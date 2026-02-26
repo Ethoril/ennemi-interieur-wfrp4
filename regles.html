@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Aides de Jeu & Règles — L'Ennemi Intérieur</title>
+    <meta name="description"
+        content="Résumés des règles de Warhammer Fantasy RPG 4e édition — Combat, Magie, Peur, Corruption.">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-brand">
+                <span>⚔️</span> L'Ennemi Intérieur
+            </a>
+            <button class="nav-burger" id="nav-burger" aria-label="Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="videos.html">Vidéos</a></li>
+                <li><a href="tableau.html">Tableau</a></li>
+                <li><a href="regles.html">Règles</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="page-container">
+
+        <!-- Page Header -->
+        <div class="page-header fade-in">
+            <h1>Aides de Jeu & Règles</h1>
+            <p>Résumés des règles essentielles, d'après le Livre de base de Warhammer Fantasy le Jeu de Rôle (4e
+                édition). Cliquez sur une section pour la développer.</p>
+        </div>
+
+        <!-- Rules Accordion -->
+        <section class="section" style="padding-top: 0;">
+            <div class="container">
+                <div class="accordion fade-in" id="rules-accordion">
+
+                    <!-- 1. Localisation des coups -->
+                    <div class="accordion-item" id="rule-localisation">
+                        <button class="accordion-header">
+                            <span class="accordion-icon">🎯</span>
+                            Combat — Localisation des Coups
+                            <span class="accordion-chevron">▼</span>
+                        </button>
+                        <div class="accordion-body">
+                            <div class="accordion-content">
+                                <h4>1. La Règle de base : Inverser les dés</h4>
+                                <p>Pour déterminer où un coup atterrit après un Test de Corps à corps ou de Projectiles
+                                    réussi, vous devez simplement <strong>inverser le résultat des dés</strong> de votre
+                                    jet d'attaque.</p>
+                                <div class="rule-note">
+                                    Exemple : Si vous réussissez votre attaque avec un jet de <strong>23</strong>, vous
+                                    inversez les chiffres pour obtenir <strong>32</strong>.
+                                    Si vous obtenez 04, la localisation est 40. Si vous obtenez 10, l'inverse est 01.
+                                </div>
+
+                                <h4>2. Le Tableau de Localisation</h4>
+                                <table class="rules-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Résultat (d100)</th>
+                                            <th>Localisation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>01–09</td>
+                                            <td>Tête</td>
+                                        </tr>
+                                        <tr>
+                                            <td>10–24</td>
+                                            <td>Bras gauche</td>
+                                        </tr>
+                                        <tr>
+                                            <td>25–44</td>
+                                            <td>Bras droit</td>
+                                        </tr>
+                                        <tr>
+                                            <td>45–79</td>
+                                            <td>Torse</td>
+                                        </tr>
+                                        <tr>
+                                            <td>80–89</td>
+                                            <td>Jambe gauche</td>
+                                        </tr>
+                                        <tr>
+                                            <td>90–00</td>
+                                            <td>Jambe droite</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <h4>3. Exception pour les Coups Critiques</h4>
+                                <p>Si votre jet d'attaque est un <strong>Coup Critique</strong> (un succès sur un
+                                    double, par exemple 11, 22, 33...), la procédure change. Vous n'inversez pas le jet
+                                    d'attaque. À la place :</p>
+                                <ul>
+                                    <li>Vous lancez un nouveau <strong>1d100</strong> pour déterminer la localisation
+                                        (en consultant le tableau ci-dessus).</li>
+                                    <li>Vous lancez un second <strong>1d100</strong> pour déterminer la gravité de la
+                                        blessure sur le Tableau des Critiques correspondant à cette localisation.</li>
+                                </ul>
+
+                                <h4>4. Cas particuliers</h4>
+                                <ul>
+                                    <li><strong>Créatures non-humanoïdes :</strong> Pour les quadrupèdes, on remplace
+                                        généralement les bras par les pattes avant et les jambes par les pattes arrière.
+                                    </li>
+                                    <li><strong>Viser :</strong> Il est possible de viser une localisation précise, mais
+                                        cela impose un malus de <strong>-20</strong> au test d'attaque.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Blessures et Coups Critiques -->
+                    <div class="accordion-item" id="rule-critiques">
+                        <button class="accordion-header">
+                            <span class="accordion-icon">💀</span>
+                            Blessures & Coups Critiques
+                            <span class="accordion-chevron">▼</span>
+                        </button>
+                        <div class="accordion-body">
+                            <div class="accordion-content">
+                                <h4>1. Les Blessures et l'État de Santé</h4>
+                                <ul>
+                                    <li><strong>Subir des Dégâts :</strong> Dégâts de l'arme + DR – (Bonus d'Endurance +
+                                        Points d'Armure) = Blessures perdues.</li>
+                                    <li><strong>Tomber à 0 Blessures :</strong> Vous gagnez l'État <em>À Terre</em>. Si
+                                        non soigné en un nombre de Rounds égal au Bonus d'Endurance, vous gagnez l'État
+                                        <em>Inconscient</em>.</li>
+                                    <li><strong>Le Symptôme « Blessé » :</strong> Désigne un symptôme spécifique de
+                                        maladie (plaie infectée). Empêche la récupération de Blessures tant que non
+                                        traité.</li>
+                                </ul>
+
+                                <h4>2. Les Coups Critiques</h4>
+                                <p><strong>Quand subit-on un Critique ?</strong></p>
+                                <ol>
+                                    <li><strong>Le Double :</strong> L'attaquant réussit son Test avec un double. La
+                                        victime subit le Critique <strong>ET</strong> les dégâts normaux.</li>
+                                    <li><strong>L'Acharnement (0 PV) :</strong> Si la cible est réduite à 0 Blessures,
+                                        tout coup porté inflige automatiquement un Critique.</li>
+                                </ol>
+                                <div class="rule-note">
+                                    Résolution : Lancer 1d100 pour la localisation, puis 1d100 pour la gravité (+10 si
+                                    cible à 0 PV).
+                                </div>
+
+                                <h4>3. La Mort</h4>
+                                <ol>
+                                    <li><strong>Résultat Mortel :</strong> Le jet sur le tableau des Critiques indique «
+                                        Mort ».</li>
+                                    <li><strong>Accumulation :</strong> Si Inconscient à 0 B et que le nombre de
+                                        Critiques actifs > Bonus d'Endurance, mort à la fin du Round.</li>
+                                </ol>
+
+                                <h4>4. Comment Éviter ou Atténuer</h4>
+                                <ul>
+                                    <li><strong>Déviation Critique (Sacrifice d'Armure) :</strong> Sacrifier 1 Point
+                                        d'Armure pour ignorer le Critique (mais subir les dégâts).</li>
+                                    <li><strong>Points de Destin/Résilience :</strong> Survivre in extremis ou choisir
+                                        le résultat d'un dé.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Magie -->
+                    <div class="accordion-item" id="rule-magie">
+                        <button class="accordion-header">
+                            <span class="accordion-icon">✨</span>
+                            Magie — Focalisation & Incantation
+                            <span class="accordion-chevron">▼</span>
+                        </button>
+                        <div class="accordion-body">
+                            <div class="accordion-content">
+                                <div class="rule-note">
+                                    Pour réussir un sort, il faut obtenir un <strong>SR (Seuil de Réussite)</strong>
+                                    supérieur ou égal au <strong>NI (Niveau d'Incantation)</strong> du sort.
+                                </div>
+
+                                <h4>1. Test de Focalisation (Channeling)</h4>
+                                <ul>
+                                    <li>Un test réussi permet d'accumuler des succès (<strong>Bonus FM + SR
+                                            obtenus</strong>) utilisables pour le prochain test de Langue Magik.</li>
+                                    <li>Peut être fait en Test étendu sur plusieurs rounds jusqu'à accumuler assez de
+                                        succès pour lancer le sort à difficulté 0.</li>
+                                </ul>
+                                <div class="rule-note">
+                                    Exemple : Pour un sort NI 8. Si tu as 52 en FM et 62 en Focalisation. Tu lances 48.
+                                    SR = 2 (62 vs 48) + Bonus FM (5) = 7 succès accumulés. Il te manque 1 succès pour le
+                                    NI 8.
+                                </div>
+
+                                <h4>2. Test de Langue Magik (Lancement)</h4>
+                                <ul>
+                                    <li>Vous devez réussir un test de Langue Magik avec assez de SR pour combler ce
+                                        qu'il manque au NI du sort.</li>
+                                    <li>Si succès excédentaires en Focalisation : Chaque succès "de trop" donne un bonus
+                                        de <strong>+10</strong> au test de Langue Magik.</li>
+                                </ul>
+
+                                <h4>Cas Spéciaux</h4>
+                                <table class="rules-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Situation</th>
+                                            <th>Effet</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Interruption pendant Focalisation</td>
+                                            <td>Test de Calme Difficile (-20). Échec : perte de succès + Incantations
+                                                Imparfaites Mineures.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Réussite Critique (Focalisation ou Langue Magik)</td>
+                                            <td>Effet positif + jet sur table Mineure.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Maladresse (Focalisation)</td>
+                                            <td>Jet sur table Majeure.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Maladresse (Langue Magik)</td>
+                                            <td>Échec + Jet sur table Mineure.</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Magie Sombre</td>
+                                            <td>Un dé sur un 8 (dizaine ou unité) = Jet sur table Mineure.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Peur et Terreur -->
+                    <div class="accordion-item" id="rule-peur">
+                        <button class="accordion-header">
+                            <span class="accordion-icon">😱</span>
+                            Peur & Terreur
+                            <span class="accordion-chevron">▼</span>
+                        </button>
+                        <div class="accordion-body">
+                            <div class="accordion-content">
+                                <p>La <strong>Peur</strong> est un Trait Psychologique représentant une aversion
+                                    extrême. Les créatures possèdent un <strong>Indice de Peur</strong> (ex : Peur 2).
+                                </p>
+
+                                <h4>1. Surmonter la Peur</h4>
+                                <p>Pour vaincre sa peur, le personnage doit réussir un <strong>Test Étendu de
+                                        Calme</strong>.</p>
+                                <ul>
+                                    <li><strong>Objectif :</strong> Cumuler un nombre de DR (Degrés de Réussite) ≥
+                                        Indice de Peur.</li>
+                                    <li><strong>Quand :</strong> À la fin de chaque Round (avant ou après le jet de
+                                        récupération de l'état Brisé).</li>
+                                    <li><strong>Succès :</strong> Une fois le total atteint, vous n'êtes plus sujet à la
+                                        Peur pour le reste de la rencontre.</li>
+                                </ul>
+
+                                <h4>2. Les Effets (Tant qu'on a Peur)</h4>
+                                <ul>
+                                    <li><strong>Malus d'action :</strong> -1 DR à tous les Tests liés à la source de la
+                                        peur (attaque, interaction...).</li>
+                                    <li><strong>Mouvement restreint :</strong> Impossible de se rapprocher
+                                        volontairement. Pour forcer sa volonté : Test de Calme Intermédiaire (+0)
+                                        requis.</li>
+                                    <li><strong>Risque de panique :</strong> Si la source approche, Test de Calme
+                                        Intermédiaire (+0) immédiat. En cas d'échec : gain de l'État <em>Brisé</em>.
+                                    </li>
+                                </ul>
+
+                                <h4>3. La Terreur (Terror)</h4>
+                                <p>Une forme plus intense de la Peur.</p>
+                                <ul>
+                                    <li><strong>À la vue de la créature :</strong> Test de Calme immédiat.</li>
+                                    <li><strong>Échec :</strong> Gagnez un nombre d'États <em>Brisé</em> égal à (Indice
+                                        Terreur + DR d'échec).</li>
+                                    <li><strong>Ensuite :</strong> La créature cause la Peur (avec un indice égal à son
+                                        indice de Terreur) pour le reste du combat.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Corruption et Mutations -->
+                    <div class="accordion-item" id="rule-corruption">
+                        <button class="accordion-header">
+                            <span class="accordion-icon">🌀</span>
+                            Corruption & Mutations
+                            <span class="accordion-chevron">▼</span>
+                        </button>
+                        <div class="accordion-body">
+                            <div class="accordion-content">
+                                <h4>1. Gagner de la Corruption</h4>
+                                <p>On accumule de la Corruption par exposition ou choix volontaire. Test de
+                                    <strong>Résistance (Physique)</strong> ou <strong>Calme (Spirituel)</strong> requis
+                                    face au Chaos.</p>
+
+                                <table class="rules-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Exposition</th>
+                                            <th>Échec</th>
+                                            <th>Succès minime (0-1 DR)</th>
+                                            <th>Succès (2-3 DR)</th>
+                                            <th>Succès (4+ DR)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><strong>Mineure</strong> (ex : voir un démon mineur)</td>
+                                            <td>+1 Corruption</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Modérée</strong> (ex : malepierre, plusieurs démons)</td>
+                                            <td>+2 Corruption</td>
+                                            <td>+1 Corruption</td>
+                                            <td>—</td>
+                                            <td>—</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Majeure</strong> (ex : Démon Majeur, pacte)</td>
+                                            <td>+3 Corruption</td>
+                                            <td>+2 Corruption</td>
+                                            <td>+1 Corruption</td>
+                                            <td>0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <div class="rule-note">
+                                    Si vous ratez un test, vous pouvez accepter volontairement +1 Point de Corruption
+                                    pour réussir le jet ou le relancer. (Choix du joueur).
+                                </div>
+
+                                <h4>2. Le Seuil & la Mutation</h4>
+                                <p>Si votre total dépasse le seuil, faites immédiatement un <strong>Test de Résistance
+                                        (+0)</strong>.</p>
+                                <ul>
+                                    <li><strong>Succès :</strong> Vous résistez pour l'instant (test à refaire au
+                                        prochain gain de corruption).</li>
+                                    <li><strong>Échec :</strong> Mutation ! Vous perdez un nombre de points de
+                                        Corruption égal à votre BFM et subissez une mutation.</li>
+                                </ul>
+
+                                <h4>3. Déterminer la Mutation</h4>
+                                <ol>
+                                    <li><strong>Le Type :</strong> Lancez 1d100. Humains : 01-50 Corps, 51-00 Esprit.
+                                        Elfes : Tendance aux mutations mentales.</li>
+                                    <li><strong>L'Effet :</strong> Lancez sur le Tableau de Corruption Physique ou
+                                        Mentale correspondant.</li>
+                                </ol>
+
+                                <h4>4. Perdre de la Corruption</h4>
+                                <ul>
+                                    <li><strong>Absolution :</strong> Actes héroïques, purification, pèlerinage
+                                        (difficile, à la discrétion du MJ).</li>
+                                    <li><strong>Sombres Murmures :</strong> Le MJ propose de retirer 1 Point si vous
+                                        commettez un acte vil suggéré par les Dieux Sombres.</li>
+                                </ul>
+
+                                <h4>5. La Fin du Personnage</h4>
+                                <p>Si le nombre de mutations dépasse votre <strong>BE</strong> (pour le physique) ou
+                                    votre <strong>BFM</strong> (pour le mental), le personnage sombre définitivement et
+                                    devient un PNJ (Enfant du Chaos).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /accordion -->
+            </div>
+        </section>
+
+        <!-- Ornament -->
+        <div class="ornament">⚜</div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <p>Warhammer Fantasy Roleplay — Campagne de l'Ennemi Intérieur</p>
+                <p style="margin-top: 0.5rem; font-size: 0.8rem;">
+                    Warhammer Fantasy Roleplay © Games Workshop. Ce site est un outil non officiel à usage
+                    personnel.<br>
+                    Résumés basés sur le Livre de base WFRP 4e édition.
+                </p>
+            </div>
+        </footer>
+
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>
