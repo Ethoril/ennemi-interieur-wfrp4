@@ -74,8 +74,23 @@ async function fetchSheetData(sheetName) {
 
         if (rows.length < 2) return { headers: [], data: [] };
 
-        const headers = rows[0];
-        const data = rows.slice(1).filter(r => r.some(c => c !== ''));
+        let headers = rows[0];
+        let dataStart = 1;
+
+        // Fix: detect corrupted first row from merged cells in Google Sheets
+        // If a header cell contains newlines, it means multiple data values got merged
+        const firstRowCorrupted = headers.some(h => h.includes('\n'));
+        if (firstRowCorrupted) {
+            // Extract real header names (first word/line of each cell)
+            headers = headers.map(h => {
+                const firstLine = h.split('\n')[0].trim();
+                return firstLine;
+            });
+            // Skip this corrupted row entirely (data starts from row 2)
+            dataStart = 1;
+        }
+
+        const data = rows.slice(dataStart).filter(r => r.some(c => c !== ''));
 
         dataCache[sheetName] = { headers, data };
         return { headers, data };
