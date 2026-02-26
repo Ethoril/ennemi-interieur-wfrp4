@@ -94,17 +94,20 @@ function renderCards(container, headers, data, tabId) {
 
     // Special layout for Coûts XP (simple table works better)
     if (tabId === 'couts-xp') {
+        container.style.display = 'block';
         renderTable(container, headers, data);
         return;
     }
 
     // Special layout for Mots Clés (definition list)
     if (tabId === 'mots-cles') {
+        container.style.display = 'block';
         renderDefinitions(container, headers, data);
         return;
     }
 
     // Card layout for everything else
+    container.style.display = 'grid';
     let html = '';
     data.forEach((row, idx) => {
         html += `<div class="sheet-card" style="animation-delay: ${idx * 0.03}s">`;
