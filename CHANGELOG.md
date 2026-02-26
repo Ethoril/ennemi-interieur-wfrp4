@@ -6,6 +6,14 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [0.3.0] - 2026-02-26
+
+### Ajouté
+- Badge de version affiché dans la navbar (en haut à droite) sur toutes les pages
+- Style `.nav-version` dans le design system
+
+---
+
 ## [0.2.0] - 2026-02-26
 
 ### Corrigé
