@@ -208,12 +208,16 @@ function formatText(text) {
 }
 
 // ── Search / Filter ───────────────────────────────
+function stripAccents(str) {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 function filterCards(container, query) {
     const cards = container.querySelectorAll('.sheet-card, .sheet-definition, .sheet-table-wrapper tr');
-    const q = query.toLowerCase();
+    const q = stripAccents(query.toLowerCase());
 
     cards.forEach(card => {
-        const text = card.textContent.toLowerCase();
+        const text = stripAccents(card.textContent.toLowerCase());
         card.style.display = text.includes(q) ? '' : 'none';
     });
 }
