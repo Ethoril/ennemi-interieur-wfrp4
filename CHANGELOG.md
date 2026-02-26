@@ -6,6 +6,15 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [0.4.0] - 2026-02-26
+
+### Modifié
+- Onglet "Tableau" renommé en "Aides de Jeux" (navbar + page d'accueil)
+- Titre et description de la page mis à jour
+- Google Sheet élargi à 95% de la largeur de la page
+
+---
+
 ## [0.3.0] - 2026-02-26
 
 ### Ajouté

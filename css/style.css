@@ -667,9 +667,16 @@ strong {
 
 .sheet-container iframe {
   width: 100%;
-  height: 75vh;
-  min-height: 500px;
+  height: 80vh;
+  min-height: 600px;
   border: none;
+}
+
+/* Wider container for full-width content like sheets */
+.container-wide {
+  max-width: 95%;
+  margin: 0 auto;
+  padding: 0 var(--space-xl);
 }
 
 /* ── Accordion (Rules) ─────────────────────────── */
