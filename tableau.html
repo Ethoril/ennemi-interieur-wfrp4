@@ -16,7 +16,7 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-brand">
-                <span>⚔️</span> L'Ennemi Intérieur <span class="nav-version">v0.6.0</span>
+                <span>⚔️</span> L'Ennemi Intérieur <span class="nav-version">v0.7.0</span>
             </a>
             <button class="nav-burger" id="nav-burger" aria-label="Menu">
                 <span></span>
@@ -41,15 +41,36 @@
             </p>
         </div>
 
-        <!-- Google Sheet Embed -->
+        <!-- Dynamic Sheet Content -->
         <section class="section" style="padding-top: 0;">
-            <div class="container-wide">
-                <div class="sheet-container fade-in">
-                    <iframe id="sheet-embed"
-                        src="https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/htmlembed?widget=true&headers=true"
-                        title="Tableau de campagne" loading="lazy">
-                    </iframe>
+            <div class="container">
+
+                <!-- Toolbar: Tabs + Search -->
+                <div class="sheet-toolbar fade-in">
+                    <div class="sheet-tabs" id="sheet-tabs"></div>
+                    <div class="sheet-search-wrapper">
+                        <span class="sheet-search-icon">🔍</span>
+                        <input type="text" class="sheet-search" id="sheet-search"
+                            placeholder="Rechercher un sort, une arme, un mot clé...">
+                    </div>
                 </div>
+
+                <!-- Loading -->
+                <div class="sheet-loading" id="sheet-loading">
+                    <div class="sheet-spinner"></div>
+                    Chargement des données...
+                </div>
+
+                <!-- Data Container -->
+                <div class="sheet-content" id="sheet-content"></div>
+
+                <!-- Open in Google Sheets link -->
+                <div style="text-align: center; margin-top: var(--space-xl);">
+                    <a href="#" class="sheet-open-btn" id="sheet-link" target="_blank" rel="noopener">
+                        📎 Ouvrir dans Google Sheets
+                    </a>
+                </div>
+
             </div>
         </section>
 
@@ -69,6 +90,7 @@
     </div>
 
     <script src="js/main.js"></script>
+    <script src="js/sheets.js"></script>
 </body>
 
 </html>

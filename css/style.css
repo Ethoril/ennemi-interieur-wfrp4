@@ -656,27 +656,276 @@ strong {
   color: var(--gold);
 }
 
-/* ── Google Sheet Embed ────────────────────────── */
-.sheet-container {
+/* ── Dynamic Sheet UI ─────────────────────────── */
+.sheet-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.sheet-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  overflow-x: auto;
+  padding-bottom: var(--space-xs);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.sheet-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sheet-tab:hover {
+  border-color: var(--border-gold);
+  color: var(--gold);
+}
+
+.sheet-tab.active {
+  background: rgba(201, 168, 76, 0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.sheet-tab-icon {
+  font-size: 1rem;
+}
+
+.sheet-search-wrapper {
+  position: relative;
+}
+
+.sheet-search {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md) var(--space-sm) 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast);
+}
+
+.sheet-search:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.sheet-search::placeholder {
+  color: var(--text-muted);
+}
+
+.sheet-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+/* Sheet cards */
+.sheet-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-md);
+}
+
+.sheet-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  transition: all var(--transition-fast);
+  animation: fadeInUp 0.3s ease both;
+}
+
+.sheet-card:hover {
+  border-color: var(--border-gold);
   box-shadow: var(--shadow-md);
 }
 
-.sheet-container iframe {
-  width: 100%;
-  height: 80vh;
-  min-height: 600px;
-  border: none;
+.sheet-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
 }
 
-/* Wider container for full-width content like sheets */
-.container-wide {
-  max-width: 95%;
-  margin: 0 auto;
-  padding: 0 var(--space-xl);
+.sheet-card-title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  color: var(--gold);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.sheet-badge {
+  font-size: 0.7rem;
+  font-family: var(--font-heading);
+  padding: 2px 8px;
+  background: rgba(201, 168, 76, 0.12);
+  border: 1px solid var(--border-gold);
+  border-radius: 10px;
+  color: var(--gold-dim);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.sheet-card-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xs) var(--space-md);
+}
+
+.sheet-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sheet-field-full {
+  grid-column: 1 / -1;
+}
+
+.sheet-field-label {
+  font-size: 0.7rem;
+  font-family: var(--font-heading);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sheet-field-value {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* Definition list for Mots Clés */
+.sheet-def-list {
+  display: grid;
+  gap: var(--space-md);
+  margin: 0;
+}
+
+.sheet-definition {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  animation: fadeInUp 0.3s ease both;
+}
+
+.sheet-def-term {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  color: var(--gold);
+  margin-bottom: var(--space-xs);
+}
+
+.sheet-def-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Table wrapper for scrollable tables */
+.sheet-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-md);
+}
+
+/* Loading spinner */
+.sheet-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3xl);
+  gap: var(--space-md);
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+}
+
+.sheet-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-subtle);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sheet-error,
+.sheet-empty {
+  text-align: center;
+  padding: var(--space-2xl);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Open in Sheets button */
+.sheet-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(201, 168, 76, 0.1);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  color: var(--gold);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  transition: all var(--transition-fast);
+}
+
+.sheet-open-btn:hover {
+  background: rgba(201, 168, 76, 0.2);
+  color: var(--gold-bright);
 }
 
 /* ── Accordion (Rules) ─────────────────────────── */
@@ -960,6 +1209,18 @@ strong {
 
   .page-header {
     padding: var(--space-2xl) var(--space-md) var(--space-lg);
+  }
+
+  .sheet-content {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-card-body {
+    grid-template-columns: 1fr;
+  }
+
+  .sheet-tab-name {
+    font-size: 0.7rem;
   }
 }
 
