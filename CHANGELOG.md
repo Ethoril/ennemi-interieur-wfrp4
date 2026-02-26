@@ -6,6 +6,37 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [0.8.0] - 2026-02-27
+
+### Corrigé
+- Onglet Coûts XP : séparation en 2 tableaux distincts + correction coût "+1 Talent" manquant
+- Recherche insensible aux accents (ex: "regeneration" → "régénération")
+- Gestion des CSV corrompus par le format de cellules Google Sheets
+- Onglets en wrap (multi-lignes) sur mobile, plus de scroll horizontal
+
+---
+
+## [0.7.0] - 2026-02-27
+
+### Ajouté
+- **Aides de Jeux dynamique** : remplacement de l'iframe Google Sheets par un affichage custom
+- 6 onglets cliquables (Coûts XP, Magie, Miracles, Armes CàC, Armes à Distance, Mots Clés)
+- Données chargées en temps réel depuis Google Sheets (API CSV)
+- Cartes responsives pour chaque sort, arme, miracle
+- Barre de recherche avec filtrage instantané
+- Bouton "Ouvrir dans Google Sheets"
+- Spinner de chargement
+
+---
+
+## [0.6.0] - 2026-02-26
+
+### Modifié
+- Passage complet au tutoiement sur toutes les pages (accueil, vidéos, règles, aides de jeux)
+- Correction d'encodage UTF-8 sur tous les fichiers HTML
+
+---
+
 ## [0.5.0] - 2026-02-26
 
 ### Modifié
