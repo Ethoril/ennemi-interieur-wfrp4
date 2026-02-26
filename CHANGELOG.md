@@ -6,6 +6,17 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [0.5.0] - 2026-02-26
+
+### Modifié
+- Titre hero : "Ennemi Intérieur" (simplifié)
+- Texte d'accueil : ton informel, tutoiement, mention feuille de perso (soon™)
+- Hero réduit en hauteur pour rapprocher les cartes
+- Carte Vidéos : tutoiement + "..."
+- Carte Règles renommée → "Règles du Jeu"
+
+---
+
 ## [0.4.0] - 2026-02-26
 
 ### Modifié
