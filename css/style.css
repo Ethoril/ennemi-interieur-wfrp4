@@ -667,10 +667,7 @@ strong {
 .sheet-tabs {
   display: flex;
   gap: var(--space-xs);
-  overflow-x: auto;
-  padding-bottom: var(--space-xs);
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
+  flex-wrap: wrap;
 }
 
 .sheet-tab {
