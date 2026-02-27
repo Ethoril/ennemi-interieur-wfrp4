@@ -6,6 +6,14 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.1.0] - 2026-02-27
+
+### Ajouté
+- **Page "Le Groupe"** : nouvelle page avec les portraits des 5 personnages (Bhelgi, Caelel, Elysia, Hellaya, Wren) en vignettes circulaires
+- Lien "Le Groupe" ajouté à la navigation sur toutes les pages
+
+---
+
 ## [1.0.0] - 2026-02-27
 
 ### Amélioré

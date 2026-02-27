@@ -1160,6 +1160,83 @@ strong {
   width: 60px;
 }
 
+/* ── Character Cards (Le Groupe) ───────────────── */
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-xl);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.character-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  text-align: center;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.character-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.character-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-gold);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+}
+
+.character-card:hover::before {
+  opacity: 1;
+}
+
+.character-portrait {
+  width: 160px;
+  height: 160px;
+  margin: 0 auto var(--space-lg);
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--border-gold);
+  box-shadow: 0 0 20px rgba(201, 168, 76, 0.1);
+  transition: all var(--transition-base);
+}
+
+.character-card:hover .character-portrait {
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 30px rgba(201, 168, 76, 0.25);
+}
+
+.character-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.character-card:hover .character-portrait img {
+  transform: scale(1.08);
+}
+
+.character-info h3 {
+  font-size: 1.2rem;
+  color: var(--gold);
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
 /* ── Page Header ───────────────────────────────── */
 .page-header {
   text-align: center;
