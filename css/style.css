@@ -1105,7 +1105,7 @@ strong {
 }
 
 .crit-table-section.open .crit-table-body {
-  max-height: 2000px;
+  max-height: 5000px;
 }
 
 .crit-table-body .rules-table {
