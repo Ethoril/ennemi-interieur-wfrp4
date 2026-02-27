@@ -6,6 +6,15 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [0.11.0] - 2026-02-27
+
+### Ajouté
+- **Tables de Mutations** dans la section Corruption : Physiques (55 entrées), Sous-tableau Tête Bestiale (10 animaux), Mentales (34 entrées)
+- Colonnes par Dieu du Chaos (Universel, Khorne, Nurgle, Slaanesh, Tzeentch)
+- Notes de visibilité (¹ cachable, ² démarche, ³ incachable)
+
+---
+
 ## [0.10.0] - 2026-02-27
 
 ### Ajouté

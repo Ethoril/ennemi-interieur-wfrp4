@@ -17,7 +17,7 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-brand">
-                <span>⚔️</span> L'Ennemi Intérieur <span class="nav-version">v0.10.0</span>
+                <span>⚔️</span> L'Ennemi Intérieur <span class="nav-version">v0.11.0</span>
             </a>
             <button class="nav-burger" id="nav-burger" aria-label="Menu">
                 <span></span>
@@ -1168,6 +1168,1047 @@
                                 <p>Si le nombre de mutations dépasse ton <strong>BE</strong> (pour le physique) ou
                                     ton <strong>BFM</strong> (pour le mental), le personnage sombre définitivement et
                                     devient un PNJ (Enfant du Chaos).</p>
+                                <h4>6. Tables de Mutations</h4>
+                                <p>Lance sur la colonne correspondant au Dieu du Chaos responsable (ou Universel si non
+                                    spécifique).</p>
+
+                                <!-- Mutations Physiques -->
+                                <div class="crit-table-section">
+                                    <button class="crit-table-toggle">
+                                        <span>🧬</span> Mutations Physiques <span class="accordion-chevron">▼</span>
+                                    </button>
+                                    <div class="crit-table-body">
+                                        <table class="rules-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Univ.</th>
+                                                    <th>Kho.</th>
+                                                    <th>Nur.</th>
+                                                    <th>Sla.</th>
+                                                    <th>Tze.</th>
+                                                    <th>Mutation</th>
+                                                    <th>Effet</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>01–03</td>
+                                                    <td>01–04</td>
+                                                    <td>01–03</td>
+                                                    <td>01–05</td>
+                                                    <td>01–07</td>
+                                                    <td>Jambes animales ¹²</td>
+                                                    <td>+1 Mouvement.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>04</td>
+                                                    <td>05–08</td>
+                                                    <td>04</td>
+                                                    <td>06</td>
+                                                    <td>08–09</td>
+                                                    <td>Sang acide</td>
+                                                    <td>Gagnez le trait Sang corrosif.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>05–06</td>
+                                                    <td>09</td>
+                                                    <td>-</td>
+                                                    <td>07</td>
+                                                    <td>10–12</td>
+                                                    <td>Visage à bec ³</td>
+                                                    <td>Gagnez le trait Morsure +3.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>07–10</td>
+                                                    <td>10–15</td>
+                                                    <td>05–07</td>
+                                                    <td>08–10</td>
+                                                    <td>13</td>
+                                                    <td>Tête bestiale ³</td>
+                                                    <td>Voir sous-tableau Tête Bestiale.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>11</td>
+                                                    <td>16–19</td>
+                                                    <td>08</td>
+                                                    <td>11–12</td>
+                                                    <td>14–15</td>
+                                                    <td>Extrémités armées ³</td>
+                                                    <td>Dextérité réduite à 0. Impossible d'être désarmé.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>12–13</td>
+                                                    <td>20</td>
+                                                    <td>09–10</td>
+                                                    <td>13</td>
+                                                    <td>16</td>
+                                                    <td>Grandes oreilles ¹</td>
+                                                    <td>Gagnez Sens aiguisés (Ouïe).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>14–15</td>
+                                                    <td>-</td>
+                                                    <td>11</td>
+                                                    <td>-</td>
+                                                    <td>17–19</td>
+                                                    <td>Pattes d'oiseau ³</td>
+                                                    <td>Gagnez le trait Arboricole.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>16</td>
+                                                    <td>-</td>
+                                                    <td>12</td>
+                                                    <td>-</td>
+                                                    <td>20–21</td>
+                                                    <td>Visage lisse ¹</td>
+                                                    <td>Gagnez le trait Peur 2.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>17</td>
+                                                    <td>21–22</td>
+                                                    <td>13</td>
+                                                    <td>14–15</td>
+                                                    <td>22</td>
+                                                    <td>Souffle de feu</td>
+                                                    <td>Gagnez le trait Souffle 5 (Feu).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>18–19</td>
+                                                    <td>23</td>
+                                                    <td>14–16</td>
+                                                    <td>-</td>
+                                                    <td>23</td>
+                                                    <td>Yeux globuleux ¹</td>
+                                                    <td>+10 Initiative.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>20</td>
+                                                    <td>24–25</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>24</td>
+                                                    <td>Peau brûlante ³</td>
+                                                    <td>Contact = Test Athlétisme ou 1 État Enflammé.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>21–22</td>
+                                                    <td>26–27</td>
+                                                    <td>17–19</td>
+                                                    <td>16–17</td>
+                                                    <td>25–26</td>
+                                                    <td>Carapace ¹</td>
+                                                    <td>+1 PA sur deux Localisations aléatoires.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>23–24</td>
+                                                    <td>28–31</td>
+                                                    <td>20–21</td>
+                                                    <td>18–20</td>
+                                                    <td>27–28</td>
+                                                    <td>Griffes ³</td>
+                                                    <td>Mains = Armes (Dégâts = Bonus de Force).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>25</td>
+                                                    <td>-</td>
+                                                    <td>22–25</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>Nuage de mouches ³</td>
+                                                    <td>Gagnez le trait Gênant.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>26</td>
+                                                    <td>-</td>
+                                                    <td>26–29</td>
+                                                    <td>21–22</td>
+                                                    <td>-</td>
+                                                    <td>Corpulent</td>
+                                                    <td>-1 Mouvement, +5 Force, +5 Endurance.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>27–28</td>
+                                                    <td>32</td>
+                                                    <td>30–31</td>
+                                                    <td>23–24</td>
+                                                    <td>29–30</td>
+                                                    <td>Tête à crête ³</td>
+                                                    <td>Talent Séduisant face aux Mutants.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>29–30</td>
+                                                    <td>33–35</td>
+                                                    <td>32</td>
+                                                    <td>25–27</td>
+                                                    <td>31–32</td>
+                                                    <td>Cri assourdissant</td>
+                                                    <td>Gagnez le trait Gênant.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>31</td>
+                                                    <td>36</td>
+                                                    <td>-</td>
+                                                    <td>28–29</td>
+                                                    <td>33–34</td>
+                                                    <td>Doigts distendus ³</td>
+                                                    <td>+10 Dextérité.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>32–33</td>
+                                                    <td>-</td>
+                                                    <td>33–34</td>
+                                                    <td>30–32</td>
+                                                    <td>35–36</td>
+                                                    <td>Bras élastiques</td>
+                                                    <td>Allonge augmentée jusqu'à 2 crans.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>34</td>
+                                                    <td>37–39</td>
+                                                    <td>35–37</td>
+                                                    <td>33</td>
+                                                    <td>37</td>
+                                                    <td>Émacié</td>
+                                                    <td>-10 Force, +5 Agilité.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>35</td>
+                                                    <td>-</td>
+                                                    <td>38–39</td>
+                                                    <td>34–36</td>
+                                                    <td>38–39</td>
+                                                    <td>Mauvais œil ³</td>
+                                                    <td>Sort Mauvais Œil sans test (1 Point de Fortune).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>36</td>
+                                                    <td>40–41</td>
+                                                    <td>-</td>
+                                                    <td>37</td>
+                                                    <td>40–41</td>
+                                                    <td>Articul. supp. (jambes) ³</td>
+                                                    <td>+5 Agilité.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>37</td>
+                                                    <td>42–43</td>
+                                                    <td>40</td>
+                                                    <td>38–40</td>
+                                                    <td>42–44</td>
+                                                    <td>Bouche suppl. ¹</td>
+                                                    <td>Localisation aléatoire.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>38–39</td>
+                                                    <td>-</td>
+                                                    <td>41–43</td>
+                                                    <td>41</td>
+                                                    <td>45</td>
+                                                    <td>Yeux pédonculés ³</td>
+                                                    <td>Voir au-dessus/autour des obstacles.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>40</td>
+                                                    <td>-</td>
+                                                    <td>44–46</td>
+                                                    <td>42–44</td>
+                                                    <td>46–47</td>
+                                                    <td>Tentacule charnu ¹</td>
+                                                    <td>Gagnez le trait Tentacules.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>41–43</td>
+                                                    <td>-</td>
+                                                    <td>47–51</td>
+                                                    <td>-</td>
+                                                    <td>48</td>
+                                                    <td>Odeur fétide</td>
+                                                    <td>Gagnez le trait Gênant.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>44</td>
+                                                    <td>44</td>
+                                                    <td>52</td>
+                                                    <td>45–46</td>
+                                                    <td>49</td>
+                                                    <td>Peau poilue ³</td>
+                                                    <td>Immunité Hypothermie ; Insolation doublée.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>45–47</td>
+                                                    <td>-</td>
+                                                    <td>53–54</td>
+                                                    <td>47–48</td>
+                                                    <td>50</td>
+                                                    <td>Branchies ¹</td>
+                                                    <td>Respiration sous l'eau.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>48</td>
+                                                    <td>45–47</td>
+                                                    <td>-</td>
+                                                    <td>49–50</td>
+                                                    <td>51–52</td>
+                                                    <td>Peau brillante ³</td>
+                                                    <td>Éclaire comme une bougie.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>49</td>
+                                                    <td>48–50</td>
+                                                    <td>55–56</td>
+                                                    <td>-</td>
+                                                    <td>53</td>
+                                                    <td>Sans tête ³</td>
+                                                    <td>Peur 2 ; coups à la tête = échecs.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>50–51</td>
+                                                    <td>51</td>
+                                                    <td>57–58</td>
+                                                    <td>51</td>
+                                                    <td>54</td>
+                                                    <td>Sauteur ³</td>
+                                                    <td>Mouvement 2 (fixe) ; trait Rebond.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>52</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>52–57</td>
+                                                    <td>55</td>
+                                                    <td>Beauté inhumaine</td>
+                                                    <td>+10 Sociabilité ; pas de cicatrices.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>53–54</td>
+                                                    <td>52–55</td>
+                                                    <td>-</td>
+                                                    <td>58–59</td>
+                                                    <td>56</td>
+                                                    <td>Peau d'acier</td>
+                                                    <td>+2 PA partout, -10 Agilité.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>55</td>
+                                                    <td>56–58</td>
+                                                    <td>59</td>
+                                                    <td>60–61</td>
+                                                    <td>-</td>
+                                                    <td>Langue pendante ³</td>
+                                                    <td>-10 Tests de Langue parlée.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>56–57</td>
+                                                    <td>59</td>
+                                                    <td>-</td>
+                                                    <td>62–63</td>
+                                                    <td>57–58</td>
+                                                    <td>Bras longs ³</td>
+                                                    <td>Arme compte comme plus longue.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>58–59</td>
+                                                    <td>60</td>
+                                                    <td>-</td>
+                                                    <td>64</td>
+                                                    <td>59–60</td>
+                                                    <td>Longues jambes ³</td>
+                                                    <td>+2 Mouvement.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>60–61</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>65</td>
+                                                    <td>61–62</td>
+                                                    <td>Long cou ³</td>
+                                                    <td>½ coups au corps touchent la Tête.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>62</td>
+                                                    <td>61–63</td>
+                                                    <td>60–61</td>
+                                                    <td>66–67</td>
+                                                    <td>63–64</td>
+                                                    <td>Bras multiples ³</td>
+                                                    <td>Attaque gratuite.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>63–64</td>
+                                                    <td>64–65</td>
+                                                    <td>62–63</td>
+                                                    <td>68–69</td>
+                                                    <td>65–66</td>
+                                                    <td>Jambes multiples ³</td>
+                                                    <td>+1 Mouvement.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>65–66</td>
+                                                    <td>66</td>
+                                                    <td>64–66</td>
+                                                    <td>70</td>
+                                                    <td>67</td>
+                                                    <td>Cyclope ¹</td>
+                                                    <td>-20 Capacité de Tir.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>67</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>71–72</td>
+                                                    <td>68–70</td>
+                                                    <td>Plumes éparses</td>
+                                                    <td>Localisations aléatoires.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>68–69</td>
+                                                    <td>67</td>
+                                                    <td>67–68</td>
+                                                    <td>73</td>
+                                                    <td>-</td>
+                                                    <td>Tête d'épingle ³</td>
+                                                    <td>Gagnez le trait Stupide.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>70–71</td>
+                                                    <td>68</td>
+                                                    <td>69</td>
+                                                    <td>74</td>
+                                                    <td>-</td>
+                                                    <td>Tête pointue ³</td>
+                                                    <td>Stupide ; pas de casque.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>72</td>
+                                                    <td>69</td>
+                                                    <td>70–72</td>
+                                                    <td>-</td>
+                                                    <td>71–73</td>
+                                                    <td>Visage réarrangé ¹</td>
+                                                    <td>Peur 1 ; -20 Intuition pour détecter mensonges.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>73</td>
+                                                    <td>-</td>
+                                                    <td>73–78</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>Chair putréfiée</td>
+                                                    <td>Peur 2 et Infecté.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>74–75</td>
+                                                    <td>70</td>
+                                                    <td>-</td>
+                                                    <td>75–77</td>
+                                                    <td>74–76</td>
+                                                    <td>Couleurs changeantes ³</td>
+                                                    <td>Gagnez le trait Gênant.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>76–77</td>
+                                                    <td>71</td>
+                                                    <td>79</td>
+                                                    <td>78</td>
+                                                    <td>77</td>
+                                                    <td>Court sur pattes ³</td>
+                                                    <td>-1 Mouvement.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>78–79</td>
+                                                    <td>72–75</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>Visage de crâne ¹</td>
+                                                    <td>Peur 2.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>80</td>
+                                                    <td>76–78</td>
+                                                    <td>-</td>
+                                                    <td>79–81</td>
+                                                    <td>-</td>
+                                                    <td>Peau à pointes ³</td>
+                                                    <td>Pas d'armure ; +1 PA partout ; +1 Attaque en Charge.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>81–82</td>
+                                                    <td>79</td>
+                                                    <td>80–81</td>
+                                                    <td>82–83</td>
+                                                    <td>78–79</td>
+                                                    <td>Ventouses ¹</td>
+                                                    <td>Gagnez le trait Grimpeur aux murs.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>83–84</td>
+                                                    <td>80–81</td>
+                                                    <td>82–84</td>
+                                                    <td>84–85</td>
+                                                    <td>80–82</td>
+                                                    <td>Queue ¹</td>
+                                                    <td>Attaque avec la queue +3.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>85</td>
+                                                    <td>82–84</td>
+                                                    <td>-</td>
+                                                    <td>86–87</td>
+                                                    <td>83</td>
+                                                    <td>Écailles épineuses ¹</td>
+                                                    <td>+1 PA partout.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>86–87</td>
+                                                    <td>85</td>
+                                                    <td>85–87</td>
+                                                    <td>88–90</td>
+                                                    <td>84</td>
+                                                    <td>Trois yeux ¹</td>
+                                                    <td>Sens aiguisés (Vue).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>88</td>
+                                                    <td>86</td>
+                                                    <td>88–89</td>
+                                                    <td>-</td>
+                                                    <td>85</td>
+                                                    <td>Peau transparente ³</td>
+                                                    <td>Peur 2.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>89–90</td>
+                                                    <td>87–88</td>
+                                                    <td>90</td>
+                                                    <td>91–92</td>
+                                                    <td>86–87</td>
+                                                    <td>Deux têtes ³</td>
+                                                    <td>Talent Ambidextre.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>91</td>
+                                                    <td>89–92</td>
+                                                    <td>91–92</td>
+                                                    <td>-</td>
+                                                    <td>88</td>
+                                                    <td>Cornes asymétriques ³</td>
+                                                    <td>+1 PA Tête ; Arme (BF dégâts).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>92–94</td>
+                                                    <td>93–94</td>
+                                                    <td>93–94</td>
+                                                    <td>93–95</td>
+                                                    <td>89–91</td>
+                                                    <td>Peau étrange ³</td>
+                                                    <td>Couleur/texture bizarre.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>95</td>
+                                                    <td>95–96</td>
+                                                    <td>-</td>
+                                                    <td>96–97</td>
+                                                    <td>92–95</td>
+                                                    <td>Frénésie distordante</td>
+                                                    <td>En Frénésie : 2ème mutation physique aléatoire.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>96–97</td>
+                                                    <td>97</td>
+                                                    <td>95–96</td>
+                                                    <td>98</td>
+                                                    <td>96</td>
+                                                    <td>Pieds palmés ¹</td>
+                                                    <td>Trait Amphibie.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>98</td>
+                                                    <td>98</td>
+                                                    <td>97–00</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>Suintement de pus</td>
+                                                    <td>Localisation aléatoire.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>99</td>
+                                                    <td>99</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>97</td>
+                                                    <td>Groin à moustaches ¹</td>
+                                                    <td>+10 Pistage.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>00</td>
+                                                    <td>00</td>
+                                                    <td>-</td>
+                                                    <td>99–00</td>
+                                                    <td>98–00</td>
+                                                    <td>Ailes ¹</td>
+                                                    <td>Trait Vol 60.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <div class="rule-note">
+                                            <strong>Notes :</strong> ¹ Peut être cachée par des vêtements. ² Test
+                                            d'Athlétisme Difficile (-10) pour démarche normale. ³ Ne peut pas être
+                                            cachée.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Sous-tableau Tête Bestiale -->
+                                <div class="crit-table-section">
+                                    <button class="crit-table-toggle">
+                                        <span>🐂</span> Sous-tableau : Tête Bestiale <span
+                                            class="accordion-chevron">▼</span>
+                                    </button>
+                                    <div class="crit-table-body">
+                                        <p
+                                            style="padding: var(--space-sm) var(--space-md); color: var(--text-secondary); font-style: italic;">
+                                            Si vous obtenez "Tête Bestiale", relancez 1d100 sur ce mini-tableau :
+                                        </p>
+                                        <table class="rules-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Univ.</th>
+                                                    <th>Kho.</th>
+                                                    <th>Nur.</th>
+                                                    <th>Sla.</th>
+                                                    <th>Tze.</th>
+                                                    <th>Animal</th>
+                                                    <th>Effet</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>01–05</td>
+                                                    <td>01–10</td>
+                                                    <td>01–05</td>
+                                                    <td>01–05</td>
+                                                    <td>01–10</td>
+                                                    <td>Ours</td>
+                                                    <td>+1 PA Tête ; Morsure +9.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>06–15</td>
+                                                    <td>11–25</td>
+                                                    <td>06–20</td>
+                                                    <td>06–10</td>
+                                                    <td>11–20</td>
+                                                    <td>Sanglier</td>
+                                                    <td>+1 PA Tête ; Cornes (Défenses).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>16–25</td>
+                                                    <td>26–45</td>
+                                                    <td>-</td>
+                                                    <td>11–15</td>
+                                                    <td>21–30</td>
+                                                    <td>Taureau</td>
+                                                    <td>+1 PA Tête ; Cornes.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>26–30</td>
+                                                    <td>46–60</td>
+                                                    <td>21–35</td>
+                                                    <td>16–25</td>
+                                                    <td>31–40</td>
+                                                    <td>Chien</td>
+                                                    <td>Morsure +5.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>31–35</td>
+                                                    <td>61–65</td>
+                                                    <td>36–40</td>
+                                                    <td>26–35</td>
+                                                    <td>41–50</td>
+                                                    <td>Aigle</td>
+                                                    <td>Morsure +4.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>36–50</td>
+                                                    <td>-</td>
+                                                    <td>41–60</td>
+                                                    <td>-</td>
+                                                    <td>51–60</td>
+                                                    <td>Rat</td>
+                                                    <td>Morsure +4 et Infecté.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>51–55</td>
+                                                    <td>-</td>
+                                                    <td>61–80</td>
+                                                    <td>-</td>
+                                                    <td>61–70</td>
+                                                    <td>Araignée</td>
+                                                    <td>Morsure +3 et Venin (Intermédiaire).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>56–80</td>
+                                                    <td>66–80</td>
+                                                    <td>81–95</td>
+                                                    <td>36–75</td>
+                                                    <td>71–80</td>
+                                                    <td>Chèvre</td>
+                                                    <td>Cornes.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>81–95</td>
+                                                    <td>81–99</td>
+                                                    <td>-</td>
+                                                    <td>76–80</td>
+                                                    <td>81–90</td>
+                                                    <td>Loup</td>
+                                                    <td>+1 PA Tête ; Morsure +6 ; Sens aiguisés (Odorat).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>96–00</td>
+                                                    <td>00</td>
+                                                    <td>96–00</td>
+                                                    <td>81–00</td>
+                                                    <td>91–00</td>
+                                                    <td>Serpent</td>
+                                                    <td>+1 PA Tête ; Morsure +3 ; Venin (Intermédiaire).</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Mutations Mentales -->
+                                <div class="crit-table-section">
+                                    <button class="crit-table-toggle">
+                                        <span>🧠</span> Mutations Mentales <span class="accordion-chevron">▼</span>
+                                    </button>
+                                    <div class="crit-table-body">
+                                        <table class="rules-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Univ.</th>
+                                                    <th>Kho.</th>
+                                                    <th>Nur.</th>
+                                                    <th>Sla.</th>
+                                                    <th>Tze.</th>
+                                                    <th>Mutation</th>
+                                                    <th>Effet</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>01</td>
+                                                    <td>-</td>
+                                                    <td>01–02</td>
+                                                    <td>01–03</td>
+                                                    <td>01–05</td>
+                                                    <td>Fuite aéthyrique</td>
+                                                    <td>Talent Sorcier ; -5 Sociabilité, -5 Intelligence.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>02–04</td>
+                                                    <td>01–05</td>
+                                                    <td>03–04</td>
+                                                    <td>04–06</td>
+                                                    <td>06–09</td>
+                                                    <td>Psyché animale</td>
+                                                    <td>Trait Bestial 1d10h si échec Test FM.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>05–08</td>
+                                                    <td>06–09</td>
+                                                    <td>05–07</td>
+                                                    <td>07–10</td>
+                                                    <td>10–11</td>
+                                                    <td>Atroces désirs</td>
+                                                    <td>-5 Sociabilité, -5 Force Mentale.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>09</td>
+                                                    <td>10–11</td>
+                                                    <td>08–10</td>
+                                                    <td>11–13</td>
+                                                    <td>12–16</td>
+                                                    <td>Phare de corruption</td>
+                                                    <td>Trait Corruption (Mineure) si sujet à Psychologie ; -10
+                                                        Sociabilité.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>10–13</td>
+                                                    <td>12–17</td>
+                                                    <td>11–14</td>
+                                                    <td>14–15</td>
+                                                    <td>17–19</td>
+                                                    <td>Bête intérieure</td>
+                                                    <td>+10 FM, -5 Sociabilité, -5 Intelligence.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>14–15</td>
+                                                    <td>18–21</td>
+                                                    <td>15–17</td>
+                                                    <td>16–19</td>
+                                                    <td>20–21</td>
+                                                    <td>Au-delà de la douleur</td>
+                                                    <td>Insensible à la douleur ; -20 Initiative, -20 Intelligence.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>16–19</td>
+                                                    <td>22–24</td>
+                                                    <td>18–21</td>
+                                                    <td>20–23</td>
+                                                    <td>22–24</td>
+                                                    <td>Âme blasphématoire</td>
+                                                    <td>Haine (Religion) ; +10 FM.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>20–22</td>
+                                                    <td>25–29</td>
+                                                    <td>22–25</td>
+                                                    <td>24–25</td>
+                                                    <td>-</td>
+                                                    <td>Esprit détruit</td>
+                                                    <td>Immunité Psychologie 1d10 Rounds puis 1d10 États Brisé.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>23–24</td>
+                                                    <td>30–33</td>
+                                                    <td>26–27</td>
+                                                    <td>26–28</td>
+                                                    <td>25–29</td>
+                                                    <td>Rêves chaotiques</td>
+                                                    <td>État Exténué les 2 premières heures du jour.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>25–27</td>
+                                                    <td>34–35</td>
+                                                    <td>28–32</td>
+                                                    <td>29–31</td>
+                                                    <td>-</td>
+                                                    <td>Peau rampante</td>
+                                                    <td>-5 Initiative, -5 Dextérité.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>28–30</td>
+                                                    <td>36–38</td>
+                                                    <td>-</td>
+                                                    <td>32–34</td>
+                                                    <td>30–34</td>
+                                                    <td>Fantaisiste</td>
+                                                    <td>-5 Initiative, -5 FM.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>31–33</td>
+                                                    <td>39–43</td>
+                                                    <td>-</td>
+                                                    <td>35–37</td>
+                                                    <td>-</td>
+                                                    <td>Haine instable</td>
+                                                    <td>Haine (Cible aléatoire/jour).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>34–35</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>38–41</td>
+                                                    <td>35–39</td>
+                                                    <td>Corruption glorieuse</td>
+                                                    <td>État Exténué/semaine sans corruption.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>36–38</td>
+                                                    <td>44–48</td>
+                                                    <td>33–35</td>
+                                                    <td>-</td>
+                                                    <td>40–41</td>
+                                                    <td>Pulsions de haine</td>
+                                                    <td>Hostilité envers les non-congénères.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>39–42</td>
+                                                    <td>49–50</td>
+                                                    <td>36–38</td>
+                                                    <td>42–45</td>
+                                                    <td>42–44</td>
+                                                    <td>Cœur desséché</td>
+                                                    <td>+10 FM, -10 Sociabilité.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>43–47</td>
+                                                    <td>-</td>
+                                                    <td>39–43</td>
+                                                    <td>46–48</td>
+                                                    <td>45–47</td>
+                                                    <td>Chiens du désespoir</td>
+                                                    <td>Malaise 1d10h si échec Test FM.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>48–49</td>
+                                                    <td>51–54</td>
+                                                    <td>44–46</td>
+                                                    <td>49–53</td>
+                                                    <td>-</td>
+                                                    <td>Masochisme empressé</td>
+                                                    <td>Trait Belliqueux ; pas de fuite.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>50–52</td>
+                                                    <td>-</td>
+                                                    <td>-</td>
+                                                    <td>54–58</td>
+                                                    <td>48–52</td>
+                                                    <td>Pensées envieuses</td>
+                                                    <td>-10 Sociabilité.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>53–55</td>
+                                                    <td>-</td>
+                                                    <td>47–51</td>
+                                                    <td>-</td>
+                                                    <td>53–54</td>
+                                                    <td>Souillure persistante</td>
+                                                    <td>Nausée 1d10h après contact saleté.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>56–58</td>
+                                                    <td>-</td>
+                                                    <td>52–56</td>
+                                                    <td>59–62</td>
+                                                    <td>-</td>
+                                                    <td>Esprit solitaire</td>
+                                                    <td>-10 à tous les Tests seul.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>59–61</td>
+                                                    <td>55–57</td>
+                                                    <td>57–59</td>
+                                                    <td>63–64</td>
+                                                    <td>-</td>
+                                                    <td>Blocage mental</td>
+                                                    <td>-10 Intelligence.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>62–63</td>
+                                                    <td>58–60</td>
+                                                    <td>60–62</td>
+                                                    <td>-</td>
+                                                    <td>55–58</td>
+                                                    <td>Errances sans but</td>
+                                                    <td>-10 Int, +10 FM ; Stupide quand seul.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>64–66</td>
+                                                    <td>-</td>
+                                                    <td>63–66</td>
+                                                    <td>65–67</td>
+                                                    <td>59–61</td>
+                                                    <td>Paranoïa monstrueuse</td>
+                                                    <td>Trait Craintif ; +10 Initiative.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>67–69</td>
+                                                    <td>61–63</td>
+                                                    <td>67–70</td>
+                                                    <td>68–72</td>
+                                                    <td>62–64</td>
+                                                    <td>Urgence paniquée</td>
+                                                    <td>-10 FM, +10 Agilité.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>70–72</td>
+                                                    <td>64–66</td>
+                                                    <td>71–74</td>
+                                                    <td>73–76</td>
+                                                    <td>65–66</td>
+                                                    <td>Faim vorace</td>
+                                                    <td>Trait Affamé.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>73–76</td>
+                                                    <td>67–68</td>
+                                                    <td>75–78</td>
+                                                    <td>77–78</td>
+                                                    <td>67–71</td>
+                                                    <td>Morale douteuse</td>
+                                                    <td>État Brisé si échec Test FM.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>77–79</td>
+                                                    <td>69–71</td>
+                                                    <td>79–83</td>
+                                                    <td>79–81</td>
+                                                    <td>72–75</td>
+                                                    <td>Maladie de l'âme</td>
+                                                    <td>Convulsions 1d10h si échec Test FM.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>80–82</td>
+                                                    <td>72–75</td>
+                                                    <td>84–85</td>
+                                                    <td>82–83</td>
+                                                    <td>76–80</td>
+                                                    <td>Esprit suspicieux</td>
+                                                    <td>-5 Initiative, -5 Intelligence.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>83–86</td>
+                                                    <td>76–77</td>
+                                                    <td>86–87</td>
+                                                    <td>-</td>
+                                                    <td>81–83</td>
+                                                    <td>Phobie terrible</td>
+                                                    <td>Peur (Cible via table Fixations).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>87–89</td>
+                                                    <td>78–82</td>
+                                                    <td>-</td>
+                                                    <td>84–87</td>
+                                                    <td>84–86</td>
+                                                    <td>Accro à l'adrénaline</td>
+                                                    <td>+10 FM, -10 Initiative.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>90–92</td>
+                                                    <td>83–87</td>
+                                                    <td>88–92</td>
+                                                    <td>88–90</td>
+                                                    <td>87–88</td>
+                                                    <td>Visions torturées</td>
+                                                    <td>-10 Initiative.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>93–94</td>
+                                                    <td>88–92</td>
+                                                    <td>93–97</td>
+                                                    <td>91–94</td>
+                                                    <td>89–93</td>
+                                                    <td>Totalement déséquilibré</td>
+                                                    <td>-20 Sociabilité, +10 FM.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>95–97</td>
+                                                    <td>93–97</td>
+                                                    <td>-</td>
+                                                    <td>95–98</td>
+                                                    <td>94–97</td>
+                                                    <td>Infinie malveillance</td>
+                                                    <td>-10 Tests sauf pour blesser (+10).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>98–00</td>
+                                                    <td>98–00</td>
+                                                    <td>98–00</td>
+                                                    <td>99–00</td>
+                                                    <td>98–00</td>
+                                                    <td>Affreusement nerveux</td>
+                                                    <td>+5 Agilité, -5 Sociabilité.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
