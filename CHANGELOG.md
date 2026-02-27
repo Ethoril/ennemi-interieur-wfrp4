@@ -6,6 +6,16 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [0.10.0] - 2026-02-27
+
+### Ajouté
+- **Tables des Incantations Imparfaites** : 2 tables collapsibles (Mineures + Majeures, 20 entrées chacune) dans la section Magie
+
+### Modifié
+- Section "Blessures & Coups Critiques" renommée → "Santé, Critiques et Survie"
+
+---
+
 ## [0.9.0] - 2026-02-27
 
 ### Ajouté
