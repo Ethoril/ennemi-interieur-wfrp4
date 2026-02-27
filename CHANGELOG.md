@@ -1,4 +1,4 @@
-# Changelog
+﻿# Changelog
 
 Toutes les modifications notables du site sont documentées dans ce fichier.
 
@@ -6,7 +6,7 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
-## [0.2.0] - 2026-02-27
+## [1.0.0] - 2026-02-27
 
 ### Amélioré
 - **Accueil mobile** : espaces réduits pour voir les cartouches sans scroller
@@ -102,7 +102,7 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
-## [0.2.0] - 2026-02-26
+## [1.0.0] - 2026-02-26
 
 ### Corrigé
 - Miniatures YouTube : utilisation de `hqdefault.jpg` (toujours disponible) au lieu de `maxresdefault.jpg`
