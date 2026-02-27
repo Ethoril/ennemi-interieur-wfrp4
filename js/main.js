@@ -108,13 +108,11 @@ function initAccordion() {
       const section = btn.parentElement;
       section.classList.toggle('open');
 
-      // Recalculate parent accordion-body maxHeight after transition
+      // Recalculate parent accordion-body maxHeight
       const accordionBody = section.closest('.accordion-body');
       if (accordionBody) {
-        // Wait for the crit table to expand, then update parent
-        setTimeout(() => {
-          accordionBody.style.maxHeight = accordionBody.scrollHeight + 'px';
-        }, 50);
+        // Remove max-height constraint so content can grow freely
+        accordionBody.style.maxHeight = 'none';
       }
     });
   });
