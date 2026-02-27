@@ -101,6 +101,23 @@ function initAccordion() {
       }
     });
   });
+
+  // Crit sub-table toggles: recalculate parent accordion height
+  document.querySelectorAll('.crit-table-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const section = btn.parentElement;
+      section.classList.toggle('open');
+
+      // Recalculate parent accordion-body maxHeight after transition
+      const accordionBody = section.closest('.accordion-body');
+      if (accordionBody) {
+        // Wait for the crit table to expand, then update parent
+        setTimeout(() => {
+          accordionBody.style.maxHeight = accordionBody.scrollHeight + 'px';
+        }, 50);
+      }
+    });
+  });
 }
 
 /* ── Video Modal ───────────────────────────────── */
