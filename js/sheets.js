@@ -125,7 +125,16 @@ function renderCards(container, headers, data, tabId) {
     container.style.display = 'grid';
     let html = '';
     data.forEach((row, idx) => {
-        html += `<div class="sheet-card" style="animation-delay: ${idx * 0.03}s">`;
+        // For magic tab, detect wind of magic from Type column
+        let windAttr = '';
+        if (tabId === 'magie') {
+            const typeIdx = headers.findIndex(h => h.toLowerCase() === 'type' || h.toLowerCase() === 'catégorie');
+            if (typeIdx >= 0 && row[typeIdx]) {
+                const windName = row[typeIdx].split(/[\s–-]/)[0].trim().toLowerCase();
+                windAttr = ` data-wind="${windName}"`;
+            }
+        }
+        html += `<div class="sheet-card"${windAttr} style="animation-delay: ${idx * 0.03}s">`;
 
         // Title: use 2nd column (Nom) if it exists, else 1st
         const nameIdx = headers.findIndex(h => h.toLowerCase() === 'nom');

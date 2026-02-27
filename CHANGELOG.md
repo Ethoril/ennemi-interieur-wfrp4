@@ -6,6 +6,15 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [0.2.0] - 2026-02-27
+
+### Amélioré
+- **Accueil mobile** : espaces réduits pour voir les cartouches sans scroller
+- **Aides de Jeux** : bouton "Ouvrir dans Google Sheets (idéal sur PC)" déplacé au-dessus des onglets
+- **Magie** : fond des cartouches de sort teinté selon le Vent de Magie (Aqshy=rouge, Azyr=bleu, Chamon=or, Ghur=ambre, Ghyran=vert, Hysh=blanc, Shyish=violet, Ulgu=gris)
+
+---
+
 ## [0.11.0] - 2026-02-27
 
 ### Ajouté
