@@ -1056,6 +1056,69 @@ strong {
   background: rgba(255, 255, 255, 0.02);
 }
 
+/* Crit table collapsible sub-sections */
+.crit-table-section {
+  margin: var(--space-sm) 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.crit-table-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-surface);
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.crit-table-toggle:hover {
+  color: var(--gold);
+  background: rgba(201, 168, 76, 0.05);
+}
+
+.crit-table-section.open .crit-table-toggle {
+  color: var(--gold);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.crit-table-section .accordion-chevron {
+  transition: transform var(--transition-base);
+}
+
+.crit-table-section.open .accordion-chevron {
+  transform: rotate(180deg);
+}
+
+.crit-table-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+
+.crit-table-section.open .crit-table-body {
+  max-height: 2000px;
+}
+
+.crit-table-body .rules-table {
+  margin: 0;
+}
+
+.crit-table-body .rules-table td:first-child {
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--gold-dim);
+  width: 60px;
+}
+
 /* ── Page Header ───────────────────────────────── */
 .page-header {
   text-align: center;

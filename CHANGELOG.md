@@ -6,6 +6,15 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [0.9.0] - 2026-02-27
+
+### Ajouté
+- **Tables des Coups Critiques** : 4 tables collapsibles (Tête, Bras, Corps, Jambe) dans la section Combat
+- Section renommée "Localisation des dégâts & Tables Critiques"
+- Chaque table avec 20 entrées (D100, Nom, Effet)
+
+---
+
 ## [0.8.0] - 2026-02-27
 
 ### Corrigé

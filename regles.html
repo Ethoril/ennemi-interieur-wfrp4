@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 
 <head>
@@ -17,7 +17,7 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-brand">
-                <span>⚔️</span> L'Ennemi Intérieur <span class="nav-version">v0.8.0</span>
+                <span>⚔️</span> L'Ennemi Intérieur <span class="nav-version">v0.9.0</span>
             </a>
             <button class="nav-burger" id="nav-burger" aria-label="Menu">
                 <span></span>
@@ -51,7 +51,7 @@
                     <div class="accordion-item" id="rule-localisation">
                         <button class="accordion-header">
                             <span class="accordion-icon">🎯</span>
-                            Combat — Localisation des Coups
+                            Combat — Localisation des dégâts & Tables Critiques
                             <span class="accordion-chevron">▼</span>
                         </button>
                         <div class="accordion-body">
@@ -121,6 +121,514 @@
                                     <li><strong>Viser :</strong> Il est possible de viser une localisation précise, mais
                                         cela impose un malus de <strong>-20</strong> au test d'attaque.</li>
                                 </ul>
+
+                                <h4>5. Tables des Coups Critiques</h4>
+                                <p>Quand tu infliges un Coup Critique, lance 1d100 sur la table correspondant à la
+                                    localisation touchée.</p>
+
+                                <!-- Critiques Tête -->
+                                <div class="crit-table-section">
+                                    <button class="crit-table-toggle"
+                                        onclick="this.parentElement.classList.toggle('open')">
+                                        <span>🗡️</span> Critiques — Tête <span class="accordion-chevron">▼</span>
+                                    </button>
+                                    <div class="crit-table-body">
+                                        <table class="rules-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>D100</th>
+                                                    <th>Nom</th>
+                                                    <th>Effet</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>1–10</td>
+                                                    <td>Blessure spectaculaire</td>
+                                                    <td>+1 Blessure, 1 Hémorragie. Cicatrice (+1 DR Social).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>11–20</td>
+                                                    <td>Coupure mineure</td>
+                                                    <td>+1 Blessure, 1 Hémorragie.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>21–25</td>
+                                                    <td>Coup à l'œil</td>
+                                                    <td>+1 Blessure, 1 Aveuglé.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>26–30</td>
+                                                    <td>Frappe à l'oreille</td>
+                                                    <td>+1 Blessure, 1 Assourdi.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>31–35</td>
+                                                    <td>Coup percutant</td>
+                                                    <td>+2 Blessures, 1 Sonné.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>36–40</td>
+                                                    <td>Œil au beurre noir</td>
+                                                    <td>+2 Blessures, 2 Aveuglé.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>41–45</td>
+                                                    <td>Oreille tranchée</td>
+                                                    <td>+2 Blessures, 2 Assourdi, 1 Hémorragie.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>46–50</td>
+                                                    <td>En plein front</td>
+                                                    <td>+2 Blessures, 2 Hémorragie, 1 Aveuglé (persistant).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>51–55</td>
+                                                    <td>Mâchoire fracturée</td>
+                                                    <td>+3 Blessures, 2 Sonné, Fracture (Mineure).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>56–60</td>
+                                                    <td>Blessure majeure à l'œil</td>
+                                                    <td>+3 Blessures, 1 Hémorragie, 1 Aveuglé (persistant).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>61–65</td>
+                                                    <td>Blessure majeure à l'oreille</td>
+                                                    <td>+3 Blessures, Perte auditive permanente (-20 tests).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>66–70</td>
+                                                    <td>Nez cassé</td>
+                                                    <td>+3 Blessures, 2 Hémorragie, Test Résistance ou Sonné.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>71–75</td>
+                                                    <td>Mâchoire cassée</td>
+                                                    <td>+4 Blessures, 3 Sonné, Test Rés. ou Inconscient, Fracture
+                                                        (Majeure).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>76–80</td>
+                                                    <td>Commotion cérébrale</td>
+                                                    <td>+4 Blessures, 1 Assourdi, 2 Hémorragie, 1d10 Sonné, Exténué
+                                                        (1d10j).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>81–85</td>
+                                                    <td>Bouche explosée</td>
+                                                    <td>+4 Blessures, 2 Hémorragie, Perte 1d10 dents.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>86–90</td>
+                                                    <td>Oreille mutilée</td>
+                                                    <td>+4 Blessures, 3 Assourdi, 2 Hémorragie, Perte oreille.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>91–93</td>
+                                                    <td>Œil crevé</td>
+                                                    <td>+5 Blessures, 3 Aveuglé, 2 Hémorragie, 1 Sonné, Perte œil.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>94–96</td>
+                                                    <td>Coup défigurant</td>
+                                                    <td>+5 Blessures, 3 Hémorragie, 3 Aveuglé, 2 Sonné, Perte œil et
+                                                        nez.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>97–99</td>
+                                                    <td>Mâchoire mutilée</td>
+                                                    <td>+5 Blessures, 4 Hémorragie, 3 Sonné, Fracture (Majeure), Perte
+                                                        langue.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>100</td>
+                                                    <td>Décapitation</td>
+                                                    <td><strong>Mort instantanée.</strong></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Critiques Bras -->
+                                <div class="crit-table-section">
+                                    <button class="crit-table-toggle"
+                                        onclick="this.parentElement.classList.toggle('open')">
+                                        <span>💪</span> Critiques — Bras <span class="accordion-chevron">▼</span>
+                                    </button>
+                                    <div class="crit-table-body">
+                                        <table class="rules-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>D100</th>
+                                                    <th>Nom</th>
+                                                    <th>Effet</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>1–10</td>
+                                                    <td>Choc au bras</td>
+                                                    <td>+1 Blessure, lâche l'objet.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>11–20</td>
+                                                    <td>Coupure mineure</td>
+                                                    <td>+1 Blessure, 1 Hémorragie.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>21–25</td>
+                                                    <td>Torsion</td>
+                                                    <td>+1 Blessure, Déchirure musculaire (Mineure).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>26–30</td>
+                                                    <td>Choc violent</td>
+                                                    <td>+2 Blessures, lâche l'objet, main inutilisable 1d10-BE rounds.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>31–35</td>
+                                                    <td>Déchirure musculaire</td>
+                                                    <td>+2 Blessures, 1 Hémorragie, Déchirure (Mineure).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>36–40</td>
+                                                    <td>Main ensanglantée</td>
+                                                    <td>+2 Blessures, 1 Hémorragie, Test Dex pour tenir objets.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>41–45</td>
+                                                    <td>Clef de bras</td>
+                                                    <td>+2 Blessures, lâche l'objet, bras inutilisable 1d10 rounds.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>46–50</td>
+                                                    <td>Blessure béante</td>
+                                                    <td>+3 Blessures, 2 Hémorragie (risque réouverture).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>51–55</td>
+                                                    <td>Cassure nette</td>
+                                                    <td>+3 Blessures, lâche l'objet, Fracture (Mineure), Test Rés. ou
+                                                        Sonné.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>56–60</td>
+                                                    <td>Ligament rompu</td>
+                                                    <td>+3 Blessures, lâche l'objet, Déchirure (Majeure).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>61–65</td>
+                                                    <td>Coupure profonde</td>
+                                                    <td>+3 Blessures, 2 Hémorragie, 1 Sonné, Déchirure (Mineure), Test
+                                                        Rés. ou Inconscient.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>66–70</td>
+                                                    <td>Artère endommagée</td>
+                                                    <td>+4 Blessures, 4 Hémorragie (risque réouverture).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>71–75</td>
+                                                    <td>Coude fracassé</td>
+                                                    <td>+4 Blessures, lâche l'objet, Fracture (Majeure).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>76–80</td>
+                                                    <td>Épaule luxée</td>
+                                                    <td>+4 Blessures, Test Rés. ou Sonné et À Terre, lâche objet, bras
+                                                        inutilisable.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>81–85</td>
+                                                    <td>Doigt sectionné</td>
+                                                    <td>+4 Blessures, 1 Hémorragie, Perte d'un doigt.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>86–90</td>
+                                                    <td>Main ouverte</td>
+                                                    <td>+5 Blessures, Perte 1 doigt/round, 2 Hémorragie, 1 Sonné.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>91–93</td>
+                                                    <td>Biceps déchiqueté</td>
+                                                    <td>+5 Blessures, lâche objet, Déchirure (Majeure), 2 Hémorragie, 1
+                                                        Sonné.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>94</td>
+                                                    <td>Main mutilée</td>
+                                                    <td>+5 Blessures, Perte main, 2 Hémorragie, Test Rés. ou Sonné et À
+                                                        Terre.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>95–99</td>
+                                                    <td>Tendons coupés</td>
+                                                    <td>+5 Blessures, Bras inutilisable, 3 Hémorragie, 1 À Terre, 1
+                                                        Sonné.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>100</td>
+                                                    <td>Démembrement</td>
+                                                    <td><strong>Mort instantanée.</strong></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Critiques Corps -->
+                                <div class="crit-table-section">
+                                    <button class="crit-table-toggle"
+                                        onclick="this.parentElement.classList.toggle('open')">
+                                        <span>🛡️</span> Critiques — Corps <span class="accordion-chevron">▼</span>
+                                    </button>
+                                    <div class="crit-table-body">
+                                        <table class="rules-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>D100</th>
+                                                    <th>Nom</th>
+                                                    <th>Effet</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>1–10</td>
+                                                    <td>Égratignure</td>
+                                                    <td>+1 Blessure, 1 Hémorragie.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>11–20</td>
+                                                    <td>Coup au ventre</td>
+                                                    <td>+1 Blessure, 1 Sonné. Test Rés. ou vomissement et À Terre.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>21–25</td>
+                                                    <td>Coup bas</td>
+                                                    <td>+1 Blessure, Test Rés. ou 3 États Sonné.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>26–30</td>
+                                                    <td>Torsion du dos</td>
+                                                    <td>+1 Blessure, Déchirure (Mineure).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>31–35</td>
+                                                    <td>Souffle coupé</td>
+                                                    <td>+2 Blessures, 1 Sonné. Test Rés. ou À Terre. Mvt réduit.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>36–40</td>
+                                                    <td>Bleus aux côtes</td>
+                                                    <td>+2 Blessures, Malus -10 Agilité (1d10 jours).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>41–45</td>
+                                                    <td>Clavicule tordue</td>
+                                                    <td>+2 Blessures, un bras inutilisable 1d10 rounds.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>46–50</td>
+                                                    <td>Chairs déchirées</td>
+                                                    <td>+2 Blessures, 2 Hémorragie.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>51–55</td>
+                                                    <td>Côtes fracturées</td>
+                                                    <td>+3 Blessures, 1 Sonné, Fracture (Mineure).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>56–60</td>
+                                                    <td>Blessure béante</td>
+                                                    <td>+3 Blessures, 3 Hémorragie (risque réouverture).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>61–65</td>
+                                                    <td>Entaille douloureuse</td>
+                                                    <td>+3 Blessures, 2 Hémorragie, 1 Sonné. Test Rés. ou Inconscient.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>66–70</td>
+                                                    <td>Dégâts artériels</td>
+                                                    <td>+3 Blessures, 4 Hémorragie (risque réouverture).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>71–75</td>
+                                                    <td>Dos froissé</td>
+                                                    <td>+4 Blessures, Déchirure (Majeure).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>76–80</td>
+                                                    <td>Hanche fracturée</td>
+                                                    <td>+4 Blessures, 1 Sonné, Test Rés. ou À Terre, Fracture (Mineure).
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>81–85</td>
+                                                    <td>Blessure majeure</td>
+                                                    <td>+4 Blessures, 4 Hémorragie (risque réouverture).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>86–90</td>
+                                                    <td>Blessure au ventre</td>
+                                                    <td>+4 Blessures, 2 Hémorragie, Blessure Purulente.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>91–93</td>
+                                                    <td>Organe touché</td>
+                                                    <td>+5 Blessures, 3 Hémorragie, 1d10 Sonné, Exténué (perm).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>94–96</td>
+                                                    <td>Hémorragie interne</td>
+                                                    <td>+5 Blessures, Hémorragie interne (difficile à soigner).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>97–99</td>
+                                                    <td>Cœur touché</td>
+                                                    <td>+5 Blessures, Mort en 1d10 rounds si pas soigné.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>100</td>
+                                                    <td>Éviscération</td>
+                                                    <td><strong>Mort instantanée.</strong></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Critiques Jambe -->
+                                <div class="crit-table-section">
+                                    <button class="crit-table-toggle"
+                                        onclick="this.parentElement.classList.toggle('open')">
+                                        <span>🦵</span> Critiques — Jambe <span class="accordion-chevron">▼</span>
+                                    </button>
+                                    <div class="crit-table-body">
+                                        <table class="rules-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>D100</th>
+                                                    <th>Nom</th>
+                                                    <th>Effet</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>1–10</td>
+                                                    <td>Orteil contusionné</td>
+                                                    <td>+1 Blessure, Test Rés. ou -10 Ag (1 tour).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>11–20</td>
+                                                    <td>Cheville tordue</td>
+                                                    <td>+1 Blessure, -10 Ag (1d10 rounds).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>21–25</td>
+                                                    <td>Coupure mineure</td>
+                                                    <td>+1 Blessure, 1 Hémorragie.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>26–30</td>
+                                                    <td>Perte d'équilibre</td>
+                                                    <td>+1 Blessure, Test Rés. ou À Terre.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>31–35</td>
+                                                    <td>Coup à la cuisse</td>
+                                                    <td>+2 Blessures, 1 Hémorragie, Test Rés. ou À Terre.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>36–40</td>
+                                                    <td>Cheville foulée</td>
+                                                    <td>+2 Blessures, Déchirure (Mineure).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>41–45</td>
+                                                    <td>Genou tordu</td>
+                                                    <td>+2 Blessures, -20 Ag (1d10 rounds).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>46–50</td>
+                                                    <td>Coupure à l'orteil</td>
+                                                    <td>+2 Blessures, 1 Hémorragie, risque perte orteil.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>51–55</td>
+                                                    <td>Mauvaise coupure</td>
+                                                    <td>+3 Blessures, 2 Hémorragie, Test Rés. ou À Terre.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>56–60</td>
+                                                    <td>Genou tordu (grave)</td>
+                                                    <td>+3 Blessures, Déchirure (Majeure).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>61–65</td>
+                                                    <td>Jambe charcutée</td>
+                                                    <td>+3 Blessures, 2 Hémorragie, 1 À Terre, Fracture (Mineure),
+                                                        risque Sonné.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>66–70</td>
+                                                    <td>Cuisse lacérée</td>
+                                                    <td>+3 Blessures, 3 Hémorragie, Test Rés. ou À Terre.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>71–75</td>
+                                                    <td>Tendon rompu</td>
+                                                    <td>+4 Blessures, À Terre et Sonné, Test Rés. ou Inconscient, Jambe
+                                                        inutilisable.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>76–80</td>
+                                                    <td>Entaille au tibia</td>
+                                                    <td>+4 Blessures, Sonné et À Terre, Déchirure (Maj), Fracture (Maj).
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>81–85</td>
+                                                    <td>Genou cassé</td>
+                                                    <td>+4 Blessures, 1 Sonné, 1 À Terre, Fracture (Majeure).</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>86–90</td>
+                                                    <td>Genou démis</td>
+                                                    <td>+4 Blessures, À Terre, risque Sonné, Mvt réduit.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>91–93</td>
+                                                    <td>Pied écrasé</td>
+                                                    <td>+5 Blessures, Test Rés. ou À Terre et perte orteils, 2
+                                                        Hémorragie.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>94–96</td>
+                                                    <td>Pied sectionné</td>
+                                                    <td>+5 Blessures, Perte du pied, 3 Hémorragie, 2 Sonné, 1 À Terre.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>97–99</td>
+                                                    <td>Tendon coupé</td>
+                                                    <td>+5 Blessures, 2 Hémorragie, 2 Sonné, 1 À Terre, Perte usage
+                                                        jambe.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>100</td>
+                                                    <td>Bassin fracassé</td>
+                                                    <td><strong>Mort instantanée.</strong></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
