@@ -10,6 +10,8 @@ const TABS = [
     { id: 'miracles', name: 'Miracles', icon: '🙏', sheet: 'Miracles' },
     { id: 'armes-cac', name: 'Armes CàC', icon: '⚔️', sheet: 'Armes%20Corps%20%C3%A0%20Corps' },
     { id: 'armes-dist', name: 'Armes à Distance', icon: '🏹', sheet: 'Armes%20%C3%A0%20Distance' },
+    { id: 'armures', name: 'Armures', icon: '🛡️', sheet: 'Armures' },
+    { id: 'talents', name: 'Talents', icon: '🎭', sheet: 'Talents' },
     { id: 'mots-cles', name: 'Mots Clés', icon: '🔑', sheet: 'Mots%20Cl%C3%A9s%20Armes%20et%20Armures' }
 ];
 

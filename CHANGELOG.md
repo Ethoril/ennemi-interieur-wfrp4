@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.1.1] - 2026-02-28
+
+### Ajouté
+- **Aides de Jeux** : 2 nouveaux onglets — Armures (🛡️) et Talents (🎭)
+
+---
+
 ## [1.1.0] - 2026-02-27
 
 ### Ajouté
