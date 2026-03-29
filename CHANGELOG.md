@@ -1,8 +1,15 @@
-﻿# Changelog
+# Changelog
 
 Toutes les modifications notables du site sont documentées dans ce fichier.
 
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
+
+---
+
+## [1.2.0] - 2026-03-29
+
+### Ajouté
+- **Le Groupe** : les vignettes de personnages sont désormais cliquables et ouvrent la fiche de perso Google Sheets correspondante (nouvel onglet)
 
 ---
 
