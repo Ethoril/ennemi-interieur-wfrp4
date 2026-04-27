@@ -8,6 +8,19 @@ const LINK_COLORS = {
     'allié': '#4caf7d', 'ennemi': '#c94c4c',
     'famille': '#c9a84c', 'mentor': '#7a9ac9', 'rival': '#c97a4c',
 };
+const DIM_PALETTE = [
+    '#c9a84c', '#4c8fc9', '#c94c8e', '#5bc994', '#8e4cc9',
+    '#c97a4c', '#4cc9c9', '#9ac94c', '#c9a87a', '#7a9ac9',
+];
+
+const TABLE_COLS = [
+    { key: 'Nom',         label: 'Nom' },
+    { key: 'Statut',      label: 'Statut' },
+    { key: 'Vivant',      label: 'Vivant' },
+    { key: 'Lieu',        label: 'Lieu' },
+    { key: 'Groupe',      label: 'Groupe' },
+    { key: 'Description', label: 'Description' },
+];
 
 function escapeHtml(s) {
     return String(s ?? '')
@@ -72,6 +85,41 @@ let d3nodes = [], d3links = [];
 const active = { statut: new Set(), vivant: new Set(), lieu: new Set(), groupe: new Set() };
 let searchQ = '';
 let nodeSel, linkSel, simulation;
+let colorBy = 'Statut';
+let dimColorMap = null;
+let graphW = 800, graphH = 550;
+let currentView = 'graph';
+let sortCol = 'Nom', sortDir = 1;
+
+// ── Color helpers ──────────────────────────────────────────────
+function buildDimColorMap() {
+    if (colorBy === 'Statut') { dimColorMap = null; return; }
+    const vals = [...new Set(d3nodes.map(d => d[colorBy]).filter(Boolean))].sort();
+    dimColorMap = new Map(vals.map((v, i) => [v, DIM_PALETTE[i % DIM_PALETTE.length]]));
+}
+
+function getDimColor(d) {
+    if (!dimColorMap) return getStatutColor(d.Statut);
+    return dimColorMap.get(d[colorBy]) || '#7a7a8a';
+}
+
+function updateLegend() {
+    const legend = document.getElementById('graph-legend');
+    if (colorBy === 'Statut') {
+        legend.innerHTML = `
+            <div class="legend-item"><span class="legend-dot" style="background:#4caf7d"></span>Allié</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#c94c4c"></span>Ennemi</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#8a8a9a"></span>Neutre</div>
+            <div class="legend-item"><span class="legend-ring"></span>Décédé</div>`;
+    } else {
+        const items = dimColorMap
+            ? [...dimColorMap.entries()].map(([v, c]) =>
+                `<div class="legend-item"><span class="legend-dot" style="background:${c}"></span>${escapeHtml(v)}</div>`
+              ).join('')
+            : '';
+        legend.innerHTML = items + `<div class="legend-item"><span class="legend-ring"></span>Décédé</div>`;
+    }
+}
 
 // ── Init ───────────────────────────────────────────────────────
 async function init() {
@@ -80,7 +128,6 @@ async function init() {
             fetchSheet('pnjs'),
             fetchSheet('relations'),
         ]);
-
         const allNodes = pnjRows.filter(d => d.ID && d.Nom);
         const allLinks = relRows.filter(d => d.Source && d.Cible);
 
@@ -124,6 +171,7 @@ function buildFilters(allNodes) {
                 active[key].has(v) ? active[key].delete(v) : active[key].add(v);
                 btn.classList.toggle('active', active[key].has(v));
                 updateVisibility();
+                if (currentView === 'table') renderTable();
             });
             el.appendChild(btn);
         });
@@ -133,8 +181,8 @@ function buildFilters(allNodes) {
 // ── Graph ──────────────────────────────────────────────────────
 function buildGraph() {
     const container = document.getElementById('pnj-graph');
-    const W = container.clientWidth || window.innerWidth * 0.85;
-    const H = container.clientHeight || 550;
+    graphW = container.clientWidth || window.innerWidth * 0.85;
+    graphH = container.clientHeight || 550;
 
     const degree = new Map(d3nodes.map(d => [d.ID, 0]));
     d3links.forEach(l => {
@@ -142,6 +190,8 @@ function buildGraph() {
         degree.set(l.Cible,  (degree.get(l.Cible)  || 0) + 1);
     });
     const nodeR = d => 13 + Math.min((degree.get(d.ID) || 0) * 2, 10);
+
+    buildDimColorMap();
 
     const svg = d3.select('#pnj-graph').append('svg')
         .attr('width', '100%').attr('height', '100%');
@@ -171,7 +221,7 @@ function buildGraph() {
 
     nodeG.append('circle')
         .attr('r', nodeR)
-        .attr('fill', d => getStatutColor(d.Statut))
+        .attr('fill', getDimColor)
         .attr('stroke', '#0e0e18')
         .attr('stroke-width', 2.5);
 
@@ -186,7 +236,7 @@ function buildGraph() {
     simulation = d3.forceSimulation(d3nodes)
         .force('link', d3.forceLink(d3links).id(d => d.ID).distance(130))
         .force('charge', d3.forceManyBody().strength(-380))
-        .force('center', d3.forceCenter(W / 2, H / 2))
+        .force('center', d3.forceCenter(graphW / 2, graphH / 2))
         .force('collide', d3.forceCollide(d => nodeR(d) + 14))
         .on('tick', () => {
             linkSel
@@ -196,6 +246,34 @@ function buildGraph() {
         });
 
     updateVisibility();
+    updateLegend();
+}
+
+// ── Color by / clustering ──────────────────────────────────────
+function applyColorBy(dim) {
+    colorBy = dim;
+    buildDimColorMap();
+    nodeSel.select('circle').attr('fill', getDimColor);
+
+    if (dim === 'Statut') {
+        simulation.force('cluster-x', null).force('cluster-y', null).alpha(0.15).restart();
+    } else {
+        const vals = dimColorMap ? [...dimColorMap.keys()] : [];
+        const n = vals.length || 1;
+        const r = Math.min(graphW, graphH) * 0.28;
+        const centers = Object.fromEntries(vals.map((v, i) => [v, {
+            x: graphW / 2 + r * Math.cos((2 * Math.PI * i / n) - Math.PI / 2),
+            y: graphH / 2 + r * Math.sin((2 * Math.PI * i / n) - Math.PI / 2),
+        }]));
+        simulation
+            .force('cluster-x', d3.forceX(d => centers[d[dim]]?.x ?? graphW / 2).strength(0.07))
+            .force('cluster-y', d3.forceY(d => centers[d[dim]]?.y ?? graphH / 2).strength(0.07))
+            .alpha(0.4).restart();
+    }
+
+    updateLegend();
+    document.querySelectorAll('.colorby-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.dim === dim));
 }
 
 // ── Visibility ─────────────────────────────────────────────────
@@ -224,6 +302,69 @@ function updateVisibility() {
         const s = d.source.ID ?? d.source, t = d.target.ID ?? d.target;
         return visIds.has(s) && visIds.has(t) ? 0.55 : 0.04;
     });
+}
+
+// ── Table view ─────────────────────────────────────────────────
+function renderTable() {
+    const container = document.getElementById('pnj-table-container');
+    const filtered = d3nodes.filter(isVisible);
+    const sorted = [...filtered].sort((a, b) =>
+        sortDir * (a[sortCol] || '').localeCompare(b[sortCol] || '', 'fr', { sensitivity: 'base' })
+    );
+
+    const thead = TABLE_COLS.map(c => {
+        const arrow = c.key === sortCol ? (sortDir > 0 ? ' ▲' : ' ▼') : '';
+        return `<th data-col="${escapeHtml(c.key)}" class="sortable">${escapeHtml(c.label)}${arrow}</th>`;
+    }).join('');
+
+    const tbody = sorted.map(d => {
+        const cells = TABLE_COLS.map(c => {
+            if (c.key === 'Statut') {
+                const cls = (d.Statut || '').toLowerCase();
+                return `<td><span class="pnj-badge statut-${escapeHtml(cls)}">${escapeHtml(d.Statut || '—')}</span></td>`;
+            }
+            if (c.key === 'Vivant') {
+                const vk = (d.Vivant || '').toLowerCase();
+                const vl = { oui: 'Vivant', non: 'Décédé', inconnu: 'Inconnu' }[vk] || d.Vivant || '—';
+                return `<td><span class="pnj-badge vivant-${escapeHtml(vk)}">${escapeHtml(vl)}</span></td>`;
+            }
+            if (c.key === 'Description') {
+                const full = d.Description || '';
+                const short = full.length > 90 ? full.slice(0, 90) + '…' : full;
+                return `<td class="pnj-td-desc" title="${escapeHtml(full)}">${escapeHtml(short || '—')}</td>`;
+            }
+            return `<td>${escapeHtml(d[c.key] || '—')}</td>`;
+        }).join('');
+        return `<tr>${cells}</tr>`;
+    }).join('');
+
+    container.innerHTML = `
+        <p class="pnj-table-count">${sorted.length} personnage${sorted.length !== 1 ? 's' : ''}</p>
+        <div class="pnj-table-scroll">
+            <table class="rules-table pnj-table-el">
+                <thead><tr>${thead}</tr></thead>
+                <tbody>${tbody}</tbody>
+            </table>
+        </div>`;
+
+    container.querySelectorAll('th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            sortDir = sortCol === th.dataset.col ? sortDir * -1 : 1;
+            sortCol = th.dataset.col;
+            renderTable();
+        });
+    });
+}
+
+// ── View toggle ────────────────────────────────────────────────
+function setView(view) {
+    currentView = view;
+    document.getElementById('pnj-graph').style.display           = view === 'graph' ? '' : 'none';
+    document.getElementById('pnj-table-container').style.display = view === 'table' ? '' : 'none';
+    document.getElementById('colorby-group').style.display       = view === 'graph' ? '' : 'none';
+    document.querySelectorAll('.view-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.view === view));
+    if (view === 'table') renderTable();
 }
 
 // ── Detail panel ───────────────────────────────────────────────
@@ -303,7 +444,6 @@ function highlightConnected(id) {
         if (s === id) connected.add(t);
         if (t === id) connected.add(s);
     });
-
     nodeSel.style('opacity', d => {
         if (!isVisible(d)) return 0.06;
         return connected.has(d.ID) ? getNodeOpacity(d) : 0.15;
@@ -318,8 +458,15 @@ function highlightConnected(id) {
 document.getElementById('pnj-search').addEventListener('input', e => {
     searchQ = e.target.value.trim();
     updateVisibility();
+    if (currentView === 'table') renderTable();
 });
 
 document.getElementById('pnj-detail-close').addEventListener('click', closePanel);
+
+document.querySelectorAll('.view-btn').forEach(btn =>
+    btn.addEventListener('click', () => setView(btn.dataset.view)));
+
+document.querySelectorAll('.colorby-btn').forEach(btn =>
+    btn.addEventListener('click', () => applyColorBy(btn.dataset.dim)));
 
 init();

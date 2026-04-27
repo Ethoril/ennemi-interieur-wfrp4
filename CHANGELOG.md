@@ -6,6 +6,18 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.4.1] - 2026-04-27
+
+### Amélioré (PNJs)
+- **Toggle Graphe / Tableau** : bascule entre le réseau interactif et un tableau trié par clic sur les en-têtes
+- **Couleur par** : boutons Statut / Lieu / Groupe recolorent les nœuds et animent un clustering spatial par force D3
+- Recherche textuelle active dans les deux vues (graphe et tableau)
+- Filtres actifs appliqués au tableau
+- Compteur de résultats en vue tableau
+- Descriptions tronquées dans le tableau avec texte complet au survol
+
+---
+
 ## [1.4.0] - 2026-04-27
 
 ### Ajouté
