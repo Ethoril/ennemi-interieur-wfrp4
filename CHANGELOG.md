@@ -6,6 +6,14 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.2.4] - 2026-04-27
+
+### Corrigé
+- **Aides de Jeux** : échappement HTML sur toutes les valeurs injectées depuis Google Sheets — une cellule contenant `<` ou `>` ne peut plus briser la mise en page
+- **Accueil** : suppression du texte "(soon™ pour ça)"
+
+---
+
 ## [1.2.3] - 2026-04-27
 
 ### Amélioré
