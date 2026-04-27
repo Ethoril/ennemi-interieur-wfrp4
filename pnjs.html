@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>PNJs — L'Ennemi Intérieur</title>
+    <meta name="description" content="Réseau interactif des personnages non-joueurs de la campagne L'Ennemi Intérieur.">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="page-container">
+
+        <div class="page-header fade-in">
+            <h1>Personnages</h1>
+            <p>Réseau des personnages non-joueurs rencontrés durant la campagne. Clique sur un nœud pour afficher la fiche.</p>
+        </div>
+
+        <section class="section" style="padding-top: 0; flex: 1; display: flex; flex-direction: column;">
+            <div class="container" style="flex: 1; display: flex; flex-direction: column;">
+
+                <!-- Toolbar -->
+                <div class="pnj-toolbar fade-in">
+                    <div class="pnj-search-wrapper">
+                        <input type="text" id="pnj-search" placeholder="Rechercher un personnage...">
+                    </div>
+                    <div class="pnj-filters">
+                        <div class="filter-group" id="filter-statut"></div>
+                        <div class="filter-sep">|</div>
+                        <div class="filter-group" id="filter-vivant"></div>
+                        <div class="filter-sep">|</div>
+                        <div class="filter-group" id="filter-lieu"></div>
+                        <div class="filter-sep">|</div>
+                        <div class="filter-group" id="filter-groupe"></div>
+                    </div>
+                </div>
+
+                <!-- Graph -->
+                <div id="pnj-graph">
+                    <div id="pnj-loading">
+                        <div class="pnj-spinner"></div>
+                        Chargement des personnages...
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="graph-legend" id="graph-legend" style="display:none;">
+                        <div class="legend-item"><span class="legend-dot" style="background:#4caf7d"></span>Allié</div>
+                        <div class="legend-item"><span class="legend-dot" style="background:#c94c4c"></span>Ennemi</div>
+                        <div class="legend-item"><span class="legend-dot" style="background:#8a8a9a"></span>Neutre</div>
+                        <div class="legend-item"><span class="legend-ring"></span>Décédé</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Detail panel -->
+        <div id="pnj-detail" class="pnj-detail-panel">
+            <button class="pnj-detail-close" id="pnj-detail-close">✕ Fermer</button>
+            <div id="pnj-detail-content"></div>
+        </div>
+
+        <div class="ornament">⚜</div>
+        <footer class="footer" id="site-footer"></footer>
+
+    </div>
+
+    <script src="js/layout.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/pnjs.js"></script>
+</body>
+
+</html>

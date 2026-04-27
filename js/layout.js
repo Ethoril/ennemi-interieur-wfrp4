@@ -1,4 +1,4 @@
-const APP_VERSION = 'v1.3.1';
+const APP_VERSION = 'v1.4.0';
 
 const NAV_ITEMS = [
     { href: 'index.html',   label: 'Accueil' },
@@ -7,6 +7,7 @@ const NAV_ITEMS = [
     { href: 'tableau.html', label: 'Aides de Jeux' },
     { href: 'regles.html',  label: 'Règles' },
     { href: 'cartes.html',  label: 'Cartes' },
+    { href: 'pnjs.html',    label: 'PNJs' },
 ];
 
 function injectNav() {

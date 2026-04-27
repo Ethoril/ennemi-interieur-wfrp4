@@ -6,6 +6,20 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.4.0] - 2026-04-27
+
+### Ajouté
+- **Page PNJs** : réseau interactif force-directed (D3.js) des personnages non-joueurs de la campagne
+- Données pilotées par deux onglets Google Sheets (`pnjs` et `relations`)
+- Filtres dynamiques par Statut, Vivant, Lieu et Groupe Social
+- Recherche textuelle par nom et description
+- Panneau de détail latéral avec portrait, badges, description et relations cliquables
+- Navigation entre fiches PNJs via les chips de relations
+- Nœuds à opacité réduite pour les PNJs décédés (cercle en pointillés) ou au statut inconnu
+- Légende intégrée dans le graphe
+
+---
+
 ## [1.3.1] - 2026-04-27
 
 ### Ajouté
