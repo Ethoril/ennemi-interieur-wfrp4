@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.3.1] - 2026-04-27
+
+### Ajouté
+- **Favicon** : icône ⚜ SVG (fleur de lys dorée sur fond sombre) affichée dans l'onglet du navigateur sur toutes les pages
+
+---
+
 ## [1.3.0] - 2026-04-27
 
 ### Ajouté
