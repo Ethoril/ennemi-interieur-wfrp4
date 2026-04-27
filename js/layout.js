@@ -1,4 +1,4 @@
-const APP_VERSION = 'v1.2.2';
+const APP_VERSION = 'v1.2.3';
 
 const NAV_ITEMS = [
     { href: 'index.html',   label: 'Accueil' },
@@ -45,5 +45,23 @@ function injectFooter() {
         </div>`;
 }
 
+async function loadNextSession() {
+    const el = document.getElementById('next-session');
+    if (!el) return;
+
+    const url = 'https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs'
+        + '/gviz/tq?tqx=out:csv&sheet=date%20prochaine%20session';
+
+    try {
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const firstRow = (await res.text()).trim().split('\n')[0];
+        // B1 = second CSV field, strip surrounding quotes
+        const b1 = firstRow.replace(/^[^,]*,\s*/, '').replace(/^"|"$/g, '').trim();
+        if (b1) el.textContent = `🗡️ Prochaine session ${b1} 🗡️`;
+    } catch (_) {}
+}
+
 injectNav();
 injectFooter();
+loadNextSession();
