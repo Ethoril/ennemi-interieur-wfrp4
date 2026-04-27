@@ -6,6 +6,16 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.3.0] - 2026-04-27
+
+### Ajouté
+- **Page "Cartes"** : nouvelle page avec visionneuse interactive (Leaflet.js) pour deux cartes haute résolution
+- **Carte de l'Empire** : 14 400×14 400 px, 1 365 tuiles WebP sur 6 niveaux de zoom
+- **Carte du Vieux Monde** : 32 000×28 050 px, 1 253 tuiles WebP sur 6 niveaux de zoom
+- Lien "Cartes" ajouté à la navigation sur toutes les pages
+
+---
+
 ## [1.2.5] - 2026-04-27
 
 ### Corrigé
