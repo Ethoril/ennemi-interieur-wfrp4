@@ -1863,6 +1863,12 @@ strong {
   white-space: nowrap;
 }
 
+.chip-dir {
+  font-style: normal;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
 /* View toggle */
 .view-toggle {
   display: flex;

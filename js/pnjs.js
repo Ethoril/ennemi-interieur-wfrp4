@@ -376,7 +376,13 @@ function openPanel(d) {
         return s === d.ID || t === d.ID;
     }).map(l => {
         const s = l.source.ID ?? l.source, t = l.target.ID ?? l.target;
-        return { node: nodeById.get(s === d.ID ? t : s), type: l.Type, label: l.Label || l.Type || 'Lié' };
+        const isSource = s === d.ID;
+        return {
+            node: nodeById.get(isSource ? t : s),
+            type: l.Type,
+            label: l.Label || l.Type || 'Lié',
+            dir: isSource ? '→' : '←',
+        };
     }).filter(r => r.node);
 
     const vKey = (d.Vivant || '').toLowerCase();
@@ -405,7 +411,7 @@ function openPanel(d) {
                     <button class="pnj-relation-chip" data-id="${escapeHtml(r.node.ID)}"
                         style="--chip-color:${getLinkColor(r.type)}">
                         <span class="chip-name">${escapeHtml(r.node.Nom)}</span>
-                        <span class="chip-type">${escapeHtml(r.label)}</span>
+                        <span class="chip-type"><span class="chip-dir">${r.dir}</span> ${escapeHtml(r.label)}</span>
                     </button>`).join('')}
             </div>
         </div>` : '';
