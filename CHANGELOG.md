@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.2.3] - 2026-04-27
+
+### Amélioré
+- **Accueil** : date de la prochaine session lue dynamiquement depuis Google Sheets (onglet "date prochaine session", cellule B1) — plus besoin de modifier le code pour la mettre à jour
+
+---
+
 ## [1.2.2] - 2026-04-27
 
 ### Amélioré
