@@ -148,11 +148,11 @@ function renderCards(container, headers, data, tabId) {
             h.toLowerCase() === 'type' || h.toLowerCase() === 'catégorie'
         );
         const typeBadge = typeIdx >= 0 && row[typeIdx]
-            ? `<span class="sheet-badge">${row[typeIdx]}</span>`
+            ? `<span class="sheet-badge">${escapeHtml(row[typeIdx])}</span>`
             : '';
 
         html += `<div class="sheet-card-header">
-      <h4 class="sheet-card-title">${title}</h4>
+      <h4 class="sheet-card-title">${escapeHtml(title)}</h4>
       ${typeBadge}
     </div>`;
 
@@ -164,7 +164,7 @@ function renderCards(container, headers, data, tabId) {
 
             const isLong = row[i].length > 100;
             html += `<div class="sheet-field ${isLong ? 'sheet-field-full' : ''}">
-        <span class="sheet-field-label">${header}</span>
+        <span class="sheet-field-label">${escapeHtml(header)}</span>
         <span class="sheet-field-value">${formatText(row[i])}</span>
       </div>`;
         });
@@ -190,7 +190,7 @@ function renderTable(container, headers, data) {
     html += '<thead><tr><th>Augmentations</th><th>Caractéristiques</th><th>Compétences</th></tr></thead><tbody>';
     data.forEach(row => {
         if (row[0] && row[0] !== '') {
-            html += `<tr><td>${row[0]}</td><td>${row[1] || ''}</td><td>${row[2] || ''}</td></tr>`;
+            html += `<tr><td>${escapeHtml(row[0])}</td><td>${escapeHtml(row[1] || '')}</td><td>${escapeHtml(row[2] || '')}</td></tr>`;
         }
     });
     html += '</tbody></table></div>';
@@ -202,11 +202,10 @@ function renderTable(container, headers, data) {
     data.forEach(row => {
         if (row[5] && row[5] !== '') {
             let cost = row[6] || '';
-            // Fix missing talent cost
             if (row[5] === '+1 Talent' && cost === '') {
                 cost = TALENT_COST_FIX;
             }
-            html += `<tr><td>${row[5]}</td><td>${cost}</td></tr>`;
+            html += `<tr><td>${escapeHtml(row[5])}</td><td>${escapeHtml(cost)}</td></tr>`;
         }
     });
     html += '</tbody></table></div>';
@@ -219,16 +218,25 @@ function renderDefinitions(container, headers, data) {
     let html = '';
     data.forEach((row, idx) => {
         html += `<div class="sheet-definition" style="animation-delay: ${idx * 0.03}s">
-      <dt class="sheet-def-term">${row[0] || ''}</dt>
+      <dt class="sheet-def-term">${escapeHtml(row[0] || '')}</dt>
       <dd class="sheet-def-desc">${formatText(row[1] || '')}</dd>
     </div>`;
     });
     container.innerHTML = `<dl class="sheet-def-list">${html}</dl>`;
 }
 
-// ── Format text (line breaks, bold) ───────────────
+// ── Escape HTML special characters ────────────────
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+// ── Format text (line breaks, bullet points) ──────
 function formatText(text) {
-    return text
+    return escapeHtml(text)
         .replace(/\n/g, '<br>')
         .replace(/•/g, '<br>•');
 }
