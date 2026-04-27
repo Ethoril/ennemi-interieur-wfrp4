@@ -6,6 +6,14 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.4.2] - 2026-04-27
+
+### Corrigé
+- **PNJs** : ajout de `main.js` manquant sur `pnjs.html` (toolbar et header invisibles à cause du `fade-in` non déclenché)
+- **PNJs** : direction des relations affichée dans le panneau de détail (`→` si le PNJ courant est source, `←` s'il est cible)
+
+---
+
 ## [1.4.1] - 2026-04-27
 
 ### Amélioré (PNJs)
