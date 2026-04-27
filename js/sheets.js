@@ -176,36 +176,38 @@ function renderCards(container, headers, data, tabId) {
 
 // ── Render Table (for Coûts XP) ───────────────────
 function renderTable(container, headers, data) {
-    // "Coûts XP" has two sub-tables side by side:
-    // Left: cols 0-2 (Augmentations, Caractéristiques, Compétences)
-    // Right: cols 5-6 (Augmentations, Coût en PX)
-    // Cols 3-4 are spacers
-
-    // Fix known missing value: +1 Talent cost
     const TALENT_COST_FIX = '100 PX + 100 PX par fois où le Talent a déjà été pris';
 
-    // Left table (Augmentations de Caractéristiques/Compétences)
+    const caracIdx = headers.findIndex(h => /caract/i.test(h));
+    const compIdx  = headers.findIndex(h => /comp/i.test(h));
+    const coutIdx  = headers.findIndex(h => /co[uû]t/i.test(h));
+
+    if (caracIdx < 0 || compIdx < 0 || coutIdx < 0) {
+        container.innerHTML = '<p class="sheet-error">Structure du tableau Coûts XP non reconnue.</p>';
+        return;
+    }
+
+    const leftAugIdx  = Math.max(0, caracIdx - 1);
+    const rightAugIdx = coutIdx - 1;
+
     let html = '<h4 style="color: var(--gold); margin-bottom: var(--space-sm);">Augmentations de Caractéristiques & Compétences</h4>';
     html += '<div class="sheet-table-wrapper"><table class="rules-table">';
     html += '<thead><tr><th>Augmentations</th><th>Caractéristiques</th><th>Compétences</th></tr></thead><tbody>';
     data.forEach(row => {
-        if (row[0] && row[0] !== '') {
-            html += `<tr><td>${escapeHtml(row[0])}</td><td>${escapeHtml(row[1] || '')}</td><td>${escapeHtml(row[2] || '')}</td></tr>`;
+        if (row[leftAugIdx]) {
+            html += `<tr><td>${escapeHtml(row[leftAugIdx])}</td><td>${escapeHtml(row[caracIdx] || '')}</td><td>${escapeHtml(row[compIdx] || '')}</td></tr>`;
         }
     });
     html += '</tbody></table></div>';
 
-    // Right table (Coûts fixes)
     html += '<h4 style="color: var(--gold); margin-top: var(--space-xl); margin-bottom: var(--space-sm);">Autres Coûts</h4>';
     html += '<div class="sheet-table-wrapper"><table class="rules-table">';
     html += '<thead><tr><th>Augmentation</th><th>Coût en PX</th></tr></thead><tbody>';
     data.forEach(row => {
-        if (row[5] && row[5] !== '') {
-            let cost = row[6] || '';
-            if (row[5] === '+1 Talent' && cost === '') {
-                cost = TALENT_COST_FIX;
-            }
-            html += `<tr><td>${escapeHtml(row[5])}</td><td>${escapeHtml(cost)}</td></tr>`;
+        if (row[rightAugIdx]) {
+            let cost = row[coutIdx] || '';
+            if (row[rightAugIdx] === '+1 Talent' && cost === '') cost = TALENT_COST_FIX;
+            html += `<tr><td>${escapeHtml(row[rightAugIdx])}</td><td>${escapeHtml(cost)}</td></tr>`;
         }
     });
     html += '</tbody></table></div>';

@@ -6,6 +6,14 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.2.5] - 2026-04-27
+
+### Corrigé
+- **Aides de Jeux** : l'onglet "Coûts XP" localise désormais ses colonnes par nom de header — résistant aux réorganisations du Google Sheet
+- **Règles** : fermeture d'un accordéon après ouverture d'une table de critique s'anime correctement (transition fluide au lieu d'un saut)
+
+---
+
 ## [1.2.4] - 2026-04-27
 
 ### Corrigé

@@ -108,11 +108,12 @@ function initAccordion() {
       const section = btn.parentElement;
       section.classList.toggle('open');
 
-      // Recalculate parent accordion-body maxHeight
+      // Wait for CSS to apply before measuring, so scrollHeight is accurate
       const accordionBody = section.closest('.accordion-body');
       if (accordionBody) {
-        // Remove max-height constraint so content can grow freely
-        accordionBody.style.maxHeight = 'none';
+        requestAnimationFrame(() => {
+          accordionBody.style.maxHeight = accordionBody.scrollHeight + 'px';
+        });
       }
     });
   });
