@@ -1,0 +1,7 @@
+# Originaux des cartes (trop lourds pour GitHub — remplacés par les tuiles)
+img/Carte Empire.jpg
+img/Carte Vieux Monde.png
+
+# Script de génération de tuiles (usage local uniquement)
+generate-tiles.cjs
+tiles-log.txt

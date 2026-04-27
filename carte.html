@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Carte — L'Ennemi Intérieur</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        html, body { height: 100%; margin: 0; overflow: hidden; }
+        .page-container { padding-top: var(--nav-height); height: 100%; display: flex; flex-direction: column; }
+        #map-container { flex: 1; background: #07070d; }
+        #map-back {
+            position: fixed;
+            top: calc(var(--nav-height) + 12px);
+            left: 16px;
+            z-index: 1100;
+            background: rgba(7,7,13,0.85);
+            border: 1px solid var(--border-gold);
+            color: var(--gold);
+            font-family: var(--font-heading);
+            font-size: 0.8rem;
+            padding: 6px 14px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            transition: background var(--transition-fast);
+        }
+        #map-back:hover { background: rgba(201,168,76,0.15); color: var(--gold-bright); }
+        #map-title {
+            position: fixed;
+            top: calc(var(--nav-height) + 12px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1100;
+            font-family: var(--font-heading);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+        .leaflet-container { background: #07070d; }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar" id="navbar"></nav>
+
+    <a href="cartes.html" id="map-back">← Retour</a>
+    <span id="map-title"></span>
+
+    <div class="page-container">
+        <div id="map-container"></div>
+    </div>
+
+    <script src="js/layout.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/maps.js"></script>
+</body>
+
+</html>
