@@ -6,6 +6,14 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.2.2] - 2026-04-27
+
+### Amélioré
+- **Le Groupe** : portraits convertis en WebP (-96% de poids, 18 MB → 774 KB) avec fallback PNG pour les navigateurs anciens
+- **Le Groupe** : attribut `loading="lazy"` ajouté sur tous les portraits
+
+---
+
 ## [1.2.1] - 2026-04-27
 
 ### Modifié
