@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.2.1] - 2026-04-27
+
+### Modifié
+- **Technique** : navbar et footer centralisés dans `js/layout.js` (source unique pour la version, les liens de navigation et le contenu du footer)
+
+---
+
 ## [1.2.0] - 2026-03-29
 
 ### Ajouté
