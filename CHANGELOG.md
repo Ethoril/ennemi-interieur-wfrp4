@@ -6,6 +6,17 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.6.0] - 2026-04-28
+
+### Technique
+- **État centralisé** : les 12 variables globales de `pnjs.js` regroupées dans un objet `state` — débogage et lisibilité améliorés
+- **Fusion loadData/reloadData** : une seule fonction `loadData({ init })` remplace les deux — moins de duplication, gestion d'erreur unifiée
+- **Délégation d'événements** : le panneau de détail PNJ utilise un unique listener sur le conteneur statique au lieu de rebinder 6-8 handlers à chaque ouverture
+- **Module utils.js** : `esc`, `cap`, `stripAccents` extraits dans un module partagé — suppression des doublons entre `pnjs.js` et `sheets.js`
+- **Recherche insensible aux accents (PNJs)** : "elysia" trouve désormais "Élysia" dans le graphe et le tableau
+
+---
+
 ## [1.5.0] - 2026-04-27
 
 ### Ajouté
