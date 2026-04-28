@@ -1,4 +1,4 @@
-const APP_VERSION = 'v1.6.3';
+const APP_VERSION = 'v1.6.4';
 
 const NAV_ITEMS = [
     { href: 'index.html',   label: 'Accueil' },
@@ -10,6 +10,40 @@ const NAV_ITEMS = [
     { href: 'pnjs.html',    label: 'PNJs' },
 ];
 
+// ── Thème ───────────────────────────────────────────
+(function initTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'parchment') document.documentElement.setAttribute('data-theme', 'parchment');
+
+    const link = document.createElement('link');
+    link.rel  = 'stylesheet';
+    link.href = 'css/theme-parchment.css';
+    document.head.appendChild(link);
+})();
+
+function getTheme() {
+    return document.documentElement.getAttribute('data-theme') || 'dark';
+}
+
+function setTheme(theme) {
+    if (theme === 'parchment') {
+        document.documentElement.setAttribute('data-theme', 'parchment');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+    localStorage.setItem('theme', theme);
+    updateToggleLabel();
+}
+
+function updateToggleLabel() {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    const isParchment = getTheme() === 'parchment';
+    btn.textContent = isParchment ? '🌙' : '☀️';
+    btn.title       = isParchment ? 'Thème sombre' : 'Thème parchemin';
+}
+
+// ── Nav ─────────────────────────────────────────────
 function injectNav() {
     const nav = document.getElementById('navbar');
     if (!nav) return;
@@ -27,7 +61,13 @@ function injectNav() {
                 <span></span><span></span><span></span>
             </button>
             <ul class="nav-links" id="nav-links">${linksHtml}</ul>
+            <button class="theme-toggle" id="theme-toggle" title="Thème parchemin">☀️</button>
         </div>`;
+
+    updateToggleLabel();
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+        setTheme(getTheme() === 'parchment' ? 'dark' : 'parchment');
+    });
 }
 
 function injectFooter() {

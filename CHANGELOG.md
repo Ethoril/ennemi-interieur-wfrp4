@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.6.4] - 2026-04-28
+
+### Ajouté
+- **Thème parchemin** : deuxième thème visuel clair (tons papier vieilli, bordeaux foncé) activable via un bouton ☀️/🌙 dans la navbar — persisté en localStorage sur toutes les pages
+
+---
+
 ## [1.6.3] - 2026-04-28
 
 ### Amélioré
