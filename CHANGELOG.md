@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.6.2] - 2026-04-28
+
+### Ajouté
+- **Cadrage portrait** : sélecteur de rognage carré (Cropper.js) affiché au moment de l'upload — permet de choisir la zone à conserver avant sauvegarde
+
+---
+
 ## [1.6.1] - 2026-04-28
 
 ### Corrigé

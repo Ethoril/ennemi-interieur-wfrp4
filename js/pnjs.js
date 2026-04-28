@@ -3,6 +3,7 @@ import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signO
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
+import Cropper from 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js';
 import { esc, cap, stripAccents } from './utils.js';
 
 // ── Config ─────────────────────────────────────────────────────
@@ -46,6 +47,7 @@ const state = {
     view: 'graph',
     sortCol: 'nom', sortDir: 1,
     editingId: null, panelId: null,
+    croppedBlob: null,
 };
 
 // ── Utils ──────────────────────────────────────────────────────
@@ -59,10 +61,10 @@ function stringToColor(str) {
     return `hsl(${Math.abs(h) % 360}, 45%, 55%)`;
 }
 
-async function uploadImage(file) {
-    const storage  = getStorage(app);
-    const fileRef  = ref(storage, `portraits/${Date.now()}_${file.name}`);
-    await uploadBytes(fileRef, file);
+async function uploadImage(blob) {
+    const storage = getStorage(app);
+    const fileRef = ref(storage, `portraits/${Date.now()}.webp`);
+    await uploadBytes(fileRef, blob, { contentType: 'image/webp' });
     return getDownloadURL(fileRef);
 }
 
@@ -184,7 +186,8 @@ async function deleteRelation(relId) {
 
 // ── PNJ Modal ──────────────────────────────────────────────────
 function openPnjModal(pnjId = null) {
-    state.editingId = pnjId;
+    state.editingId  = pnjId;
+    state.croppedBlob = null;
     const preview = document.getElementById('f-image-preview');
     document.getElementById('pnj-form').reset();
     preview.innerHTML = '';
@@ -212,13 +215,13 @@ function openPnjModal(pnjId = null) {
 
 function closePnjModal() {
     document.getElementById('pnj-modal').style.display = 'none';
-    state.editingId = null;
+    state.editingId   = null;
+    state.croppedBlob = null;
 }
 
 document.getElementById('pnj-form').addEventListener('submit', async e => {
     e.preventDefault();
-    const imageFile = document.getElementById('f-image').files[0] || null;
-    const preview   = document.getElementById('f-image-preview');
+    const preview = document.getElementById('f-image-preview');
     await savePnj({
         nom:         document.getElementById('f-nom').value.trim(),
         statut:      document.getElementById('f-statut').value,
@@ -227,14 +230,55 @@ document.getElementById('pnj-form').addEventListener('submit', async e => {
         groupe:      document.getElementById('f-groupe').value.trim(),
         description: document.getElementById('f-description').value.trim(),
         imageUrl:    preview.dataset.existingUrl || '',
-    }, imageFile);
+    }, state.croppedBlob);
 });
 
 document.getElementById('f-image').addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
-    const preview = document.getElementById('f-image-preview');
-    preview.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="Aperçu">`;
+    openCropModal(file);
+});
+
+// ── Crop Modal ─────────────────────────────────────────────────
+let cropperInstance = null;
+
+function openCropModal(file) {
+    const img = document.getElementById('crop-img');
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+    img.src = URL.createObjectURL(file);
+    document.getElementById('crop-modal').style.display = 'flex';
+    img.onload = () => {
+        cropperInstance = new Cropper(img, {
+            aspectRatio: 1,
+            viewMode: 1,
+            autoCropArea: 0.85,
+            movable: true,
+            zoomable: true,
+            scalable: false,
+            guides: true,
+        });
+    };
+}
+
+function closeCropModal() {
+    document.getElementById('crop-modal').style.display = 'none';
+    if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+}
+
+document.getElementById('crop-confirm-btn').addEventListener('click', () => {
+    if (!cropperInstance) return;
+    cropperInstance.getCroppedCanvas({ width: 500, height: 500 }).toBlob(blob => {
+        state.croppedBlob = blob;
+        const preview = document.getElementById('f-image-preview');
+        preview.innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="Aperçu">`;
+        preview.dataset.existingUrl = '';
+        closeCropModal();
+    }, 'image/webp', 0.85);
+});
+
+document.getElementById('crop-cancel-btn').addEventListener('click', () => {
+    document.getElementById('f-image').value = '';
+    closeCropModal();
 });
 
 document.getElementById('pnj-modal-close').addEventListener('click', closePnjModal);
