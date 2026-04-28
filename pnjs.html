@@ -44,9 +44,9 @@
                     <!-- Couleur par (graphe seulement) -->
                     <div class="colorby-group" id="colorby-group">
                         <span class="filter-group-label">Couleur :</span>
-                        <button class="colorby-btn active" data-dim="Statut">Statut</button>
-                        <button class="colorby-btn" data-dim="Lieu">Lieu</button>
-                        <button class="colorby-btn" data-dim="Groupe">Groupe</button>
+                        <button class="colorby-btn active" data-dim="statut">Statut</button>
+                        <button class="colorby-btn" data-dim="lieu">Lieu</button>
+                        <button class="colorby-btn" data-dim="groupe">Groupe</button>
                     </div>
 
                     <div class="filter-sep">|</div>
@@ -62,6 +62,12 @@
                         <div class="filter-group" id="filter-groupe"></div>
                     </div>
 
+                    <!-- Admin -->
+                    <div class="pnj-admin-actions">
+                        <button class="btn-add-pnj" id="add-pnj-btn" style="display:none">＋ PNJ</button>
+                        <button class="btn-auth" id="auth-btn">🔑 Admin</button>
+                    </div>
+
                 </div>
 
                 <!-- Graphe -->
@@ -69,6 +75,10 @@
                     <div id="pnj-loading">
                         <div class="pnj-spinner"></div>
                         Chargement des personnages...
+                    </div>
+                    <div id="pnj-empty" style="display:none;">
+                        <p>Aucun personnage pour l'instant.</p>
+                        <span class="pnj-empty-hint">Connecte-toi en mode Admin pour en ajouter.</span>
                     </div>
                     <div class="graph-legend" id="graph-legend" style="display:none;"></div>
                 </div>
@@ -85,6 +95,68 @@
             <div id="pnj-detail-content"></div>
         </div>
 
+        <!-- Modal édition PNJ -->
+        <div id="pnj-modal" class="pnj-modal-overlay" style="display:none;">
+            <div class="pnj-modal-content">
+                <h3 id="pnj-modal-title">Nouveau personnage</h3>
+                <form id="pnj-form">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Nom *</label>
+                            <input type="text" id="f-nom" required placeholder="Nom du personnage">
+                        </div>
+                        <div class="form-col">
+                            <label>Statut</label>
+                            <select id="f-statut">
+                                <option value="">— Inconnu —</option>
+                                <option value="allié">Allié</option>
+                                <option value="neutre">Neutre</option>
+                                <option value="ennemi">Ennemi</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Vivant</label>
+                            <select id="f-vivant">
+                                <option value="oui">Oui</option>
+                                <option value="inconnu">Inconnu</option>
+                                <option value="non">Non (décédé)</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label>Lieu</label>
+                            <input type="text" id="f-lieu" placeholder="Altdorf, Bögenhafen…">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col form-col-full">
+                            <label>Groupe social</label>
+                            <input type="text" id="f-groupe" placeholder="Marchand, Culte, Garde…">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col form-col-full">
+                            <label>Description</label>
+                            <textarea id="f-description" rows="4" placeholder="Description, notes…"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-col form-col-full">
+                            <label>Portrait</label>
+                            <input type="file" id="f-image" accept="image/*">
+                            <div id="f-image-preview" class="image-preview"></div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-danger" id="pnj-delete-btn" style="display:none">🗑 Supprimer</button>
+                        <button type="button" class="btn-ghost" id="pnj-modal-close">Annuler</button>
+                        <button type="submit" class="btn-primary" id="pnj-save-btn">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <div class="ornament">⚜</div>
         <footer class="footer" id="site-footer"></footer>
 
@@ -92,8 +164,7 @@
 
     <script src="js/layout.js"></script>
     <script src="js/main.js"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="js/pnjs.js"></script>
+    <script type="module" src="js/pnjs.js"></script>
 </body>
 
 </html>
