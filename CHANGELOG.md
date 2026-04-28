@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.6.10] - 2026-04-28
+
+### Corrigé
+- **Le Groupe** : suppression du `max-width: 1100px` codé en dur sur `.character-grid` — la grille utilise désormais toute la largeur du conteneur (1600 px)
+
+---
+
 ## [1.6.9] - 2026-04-28
 
 ### Modifié
