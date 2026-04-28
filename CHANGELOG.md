@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.6.3] - 2026-04-28
+
+### Amélioré
+- **Graphe PNJs** : les nœuds affichent désormais le portrait du personnage clipé en cercle, avec un anneau coloré indiquant le statut (ou la dimension active). Fallback sur le cercle coloré pour les PNJs sans portrait. Anneau pointillé conservé pour les décédés.
+
+---
+
 ## [1.6.2] - 2026-04-28
 
 ### Ajouté
