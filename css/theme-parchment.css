@@ -41,11 +41,13 @@
 }
 
 /* ── Corps de page ───────────────────────────────── */
-/* Texture fibre grossière (fond de page) — fréquence horizontale basse pour l'effet fibres */
 [data-theme="parchment"] body {
   background-color: var(--bg-dark);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65 0.15' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
+  background-image: url('../img/vecteezy_old-grunge-frame-background_153249.svg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 [data-theme="parchment"] body::before {
@@ -265,6 +267,10 @@
 [data-theme="parchment"] .page-header p {
   color: var(--text-secondary);
 }
+
+/* ── Attribution texture (cachée en thème sombre) ── */
+.footer-vecteezy { display: none; }
+[data-theme="parchment"] .footer-vecteezy { display: block; }
 
 /* ── Footer ──────────────────────────────────────── */
 [data-theme="parchment"] .footer {
