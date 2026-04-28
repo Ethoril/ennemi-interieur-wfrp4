@@ -1,6 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 import { esc, cap, stripAccents } from './utils.js';
 
@@ -13,8 +14,7 @@ const FIREBASE_CONFIG = {
     messagingSenderId: '1097155283992',
     appId: '1:1097155283992:web:27976b947ea8bc5b87476d',
 };
-const UPLOADCARE_KEY = 'ef2df1dc701aa66f3f4f';
-const ADMIN_EMAIL    = 'ethoril@gmail.com';
+const ADMIN_EMAIL = 'ethoril@gmail.com';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
@@ -60,14 +60,10 @@ function stringToColor(str) {
 }
 
 async function uploadImage(file) {
-    const fd = new FormData();
-    fd.append('UPLOADCARE_PUB_KEY', UPLOADCARE_KEY);
-    fd.append('UPLOADCARE_STORE', '1');
-    fd.append('file', file);
-    const res = await fetch('https://upload.uploadcare.com/base/', { method: 'POST', body: fd });
-    if (!res.ok) throw new Error('Upload échoué');
-    const data = await res.json();
-    return `https://ucarecdn.com/${data.file}/-/resize/500x/-/format/webp/`;
+    const storage  = getStorage(app);
+    const fileRef  = ref(storage, `portraits/${Date.now()}_${file.name}`);
+    await uploadBytes(fileRef, file);
+    return getDownloadURL(fileRef);
 }
 
 // ── Auth ───────────────────────────────────────────────────────
