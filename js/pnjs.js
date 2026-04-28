@@ -13,7 +13,7 @@ const FIREBASE_CONFIG = {
     appId: '1:1097155283992:web:27976b947ea8bc5b87476d',
 };
 const UPLOADCARE_KEY = 'ef2df1dc701aa66f3f4f';
-const ADMIN_EMAIL    = 'd.barritaud@topachat.com';
+const ADMIN_EMAIL    = 'ethoril@gmail.com';
 
 const app  = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
