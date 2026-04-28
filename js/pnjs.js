@@ -367,7 +367,12 @@ function buildGraph() {
     const svg = d3.select('#pnj-graph').append('svg').attr('width', '100%').attr('height', '100%');
     const g   = svg.append('g');
 
-    svg.call(d3.zoom().scaleExtent([0.1, 5]).on('zoom', e => g.attr('transform', e.transform)));
+    const initialScale = 1.8;
+    const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', e => g.attr('transform', e.transform));
+    svg.call(zoom);
+    svg.call(zoom.transform, d3.zoomIdentity
+        .translate(state.graphW / 2 * (1 - initialScale), state.graphH / 2 * (1 - initialScale))
+        .scale(initialScale));
     svg.on('click', () => closePanel());
 
     state.linkSel = g.append('g').selectAll('line').data(state.links).join('line')
