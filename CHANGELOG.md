@@ -6,6 +6,26 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.5.0] - 2026-04-27
+
+### Ajouté
+- **PNJs éditable** : les données sont désormais stockées dans Firestore (Firebase) au lieu de Google Sheets
+- **Authentification Google** : bouton "Admin" en toolbar — connexion via Google OAuth (email autorisé uniquement)
+- **Création / modification de PNJ** : modal complet avec nom, statut, vivant, lieu, groupe social, description, portrait (upload Uploadcare)
+- **Suppression de PNJ** : cascade sur toutes les relations du personnage (batch Firestore)
+- **Ajout de relation** : formulaire inline dans le panneau de détail (cible, type, label)
+- **Suppression de relation** : bouton × sur chaque chip de relation (mode admin)
+- **Upload portrait** : hébergement via Uploadcare (serveurs européens, GDPR), URL CDN WebP 500 px stockée dans Firestore
+- **État vide** : message affiché si Firestore ne contient aucun PNJ
+- Bouton ✏ dans le panneau de détail et la vue tableau (admin uniquement)
+
+### Technique
+- `js/pnjs.js` converti en module ES (`type="module"`) — D3 importé via jsDelivr ESM, Firebase v10.12.0 via gstatic CDN
+- Suppression du tag `<script src="d3.v7.min.js">` dans `pnjs.html` (import géré dans le module)
+- Champs Firestore en minuscules : `nom, statut, vivant, lieu, groupe, description, imageUrl`
+
+---
+
 ## [1.4.2] - 2026-04-27
 
 ### Corrigé

@@ -1984,3 +1984,388 @@ strong {
     width: 150px;
   }
 }
+
+/* ── PNJs – Admin actions (auth + add) ─────────── */
+.pnj-admin-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-left: auto;
+}
+
+.btn-auth {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  padding: 5px 12px;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn-auth:hover {
+  border-color: var(--border-gold);
+  color: var(--gold);
+}
+
+.btn-add-pnj {
+  background: rgba(201, 168, 76, 0.12);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  color: var(--gold);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  padding: 5px 12px;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn-add-pnj:hover {
+  background: rgba(201, 168, 76, 0.22);
+}
+
+/* ── PNJs – Edit buttons ───────────────────────── */
+.pnj-edit-actions {
+  margin-bottom: var(--space-sm);
+}
+
+.btn-edit {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  transition: all var(--transition-fast);
+}
+
+.btn-edit:hover {
+  border-color: var(--border-gold);
+  color: var(--gold);
+}
+
+.btn-edit-sm {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  transition: all var(--transition-fast);
+}
+
+.btn-edit-sm:hover {
+  border-color: var(--border-gold);
+  color: var(--gold);
+}
+
+/* ── PNJs – Relation chip row ──────────────────── */
+.rel-chip-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.rel-chip-row .pnj-relation-chip {
+  flex: 1;
+}
+
+.rel-delete-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 5px;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.rel-delete-btn:hover {
+  color: #c94c4c;
+  border-color: #c94c4c;
+}
+
+/* ── PNJs – Add-relation form ──────────────────── */
+.btn-add-rel {
+  background: transparent;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  margin-top: var(--space-sm);
+  padding: 4px 12px;
+  transition: all var(--transition-fast);
+  width: 100%;
+}
+
+.btn-add-rel:hover {
+  border-color: var(--border-gold);
+  color: var(--gold);
+}
+
+.rel-add-form {
+  margin-top: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rel-add-form select,
+.rel-add-form input {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  padding: 5px 8px;
+  width: 100%;
+}
+
+.rel-add-form select:focus,
+.rel-add-form input:focus {
+  border-color: var(--border-gold);
+  outline: none;
+}
+
+.rel-form-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-primary-sm {
+  background: rgba(201, 168, 76, 0.15);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 4px 12px;
+  transition: all var(--transition-fast);
+}
+
+.btn-primary-sm:hover {
+  background: rgba(201, 168, 76, 0.25);
+}
+
+.btn-ghost-sm {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 4px 12px;
+  transition: all var(--transition-fast);
+}
+
+.btn-ghost-sm:hover {
+  border-color: var(--border-gold);
+  color: var(--text-primary);
+}
+
+/* ── PNJs – Empty state ────────────────────────── */
+#pnj-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  background: var(--bg-card);
+  z-index: 4;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-size: 0.95rem;
+}
+
+.pnj-empty-hint {
+  font-size: 0.78rem;
+  color: var(--gold-dim);
+  font-style: italic;
+}
+
+/* ── PNJs – Modal édition ──────────────────────── */
+.pnj-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  padding: var(--space-md);
+}
+
+.pnj-modal-content {
+  background: var(--bg-dark);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-2xl);
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.pnj-modal-content h3 {
+  font-family: var(--font-heading);
+  color: var(--gold);
+  margin-bottom: var(--space-lg);
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+}
+
+.form-row {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.form-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-col-full {
+  flex: 1 1 100%;
+}
+
+.form-col label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.form-col input,
+.form-col select,
+.form-col textarea {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.88rem;
+  font-family: var(--font-body);
+  padding: 7px 10px;
+  transition: border-color var(--transition-fast);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-col input:focus,
+.form-col select:focus,
+.form-col textarea:focus {
+  border-color: var(--border-gold);
+  outline: none;
+}
+
+.form-col textarea {
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.image-preview {
+  margin-top: var(--space-sm);
+}
+
+.image-preview img {
+  max-width: 100%;
+  max-height: 160px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  object-fit: cover;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.btn-primary {
+  background: rgba(201, 168, 76, 0.15);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  color: var(--gold);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  padding: 8px 20px;
+  transition: all var(--transition-fast);
+  margin-left: auto;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: rgba(201, 168, 76, 0.25);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  padding: 8px 16px;
+  transition: all var(--transition-fast);
+}
+
+.btn-ghost:hover {
+  border-color: var(--border-gold);
+  color: var(--text-primary);
+}
+
+.btn-danger {
+  background: transparent;
+  border: 1px solid #c94c4c;
+  border-radius: var(--radius-md);
+  color: #c94c4c;
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  padding: 8px 14px;
+  transition: all var(--transition-fast);
+  margin-right: auto;
+}
+
+.btn-danger:hover {
+  background: rgba(201, 76, 76, 0.12);
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    flex-direction: column;
+  }
+
+  .pnj-admin-actions {
+    margin-left: 0;
+  }
+}
