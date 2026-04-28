@@ -638,12 +638,16 @@ function renderTable() {
     const sorted = [...state.nodes.filter(isVisible)].sort((a, b) =>
         state.sortDir * (a[state.sortCol] || '').localeCompare(b[state.sortCol] || '', 'fr', { sensitivity: 'base' }));
 
-    const thead = TABLE_COLS.map(c => {
+    const thead = '<th class="col-portrait"></th>' + TABLE_COLS.map(c => {
         const arrow = c.key === state.sortCol ? (state.sortDir > 0 ? ' ▲' : ' ▼') : '';
         return `<th data-col="${esc(c.key)}" class="sortable">${esc(c.label)}${arrow}</th>`;
     }).join('') + (state.isAdmin ? '<th></th>' : '');
 
     const tbody = sorted.map(d => {
+        const portraitCell = d.imageUrl
+            ? `<td class="col-portrait"><img src="${esc(d.imageUrl)}" class="table-portrait" alt="${esc(d.nom)}"></td>`
+            : `<td class="col-portrait"><div class="table-portrait-placeholder">${esc((d.nom || '?').charAt(0).toUpperCase())}</div></td>`;
+
         const cells = TABLE_COLS.map(c => {
             if (c.key === 'statut') return `<td><span class="pnj-badge statut-${esc((d.statut || '').toLowerCase())}">${esc(cap(d.statut) || '—')}</span></td>`;
             if (c.key === 'vivant') {
@@ -657,7 +661,7 @@ function renderTable() {
             return `<td>${esc(d[c.key] || '—')}</td>`;
         }).join('');
         const editCell = state.isAdmin ? `<td><button class="btn-edit-sm" data-id="${esc(d.id)}">✏</button></td>` : '';
-        return `<tr>${cells}${editCell}</tr>`;
+        return `<tr>${portraitCell}${cells}${editCell}</tr>`;
     }).join('');
 
     container.innerHTML = `
