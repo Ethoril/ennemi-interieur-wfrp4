@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.6.1] - 2026-04-28
+
+### Corrigé
+- **Portraits PNJs** : remplacement d'Uploadcare (clé invalide, images en 404) par Firebase Storage (`europe-west9`) — upload et affichage des portraits fonctionnels
+
+---
+
 ## [1.6.0] - 2026-04-28
 
 ### Technique
