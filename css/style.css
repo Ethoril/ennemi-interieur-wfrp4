@@ -232,6 +232,8 @@ strong {
   text-decoration: none;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
   gap: var(--space-sm);
 }
 
@@ -260,9 +262,10 @@ strong {
 
 .nav-links a {
   display: block;
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) 10px;
   font-family: var(--font-heading);
   font-size: 0.85rem;
+  white-space: nowrap;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -429,7 +432,7 @@ strong {
 /* ── Cards ─────────────────────────────────────── */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: var(--space-xl);
 }
 
