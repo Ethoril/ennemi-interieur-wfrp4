@@ -264,9 +264,6 @@
   color: var(--text-secondary);
 }
 
-/* ── Attribution texture (cachée en thème sombre) ── */
-.footer-vecteezy { display: none; }
-[data-theme="parchment"] .footer-vecteezy { display: block; }
 
 /* ── Footer ──────────────────────────────────────── */
 [data-theme="parchment"] .footer {

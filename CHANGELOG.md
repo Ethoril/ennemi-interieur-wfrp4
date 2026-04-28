@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.6.12] - 2026-04-28
+
+### Supprimé
+- **Footer** : retrait de l'attribution Vecteezy (SVG texture non utilisé)
+
+---
+
 ## [1.6.11] - 2026-04-28
 
 ### Ajouté
