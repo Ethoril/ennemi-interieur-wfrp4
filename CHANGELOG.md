@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.6.9] - 2026-04-28
+
+### Modifié
+- **Mise en page** : largeur maximale étendue de 1200 px à 1600 px — meilleure utilisation de l'espace sur les écrans larges, mobile inchangé
+
+---
+
 ## [1.6.8] - 2026-04-28
 
 ### Modifié
