@@ -5,8 +5,8 @@
 
 [data-theme="parchment"] {
   /* Fonds — palette parchemin/papier vieilli */
-  --bg-darkest:    #b08855;
-  --bg-dark:       #c09a6a;
+  --bg-darkest:    #D4C9AB;
+  --bg-dark:       #E7DAC1;
   --bg-card:       #f2e8d5;
   --bg-card-hover: #ead9c0;
   --bg-surface:    #e8d5b0;
@@ -42,19 +42,15 @@
 
 /* ── Corps de page ───────────────────────────────── */
 [data-theme="parchment"] body {
-  background-color: var(--bg-dark);
-  background-image: url('../img/vecteezy_old-grunge-frame-background_153249.svg');
-  background-size: cover;
-  background-position: center;
+  background: linear-gradient(160deg, #E9DDC3 0%, #E7DAC1 45%, #E2D7BB 100%);
   background-attachment: fixed;
-  background-repeat: no-repeat;
 }
 
 [data-theme="parchment"] body::before {
   background:
-    radial-gradient(ellipse at 15% 50%, rgba(100, 45, 15, 0.12) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(170, 120, 45, 0.10) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 85%, rgba(130, 75, 25, 0.10) 0%, transparent 50%);
+    radial-gradient(ellipse at 15% 50%, rgba(180, 155, 100, 0.10) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(200, 175, 120, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 85%, rgba(190, 165, 110, 0.08) 0%, transparent 50%);
 }
 
 /* ── Navbar — bordeaux foncé ─────────────────────── */

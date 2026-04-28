@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.6.8] - 2026-04-28
+
+### Modifié
+- **Thème parchemin — fond** : suppression du SVG Vecteezy, remplacement par un dégradé CSS en trois teintes (#E9DDC3 → #E7DAC1 → #E2D7BB)
+
+---
+
 ## [1.6.7] - 2026-04-28
 
 ### Amélioré
