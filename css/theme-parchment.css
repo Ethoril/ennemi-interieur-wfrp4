@@ -1,0 +1,291 @@
+/* ================================================
+   THÈME PARCHEMIN — L'Ennemi Intérieur
+   Surcharge des variables du thème sombre
+   ================================================ */
+
+[data-theme="parchment"] {
+  /* Fonds — palette parchemin/papier vieilli */
+  --bg-darkest:    #b08855;
+  --bg-dark:       #c09a6a;
+  --bg-card:       #f2e8d5;
+  --bg-card-hover: #ead9c0;
+  --bg-surface:    #e8d5b0;
+  --bg-overlay:    rgba(195, 160, 110, 0.95);
+
+  /* Or → ambre foncé (lisible sur fond clair) */
+  --gold:          #7a5c10;
+  --gold-bright:   #9a7820;
+  --gold-dim:      #5a4010;
+  --copper:        #8b5e0b;
+  --blood:         #7a1f1f;
+  --blood-bright:  #9a2a2a;
+  --crimson:       #4a0e0e;
+
+  /* Textes — bruns foncés */
+  --text-primary:   #2a1008;
+  --text-secondary: #5a3015;
+  --text-muted:     #8a6040;
+  --text-heading:   #2d0a0a;
+
+  /* Bordures — ambrés/brun chaud */
+  --border-subtle: rgba(100, 65, 20, 0.18);
+  --border-gold:   rgba(100, 65, 20, 0.42);
+  --border-strong: rgba(100, 65, 20, 0.65);
+
+  /* Ombres — chaudes, moins profondes */
+  --shadow-sm:          0 2px 8px  rgba(80, 40, 10, 0.18);
+  --shadow-md:          0 4px 20px rgba(80, 40, 10, 0.25);
+  --shadow-lg:          0 8px 40px rgba(80, 40, 10, 0.35);
+  --shadow-glow:        0 0 20px   rgba(100, 65, 20, 0.15);
+  --shadow-glow-strong: 0 0 40px   rgba(100, 65, 20, 0.22);
+}
+
+/* ── Corps de page ───────────────────────────────── */
+[data-theme="parchment"] body {
+  background-color: var(--bg-dark);
+}
+
+[data-theme="parchment"] body::before {
+  background:
+    radial-gradient(ellipse at 15% 50%, rgba(100, 45, 15, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(170, 120, 45, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 85%, rgba(130, 75, 25, 0.10) 0%, transparent 50%);
+}
+
+/* ── Navbar — bordeaux foncé ─────────────────────── */
+[data-theme="parchment"] .navbar {
+  background: rgba(38, 8, 8, 0.92);
+  border-bottom-color: rgba(140, 85, 25, 0.35);
+}
+
+[data-theme="parchment"] .navbar.scrolled {
+  background: rgba(38, 8, 8, 0.98);
+}
+
+[data-theme="parchment"] .nav-links a {
+  color: rgba(230, 195, 140, 0.75);
+}
+
+[data-theme="parchment"] .nav-links a:hover,
+[data-theme="parchment"] .nav-links a.active {
+  color: var(--gold-bright);
+}
+
+[data-theme="parchment"] .nav-version {
+  background: rgba(180, 120, 40, 0.15);
+  border-color: rgba(140, 85, 25, 0.35);
+  color: rgba(210, 170, 100, 0.7);
+}
+
+/* ── Titres ──────────────────────────────────────── */
+[data-theme="parchment"] h1 {
+  background: linear-gradient(135deg, #3d0f0f 0%, #6a1818 40%, #2a0808 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 1px 2px rgba(80, 20, 10, 0.3));
+}
+
+[data-theme="parchment"] h2 { color: var(--gold);        }
+[data-theme="parchment"] h3 { color: var(--gold-bright); }
+
+/* ── Hero ────────────────────────────────────────── */
+[data-theme="parchment"] .hero::before {
+  background:
+    radial-gradient(ellipse at center, rgba(100, 40, 15, 0.18) 0%, transparent 70%),
+    radial-gradient(ellipse at 30% 70%, rgba(170, 120, 45, 0.08) 0%, transparent 50%);
+}
+
+[data-theme="parchment"] .hero::after {
+  background: linear-gradient(to top, var(--bg-dark), transparent);
+}
+
+[data-theme="parchment"] .hero-subtitle {
+  color: var(--text-secondary);
+}
+
+[data-theme="parchment"] .hero-description {
+  color: var(--text-secondary);
+}
+
+/* ── Cartes ──────────────────────────────────────── */
+[data-theme="parchment"] .card {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+}
+
+[data-theme="parchment"] .card:hover {
+  background: var(--bg-card-hover);
+}
+
+[data-theme="parchment"] .card p { color: var(--text-secondary); }
+
+[data-theme="parchment"] .video-card {
+  background: var(--bg-card);
+}
+
+/* ── Formulaires ─────────────────────────────────── */
+[data-theme="parchment"] input,
+[data-theme="parchment"] select,
+[data-theme="parchment"] textarea {
+  background: #faf4e8;
+  color: var(--text-primary);
+  border-color: var(--border-gold);
+}
+
+[data-theme="parchment"] input::placeholder,
+[data-theme="parchment"] textarea::placeholder {
+  color: var(--text-muted);
+}
+
+[data-theme="parchment"] select option {
+  background: #f2e8d5;
+  color: var(--text-primary);
+}
+
+/* ── Tableaux ────────────────────────────────────── */
+[data-theme="parchment"] .rules-table th {
+  background: rgba(100, 60, 20, 0.15);
+  color: var(--text-heading);
+  border-color: var(--border-gold);
+}
+
+[data-theme="parchment"] .rules-table td {
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+[data-theme="parchment"] .rules-table tr:nth-child(even) td {
+  background: rgba(100, 60, 20, 0.05);
+}
+
+[data-theme="parchment"] .rules-table tr:hover td {
+  background: rgba(100, 60, 20, 0.10);
+}
+
+/* ── Accordéons ──────────────────────────────────── */
+[data-theme="parchment"] .accordion-item {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+}
+
+[data-theme="parchment"] .accordion-header {
+  background: var(--bg-card);
+  color: var(--text-heading);
+}
+
+[data-theme="parchment"] .accordion-header:hover {
+  background: var(--bg-card-hover);
+}
+
+[data-theme="parchment"] .accordion-body {
+  background: #faf4e8;
+  color: var(--text-primary);
+}
+
+/* ── Aides de jeux (Sheets) ──────────────────────── */
+[data-theme="parchment"] .sheet-tab {
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+}
+
+[data-theme="parchment"] .sheet-tab.active {
+  background: var(--bg-card-hover);
+  color: var(--text-heading);
+}
+
+[data-theme="parchment"] .sheet-card {
+  background: var(--bg-card);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+[data-theme="parchment"] .sheet-card-title { color: var(--text-heading); }
+
+[data-theme="parchment"] .sheet-field-label { color: var(--text-muted); }
+
+[data-theme="parchment"] .sheet-definition {
+  border-color: var(--border-subtle);
+}
+
+[data-theme="parchment"] .sheet-def-term { color: var(--text-heading); }
+
+/* ── PNJs ────────────────────────────────────────── */
+[data-theme="parchment"] .pnj-detail-panel {
+  background: var(--bg-card);
+  border-color: var(--border-gold);
+}
+
+[data-theme="parchment"] .pnj-detail-content h2 {
+  color: var(--text-heading);
+}
+
+[data-theme="parchment"] .pnj-desc {
+  color: var(--text-primary);
+}
+
+[data-theme="parchment"] .pnj-detail-section h4 {
+  color: var(--gold);
+  border-color: var(--border-subtle);
+}
+
+[data-theme="parchment"] .pnj-modal-content {
+  background: var(--bg-card);
+  border-color: var(--border-gold);
+}
+
+[data-theme="parchment"] .crop-modal-content {
+  background: var(--bg-card);
+  border-color: var(--border-gold);
+}
+
+[data-theme="parchment"] .filter-pill {
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+}
+
+[data-theme="parchment"] .filter-pill.active {
+  background: var(--gold);
+  color: #fff;
+}
+
+[data-theme="parchment"] .pnj-table-count {
+  color: var(--text-muted);
+}
+
+[data-theme="parchment"] #pnj-search {
+  background: #faf4e8;
+}
+
+/* ── Page header ─────────────────────────────────── */
+[data-theme="parchment"] .page-header p {
+  color: var(--text-secondary);
+}
+
+/* ── Footer ──────────────────────────────────────── */
+[data-theme="parchment"] .footer {
+  background: rgba(38, 8, 8, 0.92);
+  border-color: rgba(140, 85, 25, 0.3);
+  color: rgba(220, 180, 120, 0.65);
+}
+
+/* ── Toggle bouton ───────────────────────────────── */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 5px 8px;
+  transition: all var(--transition-fast);
+  margin-left: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  border-color: var(--border-gold);
+  color: var(--gold);
+}
