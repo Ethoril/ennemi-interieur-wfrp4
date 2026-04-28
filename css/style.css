@@ -2417,3 +2417,32 @@ strong {
   gap: var(--space-sm);
   justify-content: flex-end;
 }
+
+/* ── Portrait en vue tableau ────────────────────── */
+.col-portrait {
+  width: 52px;
+  padding: 4px 8px !important;
+}
+
+.table-portrait {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 2px solid var(--border);
+}
+
+.table-portrait-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-elevated, #1e1e30);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  color: var(--gold);
+}
