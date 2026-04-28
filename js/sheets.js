@@ -1,3 +1,5 @@
+import { esc, stripAccents } from './utils.js';
+
 /* ================================================
    GOOGLE SHEETS — Dynamic Data Fetcher & Renderer
    ================================================ */
@@ -148,11 +150,11 @@ function renderCards(container, headers, data, tabId) {
             h.toLowerCase() === 'type' || h.toLowerCase() === 'catégorie'
         );
         const typeBadge = typeIdx >= 0 && row[typeIdx]
-            ? `<span class="sheet-badge">${escapeHtml(row[typeIdx])}</span>`
+            ? `<span class="sheet-badge">${esc(row[typeIdx])}</span>`
             : '';
 
         html += `<div class="sheet-card-header">
-      <h4 class="sheet-card-title">${escapeHtml(title)}</h4>
+      <h4 class="sheet-card-title">${esc(title)}</h4>
       ${typeBadge}
     </div>`;
 
@@ -164,7 +166,7 @@ function renderCards(container, headers, data, tabId) {
 
             const isLong = row[i].length > 100;
             html += `<div class="sheet-field ${isLong ? 'sheet-field-full' : ''}">
-        <span class="sheet-field-label">${escapeHtml(header)}</span>
+        <span class="sheet-field-label">${esc(header)}</span>
         <span class="sheet-field-value">${formatText(row[i])}</span>
       </div>`;
         });
@@ -195,7 +197,7 @@ function renderTable(container, headers, data) {
     html += '<thead><tr><th>Augmentations</th><th>Caractéristiques</th><th>Compétences</th></tr></thead><tbody>';
     data.forEach(row => {
         if (row[leftAugIdx]) {
-            html += `<tr><td>${escapeHtml(row[leftAugIdx])}</td><td>${escapeHtml(row[caracIdx] || '')}</td><td>${escapeHtml(row[compIdx] || '')}</td></tr>`;
+            html += `<tr><td>${esc(row[leftAugIdx])}</td><td>${esc(row[caracIdx] || '')}</td><td>${esc(row[compIdx] || '')}</td></tr>`;
         }
     });
     html += '</tbody></table></div>';
@@ -207,7 +209,7 @@ function renderTable(container, headers, data) {
         if (row[rightAugIdx]) {
             let cost = row[coutIdx] || '';
             if (row[rightAugIdx] === '+1 Talent' && cost === '') cost = TALENT_COST_FIX;
-            html += `<tr><td>${escapeHtml(row[rightAugIdx])}</td><td>${escapeHtml(cost)}</td></tr>`;
+            html += `<tr><td>${esc(row[rightAugIdx])}</td><td>${esc(cost)}</td></tr>`;
         }
     });
     html += '</tbody></table></div>';
@@ -220,34 +222,21 @@ function renderDefinitions(container, headers, data) {
     let html = '';
     data.forEach((row, idx) => {
         html += `<div class="sheet-definition" style="animation-delay: ${idx * 0.03}s">
-      <dt class="sheet-def-term">${escapeHtml(row[0] || '')}</dt>
+      <dt class="sheet-def-term">${esc(row[0] || '')}</dt>
       <dd class="sheet-def-desc">${formatText(row[1] || '')}</dd>
     </div>`;
     });
     container.innerHTML = `<dl class="sheet-def-list">${html}</dl>`;
 }
 
-// ── Escape HTML special characters ────────────────
-function escapeHtml(str) {
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
-
 // ── Format text (line breaks, bullet points) ──────
 function formatText(text) {
-    return escapeHtml(text)
+    return esc(text)
         .replace(/\n/g, '<br>')
         .replace(/•/g, '<br>•');
 }
 
 // ── Search / Filter ───────────────────────────────
-function stripAccents(str) {
-    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
-
 function filterCards(container, query) {
     const cards = container.querySelectorAll('.sheet-card, .sheet-definition, .sheet-table-wrapper tr');
     const q = stripAccents(query.toLowerCase());
