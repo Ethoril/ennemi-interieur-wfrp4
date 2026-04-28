@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.6.5] - 2026-04-28
+
+### Amélioré
+- **Thème parchemin — texture** : fond de page avec fibres horizontales et surfaces (cartes, panneaux, modals) avec grain fin, générés en CSS pur via filtre SVG `feTurbulence` (aucun fichier image supplémentaire)
+
+---
+
 ## [1.6.4] - 2026-04-28
 
 ### Ajouté
