@@ -6,6 +6,23 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.6.7] - 2026-04-28
+
+### Amélioré
+- **Thème parchemin — texture réelle** : remplacement de la texture CSS générée par un SVG Vecteezy (photo parchemin IA embarquée en base64) — `cover` + `fixed` pour remplir l'écran
+- **Attribution** : lien Vecteezy ajouté dans le footer, affiché uniquement en thème parchemin
+
+---
+
+## [1.6.6] - 2026-04-28
+
+### Corrigé
+- **Navbar desktop** : `white-space: nowrap` + `flex-shrink: 0` sur le brand et les liens — "LE GROUPE" et "AIDES DE JEUX" ne se replient plus sur deux lignes
+- **Navbar desktop** : padding horizontal des liens réduit (16 px → 10 px) pour laisser plus de place
+- **Accueil** : `card-grid` minmax 300 px → 260 px — les 4 cartes tiennent sur une ligne dans un conteneur 1200 px
+
+---
+
 ## [1.6.5] - 2026-04-28
 
 ### Amélioré
