@@ -383,9 +383,39 @@ function buildGraph() {
             .on('end',   (e, d) => { if (!e.active) state.simulation.alphaTarget(0); d.fx = null; d.fy = null; }))
         .on('click', (e, d) => { e.stopPropagation(); openPanel(d); });
 
+    // Clip path pour le portrait circulaire
+    nodeG.append('clipPath')
+        .attr('id', d => `clip-${d.id.replace(/[^a-zA-Z0-9]/g, '_')}`)
+        .append('circle')
+        .attr('r', nodeR);
+
+    // Fond coloré (visible si pas de portrait)
     nodeG.append('circle')
-        .attr('r', nodeR).attr('fill', getDimColor)
-        .attr('stroke', '#0e0e18').attr('stroke-width', 2.5);
+        .attr('class', 'node-bg')
+        .attr('r', nodeR)
+        .attr('fill', getDimColor)
+        .attr('stroke', '#0e0e18')
+        .attr('stroke-width', 2);
+
+    // Portrait clipé
+    nodeG.append('image')
+        .attr('href', d => d.imageUrl || null)
+        .attr('x', d => -nodeR(d))
+        .attr('y', d => -nodeR(d))
+        .attr('width',  d => nodeR(d) * 2)
+        .attr('height', d => nodeR(d) * 2)
+        .attr('clip-path', d => `url(#clip-${d.id.replace(/[^a-zA-Z0-9]/g, '_')})`)
+        .attr('preserveAspectRatio', 'xMidYMid slice')
+        .style('display', d => d.imageUrl ? '' : 'none')
+        .on('error', function() { d3.select(this).style('display', 'none'); });
+
+    // Anneau coloré (statut/dimension) — toujours visible par-dessus le portrait
+    nodeG.append('circle')
+        .attr('class', 'node-ring')
+        .attr('r', nodeR)
+        .attr('fill', 'none')
+        .attr('stroke', getDimColor)
+        .attr('stroke-width', 3);
 
     nodeG.append('text')
         .attr('text-anchor', 'middle').attr('dy', d => nodeR(d) + 14)
@@ -410,7 +440,8 @@ function buildGraph() {
 function applyColorBy(dim) {
     state.colorBy = dim;
     buildDimColorMap();
-    state.nodeSel?.select('circle').attr('fill', getDimColor);
+    state.nodeSel?.select('.node-bg').attr('fill', getDimColor);
+    state.nodeSel?.select('.node-ring').attr('stroke', getDimColor);
     if (dim === 'statut') {
         state.simulation?.force('cluster-x', null).force('cluster-y', null).alpha(0.15).restart();
     } else {
@@ -447,7 +478,7 @@ function updateVisibility() {
     state.nodeSel
         .style('opacity', d => isVisible(d) ? getNodeOpacity(d) : 0.06)
         .style('pointer-events', d => isVisible(d) ? 'all' : 'none');
-    state.nodeSel.select('circle').attr('stroke-dasharray', d => (d.vivant || '').toLowerCase() === 'non' ? '5 3' : null);
+    state.nodeSel.select('.node-ring').attr('stroke-dasharray', d => (d.vivant || '').toLowerCase() === 'non' ? '5 3' : null);
     state.linkSel?.style('opacity', d => {
         // d.source/.target peuvent être soit un id (string) soit l'objet node après simulation
         const s = d.source.id ?? d.source, t = d.target.id ?? d.target;
