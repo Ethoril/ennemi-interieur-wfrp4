@@ -2369,3 +2369,51 @@ strong {
     margin-left: 0;
   }
 }
+
+/* ── Crop Modal ─────────────────────────────────── */
+.crop-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: var(--space-md);
+}
+
+.crop-modal-content {
+  background: var(--surface);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  width: min(92vw, 560px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.crop-modal-content h3 {
+  color: var(--gold);
+  font-family: var(--font-heading);
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.crop-container {
+  max-height: 420px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: #000;
+}
+
+.crop-container img {
+  display: block;
+  max-width: 100%;
+}
+
+.crop-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+}
