@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.6.11] - 2026-04-28
+
+### Ajouté
+- **Vidéos** : 3 nouveaux épisodes — Middenheim : La Cité du Loup Blanc (7), Les Vents de Magie (8), Les Voisins de l'Empire (9)
+
+---
+
 ## [1.6.10] - 2026-04-28
 
 ### Corrigé
