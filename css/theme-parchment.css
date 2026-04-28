@@ -41,8 +41,11 @@
 }
 
 /* ── Corps de page ───────────────────────────────── */
+/* Texture fibre grossière (fond de page) — fréquence horizontale basse pour l'effet fibres */
 [data-theme="parchment"] body {
   background-color: var(--bg-dark);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65 0.15' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
 }
 
 [data-theme="parchment"] body::before {
@@ -109,25 +112,25 @@
 
 /* ── Cartes ──────────────────────────────────────── */
 [data-theme="parchment"] .card {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border-color: var(--border-subtle);
 }
 
 [data-theme="parchment"] .card:hover {
-  background: var(--bg-card-hover);
+  background-color: var(--bg-card-hover);
 }
 
 [data-theme="parchment"] .card p { color: var(--text-secondary); }
 
 [data-theme="parchment"] .video-card {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
 }
 
 /* ── Formulaires ─────────────────────────────────── */
 [data-theme="parchment"] input,
 [data-theme="parchment"] select,
 [data-theme="parchment"] textarea {
-  background: #faf4e8;
+  background-color: #faf4e8;
   color: var(--text-primary);
   border-color: var(--border-gold);
 }
@@ -164,38 +167,38 @@
 
 /* ── Accordéons ──────────────────────────────────── */
 [data-theme="parchment"] .accordion-item {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border-color: var(--border-subtle);
 }
 
 [data-theme="parchment"] .accordion-header {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   color: var(--text-heading);
 }
 
 [data-theme="parchment"] .accordion-header:hover {
-  background: var(--bg-card-hover);
+  background-color: var(--bg-card-hover);
 }
 
 [data-theme="parchment"] .accordion-body {
-  background: #faf4e8;
+  background-color: #faf4e8;
   color: var(--text-primary);
 }
 
 /* ── Aides de jeux (Sheets) ──────────────────────── */
 [data-theme="parchment"] .sheet-tab {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   color: var(--text-secondary);
   border-color: var(--border-subtle);
 }
 
 [data-theme="parchment"] .sheet-tab.active {
-  background: var(--bg-card-hover);
+  background-color: var(--bg-card-hover);
   color: var(--text-heading);
 }
 
 [data-theme="parchment"] .sheet-card {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border-color: var(--border-subtle);
   color: var(--text-primary);
 }
@@ -212,7 +215,7 @@
 
 /* ── PNJs ────────────────────────────────────────── */
 [data-theme="parchment"] .pnj-detail-panel {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border-color: var(--border-gold);
 }
 
@@ -230,23 +233,23 @@
 }
 
 [data-theme="parchment"] .pnj-modal-content {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border-color: var(--border-gold);
 }
 
 [data-theme="parchment"] .crop-modal-content {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   border-color: var(--border-gold);
 }
 
 [data-theme="parchment"] .filter-pill {
-  background: var(--bg-card);
+  background-color: var(--bg-card);
   color: var(--text-secondary);
   border-color: var(--border-subtle);
 }
 
 [data-theme="parchment"] .filter-pill.active {
-  background: var(--gold);
+  background-color: var(--gold);
   color: #fff;
 }
 
@@ -255,7 +258,7 @@
 }
 
 [data-theme="parchment"] #pnj-search {
-  background: #faf4e8;
+  background-color: #faf4e8;
 }
 
 /* ── Page header ─────────────────────────────────── */
@@ -268,6 +271,22 @@
   background: rgba(38, 8, 8, 0.92);
   border-color: rgba(140, 85, 25, 0.3);
   color: rgba(220, 180, 120, 0.65);
+}
+
+/* ── Texture grain fin sur les surfaces ──────────── */
+/* Appliquée APRÈS les règles background-color pour éviter la réinitialisation par le shorthand */
+[data-theme="parchment"] .card,
+[data-theme="parchment"] .video-card,
+[data-theme="parchment"] .accordion-body,
+[data-theme="parchment"] .accordion-item,
+[data-theme="parchment"] .accordion-header,
+[data-theme="parchment"] .sheet-card,
+[data-theme="parchment"] .pnj-detail-panel,
+[data-theme="parchment"] .pnj-modal-content,
+[data-theme="parchment"] .crop-modal-content {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.10'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
+  background-repeat: repeat;
 }
 
 /* ── Toggle bouton ───────────────────────────────── */
