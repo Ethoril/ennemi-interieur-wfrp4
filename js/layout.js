@@ -1,4 +1,4 @@
-const APP_VERSION = 'v1.6.11';
+const APP_VERSION = 'v1.6.12';
 
 const NAV_ITEMS = [
     { href: 'index.html',   label: 'Accueil' },
@@ -84,9 +84,7 @@ function injectFooter() {
             <p style="margin-top: 0.5rem; font-size: 0.8rem;">
                 Warhammer Fantasy Roleplay © Games Workshop. Ce site est un outil non officiel à usage personnel.${note}
             </p>
-            <p class="footer-vecteezy" style="margin-top: 0.4rem; font-size: 0.72rem; opacity: 0.55;">
-                Texture : <a href="https://fr.vecteezy.com/vecteur-libre/parchemin" target="_blank" rel="noopener" style="color: inherit;">Parchemin Vecteurs par Vecteezy</a>
-            </p>
+
         </div>`;
 }
 
