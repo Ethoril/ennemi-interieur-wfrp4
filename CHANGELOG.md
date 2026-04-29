@@ -6,6 +6,19 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.8.0] - 2026-04-28
+
+### Ajouté — Système d'avancement XP (fiche de personnage)
+- **Base de données compétences** (`js/data/skills.js`) : 31 compétences de base + 27 avancées avec carac associée et flag spécialisation
+- **Base de données carrières** (`js/data/careers.js`) : 3 carrières initiales (Agitateur, Artisan, Bourgeois) avec 4 rangs chacune — compétences et talents par rang
+- **Calme & Ragot** ajoutés aux compétences de base du tableau de fiche
+- **Formulaire d'achat XP transactionnel** : sélection guidée (type → cible → avances) avec calcul automatique du coût selon les règles WFRP4 (tranches 25/30/40/50/70/90 pour les caracs, 5/10/15/20/25/30 pour les compétences — ×2 hors carrière)
+- **Détection automatique "dans la carrière"** : la case est pré-cochée si la compétence/carac/talent figure dans la carrière active au rang actuel
+- **Application immédiate sur la fiche** : valider un achat met à jour la carac, la compétence ou le talent directement
+- **Annulation avec revert** : supprimer une entrée appliquée (badge ✓) revient en arrière sur la fiche
+
+---
+
 ## [1.7.1] - 2026-04-29
 
 ### Amélioré — Fiche de personnage
