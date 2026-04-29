@@ -6,6 +6,14 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.9.2] - 2026-04-29
+
+### Fiche — Carrière
+- **Autocomplétion** : le champ "Carrière actuelle" propose les carrières connues de la base de données
+- **Panneau référence carrière** : quand une carrière reconnue est saisie, un panneau s'affiche avec les caractéristiques, compétences et talents disponibles pour le rang sélectionné
+
+---
+
 ## [1.9.1] - 2026-04-29
 
 ### Correctif

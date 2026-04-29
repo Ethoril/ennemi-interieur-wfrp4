@@ -771,6 +771,68 @@
   background: rgba(100, 60, 20, 0.06);
 }
 
+/* ── Panneau référence carrière ──────────────────── */
+.career-detail-section {
+  padding: 0.75rem 1rem;
+  background: rgba(var(--accent-rgb, 180,140,60), 0.06);
+  border-left: 3px solid var(--color-accent, #b48c3c);
+}
+
+.career-detail-section h2 {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.career-rang-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--color-accent, #b48c3c);
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.career-detail-grid {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 0.75rem 1.5rem;
+  align-items: start;
+}
+
+.career-detail-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  opacity: .6;
+  margin-bottom: 0.25rem;
+}
+
+.career-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.career-tag {
+  display: inline-block;
+  font-size: 0.78rem;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(var(--accent-rgb, 180,140,60), 0.15);
+  border: 1px solid rgba(var(--accent-rgb, 180,140,60), 0.3);
+}
+
+.career-tag-talent {
+  background: rgba(80,120,200, 0.12);
+  border-color: rgba(80,120,200, 0.3);
+}
+
+@media (max-width: 700px) {
+  .career-detail-grid { grid-template-columns: 1fr; }
+}
+
 /* ── Responsive ──────────────────────────────────── */
 @media (max-width: 900px) {
   .fiche-header       { grid-template-columns: 1fr 1fr; }

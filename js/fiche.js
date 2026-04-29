@@ -552,6 +552,49 @@ function bindAdvancedSkills(tbody) {
 
 // ── Carrières ─────────────────────────────────────────
 
+function buildCareerDatalist() {
+    const dl = document.getElementById('career-names-list');
+    if (!dl || !window.WFRP_CAREERS) return;
+    dl.innerHTML = WFRP_CAREERS.map(c => `<option value="${c.nom}">`).join('');
+}
+
+function renderCareerDetail() {
+    const panel = document.getElementById('career-detail-panel');
+    if (!panel) return;
+
+    const career = getActiveCareerData();
+    if (!career) { panel.style.display = 'none'; return; }
+
+    const rang = Math.min(4, Math.max(1, +getVal('rang') || 1));
+    const rd   = career.rangs.find(r => r.rang === rang);
+    if (!rd)   { panel.style.display = 'none'; return; }
+
+    const CARAC_FULL = { cc:'CC', ct:'CT', f:'F', e:'E', i:'I', ag:'Ag', dex:'Dex', int:'Int', fm:'FM', soc:'Soc' };
+    const caracLabels = (career.carac || []).map(c => CARAC_FULL[c] || c).join(', ') || '—';
+    const skillsHtml  = (rd.skills  || []).map(s => `<span class="career-tag">${s}</span>`).join('') || '<em>—</em>';
+    const talentsHtml = (rd.talents || []).map(t => `<span class="career-tag career-tag-talent">${t}</span>`).join('') || '<em>—</em>';
+
+    panel.style.display = '';
+    panel.innerHTML = `
+        <div class="fiche-section career-detail-section">
+            <h2>${career.nom} — ${rd.titre} <span class="career-rang-badge">Rang ${rang}</span></h2>
+            <div class="career-detail-grid">
+                <div class="career-detail-col">
+                    <div class="career-detail-label">Caractéristiques</div>
+                    <div class="career-detail-tags">${caracLabels}</div>
+                </div>
+                <div class="career-detail-col">
+                    <div class="career-detail-label">Compétences (rang ${rang})</div>
+                    <div class="career-detail-tags">${skillsHtml}</div>
+                </div>
+                <div class="career-detail-col">
+                    <div class="career-detail-label">Talents (rang ${rang})</div>
+                    <div class="career-detail-tags">${talentsHtml}</div>
+                </div>
+            </div>
+        </div>`;
+}
+
 function renderCareers() {
     const tbody = document.getElementById('tbody-careers');
     if (!tbody) return;
@@ -779,6 +822,10 @@ function bindAll() {
     // Champs simples
     ['nom','carriere','rang','blessures-act','resilience','determination','chance','destin','corruption','possessions']
         .forEach(id => document.getElementById(id)?.addEventListener('input', save));
+
+    // Panneau référence carrière
+    ['carriere','rang'].forEach(id =>
+        document.getElementById(id)?.addEventListener('input', renderCareerDetail));
     ['race','xp-total'].forEach(id => document.getElementById(id)?.addEventListener('input', recalc));
 
     // Boutons ajout
@@ -830,8 +877,10 @@ function bindAll() {
 // ── Init ──────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+    buildCareerDatalist();
     buildBasicSkills();
     load();
+    renderCareerDetail();
     renderAdvancedSkills();
     renderCareers();
     renderTalents('acq');
