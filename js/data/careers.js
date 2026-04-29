@@ -139,3 +139,6 @@ const WFRP_CAREERS = [
         ],
     },
 ];
+
+// Exposition globale (const ne s'attache pas à window dans les balises <script>)
+window.WFRP_CAREERS = WFRP_CAREERS;
