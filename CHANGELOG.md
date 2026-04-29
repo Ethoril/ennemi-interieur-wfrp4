@@ -6,6 +6,13 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.9.1] - 2026-04-29
+
+### Correctif
+- **Hotfix `window.WFRP_SKILLS`** : `const` en balise `<script>` ne s'attache pas à `window` — ajout de `window.WFRP_SKILLS`, `window.WFRP_SKILL_GROUPS_WITH_SPECS` et `window.WFRP_CAREERS` à la fin des fichiers de données pour que toutes les fonctions de `fiche.js` (autocomplete, dropdown groupe/spéc, détection carrière) fonctionnent correctement
+
+---
+
 ## [1.9.0] - 2026-04-29
 
 ### Données & compétences

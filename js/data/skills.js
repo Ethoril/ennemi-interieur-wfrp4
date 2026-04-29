@@ -206,3 +206,7 @@ const WFRP_SKILLS = [
 const WFRP_SKILL_GROUPS_WITH_SPECS = [
     ...new Set(WFRP_SKILLS.filter(s => s.spec).map(s => s.group)),
 ];
+
+// Exposition globale (const ne s'attache pas à window dans les balises <script>)
+window.WFRP_SKILLS = WFRP_SKILLS;
+window.WFRP_SKILL_GROUPS_WITH_SPECS = WFRP_SKILL_GROUPS_WITH_SPECS;
