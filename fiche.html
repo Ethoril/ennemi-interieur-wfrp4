@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Fiche de Personnage — L'Ennemi Intérieur</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/fiche.css">
+</head>
+
+<body>
+
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="page-container">
+
+        <div class="page-header fade-in">
+            <h1>Fiche de Personnage</h1>
+            <p>Sauvegarde automatique dans le navigateur.</p>
+        </div>
+
+        <section class="section" style="padding-top: 0;">
+            <div class="container">
+                <div class="fiche-sheet">
+
+                    <!-- ══ INFORMATIONS GÉNÉRALES ══ -->
+                    <div class="fiche-header">
+                        <div class="fiche-field">
+                            <label>Nom</label>
+                            <input type="text" id="nom" placeholder="Nom du personnage">
+                        </div>
+                        <div class="fiche-field">
+                            <label>Race</label>
+                            <select id="race">
+                                <option value="humain">Humain</option>
+                                <option value="nain">Nain</option>
+                                <option value="elfe">Elfe</option>
+                                <option value="halfling">Halfling</option>
+                            </select>
+                        </div>
+                        <div class="fiche-field">
+                            <label>Carrière</label>
+                            <input type="text" id="carriere" placeholder="Carrière actuelle">
+                        </div>
+                        <div class="fiche-field">
+                            <label>Rang</label>
+                            <input type="number" id="rang" min="1" max="4" value="1">
+                        </div>
+
+                        <div class="fiche-xp-block">
+                            <div class="fiche-field">
+                                <label>XP Total</label>
+                                <input type="number" id="xp-total" min="0" value="0">
+                            </div>
+                            <div class="fiche-field">
+                                <label>XP Dépensé</label>
+                                <input type="number" id="xp-spent" min="0" value="0">
+                            </div>
+                            <div class="xp-dispo">
+                                <label>XP Disponible</label>
+                                <span class="xp-dispo-val" id="xp-dispo">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ══ CARACTÉRISTIQUES ══ -->
+                    <div class="fiche-section">
+                        <h2>Caractéristiques</h2>
+                        <div class="carac-wrapper">
+                            <table class="carac-table">
+                                <thead>
+                                    <tr>
+                                        <th>CC</th><th>CT</th><th>F</th><th>E</th><th>I</th>
+                                        <th>Ag</th><th>Dex</th><th>Int</th><th>FM</th><th>Soc</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="carac-row-header"><td colspan="10">Base</td></tr>
+                                    <tr>
+                                        <td><input class="carac-input" id="base-cc"  type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="base-ct"  type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="base-f"   type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="base-e"   type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="base-i"   type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="base-ag"  type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="base-dex" type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="base-int" type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="base-fm"  type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="base-soc" type="number" min="0" max="99" value="0"></td>
+                                    </tr>
+                                    <tr class="carac-row-header"><td colspan="10">Avances</td></tr>
+                                    <tr>
+                                        <td><input class="carac-input" id="adv-cc"  type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="adv-ct"  type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="adv-f"   type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="adv-e"   type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="adv-i"   type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="adv-ag"  type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="adv-dex" type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="adv-int" type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="adv-fm"  type="number" min="0" max="99" value="0"></td>
+                                        <td><input class="carac-input" id="adv-soc" type="number" min="0" max="99" value="0"></td>
+                                    </tr>
+                                    <tr class="carac-row-header"><td colspan="10">Total</td></tr>
+                                    <tr>
+                                        <td class="carac-total-cell"><span id="total-cc">0</span></td>
+                                        <td class="carac-total-cell"><span id="total-ct">0</span></td>
+                                        <td class="carac-total-cell"><span id="total-f">0</span></td>
+                                        <td class="carac-total-cell"><span id="total-e">0</span></td>
+                                        <td class="carac-total-cell"><span id="total-i">0</span></td>
+                                        <td class="carac-total-cell"><span id="total-ag">0</span></td>
+                                        <td class="carac-total-cell"><span id="total-dex">0</span></td>
+                                        <td class="carac-total-cell"><span id="total-int">0</span></td>
+                                        <td class="carac-total-cell"><span id="total-fm">0</span></td>
+                                        <td class="carac-total-cell"><span id="total-soc">0</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ══ STATS DÉRIVÉES ══ -->
+                    <div class="fiche-section">
+                        <h2>Stats Dérivées</h2>
+                        <div class="derived-grid">
+                            <div class="derived-stat">
+                                <label>Mouvement</label>
+                                <span class="derived-stat-val" id="mouvement">4</span>
+                            </div>
+                            <div class="derived-stat">
+                                <label>Blessures max</label>
+                                <span class="derived-stat-val" id="blessures-max">0</span>
+                            </div>
+                            <div class="derived-separator"></div>
+                            <div class="derived-stat">
+                                <label>Blessures actuelles</label>
+                                <input type="number" id="blessures-act" min="0" value="0">
+                            </div>
+                            <div class="derived-stat">
+                                <label>Résilience max</label>
+                                <input type="number" id="resilience" min="0" value="0">
+                            </div>
+                            <div class="derived-stat">
+                                <label>Détermination</label>
+                                <input type="number" id="determination" min="0" value="0">
+                            </div>
+                            <div class="derived-stat">
+                                <label>Fortune</label>
+                                <input type="number" id="fortune" min="0" value="0">
+                            </div>
+                            <div class="derived-stat">
+                                <label>Destin</label>
+                                <input type="number" id="destin" min="0" value="0">
+                            </div>
+                            <div class="derived-stat">
+                                <label>Corruption</label>
+                                <input type="number" id="corruption" min="0" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ══ COMPÉTENCES ══ -->
+                    <div class="fiche-section">
+                        <h2>Compétences</h2>
+                        <div class="fiche-skills-grid">
+
+                            <!-- Compétences de base -->
+                            <div>
+                                <table class="skills-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Compétence de base</th>
+                                            <th class="col-num">Carac.</th>
+                                            <th class="col-num">Val.</th>
+                                            <th class="col-num">Av.</th>
+                                            <th class="col-num">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-skills-basic"></tbody>
+                                </table>
+                            </div>
+
+                            <!-- Compétences avancées -->
+                            <div>
+                                <table class="skills-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Compétence avancée</th>
+                                            <th class="col-num">Carac.</th>
+                                            <th class="col-num">Val.</th>
+                                            <th class="col-num">Av.</th>
+                                            <th class="col-num">Total</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-skills-advanced"></tbody>
+                                </table>
+                                <button class="btn-add" id="btn-add-adv-skill">+ Ajouter une compétence</button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ══ TALENTS ══ -->
+                    <div class="fiche-section">
+                        <h2>Talents</h2>
+                        <div class="fiche-talents-grid">
+                            <div>
+                                <table class="talents-table">
+                                    <thead><tr><th>Talents acquis</th><th>Notes</th></tr></thead>
+                                    <tbody>
+                                        <tr class="empty-row"><td colspan="2">À compléter</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div>
+                                <table class="talents-table">
+                                    <thead><tr><th>Talents achetables (carrière)</th><th>Coût XP</th></tr></thead>
+                                    <tbody>
+                                        <tr class="empty-row"><td colspan="2">À compléter</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ══ POSSESSIONS ══ -->
+                    <div class="fiche-section">
+                        <h2>Possessions &amp; Notes</h2>
+                        <textarea id="possessions" placeholder="Équipement, argent, objets notables…"></textarea>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <div class="ornament">⚜</div>
+        <footer class="footer" id="site-footer"></footer>
+
+    </div>
+
+    <script src="js/layout.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/fiche.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,479 @@
+/* ================================================
+   FICHE DE PERSONNAGE — WFRP4
+   ================================================ */
+
+.fiche-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+  padding-bottom: var(--space-3xl);
+}
+
+/* ── Infos générales ─────────────────────────────── */
+.fiche-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr 1fr;
+  gap: var(--space-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg) var(--space-xl);
+}
+
+.fiche-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fiche-field label {
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.fiche-field input,
+.fiche-field select {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 5px 8px;
+  transition: border-color var(--transition-fast);
+}
+
+.fiche-field input:focus,
+.fiche-field select:focus {
+  outline: none;
+  border-color: var(--border-gold);
+}
+
+.fiche-xp-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--space-md);
+  grid-column: span 4;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-md);
+  margin-top: var(--space-xs);
+}
+
+.xp-dispo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xp-dispo label {
+  font-family: var(--font-heading);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.xp-dispo-val {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  color: var(--gold);
+  padding: 4px 0;
+}
+
+/* ── Sections ────────────────────────────────────── */
+.fiche-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg) var(--space-xl);
+}
+
+.fiche-section h2 {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* ── Caractéristiques ────────────────────────────── */
+.carac-wrapper {
+  overflow-x: auto;
+}
+
+.carac-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 600px;
+}
+
+.carac-table th {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  text-align: center;
+  padding: var(--space-sm);
+  background: rgba(201, 168, 76, 0.06);
+  border: 1px solid var(--border-subtle);
+}
+
+.carac-table td {
+  text-align: center;
+  padding: 4px var(--space-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.carac-row-header td {
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--bg-darkest);
+  padding: 3px var(--space-sm);
+}
+
+.carac-input {
+  width: 56px;
+  text-align: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 4px;
+  transition: border-color var(--transition-fast);
+}
+
+.carac-input:focus {
+  outline: none;
+  border-color: var(--border-gold);
+}
+
+.carac-total-cell {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+  background: rgba(201, 168, 76, 0.05);
+}
+
+/* ── Stats dérivées ──────────────────────────────── */
+.derived-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-md);
+}
+
+.derived-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  text-align: center;
+}
+
+.derived-stat label {
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.derived-stat-val {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  color: var(--gold-bright);
+  min-width: 3rem;
+}
+
+.derived-stat input {
+  width: 72px;
+  text-align: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  padding: 4px 8px;
+}
+
+.derived-stat input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.derived-separator {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: var(--border-subtle);
+  margin: var(--space-xs) 0;
+}
+
+/* ── Compétences ─────────────────────────────────── */
+.fiche-skills-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xl);
+}
+
+.skills-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.skills-table th {
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.skills-table th.col-num {
+  text-align: center;
+}
+
+.skills-table td {
+  padding: 3px var(--space-sm);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.06);
+  vertical-align: middle;
+}
+
+.skills-table tr:hover td {
+  background: rgba(201, 168, 76, 0.04);
+}
+
+.sk-nom {
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.sk-carac-lbl {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  color: var(--gold-dim);
+  text-align: center;
+}
+
+.sk-carac-val,
+.sk-total {
+  text-align: center;
+  font-family: var(--font-heading);
+}
+
+.sk-total {
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+.sk-adv {
+  width: 52px;
+  text-align: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 3px;
+}
+
+.sk-adv:focus {
+  outline: none;
+  border-color: var(--border-gold);
+}
+
+.sk-nom-input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 3px 6px;
+}
+
+.sk-carac-sel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  padding: 2px 4px;
+}
+
+.btn-rm-adv-skill {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 2px 6px;
+  transition: all var(--transition-fast);
+}
+
+.btn-rm-adv-skill:hover {
+  border-color: var(--blood);
+  color: var(--blood-bright);
+}
+
+.btn-add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  transition: all var(--transition-fast);
+}
+
+.btn-add:hover {
+  border-color: var(--border-gold);
+  color: var(--gold);
+}
+
+.empty-row td {
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: var(--space-md);
+}
+
+/* ── Talents ─────────────────────────────────────── */
+.fiche-talents-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xl);
+}
+
+.talents-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.talents-table th {
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.talents-table td {
+  padding: 4px var(--space-sm);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.06);
+  vertical-align: top;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+}
+
+/* ── Possessions ─────────────────────────────────── */
+#possessions {
+  width: 100%;
+  min-height: 120px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  padding: var(--space-md);
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+}
+
+#possessions:focus {
+  outline: none;
+  border-color: var(--border-gold);
+}
+
+/* ── Portrait placeholder (groupe.html) ──────────── */
+.character-portrait--placeholder {
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+}
+
+.char-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-family: var(--font-body);
+  font-style: italic;
+}
+
+/* ── Thème parchemin ─────────────────────────────── */
+[data-theme="parchment"] .fiche-header,
+[data-theme="parchment"] .fiche-section {
+  background-color: var(--bg-card);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.10'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
+}
+
+[data-theme="parchment"] .carac-input,
+[data-theme="parchment"] .sk-adv,
+[data-theme="parchment"] .sk-nom-input,
+[data-theme="parchment"] .sk-carac-sel,
+[data-theme="parchment"] .derived-stat input,
+[data-theme="parchment"] #possessions,
+[data-theme="parchment"] .fiche-field input,
+[data-theme="parchment"] .fiche-field select {
+  background-color: #faf4e8;
+  color: var(--text-primary);
+  border-color: var(--border-gold);
+}
+
+[data-theme="parchment"] .carac-row-header td {
+  background: rgba(100, 60, 20, 0.08);
+}
+
+[data-theme="parchment"] .carac-total-cell {
+  background: rgba(100, 60, 20, 0.06);
+}
+
+/* ── Responsive ──────────────────────────────────── */
+@media (max-width: 900px) {
+  .fiche-header       { grid-template-columns: 1fr 1fr; }
+  .fiche-xp-block     { grid-column: span 2; }
+  .fiche-skills-grid,
+  .fiche-talents-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .fiche-header       { grid-template-columns: 1fr; }
+  .fiche-xp-block     { grid-column: span 1; grid-template-columns: 1fr 1fr 1fr; }
+  .derived-grid       { grid-template-columns: repeat(3, 1fr); }
+}

@@ -6,6 +6,20 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.7.0] - 2026-04-29
+
+### Ajouté
+- **Fiche de personnage HTML** (`fiche.html`) : première version interactive
+  - 10 caractéristiques avec base / avances / total auto-calculé
+  - Stats dérivées : Mouvement (selon race), Blessures max (FB + 2×EB + FMB), trackers éditables
+  - 29 compétences de base avec valeur de caractéristique et total auto-calculés
+  - Compétences avancées ajoutables dynamiquement
+  - Sections Talents et Possessions
+  - Sauvegarde automatique en localStorage
+- **Le Groupe** : 6ème carte "Fiche HTML" pointant vers `fiche.html`
+
+---
+
 ## [1.6.12] - 2026-04-28
 
 ### Supprimé
