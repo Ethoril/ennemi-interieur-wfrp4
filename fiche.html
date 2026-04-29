@@ -42,8 +42,8 @@
                             </select>
                         </div>
                         <div class="fiche-field">
-                            <label>Carrière</label>
-                            <input type="text" id="carriere" placeholder="Carrière actuelle">
+                            <label>Carrière actuelle</label>
+                            <input type="text" id="carriere" placeholder="Carrière">
                         </div>
                         <div class="fiche-field">
                             <label>Rang</label>
@@ -55,13 +55,13 @@
                                 <label>XP Total</label>
                                 <input type="number" id="xp-total" min="0" value="0">
                             </div>
-                            <div class="fiche-field">
-                                <label>XP Dépensé</label>
-                                <input type="number" id="xp-spent" min="0" value="0">
+                            <div class="xp-dispo">
+                                <label>XP Dépensé <span class="xp-from-log">(depuis journal)</span></label>
+                                <span class="xp-dispo-val" id="xp-spent-display">0</span>
                             </div>
                             <div class="xp-dispo">
                                 <label>XP Disponible</label>
-                                <span class="xp-dispo-val" id="xp-dispo">0</span>
+                                <span class="xp-dispo-val xp-dispo-avail" id="xp-dispo">0</span>
                             </div>
                         </div>
                     </div>
@@ -148,8 +148,8 @@
                                 <input type="number" id="determination" min="0" value="0">
                             </div>
                             <div class="derived-stat">
-                                <label>Fortune</label>
-                                <input type="number" id="fortune" min="0" value="0">
+                                <label>Chance</label>
+                                <input type="number" id="chance" min="0" value="0">
                             </div>
                             <div class="derived-stat">
                                 <label>Destin</label>
@@ -162,12 +162,27 @@
                         </div>
                     </div>
 
+                    <!-- ══ HISTORIQUE DES CARRIÈRES ══ -->
+                    <div class="fiche-section">
+                        <h2>Historique des Carrières</h2>
+                        <table class="career-table">
+                            <thead>
+                                <tr>
+                                    <th>Carrière</th>
+                                    <th class="col-num">Rang atteint</th>
+                                    <th>Notes</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-careers"></tbody>
+                        </table>
+                        <button class="btn-add" id="btn-add-career">+ Ancienne carrière</button>
+                    </div>
+
                     <!-- ══ COMPÉTENCES ══ -->
                     <div class="fiche-section">
                         <h2>Compétences</h2>
                         <div class="fiche-skills-grid">
-
-                            <!-- Compétences de base -->
                             <div>
                                 <table class="skills-table">
                                     <thead>
@@ -182,8 +197,6 @@
                                     <tbody id="tbody-skills-basic"></tbody>
                                 </table>
                             </div>
-
-                            <!-- Compétences avancées -->
                             <div>
                                 <table class="skills-table">
                                     <thead>
@@ -200,7 +213,6 @@
                                 </table>
                                 <button class="btn-add" id="btn-add-adv-skill">+ Ajouter une compétence</button>
                             </div>
-
                         </div>
                     </div>
 
@@ -211,19 +223,88 @@
                             <div>
                                 <table class="talents-table">
                                     <thead><tr><th>Talents acquis</th><th>Notes</th></tr></thead>
-                                    <tbody>
-                                        <tr class="empty-row"><td colspan="2">À compléter</td></tr>
-                                    </tbody>
+                                    <tbody id="tbody-talents-acq"></tbody>
                                 </table>
+                                <button class="btn-add" id="btn-add-talent-acq">+ Ajouter</button>
                             </div>
                             <div>
                                 <table class="talents-table">
                                     <thead><tr><th>Talents achetables (carrière)</th><th>Coût XP</th></tr></thead>
-                                    <tbody>
-                                        <tr class="empty-row"><td colspan="2">À compléter</td></tr>
-                                    </tbody>
+                                    <tbody id="tbody-talents-avail"></tbody>
                                 </table>
+                                <button class="btn-add" id="btn-add-talent-avail">+ Ajouter</button>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- ══ SORTS (optionnel) ══ -->
+                    <div class="fiche-section fiche-optional" id="section-sorts" style="display:none">
+                        <h2>
+                            Sorts
+                            <button class="btn-close-section" data-target="section-sorts">× Masquer</button>
+                        </h2>
+                        <table class="skills-table">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Vent / Type</th>
+                                    <th>CN</th>
+                                    <th>Portée</th>
+                                    <th>Durée</th>
+                                    <th>Résumé</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-sorts"></tbody>
+                        </table>
+                        <button class="btn-add" id="btn-add-sort">+ Ajouter un sort</button>
+                    </div>
+
+                    <!-- ══ PRIÈRES & MIRACLES (optionnel) ══ -->
+                    <div class="fiche-section fiche-optional" id="section-prieres" style="display:none">
+                        <h2>
+                            Prières &amp; Miracles
+                            <button class="btn-close-section" data-target="section-prieres">× Masquer</button>
+                        </h2>
+                        <table class="skills-table">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Type</th>
+                                    <th>Résumé / Effets</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-prieres"></tbody>
+                        </table>
+                        <button class="btn-add" id="btn-add-priere">+ Ajouter</button>
+                    </div>
+
+                    <!-- ══ BOUTONS SECTIONS OPTIONNELLES ══ -->
+                    <div class="optional-toggles">
+                        <span class="optional-label">Sections optionnelles :</span>
+                        <button class="btn-toggle-opt" data-target="section-sorts">+ Sorts</button>
+                        <button class="btn-toggle-opt" data-target="section-prieres">+ Prières &amp; Miracles</button>
+                    </div>
+
+                    <!-- ══ HISTORIQUE XP ══ -->
+                    <div class="fiche-section">
+                        <h2>Journal XP</h2>
+                        <table class="xp-log-table">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Achat</th>
+                                    <th class="col-num">Coût</th>
+                                    <th>Note</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-xp-log"></tbody>
+                        </table>
+                        <div class="xp-log-footer">
+                            <button class="btn-add" id="btn-add-xp">+ Ajouter une dépense</button>
+                            <span class="xp-log-total">Total journalisé : <strong id="xp-log-total">0</strong> XP</span>
                         </div>
                     </div>
 
