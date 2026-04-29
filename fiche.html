@@ -43,7 +43,8 @@
                         </div>
                         <div class="fiche-field">
                             <label>Carrière actuelle</label>
-                            <input type="text" id="carriere" placeholder="Carrière">
+                            <input type="text" id="carriere" placeholder="Carrière" list="career-names-list" autocomplete="off">
+                            <datalist id="career-names-list"></datalist>
                         </div>
                         <div class="fiche-field">
                             <label>Rang</label>
@@ -161,6 +162,9 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- ══ RÉFÉRENCE CARRIÈRE ══ -->
+                    <div id="career-detail-panel" style="display:none"></div>
 
                     <!-- ══ HISTORIQUE DES CARRIÈRES ══ -->
                     <div class="fiche-section">
