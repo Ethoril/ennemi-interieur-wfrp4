@@ -435,6 +435,194 @@
   font-style: italic;
 }
 
+/* ── XP header ───────────────────────────────────── */
+.xp-from-log {
+  font-size: 0.6rem;
+  opacity: 0.6;
+  font-style: italic;
+  font-family: var(--font-body);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.xp-dispo-avail {
+  color: var(--gold-bright);
+}
+
+/* ── Carrières ───────────────────────────────────── */
+.career-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.career-table th {
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.career-table td {
+  padding: 4px var(--space-sm);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.06);
+  vertical-align: middle;
+}
+
+.career-input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 3px 6px;
+}
+
+.career-rang {
+  width: 52px;
+  text-align: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+  padding: 3px 6px;
+}
+
+.career-note {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  padding: 3px 6px;
+  font-style: italic;
+}
+
+/* ── Sections optionnelles ───────────────────────── */
+.optional-toggles {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.optional-label {
+  font-family: var(--font-heading);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.btn-toggle-opt {
+  background: none;
+  border: 1px solid var(--border-gold);
+  border-radius: 20px;
+  color: var(--gold-dim);
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  padding: 5px 14px;
+  transition: all var(--transition-fast);
+}
+
+.btn-toggle-opt:hover {
+  background: rgba(201, 168, 76, 0.1);
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.fiche-section h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.btn-close-section {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-family: var(--font-heading);
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  transition: color var(--transition-fast);
+}
+
+.btn-close-section:hover { color: var(--blood-bright); }
+
+/* ── Sorts / Prières ─────────────────────────────── */
+.sort-wide {
+  min-width: 160px;
+}
+
+/* ── Journal XP ──────────────────────────────────── */
+.xp-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.xp-log-table th {
+  font-family: var(--font-heading);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.xp-log-table td {
+  padding: 4px var(--space-sm);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.06);
+  vertical-align: middle;
+}
+
+.xp-log-table input[type="text"],
+.xp-log-table select {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  padding: 3px 6px;
+  width: 100%;
+}
+
+.xp-log-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-md);
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.xp-log-total {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.xp-log-total strong {
+  color: var(--gold);
+}
+
 /* ── Thème parchemin ─────────────────────────────── */
 [data-theme="parchment"] .fiche-header,
 [data-theme="parchment"] .fiche-section {

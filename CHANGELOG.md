@@ -6,6 +6,18 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.7.1] - 2026-04-29
+
+### Amélioré — Fiche de personnage
+- **Fortune → Chance** (renommage)
+- **Historique des carrières** : tableau d'anciennes carrières (nom, rang atteint, notes)
+- **Sorts** : section optionnelle (masquée par défaut) avec nom, vent de magie, CN, portée, durée, résumé
+- **Prières & Miracles** : section optionnelle avec type (Bénédiction / Miracle) et résumé
+- **Journal XP** : tableau de dépenses avec type, achat, coût — XP dépensé auto-calculé depuis le journal
+- **Talents** : tableaux "Acquis" et "Achetables" éditables (ajout/suppression dynamique)
+
+---
+
 ## [1.7.0] - 2026-04-29
 
 ### Ajouté
