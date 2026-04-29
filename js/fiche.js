@@ -11,44 +11,41 @@ const XP_TYPES = ['Caractéristique','Compétence','Talent','Sort','Prière','Mi
 
 const VENTS = ['Aqshy','Azyr','Chamon','Ghur','Ghyran','Hysh','Shyish','Ulgu','Magie Commune','Autre'];
 
+// Compétences de base affichées sur la fiche (une ligne par groupe, Corps à corps avec "(Base)").
+// Les spécialisations de ces groupes se créent dans la section Compétences avancées.
 const BASIC_SKILLS = [
-    { nom:'Art',                       carac:'dex' },
-    { nom:'Athlétisme',                carac:'ag'  },
-    { nom:'Baratin',                   carac:'soc' },
-    { nom:'Calme',                     carac:'fm'  },
-    { nom:'Charme',                    carac:'soc' },
-    { nom:'Charme Animal',             carac:'fm'  },
-    { nom:'Commandement',              carac:'soc' },
-    { nom:'Commerce',                  carac:'int' },
-    { nom:'Conduite',                  carac:'ag'  },
-    { nom:'Corps à Corps (Ordinaire)', carac:'cc'  },
-    { nom:'Crochetage',                carac:'dex' },
-    { nom:'Discrétion',                carac:'ag'  },
-    { nom:'Endurance',                 carac:'e'   },
-    { nom:'Équitation',                carac:'ag'  },
-    { nom:'Escamotage',                carac:'dex' },
-    { nom:'Esquive',                   carac:'ag'  },
-    { nom:'Expression Artistique',     carac:'soc' },
-    { nom:'Intimidation',              carac:'f'   },
-    { nom:'Intuition',                 carac:'i'   },
-    { nom:'Jeu',                       carac:'int' },
-    { nom:'Langue (Reikspiel)',        carac:'int' },
-    { nom:'Meneur',                    carac:'soc' },
-    { nom:'Nage',                      carac:'ag'  },
-    { nom:'Perception',                carac:'i'   },
-    { nom:'Persuasion',                carac:'soc' },
-    { nom:'Psychologie',               carac:'fm'  },
-    { nom:'Ragot',                     carac:'soc' },
-    { nom:'Sang-Froid',                carac:'fm'  },
-    { nom:'Soins',                     carac:'int' },
-    { nom:'Survie',                    carac:'int' },
-    { nom:'Tir (Ordinaire)',           carac:'ct'  },
+    { nom:'Art',                     carac:'dex' },
+    { nom:'Athlétisme',              carac:'ag'  },
+    { nom:'Calme',                   carac:'fm'  },
+    { nom:'Charme',                  carac:'soc' },
+    { nom:'Chevaucher',              carac:'ag'  },
+    { nom:'Commandement',            carac:'soc' },
+    { nom:'Conduite',                carac:'ag'  },
+    { nom:'Corps à corps (Base)',    carac:'cc'  },
+    { nom:'Discrétion',              carac:'ag'  },
+    { nom:'Divertissement',          carac:'soc' },
+    { nom:'Emprise sur les animaux', carac:'fm'  },
+    { nom:'Escalade',                carac:'f'   },
+    { nom:'Esquive',                 carac:'ag'  },
+    { nom:'Intimidation',            carac:'f'   },
+    { nom:'Intuition',               carac:'i'   },
+    { nom:'Marchandage',             carac:'soc' },
+    { nom:'Orientation',             carac:'i'   },
+    { nom:'Pari',                    carac:'int' },
+    { nom:'Perception',              carac:'i'   },
+    { nom:'Ragot',                   carac:'soc' },
+    { nom:'Ramer',                   carac:'f'   },
+    { nom:'Résistance',              carac:'e'   },
+    { nom:"Résistance à l'alcool",   carac:'e'   },
+    { nom:'Subornation',             carac:'soc' },
+    { nom:'Survie en extérieur',     carac:'int' },
 ];
 
 // ── Moteur XP ─────────────────────────────────────────
 
-const CARAC_XP_BANDS = [25, 30, 40, 50, 70, 90];
-const SKILL_XP_BANDS  = [5,  10, 15, 20, 25, 30];
+const CARAC_XP_BANDS    = [25, 30, 40, 50, 70, 90];
+const SKILL_XP_BANDS    = [5,  10, 15, 20, 25, 30];   // compétences de base
+const SKILL_XP_BANDS_ADV = [10, 15, 20, 25, 30, 35];  // compétences avancées
 
 function xpBandCost(bands, currentAdv, count, inCareer) {
     let total = 0;
@@ -150,6 +147,76 @@ function showXpForm() {
     document.getElementById('xf-cancel').addEventListener('click', () => { form.style.display = 'none'; });
 }
 
+// Retourne les groupes uniques (triés) pour le type donné ('basic' | 'adv' | 'all')
+function getSkillGroups(filter) {
+    if (!window.WFRP_SKILLS) return [];
+    const filtered = filter === 'all' ? WFRP_SKILLS
+        : WFRP_SKILLS.filter(s => filter === 'basic' ? s.basic : !s.basic);
+    return [...new Set(filtered.map(s => s.group))].sort((a, b) => a.localeCompare(b, 'fr'));
+}
+
+// Retourne les spécialisations connues pour un groupe (basic + advanced) + '' si sans-spec
+function getSpecsForGroup(group) {
+    if (!window.WFRP_SKILLS) return [];
+    return WFRP_SKILLS.filter(s => s.group === group && s.spec).map(s => s.spec);
+}
+
+// Carac d'un groupe de compétence
+function getCaracForGroup(group) {
+    if (!window.WFRP_SKILLS) return 'int';
+    return WFRP_SKILLS.find(s => s.group === group)?.carac || 'int';
+}
+
+// Nom complet sélectionné dans le formulaire XP
+function getXfSkillFullNom() {
+    const group = document.getElementById('xf-group')?.value || '';
+    if (!group) return '';
+    const specSel = document.getElementById('xf-spec-sel');
+    if (!specSel) return group;
+    const specVal = specSel.value;
+    if (specVal === '_custom') {
+        const custom = document.getElementById('xf-spec-custom')?.value?.trim() || '';
+        return custom ? `${group} (${custom})` : group;
+    }
+    return specVal ? `${group} (${specVal})` : group;
+}
+
+// Avances actuelles du skill sélectionné dans le formulaire
+function getXfSkillCurrentAdv(fullNom) {
+    if (!fullNom) return 0;
+    if (BASIC_SKILLS.some(s => s.nom === fullNom)) return state.skillsBasic[fullNom] || 0;
+    return state.skillsAdvanced.find(s => s.nom === fullNom)?.adv || 0;
+}
+
+function buildXfSpecPicker(group, wrap) {
+    const specs = getSpecsForGroup(group);
+    if (specs.length === 0) { wrap.innerHTML = ''; return; }
+
+    const specSel = document.createElement('select');
+    specSel.id = 'xf-spec-sel';
+    specSel.className = 'xf-spec-sel';
+    specSel.innerHTML =
+        specs.map(s => `<option value="${s}">${s}</option>`).join('') +
+        '<option value="_custom">Autre (personnalisé)…</option>';
+    wrap.appendChild(specSel);
+
+    const customInput = document.createElement('input');
+    customInput.type = 'text';
+    customInput.id = 'xf-spec-custom';
+    customInput.placeholder = 'Spécialisation…';
+    customInput.className = 'xf-spec-input';
+    customInput.style.display = 'none';
+    wrap.appendChild(customInput);
+
+    const onChange = () => {
+        customInput.style.display = specSel.value === '_custom' ? '' : 'none';
+        document.getElementById('xf-incareer').checked = isSkillInCareer(getXfSkillFullNom());
+        computeXfCost();
+    };
+    specSel.addEventListener('change', onChange);
+    customInput.addEventListener('input', onChange);
+}
+
 function updateXfTarget() {
     const type = document.getElementById('xf-type').value;
     const wrap = document.getElementById('xf-target-wrap');
@@ -169,46 +236,33 @@ function updateXfTarget() {
             computeXfCost();
         });
 
-    } else if (type === 'skill-basic') {
-        const sel = document.createElement('select');
-        sel.id = 'xf-target';
-        sel.innerHTML = '<option value="">— Compétence —</option>' +
-            BASIC_SKILLS.map(sk => {
-                const adv = state.skillsBasic[sk.nom] || 0;
-                return `<option value="${sk.nom}">${sk.nom} (av. ${adv})</option>`;
+    } else if (type === 'skill-basic' || type === 'skill-adv') {
+        const filter = type === 'skill-basic' ? 'basic' : 'adv';
+        const groups = getSkillGroups(filter);
+
+        // Sélecteur de groupe
+        const grpSel = document.createElement('select');
+        grpSel.id = 'xf-group';
+        grpSel.className = 'xf-group-sel';
+        grpSel.innerHTML = '<option value="">— Compétence —</option>' +
+            groups.map(g => {
+                const adv = getXfSkillCurrentAdv(g);
+                return `<option value="${g}">${g}${adv ? ` (av. ${adv})` : ''}</option>`;
             }).join('');
-        wrap.appendChild(sel);
-        sel.addEventListener('change', () => {
-            document.getElementById('xf-incareer').checked = isSkillInCareer(sel.value);
+        wrap.appendChild(grpSel);
+
+        // Zone du sélecteur de spécialisation
+        const specWrap = document.createElement('span');
+        specWrap.id = 'xf-spec-wrap';
+        specWrap.className = 'xf-target-wrap';
+        wrap.appendChild(specWrap);
+
+        grpSel.addEventListener('change', () => {
+            specWrap.innerHTML = '';
+            buildXfSpecPicker(grpSel.value, specWrap);
+            document.getElementById('xf-incareer').checked = isSkillInCareer(getXfSkillFullNom());
             computeXfCost();
         });
-
-    } else if (type === 'skill-adv') {
-        const advSkills = (window.WFRP_SKILLS || []).filter(s => !s.basic)
-            .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
-        const sel = document.createElement('select');
-        sel.id = 'xf-target';
-        sel.innerHTML = '<option value="">— Compétence —</option>' +
-            advSkills.map(sk =>
-                `<option value="${sk.nom}" data-spec="${sk.spec}">${sk.nom}</option>`
-            ).join('');
-        wrap.appendChild(sel);
-
-        const specInput = document.createElement('input');
-        specInput.type = 'text';
-        specInput.id = 'xf-spec';
-        specInput.placeholder = 'Spécialisation…';
-        specInput.className = 'xf-spec-input';
-        specInput.style.display = 'none';
-        wrap.appendChild(specInput);
-
-        sel.addEventListener('change', () => {
-            const opt = sel.options[sel.selectedIndex];
-            specInput.style.display = opt?.dataset.spec === 'true' ? '' : 'none';
-            document.getElementById('xf-incareer').checked = isSkillInCareer(sel.value);
-            computeXfCost();
-        });
-        specInput.addEventListener('input', computeXfCost);
 
     } else if (type === 'talent') {
         const inp = document.createElement('input');
@@ -236,20 +290,16 @@ function computeXfCost() {
 
     if (type === 'carac') {
         const carac = document.getElementById('xf-target')?.value;
-        if (carac) {
-            cost = xpBandCost(CARAC_XP_BANDS, state.carac[carac].adv || 0, avances, inCareer);
+        if (carac) cost = xpBandCost(CARAC_XP_BANDS, state.carac[carac].adv || 0, avances, inCareer);
+
+    } else if (type === 'skill-basic' || type === 'skill-adv') {
+        const fullNom = getXfSkillFullNom();
+        if (fullNom) {
+            const bands   = type === 'skill-basic' ? SKILL_XP_BANDS : SKILL_XP_BANDS_ADV;
+            const currAdv = getXfSkillCurrentAdv(fullNom);
+            cost = xpBandCost(bands, currAdv, avances, inCareer);
         }
-    } else if (type === 'skill-basic') {
-        const nom = document.getElementById('xf-target')?.value;
-        if (nom) {
-            cost = xpBandCost(SKILL_XP_BANDS, state.skillsBasic[nom] || 0, avances, inCareer);
-        }
-    } else if (type === 'skill-adv') {
-        const nom = document.getElementById('xf-target')?.value;
-        if (nom) {
-            const existing = state.skillsAdvanced.find(s => s.nom.split('(')[0].trim() === nom.split('(')[0].trim());
-            cost = xpBandCost(SKILL_XP_BANDS, existing?.adv || 0, avances, inCareer);
-        }
+
     } else if (type === 'talent') {
         cost = inCareer ? 100 : 200;
     }
@@ -263,12 +313,9 @@ function validateXpPurchase() {
     const avances  = Math.max(1, +document.getElementById('xf-avances')?.value || 1);
     const inCareer = document.getElementById('xf-incareer')?.checked ?? true;
     const cost     = computeXfCost();
-
     if (!type || cost <= 0) return;
 
-    let achatLabel = '';
-    let targetNom  = '';
-    let targetType = '';
+    let achatLabel = '', targetNom = '', targetType = '', targetStorage = '';
 
     if (type === 'carac') {
         const carac = document.getElementById('xf-target')?.value;
@@ -276,44 +323,41 @@ function validateXpPurchase() {
         state.carac[carac].adv = (state.carac[carac].adv || 0) + avances;
         setVal(`adv-${carac}`, state.carac[carac].adv);
         achatLabel = `${CARAC_LABELS[carac]} +${avances}`;
-        targetNom  = carac;
-        targetType = 'carac';
+        targetNom = carac; targetType = 'carac'; targetStorage = 'carac';
 
-    } else if (type === 'skill-basic') {
-        const nom = document.getElementById('xf-target')?.value;
-        if (!nom) return;
-        state.skillsBasic[nom] = (state.skillsBasic[nom] || 0) + avances;
-        const inp = document.querySelector(`.sk-adv[data-skill="${nom}"]`);
-        if (inp) inp.value = state.skillsBasic[nom];
-        achatLabel = `${nom} +${avances}`;
-        targetNom  = nom;
-        targetType = 'skill-basic';
+    } else if (type === 'skill-basic' || type === 'skill-adv') {
+        const fullNom = getXfSkillFullNom();
+        if (!fullNom) return;
+        const group = document.getElementById('xf-group')?.value || fullNom;
+        const carac = getCaracForGroup(group);
 
-    } else if (type === 'skill-adv') {
-        const nom  = document.getElementById('xf-target')?.value;
-        const spec = document.getElementById('xf-spec')?.value?.trim() || '';
-        if (!nom) return;
-        const fullNom = spec ? `${nom} (${spec})` : nom;
-        const skillDef = (window.WFRP_SKILLS || []).find(s => s.nom === nom);
-        let existing = state.skillsAdvanced.find(s => s.nom === fullNom);
-        if (!existing) {
-            state.skillsAdvanced.push({ nom: fullNom, carac: skillDef?.carac || 'int', adv: 0 });
-            existing = state.skillsAdvanced[state.skillsAdvanced.length - 1];
+        // Corps à corps (Base) et compétences sans spec → skillsBasic si elles y sont
+        const inBasicTable = BASIC_SKILLS.some(s => s.nom === fullNom);
+        if (inBasicTable) {
+            state.skillsBasic[fullNom] = (state.skillsBasic[fullNom] || 0) + avances;
+            const inp = document.querySelector(`.sk-adv[data-skill="${CSS.escape(fullNom)}"]`);
+            if (inp) inp.value = state.skillsBasic[fullNom];
+            targetStorage = 'skillsBasic';
+        } else {
+            // Spécialisation ou compétence avancée → skillsAdvanced
+            let existing = state.skillsAdvanced.find(s => s.nom === fullNom);
+            if (!existing) {
+                state.skillsAdvanced.push({ nom: fullNom, carac, adv: 0 });
+                existing = state.skillsAdvanced[state.skillsAdvanced.length - 1];
+            }
+            existing.adv = (existing.adv || 0) + avances;
+            renderAdvancedSkills();
+            targetStorage = 'skillsAdvanced';
         }
-        existing.adv = (existing.adv || 0) + avances;
-        renderAdvancedSkills();
         achatLabel = `${fullNom} +${avances}`;
-        targetNom  = fullNom;
-        targetType = 'skill-adv';
+        targetNom = fullNom; targetType = type;
 
     } else if (type === 'talent') {
         const nom = document.getElementById('xf-talent')?.value?.trim();
         if (!nom) return;
         state.talentsAcq.push({ nom, note: inCareer ? '' : 'hors carrière' });
         renderTalents('acq');
-        achatLabel = nom;
-        targetNom  = nom;
-        targetType = 'talent';
+        achatLabel = nom; targetNom = nom; targetType = 'talent'; targetStorage = 'talent';
     }
 
     state.xpLog.push({
@@ -322,8 +366,7 @@ function validateXpPurchase() {
         cout:      cost,
         note:      '',
         applied:   true,
-        targetNom,
-        targetType,
+        targetNom, targetType, targetStorage,
         avances:   type !== 'talent' ? avances : 1,
     });
 
@@ -334,20 +377,35 @@ function validateXpPurchase() {
 
 function revertXpEntry(entry) {
     if (!entry.applied) return;
-    const { targetType, targetNom, avances } = entry;
-    if (targetType === 'carac') {
+    const { targetStorage, targetNom, avances } = entry;
+    if (targetStorage === 'carac') {
         state.carac[targetNom].adv = Math.max(0, (state.carac[targetNom].adv || 0) - avances);
         setVal(`adv-${targetNom}`, state.carac[targetNom].adv);
-    } else if (targetType === 'skill-basic') {
+    } else if (targetStorage === 'skillsBasic') {
         state.skillsBasic[targetNom] = Math.max(0, (state.skillsBasic[targetNom] || 0) - avances);
-        const inp = document.querySelector(`.sk-adv[data-skill="${targetNom}"]`);
+        const inp = document.querySelector(`.sk-adv[data-skill="${CSS.escape(targetNom)}"]`);
         if (inp) inp.value = state.skillsBasic[targetNom];
-    } else if (targetType === 'skill-adv') {
+    } else if (targetStorage === 'skillsAdvanced') {
         const sk = state.skillsAdvanced.find(s => s.nom === targetNom);
         if (sk) { sk.adv = Math.max(0, (sk.adv || 0) - avances); renderAdvancedSkills(); }
-    } else if (targetType === 'talent') {
+    } else if (targetStorage === 'talent') {
         const idx = state.talentsAcq.map(t => t.nom).lastIndexOf(targetNom);
         if (idx >= 0) { state.talentsAcq.splice(idx, 1); renderTalents('acq'); }
+    } else {
+        // Rétrocompat : anciennes entrées sans targetStorage
+        const { targetType } = entry;
+        if (targetType === 'carac') {
+            state.carac[targetNom].adv = Math.max(0, (state.carac[targetNom].adv || 0) - avances);
+            setVal(`adv-${targetNom}`, state.carac[targetNom].adv);
+        } else if (targetType === 'skill-basic') {
+            state.skillsBasic[targetNom] = Math.max(0, (state.skillsBasic[targetNom] || 0) - avances);
+        } else if (targetType === 'skill-adv') {
+            const sk = state.skillsAdvanced.find(s => s.nom === targetNom);
+            if (sk) { sk.adv = Math.max(0, (sk.adv || 0) - avances); renderAdvancedSkills(); }
+        } else if (targetType === 'talent') {
+            const idx = state.talentsAcq.map(t => t.nom).lastIndexOf(targetNom);
+            if (idx >= 0) { state.talentsAcq.splice(idx, 1); renderTalents('acq'); }
+        }
     }
 }
 
@@ -438,13 +496,25 @@ function buildBasicSkills() {
 
 // ── Compétences avancées ──────────────────────────────
 
+function ensureSkillsDatalist() {
+    if (document.getElementById('wfrp-skills-list')) return;
+    const dl = document.createElement('datalist');
+    dl.id = 'wfrp-skills-list';
+    if (window.WFRP_SKILLS) {
+        dl.innerHTML = WFRP_SKILLS.map(s => `<option value="${s.nom}">`).join('');
+    }
+    document.body.appendChild(dl);
+}
+
 function renderAdvancedSkills() {
+    ensureSkillsDatalist();
     const tbody = document.getElementById('tbody-skills-advanced');
     if (!tbody) return;
     tbody.innerHTML = state.skillsAdvanced.length === 0
         ? `<tr class="empty-row"><td colspan="6">Aucune compétence avancée</td></tr>`
         : state.skillsAdvanced.map((sk, i) => `<tr>
-            <td><input class="sk-nom-input" type="text" data-idx="${i}" data-field="nom" value="${sk.nom}" placeholder="Nom"></td>
+            <td><input class="sk-nom-input" type="text" list="wfrp-skills-list"
+                       data-idx="${i}" value="${sk.nom}" placeholder="Nom ou Groupe (Spécialisation)"></td>
             <td><select class="sk-carac-sel" data-idx="${i}">
                 ${CARACS.map(c => `<option value="${c}" ${sk.carac===c?'selected':''}>${CARAC_LABELS[c]}</option>`).join('')}
             </select></td>
@@ -458,7 +528,20 @@ function renderAdvancedSkills() {
 
 function bindAdvancedSkills(tbody) {
     tbody.querySelectorAll('.sk-nom-input').forEach(inp =>
-        inp.addEventListener('input', () => { state.skillsAdvanced[+inp.dataset.idx].nom = inp.value; save(); }));
+        inp.addEventListener('input', () => {
+            const idx = +inp.dataset.idx;
+            state.skillsAdvanced[idx].nom = inp.value;
+            // Auto-remplir la carac si le nom correspond à une compétence connue
+            const found = window.WFRP_SKILLS?.find(s => s.nom === inp.value);
+            if (found) {
+                state.skillsAdvanced[idx].carac = found.carac;
+                const sel = tbody.querySelector(`.sk-carac-sel[data-idx="${idx}"]`);
+                if (sel) sel.value = found.carac;
+                recalc();
+            } else {
+                save();
+            }
+        }));
     tbody.querySelectorAll('.sk-carac-sel').forEach(sel =>
         sel.addEventListener('change', () => { state.skillsAdvanced[+sel.dataset.idx].carac = sel.value; recalc(); }));
     tbody.querySelectorAll('.sk-adv-adv').forEach(inp =>

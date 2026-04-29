@@ -680,7 +680,9 @@
   flex-wrap: wrap;
 }
 
-.xf-target-wrap select { min-width: 220px; }
+.xf-target-wrap select,
+.xf-group-sel { min-width: 220px; }
+.xf-spec-sel  { min-width: 180px; }
 .xf-spec-input,
 .xf-talent-input { min-width: 150px; }
 

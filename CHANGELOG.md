@@ -6,6 +6,24 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.9.0] - 2026-04-29
+
+### Données & compétences
+- **`skills.js` complet** : 158 entrées (44 de base + 114 avancées) issues du sheet officiel — chaque spécialisation est une entrée distincte avec `group`, `spec`, `nom`, `carac`, `basic`
+- **`BASIC_SKILLS` corrigé** : 25 compétences conformes au sheet (suppression des erreurs d'édition, ajout Chevaucher/Divertissement/Orientation/Ramer/etc., Corps à corps affiché comme "Corps à corps (Base)")
+
+### Journal XP — sélecteur à deux niveaux
+- **Groupe → Spécialisation** : le formulaire d'achat propose d'abord le groupe de compétence, puis un dropdown des spécialisations connues issues de la DB
+- **Option "Autre (personnalisé)…"** : permet de créer une nouvelle spécialisation non listée
+- Coût distingué : compétences de base 5/10/15… XP, avancées 10/15/20… XP
+- Détection "dans la carrière" mise à jour pour le nouveau sélecteur
+
+### Compétences avancées — autocomplete
+- Le champ de nom de compétence avancée supporte maintenant `<datalist>` avec les 158 compétences de la DB
+- La caractéristique est **auto-remplie** quand un nom reconnu est sélectionné
+
+---
+
 ## [1.8.0] - 2026-04-28
 
 ### Ajouté — Système d'avancement XP (fiche de personnage)
