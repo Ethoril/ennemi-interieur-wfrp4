@@ -623,6 +623,123 @@
   color: var(--gold);
 }
 
+/* ── Journal XP — entrées appliquées ────────────── */
+.xp-applied-row td:nth-child(1),
+.xp-applied-row td:nth-child(2),
+.xp-applied-row td:nth-child(3) {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.xp-applied-badge {
+  display: inline-block;
+  background: rgba(201, 168, 76, 0.15);
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 3px;
+  color: var(--gold);
+  font-size: 0.68rem;
+  font-family: var(--font-heading);
+  letter-spacing: 0.05em;
+  padding: 1px 5px;
+  vertical-align: middle;
+}
+
+/* ── Formulaire d'achat XP ───────────────────────── */
+#xp-add-form {
+  margin-top: var(--space-lg);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  background: var(--bg-card);
+}
+
+.xp-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.xp-form-row select,
+.xp-form-row input[type="text"],
+.xf-target-wrap select,
+.xf-target-wrap input[type="text"] {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 4px 8px;
+}
+
+.xf-target-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+}
+
+.xf-target-wrap select { min-width: 220px; }
+.xf-spec-input,
+.xf-talent-input { min-width: 150px; }
+
+.xf-avances-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.xf-avances-label input {
+  width: 60px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 4px 6px;
+  text-align: center;
+}
+
+.xf-incareer-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.xf-cost-row {
+  margin-top: var(--space-sm);
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.xf-cost-row strong {
+  color: var(--gold);
+  font-size: 1rem;
+}
+
+.xf-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.xf-actions .btn-add { margin-top: 0; }
+.xf-actions .btn-rm  { margin-top: 0; }
+
 /* ── Thème parchemin ─────────────────────────────── */
 [data-theme="parchment"] .fiche-header,
 [data-theme="parchment"] .fiche-section {
