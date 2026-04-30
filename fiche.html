@@ -17,9 +17,11 @@
 
     <div class="page-container">
 
-        <div class="page-header fade-in">
+        <div class="page-header fade-in fiche-page-header">
             <h1>Fiche de Personnage</h1>
-            <p>Sauvegarde automatique dans le navigateur.</p>
+            <div id="fiche-auth-bar" class="fiche-auth-bar">
+                <span class="fiche-auth-local">💾 Sauvegarde locale</span>
+            </div>
         </div>
 
         <section class="section" style="padding-top: 0;">
@@ -335,6 +337,7 @@
     <script src="js/data/skills.js"></script>
     <script src="js/data/careers.js"></script>
     <script src="js/fiche.js"></script>
+    <script type="module" src="js/fiche-cloud.js"></script>
 </body>
 
 </html>

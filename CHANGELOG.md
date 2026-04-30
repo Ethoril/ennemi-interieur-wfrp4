@@ -6,6 +6,27 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [2.0.0] - 2026-04-30
+
+### Sauvegarde cloud — Fiche de Personnage
+- **Firebase Auth** : bouton "Connexion Google" dans l'en-tête de la fiche ; seul `ethoril@gmail.com` est autorisé pour l'instant
+- **Firestore** : la fiche est sauvegardée dans `fiches/{uid}` avec debounce 2 s après chaque modification ; rechargement automatique au login
+- **Fallback localStorage** : si non connecté, la fiche continue de se sauvegarder localement ; la connexion charge le cloud par-dessus
+- **Fix bug** : les avances des compétences de base ne se restoraient pas après rechargement de page (`buildBasicSkills` s'exécutait avant `load`) — corrigé en inversant l'ordre d'init
+
+### Technique
+- `exportData()` / `resetState()` / `applyData()` extraits de `save()` / `load()` pour permettre le rechargement propre depuis le cloud
+- `js/fiche-cloud.js` : nouveau module ES isolé pour toute la logique Firebase de la fiche
+
+> **Règle Firestore à ajouter manuellement** dans la console Firebase :
+> ```
+> match /fiches/{userId} {
+>   allow read, write: if request.auth != null && request.auth.uid == userId;
+> }
+> ```
+
+---
+
 ## [1.9.3] - 2026-04-29
 
 ### Fiche — Carrière & Talents
