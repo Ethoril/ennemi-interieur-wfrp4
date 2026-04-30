@@ -779,7 +779,8 @@
   background: rgba(140, 90, 20, 0.20) !important;
 }
 
-[data-theme="parchment"] #tbody-skills-basic tr.skill-in-career {
+[data-theme="parchment"] #tbody-skills-basic tr.skill-in-career,
+[data-theme="parchment"] #tbody-skills-advanced tr.skill-in-career {
   background: rgba(140, 90, 20, 0.10);
 }
 
@@ -865,11 +866,13 @@
   opacity: .6;
 }
 
-#tbody-skills-basic tr.skill-in-career {
+#tbody-skills-basic tr.skill-in-career,
+#tbody-skills-advanced tr.skill-in-career {
   background: rgba(180, 140, 60, 0.10);
 }
 
-#tbody-skills-basic tr.skill-in-career td:first-child {
+#tbody-skills-basic tr.skill-in-career td:first-child,
+#tbody-skills-advanced tr.skill-in-career td:first-child {
   border-left: 3px solid var(--color-accent, #b48c3c);
   padding-left: 6px;
 }
