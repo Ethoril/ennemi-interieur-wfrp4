@@ -366,10 +366,60 @@
 }
 
 /* ── Talents ─────────────────────────────────────── */
-.fiche-talents-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-xl);
+.talents-acq-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 0.6rem;
+}
+
+.talent-empty {
+  font-style: italic;
+  opacity: .5;
+  font-size: 0.85rem;
+}
+
+.talent-chip-wrap,
+.talent-entry-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.talent-chip {
+  display: inline-block;
+  font-size: 0.82rem;
+  padding: 3px 10px;
+  border-radius: 3px;
+  background: rgba(80, 120, 200, 0.14);
+  border: 1px solid rgba(80, 120, 200, 0.32);
+  cursor: pointer;
+  transition: opacity .15s;
+  font-family: inherit;
+  color: inherit;
+}
+
+.talent-chip:hover {
+  opacity: .75;
+  text-decoration: underline;
+}
+
+.talent-hors-badge {
+  font-size: 0.7em;
+  color: #c06020;
+  font-weight: bold;
+  cursor: default;
+}
+
+.talent-rm {
+  font-size: 0.78rem;
+  padding: 1px 5px;
+  line-height: 1;
+}
+
+.talent-name-new {
+  font-size: 0.85rem;
+  padding: 3px 6px;
 }
 
 .talents-table {
@@ -1106,8 +1156,7 @@ tr.sk-ghost-open td.sk-nom::after {
 @media (max-width: 900px) {
   .fiche-header       { grid-template-columns: 1fr 1fr; }
   .fiche-xp-block     { grid-column: span 2; }
-  .fiche-skills-grid,
-  .fiche-talents-grid { grid-template-columns: 1fr; }
+  .fiche-skills-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 600px) {
