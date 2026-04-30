@@ -709,17 +709,16 @@
   text-align: center;
 }
 
-.xf-incareer-label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.xf-career-badge {
+  margin-left: .6rem;
+  font-size: .72rem;
   font-family: var(--font-heading);
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  cursor: pointer;
+  letter-spacing: .04em;
+  opacity: .75;
 }
+
+.xf-career-badge[data-career="yes"] { color: #4caf7d; }
+.xf-career-badge[data-career="no"]  { color: var(--text-muted); }
 
 .xf-cost-row {
   margin-top: var(--space-sm);
