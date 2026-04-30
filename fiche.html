@@ -19,12 +19,18 @@
 
         <div class="page-header fade-in fiche-page-header">
             <h1>Fiche de Personnage</h1>
-            <div id="fiche-auth-bar" class="fiche-auth-bar">
-                <span class="fiche-auth-local">💾 Sauvegarde locale</span>
+            <div id="fiche-auth-bar" class="fiche-auth-bar"></div>
+        </div>
+
+        <!-- Écran de connexion (visible par défaut, masqué après auth) -->
+        <div id="fiche-login-wall" class="fiche-login-wall">
+            <div class="fiche-login-box">
+                <p class="fiche-login-msg">Connexion requise pour accéder à la fiche.</p>
+                <button class="fiche-auth-btn fiche-login-btn" id="btn-login-wall">☁ Connexion Google</button>
             </div>
         </div>
 
-        <section class="section" style="padding-top: 0;">
+        <section class="section" style="padding-top: 0; display:none" id="fiche-content-section">
             <div class="container">
                 <div class="fiche-sheet">
 
@@ -325,7 +331,7 @@
 
                 </div>
             </div>
-        </section>
+        </section><!-- /fiche-content-section -->
 
         <div class="ornament">⚜</div>
         <footer class="footer" id="site-footer"></footer>
