@@ -6,6 +6,15 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [2.1.2] - 2026-04-30
+
+### Fiche de Personnage — Talents "au choix"
+- **Sélecteur de spécialisation pour les talents** : quand on saisit le nom de base d'un talent qui existe en version "au choix" dans une carrière (ex: "Maître artisan"), un sélecteur de spécialisation apparaît automatiquement avec les variantes connues + "Autre (personnalisé)…"
+- **Persistance `customTalents`** : une spécialisation de talent saisie manuellement est mémorisée et réapparaît dans le sélecteur aux prochains achats (sauvegardée dans le cloud)
+- **Détection carrière** : `isTalentInCareer("Maître artisan (Forgeron)")` reconnaît le talent comme dans la carrière si celle-ci possède "Maître artisan (au choix)"
+
+---
+
 ## [2.1.1] - 2026-04-30
 
 ### Fiche de Personnage — Carrières
