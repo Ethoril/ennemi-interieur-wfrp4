@@ -242,6 +242,74 @@ function getXfSkillCurrentAdv(fullNom) {
     return state.skillsAdvanced.find(s => s.nom === fullNom)?.adv || 0;
 }
 
+// Specs connues pour un groupe de talent (depuis toutes les carrières)
+function getTalentSpecsForGroup(groupBase) {
+    if (!window.WFRP_CAREERS) return [];
+    const lowerBase = groupBase.toLowerCase().trim();
+    const specs = new Set();
+    WFRP_CAREERS.forEach(c => c.rangs.forEach(r => r.talents.forEach(t => {
+        if (OPEN_SPEC_PATTERN.test(t)) return;
+        const tBase = t.split('(')[0].trim().toLowerCase();
+        const m = t.match(/\(([^)]+)\)$/);
+        if (tBase === lowerBase && m) specs.add(m[1].trim());
+    })));
+    return [...specs].sort((a, b) => a.localeCompare(b, 'fr'));
+}
+
+// Vérifie si un talent existe en version "au choix" dans une carrière quelconque
+function isTalentGroupOpen(groupBase) {
+    if (!window.WFRP_CAREERS) return false;
+    const lowerBase = groupBase.toLowerCase().trim();
+    return WFRP_CAREERS.some(c => c.rangs.some(r => r.talents.some(t =>
+        isOpenCareerSlot(t) && t.split('(')[0].trim().toLowerCase() === lowerBase
+    )));
+}
+
+function buildXfTalentSpecPicker(groupBase, wrap) {
+    wrap.innerHTML = '';
+    const knownSpecs  = getTalentSpecsForGroup(groupBase);
+    const customSpecs = state.customTalents[groupBase] || [];
+    const allSpecs    = [...new Set([...knownSpecs, ...customSpecs])];
+
+    const specSel = document.createElement('select');
+    specSel.id = 'xf-talent-spec-sel';
+    specSel.className = 'xf-spec-sel';
+    specSel.innerHTML =
+        allSpecs.map(s => `<option value="${s}">${s}</option>`).join('') +
+        '<option value="_custom">Autre (personnalisé)…</option>';
+    if (allSpecs.length === 0) specSel.value = '_custom';
+    wrap.appendChild(specSel);
+
+    const customInput = document.createElement('input');
+    customInput.type = 'text';
+    customInput.id = 'xf-talent-spec-custom';
+    customInput.placeholder = 'Spécialisation…';
+    customInput.className = 'xf-spec-input';
+    customInput.style.display = allSpecs.length === 0 ? '' : 'none';
+    wrap.appendChild(customInput);
+
+    const onChange = () => {
+        customInput.style.display = specSel.value === '_custom' ? '' : 'none';
+        computeXfCost();
+    };
+    specSel.addEventListener('change', onChange);
+    customInput.addEventListener('input', onChange);
+}
+
+function getXfTalentFullNom() {
+    const inp = document.getElementById('xf-talent');
+    if (!inp) return '';
+    const base = inp.value.trim();
+    if (!base) return '';
+    const specSel = document.getElementById('xf-talent-spec-sel');
+    if (!specSel) return base;
+    if (specSel.value === '_custom') {
+        const custom = document.getElementById('xf-talent-spec-custom')?.value?.trim() || '';
+        return custom ? `${base} (${custom})` : base;
+    }
+    return `${base} (${specSel.value})`;
+}
+
 function buildXfSpecPicker(group, wrap) {
     const knownSpecs  = getSpecsForGroup(group);
     const customSpecs = state.customSpecs[group] || [];
@@ -325,16 +393,37 @@ function updateXfTarget() {
         inp.setAttribute('autocomplete', 'off');
         wrap.appendChild(inp);
 
-        if (!document.getElementById('xf-talent-datalist') && window.WFRP_CAREERS) {
+        const talentSpecWrap = document.createElement('span');
+        talentSpecWrap.id = 'xf-talent-spec-wrap';
+        talentSpecWrap.className = 'xf-target-wrap';
+        wrap.appendChild(talentSpecWrap);
+
+        // Reconstruire la datalist (noms de base pour "au choix", noms complets sinon)
+        document.getElementById('xf-talent-datalist')?.remove();
+        if (window.WFRP_CAREERS) {
             const dl = document.createElement('datalist');
             dl.id = 'xf-talent-datalist';
             const talents = new Set();
-            WFRP_CAREERS.forEach(c => c.rangs.forEach(r => r.talents.forEach(t => talents.add(t))));
+            WFRP_CAREERS.forEach(c => c.rangs.forEach(r => r.talents.forEach(t => {
+                if (isOpenCareerSlot(t)) talents.add(t.split('(')[0].trim());
+                else talents.add(t);
+            })));
+            Object.entries(state.customTalents).forEach(([base, specs]) =>
+                specs.forEach(spec => talents.add(`${base} (${spec})`))
+            );
             dl.innerHTML = [...talents].sort((a, b) => a.localeCompare(b, 'fr')).map(t => `<option value="${t}">`).join('');
             document.body.appendChild(dl);
         }
 
-        inp.addEventListener('input', computeXfCost);
+        inp.addEventListener('input', () => {
+            const val = inp.value.trim();
+            if (val && isTalentGroupOpen(val)) {
+                buildXfTalentSpecPicker(val, talentSpecWrap);
+            } else {
+                talentSpecWrap.innerHTML = '';
+            }
+            computeXfCost();
+        });
     }
     computeXfCost();
 }
@@ -348,7 +437,7 @@ function getXfInCareer() {
         const nom = getXfSkillFullNom();
         return nom ? isSkillInCareer(nom) : false;
     } else if (type === 'talent') {
-        const nom = document.getElementById('xf-talent')?.value || '';
+        const nom = getXfTalentFullNom();
         return nom ? isTalentInCareer(nom) : false;
     }
     return false;
@@ -452,8 +541,20 @@ function validateXpPurchase() {
         targetNom = fullNom; targetType = type;
 
     } else if (type === 'talent') {
-        const nom = document.getElementById('xf-talent')?.value?.trim();
+        const nom = getXfTalentFullNom();
         if (!nom) return;
+
+        // Mémoriser la spécialisation personnalisée
+        const specSel = document.getElementById('xf-talent-spec-sel');
+        if (specSel?.value === '_custom') {
+            const base     = document.getElementById('xf-talent')?.value?.trim();
+            const customVal = document.getElementById('xf-talent-spec-custom')?.value?.trim();
+            if (base && customVal) {
+                if (!state.customTalents[base]) state.customTalents[base] = [];
+                if (!state.customTalents[base].includes(customVal)) state.customTalents[base].push(customVal);
+            }
+        }
+
         state.talentsAcq.push({ nom, note: inCareer ? '' : 'hors carrière' });
         renderTalents('acq');
         achatLabel = nom; targetNom = nom; targetType = 'talent'; targetStorage = 'talent';
@@ -521,6 +622,7 @@ const state = {
     prieres:        [],
     xpLog:          [],
     customSpecs:    {},   // { 'Métier': ['Boulangerie', 'Tonnelier'], ... }
+    customTalents:  {},   // { 'Maître artisan': ['Apothicaire', 'Forgeron'], ... }
     optVisible:     { 'section-sorts': false, 'section-prieres': false },
 };
 
@@ -1116,6 +1218,7 @@ function exportData() {
         prieres:        state.prieres,
         xpLog:          state.xpLog,
         customSpecs:    state.customSpecs,
+        customTalents:  state.customTalents,
         optVisible:     state.optVisible,
     };
 }
@@ -1140,6 +1243,7 @@ function resetState() {
     state.prieres.length        = 0;
     state.xpLog.length          = 0;
     state.customSpecs           = {};
+    state.customTalents         = {};
     Object.keys(state.optVisible).forEach(k => { state.optVisible[k] = false; });
 }
 
@@ -1174,6 +1278,7 @@ function applyData(d) {
     if (d.prieres)        state.prieres.push(...d.prieres);
     if (d.xpLog)          state.xpLog.push(...d.xpLog);
     if (d.customSpecs)    Object.assign(state.customSpecs, d.customSpecs);
+    if (d.customTalents)  Object.assign(state.customTalents, d.customTalents);
     if (d.optVisible)     Object.assign(state.optVisible, d.optVisible);
 }
 
