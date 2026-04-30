@@ -299,7 +299,8 @@ function buildXfTalentSpecPicker(groupBase, wrap) {
 function getXfTalentFullNom() {
     const inp = document.getElementById('xf-talent');
     if (!inp) return '';
-    const base = inp.value.trim();
+    // Nettoyer "(au choix)" éventuel dans la saisie
+    const base = inp.value.trim().replace(OPEN_SPEC_PATTERN, '').trim();
     if (!base) return '';
     const specSel = document.getElementById('xf-talent-spec-sel');
     if (!specSel) return base;
@@ -416,7 +417,8 @@ function updateXfTarget() {
         }
 
         inp.addEventListener('input', () => {
-            const val = inp.value.trim();
+            // Retirer "(au choix)" si l'utilisateur a sélectionné le nom complet depuis la datalist
+            const val = inp.value.trim().replace(OPEN_SPEC_PATTERN, '').trim();
             if (val && isTalentGroupOpen(val)) {
                 buildXfTalentSpecPicker(val, talentSpecWrap);
             } else {
@@ -547,7 +549,7 @@ function validateXpPurchase() {
         // Mémoriser la spécialisation personnalisée
         const specSel = document.getElementById('xf-talent-spec-sel');
         if (specSel?.value === '_custom') {
-            const base     = document.getElementById('xf-talent')?.value?.trim();
+            const base     = document.getElementById('xf-talent')?.value?.trim().replace(OPEN_SPEC_PATTERN, '').trim();
             const customVal = document.getElementById('xf-talent-spec-custom')?.value?.trim();
             if (base && customVal) {
                 if (!state.customTalents[base]) state.customTalents[base] = [];
