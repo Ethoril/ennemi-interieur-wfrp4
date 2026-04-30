@@ -558,7 +558,7 @@ function validateXpPurchase() {
         }
 
         state.talentsAcq.push({ nom, note: inCareer ? '' : 'hors carrière' });
-        renderTalents('acq');
+        renderTalents();
         achatLabel = nom; targetNom = nom; targetType = 'talent'; targetStorage = 'talent';
     }
 
@@ -592,7 +592,7 @@ function revertXpEntry(entry) {
         if (sk) { sk.adv = Math.max(0, (sk.adv || 0) - avances); renderAdvancedSkills(); }
     } else if (targetStorage === 'talent') {
         const idx = state.talentsAcq.map(t => t.nom).lastIndexOf(targetNom);
-        if (idx >= 0) { state.talentsAcq.splice(idx, 1); renderTalents('acq'); }
+        if (idx >= 0) { state.talentsAcq.splice(idx, 1); renderTalents(); }
     } else {
         // Rétrocompat : anciennes entrées sans targetStorage
         const { targetType } = entry;
@@ -606,7 +606,7 @@ function revertXpEntry(entry) {
             if (sk) { sk.adv = Math.max(0, (sk.adv || 0) - avances); renderAdvancedSkills(); }
         } else if (targetType === 'talent') {
             const idx = state.talentsAcq.map(t => t.nom).lastIndexOf(targetNom);
-            if (idx >= 0) { state.talentsAcq.splice(idx, 1); renderTalents('acq'); }
+            if (idx >= 0) { state.talentsAcq.splice(idx, 1); renderTalents(); }
         }
     }
 }
@@ -1058,32 +1058,54 @@ function renderCareers() {
 
 // ── Talents ───────────────────────────────────────────
 
-function renderTalents(type) {
-    const arr   = type === 'acq' ? state.talentsAcq : state.talentsAvail;
-    const tbid  = `tbody-talents-${type}`;
-    const cols  = type === 'acq' ? ['Talent','Notes'] : ['Talent','Coût XP'];
-    const tbody = document.getElementById(tbid);
-    if (!tbody) return;
-    tbody.innerHTML = arr.length === 0
-        ? `<tr class="empty-row"><td colspan="3">Aucun talent</td></tr>`
-        : arr.map((t, i) => `<tr>
-            <td><input class="talent-input" type="text" data-idx="${i}" data-type="${type}" data-field="nom" value="${t.nom}" placeholder="${cols[0]}"></td>
-            <td><input class="talent-input" type="text" data-idx="${i}" data-type="${type}" data-field="note" value="${t.note}" placeholder="${cols[1]}"></td>
-            <td><button class="btn-rm" data-type="talent-${type}" data-idx="${i}" title="Supprimer">×</button></td>
-        </tr>`).join('');
-    tbody.querySelectorAll('.talent-input').forEach(inp =>
-        inp.addEventListener('input', () => {
-            const arr2 = inp.dataset.type === 'acq' ? state.talentsAcq : state.talentsAvail;
-            arr2[+inp.dataset.idx][inp.dataset.field] = inp.value;
-            save();
-        }));
-    tbody.querySelectorAll(`.btn-rm[data-type="talent-${type}"]`).forEach(btn =>
+function renderTalents() {
+    const wrap = document.getElementById('talents-acq-chips');
+    if (!wrap) return;
+
+    wrap.innerHTML = state.talentsAcq.length === 0
+        ? '<span class="talent-empty">Aucun talent acquis</span>'
+        : state.talentsAcq.map((t, i) => {
+            if (!t.nom) {
+                // Entrée vide (ajout manuel en cours) → input de saisie
+                return `<span class="talent-entry-new">
+                    <input class="talent-name-new" type="text" data-idx="${i}"
+                           placeholder="Nom du talent…" autocomplete="off" list="xf-talent-datalist">
+                    <button class="btn-rm talent-rm" data-idx="${i}" title="Annuler">×</button>
+                </span>`;
+            }
+            const hors = t.note ? ` <span class="talent-hors-badge" title="${t.note}">!</span>` : '';
+            return `<span class="talent-chip-wrap">
+                <button class="talent-chip career-tag-talent" data-idx="${i}"
+                        title="Cliquer pour voir la description">${t.nom}${hors}</button>
+                <button class="btn-rm talent-rm" data-idx="${i}" title="Supprimer">×</button>
+            </span>`;
+        }).join('');
+
+    // Chips → description modal
+    wrap.querySelectorAll('.talent-chip').forEach(btn =>
+        btn.addEventListener('click', () => showTalentModal(state.talentsAcq[+btn.dataset.idx].nom))
+    );
+
+    // Input vide → confirmer le nom au blur / Entrée
+    wrap.querySelectorAll('.talent-name-new').forEach(inp => {
+        const confirm = () => {
+            const nom = inp.value.trim();
+            if (nom) { state.talentsAcq[+inp.dataset.idx].nom = nom; save(); }
+            else state.talentsAcq.splice(+inp.dataset.idx, 1);
+            renderTalents();
+        };
+        inp.addEventListener('blur', confirm);
+        inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
+        inp.focus();
+    });
+
+    // Boutons suppression
+    wrap.querySelectorAll('.talent-rm').forEach(btn =>
         btn.addEventListener('click', () => {
-            const arr2 = type === 'acq' ? state.talentsAcq : state.talentsAvail;
-            arr2.splice(+btn.dataset.idx, 1);
-            renderTalents(type);
-            save();
-        }));
+            state.talentsAcq.splice(+btn.dataset.idx, 1);
+            renderTalents(); save();
+        })
+    );
 }
 
 // ── Sorts ─────────────────────────────────────────────
@@ -1297,8 +1319,7 @@ window.ficheLoadCloud = function(data) {
     renderCareerDetail();
     renderAdvancedSkills();
     renderCareers();
-    renderTalents('acq');
-    renderTalents('avail');
+    renderTalents();
     renderSorts();
     renderPrieres();
     renderXpLog();
@@ -1341,11 +1362,8 @@ function bindAll() {
     });
     document.getElementById('btn-add-talent-acq')?.addEventListener('click', () => {
         state.talentsAcq.push({ nom:'', note:'' });
-        renderTalents('acq'); save();
+        renderTalents(); save();
     });
-    document.getElementById('btn-add-talent-avail')?.addEventListener('click', () => {
-        state.talentsAvail.push({ nom:'', note:'' });
-        renderTalents('avail'); save();
     });
     document.getElementById('btn-add-sort')?.addEventListener('click', () => {
         state.sorts.push({ nom:'', vent:'Aqshy', cn:0, portee:'', duree:'', resume:'' });
@@ -1385,8 +1403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCareerDetail();
     renderAdvancedSkills();
     renderCareers();
-    renderTalents('acq');
-    renderTalents('avail');
+    renderTalents();
     renderSorts();
     renderPrieres();
     renderXpLog();

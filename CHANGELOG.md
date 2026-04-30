@@ -1,3 +1,13 @@
+## [2.2.0] - 2026-04-30
+
+### Fiche — Section Talents refonte
+- **Talents acquis en chips cliquables** : chaque talent s'affiche comme un badge cliquable qui ouvre directement la modale de description — plus d'entrée texte ni de colonne Notes
+- **Badge hors carrière** : un marqueur `!` orange signale les talents acquis hors carrière (info préservée dans le state)
+- **Ajout manuel** : le bouton "+ Ajouter manuellement" insère un champ de saisie inline ; dès que le nom est confirmé, il devient un chip cliquable
+- **Section "Talents achetables" supprimée** : redondante avec le panneau de référence carrière et le journal XP
+
+---
+
 # Changelog
 
 Toutes les modifications notables du site sont documentées dans ce fichier.
