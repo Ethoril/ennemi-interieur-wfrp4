@@ -948,14 +948,21 @@ function applyOptVisible() {
 
 // ── Persistence ───────────────────────────────────────
 
-function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        nom:       getVal('nom'),
-        race:      getVal('race'),
-        carriere:  getVal('carriere'),
-        rang:      getVal('rang'),
-        xpTotal:   getVal('xp-total'),
-        carac:     state.carac,
+function exportData() {
+    return {
+        nom:           getVal('nom'),
+        race:          getVal('race'),
+        carriere:      getVal('carriere'),
+        rang:          getVal('rang'),
+        xpTotal:       getVal('xp-total'),
+        blessuresAct:  getVal('blessures-act'),
+        resilience:    getVal('resilience'),
+        determination: getVal('determination'),
+        chance:        getVal('chance'),
+        destin:        getVal('destin'),
+        corruption:    getVal('corruption'),
+        possessions:   getVal('possessions'),
+        carac:          state.carac,
         skillsBasic:    state.skillsBasic,
         skillsAdvanced: state.skillsAdvanced,
         careers:        state.careers,
@@ -965,31 +972,52 @@ function save() {
         prieres:        state.prieres,
         xpLog:          state.xpLog,
         optVisible:     state.optVisible,
-        blessuresAct:  getVal('blessures-act'),
-        resilience:    getVal('resilience'),
-        determination: getVal('determination'),
-        chance:        getVal('chance'),
-        destin:        getVal('destin'),
-        corruption:    getVal('corruption'),
-        possessions:   getVal('possessions'),
-    }));
+    };
 }
 
-function load() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const d = JSON.parse(raw);
+function save() {
+    const data = exportData();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 
-    setVal('nom', d.nom);  setVal('race', d.race);  setVal('carriere', d.carriere);
-    setVal('rang', d.rang); setVal('xp-total', d.xpTotal);
-    setVal('blessures-act', d.blessuresAct); setVal('resilience', d.resilience);
-    setVal('determination', d.determination); setVal('chance', d.chance);
-    setVal('destin', d.destin); setVal('corruption', d.corruption);
-    setVal('possessions', d.possessions);
+    // Cloud save debounced 2s — window.cloudSave injecté par fiche-cloud.js
+    clearTimeout(save._t);
+    save._t = setTimeout(() => window.cloudSave?.(data), 2000);
+}
+
+function resetState() {
+    CARACS.forEach(c => { state.carac[c] = { base: 0, adv: 0 }; });
+    state.skillsBasic    = {};
+    state.skillsAdvanced.length = 0;
+    state.careers.length        = 0;
+    state.talentsAcq.length     = 0;
+    state.talentsAvail.length   = 0;
+    state.sorts.length          = 0;
+    state.prieres.length        = 0;
+    state.xpLog.length          = 0;
+    Object.keys(state.optVisible).forEach(k => { state.optVisible[k] = false; });
+}
+
+function applyData(d) {
+    if (!d) return;
+    setVal('nom',           d.nom);
+    setVal('race',          d.race);
+    setVal('carriere',      d.carriere);
+    setVal('rang',          d.rang);
+    setVal('xp-total',      d.xpTotal);
+    setVal('blessures-act', d.blessuresAct);
+    setVal('resilience',    d.resilience);
+    setVal('determination', d.determination);
+    setVal('chance',        d.chance);
+    setVal('destin',        d.destin);
+    setVal('corruption',    d.corruption);
+    setVal('possessions',   d.possessions);
 
     if (d.carac) {
-        Object.assign(state.carac, d.carac);
-        CARACS.forEach(c => { setVal(`base-${c}`, state.carac[c]?.base ?? 0); setVal(`adv-${c}`, state.carac[c]?.adv ?? 0); });
+        CARACS.forEach(c => {
+            state.carac[c] = { base: d.carac[c]?.base ?? 0, adv: d.carac[c]?.adv ?? 0 };
+            setVal(`base-${c}`, state.carac[c].base);
+            setVal(`adv-${c}`,  state.carac[c].adv);
+        });
     }
     if (d.skillsBasic)    Object.assign(state.skillsBasic, d.skillsBasic);
     if (d.skillsAdvanced) state.skillsAdvanced.push(...d.skillsAdvanced);
@@ -1001,6 +1029,30 @@ function load() {
     if (d.xpLog)          state.xpLog.push(...d.xpLog);
     if (d.optVisible)     Object.assign(state.optVisible, d.optVisible);
 }
+
+function load() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) applyData(JSON.parse(raw));
+}
+
+// Appelée par fiche-cloud.js quand la fiche Firestore est disponible
+window.ficheLoadCloud = function(data) {
+    resetState();
+    applyData(data);
+    buildBasicSkills();
+    renderCareerDetail();
+    renderAdvancedSkills();
+    renderCareers();
+    renderTalents('acq');
+    renderTalents('avail');
+    renderSorts();
+    renderPrieres();
+    renderXpLog();
+    applyOptVisible();
+    recalc();
+    // Miroir localStorage pour fallback hors-ligne
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+};
 
 // ── Listeners ─────────────────────────────────────────
 
@@ -1074,8 +1126,8 @@ function bindAll() {
 
 document.addEventListener('DOMContentLoaded', () => {
     buildCareerDatalist();
-    buildBasicSkills();
-    load();
+    load();             // charger l'état en premier
+    buildBasicSkills(); // puis rendre avec les valeurs restaurées
     renderCareerDetail();
     renderAdvancedSkills();
     renderCareers();
