@@ -6,6 +6,14 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [2.1.1] - 2026-04-30
+
+### Fiche de Personnage — Carrières
+- **Surbrillance des compétences avancées achetées** : les compétences avancées déjà achetées qui font partie de la carrière active sont maintenant surlignées comme les compétences de base
+- **Panneau carrière cumulatif** : à partir du rang 2, le panneau de référence affiche tous les rangs acquis (rang 1, rang 2…) avec leurs compétences et talents respectifs, plus le rang en cours — chaque rang passé est marqué "✓ acquis"
+
+---
+
 ## [2.1.0] - 2026-04-30
 
 ### Fiche de Personnage — Carrières & Compétences

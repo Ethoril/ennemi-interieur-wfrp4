@@ -624,6 +624,7 @@ function renderAdvancedSkills() {
             <td><button class="btn-rm" data-type="adv-skill" data-idx="${i}" title="Supprimer">×</button></td>
         </tr>`).join('');
     bindAdvancedSkills(tbody);
+    applyCareerHighlights();
     renderCareerAdvGhosts();
 }
 
@@ -758,7 +759,7 @@ function getCareerAllSkills(career, rang) {
 
 function applyCareerHighlights() {
     document.querySelectorAll('.carac-in-career').forEach(el => el.classList.remove('carac-in-career'));
-    document.querySelectorAll('#tbody-skills-basic .skill-in-career').forEach(tr => tr.classList.remove('skill-in-career'));
+    document.querySelectorAll('.skill-in-career').forEach(tr => tr.classList.remove('skill-in-career'));
 
     const career = getActiveCareerData();
     if (!career) return;
@@ -772,15 +773,22 @@ function applyCareerHighlights() {
     });
 
     const allSkills = getCareerAllSkills(career, rang);
+
+    // Compétences de base
     document.querySelectorAll('#tbody-skills-basic tr[data-skill]').forEach(tr => {
         const nom  = tr.dataset.skill;
         const base = skillBaseNom(nom);
         const match = allSkills.some(s => {
             if (s.toLowerCase() === nom.toLowerCase()) return true;
-            // Base matching uniquement pour les slots ouverts
             return isOpenCareerSlot(s) && skillBaseNom(s) === base;
         });
         if (match) tr.classList.add('skill-in-career');
+    });
+
+    // Compétences avancées achetées
+    document.querySelectorAll('#tbody-skills-advanced tr:not(.empty-row)').forEach((tr, i) => {
+        const sk = state.skillsAdvanced[i];
+        if (sk && isSkillInCareer(sk.nom)) tr.classList.add('skill-in-career');
     });
 }
 
@@ -873,29 +881,49 @@ function renderCareerDetail() {
     }
 
     const caracLabels = (career.carac || []).map(c => CARAC_LABELS[c] || c).join(', ') || '—';
-    const skillsHtml  = (rd.skills  || []).map(s => `<span class="career-tag">${s}</span>`).join('') || '<em>—</em>';
-    const talentsHtml = (rd.talents || []).map(t =>
-        `<span class="career-tag career-tag-talent" data-talent="${t}" role="button" tabindex="0" title="Voir la description">${t}</span>`
-    ).join('') || '<em>—</em>';
+
+    // Sections par rang (cumulatif rang 1 → rang courant)
+    let rangsHtml = '';
+    for (let r = 1; r <= rang; r++) {
+        const rdata = career.rangs.find(x => x.rang === r);
+        if (!rdata) continue;
+        const isPast     = r < rang;
+        const skillsH    = (rdata.skills  || []).map(s => `<span class="career-tag">${s}</span>`).join('') || '<em>—</em>';
+        const talentsH   = (rdata.talents || []).map(t =>
+            `<span class="career-tag career-tag-talent" data-talent="${t}" role="button" tabindex="0" title="Voir la description">${t}</span>`
+        ).join('') || '<em>—</em>';
+        const statusBadge = isPast
+            ? '<span class="career-rang-acquired">✓ acquis</span>'
+            : '<span class="career-rang-current">◆ en cours</span>';
+        rangsHtml += `
+        <div class="career-rang-section${isPast ? ' career-rang-past' : ''}">
+            <div class="career-rang-header">
+                <span class="career-rang-badge${isPast ? ' career-rang-badge-past' : ''}">Rang ${r}</span>
+                <span class="career-rang-titre">${rdata.titre}</span>
+                ${statusBadge}
+            </div>
+            <div class="career-detail-grid career-detail-grid-2col">
+                <div class="career-detail-col">
+                    <div class="career-detail-label">Compétences</div>
+                    <div class="career-detail-tags">${skillsH}</div>
+                </div>
+                <div class="career-detail-col">
+                    <div class="career-detail-label">Talents — cliquez pour la description</div>
+                    <div class="career-detail-tags">${talentsH}</div>
+                </div>
+            </div>
+        </div>`;
+    }
 
     panel.style.display = '';
     panel.innerHTML = `
         <div class="fiche-section career-detail-section">
             <h2>${career.nom} — ${rd.titre} <span class="career-rang-badge">Rang ${rang}</span></h2>
-            <div class="career-detail-grid">
-                <div class="career-detail-col">
-                    <div class="career-detail-label">Caractéristiques</div>
-                    <div class="career-detail-tags">${caracLabels}</div>
-                </div>
-                <div class="career-detail-col">
-                    <div class="career-detail-label">Compétences (rang ${rang})</div>
-                    <div class="career-detail-tags">${skillsHtml}</div>
-                </div>
-                <div class="career-detail-col">
-                    <div class="career-detail-label">Talents (rang ${rang}) — cliquez pour la description</div>
-                    <div class="career-detail-tags">${talentsHtml}</div>
-                </div>
+            <div class="career-detail-carac">
+                <span class="career-detail-label">Caractéristiques :</span>
+                <span class="career-detail-carac-vals">${caracLabels}</span>
             </div>
+            ${rangsHtml}
         </div>`;
 
     panel.querySelectorAll('[data-talent]').forEach(el => {
