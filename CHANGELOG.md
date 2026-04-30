@@ -6,6 +6,17 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [2.1.0] - 2026-04-30
+
+### Fiche de Personnage — Carrières & Compétences
+- **Spécialisations personnalisées persistantes** : une spécialisation saisie manuellement dans le journal XP est mémorisée dans `customSpecs` et réapparaît dans le dropdown lors des prochains achats (sauvegardée dans le cloud)
+- **Slots "au choix"** : les entrées carrière de type `Métier (au choix)` ou `Savoir (Région)` sont détectées automatiquement ; un tel slot est considéré rempli dès qu'une compétence du même groupe de base est achetée — plus besoin de les saisir deux fois
+- **Ghost rows cliquables** : cliquer sur une compétence carrière grisée (non achetée) ouvre directement le formulaire XP pré-rempli avec le bon groupe et la spécialisation ; les slots ouverts s'affichent en ambre avec une `★`
+- **Fix correspondance carrière** : `isSkillInCareer()` utilise désormais le match exact par défaut ; le match par groupe de base ne s'applique qu'aux slots ouverts (évitait de faux positifs entre, p.ex., Corps à corps Base et Corps à corps Flambard)
+- **Talents "au choix"** : un talent de carrière de type `Savoir-vivre (au choix)` reconnaît tout talent du même groupe comme étant dans la carrière
+
+---
+
 ## [2.0.0] - 2026-04-30
 
 ### Sauvegarde cloud — Fiche de Personnage
