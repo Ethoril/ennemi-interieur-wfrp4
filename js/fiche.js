@@ -10,6 +10,15 @@ const MOUVEMENT = {
 };
 const STORAGE_KEY = 'wfrp4-fiche-test';
 
+// Slot de carrière ouvert : "(au choix)" ou catégorie générique à choisir
+const OPEN_SPEC_PATTERN   = /\(au choix\)$/i;
+const GENERIC_SPEC_WORDS  = new Set(['Région','Localité','Langue','Commerce','Peuple','Matériau','Arme','Ennemi','Organisation','Divinité']);
+function isOpenCareerSlot(s) {
+    if (OPEN_SPEC_PATTERN.test(s)) return true;
+    const m = s.match(/\(([^)]+)\)$/);
+    return m ? GENERIC_SPEC_WORDS.has(m[1].trim()) : false;
+}
+
 const XP_TYPES = ['Caractéristique','Compétence','Talent','Sort','Prière','Miracle','Autre'];
 
 const VENTS = ['Aqshy','Azyr','Chamon','Ghur','Ghyran','Hysh','Shyish','Ulgu','Magie Commune','Autre'];
@@ -83,10 +92,15 @@ function isSkillInCareer(nom) {
     const career = getActiveCareerData();
     if (!career) return false;
     const rang = getActiveRang();
-    const base = skillBaseNom(nom);
+    const purchasedBase = skillBaseNom(nom);
     for (let r = 1; r <= rang; r++) {
         const rd = career.rangs.find(x => x.rang === r);
-        if (rd?.skills.some(s => skillBaseNom(s) === base)) return true;
+        if (!rd) continue;
+        for (const s of rd.skills) {
+            if (s.toLowerCase() === nom.toLowerCase()) return true;
+            // Slot ouvert → correspondance par groupe de base uniquement
+            if (isOpenCareerSlot(s) && skillBaseNom(s) === purchasedBase) return true;
+        }
     }
     return false;
 }
@@ -100,17 +114,23 @@ function isTalentInCareer(talentNom) {
     const career = getActiveCareerData();
     if (!career) return false;
     const rang = getActiveRang();
-    const nom = talentNom.toLowerCase().trim();
+    const nom     = talentNom.toLowerCase().trim();
+    const nomBase = nom.split('(')[0].trim();
     for (let r = 1; r <= rang; r++) {
         const rd = career.rangs.find(x => x.rang === r);
-        if (rd?.talents.some(t => t.toLowerCase() === nom)) return true;
+        if (!rd) continue;
+        for (const t of rd.talents) {
+            if (t.toLowerCase() === nom) return true;
+            // "Savoir-vivre (au choix)" → tout talent du même groupe est dans la carrière
+            if (OPEN_SPEC_PATTERN.test(t) && t.split('(')[0].trim().toLowerCase() === nomBase) return true;
+        }
     }
     return false;
 }
 
 // ── Formulaire d'achat XP ─────────────────────────────
 
-function showXpForm() {
+function showXpForm(options = {}) {
     const form = document.getElementById('xp-add-form');
     if (!form) return;
     form.style.display = '';
@@ -144,6 +164,41 @@ function showXpForm() {
     document.getElementById('xf-avances').addEventListener('input', computeXfCost);
     document.getElementById('xf-validate').addEventListener('click', validateXpPurchase);
     document.getElementById('xf-cancel').addEventListener('click', () => { form.style.display = 'none'; });
+
+    // Pré-remplissage si appelé depuis un ghost row
+    if (options.type) {
+        const typeEl = document.getElementById('xf-type');
+        typeEl.value = options.type;
+        updateXfTarget();
+
+        if (options.group) {
+            const grpSel = document.getElementById('xf-group');
+            if (grpSel) {
+                grpSel.value = options.group;
+                const specWrap = document.getElementById('xf-spec-wrap');
+                if (specWrap) {
+                    specWrap.innerHTML = '';
+                    buildXfSpecPicker(options.group, specWrap);
+                }
+                // Pré-sélectionner la spécialisation fixe si fournie
+                if (options.spec) {
+                    const specSel = document.getElementById('xf-spec-sel');
+                    if (specSel) {
+                        const opt = [...specSel.options].find(o => o.value === options.spec);
+                        if (opt) {
+                            specSel.value = options.spec;
+                        } else {
+                            specSel.value = '_custom';
+                            const customInp = document.getElementById('xf-spec-custom');
+                            if (customInp) { customInp.value = options.spec; customInp.style.display = ''; }
+                        }
+                    }
+                }
+                computeXfCost();
+            }
+        }
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
 }
 
 // Retourne les groupes uniques (triés) pour le type donné ('basic' | 'adv' | 'all')
@@ -188,14 +243,16 @@ function getXfSkillCurrentAdv(fullNom) {
 }
 
 function buildXfSpecPicker(group, wrap) {
-    const specs = getSpecsForGroup(group);
-    if (specs.length === 0) { wrap.innerHTML = ''; return; }
+    const knownSpecs  = getSpecsForGroup(group);
+    const customSpecs = state.customSpecs[group] || [];
+    const allSpecs    = [...new Set([...knownSpecs, ...customSpecs])];
+    if (allSpecs.length === 0) { wrap.innerHTML = ''; return; }
 
     const specSel = document.createElement('select');
     specSel.id = 'xf-spec-sel';
     specSel.className = 'xf-spec-sel';
     specSel.innerHTML =
-        specs.map(s => `<option value="${s}">${s}</option>`).join('') +
+        allSpecs.map(s => `<option value="${s}">${s}</option>`).join('') +
         '<option value="_custom">Autre (personnalisé)…</option>';
     wrap.appendChild(specSel);
 
@@ -360,6 +417,17 @@ function validateXpPurchase() {
         const fullNom = getXfSkillFullNom();
         if (!fullNom) return;
         const group = document.getElementById('xf-group')?.value || fullNom;
+
+        // Mémoriser la spécialisation personnalisée pour la retrouver dans le picker
+        const specSel = document.getElementById('xf-spec-sel');
+        if (specSel?.value === '_custom') {
+            const customVal = document.getElementById('xf-spec-custom')?.value?.trim();
+            if (customVal && group) {
+                if (!state.customSpecs[group]) state.customSpecs[group] = [];
+                if (!state.customSpecs[group].includes(customVal)) state.customSpecs[group].push(customVal);
+            }
+        }
+
         const carac = getCaracForGroup(group);
 
         // Corps à corps (Base) et compétences sans spec → skillsBasic si elles y sont
@@ -452,6 +520,7 @@ const state = {
     sorts:          [],
     prieres:        [],
     xpLog:          [],
+    customSpecs:    {},   // { 'Métier': ['Boulangerie', 'Tonnelier'], ... }
     optVisible:     { 'section-sorts': false, 'section-prieres': false },
 };
 
@@ -706,7 +775,11 @@ function applyCareerHighlights() {
     document.querySelectorAll('#tbody-skills-basic tr[data-skill]').forEach(tr => {
         const nom  = tr.dataset.skill;
         const base = skillBaseNom(nom);
-        const match = allSkills.some(s => s.toLowerCase() === nom.toLowerCase() || skillBaseNom(s) === base);
+        const match = allSkills.some(s => {
+            if (s.toLowerCase() === nom.toLowerCase()) return true;
+            // Base matching uniquement pour les slots ouverts
+            return isOpenCareerSlot(s) && skillBaseNom(s) === base;
+        });
         if (match) tr.classList.add('skill-in-career');
     });
 }
@@ -719,22 +792,31 @@ function renderCareerAdvGhosts() {
     if (!career || !window.WFRP_SKILLS) { tbody.innerHTML = ''; return; }
 
     const rang = getActiveRang();
-    const allSkills = getCareerAllSkills(career, rang);
-    const basicBaseNoms  = new Set(BASIC_SKILLS.map(s => skillBaseNom(s.nom)));
-    const purchasedNoms  = new Set(state.skillsAdvanced.map(s => s.nom.toLowerCase()));
+    const allSkills         = getCareerAllSkills(career, rang);
+    const basicBaseNoms     = new Set(BASIC_SKILLS.map(s => skillBaseNom(s.nom)));
+    const purchasedNoms     = new Set(state.skillsAdvanced.map(s => s.nom.toLowerCase()));
+    const purchasedBaseNoms = new Set(state.skillsAdvanced.map(s => skillBaseNom(s.nom)));
 
     const ghosts = allSkills.filter(s => {
         const base = skillBaseNom(s);
-        return !basicBaseNoms.has(base) && !purchasedNoms.has(s.toLowerCase());
+        if (basicBaseNoms.has(base)) return false;
+        if (isOpenCareerSlot(s)) return !purchasedBaseNoms.has(base);
+        return !purchasedNoms.has(s.toLowerCase());
     });
 
     if (ghosts.length === 0) { tbody.innerHTML = ''; return; }
 
     tbody.innerHTML = ghosts.map(nom => {
-        const found    = WFRP_SKILLS.find(s => s.nom.toLowerCase() === nom.toLowerCase());
+        const isOpen   = isOpenCareerSlot(nom);
+        const base     = skillBaseNom(nom);
+        const found    = WFRP_SKILLS.find(s => skillBaseNom(s.nom) === base || skillBaseNom(s.group || '') === base);
         const carac    = found?.carac || 'int';
         const caracVal = getCaracTotal(carac);
-        return `<tr class="sk-ghost-row" title="Non achetée — utilisez le journal XP pour acheter cette compétence">
+        const cls      = `sk-ghost-row${isOpen ? ' sk-ghost-open' : ''}`;
+        const title    = isOpen
+            ? 'Slot ouvert — cliquez pour choisir une spécialisation dans le journal XP'
+            : 'Non achetée — cliquez pour l\'ouvrir dans le journal XP';
+        return `<tr class="${cls}" data-ghost-nom="${nom}" data-ghost-open="${isOpen}" title="${title}" role="button" tabindex="0">
             <td class="sk-nom">${nom}</td>
             <td class="sk-carac-lbl">${CARAC_LABELS[carac]}</td>
             <td class="sk-carac-val">${caracVal}</td>
@@ -743,6 +825,24 @@ function renderCareerAdvGhosts() {
             <td></td>
         </tr>`;
     }).join('');
+
+    tbody.querySelectorAll('.sk-ghost-row').forEach(tr => {
+        const handler = () => {
+            const careerNom = tr.dataset.ghostNom;
+            const isOpen    = tr.dataset.ghostOpen === 'true';
+            const base      = careerNom.split('(')[0].trim();
+            // Trouver le nom de groupe exact dans WFRP_SKILLS (casse correcte)
+            const wfrpGroup = window.WFRP_SKILLS?.find(s =>
+                (s.group || '').toLowerCase() === base.toLowerCase()
+            )?.group || base;
+            // Pour un slot fixe avec spec (ex: "Langue (Noblesse)"), pré-remplir la spec
+            const specPart = !isOpen && careerNom.includes('(')
+                ? (careerNom.match(/\(([^)]+)\)/)?.[1] ?? null) : null;
+            showXpForm({ type: 'skill-adv', group: wfrpGroup, spec: specPart });
+        };
+        tr.addEventListener('click', handler);
+        tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') handler(); });
+    });
 }
 
 function buildCareerDatalist() {
@@ -987,6 +1087,7 @@ function exportData() {
         sorts:          state.sorts,
         prieres:        state.prieres,
         xpLog:          state.xpLog,
+        customSpecs:    state.customSpecs,
         optVisible:     state.optVisible,
     };
 }
@@ -1010,6 +1111,7 @@ function resetState() {
     state.sorts.length          = 0;
     state.prieres.length        = 0;
     state.xpLog.length          = 0;
+    state.customSpecs           = {};
     Object.keys(state.optVisible).forEach(k => { state.optVisible[k] = false; });
 }
 
@@ -1043,6 +1145,7 @@ function applyData(d) {
     if (d.sorts)          state.sorts.push(...d.sorts);
     if (d.prieres)        state.prieres.push(...d.prieres);
     if (d.xpLog)          state.xpLog.push(...d.xpLog);
+    if (d.customSpecs)    Object.assign(state.customSpecs, d.customSpecs);
     if (d.optVisible)     Object.assign(state.optVisible, d.optVisible);
 }
 
