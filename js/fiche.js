@@ -4,7 +4,10 @@
 
 const CARACS = ['cc', 'ct', 'f', 'e', 'i', 'ag', 'dex', 'int', 'fm', 'soc'];
 const CARAC_LABELS = { cc:'CC', ct:'CT', f:'F', e:'E', i:'I', ag:'Ag', dex:'Dex', int:'Int', fm:'FM', soc:'Soc' };
-const MOUVEMENT = { humain:4, nain:3, elfe:5, halfling:3 };
+const MOUVEMENT = {
+    humain:4, 'elfe-sylvain':5, 'haut-elfe':5, halfelin:4, ogre:6,
+    elfe:5, halfling:4, nain:3, // rétrocompat anciennes sauvegardes
+};
 const STORAGE_KEY = 'wfrp4-fiche-test';
 
 const XP_TYPES = ['Caractéristique','Compétence','Talent','Sort','Prière','Miracle','Autre'];
@@ -478,7 +481,7 @@ function buildBasicSkills() {
     tbody.innerHTML = BASIC_SKILLS.map(sk => {
         const s   = sid(sk.nom);
         const adv = state.skillsBasic[sk.nom] ?? 0;
-        return `<tr>
+        return `<tr data-skill="${sk.nom}">
             <td class="sk-nom">${sk.nom}</td>
             <td class="sk-carac-lbl">${CARAC_LABELS[sk.carac]}</td>
             <td class="sk-carac-val" id="sk-carac-${s}">0</td>
@@ -524,6 +527,7 @@ function renderAdvancedSkills() {
             <td><button class="btn-rm" data-type="adv-skill" data-idx="${i}" title="Supprimer">×</button></td>
         </tr>`).join('');
     bindAdvancedSkills(tbody);
+    renderCareerAdvGhosts();
 }
 
 function bindAdvancedSkills(tbody) {
@@ -552,6 +556,167 @@ function bindAdvancedSkills(tbody) {
 
 // ── Carrières ─────────────────────────────────────────
 
+// ── Talent Modal ──────────────────────────────────────
+
+const TALENT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs'
+    + '/gviz/tq?tqx=out:csv&sheet=Talents';
+let _talentCache = null;
+
+function _parseCSV(text) {
+    const rows = [];
+    let cur = '', inQ = false, row = [];
+    for (let i = 0; i <= text.length; i++) {
+        const c = text[i], n = text[i + 1];
+        if (i === text.length || (!inQ && (c === '\n' || (c === '\r' && n === '\n')))) {
+            row.push(cur.trim());
+            if (row.some(f => f !== '')) rows.push(row);
+            row = []; cur = '';
+            if (c === '\r') i++;
+        } else if (inQ) {
+            if (c === '"' && n === '"') { cur += '"'; i++; }
+            else if (c === '"') inQ = false;
+            else cur += c;
+        } else {
+            if (c === '"') inQ = true;
+            else if (c === ',') { row.push(cur.trim()); cur = ''; }
+            else cur += c;
+        }
+    }
+    return rows;
+}
+
+async function fetchTalentData() {
+    if (_talentCache) return _talentCache;
+    try {
+        const res = await fetch(TALENT_SHEET_URL);
+        if (!res.ok) return null;
+        const rows = _parseCSV(await res.text());
+        if (rows.length < 2) return null;
+        const [headers, ...data] = rows;
+        _talentCache = { headers, data };
+        return _talentCache;
+    } catch { return null; }
+}
+
+function ensureTalentModal() {
+    if (document.getElementById('talent-modal')) return;
+    const div = document.createElement('div');
+    div.id = 'talent-modal';
+    div.className = 'talent-modal-backdrop';
+    div.style.display = 'none';
+    div.innerHTML = `
+        <div class="talent-modal-box" role="dialog">
+            <button class="talent-modal-close" id="talent-modal-close" title="Fermer">×</button>
+            <div id="talent-modal-body"></div>
+        </div>`;
+    div.addEventListener('click', e => {
+        if (e.target === div || e.target.id === 'talent-modal-close') div.style.display = 'none';
+    });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') div.style.display = 'none';
+    });
+    document.body.appendChild(div);
+}
+
+async function showTalentModal(nom) {
+    ensureTalentModal();
+    const modal = document.getElementById('talent-modal');
+    const body  = document.getElementById('talent-modal-body');
+    body.innerHTML = '<p class="talent-modal-loading">Chargement…</p>';
+    modal.style.display = 'flex';
+
+    const td = await fetchTalentData();
+    const _e = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    if (!td) { body.innerHTML = `<h3>${_e(nom)}</h3><p>Impossible de charger les données.</p>`; return; }
+
+    const nomIdx = td.headers.findIndex(h => h.toLowerCase() === 'nom');
+    const titleIdx = nomIdx >= 0 ? nomIdx : 0;
+    const row = td.data.find(r => (r[titleIdx] || '').toLowerCase() === nom.toLowerCase());
+
+    if (!row) { body.innerHTML = `<h3 class="talent-modal-title">${_e(nom)}</h3><p><em>Aucune description disponible.</em></p>`; return; }
+
+    let html = `<h3 class="talent-modal-title">${_e(row[titleIdx])}</h3>`;
+    td.headers.forEach((h, i) => {
+        if (i === titleIdx || !row[i]) return;
+        html += `<div class="talent-modal-field">
+            <span class="talent-modal-label">${_e(h)}</span>
+            <span class="talent-modal-value">${_e(row[i]).replace(/\n/g, '<br>')}</span>
+        </div>`;
+    });
+    body.innerHTML = html;
+}
+
+// ── Carrière — highlights & ghosts ────────────────────
+
+function getCareerAllSkills(career, rang) {
+    const seen = new Set(), noms = [];
+    for (let r = 1; r <= rang; r++) {
+        const rd = career.rangs.find(x => x.rang === r);
+        if (!rd) continue;
+        rd.skills.forEach(s => { if (!seen.has(s.toLowerCase())) { seen.add(s.toLowerCase()); noms.push(s); } });
+    }
+    return noms;
+}
+
+function applyCareerHighlights() {
+    document.querySelectorAll('.carac-in-career').forEach(el => el.classList.remove('carac-in-career'));
+    document.querySelectorAll('#tbody-skills-basic .skill-in-career').forEach(tr => tr.classList.remove('skill-in-career'));
+
+    const career = getActiveCareerData();
+    if (!career) return;
+    const rang = getActiveRang();
+
+    career.carac.forEach(c => {
+        ['base', 'adv'].forEach(type =>
+            document.getElementById(`${type}-${c}`)?.closest('td')?.classList.add('carac-in-career')
+        );
+        document.getElementById(`total-${c}`)?.closest('td')?.classList.add('carac-in-career');
+    });
+
+    const allSkills = getCareerAllSkills(career, rang);
+    document.querySelectorAll('#tbody-skills-basic tr[data-skill]').forEach(tr => {
+        const nom  = tr.dataset.skill;
+        const base = skillBaseNom(nom);
+        const match = allSkills.some(s => s.toLowerCase() === nom.toLowerCase() || skillBaseNom(s) === base);
+        if (match) tr.classList.add('skill-in-career');
+    });
+}
+
+function renderCareerAdvGhosts() {
+    const tbody = document.getElementById('tbody-career-adv-ghost');
+    if (!tbody) return;
+
+    const career = getActiveCareerData();
+    if (!career || !window.WFRP_SKILLS) { tbody.innerHTML = ''; return; }
+
+    const rang = getActiveRang();
+    const allSkills = getCareerAllSkills(career, rang);
+    const basicBaseNoms  = new Set(BASIC_SKILLS.map(s => skillBaseNom(s.nom)));
+    const purchasedNoms  = new Set(state.skillsAdvanced.map(s => s.nom.toLowerCase()));
+
+    const ghosts = allSkills.filter(s => {
+        const base = skillBaseNom(s);
+        return !basicBaseNoms.has(base) && !purchasedNoms.has(s.toLowerCase());
+    });
+
+    if (ghosts.length === 0) { tbody.innerHTML = ''; return; }
+
+    tbody.innerHTML = ghosts.map(nom => {
+        const found    = WFRP_SKILLS.find(s => s.nom.toLowerCase() === nom.toLowerCase());
+        const carac    = found?.carac || 'int';
+        const caracVal = getCaracTotal(carac);
+        return `<tr class="sk-ghost-row" title="Non achetée — utilisez le journal XP pour acheter cette compétence">
+            <td class="sk-nom">${nom}</td>
+            <td class="sk-carac-lbl">${CARAC_LABELS[carac]}</td>
+            <td class="sk-carac-val">${caracVal}</td>
+            <td><input class="sk-adv" type="number" disabled value="0" tabindex="-1"></td>
+            <td class="sk-total">${caracVal}</td>
+            <td></td>
+        </tr>`;
+    }).join('');
+}
+
 function buildCareerDatalist() {
     const dl = document.getElementById('career-names-list');
     if (!dl || !window.WFRP_CAREERS) return;
@@ -563,16 +728,27 @@ function renderCareerDetail() {
     if (!panel) return;
 
     const career = getActiveCareerData();
-    if (!career) { panel.style.display = 'none'; return; }
+    if (!career) {
+        panel.style.display = 'none';
+        applyCareerHighlights();
+        renderCareerAdvGhosts();
+        return;
+    }
 
-    const rang = Math.min(4, Math.max(1, +getVal('rang') || 1));
+    const rang = getActiveRang();
     const rd   = career.rangs.find(r => r.rang === rang);
-    if (!rd)   { panel.style.display = 'none'; return; }
+    if (!rd) {
+        panel.style.display = 'none';
+        applyCareerHighlights();
+        renderCareerAdvGhosts();
+        return;
+    }
 
-    const CARAC_FULL = { cc:'CC', ct:'CT', f:'F', e:'E', i:'I', ag:'Ag', dex:'Dex', int:'Int', fm:'FM', soc:'Soc' };
-    const caracLabels = (career.carac || []).map(c => CARAC_FULL[c] || c).join(', ') || '—';
+    const caracLabels = (career.carac || []).map(c => CARAC_LABELS[c] || c).join(', ') || '—';
     const skillsHtml  = (rd.skills  || []).map(s => `<span class="career-tag">${s}</span>`).join('') || '<em>—</em>';
-    const talentsHtml = (rd.talents || []).map(t => `<span class="career-tag career-tag-talent">${t}</span>`).join('') || '<em>—</em>';
+    const talentsHtml = (rd.talents || []).map(t =>
+        `<span class="career-tag career-tag-talent" data-talent="${t}" role="button" tabindex="0" title="Voir la description">${t}</span>`
+    ).join('') || '<em>—</em>';
 
     panel.style.display = '';
     panel.innerHTML = `
@@ -588,11 +764,19 @@ function renderCareerDetail() {
                     <div class="career-detail-tags">${skillsHtml}</div>
                 </div>
                 <div class="career-detail-col">
-                    <div class="career-detail-label">Talents (rang ${rang})</div>
+                    <div class="career-detail-label">Talents (rang ${rang}) — cliquez pour la description</div>
                     <div class="career-detail-tags">${talentsHtml}</div>
                 </div>
             </div>
         </div>`;
+
+    panel.querySelectorAll('[data-talent]').forEach(el => {
+        el.addEventListener('click', () => showTalentModal(el.dataset.talent));
+        el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') showTalentModal(el.dataset.talent); });
+    });
+
+    applyCareerHighlights();
+    renderCareerAdvGhosts();
 }
 
 function renderCareers() {

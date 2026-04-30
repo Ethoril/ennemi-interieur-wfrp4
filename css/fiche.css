@@ -771,6 +771,134 @@
   background: rgba(100, 60, 20, 0.06);
 }
 
+[data-theme="parchment"] .talent-modal-box {
+  background: #faf4e8;
+  color: var(--text-primary);
+}
+
+[data-theme="parchment"] .carac-in-career {
+  background: rgba(140, 90, 20, 0.20) !important;
+}
+
+[data-theme="parchment"] #tbody-skills-basic tr.skill-in-career {
+  background: rgba(140, 90, 20, 0.10);
+}
+
+/* ── Highlighting carrière ───────────────────────── */
+.carac-in-career {
+  background: rgba(180, 140, 60, 0.18) !important;
+  position: relative;
+}
+
+.carac-in-career::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--color-accent, #b48c3c);
+  opacity: .6;
+}
+
+#tbody-skills-basic tr.skill-in-career {
+  background: rgba(180, 140, 60, 0.10);
+}
+
+#tbody-skills-basic tr.skill-in-career td:first-child {
+  border-left: 3px solid var(--color-accent, #b48c3c);
+  padding-left: 6px;
+}
+
+/* Ghost rows (compétences avancées carrière non achetées) */
+tr.sk-ghost-row {
+  opacity: .45;
+  pointer-events: none;
+}
+
+tr.sk-ghost-row td {
+  font-style: italic;
+}
+
+tr.sk-ghost-row input[disabled] {
+  background: transparent;
+}
+
+/* ── Talent Modal ─────────────────────────────────── */
+.talent-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.talent-modal-box {
+  background: var(--bg-card, #1e1e2e);
+  border: 1px solid var(--border, #333);
+  border-radius: 8px;
+  padding: 1.5rem;
+  max-width: 560px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.talent-modal-close {
+  position: absolute;
+  top: .6rem; right: .8rem;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  opacity: .6;
+  line-height: 1;
+}
+
+.talent-modal-close:hover { opacity: 1; }
+
+.talent-modal-title {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+  border-bottom: 1px solid var(--border, #333);
+  padding-bottom: .5rem;
+}
+
+.talent-modal-field {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: .25rem .75rem;
+  margin-bottom: .4rem;
+  font-size: .88rem;
+}
+
+.talent-modal-label {
+  font-weight: 600;
+  opacity: .7;
+  text-transform: uppercase;
+  font-size: .72rem;
+  letter-spacing: .04em;
+  padding-top: .1rem;
+}
+
+.talent-modal-loading {
+  opacity: .5;
+  font-style: italic;
+}
+
+/* Talent chips cliquables */
+.career-tag-talent {
+  cursor: pointer;
+  transition: opacity .15s;
+}
+
+.career-tag-talent:hover {
+  opacity: .75;
+  text-decoration: underline;
+}
+
 /* ── Panneau référence carrière ──────────────────── */
 .career-detail-section {
   padding: 0.75rem 1rem;
