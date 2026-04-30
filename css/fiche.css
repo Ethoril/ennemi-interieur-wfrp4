@@ -824,6 +824,33 @@
 
 [data-theme="parchment"] .fiche-auth-btn:hover { background: rgba(0,0,0,.06); }
 
+/* ── Login wall ──────────────────────────────────── */
+.fiche-login-wall {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40vh;
+  padding: 2rem;
+}
+
+.fiche-login-box {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.fiche-login-msg {
+  opacity: .7;
+  font-size: .95rem;
+}
+
+.fiche-login-btn {
+  font-size: .9rem;
+  padding: 8px 20px;
+}
+
 /* ── Highlighting carrière ───────────────────────── */
 .carac-in-career {
   background: rgba(180, 140, 60, 0.18) !important;
