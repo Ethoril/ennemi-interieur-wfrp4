@@ -6,6 +6,16 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ---
 
+## [1.9.3] - 2026-04-29
+
+### Fiche — Carrière & Talents
+- **Highlighting** : les colonnes de caractéristiques liées à la carrière et les lignes de compétences de base concernées sont mis en évidence par une couleur de fond
+- **Compétences avancées fantôme** : les compétences avancées de la carrière (rangs 1 au rang actuel) non encore achetées apparaissent en grisé dans la section avancées — non éditables tant qu'elles ne sont pas achetées via le journal XP
+- **Modale talent** : cliquer sur un talent dans le panneau de carrière ouvre une modale avec sa description complète (chargée depuis le même Google Sheet que l'aide de jeu)
+- **Races corrigées** : Humain.e / Elfe Sylvain.e / Haut.e Elfe / Halfelin.ne / Ogre
+
+---
+
 ## [1.9.2] - 2026-04-29
 
 ### Fiche — Carrière
