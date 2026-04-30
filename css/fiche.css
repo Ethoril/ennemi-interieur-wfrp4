@@ -876,8 +876,8 @@
 
 /* Ghost rows (compétences avancées carrière non achetées) */
 tr.sk-ghost-row {
-  opacity: .45;
-  pointer-events: none;
+  opacity: .5;
+  cursor: pointer;
 }
 
 tr.sk-ghost-row td {
@@ -886,6 +886,23 @@ tr.sk-ghost-row td {
 
 tr.sk-ghost-row input[disabled] {
   background: transparent;
+  pointer-events: none;
+}
+
+tr.sk-ghost-row:hover {
+  opacity: .85;
+  background: rgba(180, 140, 60, .06);
+}
+
+/* Slot ouvert "au choix" */
+tr.sk-ghost-open {
+  color: #8b5a00;
+}
+
+tr.sk-ghost-open td.sk-nom::after {
+  content: ' ★';
+  font-size: .75em;
+  opacity: .7;
 }
 
 /* ── Talent Modal ─────────────────────────────────── */
