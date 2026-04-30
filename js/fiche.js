@@ -129,13 +129,10 @@ function showXpForm() {
                     Avances&nbsp;
                     <input type="number" id="xf-avances" min="1" max="30" value="1">
                 </label>
-                <label class="xf-incareer-label">
-                    <input type="checkbox" id="xf-incareer" checked>
-                    Dans la carrière
-                </label>
             </div>
             <div class="xf-cost-row">
                 Coût estimé : <strong id="xf-cost">—</strong> XP
+                <span id="xf-career-badge" class="xf-career-badge"></span>
             </div>
             <div class="xf-actions">
                 <button class="btn-add" id="xf-validate">✓ Valider et appliquer</button>
@@ -145,7 +142,6 @@ function showXpForm() {
 
     document.getElementById('xf-type').addEventListener('change', updateXfTarget);
     document.getElementById('xf-avances').addEventListener('input', computeXfCost);
-    document.getElementById('xf-incareer').addEventListener('change', computeXfCost);
     document.getElementById('xf-validate').addEventListener('click', validateXpPurchase);
     document.getElementById('xf-cancel').addEventListener('click', () => { form.style.display = 'none'; });
 }
@@ -213,7 +209,6 @@ function buildXfSpecPicker(group, wrap) {
 
     const onChange = () => {
         customInput.style.display = specSel.value === '_custom' ? '' : 'none';
-        document.getElementById('xf-incareer').checked = isSkillInCareer(getXfSkillFullNom());
         computeXfCost();
     };
     specSel.addEventListener('change', onChange);
@@ -234,10 +229,7 @@ function updateXfTarget() {
                 return `<option value="${c}">${CARAC_LABELS[c]} (avances: ${adv}, total: ${getCaracTotal(c)})</option>`;
             }).join('');
         wrap.appendChild(sel);
-        sel.addEventListener('change', () => {
-            document.getElementById('xf-incareer').checked = isCaracInCareer(sel.value);
-            computeXfCost();
-        });
+        sel.addEventListener('change', computeXfCost);
 
     } else if (type === 'skill-basic' || type === 'skill-adv') {
         const filter = type === 'skill-basic' ? 'basic' : 'adv';
@@ -263,7 +255,6 @@ function updateXfTarget() {
         grpSel.addEventListener('change', () => {
             specWrap.innerHTML = '';
             buildXfSpecPicker(grpSel.value, specWrap);
-            document.getElementById('xf-incareer').checked = isSkillInCareer(getXfSkillFullNom());
             computeXfCost();
         });
 
@@ -286,18 +277,30 @@ function updateXfTarget() {
             document.body.appendChild(dl);
         }
 
-        inp.addEventListener('input', () => {
-            document.getElementById('xf-incareer').checked = isTalentInCareer(inp.value);
-            computeXfCost();
-        });
+        inp.addEventListener('input', computeXfCost);
     }
     computeXfCost();
+}
+
+function getXfInCareer() {
+    const type = document.getElementById('xf-type')?.value || '';
+    if (type === 'carac') {
+        const carac = document.getElementById('xf-target')?.value;
+        return carac ? isCaracInCareer(carac) : false;
+    } else if (type === 'skill-basic' || type === 'skill-adv') {
+        const nom = getXfSkillFullNom();
+        return nom ? isSkillInCareer(nom) : false;
+    } else if (type === 'talent') {
+        const nom = document.getElementById('xf-talent')?.value || '';
+        return nom ? isTalentInCareer(nom) : false;
+    }
+    return false;
 }
 
 function computeXfCost() {
     const type     = document.getElementById('xf-type')?.value || '';
     const avances  = Math.max(1, +document.getElementById('xf-avances')?.value || 1);
-    const inCareer = document.getElementById('xf-incareer')?.checked ?? true;
+    const inCareer = getXfInCareer();
     const costEl   = document.getElementById('xf-cost');
     if (!costEl) return 0;
 
@@ -320,13 +323,26 @@ function computeXfCost() {
     }
 
     costEl.textContent = cost > 0 ? cost : '—';
+
+    // Badge carrière informatif
+    const badge = document.getElementById('xf-career-badge');
+    if (badge && type) {
+        const career = getActiveCareerData();
+        if (!career) {
+            badge.textContent = '';
+        } else {
+            badge.textContent    = inCareer ? '✓ dans la carrière' : '✗ hors carrière';
+            badge.dataset.career = inCareer ? 'yes' : 'no';
+        }
+    }
+
     return cost;
 }
 
 function validateXpPurchase() {
     const type     = document.getElementById('xf-type')?.value || '';
     const avances  = Math.max(1, +document.getElementById('xf-avances')?.value || 1);
-    const inCareer = document.getElementById('xf-incareer')?.checked ?? true;
+    const inCareer = getXfInCareer();
     const cost     = computeXfCost();
     if (!type || cost <= 0) return;
 
