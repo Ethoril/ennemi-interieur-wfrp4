@@ -273,7 +273,19 @@ function updateXfTarget() {
         inp.id = 'xf-talent';
         inp.placeholder = 'Nom du talent…';
         inp.className = 'xf-talent-input';
+        inp.setAttribute('list', 'xf-talent-datalist');
+        inp.setAttribute('autocomplete', 'off');
         wrap.appendChild(inp);
+
+        if (!document.getElementById('xf-talent-datalist') && window.WFRP_CAREERS) {
+            const dl = document.createElement('datalist');
+            dl.id = 'xf-talent-datalist';
+            const talents = new Set();
+            WFRP_CAREERS.forEach(c => c.rangs.forEach(r => r.talents.forEach(t => talents.add(t))));
+            dl.innerHTML = [...talents].sort((a, b) => a.localeCompare(b, 'fr')).map(t => `<option value="${t}">`).join('');
+            document.body.appendChild(dl);
+        }
+
         inp.addEventListener('input', () => {
             document.getElementById('xf-incareer').checked = isTalentInCareer(inp.value);
             computeXfCost();
