@@ -88,7 +88,9 @@ onAuthStateChanged(auth, async (user) => {
         try {
             const snap = await getDoc(doc(db, 'fiches', user.uid));
             if (snap.exists() && typeof window.ficheLoadCloud === 'function') {
-                window.ficheLoadCloud(snap.data().data);
+                const snapData   = snap.data();
+                const cloudMillis = snapData.updatedAt?.toMillis?.() ?? 0;
+                window.ficheLoadCloud(snapData.data, cloudMillis);
                 setStatus('☁ Chargé', 'saved');
                 setTimeout(() => setStatus(''), 2000);
             } else {
