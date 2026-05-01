@@ -1,3 +1,12 @@
+## [2.2.1] - 2026-05-01
+
+### Fix
+- **Perte de données corrigée** : synchronisation cloud/local basée sur les timestamps — si les données locales sont plus récentes que le cloud (ex: modification dans la fenêtre de debounce de 2s), elles sont conservées et poussées vers le cloud plutôt qu'écrasées
+- `save()` enregistre désormais `_savedAt: Date.now()` dans le localStorage pour comparaison
+- `ficheLoadCloud` reçoit le timestamp Firestore (`updatedAt`) et préfère la source la plus fraîche
+
+---
+
 ## [2.2.0] - 2026-04-30
 
 ### Fiche — Section Talents refonte

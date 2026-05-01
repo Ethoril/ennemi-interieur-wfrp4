@@ -1249,7 +1249,7 @@ function exportData() {
 
 function save() {
     const data = exportData();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ _savedAt: Date.now(), ...data }));
 
     // Cloud save debounced 2s — window.cloudSave injecté par fiche-cloud.js
     clearTimeout(save._t);
@@ -1312,7 +1312,21 @@ function load() {
 }
 
 // Appelée par fiche-cloud.js quand la fiche Firestore est disponible
-window.ficheLoadCloud = function(data) {
+// cloudMillis : timestamp Firestore en ms (updatedAt.toMillis())
+window.ficheLoadCloud = function(data, cloudMillis) {
+    // Préférer la source la plus récente pour éviter d'écraser des données
+    // locales plus fraîches que le cloud (fenêtre debounce de 2s).
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+        try {
+            const local = JSON.parse(raw);
+            if (local._savedAt && cloudMillis && local._savedAt > cloudMillis) {
+                // Local plus récent → pousser vers le cloud, ne pas écraser
+                window.cloudSave?.(exportData());
+                return;
+            }
+        } catch {}
+    }
     resetState();
     applyData(data);
     buildBasicSkills();
@@ -1325,8 +1339,8 @@ window.ficheLoadCloud = function(data) {
     renderXpLog();
     applyOptVisible();
     recalc();
-    // Miroir localStorage pour fallback hors-ligne
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    // Miroir localStorage avec timestamp cloud pour référence future
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ _savedAt: cloudMillis || Date.now(), ...data }));
 };
 
 // ── Listeners ─────────────────────────────────────────
