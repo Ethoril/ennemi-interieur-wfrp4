@@ -26,6 +26,7 @@ const STATUT_COLOR   = { 'allié': '#4caf7d', 'ennemi': '#c94c4c', 'neutre': '#8
 const VIVANT_OPACITY = { 'oui': 1, 'non': 0.35, 'inconnu': 0.65 };
 const LINK_COLORS    = { 'allié': '#4caf7d', 'ennemi': '#c94c4c', 'famille': '#c9a84c', 'mentor': '#7a9ac9', 'rival': '#c97a4c' };
 const DIM_PALETTE    = ['#c9a84c','#4c8fc9','#c94c8e','#5bc994','#8e4cc9','#c97a4c','#4cc9c9','#9ac94c','#c9a87a','#7a9ac9'];
+const CARD_W = 200, CARD_H = 72, PORT_R = 23, CARD_RX = 8;
 const TABLE_COLS     = [
     { key: 'nom',         label: 'Nom' },
     { key: 'statut',      label: 'Statut' },
@@ -41,7 +42,7 @@ const state = {
     nodes: [], links: [],
     active: { statut: new Set(), vivant: new Set(), lieu: new Set(), groupe: new Set() },
     searchQ: '',
-    nodeSel: null, linkSel: null, simulation: null,
+    nodeSel: null, linkSel: null, linkLabelSel: null, simulation: null,
     colorBy: 'statut', dimColorMap: null,
     graphW: 800, graphH: 550,
     view: 'graph',
@@ -59,6 +60,15 @@ function stringToColor(str) {
     let h = 0;
     for (const c of str) h = ((h << 5) - h) + c.charCodeAt(0);
     return `hsl(${Math.abs(h) % 360}, 45%, 55%)`;
+}
+
+function bezierPath(x1, y1, x2, y2) {
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const curve = Math.min(len * 0.3, 80);
+    const mx = (x1 + x2) / 2 - dy / len * curve;
+    const my = (y1 + y2) / 2 + dx / len * curve;
+    return `M${x1},${y1} Q${mx},${my} ${x2},${y2}`;
 }
 
 async function uploadImage(blob) {
@@ -110,6 +120,7 @@ async function loadData({ init = false } = {}) {
         d3.select('#pnj-graph svg').remove();
         state.nodeSel = null;
         state.linkSel = null;
+        state.linkLabelSel = null;
         if (state.simulation) { state.simulation.stop(); state.simulation = null; }
 
         clearFilters();
@@ -168,9 +179,12 @@ async function deletePnj(id) {
     await loadData();
 }
 
-async function saveRelation(sourceId, cibleId, type, label) {
+async function saveRelation(sourceId, cibleId, type, label, color, style) {
     if (!sourceId || !cibleId || !type) { alert('Choisissez un PNJ et entrez un type de relation.'); return; }
-    await addDoc(collection(db, 'relations'), { source: sourceId, cible: cibleId, type, label: label || type });
+    const relData = { source: sourceId, cible: cibleId, type, label: label || type };
+    if (color) relData.color = color;
+    if (style === 'dashed') relData.style = style;
+    await addDoc(collection(db, 'relations'), relData);
     await loadData();
     const node = state.nodes.find(n => n.id === sourceId);
     if (node) openPanel(node);
@@ -353,21 +367,12 @@ function buildGraph() {
     state.graphW = container.clientWidth  || window.innerWidth * 0.85;
     state.graphH = container.clientHeight || 550;
 
-    const degree = new Map(state.nodes.map(d => [d.id, 0]));
-    state.links.forEach(l => {
-        const s = typeof l.source === 'object' ? l.source.id : l.source;
-        const t = typeof l.target === 'object' ? l.target.id : l.target;
-        degree.set(s, (degree.get(s) || 0) + 1);
-        degree.set(t, (degree.get(t) || 0) + 1);
-    });
-    const nodeR = d => 13 + Math.min((degree.get(d.id) || 0) * 2, 10);
-
     buildDimColorMap();
 
     const svg = d3.select('#pnj-graph').append('svg').attr('width', '100%').attr('height', '100%');
     const g   = svg.append('g');
 
-    const initialScale = 1.8;
+    const initialScale = 0.8;
     const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', e => g.attr('transform', e.transform));
     svg.call(zoom);
     svg.call(zoom.transform, d3.zoomIdentity
@@ -375,67 +380,113 @@ function buildGraph() {
         .scale(initialScale));
     svg.on('click', () => closePanel());
 
-    state.linkSel = g.append('g').selectAll('line').data(state.links).join('line')
+    // Liens : paths courbés + labels
+    const linkG = g.append('g');
+    state.linkSel = linkG.selectAll('path').data(state.links).join('path')
+        .attr('id', (d, i) => `pnj-lp-${i}`)
         .attr('class', 'pnj-link')
-        .attr('stroke', d => getLinkColor(d.type))
-        .attr('stroke-width', 2).attr('stroke-opacity', 0.55);
+        .attr('stroke', d => d.color || getLinkColor(d.type))
+        .attr('stroke-width', 3.5)
+        .attr('stroke-dasharray', d => d.style === 'dashed' ? '8 5' : null)
+        .attr('stroke-opacity', 0.7).attr('fill', 'none');
+
+    const linkTextSel = linkG.selectAll('text.pnj-link-label').data(state.links).join('text')
+        .attr('class', 'pnj-link-label');
+    linkTextSel.append('textPath')
+        .attr('href', (d, i) => `#pnj-lp-${i}`)
+        .attr('startOffset', '50%')
+        .text(d => d.label || d.type || '');
+    state.linkLabelSel = linkTextSel;
+
+    // Nœuds : cartouches SVG déplaçables
+    // Géométrie : accent(5) + padding(10) + portrait(PORT_R*2) + gap(8) + texte
+    // Centre portrait cx = -CARD_W/2 + 5 + 10 + PORT_R = -100 + 38 = -62
+    // Texte x = -CARD_W/2 + 5 + 10 + PORT_R*2 + 8 = -100 + 69 = -31
+    const portCx = -CARD_W / 2 + 5 + 10 + PORT_R;
+    const textX  = -CARD_W / 2 + 5 + 10 + PORT_R * 2 + 8;
 
     const nodeG = g.append('g').selectAll('g').data(state.nodes).join('g')
         .attr('class', 'pnj-node')
         .call(d3.drag()
             .on('start', (e, d) => { if (!e.active) state.simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
             .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
-            .on('end',   (e, d) => { if (!e.active) state.simulation.alphaTarget(0); d.fx = null; d.fy = null; }))
+            .on('end',   (e, d) => { if (!e.active) state.simulation.alphaTarget(0); d.fx = d.x; d.fy = d.y; }))
         .on('click', (e, d) => { e.stopPropagation(); openPanel(d); });
 
-    // Clip path pour le portrait circulaire
+    // Fond de la carte
+    nodeG.append('rect')
+        .attr('class', 'node-card')
+        .attr('x', -CARD_W / 2).attr('y', -CARD_H / 2)
+        .attr('width', CARD_W).attr('height', CARD_H)
+        .attr('rx', CARD_RX)
+        .attr('fill', '#12121e')
+        .attr('stroke', getDimColor)
+        .attr('stroke-width', 2.5);
+
+    // Barre accent gauche
+    nodeG.append('rect')
+        .attr('class', 'node-accent')
+        .attr('x', -CARD_W / 2).attr('y', -CARD_H / 2)
+        .attr('width', 5).attr('height', CARD_H)
+        .attr('rx', CARD_RX)
+        .attr('fill', getDimColor);
+
+    // Clip path circulaire pour le portrait
     nodeG.append('clipPath')
         .attr('id', d => `clip-${d.id.replace(/[^a-zA-Z0-9]/g, '_')}`)
         .append('circle')
-        .attr('r', nodeR);
+        .attr('cx', portCx).attr('cy', 0).attr('r', PORT_R);
 
-    // Fond coloré (visible si pas de portrait)
+    // Fond du portrait (placeholder)
     nodeG.append('circle')
-        .attr('class', 'node-bg')
-        .attr('r', nodeR)
-        .attr('fill', getDimColor)
-        .attr('stroke', '#0e0e18')
-        .attr('stroke-width', 2);
+        .attr('class', 'node-portrait-bg')
+        .attr('cx', portCx).attr('cy', 0).attr('r', PORT_R)
+        .attr('fill', '#1e1e30')
+        .style('display', d => d.imageUrl ? 'none' : '');
 
-    // Portrait clipé
+    // Initiale (si pas de portrait)
+    nodeG.append('text')
+        .attr('class', 'node-initial')
+        .attr('x', portCx).attr('y', 0).attr('dy', '0.35em')
+        .attr('text-anchor', 'middle')
+        .style('display', d => d.imageUrl ? 'none' : '')
+        .text(d => (d.nom || '?')[0].toUpperCase());
+
+    // Portrait
     nodeG.append('image')
         .attr('href', d => d.imageUrl || null)
-        .attr('x', d => -nodeR(d))
-        .attr('y', d => -nodeR(d))
-        .attr('width',  d => nodeR(d) * 2)
-        .attr('height', d => nodeR(d) * 2)
+        .attr('x', -CARD_W / 2 + 5 + 10).attr('y', -PORT_R)
+        .attr('width', PORT_R * 2).attr('height', PORT_R * 2)
         .attr('clip-path', d => `url(#clip-${d.id.replace(/[^a-zA-Z0-9]/g, '_')})`)
         .attr('preserveAspectRatio', 'xMidYMid slice')
         .style('display', d => d.imageUrl ? '' : 'none')
         .on('error', function() { d3.select(this).style('display', 'none'); });
 
-    // Anneau coloré (statut/dimension) — toujours visible par-dessus le portrait
-    nodeG.append('circle')
-        .attr('class', 'node-ring')
-        .attr('r', nodeR)
-        .attr('fill', 'none')
-        .attr('stroke', getDimColor)
-        .attr('stroke-width', 3);
-
+    // Nom
     nodeG.append('text')
-        .attr('text-anchor', 'middle').attr('dy', d => nodeR(d) + 14)
-        .attr('class', 'node-label').text(d => d.nom);
+        .attr('class', 'node-name')
+        .attr('x', textX).attr('y', -8)
+        .text(d => d.nom || '');
+
+    // Sous-ligne : statut · lieu
+    nodeG.append('text')
+        .attr('class', 'node-sub')
+        .attr('x', textX).attr('y', 10)
+        .text(d => [cap(d.statut), d.lieu].filter(Boolean).join(' · ') || '');
 
     state.nodeSel = nodeG;
 
     state.simulation = d3.forceSimulation(state.nodes)
-        .force('link',    d3.forceLink(state.links).id(d => d.id).distance(130))
-        .force('charge',  d3.forceManyBody().strength(-380))
+        .force('link',    d3.forceLink(state.links).id(d => d.id).distance(240))
+        .force('charge',  d3.forceManyBody().strength(-700))
         .force('center',  d3.forceCenter(state.graphW / 2, state.graphH / 2))
-        .force('collide', d3.forceCollide(d => nodeR(d) + 14))
+        .force('collide', d3.forceCollide(Math.sqrt(CARD_W * CARD_W + CARD_H * CARD_H) / 2 + 20))
         .on('tick', () => {
-            state.linkSel.attr('x1', d => d.source.x).attr('y1', d => d.source.y).attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+            state.linkSel.attr('d', d => bezierPath(d.source.x, d.source.y, d.target.x, d.target.y));
             state.nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
+        })
+        .on('end', () => {
+            state.nodes.forEach(d => { if (d.fx == null) { d.fx = d.x; d.fy = d.y; } });
         });
 
     updateVisibility();
@@ -445,11 +496,12 @@ function buildGraph() {
 function applyColorBy(dim) {
     state.colorBy = dim;
     buildDimColorMap();
-    state.nodeSel?.select('.node-bg').attr('fill', getDimColor);
-    state.nodeSel?.select('.node-ring').attr('stroke', getDimColor);
+    state.nodeSel?.select('.node-card').attr('stroke', getDimColor);
+    state.nodeSel?.select('.node-accent').attr('fill', getDimColor);
     if (dim === 'statut') {
-        state.simulation?.force('cluster-x', null).force('cluster-y', null).alpha(0.15).restart();
+        state.simulation?.force('cluster-x', null).force('cluster-y', null);
     } else {
+        state.nodes.forEach(d => { d.fx = null; d.fy = null; });
         const vals = state.dimColorMap ? [...state.dimColorMap.keys()] : [];
         const n = vals.length || 1, r = Math.min(state.graphW, state.graphH) * 0.28;
         const centers = Object.fromEntries(vals.map((v, i) => [v, {
@@ -483,11 +535,15 @@ function updateVisibility() {
     state.nodeSel
         .style('opacity', d => isVisible(d) ? getNodeOpacity(d) : 0.06)
         .style('pointer-events', d => isVisible(d) ? 'all' : 'none');
-    state.nodeSel.select('.node-ring').attr('stroke-dasharray', d => (d.vivant || '').toLowerCase() === 'non' ? '5 3' : null);
+    state.nodeSel.select('.node-card').attr('stroke-dasharray', d => (d.vivant || '').toLowerCase() === 'non' ? '5 3' : null);
     state.linkSel?.style('opacity', d => {
         // d.source/.target peuvent être soit un id (string) soit l'objet node après simulation
         const s = d.source.id ?? d.source, t = d.target.id ?? d.target;
-        return visIds.has(s) && visIds.has(t) ? 0.55 : 0.04;
+        return visIds.has(s) && visIds.has(t) ? 0.6 : 0.04;
+    });
+    state.linkLabelSel?.style('opacity', d => {
+        const s = d.source.id ?? d.source, t = d.target.id ?? d.target;
+        return visIds.has(s) && visIds.has(t) ? 0.7 : 0;
     });
 }
 
@@ -502,7 +558,7 @@ function openPanel(d) {
     }).map(l => {
         const s = l.source.id ?? l.source, t = l.target.id ?? l.target;
         const isSource = s === d.id;
-        return { relId: l.id, node: nodeById.get(isSource ? t : s), type: l.type, label: l.label || l.type || 'Lié', dir: isSource ? '→' : '←' };
+        return { relId: l.id, node: nodeById.get(isSource ? t : s), type: l.type, label: l.label || l.type || 'Lié', dir: isSource ? '→' : '←', color: l.color, style: l.style };
     }).filter(r => r.node);
 
     const vKey   = (d.vivant || '').toLowerCase();
@@ -537,7 +593,7 @@ function openPanel(d) {
             <div class="pnj-relation-list">
                 ${related.map(r => `
                     <div class="rel-chip-row">
-                        <button class="pnj-relation-chip" data-id="${esc(r.node.id)}" style="--chip-color:${getLinkColor(r.type)}">
+                        <button class="pnj-relation-chip" data-id="${esc(r.node.id)}" style="--chip-color:${r.color || getLinkColor(r.type)}">
                             <span class="chip-name">${esc(r.node.nom)}</span>
                             <span class="chip-type"><span class="chip-dir">${r.dir}</span> ${esc(r.label)}</span>
                         </button>
@@ -553,6 +609,13 @@ function openPanel(d) {
                     </select>
                     <input type="text" id="rel-type" placeholder="Type (Patronage, Rival…)">
                     <input type="text" id="rel-label" placeholder="Label (optionnel)">
+                    <div class="rel-style-row">
+                        <input type="color" id="rel-color" value="#c9a84c" title="Couleur du lien">
+                        <div class="rel-style-toggle">
+                            <button type="button" class="style-btn active" data-style="solid" title="Continu">━━</button>
+                            <button type="button" class="style-btn" data-style="dashed" title="Pointillé">╌╌</button>
+                        </div>
+                    </div>
                     <div class="rel-form-btns">
                         <button id="rel-save-btn" class="btn-primary-sm">Ajouter</button>
                         <button id="rel-cancel-btn" class="btn-ghost-sm">Annuler</button>
@@ -593,6 +656,10 @@ function highlightConnected(id) {
         const s = d.source.id ?? d.source, t = d.target.id ?? d.target;
         return (s === id || t === id) ? 0.9 : 0.04;
     });
+    state.linkLabelSel?.style('opacity', d => {
+        const s = d.source.id ?? d.source, t = d.target.id ?? d.target;
+        return (s === id || t === id) ? 0.8 : 0;
+    });
 }
 
 // ── Detail panel events (délégation — bindé une seule fois) ────
@@ -608,6 +675,13 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
     if (delBtn) { deleteRelation(delBtn.dataset.rel); return; }
 
     if (e.target.closest('#panel-edit-btn')) { openPnjModal(state.panelId); return; }
+
+    const styleBtn = e.target.closest('.style-btn');
+    if (styleBtn) {
+        styleBtn.closest('.rel-style-toggle').querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+        styleBtn.classList.add('active');
+        return;
+    }
 
     if (e.target.closest('#add-rel-btn')) {
         document.getElementById('rel-add-form').style.display = 'block';
@@ -627,6 +701,8 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
             document.getElementById('rel-target').value,
             document.getElementById('rel-type').value.trim(),
             document.getElementById('rel-label').value.trim(),
+            document.getElementById('rel-color').value,
+            document.querySelector('#rel-add-form .style-btn.active')?.dataset.style || 'solid',
         );
         return;
     }

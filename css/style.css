@@ -1677,12 +1677,8 @@ strong {
   flex-shrink: 0;
 }
 
-.node-label {
-  font-size: 11px;
-  fill: #9a9aaa;
-  font-family: var(--font-body, sans-serif);
-  pointer-events: none;
-  user-select: none;
+.node-card {
+  transition: stroke-width 0.15s;
 }
 
 .pnj-link {
@@ -1693,9 +1689,39 @@ strong {
   cursor: pointer;
 }
 
-.pnj-node:hover > circle {
+.pnj-node:hover .node-card {
   stroke: var(--gold);
   stroke-width: 3.5px;
+}
+
+.node-name {
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--text-primary, #e0e0f0);
+  pointer-events: none;
+  user-select: none;
+}
+
+.node-sub {
+  font-size: 10.5px;
+  fill: var(--text-secondary, #9a9aaa);
+  pointer-events: none;
+  user-select: none;
+}
+
+.node-initial {
+  font-size: 18px;
+  font-weight: 700;
+  fill: var(--text-secondary, #9a9aaa);
+  pointer-events: none;
+  user-select: none;
+}
+
+.pnj-link-label {
+  font-size: 10px;
+  fill: var(--text-secondary, #9a9aaa);
+  pointer-events: none;
+  user-select: none;
 }
 
 /* Detail panel */
@@ -2143,6 +2169,47 @@ strong {
 .rel-form-btns {
   display: flex;
   gap: 6px;
+}
+
+.rel-style-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0;
+}
+
+.rel-style-row input[type="color"] {
+  width: 36px;
+  height: 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  cursor: pointer;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.rel-style-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.style-btn {
+  padding: 3px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.4;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.style-btn.active {
+  background: rgba(201, 168, 76, 0.2);
+  border-color: var(--gold, #c9a84c);
+  color: var(--gold, #c9a84c);
 }
 
 .btn-primary-sm {

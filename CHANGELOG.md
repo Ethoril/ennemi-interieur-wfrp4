@@ -1,3 +1,20 @@
+## [2.4.0] - 2026-05-06
+
+### PNJs — Vue graphe refonte (carte mentale)
+- **Cartouches** : les nœuds circulaires sont remplacés par des cartes rectangulaires affichant portrait, nom et statut · lieu
+- **Barre accent** : une barre colorée à gauche de chaque carte reflète le colorBy actif (statut, lieu ou groupe)
+- **Liens en courbes** : les liens droits sont remplacés par des courbes de Bézier quadratiques
+- **Labels sur les liens** : le type ou label de la relation est affiché directement sur le lien (textPath SVG)
+- **Épinglage après déplacement** : glisser une carte la fixe en place (comportement carte mentale) ; au chargement initial, le layout s'auto-stabilise puis se fige
+- **Trait plus épais** : stroke-width des liens passé à 3.5px (était 2px)
+
+### PNJs — Personnalisation des liens
+- **Couleur custom** : color picker dans le formulaire "Ajouter une relation" — la couleur est stockée dans Firestore et appliquée dans le graphe et les chips du panneau détail
+- **Style continu / pointillé** : toggle ━━ / ╌╌ pour choisir le style du trait au moment de la création
+- Compatibilité ascendante : les relations existantes sans couleur ni style continuent d'utiliser les couleurs par type (allié, ennemi, famille…)
+
+---
+
 ## [2.3.0] - 2026-05-06
 
 ### Fiche — Journal XP repensé
