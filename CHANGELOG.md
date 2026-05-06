@@ -1,3 +1,12 @@
+## [2.4.1] - 2026-05-06
+
+### PNJs — Liens (suite)
+- **Palette 16 couleurs** : le sélecteur de couleur du lien est remplacé par une palette de 16 teintes douces — swatches cliquables avec indicateur d'état actif
+- **Liens parallèles non chevauchants** : deux liens entre les mêmes personnages courbent dans des directions opposées (courbes de Bézier avec échelle alternée ×1/−1/×2/−2…)
+- **Édition de relation** : en mode admin, un bouton ✏ apparaît sur chaque relation du panneau latéral pour modifier type, label, couleur et style sans recréer la relation
+
+---
+
 ## [2.4.0] - 2026-05-06
 
 ### PNJs — Vue graphe refonte (carte mentale)

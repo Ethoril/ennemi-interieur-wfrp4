@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch, deleteField } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 import Cropper from 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js';
@@ -27,6 +27,12 @@ const VIVANT_OPACITY = { 'oui': 1, 'non': 0.35, 'inconnu': 0.65 };
 const LINK_COLORS    = { 'allié': '#4caf7d', 'ennemi': '#c94c4c', 'famille': '#c9a84c', 'mentor': '#7a9ac9', 'rival': '#c97a4c' };
 const DIM_PALETTE    = ['#c9a84c','#4c8fc9','#c94c8e','#5bc994','#8e4cc9','#c97a4c','#4cc9c9','#9ac94c','#c9a87a','#7a9ac9'];
 const CARD_W = 200, CARD_H = 72, PORT_R = 23, CARD_RX = 8;
+const REL_PALETTE = [
+    '#c9a84c','#e8a87c','#d4756b','#c4726e',
+    '#c94c8e','#8e4cc9','#5a7ac9','#4c9ac9',
+    '#4cc9c9','#4caf7d','#7ac94c','#a8965a',
+    '#8a7a6a','#9a9aaa','#7a7a8a','#c9b89a',
+];
 const TABLE_COLS     = [
     { key: 'nom',         label: 'Nom' },
     { key: 'statut',      label: 'Statut' },
@@ -62,10 +68,16 @@ function stringToColor(str) {
     return `hsl(${Math.abs(h) % 360}, 45%, 55%)`;
 }
 
-function bezierPath(x1, y1, x2, y2) {
+function renderPalette(selectedColor, inputId) {
+    return `<div class="rel-color-palette" data-input="${esc(inputId)}">${
+        REL_PALETTE.map(c => `<button type="button" class="color-swatch${c === selectedColor ? ' active' : ''}" data-color="${c}" style="background:${c}" title="${c}"></button>`).join('')
+    }</div><input type="hidden" id="${esc(inputId)}" value="${esc(selectedColor)}">`;
+}
+
+function bezierPath(x1, y1, x2, y2, curveScale = 1) {
     const dx = x2 - x1, dy = y2 - y1;
     const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const curve = Math.min(len * 0.3, 80);
+    const curve = Math.min(len * 0.3, 80) * curveScale;
     const mx = (x1 + x2) / 2 - dy / len * curve;
     const my = (y1 + y2) / 2 + dx / len * curve;
     return `M${x1},${y1} Q${mx},${my} ${x2},${y2}`;
@@ -185,8 +197,20 @@ async function saveRelation(sourceId, cibleId, type, label, color, style) {
     if (color) relData.color = color;
     if (style === 'dashed') relData.style = style;
     await addDoc(collection(db, 'relations'), relData);
+
     await loadData();
     const node = state.nodes.find(n => n.id === sourceId);
+    if (node) openPanel(node);
+}
+
+async function updateRelation(relId, type, label, color, style) {
+    if (!type) { alert('Le type de relation est requis.'); return; }
+    const data = { type, label: label || type };
+    data.color = color || deleteField();
+    data.style = style === 'dashed' ? 'dashed' : deleteField();
+    await updateDoc(doc(db, 'relations', relId), data);
+    await loadData();
+    const node = state.nodes.find(n => n.id === state.panelId);
     if (node) openPanel(node);
 }
 
@@ -380,6 +404,19 @@ function buildGraph() {
         .scale(initialScale));
     svg.on('click', () => closePanel());
 
+    // Offsets pour liens parallèles entre les mêmes nœuds
+    const pairCount = new Map(), pairIdx = new Map();
+    state.links.forEach(l => {
+        const key = [l.source, l.target].sort().join('|');
+        pairCount.set(key, (pairCount.get(key) || 0) + 1);
+    });
+    state.links.forEach(l => {
+        const key = [l.source, l.target].sort().join('|');
+        const idx = pairIdx.get(key) || 0;
+        l._curveScale = Math.ceil((idx + 1) / 2) * (idx % 2 === 0 ? 1 : -1);
+        pairIdx.set(key, idx + 1);
+    });
+
     // Liens : paths courbés + labels
     const linkG = g.append('g');
     state.linkSel = linkG.selectAll('path').data(state.links).join('path')
@@ -482,7 +519,7 @@ function buildGraph() {
         .force('center',  d3.forceCenter(state.graphW / 2, state.graphH / 2))
         .force('collide', d3.forceCollide(Math.sqrt(CARD_W * CARD_W + CARD_H * CARD_H) / 2 + 20))
         .on('tick', () => {
-            state.linkSel.attr('d', d => bezierPath(d.source.x, d.source.y, d.target.x, d.target.y));
+            state.linkSel.attr('d', d => bezierPath(d.source.x, d.source.y, d.target.x, d.target.y, d._curveScale ?? 1));
             state.nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
         })
         .on('end', () => {
@@ -586,18 +623,20 @@ function openPanel(d) {
 
     const relDeleteBtn = relId => state.isAdmin
         ? `<button class="rel-delete-btn" data-rel="${esc(relId)}" title="Supprimer">×</button>` : '';
+    const relEditBtn = relId => state.isAdmin
+        ? `<button class="rel-edit-btn" data-rel="${esc(relId)}" title="Modifier">✏</button>` : '';
 
     const relHtml = `
         <div class="pnj-detail-section">
             <h4>Relations${related.length ? ` (${related.length})` : ''}</h4>
             <div class="pnj-relation-list">
                 ${related.map(r => `
-                    <div class="rel-chip-row">
+                    <div class="rel-chip-row" id="rel-row-${esc(r.relId)}">
                         <button class="pnj-relation-chip" data-id="${esc(r.node.id)}" style="--chip-color:${r.color || getLinkColor(r.type)}">
                             <span class="chip-name">${esc(r.node.nom)}</span>
                             <span class="chip-type"><span class="chip-dir">${r.dir}</span> ${esc(r.label)}</span>
                         </button>
-                        ${relDeleteBtn(r.relId)}
+                        ${relEditBtn(r.relId)}${relDeleteBtn(r.relId)}
                     </div>`).join('')}
             </div>
             ${state.isAdmin ? `
@@ -609,8 +648,8 @@ function openPanel(d) {
                     </select>
                     <input type="text" id="rel-type" placeholder="Type (Patronage, Rival…)">
                     <input type="text" id="rel-label" placeholder="Label (optionnel)">
+                    ${renderPalette('#c9a84c', 'rel-color')}
                     <div class="rel-style-row">
-                        <input type="color" id="rel-color" value="#c9a84c" title="Couleur du lien">
                         <div class="rel-style-toggle">
                             <button type="button" class="style-btn active" data-style="solid" title="Continu">━━</button>
                             <button type="button" class="style-btn" data-style="dashed" title="Pointillé">╌╌</button>
@@ -680,6 +719,69 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
     if (styleBtn) {
         styleBtn.closest('.rel-style-toggle').querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
         styleBtn.classList.add('active');
+        return;
+    }
+
+    const swatch = e.target.closest('.color-swatch');
+    if (swatch) {
+        const palette = swatch.closest('.rel-color-palette');
+        palette.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+        swatch.classList.add('active');
+        const inp = document.getElementById(palette.dataset.input);
+        if (inp) inp.value = swatch.dataset.color;
+        return;
+    }
+
+    const relEditBtn = e.target.closest('.rel-edit-btn');
+    if (relEditBtn) {
+        // Fermer toute édition ouverte
+        document.querySelectorAll('.rel-edit-form-inline').forEach(f => {
+            document.getElementById(f.dataset.chipRowId)?.style.removeProperty('display');
+            f.remove();
+        });
+        const relId = relEditBtn.dataset.rel;
+        const link = state.links.find(l => l.id === relId);
+        if (!link) return;
+        const currentColor = link.color || REL_PALETTE[0];
+        const currentStyle = link.style || 'solid';
+        const formHtml = `
+            <div class="rel-edit-form-inline" data-rel="${esc(relId)}" data-chip-row-id="rel-row-${esc(relId)}">
+                <input type="text" class="rel-edit-type" value="${esc(link.type || '')}" placeholder="Type">
+                <input type="text" class="rel-edit-label" value="${esc(link.label || '')}" placeholder="Label">
+                ${renderPalette(currentColor, 'rel-edit-color')}
+                <div class="rel-style-row">
+                    <div class="rel-style-toggle">
+                        <button type="button" class="style-btn${currentStyle === 'solid' ? ' active' : ''}" data-style="solid" title="Continu">━━</button>
+                        <button type="button" class="style-btn${currentStyle === 'dashed' ? ' active' : ''}" data-style="dashed" title="Pointillé">╌╌</button>
+                    </div>
+                </div>
+                <div class="rel-form-btns">
+                    <button class="btn-primary-sm rel-edit-save-btn" data-rel="${esc(relId)}">Enregistrer</button>
+                    <button class="btn-ghost-sm rel-edit-cancel-btn">Annuler</button>
+                </div>
+            </div>`;
+        const chipRow = document.getElementById(`rel-row-${relId}`);
+        if (chipRow) { chipRow.style.display = 'none'; chipRow.insertAdjacentHTML('afterend', formHtml); }
+        return;
+    }
+
+    if (e.target.closest('.rel-edit-save-btn')) {
+        const btn = e.target.closest('.rel-edit-save-btn');
+        const form = btn.closest('.rel-edit-form-inline');
+        updateRelation(
+            form.dataset.rel,
+            form.querySelector('.rel-edit-type').value.trim(),
+            form.querySelector('.rel-edit-label').value.trim(),
+            document.getElementById('rel-edit-color')?.value || REL_PALETTE[0],
+            form.querySelector('.style-btn.active')?.dataset.style || 'solid',
+        );
+        return;
+    }
+
+    if (e.target.closest('.rel-edit-cancel-btn')) {
+        const form = e.target.closest('.rel-edit-form-inline');
+        document.getElementById(form.dataset.chipRowId)?.style.removeProperty('display');
+        form.remove();
         return;
     }
 

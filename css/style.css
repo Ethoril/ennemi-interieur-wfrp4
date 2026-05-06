@@ -2123,6 +2123,46 @@ strong {
   border-color: #c94c4c;
 }
 
+.rel-edit-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 0 5px;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.rel-edit-btn:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.rel-edit-form-inline {
+  background: var(--bg-hover, rgba(255,255,255,0.04));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  margin: 4px 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rel-edit-form-inline input[type="text"] {
+  background: var(--bg-input, rgba(255,255,255,0.06));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  padding: 5px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 /* ── PNJs – Add-relation form ──────────────────── */
 .btn-add-rel {
   background: transparent;
@@ -2171,22 +2211,39 @@ strong {
   gap: 6px;
 }
 
+.rel-color-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 4px 0;
+}
+
+.color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s, border-color 0.1s;
+  flex-shrink: 0;
+}
+
+.color-swatch:hover {
+  transform: scale(1.2);
+}
+
+.color-swatch.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.4);
+  transform: scale(1.15);
+}
+
 .rel-style-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin: 2px 0;
-}
-
-.rel-style-row input[type="color"] {
-  width: 36px;
-  height: 28px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--bg-card);
-  cursor: pointer;
-  padding: 2px;
-  flex-shrink: 0;
 }
 
 .rel-style-toggle {
