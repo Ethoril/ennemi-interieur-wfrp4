@@ -432,6 +432,7 @@ function buildGraph() {
         const key = [l.source, l.target].sort().join('|');
         const idx = pairIdx.get(key) || 0;
         l._curveScale = Math.ceil((idx + 1) / 2) * (idx % 2 === 0 ? 1 : -1);
+        l._showLabel = idx % 2 === 0;
         pairIdx.set(key, idx + 1);
     });
 
@@ -462,7 +463,7 @@ function buildGraph() {
     linkTextSel.append('textPath')
         .attr('href', (d, i) => `#pnj-lp-${i}`)
         .attr('startOffset', '50%')
-        .text(d => d.label || d.type || '');
+        .text(d => d._showLabel !== false ? (d.label || d.type || '') : '');
     state.linkLabelSel = linkTextSel;
 
     // Nœuds : cartouches SVG déplaçables

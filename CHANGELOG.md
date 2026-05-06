@@ -1,3 +1,10 @@
+## [2.4.3] - 2026-05-06
+
+### PNJs — Étiquette unique sur lien bidirectionnel
+- **Label unique** : un lien bidirectionnel (A→B + B→A) chevauchant naturellement, seule l'étiquette du premier sens est affichée — plus de doublon de texte au milieu de la courbe
+
+---
+
 ## [2.4.2] - 2026-05-06
 
 ### PNJs — Directionnalité des liens
