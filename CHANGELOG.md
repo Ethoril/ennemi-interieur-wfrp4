@@ -1,3 +1,12 @@
+## [2.4.2] - 2026-05-06
+
+### PNJs — Directionnalité des liens
+- **Flèches sur les liens** : chaque lien porte un embout flèche (marqueur SVG) coloré de la même teinte que le lien, pointant vers le personnage cible
+- **Liens partant/arrivant sur les bordures des cartes** : les chemins bezier sont tronqués aux bordures des cartouches (calcul de l'intersection tangente/rectangle) — plus de traits qui commencent ou finissent au centre d'une carte
+- **Bidirectionnel** : nouvelle case à cocher dans le formulaire de création — si cochée, deux records Firestore sont créés (A→B et B→A) ; les deux liens reçoivent chacun une flèche et s'écartent naturellement grâce aux courbes anti-chevauchement
+
+---
+
 ## [2.4.1] - 2026-05-06
 
 ### PNJs — Liens (suite)

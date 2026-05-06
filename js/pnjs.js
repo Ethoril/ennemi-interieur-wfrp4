@@ -78,9 +78,26 @@ function bezierPath(x1, y1, x2, y2, curveScale = 1) {
     const dx = x2 - x1, dy = y2 - y1;
     const len = Math.sqrt(dx * dx + dy * dy) || 1;
     const curve = Math.min(len * 0.3, 80) * curveScale;
+    // Point de contrôle basé sur les centres (pour une courbure cohérente)
     const mx = (x1 + x2) / 2 - dy / len * curve;
     const my = (y1 + y2) / 2 + dx / len * curve;
-    return `M${x1},${y1} Q${mx},${my} ${x2},${y2}`;
+
+    const halfW = CARD_W / 2, halfH = CARD_H / 2;
+    const edgeDist = (ux, uy) =>
+        (Math.abs(ux) < 1e-6 ? halfH : Math.abs(uy) < 1e-6 ? halfW
+            : Math.min(halfW / Math.abs(ux), halfH / Math.abs(uy))) + 3;
+
+    // Recule le point source jusqu'à la bordure de sa carte (tangente en t=0)
+    const sdx = mx - x1, sdy = my - y1, sl = Math.sqrt(sdx*sdx + sdy*sdy) || 1;
+    const sux = sdx/sl, suy = sdy/sl;
+    const sx = x1 + sux * edgeDist(sux, suy), sy = y1 + suy * edgeDist(sux, suy);
+
+    // Recule le point cible jusqu'à la bordure de sa carte (tangente en t=1)
+    const tdx = x2 - mx, tdy = y2 - my, tl = Math.sqrt(tdx*tdx + tdy*tdy) || 1;
+    const tux = tdx/tl, tuy = tdy/tl;
+    const ex = x2 - tux * edgeDist(tux, tuy), ey = y2 - tuy * edgeDist(tux, tuy);
+
+    return `M${sx},${sy} Q${mx},${my} ${ex},${ey}`;
 }
 
 async function uploadImage(blob) {
@@ -191,12 +208,13 @@ async function deletePnj(id) {
     await loadData();
 }
 
-async function saveRelation(sourceId, cibleId, type, label, color, style) {
+async function saveRelation(sourceId, cibleId, type, label, color, style, bidir) {
     if (!sourceId || !cibleId || !type) { alert('Choisissez un PNJ et entrez un type de relation.'); return; }
     const relData = { source: sourceId, cible: cibleId, type, label: label || type };
     if (color) relData.color = color;
     if (style === 'dashed') relData.style = style;
     await addDoc(collection(db, 'relations'), relData);
+    if (bidir) await addDoc(collection(db, 'relations'), { ...relData, source: cibleId, cible: sourceId });
 
     await loadData();
     const node = state.nodes.find(n => n.id === sourceId);
@@ -417,6 +435,17 @@ function buildGraph() {
         pairIdx.set(key, idx + 1);
     });
 
+    // Marqueurs de flèches (un par couleur unique)
+    const defs = svg.append('defs');
+    [...new Set(state.links.map(l => l.color || getLinkColor(l.type)))].forEach(color => {
+        defs.append('marker')
+            .attr('id', `arrow-${color.replace('#', '')}`)
+            .attr('viewBox', '0 -4 10 8').attr('refX', 10).attr('refY', 0)
+            .attr('markerWidth', 10).attr('markerHeight', 8)
+            .attr('orient', 'auto').attr('markerUnits', 'userSpaceOnUse')
+            .append('path').attr('d', 'M0,-4 L10,0 L0,4 Z').attr('fill', color);
+    });
+
     // Liens : paths courbés + labels
     const linkG = g.append('g');
     state.linkSel = linkG.selectAll('path').data(state.links).join('path')
@@ -425,7 +454,8 @@ function buildGraph() {
         .attr('stroke', d => d.color || getLinkColor(d.type))
         .attr('stroke-width', 3.5)
         .attr('stroke-dasharray', d => d.style === 'dashed' ? '8 5' : null)
-        .attr('stroke-opacity', 0.7).attr('fill', 'none');
+        .attr('marker-end', d => `url(#arrow-${(d.color || getLinkColor(d.type)).replace('#', '')})`)
+        .attr('opacity', 0.8).attr('fill', 'none');
 
     const linkTextSel = linkG.selectAll('text.pnj-link-label').data(state.links).join('text')
         .attr('class', 'pnj-link-label');
@@ -655,6 +685,9 @@ function openPanel(d) {
                             <button type="button" class="style-btn" data-style="dashed" title="Pointillé">╌╌</button>
                         </div>
                     </div>
+                    <label class="rel-bidir-label">
+                        <input type="checkbox" id="rel-bidir"> Bidirectionnel
+                    </label>
                     <div class="rel-form-btns">
                         <button id="rel-save-btn" class="btn-primary-sm">Ajouter</button>
                         <button id="rel-cancel-btn" class="btn-ghost-sm">Annuler</button>
@@ -805,6 +838,7 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
             document.getElementById('rel-label').value.trim(),
             document.getElementById('rel-color').value,
             document.querySelector('#rel-add-form .style-btn.active')?.dataset.style || 'solid',
+            document.getElementById('rel-bidir')?.checked || false,
         );
         return;
     }
