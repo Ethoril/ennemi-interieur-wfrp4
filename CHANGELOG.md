@@ -1,3 +1,14 @@
+## [2.3.0] - 2026-05-06
+
+### Fiche — Journal XP repensé
+- **Gains XP journalisés** : nouveau bouton "+ Gain XP" — raison + montant — les gains s'affichent en vert dans le journal
+- **XP Total calculé automatiquement** : la somme des entrées de gain remplace le champ manuel
+- **XP Disponible = Total gagné − Total dépensé**, tous deux issus du journal
+- **Migration automatique** : les anciennes fiches avec un `xpTotal` manuel sont converties en entrée "XP initial (migré)" au premier chargement
+- Raccourcis clavier dans le formulaire de gain (Entrée pour passer au champ suivant / valider)
+
+---
+
 ## [2.2.1] - 2026-05-01
 
 ### Fix

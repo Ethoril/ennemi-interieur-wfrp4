@@ -649,11 +649,12 @@ function recalc() {
     setText('mouvement', MOUVEMENT[race] ?? 4);
     setText('blessures-max', getBonus('f') + 2 * getBonus('e') + getBonus('fm'));
 
-    // XP — dépensé = somme du journal
-    const xpSpent = state.xpLog.reduce((s, e) => s + (+e.cout || 0), 0);
-    const xpTotal = +getVal('xp-total') || 0;
+    // XP — total gagné = somme des entrées gain, dépensé = somme des achats
+    const xpGained = state.xpLog.filter(e => e.kind === 'gain').reduce((s, e) => s + (+e.montant || 0), 0);
+    const xpSpent  = state.xpLog.filter(e => e.kind !== 'gain').reduce((s, e) => s + (+e.cout || 0), 0);
+    setText('xp-total-display', xpGained);
     setText('xp-spent-display', xpSpent);
-    setText('xp-dispo', xpTotal - xpSpent);
+    setText('xp-dispo', xpGained - xpSpent);
     setText('xp-log-total', xpSpent);
 
     // Compétences de base
@@ -1165,6 +1166,15 @@ function renderXpLog() {
     if (!tbody) return;
 
     function rowHtml(e, i) {
+        if (e.kind === 'gain') {
+            return `<tr class="xp-gain-row">
+                <td><span class="xp-gain-badge">Gain</span></td>
+                <td><input class="xp-gain-raison" type="text" data-idx="${i}" value="${e.raison ?? ''}" placeholder="Raison…"></td>
+                <td class="col-num"><input class="xp-gain-montant" type="number" data-idx="${i}" min="0" value="${e.montant ?? 0}" style="width:60px"></td>
+                <td></td>
+                <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer">×</button></td>
+            </tr>`;
+        }
         if (e.applied) {
             return `<tr class="xp-applied-row">
                 <td>${e.type}</td>
@@ -1186,9 +1196,13 @@ function renderXpLog() {
     }
 
     tbody.innerHTML = state.xpLog.length === 0
-        ? `<tr class="empty-row"><td colspan="5">Aucune dépense enregistrée</td></tr>`
+        ? `<tr class="empty-row"><td colspan="5">Aucune entrée enregistrée</td></tr>`
         : state.xpLog.map(rowHtml).join('');
 
+    tbody.querySelectorAll('.xp-gain-raison').forEach(inp =>
+        inp.addEventListener('input', () => { state.xpLog[+inp.dataset.idx].raison = inp.value; save(); }));
+    tbody.querySelectorAll('.xp-gain-montant').forEach(inp =>
+        inp.addEventListener('input', () => { state.xpLog[+inp.dataset.idx].montant = +inp.value || 0; recalc(); }));
     tbody.querySelectorAll('.xp-type-sel').forEach(sel =>
         sel.addEventListener('change', () => { state.xpLog[+sel.dataset.idx].type = sel.value; recalc(); }));
     tbody.querySelectorAll('.xp-achat').forEach(inp =>
@@ -1205,6 +1219,38 @@ function renderXpLog() {
             renderXpLog();
             recalc();
         }));
+}
+
+function showXpGainForm() {
+    const form = document.getElementById('xp-gain-form');
+    if (!form) return;
+    form.style.display = 'block';
+    form.innerHTML = `
+        <div class="xp-gain-form-inner">
+            <input type="text" id="xg-raison" placeholder="Raison du gain (ex: fin de session)…" style="flex:1">
+            <input type="number" id="xg-montant" placeholder="XP" min="1" style="width:80px">
+            <button class="btn-add" id="xg-save-btn">Ajouter</button>
+            <button class="btn-rm" id="xg-cancel-btn" title="Annuler">×</button>
+        </div>`;
+    document.getElementById('xg-raison').focus();
+    document.getElementById('xg-save-btn').addEventListener('click', () => {
+        const raison  = document.getElementById('xg-raison').value.trim();
+        const montant = +document.getElementById('xg-montant').value || 0;
+        if (!raison || !montant) return;
+        state.xpLog.unshift({ kind: 'gain', raison, montant });
+        renderXpLog();
+        recalc();
+        form.style.display = 'none';
+    });
+    document.getElementById('xg-cancel-btn').addEventListener('click', () => {
+        form.style.display = 'none';
+    });
+    document.getElementById('xg-raison').addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('xg-montant').focus();
+    });
+    document.getElementById('xg-montant').addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('xg-save-btn').click();
+    });
 }
 
 // ── Sections optionnelles ─────────────────────────────
@@ -1224,7 +1270,6 @@ function exportData() {
         race:          getVal('race'),
         carriere:      getVal('carriere'),
         rang:          getVal('rang'),
-        xpTotal:       getVal('xp-total'),
         blessuresAct:  getVal('blessures-act'),
         resilience:    getVal('resilience'),
         determination: getVal('determination'),
@@ -1277,7 +1322,6 @@ function applyData(d) {
     setVal('race',          d.race);
     setVal('carriere',      d.carriere);
     setVal('rang',          d.rang);
-    setVal('xp-total',      d.xpTotal);
     setVal('blessures-act', d.blessuresAct);
     setVal('resilience',    d.resilience);
     setVal('determination', d.determination);
@@ -1301,6 +1345,10 @@ function applyData(d) {
     if (d.sorts)          state.sorts.push(...d.sorts);
     if (d.prieres)        state.prieres.push(...d.prieres);
     if (d.xpLog)          state.xpLog.push(...d.xpLog);
+    // Migration : ancien xpTotal manuel → entrée gain si aucun gain dans le journal
+    if (d.xpTotal && +d.xpTotal > 0 && !state.xpLog.some(e => e.kind === 'gain')) {
+        state.xpLog.unshift({ kind: 'gain', raison: 'XP initial (migré)', montant: +d.xpTotal });
+    }
     if (d.customSpecs)    Object.assign(state.customSpecs, d.customSpecs);
     if (d.customTalents)  Object.assign(state.customTalents, d.customTalents);
     if (d.optVisible)     Object.assign(state.optVisible, d.optVisible);
@@ -1363,7 +1411,7 @@ function bindAll() {
     // Panneau référence carrière
     ['carriere','rang'].forEach(id =>
         document.getElementById(id)?.addEventListener('input', renderCareerDetail));
-    ['race','xp-total'].forEach(id => document.getElementById(id)?.addEventListener('input', recalc));
+    ['race'].forEach(id => document.getElementById(id)?.addEventListener('input', recalc));
 
     // Boutons ajout
     document.getElementById('btn-add-adv-skill')?.addEventListener('click', () => {
@@ -1387,6 +1435,7 @@ function bindAll() {
         state.prieres.push({ nom:'', type:'Bénédiction', resume:'' });
         renderPrieres(); save();
     });
+    document.getElementById('btn-add-xp-gain')?.addEventListener('click', showXpGainForm);
     document.getElementById('btn-add-xp')?.addEventListener('click', showXpForm);
 
     // Sections optionnelles — toggle

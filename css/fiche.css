@@ -694,6 +694,50 @@
   vertical-align: middle;
 }
 
+/* ── Journal XP — entrées gain ──────────────────── */
+.xp-gain-row td {
+  background: rgba(80, 160, 80, 0.06);
+}
+
+.xp-gain-badge {
+  display: inline-block;
+  background: rgba(80, 180, 80, 0.18);
+  border: 1px solid rgba(80, 180, 80, 0.4);
+  border-radius: 3px;
+  color: #6dbf6d;
+  font-size: 0.68rem;
+  font-family: var(--font-heading);
+  letter-spacing: 0.05em;
+  padding: 1px 5px;
+  vertical-align: middle;
+}
+
+/* ── Formulaire gain XP ──────────────────────────── */
+#xp-gain-form {
+  margin-top: var(--space-md);
+}
+
+.xp-gain-form-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  border: 1px solid rgba(80, 180, 80, 0.35);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  background: rgba(80, 160, 80, 0.05);
+}
+
+.xp-gain-form-inner input[type="text"],
+.xp-gain-form-inner input[type="number"] {
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input, var(--bg-card));
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
 /* ── Formulaire d'achat XP ───────────────────────── */
 #xp-add-form {
   margin-top: var(--space-lg);

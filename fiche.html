@@ -61,9 +61,9 @@
                         </div>
 
                         <div class="fiche-xp-block">
-                            <div class="fiche-field">
-                                <label>XP Total</label>
-                                <input type="number" id="xp-total" min="0" value="0">
+                            <div class="xp-dispo">
+                                <label>XP Total <span class="xp-from-log">(depuis journal)</span></label>
+                                <span class="xp-dispo-val" id="xp-total-display">0</span>
                             </div>
                             <div class="xp-dispo">
                                 <label>XP Dépensé <span class="xp-from-log">(depuis journal)</span></label>
@@ -303,9 +303,11 @@
                             <tbody id="tbody-xp-log"></tbody>
                         </table>
                         <div class="xp-log-footer">
-                            <button class="btn-add" id="btn-add-xp">+ Ajouter une dépense XP</button>
-                            <span class="xp-log-total">Total journalisé : <strong id="xp-log-total">0</strong> XP</span>
+                            <button class="btn-add" id="btn-add-xp-gain">+ Gain XP</button>
+                            <button class="btn-add" id="btn-add-xp">+ Dépense XP</button>
+                            <span class="xp-log-total">Total dépensé : <strong id="xp-log-total">0</strong> XP</span>
                         </div>
+                        <div id="xp-gain-form" style="display:none"></div>
                         <div id="xp-add-form" style="display:none"></div>
                     </div>
 
