@@ -80,6 +80,9 @@ const WFRP_SKILLS = [
     { group:'Recherche',        spec:'', nom:'Recherche',        carac:'int', basic:false },
     { group:'Représentation',   spec:'', nom:'Représentation',   carac:'ag',  basic:false },
     { group:'Soins aux animaux',spec:'', nom:'Soins aux animaux',carac:'int', basic:false },
+    // Suppléments (Winds of Magic, etc.)
+    { group:'Augure',           spec:'', nom:'Augure',           carac:'fm',  basic:false },
+    { group:'Psychométrie',     spec:'', nom:'Psychométrie',     carac:'fm',  basic:false },
 
     // ── Compétences avancées — avec spécialisations ────────
     // Corps à corps (avancé)
@@ -200,6 +203,14 @@ const WFRP_SKILLS = [
     { group:'Voile', spec:'Caravelle',    nom:'Voile (Caravelle)',     carac:'ag', basic:false },
     { group:'Voile', spec:'Cogue',        nom:'Voile (Cogue)',         carac:'ag', basic:false },
     { group:'Voile', spec:'Drakkar',      nom:'Voile (Drakkar)',       carac:'ag', basic:false },
+    { group:'Voile', spec:'Skycraft',     nom:'Voile (Skycraft)',      carac:'ag', basic:false },
+
+    // Conduite — la version de base "Conduite" est déjà au-dessus,
+    // mais les Hauts Elfes ajoutent une spécialisation "Skycutter".
+    { group:'Conduite', spec:'Skycutter', nom:'Conduite (Skycutter)', carac:'ag', basic:false },
+
+    // Soins aux animaux — spécialisation (Roc, monture des Hauts Elfes)
+    { group:'Soins aux animaux', spec:'Roc', nom:'Soins aux animaux (Roc)', carac:'int', basic:false },
 ];
 
 // Groupes ayant des spécialisations (base ou avancée)

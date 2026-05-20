@@ -81,7 +81,47 @@ function getActiveCareerData() {
 }
 
 function getActiveRang() {
-    return Math.min(4, Math.max(1, +getVal('rang') || 1));
+    // Le rang max dépend de la carrière (Mage HE va jusqu'à 5, les autres à 4).
+    const career = getActiveCareerData();
+    const maxRang = career ? Math.max(4, ...career.rangs.map(r => r.rang)) : 4;
+    return Math.min(maxRang, Math.max(1, +getVal('rang') || 1));
+}
+
+// ── Variantes de rang ──────────────────────────────────
+// Certains rangs ont plusieurs entrées (variantes par race / supplément).
+// L'utilisateur peut en choisir une dans le panneau de référence ;
+// le choix est persisté dans state.chosenVariants[careerId][rang].
+
+function getRangVariants(career, rang) {
+    return career.rangs.filter(r => r.rang === rang);
+}
+
+function getChosenVariantTitre(careerId, rang) {
+    return state.chosenVariants?.[careerId]?.[rang] || null;
+}
+
+function setChosenVariantTitre(careerId, rang, titre) {
+    if (!state.chosenVariants[careerId]) state.chosenVariants[careerId] = {};
+    if (titre) state.chosenVariants[careerId][rang] = titre;
+    else delete state.chosenVariants[careerId][rang];
+}
+
+// Renvoie la variante choisie pour ce rang, ou null si l'utilisateur n'a pas choisi
+// (ou s'il n'y a qu'une variante — pas besoin de choix).
+function getActiveVariantForRang(career, rang) {
+    const variants = getRangVariants(career, rang);
+    if (variants.length === 1) return variants[0];
+    if (variants.length === 0) return null;
+    const chosen = getChosenVariantTitre(career.id, rang);
+    return chosen ? variants.find(v => v.titre === chosen) || null : null;
+}
+
+// Variantes à considérer comme "dans la carrière" : la choisie si choix, sinon toutes.
+// Comportement généreux par défaut — évite les faux négatifs pendant que la joueuse
+// achète des compétences avant d'avoir formalisé la variante avec le MJ.
+function getVariantsToConsider(career, rang) {
+    const active = getActiveVariantForRang(career, rang);
+    return active ? [active] : getRangVariants(career, rang);
 }
 
 function skillBaseNom(fullNom) {
@@ -94,12 +134,12 @@ function isSkillInCareer(nom) {
     const rang = getActiveRang();
     const purchasedBase = skillBaseNom(nom);
     for (let r = 1; r <= rang; r++) {
-        const rd = career.rangs.find(x => x.rang === r);
-        if (!rd) continue;
-        for (const s of rd.skills) {
-            if (s.toLowerCase() === nom.toLowerCase()) return true;
-            // Slot ouvert → correspondance par groupe de base uniquement
-            if (isOpenCareerSlot(s) && skillBaseNom(s) === purchasedBase) return true;
+        for (const rd of getVariantsToConsider(career, r)) {
+            for (const s of rd.skills) {
+                if (s.toLowerCase() === nom.toLowerCase()) return true;
+                // Slot ouvert → correspondance par groupe de base uniquement
+                if (isOpenCareerSlot(s) && skillBaseNom(s) === purchasedBase) return true;
+            }
         }
     }
     return false;
@@ -107,7 +147,16 @@ function isSkillInCareer(nom) {
 
 function isCaracInCareer(carac) {
     const career = getActiveCareerData();
-    return career ? career.carac.includes(carac) : false;
+    if (!career) return false;
+    const rang = getActiveRang();
+    // Cumul des caracs des rangs 1 → rang courant, en respectant les variantes choisies.
+    for (let r = 1; r <= rang; r++) {
+        for (const rd of getVariantsToConsider(career, r)) {
+            if ((rd.caracs || []).includes(carac)) return true;
+        }
+    }
+    // Rétrocompat (anciennes données sans rd.caracs) : utiliser la liste agrégée.
+    return career.carac.includes(carac);
 }
 
 function isTalentInCareer(talentNom) {
@@ -117,12 +166,12 @@ function isTalentInCareer(talentNom) {
     const nom     = talentNom.toLowerCase().trim();
     const nomBase = nom.split('(')[0].trim();
     for (let r = 1; r <= rang; r++) {
-        const rd = career.rangs.find(x => x.rang === r);
-        if (!rd) continue;
-        for (const t of rd.talents) {
-            if (t.toLowerCase() === nom) return true;
-            // "Savoir-vivre (au choix)" → tout talent du même groupe est dans la carrière
-            if (OPEN_SPEC_PATTERN.test(t) && t.split('(')[0].trim().toLowerCase() === nomBase) return true;
+        for (const rd of getVariantsToConsider(career, r)) {
+            for (const t of rd.talents) {
+                if (t.toLowerCase() === nom) return true;
+                // "Savoir-vivre (au choix)" → tout talent du même groupe est dans la carrière
+                if (OPEN_SPEC_PATTERN.test(t) && t.split('(')[0].trim().toLowerCase() === nomBase) return true;
+            }
         }
     }
     return false;
@@ -625,6 +674,7 @@ const state = {
     xpLog:          [],
     customSpecs:    {},   // { 'Métier': ['Boulangerie', 'Tonnelier'], ... }
     customTalents:  {},   // { 'Maître artisan': ['Apothicaire', 'Forgeron'], ... }
+    chosenVariants: {},   // { careerId: { rang: variantTitre, ... }, ... }
     optVisible:     { 'section-sorts': false, 'section-prieres': false },
 };
 
@@ -855,9 +905,9 @@ async function showTalentModal(nom) {
 function getCareerAllSkills(career, rang) {
     const seen = new Set(), noms = [];
     for (let r = 1; r <= rang; r++) {
-        const rd = career.rangs.find(x => x.rang === r);
-        if (!rd) continue;
-        rd.skills.forEach(s => { if (!seen.has(s.toLowerCase())) { seen.add(s.toLowerCase()); noms.push(s); } });
+        for (const rd of getVariantsToConsider(career, r)) {
+            rd.skills.forEach(s => { if (!seen.has(s.toLowerCase())) { seen.add(s.toLowerCase()); noms.push(s); } });
+        }
     }
     return noms;
 }
@@ -977,8 +1027,9 @@ function renderCareerDetail() {
     }
 
     const rang = getActiveRang();
-    const rd   = career.rangs.find(r => r.rang === rang);
-    if (!rd) {
+    const variantsCurrent = getRangVariants(career, rang);
+    const currentVariant  = getActiveVariantForRang(career, rang) || variantsCurrent[0];
+    if (!currentVariant) {
         panel.style.display = 'none';
         applyCareerHighlights();
         renderCareerAdvGhosts();
@@ -987,14 +1038,43 @@ function renderCareerDetail() {
 
     const caracLabels = (career.carac || []).map(c => CARAC_LABELS[c] || c).join(', ') || '—';
 
+    // Bandeau prérequis pour les sous-carrières (ex: Prêtre-Forgeron de Vaul exige Mage (HE) rang 2)
+    let prereqHtml = '';
+    if (career.prereq) {
+        prereqHtml = `
+        <div class="career-prereq-banner" title="Prérequis d'entrée dans cette sous-carrière">
+            <span class="career-prereq-icon">⚑</span>
+            Prérequis : <strong>${career.prereq.career}</strong> — rang ${career.prereq.minRang} minimum
+        </div>`;
+    }
+
     // Sections par rang (cumulatif rang 1 → rang courant)
     let rangsHtml = '';
     for (let r = 1; r <= rang; r++) {
-        const rdata = career.rangs.find(x => x.rang === r);
-        if (!rdata) continue;
-        const isPast     = r < rang;
-        const skillsH    = (rdata.skills  || []).map(s => `<span class="career-tag">${s}</span>`).join('') || '<em>—</em>';
-        const talentsH   = (rdata.talents || []).map(t =>
+        const variants = getRangVariants(career, r);
+        if (variants.length === 0) continue;
+
+        const isPast    = r < rang;
+        const chosen    = getActiveVariantForRang(career, r);
+        const displayed = chosen || variants[0];
+
+        // Sélecteur de variante si > 1 variante pour ce rang
+        let variantPicker = '';
+        if (variants.length > 1) {
+            const noneOpt = chosen
+                ? ''
+                : '<option value="">— Variante à choisir —</option>';
+            variantPicker = `
+            <select class="career-variant-sel" data-rang="${r}" title="Choisir la variante de ce rang">
+                ${noneOpt}
+                ${variants.map(v =>
+                    `<option value="${v.titre}" ${chosen?.titre === v.titre ? 'selected' : ''}>${v.titre}</option>`
+                ).join('')}
+            </select>`;
+        }
+
+        const skillsH  = (displayed.skills  || []).map(s => `<span class="career-tag">${s}</span>`).join('') || '<em>—</em>';
+        const talentsH = (displayed.talents || []).map(t =>
             `<span class="career-tag career-tag-talent" data-talent="${t}" role="button" tabindex="0" title="Voir la description">${t}</span>`
         ).join('') || '<em>—</em>';
         const statusBadge = isPast
@@ -1004,8 +1084,9 @@ function renderCareerDetail() {
         <div class="career-rang-section${isPast ? ' career-rang-past' : ''}">
             <div class="career-rang-header">
                 <span class="career-rang-badge${isPast ? ' career-rang-badge-past' : ''}">Rang ${r}</span>
-                <span class="career-rang-titre">${rdata.titre}</span>
+                <span class="career-rang-titre">${displayed.titre}</span>
                 ${statusBadge}
+                ${variantPicker}
             </div>
             <div class="career-detail-grid career-detail-grid-2col">
                 <div class="career-detail-col">
@@ -1023,7 +1104,8 @@ function renderCareerDetail() {
     panel.style.display = '';
     panel.innerHTML = `
         <div class="fiche-section career-detail-section">
-            <h2>${career.nom} — ${rd.titre} <span class="career-rang-badge">Rang ${rang}</span></h2>
+            <h2>${career.nom} — ${currentVariant.titre} <span class="career-rang-badge">Rang ${rang}</span></h2>
+            ${prereqHtml}
             <div class="career-detail-carac">
                 <span class="career-detail-label">Caractéristiques :</span>
                 <span class="career-detail-carac-vals">${caracLabels}</span>
@@ -1034,6 +1116,17 @@ function renderCareerDetail() {
     panel.querySelectorAll('[data-talent]').forEach(el => {
         el.addEventListener('click', () => showTalentModal(el.dataset.talent));
         el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') showTalentModal(el.dataset.talent); });
+    });
+
+    // Persister le choix de variante et re-rendre
+    panel.querySelectorAll('.career-variant-sel').forEach(sel => {
+        sel.addEventListener('change', () => {
+            const r = +sel.dataset.rang;
+            setChosenVariantTitre(career.id, r, sel.value || null);
+            save();
+            renderCareerDetail();
+            renderAdvancedSkills();
+        });
     });
 
     applyCareerHighlights();
@@ -1288,6 +1381,7 @@ function exportData() {
         xpLog:          state.xpLog,
         customSpecs:    state.customSpecs,
         customTalents:  state.customTalents,
+        chosenVariants: state.chosenVariants,
         optVisible:     state.optVisible,
     };
 }
@@ -1313,6 +1407,7 @@ function resetState() {
     state.xpLog.length          = 0;
     state.customSpecs           = {};
     state.customTalents         = {};
+    state.chosenVariants        = {};
     Object.keys(state.optVisible).forEach(k => { state.optVisible[k] = false; });
 }
 
@@ -1351,6 +1446,7 @@ function applyData(d) {
     }
     if (d.customSpecs)    Object.assign(state.customSpecs, d.customSpecs);
     if (d.customTalents)  Object.assign(state.customTalents, d.customTalents);
+    if (d.chosenVariants) Object.assign(state.chosenVariants, d.chosenVariants);
     if (d.optVisible)     Object.assign(state.optVisible, d.optVisible);
 }
 
@@ -1425,7 +1521,6 @@ function bindAll() {
     document.getElementById('btn-add-talent-acq')?.addEventListener('click', () => {
         state.talentsAcq.push({ nom:'', note:'' });
         renderTalents(); save();
-    });
     });
     document.getElementById('btn-add-sort')?.addEventListener('click', () => {
         state.sorts.push({ nom:'', vent:'Aqshy', cn:0, portee:'', duree:'', resume:'' });

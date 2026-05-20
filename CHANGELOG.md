@@ -1,3 +1,22 @@
+## [2.5.0] - 2026-05-20
+
+### Fiche — Base de données complète des carrières
+- **132 carrières** importées depuis le Google Sheet (Livre de base, Dwarf Player Guide, High Elf Player Guide, Deft Steps, Up in Arms, Winds of Magic, Archives 1-3, Middenheim) en remplacement des 3 carrières mock initiales — couverture exhaustive du panneau de référence carrière, autocomplétion et détection « dans la carrière »
+- **Script d'import** (`tools/import-careers.mjs`) qui fetche le sheet, normalise les apostrophes typographiques, regroupe les variantes et régénère `js/data/careers.js` — relancer après chaque modification du sheet pour synchroniser
+- **Variantes de rang** : certains rangs ont plusieurs versions (ex: rang 2 d'Artisan a la version « Artisan » classique et « Façonneur de Pierre » du Dwarf PG). Le panneau de référence affiche un sélecteur de variante quand plusieurs sont disponibles ; le choix est persisté dans `chosenVariants` et utilisé pour la détection « dans la carrière » et le highlighting
+- **Sous-carrières avec prérequis** : les 3 sous-carrières de Mage (HE) (Prêtre-Forgeron de Vaul, Tisseur de Tempêtes, Maître du Savoir de Hoeth) affichent un bandeau « Prérequis : Mage (HE) — rang 2 minimum » informatif (non bloquant — la règle de jeu se fait à l'oral)
+- **Comportement généreux par défaut** : tant qu'une variante n'a pas été explicitement choisie, toutes les variantes du rang sont considérées comme « dans la carrière » pour éviter les faux négatifs pendant les achats XP
+
+### Compétences & spécialisations ajoutées
+- Nouvelles compétences : `Augure`, `Psychométrie` (Winds of Magic)
+- Nouvelles spécialisations : `Voile (Skycraft)`, `Conduite (Skycutter)`, `Soins aux animaux (Roc)` (Dwarf / High Elf Player Guides)
+
+### Technique
+- Bug pré-existant corrigé : `});` orphelin dans `bindAll()` qui fermait la fonction prématurément ; les listeners `btn-add-sort` / `btn-add-priere` / `btn-add-xp(-gain)` / toggles de sections optionnelles sont maintenant bien dans le scope de la fonction
+- Le rang max d'une carrière est désormais lu dynamiquement (Mage HE va jusqu'à 5, les autres restent à 4)
+
+---
+
 ## [2.4.3] - 2026-05-06
 
 ### PNJs — Étiquette unique sur lien bidirectionnel

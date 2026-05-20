@@ -1191,9 +1191,43 @@ tr.sk-ghost-open td.sk-nom::after {
   border-color: rgba(80,120,200, 0.3);
 }
 
+/* Bandeau prérequis (sous-carrières) */
+.career-prereq-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.4rem 0 0.6rem;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.82rem;
+  background: rgba(120, 90, 180, 0.10);
+  border-left: 3px solid rgba(120, 90, 180, 0.55);
+  border-radius: 3px;
+}
+
+.career-prereq-icon {
+  font-size: 0.95rem;
+  color: rgba(120, 90, 180, 0.85);
+}
+
+/* Sélecteur de variante de rang (race / supplément) */
+.career-variant-sel {
+  margin-left: auto;
+  font-size: 0.78rem;
+  padding: 2px 6px;
+  border: 1px solid rgba(var(--accent-rgb, 180,140,60), 0.35);
+  background: rgba(var(--accent-rgb, 180,140,60), 0.06);
+  border-radius: 3px;
+  max-width: 220px;
+}
+
+.career-rang-past .career-variant-sel {
+  border-style: dashed;
+}
+
 @media (max-width: 700px) {
   .career-detail-grid,
   .career-detail-grid-2col { grid-template-columns: 1fr; }
+  .career-variant-sel { margin-left: 0; max-width: none; flex: 1 1 100%; }
 }
 
 /* ── Responsive ──────────────────────────────────── */
