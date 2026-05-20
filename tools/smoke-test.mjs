@@ -1,12 +1,10 @@
-// Smoke test : charge careers.js dans un environnement simulé et imprime des stats.
+// Smoke test : charge careers.json et imprime des stats.
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const code = await readFile(resolve(__dirname, '..', 'js', 'data', 'careers.js'), 'utf8');
-const sandbox = { window: {} };
-new Function('window', code)(sandbox.window);
-const cs = sandbox.window.WFRP_CAREERS;
+const json = await readFile(resolve(__dirname, '..', 'js', 'data', 'careers.json'), 'utf8');
+const cs = JSON.parse(json);
 
 const variants = cs.filter(c => c.rangs.some((r, i, a) => a.findIndex(x => x.rang === r.rang) !== i));
 const prereqs  = cs.filter(c => c.prereq);

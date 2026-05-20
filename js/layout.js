@@ -13,7 +13,10 @@ const NAV_ITEMS = [
 // ── Thème ───────────────────────────────────────────
 (function initTheme() {
     const saved = localStorage.getItem('theme');
-    if (saved === 'parchment') document.documentElement.setAttribute('data-theme', 'parchment');
+    // Premier visiteur : suit prefers-color-scheme (light → parchment, dark → sombre).
+    const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+    const initial = saved || (prefersLight ? 'parchment' : 'dark');
+    if (initial === 'parchment') document.documentElement.setAttribute('data-theme', 'parchment');
 
     const link = document.createElement('link');
     link.rel  = 'stylesheet';

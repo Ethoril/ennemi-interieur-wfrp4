@@ -17,7 +17,7 @@ const SHEET_NAME = 'Carri%C3%A8res'; // "Carrières" URL-encodé
 const URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUT_PATH = resolve(__dirname, '..', 'js', 'data', 'careers.js');
+const OUT_PATH = resolve(__dirname, '..', 'js', 'data', 'careers.json');
 
 const CARAC_MAP = {
     'CC': 'cc', 'CT': 'ct', 'F': 'f', 'E': 'e', 'I': 'i',
@@ -94,43 +94,46 @@ function parseCarac(s) {
         .filter(Boolean);
 }
 
-// ── Génération JS pretty-print ────────────────────────
-function jsString(s) {
-    // Utilise des guillemets doubles si la chaîne contient une apostrophe simple, sinon simples.
-    if (s.includes("'") && !s.includes('"')) return `"${s.replace(/"/g, '\\"')}"`;
-    return `'${s.replace(/'/g, "\\'")}'`;
-}
+// ── Validation structurelle ────────────────────────────
+// Bloque l'écriture si les données sont incohérentes — évite de corrompre
+// la base au moindre changement de format dans le Google Sheet.
+function validate(careers) {
+    const errors = [];
+    const idsSeen = new Set();
+    const nomsSeen = new Set(careers.map(c => c.nom));
 
-function jsArray(arr, indent) {
-    if (arr.length === 0) return '[]';
-    const lines = arr.map(s => `${indent}    ${jsString(s)},`);
-    return '[\n' + lines.join('\n') + `\n${indent}]`;
-}
+    for (const c of careers) {
+        if (idsSeen.has(c.id)) errors.push(`id dupliqué : ${c.id} (${c.nom})`);
+        idsSeen.add(c.id);
 
-function emitCareer(career) {
-    const indent = '    ';
-    let out = `${indent}{\n`;
-    out += `${indent}    id: ${jsString(career.id)},\n`;
-    out += `${indent}    nom: ${jsString(career.nom)},\n`;
-    out += `${indent}    source: ${jsString(career.source)},\n`;
-    out += `${indent}    carac: [${career.carac.map(c => `'${c}'`).join(', ')}],\n`;
-    if (career.prereq) {
-        out += `${indent}    prereq: { career: ${jsString(career.prereq.career)}, minRang: ${career.prereq.minRang} },\n`;
+        if (!c.rangs.length) {
+            errors.push(`${c.nom} : aucun rang`);
+            continue;
+        }
+
+        // Les rangs uniques doivent former une séquence contiguë (sans trou).
+        // Le départ n'est pas forcément 1 : certaines carrières HE commencent au rang 3.
+        const uniqRangs = [...new Set(c.rangs.map(r => r.rang))].sort((a, b) => a - b);
+        for (let i = 1; i < uniqRangs.length; i++) {
+            if (uniqRangs[i] !== uniqRangs[i - 1] + 1) {
+                errors.push(`${c.nom} : trou dans les rangs, trouvés [${uniqRangs.join(', ')}]`);
+                break;
+            }
+        }
+
+        for (const r of c.rangs) {
+            if (!r.titre) errors.push(`${c.nom} rang ${r.rang} : titre vide`);
+            if (!r.caracs.length) errors.push(`${c.nom} rang ${r.rang} (${r.titre}) : aucune carac`);
+        }
+
+        if (c.prereq && !nomsSeen.has(c.prereq.career)) {
+            errors.push(`${c.nom} : prereq pointe vers "${c.prereq.career}" qui n'existe pas`);
+        }
     }
-    out += `${indent}    rangs: [\n`;
-    for (const r of career.rangs) {
-        out += `${indent}        {\n`;
-        out += `${indent}            rang: ${r.rang},\n`;
-        out += `${indent}            titre: ${jsString(r.titre)},\n`;
-        if (r.statut) out += `${indent}            statut: ${jsString(r.statut)},\n`;
-        out += `${indent}            caracs: [${r.caracs.map(c => `'${c}'`).join(', ')}],\n`;
-        out += `${indent}            skills: ${jsArray(r.skills, indent + '            ')},\n`;
-        out += `${indent}            talents: ${jsArray(r.talents, indent + '            ')},\n`;
-        out += `${indent}        },\n`;
+
+    if (errors.length) {
+        throw new Error(`Validation échouée (${errors.length} erreur(s)) :\n  - ${errors.join('\n  - ')}`);
     }
-    out += `${indent}    ],\n`;
-    out += `${indent}},`;
-    return out;
 }
 
 // ── Main ───────────────────────────────────────────────
@@ -211,19 +214,11 @@ async function main() {
     // Tri alphabétique sur le nom pour avoir un fichier reproductible.
     careers.sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
 
-    // ── Génération du fichier ────────────────────────────
-    const today = new Date().toISOString().slice(0, 10);
-    let out = `'use strict';\n\n`;
-    out += `// Base de données des carrières WFRP4 (fr).\n`;
-    out += `// Généré automatiquement par tools/import-careers.mjs le ${today}.\n`;
-    out += `// Source : Google Sheet "Carrières" (id ${SHEET_ID}).\n`;
-    out += `// Ne pas éditer manuellement — relance le script pour synchroniser.\n\n`;
-    out += `const WFRP_CAREERS = [\n`;
-    out += careers.map(emitCareer).join('\n');
-    out += `\n];\n\n`;
-    out += `// Exposition globale (const ne s'attache pas à window dans les balises <script>)\n`;
-    out += `window.WFRP_CAREERS = WFRP_CAREERS;\n`;
+    validate(careers);
 
+    // ── Génération du fichier ────────────────────────────
+    // JSON pur, fetché paresseusement par fiche.js (cf. lazy-load careers).
+    const out = JSON.stringify(careers, null, 2) + '\n';
     await writeFile(OUT_PATH, out, 'utf8');
     console.log(`✓ ${careers.length} carrières écrites dans ${OUT_PATH}`);
     // Stats rapides

@@ -355,6 +355,37 @@ function getXfSkillCurrentAdv(fullNom) {
     return state.skillsAdvanced.find(s => s.nom === fullNom)?.adv || 0;
 }
 
+// ── Cache des talents issus des carrières (immuable) ───────
+let _careerTalentsBaseCache = null;
+function getCareerTalentsBase() {
+    if (_careerTalentsBaseCache) return _careerTalentsBaseCache;
+    if (!window.WFRP_CAREERS) return null;
+    const set = new Set();
+    WFRP_CAREERS.forEach(c => c.rangs.forEach(r => r.talents.forEach(t => {
+        if (isOpenCareerSlot(t)) set.add(t.split('(')[0].trim());
+        else set.add(t);
+    })));
+    _careerTalentsBaseCache = set;
+    return set;
+}
+
+// HTML de datalist mémoïsé — invalidé quand state.customTalents change.
+let _talentsDatalistCache = { sig: null, html: '' };
+function buildTalentsDatalistHtml() {
+    const base = getCareerTalentsBase();
+    if (!base) return null;
+    const sig = JSON.stringify(state.customTalents || {});
+    if (_talentsDatalistCache.sig === sig) return _talentsDatalistCache.html;
+    const set = new Set(base);
+    Object.entries(state.customTalents || {}).forEach(([baseName, specs]) =>
+        specs.forEach(spec => set.add(`${baseName} (${spec})`))
+    );
+    const html = [...set].sort((a, b) => a.localeCompare(b, 'fr'))
+        .map(t => `<option value="${t}">`).join('');
+    _talentsDatalistCache = { sig, html };
+    return html;
+}
+
 // Specs connues pour un groupe de talent (depuis toutes les carrières)
 function getTalentSpecsForGroup(groupBase) {
     if (!window.WFRP_CAREERS) return [];
@@ -512,21 +543,20 @@ function updateXfTarget() {
         talentSpecWrap.className = 'xf-target-wrap';
         wrap.appendChild(talentSpecWrap);
 
-        // Reconstruire la datalist (noms de base pour "au choix", noms complets sinon)
-        document.getElementById('xf-talent-datalist')?.remove();
-        if (window.WFRP_CAREERS) {
-            const dl = document.createElement('datalist');
-            dl.id = 'xf-talent-datalist';
-            const talents = new Set();
-            WFRP_CAREERS.forEach(c => c.rangs.forEach(r => r.talents.forEach(t => {
-                if (isOpenCareerSlot(t)) talents.add(t.split('(')[0].trim());
-                else talents.add(t);
-            })));
-            Object.entries(state.customTalents).forEach(([base, specs]) =>
-                specs.forEach(spec => talents.add(`${base} (${spec})`))
-            );
-            dl.innerHTML = [...talents].sort((a, b) => a.localeCompare(b, 'fr')).map(t => `<option value="${t}">`).join('');
-            document.body.appendChild(dl);
+        // Datalist mémoïsée : on garde le noeud DOM et on ne reconstruit le HTML
+        // que si la signature des customTalents a changé.
+        const html = buildTalentsDatalistHtml();
+        if (html !== null) {
+            let dl = document.getElementById('xf-talent-datalist');
+            if (!dl) {
+                dl = document.createElement('datalist');
+                dl.id = 'xf-talent-datalist';
+                document.body.appendChild(dl);
+            }
+            if (dl.dataset.sig !== _talentsDatalistCache.sig) {
+                dl.innerHTML = html;
+                dl.dataset.sig = _talentsDatalistCache.sig;
+            }
         }
 
         inp.addEventListener('input', () => {
@@ -836,22 +866,21 @@ function ensureSkillsDatalist() {
 }
 
 // Datalist globale des talents (utilisée par les champs d'ajout d'overrides).
+// Mémoïsée : le DOM persiste, et le HTML n'est régénéré que si la signature
+// des customTalents a évolué depuis le dernier appel.
 function ensureTalentsDatalist() {
-    if (document.getElementById('wfrp-talents-list')) return;
-    if (!window.WFRP_CAREERS) return;
-    const dl = document.createElement('datalist');
-    dl.id = 'wfrp-talents-list';
-    const set = new Set();
-    WFRP_CAREERS.forEach(c => c.rangs.forEach(r => r.talents.forEach(t => {
-        if (isOpenCareerSlot(t)) set.add(t.split('(')[0].trim());
-        else set.add(t);
-    })));
-    Object.entries(state.customTalents || {}).forEach(([base, specs]) =>
-        specs.forEach(spec => set.add(`${base} (${spec})`))
-    );
-    dl.innerHTML = [...set].sort((a, b) => a.localeCompare(b, 'fr'))
-        .map(t => `<option value="${t}">`).join('');
-    document.body.appendChild(dl);
+    const html = buildTalentsDatalistHtml();
+    if (html === null) return;
+    let dl = document.getElementById('wfrp-talents-list');
+    if (!dl) {
+        dl = document.createElement('datalist');
+        dl.id = 'wfrp-talents-list';
+        document.body.appendChild(dl);
+    }
+    if (dl.dataset.sig !== _talentsDatalistCache.sig) {
+        dl.innerHTML = html;
+        dl.dataset.sig = _talentsDatalistCache.sig;
+    }
 }
 
 function renderAdvancedSkills() {
@@ -1777,7 +1806,23 @@ function bindAll() {
 
 // ── Init ──────────────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', () => {
+// Chargement paresseux de la base de carrières (JSON ~280 KB).
+// On l'attache à window pour rester compatible avec tout le code qui lit
+// directement window.WFRP_CAREERS.
+async function loadCareersData() {
+    if (window.WFRP_CAREERS) return;
+    try {
+        const res = await fetch('js/data/careers.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        window.WFRP_CAREERS = await res.json();
+    } catch (e) {
+        console.error('Impossible de charger careers.json :', e);
+        window.WFRP_CAREERS = [];
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadCareersData();
     buildCareerDatalist();
     load();             // charger l'état en premier
     buildBasicSkills(); // puis rendre avec les valeurs restaurées
