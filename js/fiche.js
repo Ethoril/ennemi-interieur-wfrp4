@@ -124,6 +124,70 @@ function getVariantsToConsider(career, rang) {
     return active ? [active] : getRangVariants(career, rang);
 }
 
+// ── Overrides par-fiche ────────────────────────────────
+// Le MJ peut retirer ou ajouter manuellement une compétence/talent sur un rang
+// donné de la carrière, sans modifier la DB globale. Stocké dans
+// state.careerOverrides[careerId][rang] = { skillsRemoved, skillsAdded, talentsRemoved, talentsAdded }.
+
+function getOverrides(careerId, rang) {
+    return state.careerOverrides?.[careerId]?.[rang] || null;
+}
+
+function ensureOverrides(careerId, rang) {
+    if (!state.careerOverrides[careerId]) state.careerOverrides[careerId] = {};
+    if (!state.careerOverrides[careerId][rang]) {
+        state.careerOverrides[careerId][rang] = {
+            skillsRemoved: [], skillsAdded: [],
+            talentsRemoved: [], talentsAdded: [],
+        };
+    }
+    return state.careerOverrides[careerId][rang];
+}
+
+// Supprime les entrées vides du state pour garder le JSON propre.
+function cleanupOverrides(careerId, rang) {
+    const o = state.careerOverrides?.[careerId]?.[rang];
+    if (!o) return;
+    if (!o.skillsRemoved.length && !o.skillsAdded.length
+        && !o.talentsRemoved.length && !o.talentsAdded.length) {
+        delete state.careerOverrides[careerId][rang];
+    }
+    if (state.careerOverrides[careerId]
+        && Object.keys(state.careerOverrides[careerId]).length === 0) {
+        delete state.careerOverrides[careerId];
+    }
+}
+
+function hasOverrides(careerId, rang) {
+    const o = getOverrides(careerId, rang);
+    return !!(o && (o.skillsRemoved.length || o.skillsAdded.length
+                 || o.talentsRemoved.length || o.talentsAdded.length));
+}
+
+// Listes effectives : (skills/talents de la variante) − retirées + ajoutées.
+// Les overrides s'appliquent au rang, indépendamment de la variante choisie.
+function getEffectiveSkills(career, rang, variant) {
+    const base = (variant?.skills || []).slice();
+    const o = getOverrides(career.id, rang);
+    if (!o) return base;
+    const removed = new Set(o.skillsRemoved.map(s => s.toLowerCase()));
+    return [
+        ...base.filter(s => !removed.has(s.toLowerCase())),
+        ...o.skillsAdded,
+    ];
+}
+
+function getEffectiveTalents(career, rang, variant) {
+    const base = (variant?.talents || []).slice();
+    const o = getOverrides(career.id, rang);
+    if (!o) return base;
+    const removed = new Set(o.talentsRemoved.map(t => t.toLowerCase()));
+    return [
+        ...base.filter(t => !removed.has(t.toLowerCase())),
+        ...o.talentsAdded,
+    ];
+}
+
 function skillBaseNom(fullNom) {
     return fullNom.split('(')[0].trim().toLowerCase();
 }
@@ -135,7 +199,7 @@ function isSkillInCareer(nom) {
     const purchasedBase = skillBaseNom(nom);
     for (let r = 1; r <= rang; r++) {
         for (const rd of getVariantsToConsider(career, r)) {
-            for (const s of rd.skills) {
+            for (const s of getEffectiveSkills(career, r, rd)) {
                 if (s.toLowerCase() === nom.toLowerCase()) return true;
                 // Slot ouvert → correspondance par groupe de base uniquement
                 if (isOpenCareerSlot(s) && skillBaseNom(s) === purchasedBase) return true;
@@ -167,7 +231,7 @@ function isTalentInCareer(talentNom) {
     const nomBase = nom.split('(')[0].trim();
     for (let r = 1; r <= rang; r++) {
         for (const rd of getVariantsToConsider(career, r)) {
-            for (const t of rd.talents) {
+            for (const t of getEffectiveTalents(career, r, rd)) {
                 if (t.toLowerCase() === nom) return true;
                 // "Savoir-vivre (au choix)" → tout talent du même groupe est dans la carrière
                 if (OPEN_SPEC_PATTERN.test(t) && t.split('(')[0].trim().toLowerCase() === nomBase) return true;
@@ -675,8 +739,18 @@ const state = {
     customSpecs:    {},   // { 'Métier': ['Boulangerie', 'Tonnelier'], ... }
     customTalents:  {},   // { 'Maître artisan': ['Apothicaire', 'Forgeron'], ... }
     chosenVariants: {},   // { careerId: { rang: variantTitre, ... }, ... }
+    careerOverrides:{},   // { careerId: { rang: { skillsRemoved, skillsAdded, talentsRemoved, talentsAdded } } }
     optVisible:     { 'section-sorts': false, 'section-prieres': false },
 };
+
+// État éphémère d'édition (pas persisté) — un Set de clés `${careerId}_${rang}`
+const editingRangs = new Set();
+function isEditingRang(careerId, rang) { return editingRangs.has(`${careerId}_${rang}`); }
+function setEditingRang(careerId, rang, on) {
+    const key = `${careerId}_${rang}`;
+    if (on) editingRangs.add(key);
+    else    editingRangs.delete(key);
+}
 
 // ── Helpers ───────────────────────────────────────────
 
@@ -758,6 +832,25 @@ function ensureSkillsDatalist() {
     if (window.WFRP_SKILLS) {
         dl.innerHTML = WFRP_SKILLS.map(s => `<option value="${s.nom}">`).join('');
     }
+    document.body.appendChild(dl);
+}
+
+// Datalist globale des talents (utilisée par les champs d'ajout d'overrides).
+function ensureTalentsDatalist() {
+    if (document.getElementById('wfrp-talents-list')) return;
+    if (!window.WFRP_CAREERS) return;
+    const dl = document.createElement('datalist');
+    dl.id = 'wfrp-talents-list';
+    const set = new Set();
+    WFRP_CAREERS.forEach(c => c.rangs.forEach(r => r.talents.forEach(t => {
+        if (isOpenCareerSlot(t)) set.add(t.split('(')[0].trim());
+        else set.add(t);
+    })));
+    Object.entries(state.customTalents || {}).forEach(([base, specs]) =>
+        specs.forEach(spec => set.add(`${base} (${spec})`))
+    );
+    dl.innerHTML = [...set].sort((a, b) => a.localeCompare(b, 'fr'))
+        .map(t => `<option value="${t}">`).join('');
     document.body.appendChild(dl);
 }
 
@@ -906,7 +999,9 @@ function getCareerAllSkills(career, rang) {
     const seen = new Set(), noms = [];
     for (let r = 1; r <= rang; r++) {
         for (const rd of getVariantsToConsider(career, r)) {
-            rd.skills.forEach(s => { if (!seen.has(s.toLowerCase())) { seen.add(s.toLowerCase()); noms.push(s); } });
+            getEffectiveSkills(career, r, rd).forEach(s => {
+                if (!seen.has(s.toLowerCase())) { seen.add(s.toLowerCase()); noms.push(s); }
+            });
         }
     }
     return noms;
@@ -1014,6 +1109,55 @@ function buildCareerDatalist() {
     dl.innerHTML = WFRP_CAREERS.map(c => `<option value="${c.nom}">`).join('');
 }
 
+// Construit le HTML d'une liste de chips (compétences ou talents) pour un rang,
+// en tenant compte des overrides et du mode édition.
+function renderCareerChips(career, rang, variant, kind, editing) {
+    const baseItems = (kind === 'skills' ? variant?.skills : variant?.talents) || [];
+    const o         = getOverrides(career.id, rang);
+    const removed   = o ? (kind === 'skills' ? o.skillsRemoved : o.talentsRemoved) : [];
+    const added     = o ? (kind === 'skills' ? o.skillsAdded   : o.talentsAdded)   : [];
+    const removedSet = new Set(removed.map(s => s.toLowerCase()));
+    const isTalent  = (kind === 'talents');
+
+    const chips = [];
+
+    // Chips officielles (non retirées en mode normal ; retirées affichées barrées en édition)
+    baseItems.forEach(item => {
+        const isRem = removedSet.has(item.toLowerCase());
+        if (isRem && !editing) return;
+        const baseCls = `career-tag${isTalent ? ' career-tag-talent' : ''}${isRem ? ' career-tag-removed' : ''}`;
+        const talAttr = isTalent && !isRem
+            ? ` data-talent="${item}" role="button" tabindex="0" title="Voir la description"` : '';
+        const actionBtn = editing
+            ? `<button class="career-tag-action" data-rang="${rang}" data-kind="${kind}" data-action="${isRem ? 'restore' : 'remove'}" data-name="${item}" title="${isRem ? 'Restaurer' : 'Retirer'}">${isRem ? '↺' : '×'}</button>`
+            : '';
+        chips.push(`<span class="${baseCls}"${talAttr}>${item}${actionBtn}</span>`);
+    });
+
+    // Chips ajoutées (★)
+    added.forEach(item => {
+        const baseCls = `career-tag career-tag-added${isTalent ? ' career-tag-talent' : ''}`;
+        const talAttr = isTalent
+            ? ` data-talent="${item}" role="button" tabindex="0" title="Voir la description"` : '';
+        const actionBtn = editing
+            ? `<button class="career-tag-action" data-rang="${rang}" data-kind="${kind}" data-action="remove-added" data-name="${item}" title="Retirer cet ajout">×</button>`
+            : '';
+        chips.push(`<span class="${baseCls}"${talAttr}><span class="career-tag-added-mark">★</span> ${item}${actionBtn}</span>`);
+    });
+
+    if (editing) {
+        const listAttr = kind === 'skills' ? ' list="wfrp-skills-list"' : ' list="wfrp-talents-list"';
+        const label = kind === 'skills' ? 'une compétence' : 'un talent';
+        chips.push(`<span class="career-add-row">
+            <input class="career-add-input" type="text"${listAttr}
+                   data-rang="${rang}" data-kind="${kind}"
+                   placeholder="+ Ajouter ${label}…" autocomplete="off">
+        </span>`);
+    }
+
+    return chips.length ? chips.join('') : '<em>—</em>';
+}
+
 function renderCareerDetail() {
     const panel = document.getElementById('career-detail-panel');
     if (!panel) return;
@@ -1036,6 +1180,9 @@ function renderCareerDetail() {
         return;
     }
 
+    ensureSkillsDatalist();
+    ensureTalentsDatalist();
+
     const caracLabels = (career.carac || []).map(c => CARAC_LABELS[c] || c).join(', ') || '—';
 
     // Bandeau prérequis pour les sous-carrières (ex: Prêtre-Forgeron de Vaul exige Mage (HE) rang 2)
@@ -1057,6 +1204,8 @@ function renderCareerDetail() {
         const isPast    = r < rang;
         const chosen    = getActiveVariantForRang(career, r);
         const displayed = chosen || variants[0];
+        const editing   = isEditingRang(career.id, r);
+        const modified  = hasOverrides(career.id, r);
 
         // Sélecteur de variante si > 1 variante pour ce rang
         let variantPicker = '';
@@ -1073,20 +1222,27 @@ function renderCareerDetail() {
             </select>`;
         }
 
-        const skillsH  = (displayed.skills  || []).map(s => `<span class="career-tag">${s}</span>`).join('') || '<em>—</em>';
-        const talentsH = (displayed.talents || []).map(t =>
-            `<span class="career-tag career-tag-talent" data-talent="${t}" role="button" tabindex="0" title="Voir la description">${t}</span>`
-        ).join('') || '<em>—</em>';
+        const skillsH  = renderCareerChips(career, r, displayed, 'skills',  editing);
+        const talentsH = renderCareerChips(career, r, displayed, 'talents', editing);
+
         const statusBadge = isPast
             ? '<span class="career-rang-acquired">✓ acquis</span>'
             : '<span class="career-rang-current">◆ en cours</span>';
+
+        const modifiedBadge = modified
+            ? `<span class="career-rang-modified" title="Ce rang a été personnalisé sur cette fiche">✎ modifié</span>`
+            : '';
+        const editBtn = `<button class="career-rang-edit-btn${editing ? ' career-rang-edit-btn-on' : ''}" data-rang="${r}" title="${editing ? "Terminer l'édition" : 'Personnaliser ce rang sur cette fiche'}">${editing ? '✓ Terminer' : '✎ Personnaliser'}</button>`;
+
         rangsHtml += `
-        <div class="career-rang-section${isPast ? ' career-rang-past' : ''}">
+        <div class="career-rang-section${isPast ? ' career-rang-past' : ''}${editing ? ' career-rang-editing' : ''}">
             <div class="career-rang-header">
                 <span class="career-rang-badge${isPast ? ' career-rang-badge-past' : ''}">Rang ${r}</span>
                 <span class="career-rang-titre">${displayed.titre}</span>
                 ${statusBadge}
+                ${modifiedBadge}
                 ${variantPicker}
+                ${editBtn}
             </div>
             <div class="career-detail-grid career-detail-grid-2col">
                 <div class="career-detail-col">
@@ -1094,7 +1250,7 @@ function renderCareerDetail() {
                     <div class="career-detail-tags">${skillsH}</div>
                 </div>
                 <div class="career-detail-col">
-                    <div class="career-detail-label">Talents — cliquez pour la description</div>
+                    <div class="career-detail-label">Talents${editing ? '' : ' — cliquez pour la description'}</div>
                     <div class="career-detail-tags">${talentsH}</div>
                 </div>
             </div>
@@ -1113,8 +1269,12 @@ function renderCareerDetail() {
             ${rangsHtml}
         </div>`;
 
+    // Talent modal : ouvrir au clic sur un chip talent (sauf si on a cliqué sur le × d'édition)
     panel.querySelectorAll('[data-talent]').forEach(el => {
-        el.addEventListener('click', () => showTalentModal(el.dataset.talent));
+        el.addEventListener('click', e => {
+            if (e.target.closest('.career-tag-action')) return;
+            showTalentModal(el.dataset.talent);
+        });
         el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') showTalentModal(el.dataset.talent); });
     });
 
@@ -1127,6 +1287,66 @@ function renderCareerDetail() {
             renderCareerDetail();
             renderAdvancedSkills();
         });
+    });
+
+    // Toggle du mode édition par rang
+    panel.querySelectorAll('.career-rang-edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const r = +btn.dataset.rang;
+            setEditingRang(career.id, r, !isEditingRang(career.id, r));
+            renderCareerDetail();
+        });
+    });
+
+    // Actions sur les chips (retirer / restaurer / retirer un ajout)
+    panel.querySelectorAll('.career-tag-action').forEach(btn => {
+        btn.addEventListener('click', e => {
+            e.stopPropagation();
+            const r      = +btn.dataset.rang;
+            const kind   = btn.dataset.kind;   // 'skills' | 'talents'
+            const action = btn.dataset.action; // 'remove' | 'restore' | 'remove-added'
+            const name   = btn.dataset.name;
+            const o      = ensureOverrides(career.id, r);
+            const removedKey = kind === 'skills' ? 'skillsRemoved' : 'talentsRemoved';
+            const addedKey   = kind === 'skills' ? 'skillsAdded'   : 'talentsAdded';
+
+            if (action === 'remove') {
+                if (!o[removedKey].some(x => x.toLowerCase() === name.toLowerCase())) {
+                    o[removedKey].push(name);
+                }
+            } else if (action === 'restore') {
+                o[removedKey] = o[removedKey].filter(x => x.toLowerCase() !== name.toLowerCase());
+            } else if (action === 'remove-added') {
+                o[addedKey] = o[addedKey].filter(x => x !== name);
+            }
+            cleanupOverrides(career.id, r);
+            save();
+            renderCareerDetail();
+            renderAdvancedSkills();
+        });
+    });
+
+    // Champ d'ajout d'une compétence/talent au rang
+    panel.querySelectorAll('.career-add-input').forEach(input => {
+        const submit = () => {
+            const val = input.value.trim();
+            if (!val) return;
+            const r    = +input.dataset.rang;
+            const kind = input.dataset.kind;
+            const o    = ensureOverrides(career.id, r);
+            const addedKey = kind === 'skills' ? 'skillsAdded' : 'talentsAdded';
+            if (!o[addedKey].some(x => x.toLowerCase() === val.toLowerCase())) {
+                o[addedKey].push(val);
+            }
+            input.value = '';
+            save();
+            renderCareerDetail();
+            renderAdvancedSkills();
+        };
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); submit(); }
+        });
+        input.addEventListener('blur', () => { if (input.value.trim()) submit(); });
     });
 
     applyCareerHighlights();
@@ -1382,6 +1602,7 @@ function exportData() {
         customSpecs:    state.customSpecs,
         customTalents:  state.customTalents,
         chosenVariants: state.chosenVariants,
+        careerOverrides:state.careerOverrides,
         optVisible:     state.optVisible,
     };
 }
@@ -1408,6 +1629,7 @@ function resetState() {
     state.customSpecs           = {};
     state.customTalents         = {};
     state.chosenVariants        = {};
+    state.careerOverrides       = {};
     Object.keys(state.optVisible).forEach(k => { state.optVisible[k] = false; });
 }
 
@@ -1444,10 +1666,11 @@ function applyData(d) {
     if (d.xpTotal && +d.xpTotal > 0 && !state.xpLog.some(e => e.kind === 'gain')) {
         state.xpLog.unshift({ kind: 'gain', raison: 'XP initial (migré)', montant: +d.xpTotal });
     }
-    if (d.customSpecs)    Object.assign(state.customSpecs, d.customSpecs);
-    if (d.customTalents)  Object.assign(state.customTalents, d.customTalents);
-    if (d.chosenVariants) Object.assign(state.chosenVariants, d.chosenVariants);
-    if (d.optVisible)     Object.assign(state.optVisible, d.optVisible);
+    if (d.customSpecs)     Object.assign(state.customSpecs, d.customSpecs);
+    if (d.customTalents)   Object.assign(state.customTalents, d.customTalents);
+    if (d.chosenVariants)  Object.assign(state.chosenVariants, d.chosenVariants);
+    if (d.careerOverrides) Object.assign(state.careerOverrides, d.careerOverrides);
+    if (d.optVisible)      Object.assign(state.optVisible, d.optVisible);
 }
 
 function load() {

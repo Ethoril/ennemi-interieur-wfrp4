@@ -1211,7 +1211,6 @@ tr.sk-ghost-open td.sk-nom::after {
 
 /* Sélecteur de variante de rang (race / supplément) */
 .career-variant-sel {
-  margin-left: auto;
   font-size: 0.78rem;
   padding: 2px 6px;
   border: 1px solid rgba(var(--accent-rgb, 180,140,60), 0.35);
@@ -1224,10 +1223,123 @@ tr.sk-ghost-open td.sk-nom::after {
   border-style: dashed;
 }
 
+/* ── Personnalisation par-fiche d'un rang ──────────── */
+
+/* Bouton "✎ Personnaliser" dans le header du rang (poussé à droite) */
+.career-rang-edit-btn {
+  margin-left: auto;
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border: 1px solid rgba(var(--accent-rgb, 180,140,60), 0.35);
+  background: transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0.7;
+  color: inherit;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.career-rang-edit-btn:hover {
+  opacity: 1;
+  background: rgba(var(--accent-rgb, 180,140,60), 0.12);
+}
+
+.career-rang-edit-btn-on {
+  opacity: 1;
+  background: rgba(var(--accent-rgb, 180,140,60), 0.20);
+  border-color: rgba(var(--accent-rgb, 180,140,60), 0.6);
+}
+
+/* Badge "✎ modifié" affiché hors mode édition quand le rang a des overrides */
+.career-rang-modified {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(120, 90, 180, 0.9);
+}
+
+/* Cadre subtil autour du rang en cours d'édition */
+.career-rang-editing {
+  background: rgba(var(--accent-rgb, 180,140,60), 0.04);
+  border-radius: 4px;
+  padding: 0.4rem 0.5rem;
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+}
+
+/* Chip retirée (visible seulement en mode édition) */
+.career-tag-removed {
+  opacity: 0.55;
+  text-decoration: line-through;
+  background: rgba(180, 60, 60, 0.06) !important;
+  border-color: rgba(180, 60, 60, 0.25) !important;
+}
+
+/* Chip ajoutée — fond verdâtre + étoile */
+.career-tag-added {
+  background: rgba(80, 160, 100, 0.14) !important;
+  border-color: rgba(80, 160, 100, 0.40) !important;
+}
+
+.career-tag-added-mark {
+  color: rgba(80, 160, 100, 1);
+  font-size: 0.8em;
+  margin-right: 1px;
+}
+
+/* Bouton × / ↺ à l'intérieur d'une chip (mode édition) */
+.career-tag-action {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  margin-left: 4px;
+  padding: 0 2px;
+  font-size: 0.85em;
+  line-height: 1;
+  opacity: 0.6;
+  color: inherit;
+  border-radius: 2px;
+}
+
+.career-tag-action:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Champ d'ajout en mode édition (compétence/talent custom) */
+.career-add-row {
+  display: inline-flex;
+  flex: 1 1 100%;
+  margin-top: 4px;
+}
+
+.career-add-input {
+  width: 100%;
+  padding: 3px 6px;
+  font-size: 0.78rem;
+  border: 1px dashed rgba(var(--accent-rgb, 180,140,60), 0.5);
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+}
+
+.career-add-input::placeholder {
+  opacity: 0.55;
+  font-style: italic;
+}
+
+.career-add-input:focus {
+  outline: none;
+  border-style: solid;
+  border-color: var(--color-accent, #b48c3c);
+  background: rgba(var(--accent-rgb, 180,140,60), 0.06);
+}
+
 @media (max-width: 700px) {
   .career-detail-grid,
   .career-detail-grid-2col { grid-template-columns: 1fr; }
   .career-variant-sel { margin-left: 0; max-width: none; flex: 1 1 100%; }
+  .career-rang-edit-btn { margin-left: 0; }
 }
 
 /* ── Responsive ──────────────────────────────────── */

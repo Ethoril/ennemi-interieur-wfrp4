@@ -1,3 +1,15 @@
+## [2.6.0] - 2026-05-20
+
+### Fiche — Personnalisation par-fiche d'une carrière
+- **Mode édition par rang** : bouton **✎ Personnaliser** dans le header de chaque rang du panneau de référence. Active des contrôles d'édition sans toucher à la base de données globale — utile quand le MJ accorde une modification spécifique à un joueur (échanger une compétence de carrière contre une autre, p. ex.)
+- **Retirer une compétence/talent** : en mode édition, un `×` apparaît sur chaque chip pour la retirer. Les chips retirées s'affichent barrées en édition (avec un `↺` pour restaurer), et sont masquées en mode normal
+- **Ajouter une compétence/talent custom** : champ avec autocomplétion (datalist) en bas de chaque liste — les ajouts s'affichent avec un ★ vert et participent à la détection « dans la carrière » pour les achats XP
+- **Badge ✎ modifié** dans le header des rangs personnalisés, en mode normal — repère visuel pour ne pas oublier qu'on a divergé du livre
+- **Persistance** : les overrides sont stockés dans `state.careerOverrides[careerId][rang]` (sync cloud + localStorage). Indépendants par fiche : changer la carrière courante ou réimporter la base globale les laisse intacts
+- Comportement intégré aux helpers existants : `isSkillInCareer`, `isTalentInCareer`, `getCareerAllSkills`, highlighting, ghost rows — tous tiennent compte des overrides
+
+---
+
 ## [2.5.0] - 2026-05-20
 
 ### Fiche — Base de données complète des carrières
