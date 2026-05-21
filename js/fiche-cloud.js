@@ -1,23 +1,6 @@
-import { initializeApp }                                           from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, signInWithPopup, GoogleAuthProvider,
-         onAuthStateChanged, signOut }                             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp }     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
-/* ── Config ────────────────────────────────────────────────────── */
-const FIREBASE_CONFIG = {
-    apiKey:            'AIzaSyD5W5U2fyXkiPzUzOOgAGusoiXn2iZbp5U',
-    authDomain:        'campagne-wrpg.firebaseapp.com',
-    projectId:         'campagne-wrpg',
-    storageBucket:     'campagne-wrpg.firebasestorage.app',
-    messagingSenderId: '1097155283992',
-    appId:             '1:1097155283992:web:27976b947ea8bc5b87476d',
-};
-
-const ALLOWED_EMAIL = 'ethoril@gmail.com';
-
-const app  = initializeApp(FIREBASE_CONFIG, 'fiche');
-const auth = getAuth(app);
-const db   = getFirestore(app);
+import { auth, db } from './firebase-init.js';
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { doc, setDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 /* ── Indicateur de statut ──────────────────────────────────────── */
 function setStatus(msg, cls = '') {
@@ -31,7 +14,7 @@ function setStatus(msg, cls = '') {
 let _isSaving = false;
 window.cloudSave = async (data) => {
     const user = auth.currentUser;
-    if (!user || user.email !== ALLOWED_EMAIL) return;
+    if (!user) return;
     if (_isSaving) return;
     _isSaving = true;
     setStatus('Sauvegarde…', 'saving');
@@ -74,7 +57,7 @@ onAuthStateChanged(auth, async (user) => {
     const bar = document.getElementById('fiche-auth-bar');
     if (!bar) return;
 
-    if (user && user.email === ALLOWED_EMAIL) {
+    if (user) {
         // ── Connecté et autorisé ──
         bar.innerHTML = `
             <span class="fiche-auth-user">☁ ${user.displayName || user.email}</span>
@@ -101,15 +84,6 @@ onAuthStateChanged(auth, async (user) => {
             console.error('[fiche-cloud] load error:', e);
         }
         showFiche();
-
-    } else if (user) {
-        // ── Connecté mais non autorisé ──
-        bar.innerHTML = `
-            <span class="fiche-auth-user warn">⚠ ${user.email} — compte non autorisé</span>
-            <button class="fiche-auth-btn" id="btn-cloud-signout">Déconnexion</button>`;
-        document.getElementById('btn-cloud-signout')
-            ?.addEventListener('click', () => signOut(auth));
-        showLoginWall(`Compte ${user.email} non autorisé. Contactez le MJ.`);
 
     } else {
         // ── Non connecté ──

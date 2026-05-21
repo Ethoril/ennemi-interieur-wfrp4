@@ -1,25 +1,10 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch, deleteField } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+import { auth, db, storage, ADMIN_EMAIL } from './firebase-init.js';
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch, deleteField } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 import Cropper from 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js';
 import { esc, cap, stripAccents } from './utils.js';
-
-// ── Config ─────────────────────────────────────────────────────
-const FIREBASE_CONFIG = {
-    apiKey: 'AIzaSyD5W5U2fyXkiPzUzOOgAGusoiXn2iZbp5U',
-    authDomain: 'campagne-wrpg.firebaseapp.com',
-    projectId: 'campagne-wrpg',
-    storageBucket: 'campagne-wrpg.firebasestorage.app',
-    messagingSenderId: '1097155283992',
-    appId: '1:1097155283992:web:27976b947ea8bc5b87476d',
-};
-const ADMIN_EMAIL = 'ethoril@gmail.com';
-
-const app  = initializeApp(FIREBASE_CONFIG);
-const auth = getAuth(app);
-const db   = getFirestore(app);
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': '#4caf7d', 'ennemi': '#c94c4c', 'neutre': '#8a8a9a' };
@@ -101,7 +86,6 @@ function bezierPath(x1, y1, x2, y2, curveScale = 1) {
 }
 
 async function uploadImage(blob) {
-    const storage = getStorage(app);
     const fileRef = ref(storage, `portraits/${Date.now()}.webp`);
     await uploadBytes(fileRef, blob, { contentType: 'image/webp' });
     return getDownloadURL(fileRef);
@@ -165,7 +149,8 @@ async function loadData({ init = false } = {}) {
         if (init) {
             const el = document.getElementById('pnj-loading');
             el.querySelector('.pnj-spinner').style.display = 'none';
-            el.childNodes[el.childNodes.length - 1].textContent = 'Impossible de charger les données.';
+            const txt = el.querySelector('.loading-text');
+            if (txt) txt.textContent = 'Impossible de charger les données.';
         }
     }
 }
