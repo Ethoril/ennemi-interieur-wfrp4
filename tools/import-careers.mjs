@@ -11,6 +11,7 @@
 import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { loadSkills, validateSkillReferences, formatIssues } from './lib/validate-skills.mjs';
 
 const SHEET_ID = '1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs';
 const SHEET_NAME = 'Carri%C3%A8res'; // "Carrières" URL-encodé
@@ -216,11 +217,25 @@ async function main() {
 
     validate(careers);
 
+    // Validation cross-data : compétences référencées vs skills.js.
+    // Non bloquant par défaut (skills.js peut être complété après l'import).
+    // En mode --strict (CI / release), une incohérence fait échouer l'import.
+    const skills = await loadSkills();
+    const skillIssues = validateSkillReferences(careers, skills);
+    if (skillIssues.length) {
+        console.warn('\n' + formatIssues(skillIssues));
+        if (process.argv.includes('--strict')) {
+            throw new Error(`Mode strict : ${skillIssues.length} compétence(s) à corriger dans skills.js ou dans le sheet.`);
+        }
+    } else {
+        console.log('\n' + formatIssues(skillIssues));
+    }
+
     // ── Génération du fichier ────────────────────────────
     // JSON pur, fetché paresseusement par fiche.js (cf. lazy-load careers).
     const out = JSON.stringify(careers, null, 2) + '\n';
     await writeFile(OUT_PATH, out, 'utf8');
-    console.log(`✓ ${careers.length} carrières écrites dans ${OUT_PATH}`);
+    console.log(`\n✓ ${careers.length} carrières écrites dans ${OUT_PATH}`);
     // Stats rapides
     let totalRangs = 0;
     let variants = 0;

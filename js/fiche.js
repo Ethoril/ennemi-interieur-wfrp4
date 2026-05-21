@@ -883,6 +883,7 @@ function ensureTalentsDatalist() {
     }
 }
 
+let _advSkillsBound = false;
 function renderAdvancedSkills() {
     ensureSkillsDatalist();
     const tbody = document.getElementById('tbody-skills-advanced');
@@ -900,18 +901,27 @@ function renderAdvancedSkills() {
             <td class="sk-total" id="adv-total-${i}">0</td>
             <td><button class="btn-rm" data-type="adv-skill" data-idx="${i}" title="Supprimer">×</button></td>
         </tr>`).join('');
-    bindAdvancedSkills(tbody);
+    if (!_advSkillsBound) {
+        bindAdvancedSkillsDelegated(tbody);
+        _advSkillsBound = true;
+    }
     applyCareerHighlights();
     renderCareerAdvGhosts();
 }
 
-function bindAdvancedSkills(tbody) {
-    tbody.querySelectorAll('.sk-nom-input').forEach(inp =>
-        inp.addEventListener('input', () => {
-            const idx = +inp.dataset.idx;
-            state.skillsAdvanced[idx].nom = inp.value;
-            // Auto-remplir la carac si le nom correspond à une compétence connue
-            const found = window.WFRP_SKILLS?.find(s => s.nom === inp.value);
+// Délégation : un seul jeu de listeners attaché au tbody, jamais ré-attaché.
+// Le re-render réécrit innerHTML, ce qui aurait empilé les listeners avec
+// l'ancienne approche (cf. audit — fuite mémoire + double-déclenchement).
+// Les data-idx étant régénérés à chaque render, ils restent synchrones avec
+// state.skillsAdvanced même après splice().
+function bindAdvancedSkillsDelegated(tbody) {
+    tbody.addEventListener('input', e => {
+        const t = e.target;
+        const idx = +t.dataset.idx;
+        if (Number.isNaN(idx) || !state.skillsAdvanced[idx]) return;
+        if (t.classList.contains('sk-nom-input')) {
+            state.skillsAdvanced[idx].nom = t.value;
+            const found = window.WFRP_SKILLS?.find(s => s.nom === t.value);
             if (found) {
                 state.skillsAdvanced[idx].carac = found.carac;
                 const sel = tbody.querySelector(`.sk-carac-sel[data-idx="${idx}"]`);
@@ -920,13 +930,28 @@ function bindAdvancedSkills(tbody) {
             } else {
                 save();
             }
-        }));
-    tbody.querySelectorAll('.sk-carac-sel').forEach(sel =>
-        sel.addEventListener('change', () => { state.skillsAdvanced[+sel.dataset.idx].carac = sel.value; recalc(); }));
-    tbody.querySelectorAll('.sk-adv-adv').forEach(inp =>
-        inp.addEventListener('input', () => { state.skillsAdvanced[+inp.dataset.idx].adv = +inp.value || 0; recalc(); }));
-    tbody.querySelectorAll('.btn-rm[data-type="adv-skill"]').forEach(btn =>
-        btn.addEventListener('click', () => { state.skillsAdvanced.splice(+btn.dataset.idx, 1); renderAdvancedSkills(); recalc(); }));
+        } else if (t.classList.contains('sk-adv-adv')) {
+            state.skillsAdvanced[idx].adv = +t.value || 0;
+            recalc();
+        }
+    });
+    tbody.addEventListener('change', e => {
+        const t = e.target;
+        if (!t.classList.contains('sk-carac-sel')) return;
+        const idx = +t.dataset.idx;
+        if (Number.isNaN(idx) || !state.skillsAdvanced[idx]) return;
+        state.skillsAdvanced[idx].carac = t.value;
+        recalc();
+    });
+    tbody.addEventListener('click', e => {
+        const btn = e.target.closest('.btn-rm[data-type="adv-skill"]');
+        if (!btn || !tbody.contains(btn)) return;
+        const idx = +btn.dataset.idx;
+        if (Number.isNaN(idx)) return;
+        state.skillsAdvanced.splice(idx, 1);
+        renderAdvancedSkills();
+        recalc();
+    });
 }
 
 // ── Carrières ─────────────────────────────────────────
@@ -1636,14 +1661,30 @@ function exportData() {
     };
 }
 
+// Debounce local de 400 ms : évite un JSON.stringify + setItem à chaque keystroke.
+// Cloud save reste à 2 s. saveNow() reste utilisable pour les actions discrètes
+// (ajout d'item, toggle) qui doivent être persistées sans attendre.
+let _saveLocalTimer = null;
 function save() {
+    clearTimeout(_saveLocalTimer);
+    _saveLocalTimer = setTimeout(saveNow, 400);
+}
+
+function saveNow() {
+    if (_saveLocalTimer) { clearTimeout(_saveLocalTimer); _saveLocalTimer = null; }
     const data = exportData();
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ _savedAt: Date.now(), ...data }));
 
-    // Cloud save debounced 2s — window.cloudSave injecté par fiche-cloud.js
-    clearTimeout(save._t);
-    save._t = setTimeout(() => window.cloudSave?.(data), 2000);
+    // Cloud save debounced 2 s — window.cloudSave injecté par fiche-cloud.js
+    clearTimeout(saveNow._t);
+    saveNow._t = setTimeout(() => window.cloudSave?.(data), 2000);
 }
+
+// Flush la sauvegarde en attente avant fermeture/onglet : sinon le dernier
+// keystroke (dans la fenêtre de 400 ms) serait perdu.
+window.addEventListener('beforeunload', () => {
+    if (_saveLocalTimer) saveNow();
+});
 
 function resetState() {
     CARACS.forEach(c => { state.carac[c] = { base: 0, adv: 0 }; });

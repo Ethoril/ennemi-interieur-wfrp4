@@ -1,0 +1,30 @@
+name: Validate data
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    name: Smoke test (careers + skills cross-check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate careers.json
+        run: node tools/smoke-test.mjs
+
+  json-lint:
+    name: JSON lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Parse careers.json
+        run: node -e "JSON.parse(require('node:fs').readFileSync('js/data/careers.json','utf8'))"
