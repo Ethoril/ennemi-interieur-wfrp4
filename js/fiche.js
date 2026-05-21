@@ -104,6 +104,7 @@ function setChosenVariantTitre(careerId, rang, titre) {
     if (!state.chosenVariants[careerId]) state.chosenVariants[careerId] = {};
     if (titre) state.chosenVariants[careerId][rang] = titre;
     else delete state.chosenVariants[careerId][rang];
+    invalidateCareerCache();
 }
 
 // Renvoie la variante choisie pour ce rang, ou null si l'utilisateur n'a pas choisi
@@ -192,33 +193,88 @@ function skillBaseNom(fullNom) {
     return fullNom.split('(')[0].trim().toLowerCase();
 }
 
-function isSkillInCareer(nom) {
-    const career = getActiveCareerData();
-    if (!career) return false;
-    const rang = getActiveRang();
-    const purchasedBase = skillBaseNom(nom);
+// ── Cache des sets carrière ───────────────────────────
+// Coûts XP et highlights étaient recalculés à chaque keystroke (O(carrières
+// × rangs × variantes × skills) à chaque appel). On mémoïse par
+// (careerId, rang) — clé invalidée à : changement de carrière/rang, choix
+// de variante, ajout/retrait d'override, resetState, applyData.
+// Les helpers passent en O(1) (Set lookup) sur les hits.
+const _careerCache = {
+    skills:    new Map(),  // → { exact: Set<lower>, openBases: Set<lowerBase> }
+    talents:   new Map(),  // → idem
+    allSkills: new Map(),  // → Array<string> ordonné (display)
+    caracs:    new Map(),  // → Set<carac>
+};
+
+function invalidateCareerCache() {
+    _careerCache.skills.clear();
+    _careerCache.talents.clear();
+    _careerCache.allSkills.clear();
+    _careerCache.caracs.clear();
+}
+
+function _careerKey(careerId, rang) { return `${careerId}::${rang}`; }
+
+function _buildCareerSkillSets(career, rang) {
+    const exact = new Set(), openBases = new Set();
     for (let r = 1; r <= rang; r++) {
         for (const rd of getVariantsToConsider(career, r)) {
             for (const s of getEffectiveSkills(career, r, rd)) {
-                if (s.toLowerCase() === nom.toLowerCase()) return true;
-                // Slot ouvert → correspondance par groupe de base uniquement
-                if (isOpenCareerSlot(s) && skillBaseNom(s) === purchasedBase) return true;
+                exact.add(s.toLowerCase());
+                if (isOpenCareerSlot(s)) openBases.add(skillBaseNom(s));
             }
         }
     }
-    return false;
+    return { exact, openBases };
+}
+
+function _buildCareerTalentSets(career, rang) {
+    const exact = new Set(), openBases = new Set();
+    for (let r = 1; r <= rang; r++) {
+        for (const rd of getVariantsToConsider(career, r)) {
+            for (const t of getEffectiveTalents(career, r, rd)) {
+                exact.add(t.toLowerCase());
+                if (OPEN_SPEC_PATTERN.test(t)) openBases.add(t.split('(')[0].trim().toLowerCase());
+            }
+        }
+    }
+    return { exact, openBases };
+}
+
+function _buildCareerCaracs(career, rang) {
+    const set = new Set();
+    for (let r = 1; r <= rang; r++) {
+        for (const rd of getVariantsToConsider(career, r)) {
+            (rd.caracs || []).forEach(c => set.add(c));
+        }
+    }
+    return set;
+}
+
+function _memo(map, key, build) {
+    let v = map.get(key);
+    if (v) return v;
+    v = build();
+    map.set(key, v);
+    return v;
+}
+
+function isSkillInCareer(nom) {
+    const career = getActiveCareerData();
+    if (!career) return false;
+    const sets = _memo(_careerCache.skills, _careerKey(career.id, getActiveRang()),
+                       () => _buildCareerSkillSets(career, getActiveRang()));
+    const nomLower = nom.toLowerCase();
+    if (sets.exact.has(nomLower)) return true;
+    return sets.openBases.has(skillBaseNom(nom));
 }
 
 function isCaracInCareer(carac) {
     const career = getActiveCareerData();
     if (!career) return false;
-    const rang = getActiveRang();
-    // Cumul des caracs des rangs 1 → rang courant, en respectant les variantes choisies.
-    for (let r = 1; r <= rang; r++) {
-        for (const rd of getVariantsToConsider(career, r)) {
-            if ((rd.caracs || []).includes(carac)) return true;
-        }
-    }
+    const set = _memo(_careerCache.caracs, _careerKey(career.id, getActiveRang()),
+                      () => _buildCareerCaracs(career, getActiveRang()));
+    if (set.has(carac)) return true;
     // Rétrocompat (anciennes données sans rd.caracs) : utiliser la liste agrégée.
     return career.carac.includes(carac);
 }
@@ -226,19 +282,11 @@ function isCaracInCareer(carac) {
 function isTalentInCareer(talentNom) {
     const career = getActiveCareerData();
     if (!career) return false;
-    const rang = getActiveRang();
-    const nom     = talentNom.toLowerCase().trim();
-    const nomBase = nom.split('(')[0].trim();
-    for (let r = 1; r <= rang; r++) {
-        for (const rd of getVariantsToConsider(career, r)) {
-            for (const t of getEffectiveTalents(career, r, rd)) {
-                if (t.toLowerCase() === nom) return true;
-                // "Savoir-vivre (au choix)" → tout talent du même groupe est dans la carrière
-                if (OPEN_SPEC_PATTERN.test(t) && t.split('(')[0].trim().toLowerCase() === nomBase) return true;
-            }
-        }
-    }
-    return false;
+    const sets = _memo(_careerCache.talents, _careerKey(career.id, getActiveRang()),
+                       () => _buildCareerTalentSets(career, getActiveRang()));
+    const nom = talentNom.toLowerCase().trim();
+    if (sets.exact.has(nom)) return true;
+    return sets.openBases.has(nom.split('(')[0].trim());
 }
 
 // ── Formulaire d'achat XP ─────────────────────────────
@@ -1056,15 +1104,17 @@ async function showTalentModal(nom) {
 // ── Carrière — highlights & ghosts ────────────────────
 
 function getCareerAllSkills(career, rang) {
-    const seen = new Set(), noms = [];
-    for (let r = 1; r <= rang; r++) {
-        for (const rd of getVariantsToConsider(career, r)) {
-            getEffectiveSkills(career, r, rd).forEach(s => {
-                if (!seen.has(s.toLowerCase())) { seen.add(s.toLowerCase()); noms.push(s); }
-            });
+    return _memo(_careerCache.allSkills, _careerKey(career.id, rang), () => {
+        const seen = new Set(), noms = [];
+        for (let r = 1; r <= rang; r++) {
+            for (const rd of getVariantsToConsider(career, r)) {
+                getEffectiveSkills(career, r, rd).forEach(s => {
+                    if (!seen.has(s.toLowerCase())) { seen.add(s.toLowerCase()); noms.push(s); }
+                });
+            }
         }
-    }
-    return noms;
+        return noms;
+    });
 }
 
 function applyCareerHighlights() {
@@ -1380,6 +1430,7 @@ function renderCareerDetail() {
                 o[addedKey] = o[addedKey].filter(x => x !== name);
             }
             cleanupOverrides(career.id, r);
+            invalidateCareerCache();
             save();
             renderCareerDetail();
             renderAdvancedSkills();
@@ -1399,6 +1450,7 @@ function renderCareerDetail() {
                 o[addedKey].push(val);
             }
             input.value = '';
+            invalidateCareerCache();
             save();
             renderCareerDetail();
             renderAdvancedSkills();
@@ -1776,6 +1828,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 function resetState() {
+    invalidateCareerCache();
     CARACS.forEach(c => { state.carac[c] = { base: 0, adv: 0 }; });
     state.skillsBasic    = {};
     state.skillsAdvanced.length = 0;
@@ -1794,6 +1847,7 @@ function resetState() {
 
 function applyData(d) {
     if (!d) return;
+    invalidateCareerCache();
     setVal('nom',           d.nom);
     setVal('race',          d.race);
     setVal('carriere',      d.carriere);
@@ -1895,8 +1949,13 @@ function bindAll() {
         .forEach(id => document.getElementById(id)?.addEventListener('input', save));
 
     // Panneau référence carrière
+    // Le changement de carrière ou de rang change le set "dans la carrière" :
+    // invalider AVANT le re-render, sinon renderCareerDetail lit le cache obsolète.
     ['carriere','rang'].forEach(id =>
-        document.getElementById(id)?.addEventListener('input', renderCareerDetail));
+        document.getElementById(id)?.addEventListener('input', () => {
+            invalidateCareerCache();
+            renderCareerDetail();
+        }));
     ['race'].forEach(id => document.getElementById(id)?.addEventListener('input', recalc));
 
     // Boutons ajout

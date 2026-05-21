@@ -140,10 +140,12 @@
         </section>
 
         <!-- Video Modal -->
-        <div class="modal-overlay" id="video-modal">
+        <div class="modal-overlay" id="video-modal" role="dialog" aria-modal="true" aria-labelledby="modal-iframe-label" aria-hidden="true">
             <div class="modal-content">
-                <button class="modal-close" id="modal-close">✕ Fermer</button>
+                <h2 id="modal-iframe-label" class="visually-hidden">Lecture vidéo</h2>
+                <button class="modal-close" id="modal-close" aria-label="Fermer la vidéo">✕ Fermer</button>
                 <iframe id="modal-iframe"
+                    title="Lecteur vidéo YouTube"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox"
                     referrerpolicy="strict-origin-when-cross-origin"

@@ -92,6 +92,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Lecteurs d'écran uniquement (a11y) — modale, libellés d'aide… */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Subtle background texture */
 body::before {
   content: '';
