@@ -1,3 +1,12 @@
+## [2.7.0] - 2026-05-21
+
+### Fiche — Multi-utilisateur & Centralisation Firebase
+- **Fiches multi-utilisateurs** : suppression des restrictions d'adresse email codées en dur côté client. Tout utilisateur connecté via Google dispose désormais de sa propre fiche sauvegardée dans son espace cloud Firestore (`fiches/{uid}`).
+- **Centralisation technique** : regroupement de l'initialisation de Firebase et du chargement des services dans un module unique `js/firebase-init.js` partagé.
+- **Robustesse DOM (PNJ)** : sécurisation du ciblage du message de chargement/erreur sur `#pnj-loading` pour éviter les crashs si le squelette HTML est modifié.
+
+---
+
 ## [2.6.0] - 2026-05-20
 
 ### Fiche — Personnalisation par-fiche d'une carrière
