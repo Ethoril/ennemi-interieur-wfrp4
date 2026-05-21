@@ -831,6 +831,7 @@ function recalc() {
 
 // ── Compétences de base ───────────────────────────────
 
+let _basicSkillsBound = false;
 function buildBasicSkills() {
     const tbody = document.getElementById('tbody-skills-basic');
     if (!tbody) return;
@@ -845,12 +846,17 @@ function buildBasicSkills() {
             <td class="sk-total" id="sk-total-${s}">0</td>
         </tr>`;
     }).join('');
-    tbody.querySelectorAll('.sk-adv').forEach(inp => {
-        inp.addEventListener('input', () => {
-            state.skillsBasic[inp.dataset.skill] = +inp.value || 0;
+    // Délégation : buildBasicSkills est rappelé sur ficheLoadCloud — sans
+    // garde, chaque login cloud empilerait un listener par compétence.
+    if (!_basicSkillsBound) {
+        tbody.addEventListener('input', e => {
+            const t = e.target;
+            if (!t.classList.contains('sk-adv')) return;
+            state.skillsBasic[t.dataset.skill] = +t.value || 0;
             recalc();
         });
-    });
+        _basicSkillsBound = true;
+    }
 }
 
 // ── Compétences avancées ──────────────────────────────
@@ -1407,6 +1413,7 @@ function renderCareerDetail() {
     renderCareerAdvGhosts();
 }
 
+let _careersBound = false;
 function renderCareers() {
     const tbody = document.getElementById('tbody-careers');
     if (!tbody) return;
@@ -1418,14 +1425,38 @@ function renderCareers() {
             <td><input class="career-note" type="text" data-idx="${i}" data-field="note" value="${c.note}" placeholder="Notes…"></td>
             <td><button class="btn-rm" data-type="career" data-idx="${i}" title="Supprimer">×</button></td>
         </tr>`).join('');
-    tbody.querySelectorAll('[data-type="career"]').forEach(btn =>
-        btn.addEventListener('click', () => { state.careers.splice(+btn.dataset.idx, 1); renderCareers(); save(); }));
-    tbody.querySelectorAll('.career-input, .career-rang, .career-note').forEach(inp =>
-        inp.addEventListener('input', () => { state.careers[+inp.dataset.idx][inp.dataset.field] = inp.value; save(); }));
+    if (!_careersBound) {
+        tbody.addEventListener('input', e => {
+            const t = e.target;
+            if (!t.matches('.career-input, .career-rang, .career-note')) return;
+            const entry = state.careers[+t.dataset.idx];
+            if (!entry) return;
+            entry[t.dataset.field] = t.value;
+            save();
+        });
+        tbody.addEventListener('click', e => {
+            const btn = e.target.closest('.btn-rm[data-type="career"]');
+            if (!btn || !tbody.contains(btn)) return;
+            state.careers.splice(+btn.dataset.idx, 1);
+            renderCareers();
+            save();
+        });
+        _careersBound = true;
+    }
 }
 
 // ── Talents ───────────────────────────────────────────
 
+function _confirmNewTalent(inp) {
+    const idx = +inp.dataset.idx;
+    if (!state.talentsAcq[idx]) return;
+    const nom = inp.value.trim();
+    if (nom) { state.talentsAcq[idx].nom = nom; save(); }
+    else state.talentsAcq.splice(idx, 1);
+    renderTalents();
+}
+
+let _talentsBound = false;
 function renderTalents() {
     const wrap = document.getElementById('talents-acq-chips');
     if (!wrap) return;
@@ -1449,35 +1480,41 @@ function renderTalents() {
             </span>`;
         }).join('');
 
-    // Chips → description modal
-    wrap.querySelectorAll('.talent-chip').forEach(btn =>
-        btn.addEventListener('click', () => showTalentModal(state.talentsAcq[+btn.dataset.idx].nom))
-    );
+    if (!_talentsBound) {
+        wrap.addEventListener('click', e => {
+            const rm = e.target.closest('.talent-rm');
+            if (rm && wrap.contains(rm)) {
+                state.talentsAcq.splice(+rm.dataset.idx, 1);
+                renderTalents();
+                save();
+                return;
+            }
+            const chip = e.target.closest('.talent-chip');
+            if (chip && wrap.contains(chip)) {
+                const entry = state.talentsAcq[+chip.dataset.idx];
+                if (entry) showTalentModal(entry.nom);
+            }
+        });
+        // focusout > blur car blur ne bubble pas
+        wrap.addEventListener('focusout', e => {
+            if (e.target.classList?.contains('talent-name-new')) _confirmNewTalent(e.target);
+        });
+        wrap.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && e.target.classList?.contains('talent-name-new')) {
+                e.preventDefault();
+                e.target.blur();
+            }
+        });
+        _talentsBound = true;
+    }
 
-    // Input vide → confirmer le nom au blur / Entrée
-    wrap.querySelectorAll('.talent-name-new').forEach(inp => {
-        const confirm = () => {
-            const nom = inp.value.trim();
-            if (nom) { state.talentsAcq[+inp.dataset.idx].nom = nom; save(); }
-            else state.talentsAcq.splice(+inp.dataset.idx, 1);
-            renderTalents();
-        };
-        inp.addEventListener('blur', confirm);
-        inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } });
-        inp.focus();
-    });
-
-    // Boutons suppression
-    wrap.querySelectorAll('.talent-rm').forEach(btn =>
-        btn.addEventListener('click', () => {
-            state.talentsAcq.splice(+btn.dataset.idx, 1);
-            renderTalents(); save();
-        })
-    );
+    // Auto-focus de l'input d'ajout (effet visuel, pas un listener)
+    wrap.querySelector('.talent-name-new')?.focus();
 }
 
 // ── Sorts ─────────────────────────────────────────────
 
+let _sortsBound = false;
 function renderSorts() {
     const tbody = document.getElementById('tbody-sorts');
     if (!tbody) return;
@@ -1494,16 +1531,37 @@ function renderSorts() {
             <td><input class="sort-input sort-wide" type="text" data-idx="${i}" data-field="resume" value="${s.resume}" placeholder="Résumé de l'effet"></td>
             <td><button class="btn-rm" data-type="sort" data-idx="${i}" title="Supprimer">×</button></td>
         </tr>`).join('');
-    tbody.querySelectorAll('.sort-input, .sort-cn').forEach(inp =>
-        inp.addEventListener('input', () => { state.sorts[+inp.dataset.idx][inp.dataset.field] = inp.value; save(); }));
-    tbody.querySelectorAll('.sort-vent').forEach(sel =>
-        sel.addEventListener('change', () => { state.sorts[+sel.dataset.idx].vent = sel.value; save(); }));
-    tbody.querySelectorAll('.btn-rm[data-type="sort"]').forEach(btn =>
-        btn.addEventListener('click', () => { state.sorts.splice(+btn.dataset.idx, 1); renderSorts(); save(); }));
+    if (!_sortsBound) {
+        tbody.addEventListener('input', e => {
+            const t = e.target;
+            if (!t.matches('.sort-input, .sort-cn')) return;
+            const entry = state.sorts[+t.dataset.idx];
+            if (!entry) return;
+            entry[t.dataset.field] = t.value;
+            save();
+        });
+        tbody.addEventListener('change', e => {
+            const t = e.target;
+            if (!t.classList.contains('sort-vent')) return;
+            const entry = state.sorts[+t.dataset.idx];
+            if (!entry) return;
+            entry.vent = t.value;
+            save();
+        });
+        tbody.addEventListener('click', e => {
+            const btn = e.target.closest('.btn-rm[data-type="sort"]');
+            if (!btn || !tbody.contains(btn)) return;
+            state.sorts.splice(+btn.dataset.idx, 1);
+            renderSorts();
+            save();
+        });
+        _sortsBound = true;
+    }
 }
 
 // ── Prières & Miracles ────────────────────────────────
 
+let _prieresBound = false;
 function renderPrieres() {
     const tbody = document.getElementById('tbody-prieres');
     if (!tbody) return;
@@ -1518,12 +1576,32 @@ function renderPrieres() {
             <td><input class="priere-input sort-wide" type="text" data-idx="${i}" data-field="resume" value="${p.resume}" placeholder="Résumé des effets"></td>
             <td><button class="btn-rm" data-type="priere" data-idx="${i}" title="Supprimer">×</button></td>
         </tr>`).join('');
-    tbody.querySelectorAll('.priere-input').forEach(inp =>
-        inp.addEventListener('input', () => { state.prieres[+inp.dataset.idx][inp.dataset.field] = inp.value; save(); }));
-    tbody.querySelectorAll('.priere-type').forEach(sel =>
-        sel.addEventListener('change', () => { state.prieres[+sel.dataset.idx].type = sel.value; save(); }));
-    tbody.querySelectorAll('.btn-rm[data-type="priere"]').forEach(btn =>
-        btn.addEventListener('click', () => { state.prieres.splice(+btn.dataset.idx, 1); renderPrieres(); save(); }));
+    if (!_prieresBound) {
+        tbody.addEventListener('input', e => {
+            const t = e.target;
+            if (!t.classList.contains('priere-input')) return;
+            const entry = state.prieres[+t.dataset.idx];
+            if (!entry) return;
+            entry[t.dataset.field] = t.value;
+            save();
+        });
+        tbody.addEventListener('change', e => {
+            const t = e.target;
+            if (!t.classList.contains('priere-type')) return;
+            const entry = state.prieres[+t.dataset.idx];
+            if (!entry) return;
+            entry.type = t.value;
+            save();
+        });
+        tbody.addEventListener('click', e => {
+            const btn = e.target.closest('.btn-rm[data-type="priere"]');
+            if (!btn || !tbody.contains(btn)) return;
+            state.prieres.splice(+btn.dataset.idx, 1);
+            renderPrieres();
+            save();
+        });
+        _prieresBound = true;
+    }
 }
 
 // ── Journal XP ────────────────────────────────────────
@@ -1566,26 +1644,37 @@ function renderXpLog() {
         ? `<tr class="empty-row"><td colspan="5">Aucune entrée enregistrée</td></tr>`
         : state.xpLog.map(rowHtml).join('');
 
-    tbody.querySelectorAll('.xp-gain-raison').forEach(inp =>
-        inp.addEventListener('input', () => { state.xpLog[+inp.dataset.idx].raison = inp.value; save(); }));
-    tbody.querySelectorAll('.xp-gain-montant').forEach(inp =>
-        inp.addEventListener('input', () => { state.xpLog[+inp.dataset.idx].montant = +inp.value || 0; recalc(); }));
-    tbody.querySelectorAll('.xp-type-sel').forEach(sel =>
-        sel.addEventListener('change', () => { state.xpLog[+sel.dataset.idx].type = sel.value; recalc(); }));
-    tbody.querySelectorAll('.xp-achat').forEach(inp =>
-        inp.addEventListener('input', () => { state.xpLog[+inp.dataset.idx].achat = inp.value; save(); }));
-    tbody.querySelectorAll('.xp-cout').forEach(inp =>
-        inp.addEventListener('input', () => { state.xpLog[+inp.dataset.idx].cout = +inp.value || 0; recalc(); }));
-    tbody.querySelectorAll('.xp-note').forEach(inp =>
-        inp.addEventListener('input', () => { state.xpLog[+inp.dataset.idx].note = inp.value; save(); }));
-    tbody.querySelectorAll('.btn-rm[data-type="xp"]').forEach(btn =>
-        btn.addEventListener('click', () => {
-            const entry = state.xpLog[+btn.dataset.idx];
+    if (!renderXpLog._bound) {
+        tbody.addEventListener('input', e => {
+            const t = e.target;
+            const entry = state.xpLog[+t.dataset.idx];
+            if (!entry) return;
+            if (t.classList.contains('xp-gain-raison'))       { entry.raison  = t.value;             save();  return; }
+            if (t.classList.contains('xp-gain-montant'))      { entry.montant = +t.value || 0;       recalc(); return; }
+            if (t.classList.contains('xp-achat'))             { entry.achat   = t.value;             save();  return; }
+            if (t.classList.contains('xp-cout'))              { entry.cout    = +t.value || 0;       recalc(); return; }
+            if (t.classList.contains('xp-note'))              { entry.note    = t.value;             save();  return; }
+        });
+        tbody.addEventListener('change', e => {
+            const t = e.target;
+            if (!t.classList.contains('xp-type-sel')) return;
+            const entry = state.xpLog[+t.dataset.idx];
+            if (!entry) return;
+            entry.type = t.value;
+            recalc();
+        });
+        tbody.addEventListener('click', e => {
+            const btn = e.target.closest('.btn-rm[data-type="xp"]');
+            if (!btn || !tbody.contains(btn)) return;
+            const idx = +btn.dataset.idx;
+            const entry = state.xpLog[idx];
             if (entry?.applied) revertXpEntry(entry);
-            state.xpLog.splice(+btn.dataset.idx, 1);
+            state.xpLog.splice(idx, 1);
             renderXpLog();
             recalc();
-        }));
+        });
+        renderXpLog._bound = true;
+    }
 }
 
 function showXpGainForm() {
@@ -1745,7 +1834,15 @@ function applyData(d) {
 
 function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) applyData(JSON.parse(raw));
+    if (!raw) return;
+    try {
+        applyData(JSON.parse(raw));
+    } catch (err) {
+        // localStorage corrompu (crash navigateur, extension capricieuse) :
+        // fallback sur un état neuf plutôt que planter le boot de la fiche.
+        console.warn('[fiche] localStorage illisible, reset', err);
+        resetState();
+    }
 }
 
 // Appelée par fiche-cloud.js quand la fiche Firestore est disponible
