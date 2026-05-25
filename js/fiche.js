@@ -1016,35 +1016,13 @@ const TALENT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1SCnAJCthdto7RO
     + '/gviz/tq?tqx=out:csv&sheet=Talents';
 let _talentCache = null;
 
-function _parseCSV(text) {
-    const rows = [];
-    let cur = '', inQ = false, row = [];
-    for (let i = 0; i <= text.length; i++) {
-        const c = text[i], n = text[i + 1];
-        if (i === text.length || (!inQ && (c === '\n' || (c === '\r' && n === '\n')))) {
-            row.push(cur.trim());
-            if (row.some(f => f !== '')) rows.push(row);
-            row = []; cur = '';
-            if (c === '\r') i++;
-        } else if (inQ) {
-            if (c === '"' && n === '"') { cur += '"'; i++; }
-            else if (c === '"') inQ = false;
-            else cur += c;
-        } else {
-            if (c === '"') inQ = true;
-            else if (c === ',') { row.push(cur.trim()); cur = ''; }
-            else cur += c;
-        }
-    }
-    return rows;
-}
-
 async function fetchTalentData() {
     if (_talentCache) return _talentCache;
     try {
         const res = await fetch(TALENT_SHEET_URL);
         if (!res.ok) return null;
-        const rows = _parseCSV(await res.text());
+        // window.parseCSV posé par js/utils.js (chargé en module avant le DOMContentLoaded)
+        const rows = window.parseCSV(await res.text());
         if (rows.length < 2) return null;
         const [headers, ...data] = rows;
         _talentCache = { headers, data };
@@ -1080,7 +1058,9 @@ async function showTalentModal(nom) {
     modal.style.display = 'flex';
 
     const td = await fetchTalentData();
-    const _e = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // window.esc est posé par js/utils.js (chargé en module deferred avant le
+    // DOMContentLoaded). On l'utilise plutôt qu'une copie locale.
+    const _e = window.esc;
 
     if (!td) { body.innerHTML = `<h3>${_e(nom)}</h3><p>Impossible de charger les données.</p>`; return; }
 
@@ -2018,8 +1998,28 @@ async function loadCareersData() {
     }
 }
 
+// Idem pour la base de compétences (~20 KB). Migré de skills.js (script
+// classique) vers skills.json pour homogénéité avec careers.json et
+// validation JSON.parse en CI.
+async function loadSkillsData() {
+    if (window.WFRP_SKILLS) return;
+    try {
+        const res = await fetch('js/data/skills.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        window.WFRP_SKILLS = await res.json();
+        // Dérivé : liste des groupes ayant au moins une spécialisation.
+        window.WFRP_SKILL_GROUPS_WITH_SPECS = [...new Set(
+            window.WFRP_SKILLS.filter(s => s.spec).map(s => s.group)
+        )];
+    } catch (e) {
+        console.error('Impossible de charger skills.json :', e);
+        window.WFRP_SKILLS = [];
+        window.WFRP_SKILL_GROUPS_WITH_SPECS = [];
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadCareersData();
+    await Promise.all([loadCareersData(), loadSkillsData()]);
     buildCareerDatalist();
     load();             // charger l'état en premier
     buildBasicSkills(); // puis rendre avec les valeurs restaurées

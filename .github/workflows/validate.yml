@@ -28,3 +28,5 @@ jobs:
           node-version: '20'
       - name: Parse careers.json
         run: node -e "JSON.parse(require('node:fs').readFileSync('js/data/careers.json','utf8'))"
+      - name: Parse skills.json
+        run: node -e "JSON.parse(require('node:fs').readFileSync('js/data/skills.json','utf8'))"

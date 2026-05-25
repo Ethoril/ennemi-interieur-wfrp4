@@ -1,4 +1,4 @@
-import { esc, stripAccents } from './utils.js';
+import { esc, stripAccents, parseCSV } from './utils.js';
 
 /* ================================================
    GOOGLE SHEETS — Dynamic Data Fetcher & Renderer
@@ -20,49 +20,7 @@ const TABS = [
 // Cache to avoid refetching
 const dataCache = {};
 
-// ── CSV Parser ────────────────────────────────────
-function parseCSV(csv) {
-    const rows = [];
-    let current = '';
-    let inQuotes = false;
-    let row = [];
-
-    for (let i = 0; i < csv.length; i++) {
-        const ch = csv[i];
-        const next = csv[i + 1];
-
-        if (inQuotes) {
-            if (ch === '"' && next === '"') {
-                current += '"';
-                i++;
-            } else if (ch === '"') {
-                inQuotes = false;
-            } else {
-                current += ch;
-            }
-        } else {
-            if (ch === '"') {
-                inQuotes = true;
-            } else if (ch === ',') {
-                row.push(current.trim());
-                current = '';
-            } else if (ch === '\n' || (ch === '\r' && next === '\n')) {
-                row.push(current.trim());
-                if (row.some(cell => cell !== '')) rows.push(row);
-                row = [];
-                current = '';
-                if (ch === '\r') i++;
-            } else {
-                current += ch;
-            }
-        }
-    }
-    // Last row
-    row.push(current.trim());
-    if (row.some(cell => cell !== '')) rows.push(row);
-
-    return rows;
-}
+// parseCSV est importé depuis utils.js (source unique partagée avec fiche.js)
 
 // ── Fetch Sheet Data ──────────────────────────────
 async function fetchSheetData(sheetName) {

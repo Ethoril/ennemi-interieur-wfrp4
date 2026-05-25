@@ -1,14 +1,13 @@
 // Validation cross-data : chaque compétence référencée dans careers.json
-// doit exister dans skills.js (sauf slots "ouverts" type "(au choix)" et
+// doit exister dans skills.json (sauf slots "ouverts" type "(au choix)" et
 // spécialisations génériques type "(Langue)" résolues à l'usage).
 
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import vm from 'node:vm';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SKILLS_PATH = resolve(__dirname, '..', '..', 'js', 'data', 'skills.js');
+const SKILLS_PATH = resolve(__dirname, '..', '..', 'js', 'data', 'skills.json');
 
 // Doit rester aligné avec fiche.js (OPEN_SPEC_PATTERN / GENERIC_SPEC_WORDS).
 const GENERIC_SPEC_WORDS = new Set([
@@ -46,17 +45,12 @@ function levenshtein(a, b) {
     return dp[m][n];
 }
 
-// skills.js exporte via `window.WFRP_SKILLS = …`. On l'exécute dans un sandbox
-// pour récupérer le tableau sans dupliquer la liste côté Node.
 export async function loadSkills() {
-    const code = await readFile(SKILLS_PATH, 'utf8');
-    const sandbox = { window: {} };
-    vm.createContext(sandbox);
-    vm.runInContext(code, sandbox);
-    if (!Array.isArray(sandbox.window.WFRP_SKILLS)) {
-        throw new Error(`skills.js n'a pas exposé window.WFRP_SKILLS (chemin : ${SKILLS_PATH})`);
+    const skills = JSON.parse(await readFile(SKILLS_PATH, 'utf8'));
+    if (!Array.isArray(skills)) {
+        throw new Error(`skills.json n'est pas un tableau (chemin : ${SKILLS_PATH})`);
     }
-    return sandbox.window.WFRP_SKILLS;
+    return skills;
 }
 
 export function validateSkillReferences(careers, skills) {
@@ -99,8 +93,8 @@ export function validateSkillReferences(careers, skills) {
 }
 
 export function formatIssues(issues) {
-    if (!issues.length) return '✓ Toutes les compétences référencées existent dans skills.js.';
-    const lines = [`⚠ ${issues.length} compétence(s) introuvable(s) dans skills.js :`];
+    if (!issues.length) return '✓ Toutes les compétences référencées existent dans skills.json.';
+    const lines = [`⚠ ${issues.length} compétence(s) introuvable(s) dans skills.json :`];
     for (const i of issues) {
         const suggest = i.suggestion ? ` → suggestion : « ${i.suggestion} »` : '';
         const reason = i.kind === 'unknown-group' ? 'groupe inconnu' : 'spec inconnue';

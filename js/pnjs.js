@@ -120,6 +120,10 @@ function applySnapshots(pnjSnap, relSnap) {
         .map(d => ({ id: d.id, ...d.data() }))
         .filter(l => nodeIds.has(l.source) && nodeIds.has(l.cible))
         .map(l => ({ ...l, source: l.source, target: l.cible }));
+    // La palette des couleurs "par lieu/groupe" dépend de la liste actuelle :
+    // sans reset, une valeur disparue garderait sa case dans la légende et un
+    // nouveau lieu/groupe n'aurait pas de couleur jusqu'au prochain switch.
+    state.dimColorMap = null;
 }
 
 async function loadData({ init = false } = {}) {

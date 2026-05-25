@@ -217,15 +217,15 @@ async function main() {
 
     validate(careers);
 
-    // Validation cross-data : compétences référencées vs skills.js.
-    // Non bloquant par défaut (skills.js peut être complété après l'import).
+    // Validation cross-data : compétences référencées vs skills.json.
+    // Non bloquant par défaut (skills.json peut être complété après l'import).
     // En mode --strict (CI / release), une incohérence fait échouer l'import.
     const skills = await loadSkills();
     const skillIssues = validateSkillReferences(careers, skills);
     if (skillIssues.length) {
         console.warn('\n' + formatIssues(skillIssues));
         if (process.argv.includes('--strict')) {
-            throw new Error(`Mode strict : ${skillIssues.length} compétence(s) à corriger dans skills.js ou dans le sheet.`);
+            throw new Error(`Mode strict : ${skillIssues.length} compétence(s) à corriger dans skills.json ou dans le sheet.`);
         }
     } else {
         console.log('\n' + formatIssues(skillIssues));

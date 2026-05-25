@@ -1,12 +1,12 @@
 // Smoke test : charge careers.json, imprime des stats, valide les références
-// vers skills.js par diff avec un baseline (tools/skills-baseline.json).
+// vers skills.json par diff avec un baseline (tools/skills-baseline.json).
 //
 // Sortie 1 si :
 //   - une NOUVELLE incohérence apparaît (régression : à corriger)
 //   - le baseline est invalide
 //
 // Les incohérences déjà présentes dans le baseline sont tolérées : c'est la
-// dette connue, à résorber au fur et à mesure que skills.js est complété.
+// dette connue, à résorber au fur et à mesure que skills.json est complété.
 // Quand des incohérences disparaissent, le script suggère --update-baseline.
 
 import { readFile, writeFile } from 'node:fs/promises';
@@ -46,7 +46,7 @@ if (mage) {
 }
 
 // ── Validation cross-data ────────────────────────────────
-console.log('\n── Validation skills.js ─────────────────────');
+console.log('\n── Validation skills.json ─────────────────────');
 const skills = await loadSkills();
 const issues = validateSkillReferences(cs, skills);
 const issueKey = i => `${i.career}::r${i.rang}::${i.skill}`;
@@ -88,7 +88,7 @@ if (fixed.length) {
 if (regressions.length) {
     console.error('\n✗ Régressions (nouvelles incohérences) :');
     console.error(formatIssues(regressions));
-    console.error(`\n→ corrige skills.js ou le Google Sheet, puis relance.`);
+    console.error(`\n→ corrige skills.json ou le Google Sheet, puis relance.`);
     process.exit(1);
 }
 
