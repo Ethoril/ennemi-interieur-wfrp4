@@ -52,6 +52,202 @@
             pointer-events: none;
         }
         .leaflet-container { background: #07070d; }
+        
+        /* Outil Règle */
+        .measure-btn {
+            position: fixed;
+            top: calc(var(--nav-height) + 12px);
+            right: 16px;
+            z-index: 1100;
+            background: rgba(7, 7, 13, 0.85);
+            border: 1px solid var(--border-gold);
+            color: var(--gold);
+            font-family: var(--font-heading);
+            font-size: 0.8rem;
+            padding: 6px 14px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: var(--shadow-sm);
+        }
+        .measure-btn:hover {
+            background: rgba(201, 168, 76, 0.15);
+            color: var(--gold-bright);
+            border-color: var(--gold-bright);
+            box-shadow: var(--shadow-glow);
+        }
+        .measure-btn.active {
+            background: rgba(201, 168, 76, 0.25);
+            color: var(--gold-bright);
+            border-color: var(--gold-bright);
+            box-shadow: var(--shadow-glow-strong);
+        }
+        .measure-panel {
+            position: fixed;
+            top: calc(var(--nav-height) + 54px);
+            right: 16px;
+            z-index: 1100;
+            width: 290px;
+            background: rgba(14, 14, 26, 0.92);
+            border: 1px solid var(--border-gold);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            font-family: var(--font-body);
+            color: var(--text-primary);
+            overflow: hidden;
+            animation: measurePanelFadeIn var(--transition-fast);
+        }
+        @keyframes measurePanelFadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .measure-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            background: rgba(7, 7, 13, 0.5);
+        }
+        .measure-panel-header h3 {
+            margin: 0;
+            font-size: 0.9rem;
+            font-family: var(--font-heading);
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .measure-close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color var(--transition-fast);
+            line-height: 1;
+        }
+        .measure-close-btn:hover {
+            color: var(--gold-bright);
+        }
+        .measure-panel-body {
+            padding: 16px;
+        }
+        .measure-distance-value {
+            text-align: center;
+            margin-bottom: 16px;
+            padding: 10px;
+            background: rgba(201, 168, 76, 0.05);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+        }
+        #measure-dist-num {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--gold-bright);
+        }
+        .measure-unit {
+            font-family: var(--font-heading);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-left: 4px;
+        }
+        .measure-travel-times {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .travel-time-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: var(--radius-sm);
+            transition: background var(--transition-fast);
+        }
+        .travel-time-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .travel-icon {
+            font-size: 1.3rem;
+            width: 24px;
+            text-align: center;
+        }
+        .travel-info {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        .travel-label {
+            font-family: var(--font-heading);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-heading);
+        }
+        .travel-speed {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .travel-duration {
+            font-family: var(--font-heading);
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gold);
+        }
+        .measure-panel-actions {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .btn-clear {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(122, 31, 31, 0.2);
+            border: 1px solid rgba(168, 50, 50, 0.4);
+            color: #e8dcc8;
+            font-family: var(--font-heading);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 6px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        .btn-clear:hover {
+            background: var(--blood);
+            border-color: var(--blood-bright);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(122, 31, 31, 0.3);
+        }
+        .measure-help {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.3;
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        /* Curseur spécial pour l'outil */
+        .measure-mode-active,
+        .measure-mode-active .leaflet-grab,
+        .measure-mode-active .leaflet-interactive,
+        .measure-mode-active .leaflet-container {
+            cursor: crosshair !important;
+        }
     </style>
 </head>
 
@@ -60,7 +256,57 @@
     <nav class="navbar" id="navbar"></nav>
 
     <a href="cartes.html" id="map-back">← Retour</a>
+    <button id="measure-btn" class="measure-btn">📐 Règle</button>
     <span id="map-title"></span>
+
+    <div id="measure-panel" class="measure-panel" style="display: none;">
+        <div class="measure-panel-header">
+            <h3>Mesure de distance</h3>
+            <button id="measure-close-btn" title="Fermer" class="measure-close-btn">&times;</button>
+        </div>
+        <div class="measure-panel-body">
+            <div class="measure-distance-value">
+                <span id="measure-dist-num">0</span><span class="measure-unit"> milles</span>
+            </div>
+            
+            <div class="measure-travel-times">
+                <div class="travel-time-item">
+                    <span class="travel-icon">🚶</span>
+                    <div class="travel-info">
+                        <span class="travel-label">À pied</span>
+                        <span class="travel-speed">(20 milles/jour)</span>
+                    </div>
+                    <span id="travel-time-walk" class="travel-duration">0 jour</span>
+                </div>
+                <div class="travel-time-item">
+                    <span class="travel-icon">🐎</span>
+                    <div class="travel-info">
+                        <span class="travel-label">À cheval</span>
+                        <span class="travel-speed">(30 milles/jour)</span>
+                    </div>
+                    <span id="travel-time-ride" class="travel-duration">0 jour</span>
+                </div>
+                <div class="travel-time-item">
+                    <span class="travel-icon">⛵</span>
+                    <div class="travel-info">
+                        <span class="travel-label">En péniche</span>
+                        <span class="travel-speed">(25 milles/jour)</span>
+                    </div>
+                    <span id="travel-time-barge" class="travel-duration">0 jour</span>
+                </div>
+            </div>
+            
+            <div class="measure-panel-actions">
+                <button id="measure-clear-btn" class="btn-clear">
+                    🗑️ Effacer
+                </button>
+            </div>
+            
+            <div class="measure-help">
+                Clic gauche pour ajouter un point. Clic droit, double-clic ou bouton Effacer pour réinitialiser.
+            </div>
+        </div>
+    </div>
 
     <div class="page-container">
         <div id="map-container"></div>

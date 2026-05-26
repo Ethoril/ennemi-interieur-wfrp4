@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Carnet d'Enquêtes — L'Ennemi Intérieur</title>
+    <meta name="description" content="Indices et enquêtes de la campagne L'Ennemi Intérieur.">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="page-container">
+
+        <!-- Page Header -->
+        <div class="page-header fade-in">
+            <h1>Carnet d'Enquêtes</h1>
+            <p>Consultez les indices découverts, suivez les fils des intrigues et résolvez les mystères de l'Empire.</p>
+        </div>
+
+        <section class="section" style="padding-top: 0;">
+            <div class="container">
+                
+                <!-- Toolbar -->
+                <div class="pnj-toolbar fade-in">
+                    <!-- Recherche -->
+                    <div class="pnj-search-wrapper">
+                        <input type="text" id="clue-search" placeholder="Rechercher un indice...">
+                    </div>
+
+                    <!-- Filtre (admin seulement) -->
+                    <div class="colorby-group" id="filter-group" style="display: none;">
+                        <span class="filter-group-label">Afficher :</span>
+                        <button class="colorby-btn active" id="btn-filter-all">Tout</button>
+                        <button class="colorby-btn" id="btn-filter-discovered">Découverts</button>
+                        <button class="colorby-btn" id="btn-filter-hidden">Non découverts</button>
+                    </div>
+
+                    <div class="filter-sep" style="display: none;" id="admin-sep">|</div>
+
+                    <!-- Actions Admin -->
+                    <div class="pnj-admin-actions">
+                        <button class="btn-add-pnj" id="add-clue-btn" style="display:none">＋ Indice</button>
+                        <button class="btn-auth" id="auth-btn">🔑 Admin</button>
+                    </div>
+                </div>
+
+                <!-- Clues List / Grimoire Grid -->
+                <div class="clues-grid stagger-children" id="clues-container">
+                    <div id="clues-loading" class="pnj-loading">
+                        <div class="pnj-spinner"></div>
+                        <span class="loading-text">Chargement du grimoire d'enquêtes...</span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Modal édition Indice -->
+        <div id="clue-modal" class="pnj-modal-overlay" style="display:none;">
+            <div class="pnj-modal-content">
+                <h3 id="clue-modal-title">Nouvel indice</h3>
+                <form id="clue-form">
+                    <div class="form-row">
+                        <div class="form-col form-col-full">
+                            <label>Titre *</label>
+                            <input type="text" id="f-titre" required placeholder="Titre de l'indice">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-col form-col-full">
+                            <label>Description *</label>
+                            <textarea id="f-description" rows="5" required placeholder="Description détaillée de l'indice..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <label>Statut</label>
+                            <select id="f-decouvert">
+                                <option value="true">Découvert par les joueurs</option>
+                                <option value="false">Non découvert (secret)</option>
+                            </select>
+                        </div>
+                        <div class="form-col">
+                            <label>Illustration (Optionnelle)</label>
+                            <input type="file" id="f-image" accept="image/*">
+                            <div id="f-image-preview" class="image-preview"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col form-col-full">
+                            <label>Personnages liés (PNJs)</label>
+                            <div class="pnjs-checkbox-grid" id="f-pnjs-grid">
+                                <!-- Checkboxes generated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-danger" id="clue-delete-btn" style="display:none">🗑 Supprimer</button>
+                        <button type="button" class="btn-ghost" id="clue-modal-close">Annuler</button>
+                        <button type="submit" class="btn-primary" id="clue-save-btn">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Ornament -->
+        <div class="ornament">⚜</div>
+
+        <footer class="footer" id="site-footer"></footer>
+
+    </div>
+
+    <script src="js/layout.js"></script>
+    <script src="js/main.js"></script>
+    <script type="module" src="js/enquetes.js"></script>
+</body>
+
+</html>

@@ -12,14 +12,33 @@ const SKILLS_PATH = resolve(__dirname, '..', '..', 'js', 'data', 'skills.json');
 // Doit rester aligné avec fiche.js (OPEN_SPEC_PATTERN / GENERIC_SPEC_WORDS).
 const GENERIC_SPEC_WORDS = new Set([
     'Région','Localité','Langue','Commerce','Peuple','Matériau',
-    'Arme','Ennemi','Organisation','Divinité',
+    'Arme','Ennemi','Organisation','Divinité','Vent',
 ]);
-const OPEN_SPEC_PATTERN = /\(au choix\)$/i;
+const OPEN_SPEC_PATTERN = /\((?:.*?\bchoix\b|n'importe quelle|celle du lanceur).*?\)$/i;
 
 function isOpenSlot(s) {
     if (OPEN_SPEC_PATTERN.test(s)) return true;
     const m = s.match(/\(([^)]+)\)$/);
     return m ? GENERIC_SPEC_WORDS.has(m[1].trim()) : false;
+}
+
+function expandChoiceSkill(s) {
+    const orMatch = s.match(/\(([^)]+)\)$/);
+    if (orMatch) {
+        if (isOpenSlot(s)) return [s];
+        const content = orMatch[1].trim();
+        if (content.startsWith('ou ')) {
+            const base = s.split('(')[0].trim();
+            const alt = content.substring(3).trim();
+            return [base, alt];
+        }
+        const parts = content.split(/,?\s+ou\s+|\s*,\s*/);
+        if (parts.length > 1) {
+            const base = s.split('(')[0].trim();
+            return parts.map(p => `${base} (${p.trim()})`);
+        }
+    }
+    return [s];
 }
 
 function parseName(s) {
@@ -65,26 +84,29 @@ export function validateSkillReferences(careers, skills) {
     const issues = [];
     for (const c of careers) {
         for (const r of c.rangs) {
-            for (const skillRef of (r.skills || [])) {
-                if (isOpenSlot(skillRef)) continue;
-                if (knownNames.has(skillRef.toLowerCase())) continue;
+            for (const skillRefRaw of (r.skills || [])) {
+                const subRefs = expandChoiceSkill(skillRefRaw);
+                for (const skillRef of subRefs) {
+                    if (isOpenSlot(skillRef)) continue;
+                    if (knownNames.has(skillRef.toLowerCase())) continue;
 
-                const { group, spec } = parseName(skillRef);
-                const groupKey = group.toLowerCase();
-                if (groupSpecs.has(groupKey)) {
-                    let suggestion = null;
-                    const specs = [...groupSpecs.get(groupKey)];
-                    if (spec && specs.length) {
-                        const lo = spec.toLowerCase();
-                        suggestion = specs.reduce((best, s) =>
-                            levenshtein(s.toLowerCase(), lo) <
-                            levenshtein(best.toLowerCase(), lo) ? s : best);
+                    const { group, spec } = parseName(skillRef);
+                    const groupKey = group.toLowerCase();
+                    if (groupSpecs.has(groupKey)) {
+                        let suggestion = null;
+                        const specs = [...groupSpecs.get(groupKey)];
+                        if (spec && specs.length) {
+                            const lo = spec.toLowerCase();
+                            suggestion = specs.reduce((best, s) =>
+                                levenshtein(s.toLowerCase(), lo) <
+                                levenshtein(best.toLowerCase(), lo) ? s : best);
+                        }
+                        issues.push({ career: c.nom, rang: r.rang, skill: skillRef,
+                                      kind: 'unknown-spec', suggestion });
+                    } else {
+                        issues.push({ career: c.nom, rang: r.rang, skill: skillRef,
+                                      kind: 'unknown-group', suggestion: null });
                     }
-                    issues.push({ career: c.nom, rang: r.rang, skill: skillRef,
-                                  kind: 'unknown-spec', suggestion });
-                } else {
-                    issues.push({ career: c.nom, rang: r.rang, skill: skillRef,
-                                  kind: 'unknown-group', suggestion: null });
                 }
             }
         }

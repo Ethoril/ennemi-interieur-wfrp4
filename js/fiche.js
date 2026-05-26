@@ -11,12 +11,31 @@ const MOUVEMENT = {
 const STORAGE_KEY = 'wfrp4-fiche-test';
 
 // Slot de carrière ouvert : "(au choix)" ou catégorie générique à choisir
-const OPEN_SPEC_PATTERN   = /\(au choix\)$/i;
-const GENERIC_SPEC_WORDS  = new Set(['Région','Localité','Langue','Commerce','Peuple','Matériau','Arme','Ennemi','Organisation','Divinité']);
+const OPEN_SPEC_PATTERN   = /\((?:.*?\bchoix\b|n'importe quelle|celle du lanceur).*?\)$/i;
+const GENERIC_SPEC_WORDS  = new Set(['Région','Localité','Langue','Commerce','Peuple','Matériau','Arme','Ennemi','Organisation','Divinité','Vent']);
 function isOpenCareerSlot(s) {
     if (OPEN_SPEC_PATTERN.test(s)) return true;
     const m = s.match(/\(([^)]+)\)$/);
     return m ? GENERIC_SPEC_WORDS.has(m[1].trim()) : false;
+}
+
+function expandChoiceSkill(s) {
+    const orMatch = s.match(/\(([^)]+)\)$/);
+    if (orMatch) {
+        if (isOpenCareerSlot(s)) return [s];
+        const content = orMatch[1].trim();
+        if (content.startsWith('ou ')) {
+            const base = s.split('(')[0].trim();
+            const alt = content.substring(3).trim();
+            return [base, alt];
+        }
+        const parts = content.split(/,?\s+ou\s+|\s*,\s*/);
+        if (parts.length > 1) {
+            const base = s.split('(')[0].trim();
+            return parts.map(p => `${base} (${p.trim()})`);
+        }
+    }
+    return [s];
 }
 
 const XP_TYPES = ['Caractéristique','Compétence','Talent','Sort','Prière','Miracle','Autre'];
@@ -32,7 +51,7 @@ const BASIC_SKILLS = [
     { nom:'Charme',                  carac:'soc' },
     { nom:'Chevaucher',              carac:'ag'  },
     { nom:'Commandement',            carac:'soc' },
-    { nom:'Conduite',                carac:'ag'  },
+    { nom:"Conduite d'attelage",     carac:'ag'  },
     { nom:'Corps à corps (Base)',    carac:'cc'  },
     { nom:'Discrétion',              carac:'ag'  },
     { nom:'Divertissement',          carac:'soc' },
@@ -220,8 +239,10 @@ function _buildCareerSkillSets(career, rang) {
     for (let r = 1; r <= rang; r++) {
         for (const rd of getVariantsToConsider(career, r)) {
             for (const s of getEffectiveSkills(career, r, rd)) {
-                exact.add(s.toLowerCase());
-                if (isOpenCareerSlot(s)) openBases.add(skillBaseNom(s));
+                for (const expanded of expandChoiceSkill(s)) {
+                    exact.add(expanded.toLowerCase());
+                    if (isOpenCareerSlot(expanded)) openBases.add(skillBaseNom(expanded));
+                }
             }
         }
     }
@@ -1119,8 +1140,10 @@ function applyCareerHighlights() {
         const nom  = tr.dataset.skill;
         const base = skillBaseNom(nom);
         const match = allSkills.some(s => {
-            if (s.toLowerCase() === nom.toLowerCase()) return true;
-            return isOpenCareerSlot(s) && skillBaseNom(s) === base;
+            return expandChoiceSkill(s).some(opt => {
+                if (opt.toLowerCase() === nom.toLowerCase()) return true;
+                return isOpenCareerSlot(opt) && skillBaseNom(opt) === base;
+            });
         });
         if (match) tr.classList.add('skill-in-career');
     });
@@ -1149,7 +1172,7 @@ function renderCareerAdvGhosts() {
         const base = skillBaseNom(s);
         if (basicBaseNoms.has(base)) return false;
         if (isOpenCareerSlot(s)) return !purchasedBaseNoms.has(base);
-        return !purchasedNoms.has(s.toLowerCase());
+        return !expandChoiceSkill(s).some(opt => purchasedNoms.has(opt.toLowerCase()));
     });
 
     if (ghosts.length === 0) { tbody.innerHTML = ''; return; }
@@ -1184,7 +1207,7 @@ function renderCareerAdvGhosts() {
                 (s.group || '').toLowerCase() === base.toLowerCase()
             )?.group || base;
             // Pour un slot fixe avec spec (ex: "Langue (Noblesse)"), pré-remplir la spec
-            const specPart = !isOpen && careerNom.includes('(')
+            const specPart = !isOpen && careerNom.includes('(') && !careerNom.includes(' ou ')
                 ? (careerNom.match(/\(([^)]+)\)/)?.[1] ?? null) : null;
             showXpForm({ type: 'skill-adv', group: wfrpGroup, spec: specPart });
         };

@@ -2601,3 +2601,471 @@ strong {
   font-size: 1rem;
   color: var(--gold);
 }
+
+/* ── Indices & Enquêtes ─────────────────────────── */
+.pnj-clues-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: var(--space-sm);
+}
+
+.pnj-clue-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border: 1px solid var(--border-gold);
+  background: rgba(201, 168, 76, 0.08);
+  color: var(--gold);
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+.pnj-clue-badge:hover {
+  background: rgba(201, 168, 76, 0.18);
+  color: var(--gold-bright);
+  border-color: var(--gold-bright);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.pnj-clue-badge.clue-hidden {
+  border-color: var(--text-muted);
+  color: var(--text-muted);
+  background: rgba(100, 100, 100, 0.05);
+  border-style: dashed;
+}
+
+.pnj-clue-badge.clue-hidden:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-secondary);
+  background: rgba(100, 100, 100, 0.12);
+}
+
+/* ── Clues / Grimoire Grid ──────────────────────── */
+.clues-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-xl);
+  margin-top: var(--space-xl);
+}
+
+.clue-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  transition: all var(--transition-base);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.clue-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.clue-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-gold);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+}
+
+.clue-card:hover::before {
+  opacity: 1;
+}
+
+/* Highlight specific clue from URL param */
+.clue-card.highlighted {
+  border-color: var(--gold-bright);
+  box-shadow: var(--shadow-lg), var(--shadow-glow-strong);
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(201, 168, 76, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(201, 168, 76, 0.45); }
+}
+
+.clue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-sm);
+}
+
+.clue-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.clue-edit-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 2px;
+  transition: color var(--transition-fast);
+}
+
+.clue-edit-btn:hover {
+  color: var(--gold);
+}
+
+.clue-image-container {
+  width: 100%;
+  max-height: 200px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-gold);
+  background: #000;
+}
+
+.clue-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.clue-card:hover .clue-image {
+  transform: scale(1.03);
+}
+
+.clue-description {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.clue-pnjs-section {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.clue-pnjs-title {
+  font-family: var(--font-heading);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.clue-pnjs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.clue-pnj-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.clue-pnj-chip:hover {
+  background: rgba(201, 168, 76, 0.1);
+  color: var(--gold);
+  border-color: var(--border-gold);
+}
+
+/* Hidden (undiscovered) Clue Styling (admin-only view) */
+.clue-card.clue-hidden {
+  border-style: dashed;
+  border-color: var(--text-muted);
+  opacity: 0.75;
+}
+
+.clue-card.clue-hidden:hover {
+  opacity: 1;
+}
+
+/* Multiselect checkboxes grid in Form */
+.pnjs-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-sm);
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--border-gold);
+  padding: var(--space-sm);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+  margin-top: 4px;
+}
+
+[data-theme="parchment"] .pnjs-checkbox-grid {
+  background: #faf4e8;
+}
+
+.pnjs-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.pnjs-checkbox-label input {
+  cursor: pointer;
+  accent-color: var(--gold);
+}
+
+/* ── Calendrier Impérial Widget ──────────────────── */
+.section-calendar {
+  padding: var(--space-xl) 0 var(--space-md) 0;
+  display: flex;
+  justify-content: center;
+}
+
+.calendar-widget {
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.calendar-widget::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.calendar-widget:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-lg), var(--shadow-glow-strong);
+}
+
+.calendar-header {
+  font-family: var(--font-heading);
+  font-size: 0.85rem;
+  color: var(--gold-bright);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-sm);
+}
+
+[data-theme="parchment"] .calendar-header {
+  color: var(--gold);
+}
+
+.calendar-weekday {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-xs);
+}
+
+.calendar-date-container {
+  margin: var(--space-sm) 0;
+}
+
+.calendar-date {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold) 60%, var(--copper) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--space-xs);
+}
+
+[data-theme="parchment"] .calendar-date {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dim) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.calendar-year {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+}
+
+/* Moons Section */
+.calendar-moons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.moon-card {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  transition: all var(--transition-base);
+}
+
+[data-theme="parchment"] .moon-card {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.moon-card:hover {
+  border-color: var(--border-gold);
+}
+
+.moon-name {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.moon-card.mannslieb .moon-name {
+  color: #d1e2ff;
+  text-shadow: 0 0 8px rgba(160, 190, 255, 0.4);
+}
+
+[data-theme="parchment"] .moon-card.mannslieb .moon-name {
+  color: #3b5080;
+  text-shadow: none;
+}
+
+.moon-card.morrslieb .moon-name {
+  color: #6eff90;
+  text-shadow: 0 0 8px rgba(110, 255, 144, 0.4);
+}
+
+[data-theme="parchment"] .moon-card.morrslieb .moon-name {
+  color: #1b662f;
+  text-shadow: none;
+}
+
+.moon-icon {
+  font-size: 2.8rem;
+  line-height: 1;
+  margin: var(--space-xs) 0;
+  transition: transform var(--transition-slow);
+  user-select: none;
+}
+
+.moon-card:hover .moon-icon {
+  transform: scale(1.15) rotate(5deg);
+}
+
+/* Green glow & hue animation for Morrslieb to convert yellow emoji to chaotic green */
+.moon-card.morrslieb .moon-icon {
+  filter: hue-rotate(65deg) saturate(1.3) brightness(1.1) drop-shadow(0 0 10px rgba(46, 204, 113, 0.6));
+  animation: pulse-green 4s infinite ease-in-out;
+}
+
+/* Silver glow for Mannslieb */
+.moon-card.mannslieb .moon-icon {
+  filter: drop-shadow(0 0 10px rgba(173, 216, 230, 0.5));
+}
+
+@keyframes pulse-green {
+  0%, 100% {
+    filter: hue-rotate(65deg) saturate(1.3) brightness(1.1) drop-shadow(0 0 6px rgba(46, 204, 113, 0.4));
+  }
+  50% {
+    filter: hue-rotate(65deg) saturate(1.4) brightness(1.25) drop-shadow(0 0 16px rgba(46, 204, 113, 0.85));
+  }
+}
+
+.moon-phase {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Admin controls styling */
+.calendar-controls {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px dashed var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.btn-ctrl {
+  background: rgba(201, 168, 76, 0.06);
+  border: 1px solid var(--border-gold);
+  color: var(--gold);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-ctrl:hover {
+  background: rgba(201, 168, 76, 0.15);
+  color: var(--gold-bright);
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 8px rgba(201, 168, 76, 0.2);
+}
+
+[data-theme="parchment"] .btn-ctrl:hover {
+  color: var(--gold-dim);
+  border-color: var(--gold);
+}

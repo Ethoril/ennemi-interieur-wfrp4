@@ -1,6 +1,6 @@
 import { auth, db, storage, ADMIN_EMAIL } from './firebase-init.js';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch, deleteField } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch, deleteField, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 import Cropper from 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js';
@@ -148,6 +148,13 @@ async function loadData({ init = false } = {}) {
         document.getElementById('pnj-empty').style.display    = state.nodes.length ? 'none' : 'flex';
         document.getElementById('graph-legend').style.display = state.nodes.length ? 'flex' : 'none';
         if (state.view === 'table') renderTable();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const pnjId = urlParams.get('id') || urlParams.get('pnj');
+        if (pnjId) {
+            const node = state.nodes.find(n => n.id === pnjId);
+            if (node) openPanel(node);
+        }
 
     } catch (e) {
         if (init) {
@@ -605,7 +612,7 @@ function updateVisibility() {
 }
 
 // ── Detail panel ───────────────────────────────────────────────
-function openPanel(d) {
+async function openPanel(d) {
     state.panelId = d.id;
     const nodeById = new Map(state.nodes.map(n => [n.id, n]));
 
@@ -685,6 +692,34 @@ function openPanel(d) {
                 </div>` : ''}
         </div>`;
 
+    // Query Firestore for indices linked to this PNJ
+    let linkedClues = [];
+    try {
+        const indicesRef = collection(db, 'indices');
+        let q;
+        if (state.isAdmin) {
+            q = query(indicesRef, where('pnjsLies', 'array-contains', d.id));
+        } else {
+            q = query(indicesRef, where('pnjsLies', 'array-contains', d.id), where('decouvert', '==', true));
+        }
+        const querySnapshot = await getDocs(q);
+        linkedClues = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (e) {
+        console.error("Erreur lors de la récupération des indices liés :", e);
+    }
+
+    const cluesHtml = linkedClues.length ? `
+        <div class="pnj-detail-section">
+            <h4>Indices liés</h4>
+            <div class="pnj-clues-list">
+                ${linkedClues.map(c => `
+                    <a href="enquetes.html?id=${esc(c.id)}" class="pnj-clue-badge${!c.decouvert ? ' clue-hidden' : ''}">
+                        🔎 ${esc(c.titre)}${!c.decouvert ? ' 👁️ (Non découvert)' : ''}
+                    </a>
+                `).join('')}
+            </div>
+        </div>` : '';
+
     document.getElementById('pnj-detail-content').innerHTML = `
         ${portraitHtml}
         <div class="pnj-detail-header">
@@ -694,7 +729,7 @@ function openPanel(d) {
                 <span class="pnj-badge vivant-${esc(vKey)}">${esc(vLabel)}</span>
             </div>
         </div>
-        ${editActions}${metaHtml}${descHtml}${relHtml}`;
+        ${editActions}${metaHtml}${descHtml}${relHtml}${cluesHtml}`;
 
     document.getElementById('pnj-detail').classList.add('open');
     highlightConnected(d.id);

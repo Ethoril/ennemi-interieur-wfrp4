@@ -8,6 +8,7 @@ const NAV_ITEMS = [
     { href: 'regles.html',  label: 'Règles' },
     { href: 'cartes.html',  label: 'Cartes' },
     { href: 'pnjs.html',    label: 'PNJs' },
+    { href: 'enquetes.html', label: 'Enquêtes' },
 ];
 
 // ── Thème ───────────────────────────────────────────

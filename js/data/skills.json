@@ -1,5 +1,68 @@
 [
   {
+    "group": "Art",
+    "spec": "Calligraphie",
+    "nom": "Art (Calligraphie)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Cartographie",
+    "nom": "Art (Cartographie)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Écriture",
+    "nom": "Art (Écriture)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Gravure",
+    "nom": "Art (Gravure)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Mosaïque",
+    "nom": "Art (Mosaïque)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Peinture",
+    "nom": "Art (Peinture)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Sculpture",
+    "nom": "Art (Sculpture)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Tatouage",
+    "nom": "Art (Tatouage)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Tissage",
+    "nom": "Art (Tissage)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
     "group": "Athlétisme",
     "spec": "",
     "nom": "Athlétisme",
@@ -21,6 +84,41 @@
     "basic": true
   },
   {
+    "group": "Chevaucher",
+    "spec": "Cheval",
+    "nom": "Chevaucher (Cheval)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Chevaucher",
+    "spec": "Demi-griffon",
+    "nom": "Chevaucher (Demi-griffon)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Chevaucher",
+    "spec": "Griffon",
+    "nom": "Chevaucher (Griffon)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Chevaucher",
+    "spec": "Loup géant",
+    "nom": "Chevaucher (Loup géant)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Chevaucher",
+    "spec": "Pégase",
+    "nom": "Chevaucher (Pégase)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
     "group": "Commandement",
     "spec": "",
     "nom": "Commandement",
@@ -28,10 +126,80 @@
     "basic": true
   },
   {
-    "group": "Conduite",
+    "group": "Conduite d'attelage",
     "spec": "",
-    "nom": "Conduite",
+    "nom": "Conduite d'attelage",
     "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Base",
+    "nom": "Corps à corps (Base)",
+    "carac": "cc",
+    "basic": true
+  },
+  {
+    "group": "Discrétion",
+    "spec": "Rurale",
+    "nom": "Discrétion (Rurale)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Discrétion",
+    "spec": "Souterraine",
+    "nom": "Discrétion (Souterraine)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Discrétion",
+    "spec": "Urbaine",
+    "nom": "Discrétion (Urbaine)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Chant",
+    "nom": "Divertissement (Chant)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Comédie",
+    "nom": "Divertissement (Comédie)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Discours",
+    "nom": "Divertissement (Discours)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Humour",
+    "nom": "Divertissement (Humour)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Narration",
+    "nom": "Divertissement (Narration)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Provocation",
+    "nom": "Divertissement (Provocation)",
+    "carac": "soc",
     "basic": true
   },
   {
@@ -140,265 +308,6 @@
     "basic": true
   },
   {
-    "group": "Art",
-    "spec": "Calligraphie",
-    "nom": "Art (Calligraphie)",
-    "carac": "dex",
-    "basic": true
-  },
-  {
-    "group": "Art",
-    "spec": "Cartographie",
-    "nom": "Art (Cartographie)",
-    "carac": "dex",
-    "basic": true
-  },
-  {
-    "group": "Art",
-    "spec": "Écriture",
-    "nom": "Art (Écriture)",
-    "carac": "dex",
-    "basic": true
-  },
-  {
-    "group": "Art",
-    "spec": "Gravure",
-    "nom": "Art (Gravure)",
-    "carac": "dex",
-    "basic": true
-  },
-  {
-    "group": "Art",
-    "spec": "Mosaïque",
-    "nom": "Art (Mosaïque)",
-    "carac": "dex",
-    "basic": true
-  },
-  {
-    "group": "Art",
-    "spec": "Peinture",
-    "nom": "Art (Peinture)",
-    "carac": "dex",
-    "basic": true
-  },
-  {
-    "group": "Art",
-    "spec": "Sculpture",
-    "nom": "Art (Sculpture)",
-    "carac": "dex",
-    "basic": true
-  },
-  {
-    "group": "Art",
-    "spec": "Tatouage",
-    "nom": "Art (Tatouage)",
-    "carac": "dex",
-    "basic": true
-  },
-  {
-    "group": "Art",
-    "spec": "Tissage",
-    "nom": "Art (Tissage)",
-    "carac": "dex",
-    "basic": true
-  },
-  {
-    "group": "Chevaucher",
-    "spec": "Cheval",
-    "nom": "Chevaucher (Cheval)",
-    "carac": "ag",
-    "basic": true
-  },
-  {
-    "group": "Chevaucher",
-    "spec": "Demi-griffon",
-    "nom": "Chevaucher (Demi-griffon)",
-    "carac": "ag",
-    "basic": true
-  },
-  {
-    "group": "Chevaucher",
-    "spec": "Griffon",
-    "nom": "Chevaucher (Griffon)",
-    "carac": "ag",
-    "basic": true
-  },
-  {
-    "group": "Chevaucher",
-    "spec": "Loup géant",
-    "nom": "Chevaucher (Loup géant)",
-    "carac": "ag",
-    "basic": true
-  },
-  {
-    "group": "Chevaucher",
-    "spec": "Pégase",
-    "nom": "Chevaucher (Pégase)",
-    "carac": "ag",
-    "basic": true
-  },
-  {
-    "group": "Corps à corps",
-    "spec": "Base",
-    "nom": "Corps à corps (Base)",
-    "carac": "cc",
-    "basic": true
-  },
-  {
-    "group": "Discrétion",
-    "spec": "Rurale",
-    "nom": "Discrétion (Rurale)",
-    "carac": "ag",
-    "basic": true
-  },
-  {
-    "group": "Discrétion",
-    "spec": "Souterraine",
-    "nom": "Discrétion (Souterraine)",
-    "carac": "ag",
-    "basic": true
-  },
-  {
-    "group": "Discrétion",
-    "spec": "Urbaine",
-    "nom": "Discrétion (Urbaine)",
-    "carac": "ag",
-    "basic": true
-  },
-  {
-    "group": "Divertissement",
-    "spec": "Chant",
-    "nom": "Divertissement (Chant)",
-    "carac": "soc",
-    "basic": true
-  },
-  {
-    "group": "Divertissement",
-    "spec": "Comédie",
-    "nom": "Divertissement (Comédie)",
-    "carac": "soc",
-    "basic": true
-  },
-  {
-    "group": "Divertissement",
-    "spec": "Discours",
-    "nom": "Divertissement (Discours)",
-    "carac": "soc",
-    "basic": true
-  },
-  {
-    "group": "Divertissement",
-    "spec": "Humour",
-    "nom": "Divertissement (Humour)",
-    "carac": "soc",
-    "basic": true
-  },
-  {
-    "group": "Divertissement",
-    "spec": "Narration",
-    "nom": "Divertissement (Narration)",
-    "carac": "soc",
-    "basic": true
-  },
-  {
-    "group": "Divertissement",
-    "spec": "Provocation",
-    "nom": "Divertissement (Provocation)",
-    "carac": "soc",
-    "basic": true
-  },
-  {
-    "group": "Crochetage",
-    "spec": "",
-    "nom": "Crochetage",
-    "carac": "dex",
-    "basic": false
-  },
-  {
-    "group": "Escamotage",
-    "spec": "",
-    "nom": "Escamotage",
-    "carac": "dex",
-    "basic": false
-  },
-  {
-    "group": "Évaluation",
-    "spec": "",
-    "nom": "Évaluation",
-    "carac": "int",
-    "basic": false
-  },
-  {
-    "group": "Focalisation",
-    "spec": "",
-    "nom": "Focalisation",
-    "carac": "fm",
-    "basic": false
-  },
-  {
-    "group": "Guérison",
-    "spec": "",
-    "nom": "Guérison",
-    "carac": "int",
-    "basic": false
-  },
-  {
-    "group": "Hypnotisme",
-    "spec": "",
-    "nom": "Hypnotisme",
-    "carac": "int",
-    "basic": false
-  },
-  {
-    "group": "Natation",
-    "spec": "",
-    "nom": "Natation",
-    "carac": "f",
-    "basic": false
-  },
-  {
-    "group": "Piégeage",
-    "spec": "",
-    "nom": "Piégeage",
-    "carac": "dex",
-    "basic": false
-  },
-  {
-    "group": "Pistage",
-    "spec": "",
-    "nom": "Pistage",
-    "carac": "i",
-    "basic": false
-  },
-  {
-    "group": "Prière",
-    "spec": "",
-    "nom": "Prière",
-    "carac": "soc",
-    "basic": false
-  },
-  {
-    "group": "Recherche",
-    "spec": "",
-    "nom": "Recherche",
-    "carac": "int",
-    "basic": false
-  },
-  {
-    "group": "Représentation",
-    "spec": "",
-    "nom": "Représentation",
-    "carac": "ag",
-    "basic": false
-  },
-  {
-    "group": "Soins aux animaux",
-    "spec": "",
-    "nom": "Soins aux animaux",
-    "carac": "int",
-    "basic": false
-  },
-  {
     "group": "Augure",
     "spec": "",
     "nom": "Augure",
@@ -406,10 +315,10 @@
     "basic": false
   },
   {
-    "group": "Psychométrie",
-    "spec": "",
-    "nom": "Psychométrie",
-    "carac": "fm",
+    "group": "Conduite d'attelage",
+    "spec": "Skycutter",
+    "nom": "Conduite d'attelage (Skycutter)",
+    "carac": "ag",
     "basic": false
   },
   {
@@ -462,6 +371,13 @@
     "basic": false
   },
   {
+    "group": "Crochetage",
+    "spec": "",
+    "nom": "Crochetage",
+    "carac": "dex",
+    "basic": false
+  },
+  {
     "group": "Dressage",
     "spec": "Chevaux",
     "nom": "Dressage (Chevaux)",
@@ -486,6 +402,41 @@
     "group": "Dressage",
     "spec": "Pigeons",
     "nom": "Dressage (Pigeons)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Escamotage",
+    "spec": "",
+    "nom": "Escamotage",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Évaluation",
+    "spec": "",
+    "nom": "Évaluation",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "",
+    "nom": "Focalisation",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Guérison",
+    "spec": "",
+    "nom": "Guérison",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Hypnotisme",
+    "spec": "",
+    "nom": "Hypnotisme",
     "carac": "int",
     "basic": false
   },
@@ -784,6 +735,34 @@
     "basic": false
   },
   {
+    "group": "Natation",
+    "spec": "",
+    "nom": "Natation",
+    "carac": "f",
+    "basic": false
+  },
+  {
+    "group": "Piégeage",
+    "spec": "",
+    "nom": "Piégeage",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Pistage",
+    "spec": "",
+    "nom": "Pistage",
+    "carac": "i",
+    "basic": false
+  },
+  {
+    "group": "Prière",
+    "spec": "",
+    "nom": "Prière",
+    "carac": "soc",
+    "basic": false
+  },
+  {
     "group": "Projectiles",
     "spec": "Arbalète",
     "nom": "Projectiles (Arbalète)",
@@ -837,6 +816,27 @@
     "spec": "Lance-flammes",
     "nom": "Projectiles (Lance-flammes)",
     "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Psychométrie",
+    "spec": "",
+    "nom": "Psychométrie",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Recherche",
+    "spec": "",
+    "nom": "Recherche",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Représentation",
+    "spec": "",
+    "nom": "Représentation",
+    "carac": "ag",
     "basic": false
   },
   {
@@ -1030,6 +1030,34 @@
   },
   {
     "group": "Signes secrets",
+    "spec": "Chasseur",
+    "nom": "Signes secrets (Chasseur)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Chasseurs",
+    "nom": "Signes secrets (Chasseurs)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Chevaliers Panthères",
+    "nom": "Signes secrets (Chevaliers Panthères)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Confrérie de Grimnir",
+    "nom": "Signes secrets (Confrérie de Grimnir)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
     "spec": "Contrebandier",
     "nom": "Signes secrets (Contrebandier)",
     "carac": "int",
@@ -1058,6 +1086,20 @@
   },
   {
     "group": "Signes secrets",
+    "spec": "Fraternité de Grimnir",
+    "nom": "Signes secrets (Fraternité de Grimnir)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Guerriers Fantômes",
+    "nom": "Signes secrets (Guerriers Fantômes)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
     "spec": "Guilde",
     "nom": "Signes secrets (Guilde)",
     "carac": "int",
@@ -1065,8 +1107,71 @@
   },
   {
     "group": "Signes secrets",
+    "spec": "La Grande Gueule",
+    "nom": "Signes secrets (La Grande Gueule)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Mineur",
+    "nom": "Signes secrets (Mineur)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Ordre chevaleresque",
+    "nom": "Signes secrets (Ordre chevaleresque)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Ordre d'Ambre",
+    "nom": "Signes secrets (Ordre d'Ambre)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Ordre Gris",
+    "nom": "Signes secrets (Ordre Gris)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Patrouilleur",
+    "nom": "Signes secrets (Patrouilleur)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Ranger",
+    "nom": "Signes secrets (Ranger)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
     "spec": "Skaven",
     "nom": "Signes secrets (Skaven)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Soleil Flamboyant",
+    "nom": "Signes secrets (Soleil Flamboyant)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Ulric",
+    "nom": "Signes secrets (Ulric)",
     "carac": "int",
     "basic": false
   },
@@ -1081,6 +1186,20 @@
     "group": "Signes secrets",
     "spec": "Voleur",
     "nom": "Signes secrets (Voleur)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Soin aux animaux",
+    "spec": "",
+    "nom": "Soin aux animaux",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Soin aux animaux",
+    "spec": "Roc",
+    "nom": "Soin aux animaux (Roc)",
     "carac": "int",
     "basic": false
   },
@@ -1124,20 +1243,6 @@
     "spec": "Skycraft",
     "nom": "Voile (Skycraft)",
     "carac": "ag",
-    "basic": false
-  },
-  {
-    "group": "Conduite",
-    "spec": "Skycutter",
-    "nom": "Conduite (Skycutter)",
-    "carac": "ag",
-    "basic": false
-  },
-  {
-    "group": "Soins aux animaux",
-    "spec": "Roc",
-    "nom": "Soins aux animaux (Roc)",
-    "carac": "int",
     "basic": false
   }
 ]
