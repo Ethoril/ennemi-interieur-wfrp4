@@ -155,6 +155,13 @@
   },
   {
     "group": "Discrétion",
+    "spec": "Souterrains",
+    "nom": "Discrétion (Souterrains)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Discrétion",
     "spec": "Urbaine",
     "nom": "Discrétion (Urbaine)",
     "carac": "ag",
@@ -171,6 +178,13 @@
     "group": "Divertissement",
     "spec": "Comédie",
     "nom": "Divertissement (Comédie)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Contes",
+    "nom": "Divertissement (Contes)",
     "carac": "soc",
     "basic": true
   },
@@ -344,8 +358,22 @@
   },
   {
     "group": "Corps à corps",
+    "spec": "Deux mains",
+    "nom": "Corps à corps (Deux mains)",
+    "carac": "cc",
+    "basic": false
+  },
+  {
+    "group": "Corps à corps",
     "spec": "Escrime",
     "nom": "Corps à corps (Escrime)",
+    "carac": "cc",
+    "basic": false
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Fléau",
+    "nom": "Corps à corps (Fléau)",
     "carac": "cc",
     "basic": false
   },
@@ -449,6 +477,13 @@
   },
   {
     "group": "Langue",
+    "spec": "Basse-cour",
+    "nom": "Langue (Basse-cour)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
     "spec": "Bataille",
     "nom": "Langue (Bataille)",
     "carac": "int",
@@ -505,6 +540,13 @@
   },
   {
     "group": "Langue",
+    "spec": "Guilde",
+    "nom": "Langue (Guilde)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
     "spec": "Khazalid",
     "nom": "Langue (Khazalid)",
     "carac": "int",
@@ -547,6 +589,13 @@
   },
   {
     "group": "Langue",
+    "spec": "Sauvage",
+    "nom": "Langue (Sauvage)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
     "spec": "Sombre / Dark Tongue",
     "nom": "Langue (Sombre / Dark Tongue)",
     "carac": "int",
@@ -577,6 +626,20 @@
     "group": "Métier",
     "spec": "Armurier",
     "nom": "Métier (Armurier)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Arquebusier",
+    "nom": "Métier (Arquebusier)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Artiste",
+    "nom": "Métier (Artiste)",
     "carac": "dex",
     "basic": false
   },
@@ -722,6 +785,13 @@
   },
   {
     "group": "Musicien",
+    "spec": "Fifre",
+    "nom": "Musicien (Fifre)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Musicien",
     "spec": "Luth",
     "nom": "Musicien (Luth)",
     "carac": "dex",
@@ -785,6 +855,13 @@
   },
   {
     "group": "Projectiles",
+    "spec": "Armes de jet",
+    "nom": "Projectiles (Armes de jet)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
     "spec": "Explosifs",
     "nom": "Projectiles (Explosifs)",
     "carac": "ct",
@@ -815,6 +892,13 @@
     "group": "Projectiles",
     "spec": "Lance-flammes",
     "nom": "Projectiles (Lance-flammes)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Poudre noire",
+    "nom": "Projectiles (Poudre noire)",
     "carac": "ct",
     "basic": false
   },
@@ -897,6 +981,13 @@
   },
   {
     "group": "Savoir",
+    "spec": "Guerre",
+    "nom": "Savoir (Guerre)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
     "spec": "Héraldique",
     "nom": "Savoir (Héraldique)",
     "carac": "int",
@@ -918,8 +1009,22 @@
   },
   {
     "group": "Savoir",
+    "spec": "Local",
+    "nom": "Savoir (Local)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
     "spec": "Locale",
     "nom": "Savoir (Locale)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Loi",
+    "nom": "Savoir (Loi)",
     "carac": "int",
     "basic": false
   },
