@@ -249,6 +249,7 @@
             cursor: crosshair !important;
         }
     </style>
+    <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
@@ -312,9 +313,10 @@
         <div id="map-container"></div>
     </div>
 
-    <script src="js/layout.js"></script>
+    <script type="module" src="js/layout.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="js/maps.js"></script>
+    <script type="module" src="js/maps.js"></script>
 </body>
 
 </html>
+

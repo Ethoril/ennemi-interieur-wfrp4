@@ -17,6 +17,7 @@
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/fiche.css">
+    <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
@@ -334,14 +335,15 @@
 
     </div>
 
-    <script src="js/layout.js"></script>
-    <script src="js/main.js"></script>
+    <script type="module" src="js/layout.js"></script>
+    <script type="module" src="js/main.js"></script>
     <!-- utils.js (module) expose esc/cap/stripAccents sur window ; chargé en
          deferred, prêt avant le DOMContentLoaded auquel fiche.js s'accroche -->
     <script type="module" src="js/utils.js"></script>
     <!-- skills.json et careers.json sont fetchés paresseusement par fiche.js au DOMContentLoaded -->
-    <script src="js/fiche.js"></script>
+    <script type="module" src="js/fiche.js"></script>
     <script type="module" src="js/fiche-cloud.js"></script>
 </body>
 
 </html>
+

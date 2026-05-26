@@ -1,3 +1,12 @@
+## [2.9.0] - 2026-05-26
+
+### Améliorations Techniques & UX
+- **PWA** : Ajout d'un manifeste et d'un Service Worker pour permettre l'installation de l'application et le cache hors-ligne.
+- **Modules JS** : Uniformisation du JavaScript avec l'utilisation de modules ES6 (<script type="module">).
+- **CSS** : Découpage du fichier monolithique style.css en fichiers séparés (ase.css, layout.css, components.css, pnjs.css) pour une meilleure maintenabilité.
+- **PNJs (Graphe D3)** : Accentuation de l'effet de focus (assombrissement plus fort des nœuds non connectés au clic).
+- **Animations & UX** : Ajout de micro-animations (survol des cartes, ouverture de modales en popIn).
+- **Responsive** : Ajustements des conteneurs du graphe D3 et des cartes Leaflet pour une meilleure manipulation sur mobile.
 ## [2.8.2] - 2026-05-26
 
 ### ThÃ¨me Parchemin (Clair) & AccessibilitÃ©
@@ -635,3 +644,4 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - **Anti-indexation** : `robots.txt` + meta `noindex, nofollow` sur chaque page
 - **Navigation** : navbar responsive avec burger menu mobile
 - **Animations** : scroll reveal, hover effects, transitions fluides
+

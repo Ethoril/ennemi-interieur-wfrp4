@@ -763,7 +763,7 @@ function highlightConnected(id) {
         if (s === id) connected.add(t);
         if (t === id) connected.add(s);
     });
-    state.nodeSel?.style('opacity', d => isVisible(d) ? (connected.has(d.id) ? getNodeOpacity(d) : 0.15) : 0.06);
+    state.nodeSel?.style('opacity', d => isVisible(d) ? (connected.has(d.id) ? getNodeOpacity(d) : 0.05) : 0.02);
     state.linkSel?.style('opacity', d => {
         const s = d.source.id ?? d.source, t = d.target.id ?? d.target;
         return (s === id || t === id) ? 0.9 : 0.04;

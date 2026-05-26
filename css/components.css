@@ -1,0 +1,42 @@
+
+
+/* -- UI Improvements & Animations ----------------- */
+/* Micro-animations */
+@keyframes popIn {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.modal-content, .pnj-detail-panel.open, .crop-modal-content, .pnj-modal-content {
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.card, .video-card, .sheet-card {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.card:hover, .video-card:hover, .sheet-card:hover {
+  transform: translateY(-6px) scale(1.02);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #pnj-graph svg {
+    min-height: 70vh;
+  }
+  #map-container {
+    min-height: 60vh;
+  }
+  .pnj-detail-panel {
+    width: 100% !important;
+    right: 0;
+    max-width: none;
+    border-radius: 12px 12px 0 0;
+    bottom: 0;
+    top: auto;
+    height: 85vh;
+  }
+  .modal-content {
+    width: 95%;
+  }
+}
