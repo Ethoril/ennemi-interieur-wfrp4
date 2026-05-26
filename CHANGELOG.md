@@ -1,3 +1,13 @@
+## [2.8.2] - 2026-05-26
+
+### Thème Parchemin (Clair) & Accessibilité
+- **PNJs (Graphe)** : Correction du contraste des nœuds. Le fond des cadres (`.node-card`) n'est plus noir mais s'adapte au thème (blanc chaud `#faf4e8` sur parchemin) afin de rendre les noms en brun foncé parfaitement lisibles.
+- **PNJs (Portrait placeholders)** : Le fond des cercles placeholders de portrait s'adapte désormais au thème (`var(--bg-surface)`) pour contraster avec les initiales.
+- **PNJs (Badges et chips)** : Refonte des teintes de statut (allié, ennemi, neutre, vivant, décédé, inconnu) et de relations (mentor, rival, etc.) pour utiliser des variables CSS adaptées à fort contraste (ratio > 4.5:1 WCAG AA) sur le thème parchemin.
+- **PNJs (Luminosité dynamique)** : La fonction `stringToColor` adapte automatiquement la luminosité des teintes calculées pour les relations personnalisées en fonction du thème actif.
+- **PNJs (Texture)** : Application de la texture grain fin au conteneur du graphe `#pnj-graph` pour l'unifier visuellement avec le reste du site.
+- **Indices & Fiches** : Amélioration du contraste des boutons danger, des chips d'indices (Page Enquêtes) et des badges de statut cloud (Page Fiche).
+
 ## [2.8.1] - 2026-05-26
 
 ### Corrections & Audit technique

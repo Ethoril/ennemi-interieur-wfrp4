@@ -38,6 +38,30 @@
   --shadow-lg:          0 8px 40px rgba(80, 40, 10, 0.35);
   --shadow-glow:        0 0 20px   rgba(100, 65, 20, 0.15);
   --shadow-glow-strong: 0 0 40px   rgba(100, 65, 20, 0.22);
+
+  /* Couleurs de statut adaptées au parchemin (contrastées) */
+  --statut-allie:   #2d6f47; /* Vert forêt riche */
+  --statut-ennemi:  #9a2a2a; /* Rouge bordeaux foncé */
+  --statut-neutre:  #5c5c66; /* Gris ardoise */
+
+  /* Couleurs de relations adaptées au parchemin */
+  --link-allie:     #2d6f47;
+  --link-ennemi:    #9a2a2a;
+  --link-famille:   #8b5e0b; /* Bronze foncé */
+  --link-mentor:    #30537d; /* Bleu nuit sourd */
+  --link-rival:     #9b4e18; /* Rouille/orange brûlé */
+
+  /* Palette de groupes pour le graphe (adaptée sur parchemin) */
+  --dim-0: #8b6508;
+  --dim-1: #30537d;
+  --dim-2: #8f2d56;
+  --dim-3: #2d6f47;
+  --dim-4: #622d8f;
+  --dim-5: #9b4e18;
+  --dim-6: #1f7d7d;
+  --dim-7: #648f2d;
+  --dim-8: #825e3f;
+  --dim-9: #475a7d;
 }
 
 /* ── Corps de page ───────────────────────────────── */
@@ -259,6 +283,57 @@
   background-color: #faf4e8;
 }
 
+/* Surcharges des Badges de statut en mode parchemin */
+[data-theme="parchment"] .pnj-badge.statut-allié   { color: var(--statut-allie); border-color: var(--statut-allie); background: rgba(45, 111, 71, 0.08); }
+[data-theme="parchment"] .pnj-badge.statut-ennemi  { color: var(--statut-ennemi); border-color: var(--statut-ennemi); background: rgba(154, 42, 42, 0.08); }
+[data-theme="parchment"] .pnj-badge.statut-neutre  { color: var(--statut-neutre); border-color: var(--statut-neutre); background: rgba(92, 92, 102, 0.08); }
+[data-theme="parchment"] .pnj-badge.vivant-oui     { color: var(--statut-allie); border-color: var(--statut-allie); background: rgba(45, 111, 71, 0.08); }
+[data-theme="parchment"] .pnj-badge.vivant-non     { color: var(--statut-neutre); border-color: var(--statut-neutre); background: rgba(92, 92, 102, 0.08); }
+[data-theme="parchment"] .pnj-badge.vivant-inconnu { color: #8b6508; border-color: #8b6508; background: rgba(139, 101, 8, 0.08); }
+
+/* Cartes de nœud dans le graphe */
+[data-theme="parchment"] .node-card {
+  fill: #faf4e8;
+  stroke: var(--border-gold);
+}
+
+/* Bouton de vue active */
+[data-theme="parchment"] .view-btn.active {
+  background: rgba(122, 92, 16, 0.12);
+  color: var(--gold);
+}
+
+/* Boutons danger */
+[data-theme="parchment"] .btn-danger {
+  border-color: var(--blood);
+  color: var(--blood);
+}
+[data-theme="parchment"] .btn-danger:hover {
+  background: rgba(122, 31, 31, 0.08);
+}
+
+/* Éléments d'indices (Page Enquêtes) */
+[data-theme="parchment"] .clue-pnj-chip {
+  background: rgba(100, 60, 20, 0.06);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+[data-theme="parchment"] .clue-pnj-chip:hover {
+  background: rgba(122, 92, 16, 0.12);
+  color: var(--gold);
+  border-color: var(--border-gold);
+}
+[data-theme="parchment"] .pnj-clue-badge {
+  background: rgba(100, 60, 20, 0.05);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
+}
+[data-theme="parchment"] .pnj-clue-badge:hover {
+  background: rgba(122, 92, 16, 0.1);
+  color: var(--gold);
+  border-color: var(--border-gold);
+}
+
 /* ── Page header ─────────────────────────────────── */
 [data-theme="parchment"] .page-header p {
   color: var(--text-secondary);
@@ -283,7 +358,8 @@
 [data-theme="parchment"] .pnj-detail-panel,
 [data-theme="parchment"] .pnj-modal-content,
 [data-theme="parchment"] .crop-modal-content,
-[data-theme="parchment"] .clue-card {
+[data-theme="parchment"] .clue-card,
+[data-theme="parchment"] #pnj-graph {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.10'/%3E%3C/svg%3E");
   background-size: 150px 150px;
   background-repeat: repeat;

@@ -7,10 +7,21 @@ import Cropper from 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.e
 import { esc, cap, stripAccents } from './utils.js';
 
 // ── Constants ──────────────────────────────────────────────────
-const STATUT_COLOR   = { 'allié': '#4caf7d', 'ennemi': '#c94c4c', 'neutre': '#8a8a9a' };
+const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
 const VIVANT_OPACITY = { 'oui': 1, 'non': 0.35, 'inconnu': 0.65 };
-const LINK_COLORS    = { 'allié': '#4caf7d', 'ennemi': '#c94c4c', 'famille': '#c9a84c', 'mentor': '#7a9ac9', 'rival': '#c97a4c' };
-const DIM_PALETTE    = ['#c9a84c','#4c8fc9','#c94c8e','#5bc994','#8e4cc9','#c97a4c','#4cc9c9','#9ac94c','#c9a87a','#7a9ac9'];
+const LINK_COLORS    = { 'allié': 'var(--link-allie, #4caf7d)', 'ennemi': 'var(--link-ennemi, #c94c4c)', 'famille': 'var(--link-famille, #c9a84c)', 'mentor': 'var(--link-mentor, #7a9ac9)', 'rival': 'var(--link-rival, #c97a4c)' };
+const DIM_PALETTE    = [
+    'var(--dim-0, #c9a84c)',
+    'var(--dim-1, #4c8fc9)',
+    'var(--dim-2, #c94c8e)',
+    'var(--dim-3, #5bc994)',
+    'var(--dim-4, #8e4cc9)',
+    'var(--dim-5, #c97a4c)',
+    'var(--dim-6, #4cc9c9)',
+    'var(--dim-7, #9ac94c)',
+    'var(--dim-8, #c9a87a)',
+    'var(--dim-9, #7a9ac9)'
+];
 const CARD_W = 200, CARD_H = 72, PORT_R = 23, CARD_RX = 8;
 const REL_PALETTE = [
     '#c9a84c','#e8a87c','#d4756b','#c4726e',
@@ -50,7 +61,10 @@ const getNodeOpacity = d => VIVANT_OPACITY[(d.vivant || '').toLowerCase()] ?? 1;
 function stringToColor(str) {
     let h = 0;
     for (const c of str) h = ((h << 5) - h) + c.charCodeAt(0);
-    return `hsl(${Math.abs(h) % 360}, 45%, 55%)`;
+    const isParchment = document.documentElement.getAttribute('data-theme') === 'parchment';
+    const saturation = isParchment ? '65%' : '45%';
+    const lightness = isParchment ? '30%' : '55%';
+    return `hsl(${Math.abs(h) % 360}, ${saturation}, ${lightness})`;
 }
 
 function renderPalette(selectedColor, inputId) {
@@ -484,7 +498,7 @@ function buildGraph() {
         .attr('x', -CARD_W / 2).attr('y', -CARD_H / 2)
         .attr('width', CARD_W).attr('height', CARD_H)
         .attr('rx', CARD_RX)
-        .attr('fill', '#12121e')
+        .attr('fill', 'var(--bg-card)')
         .attr('stroke', getDimColor)
         .attr('stroke-width', 2.5);
 
@@ -506,7 +520,7 @@ function buildGraph() {
     nodeG.append('circle')
         .attr('class', 'node-portrait-bg')
         .attr('cx', portCx).attr('cy', 0).attr('r', PORT_R)
-        .attr('fill', '#1e1e30')
+        .attr('fill', 'var(--bg-surface)')
         .style('display', d => d.imageUrl ? 'none' : '');
 
     // Initiale (si pas de portrait)

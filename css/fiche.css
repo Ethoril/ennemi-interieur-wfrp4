@@ -878,6 +878,13 @@
   background: rgba(140, 90, 20, 0.10);
 }
 
+[data-theme="parchment"] .xf-career-badge[data-career="yes"] { color: var(--statut-allie); }
+[data-theme="parchment"] .fiche-cloud-status[data-state="saved"] { color: var(--statut-allie); }
+[data-theme="parchment"] .fiche-cloud-status[data-state="error"] { color: var(--statut-ennemi); }
+[data-theme="parchment"] tr.sk-ghost-open {
+  color: var(--gold);
+}
+
 /* ── Auth bar ────────────────────────────────────── */
 .fiche-page-header {
   display: flex;

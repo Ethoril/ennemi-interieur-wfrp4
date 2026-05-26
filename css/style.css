@@ -1691,7 +1691,12 @@ strong {
 }
 
 .node-card {
+  fill: var(--bg-card);
   transition: stroke-width 0.15s;
+}
+
+.node-portrait-bg {
+  fill: var(--bg-surface);
 }
 
 .pnj-link {
