@@ -1,8 +1,8 @@
 ## [2.8.0] - 2026-05-26
 
 ### Sécurité (CSP) — Authentification Firebase
-- **Fix Firebase Auth** : résolution de l'erreur `Firebase: Error (auth/internal-error)` lors de la connexion Google en ajoutant explicitement `https://*.firebaseapp.com` dans la directive `connect-src` de la politique de sécurité du contenu (CSP) sur l'ensemble des pages.
-- **Sécurisation du Carnet d'Enquêtes** : ajout de la balise meta CSP sur la page `enquetes.html`.
+- **Fix Firebase Auth** : résolution de l'erreur `Firebase: Error (auth/internal-error)` lors de la connexion Google en autorisant les scripts `'unsafe-inline'` et les connexions/frames vers les domaines nécessaires (`https://*.firebaseapp.com`, `https://apis.google.com`, `https://accounts.google.com`, `https://www.google.com`) dans les directives `script-src`, `connect-src` et `frame-src` de la politique de sécurité du contenu (CSP) de toutes les pages.
+- **Sécurisation du Carnet d'Enquêtes** : ajout de la balise meta CSP sur la page `enquetes.html` avec les mêmes règles de sécurité adaptées.
 
 ### Carnet d'Enquêtes
 - **Nouvelle page d'enquêtes** (`enquetes.html` / `js/enquetes.js`) : interface interactive pour le suivi des indices découverts durant la campagne.
