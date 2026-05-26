@@ -1,3 +1,24 @@
+## [2.8.0] - 2026-05-26
+
+### Sécurité (CSP) — Authentification Firebase
+- **Fix Firebase Auth** : résolution de l'erreur `Firebase: Error (auth/internal-error)` lors de la connexion Google en ajoutant explicitement `https://*.firebaseapp.com` dans la directive `connect-src` de la politique de sécurité du contenu (CSP) sur l'ensemble des pages.
+- **Sécurisation du Carnet d'Enquêtes** : ajout de la balise meta CSP sur la page `enquetes.html`.
+
+### Carnet d'Enquêtes
+- **Nouvelle page d'enquêtes** (`enquetes.html` / `js/enquetes.js`) : interface interactive pour le suivi des indices découverts durant la campagne.
+- **Mode Administration** : bouton d'accès admin Google avec formulaires d'ajout/édition d'indices (titre, description, illustration facultative par image, statut de découverte, liaison dynamique avec la liste des PNJs).
+- **Filtrage et recherche** : recherche d'indices par mots-clés et filtres rapides (tous / découverts / secrets pour l'administrateur).
+
+### Calendrier Impérial
+- **Widget sur l'accueil** : intégration d'un widget de calendrier impérial interactif sur la page d'accueil (gérant les mois, phases de lunes et événements spéciaux de la campagne).
+
+### Technique & Données
+- **Données compétences (JSON)** : transition de `skills.js` vers un format structuré `skills.json` avec validation par l'intégration continue. Ajout de compétences et spécialités manquantes.
+- **Factorisation** : centralisation des parseurs CSV et utilitaires de texte dans `js/utils.js`.
+- **PNJs** : correction d'un bug de réinitialisation de couleur de la légende dans le graphe PNJ lors des changements de snapshot de couleur.
+
+---
+
 ## [2.7.0] - 2026-05-21
 
 ### Fiche — Multi-utilisateur & Centralisation Firebase
