@@ -1,5 +1,9 @@
 'use strict';
 
+// Promesse de chargement des bases de données JSON et statut du cloud
+window.dbLoadingPromise = Promise.all([loadCareersData(), loadSkillsData()]);
+window.isCloudLoaded = false;
+
 // ── Constantes ────────────────────────────────────────
 
 const CARACS = ['cc', 'ct', 'f', 'e', 'i', 'ag', 'dex', 'int', 'fm', 'soc'];
@@ -1904,7 +1908,9 @@ function load() {
 
 // Appelée par fiche-cloud.js quand la fiche Firestore est disponible
 // cloudMillis : timestamp Firestore en ms (updatedAt.toMillis())
-window.ficheLoadCloud = function(data, cloudMillis) {
+window.ficheLoadCloud = async function(data, cloudMillis) {
+    await window.dbLoadingPromise;
+
     // Préférer la source la plus récente pour éviter d'écraser des données
     // locales plus fraîches que le cloud (fenêtre debounce de 2s).
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -1914,6 +1920,7 @@ window.ficheLoadCloud = function(data, cloudMillis) {
             if (local._savedAt && cloudMillis && local._savedAt > cloudMillis) {
                 // Local plus récent → pousser vers le cloud, ne pas écraser
                 window.cloudSave?.(exportData());
+                window.isCloudLoaded = true;
                 return;
             }
         } catch {}
@@ -1930,6 +1937,7 @@ window.ficheLoadCloud = function(data, cloudMillis) {
     renderXpLog();
     applyOptVisible();
     recalc();
+    window.isCloudLoaded = true;
     // Miroir localStorage avec timestamp cloud pour référence future
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ _savedAt: cloudMillis || Date.now(), ...data }));
 };
@@ -2042,18 +2050,20 @@ async function loadSkillsData() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await Promise.all([loadCareersData(), loadSkillsData()]);
+    await window.dbLoadingPromise;
     buildCareerDatalist();
-    load();             // charger l'état en premier
-    buildBasicSkills(); // puis rendre avec les valeurs restaurées
-    renderCareerDetail();
-    renderAdvancedSkills();
-    renderCareers();
-    renderTalents();
-    renderSorts();
-    renderPrieres();
-    renderXpLog();
-    applyOptVisible();
+    if (!window.isCloudLoaded) {
+        load();             // charger l'état en premier
+        buildBasicSkills(); // puis rendre avec les valeurs restaurées
+        renderCareerDetail();
+        renderAdvancedSkills();
+        renderCareers();
+        renderTalents();
+        renderSorts();
+        renderPrieres();
+        renderXpLog();
+        applyOptVisible();
+    }
     bindAll();
     recalc();
 });

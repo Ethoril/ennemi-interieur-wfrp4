@@ -100,6 +100,7 @@ onAuthStateChanged(auth, user => {
         const node = state.nodes.find(n => n.id === state.panelId);
         if (node) openPanel(node);
     }
+    if (state.view === 'table') renderTable();
 });
 
 document.getElementById('auth-btn').addEventListener('click', async () => {
@@ -436,7 +437,7 @@ function buildGraph() {
     const defs = svg.append('defs');
     [...new Set(state.links.map(l => l.color || getLinkColor(l.type)))].forEach(color => {
         defs.append('marker')
-            .attr('id', `arrow-${color.replace('#', '')}`)
+            .attr('id', `arrow-${color.replace(/[^a-zA-Z0-9]/g, '')}`)
             .attr('viewBox', '0 -4 10 8').attr('refX', 10).attr('refY', 0)
             .attr('markerWidth', 10).attr('markerHeight', 8)
             .attr('orient', 'auto').attr('markerUnits', 'userSpaceOnUse')
@@ -451,7 +452,7 @@ function buildGraph() {
         .attr('stroke', d => d.color || getLinkColor(d.type))
         .attr('stroke-width', 3.5)
         .attr('stroke-dasharray', d => d.style === 'dashed' ? '8 5' : null)
-        .attr('marker-end', d => `url(#arrow-${(d.color || getLinkColor(d.type)).replace('#', '')})`)
+        .attr('marker-end', d => `url(#arrow-${(d.color || getLinkColor(d.type)).replace(/[^a-zA-Z0-9]/g, '')})`)
         .attr('opacity', 0.8).attr('fill', 'none');
 
     const linkTextSel = linkG.selectAll('text.pnj-link-label').data(state.links).join('text')

@@ -1,3 +1,12 @@
+## [2.8.1] - 2026-05-26
+
+### Corrections & Audit technique
+- **Fiche (Race condition)** : Résolution d'une faille de chargement concurrent entre le cache local (localStorage) et Firestore. L'initialisation attend désormais le chargement complet des bases de données JSON (`careers.json` et `skills.json`) et évite d'exécuter le rendu local si les données cloud ont déjà pris le dessus, ce qui provoquait une duplication des listes de compétences/talents/XP et la corruption de la fiche.
+- **PNJs (Marqueurs SVG)** : Correction de la génération des IDs des marqueurs de flèches SVG. Les couleurs de relation en HSL (générées dynamiquement) contenaient des parenthèses et virgules invalides qui cassaient les liens D3. Les identifiants sont désormais nettoyés et purement alphanumériques.
+- **PNJs (Vue Tableau)** : Rafraîchissement automatique et immédiat des boutons d'édition administrative sur la vue tableau lors d'une connexion ou déconnexion.
+- **Enquêtes (Race condition)** : Ajout d'une sécurité par ID de chargement unique dans `enquetes.js` pour éliminer tout conflit d'exécution en parallèle des requêtes Firestore (par exemple, lors d'un login ultra-rapide).
+- **Groupe** : Suppression du sous-titre de test temporaire sous le bouton "Fiche HTML".
+
 ## [2.8.0] - 2026-05-26
 
 ### Sécurité (CSP) — Authentification Firebase

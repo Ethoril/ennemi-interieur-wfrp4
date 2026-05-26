@@ -14,6 +14,8 @@ const state = {
     editingId: null
 };
 
+let currentLoadId = 0;
+
 // ── Auth Monitoring ────────────────────────────────────────────
 onAuthStateChanged(auth, user => {
     state.isAdmin = !!(user && user.email === ADMIN_EMAIL);
@@ -42,6 +44,7 @@ document.getElementById('auth-btn').addEventListener('click', async () => {
 
 // ── Data Fetching ──────────────────────────────────────────────
 async function loadData() {
+    const loadId = ++currentLoadId;
     try {
         const container = document.getElementById('clues-container');
         if (container) {
@@ -54,6 +57,7 @@ async function loadData() {
 
         // 1. Fetch PNJs list
         const pnjSnap = await getDocs(collection(db, 'pnjs'));
+        if (loadId !== currentLoadId) return;
         state.pnjs = pnjSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
 
         // 2. Fetch Clues based on auth state
@@ -63,6 +67,7 @@ async function loadData() {
         } else {
             cluesSnap = await getDocs(query(collection(db, 'indices'), where('decouvert', '==', true)));
         }
+        if (loadId !== currentLoadId) return;
         state.clues = cluesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
         // 3. Render
@@ -75,6 +80,7 @@ async function loadData() {
         highlightClueFromUrl();
 
     } catch (e) {
+        if (loadId !== currentLoadId) return;
         console.error("Erreur lors du chargement des données :", e);
         const container = document.getElementById('clues-container');
         if (container) {
