@@ -1,3 +1,11 @@
+## [2.11.0] - 2026-05-27
+
+### Planification & Calendrier
+- **Sondage Doodle (Planification de sessions)** : Ajout d'une nouvelle page "Calendrier" permettant de créer des sondages de dates pour planifier les parties.
+- **Vote public en temps réel** : Les joueurs peuvent indiquer leurs disponibilités de manière anonyme et en temps réel grâce à une écoute Firestore active, sans connexion Google obligatoire.
+- **Panneau Admin MDJ** : Possibilité pour le MDJ (David) de lancer un nouveau sondage (saisie de dates libre séparée par des virgules) et de supprimer le sondage actif depuis son interface d'administration sécurisée.
+- **Intégration et UX** : Nouvelle entrée "Calendrier" dans la barre de navigation, tableau des votes synchronisé en temps réel avec indicateur de totaux de présence et design parchemin/sombre avec styles d'interactions or.
+
 ## [2.10.0] - 2026-05-27
 
 ### Personnages

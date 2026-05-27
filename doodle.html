@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://www.gstatic.com https://apis.google.com https://www.google.com https://*.firebaseapp.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://img.youtube.com https://firebasestorage.googleapis.com https://*.firebasestorage.app https://*.googleusercontent.com; frame-src https://www.youtube.com https://docs.google.com https://*.firebaseapp.com https://*.google.com https://accounts.google.com; connect-src 'self' https://docs.google.com https://*.googleapis.com https://*.firebasestorage.app https://*.firebaseapp.com https://apis.google.com">
+    <meta name="robots" content="noindex, nofollow">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Calendrier — L'Ennemi Intérieur">
+    <meta property="og:description" content="Planification des prochaines sessions de la campagne de l'Ennemi Intérieur.">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Calendrier — L'Ennemi Intérieur">
+    <meta name="twitter:description" content="Planification des prochaines sessions de la campagne de l'Ennemi Intérieur.">
+    <title>Calendrier — L'Ennemi Intérieur</title>
+    <meta name="description" content="Planification des prochaines sessions de la campagne de l'Ennemi Intérieur.">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="page-container">
+
+        <div class="page-header fade-in">
+            <h1>Calendrier</h1>
+            <p>Indique tes disponibilités pour planifier les prochaines parties de jeu.</p>
+        </div>
+
+        <section class="section" style="padding-top: 0; min-height: 50vh;">
+            <div class="container fade-in">
+                
+                <!-- Panneau Admin (MDJ) -->
+                <div id="admin-panel" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border: 1px solid var(--border-gold); background: rgba(0, 0, 0, 0.2); border-radius: var(--radius-md);">
+                    <h3 style="color: var(--gold); margin-top: 0; font-family: var(--font-heading);">🔧 Mode MDJ - Nouveau Sondage</h3>
+                    <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-muted);">Saisis les dates proposées, séparées par des virgules.</p>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" id="new-dates-input" placeholder="ex: Samedi 12, Dimanche 13, Mardi 15 soir" style="flex: 1; min-width: 250px; padding: 8px 12px; border: 1px solid var(--border-subtle); background: rgba(0,0,0,0.3); color: var(--text-primary); border-radius: var(--radius-sm);">
+                        <button id="btn-create-poll" class="btn-primary" style="margin-left: 0;">Lancer le sondage</button>
+                    </div>
+                </div>
+
+                <!-- Loader -->
+                <div id="doodle-loader" style="text-align: center; padding: 3rem;">
+                    <span style="color: var(--text-muted);">Chargement du sondage...</span>
+                </div>
+
+                <!-- Message si aucun sondage en cours -->
+                <div id="doodle-empty" style="display: none; text-align: center; padding: 3rem; border: 1px dashed var(--border-subtle); border-radius: var(--radius-md);">
+                    <p style="color: var(--text-muted); font-style: italic; margin: 0;">Aucun sondage de session n'est actif pour le moment.</p>
+                </div>
+
+                <!-- Tableau du Sondage -->
+                <div id="doodle-table-container" class="sheet-table-wrapper" style="display: none; margin-bottom: 2rem;">
+                    <table class="rules-table" id="doodle-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+                        <!-- Rempli en JS -->
+                    </table>
+                </div>
+
+                <!-- Barre d'Auth -->
+                <div id="doodle-auth-bar" style="margin-top: 2rem; display: flex; justify-content: center; align-items: center; gap: 1rem; flex-wrap: wrap; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
+                    <!-- Rempli en JS -->
+                </div>
+
+            </div>
+        </section>
+
+        <div class="ornament">⚜</div>
+        <footer class="footer" id="site-footer"></footer>
+
+    </div>
+
+    <script type="module" src="js/layout.js"></script>
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/doodle.js"></script>
+</body>
+
+</html>

@@ -1,4 +1,4 @@
-const APP_VERSION = 'v2.8.2';
+const APP_VERSION = 'v2.11.0';
 
 const NAV_ITEMS = [
     { href: 'index.html',   label: 'Accueil' },
@@ -9,6 +9,7 @@ const NAV_ITEMS = [
     { href: 'cartes.html',  label: 'Cartes' },
     { href: 'pnjs.html',    label: 'PNJs' },
     { href: 'enquetes.html', label: 'Enquêtes' },
+    { href: 'doodle.html',  label: 'Calendrier' },
 ];
 
 // ── Thème ───────────────────────────────────────────

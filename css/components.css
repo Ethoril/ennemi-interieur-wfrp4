@@ -40,3 +40,23 @@
     width: 95%;
   }
 }
+
+/* -- Doodle Styles -- */
+.rules-table tr:hover td {
+  background: rgba(201, 168, 76, 0.06);
+}
+.voter-row input[type="text"] {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.voter-row input[type="text"]:focus {
+  border-color: var(--gold);
+  outline: none;
+  box-shadow: 0 0 5px rgba(201, 168, 76, 0.3);
+}
+.voter-checkbox {
+  accent-color: var(--gold);
+  transition: transform 0.2s ease;
+}
+.voter-checkbox:hover {
+  transform: scale(1.1);
+}
