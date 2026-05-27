@@ -172,6 +172,7 @@ async function loadData({ init = false } = {}) {
         }
 
     } catch (e) {
+        console.error("Erreur lors du chargement des données :", e);
         if (init) {
             const el = document.getElementById('pnj-loading');
             el.querySelector('.pnj-spinner').style.display = 'none';

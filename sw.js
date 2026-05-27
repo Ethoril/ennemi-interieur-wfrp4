@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wfrp-cache-v1';
+const CACHE_NAME = 'wfrp-cache-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -39,23 +39,49 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      // Stratégie Stale-While-Revalidate modifiée pour les pages HTML: Network First
-      if (event.request.headers.get('accept').includes('text/html')) {
-        return fetch(event.request).then(response => {
-          const resClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
-          return response;
-        }).catch(() => cachedResponse);
-      }
-      
-      // Cache First pour les assets (CSS, JS, images)
-      return cachedResponse || fetch(event.request).then(response => {
-        const resClone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
-        return response;
-      });
-    })
+  const url = new URL(event.request.url);
+  const acceptHeader = event.request.headers.get('accept');
+  const isSameOrigin = event.request.url.startsWith(self.location.origin);
+
+  // Détection des fichiers de code locaux (HTML, CSS, JS) qui changent à chaque mise à jour
+  const isCodeAsset = isSameOrigin && (
+    event.request.mode === 'navigate' ||
+    (acceptHeader && acceptHeader.includes('text/html')) ||
+    url.pathname.endsWith('.html') ||
+    url.pathname.endsWith('/') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.js')
   );
+
+  if (isCodeAsset) {
+    // Stratégie Network First avec contournement du cache HTTP du navigateur pour garantir la fraîcheur
+    event.respondWith(
+      fetch(new Request(event.request, { cache: 'no-cache' }))
+        .then(response => {
+          if (response.ok || response.status === 0) {
+            const resClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+  } else {
+    // Stratégie Stale-While-Revalidate pour les autres ressources (images, CDNs, etc.)
+    event.respondWith(
+      caches.match(event.request).then(cachedResponse => {
+        const fetchPromise = fetch(event.request)
+          .then(response => {
+            if (response.ok || response.status === 0) {
+              const resClone = response.clone();
+              caches.open(CACHE_NAME).then(cache => cache.put(event.request, resClone));
+            }
+            return response;
+          })
+          .catch(() => {}); // Ignorer les erreurs réseau pour le fetch en tâche de fond
+
+        return cachedResponse || fetchPromise;
+      })
+    );
+  }
 });

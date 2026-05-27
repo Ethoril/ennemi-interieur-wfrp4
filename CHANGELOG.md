@@ -1,3 +1,11 @@
+## [2.11.1] - 2026-05-27
+
+### PWA & Cache
+- **Résolution des problèmes de cache persistants** : Refonte de la stratégie de fetch du Service Worker. Utilisation de la stratégie *Network First* combinée avec l'option `{ cache: 'no-cache' }` pour toutes les ressources locales de code (HTML, CSS, JS), empêchant le cache HTTP du navigateur de renvoyer des pages obsolètes.
+- **Stale-While-Revalidate** : Remplacement de la stratégie *Cache First* par *Stale-While-Revalidate* pour les assets non-code (images locales, polices de caractères, CDNs), permettant leur mise à jour silencieuse en tâche de fond.
+- **Enregistrement optimisé** : Enregistrement du Service Worker avec l'option `{ updateViaCache: 'none' }` dans `js/main.js` pour forcer le navigateur à vérifier les mises à jour de `sw.js` directement sur le réseau.
+- **Incrémentation du cache** : Passage du cache en version `wfrp-cache-v2` pour purger automatiquement les fichiers obsolètes stockés dans le cache des navigateurs clients.
+
 ## [2.11.0] - 2026-05-27
 
 ### Planification & Calendrier
