@@ -1,6 +1,6 @@
 import { auth, db } from './firebase-init.js';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { doc, setDoc, getDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { doc, setDoc, getDoc, serverTimestamp, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 /* ── Configuration Personnage et Accès ─────────────────────────── */
 const urlParams = new URLSearchParams(window.location.search);
@@ -98,12 +98,37 @@ onAuthStateChanged(auth, async (user) => {
         }
 
         // ── Connecté et autorisé ──
+        let resetButtonHtml = '';
+        if (user.email === GM_EMAIL) {
+            resetButtonHtml = `<button class="fiche-auth-btn" id="btn-cloud-reset" style="background-color: var(--color-danger); color: white; border-color: darkred; margin-right: 10px;">🗑️ Reset Fiche</button>`;
+        }
+
         bar.innerHTML = `
             <span class="fiche-auth-user">☁ ${user.displayName || user.email}</span>
             <span class="fiche-cloud-status" id="fiche-cloud-status"></span>
+            ${resetButtonHtml}
             <button class="fiche-auth-btn" id="btn-cloud-signout">Déconnexion</button>`;
         document.getElementById('btn-cloud-signout')
             ?.addEventListener('click', () => signOut(auth));
+
+        const btnReset = document.getElementById('btn-cloud-reset');
+        if (btnReset) {
+            btnReset.addEventListener('click', async () => {
+                const conf1 = confirm("ATTENTION : Vous êtes sur le point de supprimer TOUTES les données de cette fiche. Continuer ?");
+                if (conf1) {
+                    const conf2 = confirm("Êtes-vous VRAIMENT sûr ? Cette action est irréversible !");
+                    if (conf2) {
+                        try {
+                            await deleteDoc(doc(db, 'fiches', charId));
+                            alert("Fiche réinitialisée avec succès ! La page va se recharger.");
+                            window.location.reload();
+                        } catch (e) {
+                            alert("Erreur lors de la réinitialisation : " + e.message);
+                        }
+                    }
+                }
+            });
+        }
 
         // Charger la fiche depuis Firestore, puis révéler le contenu
         setStatus('Chargement…', 'saving');
