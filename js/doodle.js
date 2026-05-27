@@ -1,6 +1,6 @@
 import { auth, db, ADMIN_EMAIL } from './firebase-init.js';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { doc, setDoc, deleteDoc, onSnapshot, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { doc, setDoc, deleteDoc, onSnapshot, collection, addDoc, deleteField } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // Elements du DOM
 const adminPanel = document.getElementById('admin-panel');
@@ -409,11 +409,10 @@ function renderPoll(pollData) {
                 const playerToDelete = e.currentTarget.dataset.player;
                 if (confirm(`Supprimer la réponse de ${playerToDelete} ?`)) {
                     try {
-                        const updatedResponses = { ...currentPoll.responses };
-                        delete updatedResponses[playerToDelete];
-                        
                         await setDoc(docRef, {
-                            responses: updatedResponses
+                            responses: {
+                                [playerToDelete]: deleteField()
+                            }
                         }, { merge: true });
                     } catch (err) {
                         console.error("Erreur lors de la suppression de la réponse :", err);
