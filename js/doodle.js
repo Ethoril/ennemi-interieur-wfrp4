@@ -1,6 +1,6 @@
 import { auth, db, ADMIN_EMAIL } from './firebase-init.js';
 import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { doc, setDoc, deleteDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { doc, setDoc, deleteDoc, onSnapshot, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // Elements du DOM
 const adminPanel = document.getElementById('admin-panel');
@@ -473,6 +473,24 @@ async function submitVote() {
                 [nameToSave]: votes
             }
         }, { merge: true });
+
+        // Envoi d'un email de notification via l'extension Firebase Trigger Email
+        try {
+            await addDoc(collection(db, 'mail'), {
+                to: ADMIN_EMAIL,
+                message: {
+                    subject: `[Calendrier] Disponibilités mises à jour par ${nameToSave}`,
+                    html: `
+                        <p>Salut David,</p>
+                        <p>Le joueur <strong>${nameToSave}</strong> vient de mettre à jour ses disponibilités pour le Doodle de session.</p>
+                        <p><a href="https://campagne-wrpg.firebaseapp.com/doodle.html" target="_blank">Consulter le calendrier</a></p>
+                    `
+                }
+            });
+        } catch (mailErr) {
+            // On ne bloque pas le vote si la création de l'email échoue (ex: règles Firestore non mises à jour)
+            console.error("Erreur lors de la création de la notification d'email :", mailErr);
+        }
 
         // Vider le champ de texte
         voterNameInput.value = "";

@@ -1,3 +1,8 @@
+## [2.11.4] - 2026-05-27
+
+### Planification & Calendrier
+- **Notification par email (MDJ)** : Écriture automatique dans la collection `mail` lors de la validation d'un vote joueur pour déclencher l'envoi d'une alerte au MDJ via l'extension Firebase Trigger Email.
+
 ## [2.11.3] - 2026-05-27
 
 ### Planification & Calendrier
