@@ -60,3 +60,21 @@
 .voter-checkbox:hover {
   transform: scale(1.1);
 }
+
+/* Force visible horizontal scrollbar with golden theme */
+.sheet-table-wrapper::-webkit-scrollbar {
+  height: 8px;
+  display: block;
+}
+.sheet-table-wrapper::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
+}
+.sheet-table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--gold);
+  border-radius: 4px;
+}
+.sheet-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-bright);
+}
+

@@ -35,11 +35,41 @@
                 
                 <!-- Panneau Admin (MDJ) -->
                 <div id="admin-panel" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border: 1px solid var(--border-gold); background: rgba(0, 0, 0, 0.2); border-radius: var(--radius-md);">
-                    <h3 style="color: var(--gold); margin-top: 0; font-family: var(--font-heading);">🔧 Mode MDJ - Nouveau Sondage</h3>
-                    <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-muted);">Saisis les dates proposées, séparées par des virgules.</p>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <input type="text" id="new-dates-input" placeholder="ex: Samedi 12, Dimanche 13, Mardi 15 soir" style="flex: 1; min-width: 250px; padding: 8px 12px; border: 1px solid var(--border-subtle); background: rgba(0,0,0,0.3); color: var(--text-primary); border-radius: var(--radius-sm);">
-                        <button id="btn-create-poll" class="btn-primary" style="margin-left: 0;">Lancer le sondage</button>
+                    
+                    <!-- Mode Création (affiché s'il n'y a pas de sondage actif) -->
+                    <div id="admin-create-container" style="display: none;">
+                        <h3 style="color: var(--gold); margin-top: 0; font-family: var(--font-heading);">🔧 Mode MDJ - Nouveau Sondage</h3>
+                        <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-muted);">Saisis les dates proposées, séparées par des virgules.</p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <input type="text" id="new-dates-input" placeholder="ex: Samedi 12, Dimanche 13, Mardi 15 soir" style="flex: 1; min-width: 250px; padding: 8px 12px; border: 1px solid var(--border-subtle); background: rgba(0,0,0,0.3); color: var(--text-primary); border-radius: var(--radius-sm);">
+                            <button id="btn-create-poll" class="btn-primary" style="margin-left: 0;">Lancer le sondage</button>
+                        </div>
+                    </div>
+
+                    <!-- Mode Gestion de Sondage Actif (affiché s'il y a un sondage actif) -->
+                    <div id="admin-manage-container" style="display: none;">
+                        <h3 style="color: var(--gold); margin-top: 0; font-family: var(--font-heading);">🔧 Mode MDJ - Gestion du Sondage Actif</h3>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 0;">
+                            <button id="btn-admin-edit" class="btn-primary" style="margin-left: 0;">📅 Modifier les dates</button>
+                            <button id="btn-admin-close" class="btn-primary" style="margin-left: 0; background: rgba(201, 168, 76, 0.05); border-color: var(--border-gold); color: var(--gold);">🔒 Clôturer le sondage</button>
+                            <button id="btn-admin-delete" class="btn-danger" style="margin-left: 0;">🗑️ Supprimer le sondage</button>
+                        </div>
+                        
+                        <!-- Formulaire d'édition des dates (masqué par défaut) -->
+                        <div id="admin-edit-dates-form" style="display: none; padding-top: 1rem; border-top: 1px solid var(--border-subtle); margin-top: 1rem;">
+                            <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Modifie la liste des dates (séparées par des virgules) :</p>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <input type="text" id="edit-dates-input" style="flex: 1; min-width: 250px; padding: 8px 12px; border: 1px solid var(--border-subtle); background: rgba(0,0,0,0.3); color: var(--text-primary); border-radius: var(--radius-sm);">
+                                <button id="btn-save-dates" class="btn-primary" style="margin-left: 0;">Enregistrer</button>
+                                <button id="btn-cancel-edit" class="btn-ghost" style="margin-left: 0;">Annuler</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Option de forcer la création d'un nouveau sondage -->
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); font-size: 0.85rem;">
+                            <span style="color: var(--text-muted);">Besoin de repartir à zéro ? </span>
+                            <button id="btn-admin-force-new" class="btn-ghost" style="padding: 4px 8px; font-size: 0.8rem; margin-left: 5px;">➕ Lancer un nouveau sondage</button>
+                        </div>
                     </div>
                 </div>
 
@@ -55,6 +85,9 @@
 
                 <!-- Tableau du Sondage -->
                 <div id="doodle-table-container" class="sheet-table-wrapper" style="display: none; margin-bottom: 2rem;">
+                    <div id="doodle-closed-banner" style="display: none; background: rgba(201, 168, 76, 0.1); border: 1px solid var(--border-gold); padding: 1rem; border-radius: var(--radius-md); text-align: center; margin-bottom: 1.5rem; color: var(--gold); font-family: var(--font-heading); font-size: 1.05rem;">
+                        🔒 Ce sondage est clôturé. Les votes ne sont plus modifiables.
+                    </div>
                     <table class="rules-table" id="doodle-table" style="width: 100%; border-collapse: collapse; text-align: center;">
                         <!-- Rempli en JS -->
                     </table>

@@ -1,3 +1,11 @@
+## [2.11.2] - 2026-05-27
+
+### Planification & Calendrier
+- **Refonte de l'interface MDJ (Doodle)** : Séparation claire entre l'interface de création de nouveau sondage et les contrôles de gestion du sondage actif pour éviter les confusions d'affichage.
+- **Contrôles de sondage actif** : Ajout de boutons d'administration pour modifier les dates du sondage en cours, clôturer ou réouvrir les votes (avec bannière de statut dynamique et verrouillage des inputs), et supprimer le sondage actif.
+- **Suppression de réponses individuelles** : Ajout d'icônes poubelles cliquables par le MDJ directement dans le tableau à côté de chaque joueur pour nettoyer ou corriger des votes.
+- **Améliorations de style et lisibilité** : Élargissement de la colonne "Joueurs" à 180px, fixation d'une largeur minimale de 120px sur les colonnes de dates pour éviter les retours à la ligne intempestifs (maximum 2 lignes), et intégration d'une barre de défilement horizontale dorée visible en permanence.
+
 ## [2.11.1] - 2026-05-27
 
 ### PWA & Cache
