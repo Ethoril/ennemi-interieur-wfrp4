@@ -295,7 +295,26 @@ function renderPoll(pollData) {
         const votes = responses[name] || [];
         
         let nameHtml = name;
-        if (isAdmin) {
+        if (!isClosed) {
+            if (isAdmin) {
+                nameHtml = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                        <span>${name}</span>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="btn-edit-player-response" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px 4px; font-size: 0.95rem;" title="Modifier la réponse de ${name}">✏️</button>
+                            <button class="btn-delete-player-response" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px 4px; font-size: 0.95rem;" title="Supprimer la réponse de ${name}">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                nameHtml = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                        <span>${name}</span>
+                        <button class="btn-edit-player-response" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px 6px; font-size: 0.95rem;" title="Modifier ma réponse">✏️</button>
+                    </div>
+                `;
+            }
+        } else if (isAdmin) {
             nameHtml = `
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                     <span>${name}</span>
@@ -362,6 +381,27 @@ function renderPoll(pollData) {
         document.getElementById('btn-submit-vote').addEventListener('click', submitVote);
     }
 
+    // Événements de modification de réponse joueur par clic (remplit le formulaire)
+    if (!isClosed) {
+        document.querySelectorAll('.btn-edit-player-response').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const playerName = e.currentTarget.dataset.player;
+                const voterNameInput = document.getElementById('voter-name');
+                if (voterNameInput) {
+                    voterNameInput.value = playerName;
+                    
+                    const playerVotes = responses[playerName] || [];
+                    const checkboxes = document.querySelectorAll('.voter-checkbox');
+                    checkboxes.forEach((cb, idx) => {
+                        cb.checked = !!playerVotes[idx];
+                    });
+                    
+                    voterNameInput.focus();
+                }
+            });
+        });
+    }
+
     // Événements de suppression de réponse joueur par l'admin
     if (isAdmin) {
         document.querySelectorAll('.btn-delete-player-response').forEach(btn => {
@@ -408,6 +448,16 @@ async function submitVote() {
         return;
     }
 
+    // Vérifier si le nom existe déjà pour demander confirmation
+    const existingName = Object.keys(currentPoll.responses || {}).find(name => name.toLowerCase() === voterName.toLowerCase());
+    if (existingName) {
+        if (!confirm(`Tu t'apprêtes à modifier les disponibilités de ${existingName}, est-ce bien toi ?`)) {
+            return;
+        }
+    }
+
+    const nameToSave = existingName || voterName;
+
     // Récupérer les cases à cocher et construire le tableau de réponses
     const checkboxes = Array.from(document.querySelectorAll('.voter-checkbox'))
         .sort((a, b) => parseInt(a.dataset.index) - parseInt(b.dataset.index));
@@ -420,7 +470,7 @@ async function submitVote() {
     try {
         await setDoc(docRef, {
             responses: {
-                [voterName]: votes
+                [nameToSave]: votes
             }
         }, { merge: true });
 

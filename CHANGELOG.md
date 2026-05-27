@@ -1,3 +1,9 @@
+## [2.11.3] - 2026-05-27
+
+### Planification & Calendrier
+- **Modification directe par les joueurs** : Ajout d'une icône crayon ✏️ cliquable par tous les joueurs à côté de leur nom pour pré-remplir le formulaire de vote avec leurs disponibilités actuelles.
+- **Alerte de confirmation de modification** : Demande de confirmation `"Tu t'apprêtes à modifier les disponibilités de xxx, est-ce bien toi ?"` en cas de soumission avec un pseudo déjà existant (insensible à la casse, évite les doublons et les écrasements accidentels).
+
 ## [2.11.2] - 2026-05-27
 
 ### Planification & Calendrier
