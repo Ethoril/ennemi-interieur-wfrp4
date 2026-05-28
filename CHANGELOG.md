@@ -1,3 +1,9 @@
+## [2.11.5] - 2026-05-28
+
+### Corrections
+- **Fiche (Réinitialisation)** : Correction d'un bug où la réinitialisation cloud d'une fiche ne nettoyait pas le cache local, causant sa résurrection au rechargement de la page.
+- **Fiche (Multi-personnages)** : Isolation du localStorage par personnage (clé dynamique incluant l'ID du personnage) pour éviter les conflits d'écrasement local lorsque plusieurs personnages sont ouverts sur le même navigateur.
+
 ## [2.11.4] - 2026-05-27
 
 ### Planification & Calendrier

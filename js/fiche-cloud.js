@@ -120,6 +120,8 @@ onAuthStateChanged(auth, async (user) => {
                     if (conf2) {
                         try {
                             await deleteDoc(doc(db, 'fiches', charId));
+                            localStorage.removeItem('wfrp4-fiche-' + charId);
+                            localStorage.removeItem('wfrp4-fiche-test'); // Nettoyage ancienne clé générique
                             alert("Fiche réinitialisée avec succès ! La page va se recharger.");
                             window.location.reload();
                         } catch (e) {

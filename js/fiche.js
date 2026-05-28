@@ -12,7 +12,8 @@ const MOUVEMENT = {
     humain:4, 'elfe-sylvain':5, 'haut-elfe':5, halfelin:4, ogre:6,
     elfe:5, halfling:4, nain:3, // rétrocompat anciennes sauvegardes
 };
-const STORAGE_KEY = 'wfrp4-fiche-test';
+const _charParam = new URLSearchParams(window.location.search).get('char');
+const STORAGE_KEY = 'wfrp4-fiche-' + (_charParam || 'test');
 
 // Slot de carrière ouvert : "(au choix)" ou catégorie générique à choisir
 const OPEN_SPEC_PATTERN   = /\((?:.*?\bchoix\b|n'importe quelle|celle du lanceur).*?\)$/i;
