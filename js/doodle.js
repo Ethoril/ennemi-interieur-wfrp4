@@ -23,9 +23,21 @@ const btnCancelEdit = document.getElementById('btn-cancel-edit');
 const doodleLoader = document.getElementById('doodle-loader');
 const doodleEmpty = document.getElementById('doodle-empty');
 const doodleTableContainer = document.getElementById('doodle-table-container');
-const doodleTable = document.getElementById('doodle-table');
+const doodleContentContainer = document.getElementById('doodle-content-container');
 const doodleClosedBanner = document.getElementById('doodle-closed-banner');
 const doodleAuthBar = document.getElementById('doodle-auth-bar');
+
+const btnViewHorizontal = document.getElementById('btn-view-horizontal');
+const btnViewVertical = document.getElementById('btn-view-vertical');
+
+// Eléments de la modale des votes
+const doodleVotesModal = document.getElementById('doodle-votes-modal');
+const btnCloseModal = document.getElementById('btn-close-modal');
+const modalDateDetails = document.getElementById('modal-date-details');
+const modalVotersList = document.getElementById('modal-voters-list');
+const btnFilterAll = document.getElementById('btn-filter-all');
+const btnFilterYes = document.getElementById('btn-filter-yes');
+const btnFilterNo = document.getElementById('btn-filter-no');
 
 // Reference du document dans Firestore
 const docRef = doc(db, 'doodle', 'current');
@@ -33,6 +45,46 @@ const docRef = doc(db, 'doodle', 'current');
 // Etat local
 let currentPoll = null;
 let forceCreateMode = false;
+let currentLayout = localStorage.getItem('doodle_layout') || 'horizontal';
+
+// Gestion du format d'affichage (Horizontal/Vertical)
+function updateLayoutButtons() {
+    if (!btnViewHorizontal || !btnViewVertical) return;
+    if (currentLayout === 'vertical') {
+        btnViewHorizontal.classList.remove('active');
+        btnViewVertical.classList.add('active');
+    } else {
+        btnViewHorizontal.classList.add('active');
+        btnViewVertical.classList.remove('active');
+    }
+}
+
+if (btnViewHorizontal && btnViewVertical) {
+    btnViewHorizontal.addEventListener('click', () => {
+        if (currentLayout === 'horizontal') return;
+        const currentName = document.getElementById('voter-name-vertical')?.value || "";
+        currentLayout = 'horizontal';
+        localStorage.setItem('doodle_layout', 'horizontal');
+        updateLayoutButtons();
+        if (currentPoll) renderPoll(currentPoll);
+        const nameInput = document.getElementById('voter-name');
+        if (nameInput) nameInput.value = currentName;
+    });
+
+    btnViewVertical.addEventListener('click', () => {
+        if (currentLayout === 'vertical') return;
+        const currentName = document.getElementById('voter-name')?.value || "";
+        currentLayout = 'vertical';
+        localStorage.setItem('doodle_layout', 'vertical');
+        updateLayoutButtons();
+        if (currentPoll) renderPoll(currentPoll);
+        const nameInput = document.getElementById('voter-name-vertical');
+        if (nameInput) nameInput.value = currentName;
+    });
+}
+
+// Initialisation de la vue sélectionnée
+updateLayoutButtons();
 
 // Initialisation de la surveillance de l'état d'authentification
 onAuthStateChanged(auth, (user) => {
@@ -250,7 +302,7 @@ btnCreatePoll.addEventListener('click', async () => {
     }
 });
 
-// Rendu du tableau
+// Rendu du tableau ou des cartes
 function renderPoll(pollData) {
     const dates = pollData.dates || [];
     const responses = pollData.responses || {};
@@ -259,6 +311,18 @@ function renderPoll(pollData) {
     if (doodleClosedBanner) {
         doodleClosedBanner.style.display = isClosed ? 'block' : 'none';
     }
+
+    // Sauvegarder les valeurs saisies par l'utilisateur avant le re-rendu
+    let savedVoterName = "";
+    if (currentLayout === 'vertical') {
+        savedVoterName = document.getElementById('voter-name-vertical')?.value || "";
+    } else {
+        savedVoterName = document.getElementById('voter-name')?.value || "";
+    }
+
+    const savedCheckedStates = Array.from(document.querySelectorAll('.voter-checkbox'))
+        .sort((a, b) => parseInt(a.dataset.index) - parseInt(b.dataset.index))
+        .map(cb => cb.checked);
 
     // Trier les joueurs par ordre alphabétique, mais David en premier
     const playerNames = Object.keys(responses).sort((a, b) => {
@@ -279,18 +343,115 @@ function renderPoll(pollData) {
     const user = auth.currentUser;
     const isAdmin = user && user.email === ADMIN_EMAIL;
 
-    // En-têtes du tableau
+    // Rendu en fonction du layout sélectionné
+    if (currentLayout === 'vertical') {
+        renderVerticalPoll(pollData, playerNames, totals, isClosed, isAdmin);
+    } else {
+        renderHorizontalPoll(pollData, playerNames, totals, isClosed, isAdmin);
+    }
+
+    // Restaurer les valeurs saisies si le sondage est ouvert
+    if (!isClosed) {
+        const voterNameInput = document.getElementById(currentLayout === 'vertical' ? 'voter-name-vertical' : 'voter-name');
+        if (voterNameInput) {
+            voterNameInput.value = savedVoterName;
+        }
+
+        const checkboxes = document.querySelectorAll('.voter-checkbox');
+        checkboxes.forEach((cb) => {
+            const idx = parseInt(cb.dataset.index);
+            if (!isNaN(idx) && idx < savedCheckedStates.length) {
+                cb.checked = savedCheckedStates[idx];
+            }
+        });
+    }
+
+    // Événement de soumission du vote
+    if (!isClosed) {
+        if (currentLayout === 'vertical') {
+            const submitBtnTop = document.getElementById('btn-submit-vote-vertical');
+            const submitBtnBottom = document.getElementById('btn-submit-vote-vertical-bottom');
+            if (submitBtnTop) submitBtnTop.addEventListener('click', submitVote);
+            if (submitBtnBottom) submitBtnBottom.addEventListener('click', submitVote);
+        } else {
+            const submitBtn = document.getElementById('btn-submit-vote');
+            if (submitBtn) submitBtn.addEventListener('click', submitVote);
+        }
+    }
+
+    // Événements de modification de réponse joueur par clic (uniquement en format horizontal)
+    if (!isClosed && currentLayout === 'horizontal') {
+        document.querySelectorAll('.btn-edit-player-response').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const playerName = e.currentTarget.dataset.player;
+                const voterNameInput = document.getElementById('voter-name');
+                if (voterNameInput) {
+                    voterNameInput.value = playerName;
+                    
+                    const playerVotes = responses[playerName] || [];
+                    const checkboxes = document.querySelectorAll('.voter-checkbox');
+                    checkboxes.forEach((cb) => {
+                        const idx = parseInt(cb.dataset.index);
+                        if (!isNaN(idx) && idx < playerVotes.length) {
+                            cb.checked = !!playerVotes[idx];
+                        }
+                    });
+                    
+                    voterNameInput.focus();
+                }
+            });
+        });
+    }
+
+    // Événements de suppression de réponse joueur par l'admin (uniquement en format horizontal)
+    if (isAdmin && currentLayout === 'horizontal') {
+        document.querySelectorAll('.btn-delete-player-response').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const playerToDelete = e.currentTarget.dataset.player;
+                if (confirm(`Supprimer la réponse de ${playerToDelete} ?`)) {
+                    try {
+                        await setDoc(docRef, {
+                            responses: {
+                                [playerToDelete]: deleteField()
+                            }
+                        }, { merge: true });
+                    } catch (err) {
+                        console.error("Erreur lors de la suppression de la réponse :", err);
+                        alert("Erreur de suppression : " + err.message);
+                    }
+                }
+            });
+        });
+    }
+
+    // Événement d'ouverture de la modale des votes (uniquement en format vertical)
+    if (currentLayout === 'vertical') {
+        document.querySelectorAll('.btn-show-votes').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const dateIndex = parseInt(e.currentTarget.dataset.index);
+                openVotesModal(pollData, dateIndex, playerNames);
+            });
+        });
+    }
+}
+
+// Rendu en format horizontal
+function renderHorizontalPoll(pollData, playerNames, totals, isClosed, isAdmin) {
+    const dates = pollData.dates || [];
+    const responses = pollData.responses || {};
+
     let html = `
-        <thead>
-            <tr>
-                <th style="text-align: left; padding: 12px; border-bottom: 2px solid var(--border-strong); min-width: 180px; width: 180px;">Joueurs</th>
-                ${dates.map(date => `<th style="padding: 12px; border-bottom: 2px solid var(--border-strong); min-width: 120px; font-size: 0.85rem; line-height: 1.2;">${date}</th>`).join('')}
-            </tr>
-        </thead>
-        <tbody>
+        <div class="sheet-table-wrapper">
+            <table class="rules-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding: 12px; border-bottom: 2px solid var(--border-strong); min-width: 180px; width: 180px;">Joueurs</th>
+                        ${dates.map(date => `<th style="padding: 12px; border-bottom: 2px solid var(--border-strong); min-width: 120px; font-size: 0.85rem; line-height: 1.2;">${date}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
     `;
 
-    // Lignes des réponses des joueurs
     playerNames.forEach(name => {
         const votes = responses[name] || [];
         
@@ -341,7 +502,6 @@ function renderPoll(pollData) {
         `;
     });
 
-    // Ligne des totaux
     html += `
         <tr style="border-bottom: 2px solid var(--border-strong); background: rgba(201, 168, 76, 0.05); font-weight: bold;">
             <td style="text-align: left; padding: 12px; color: var(--gold); min-width: 180px; width: 180px;">Total dispos</td>
@@ -349,7 +509,6 @@ function renderPoll(pollData) {
         </tr>
     `;
 
-    // Ligne de formulaire de vote
     if (!isClosed) {
         html += `
             <tr class="voter-row" style="background: rgba(0, 0, 0, 0.15);">
@@ -373,77 +532,117 @@ function renderPoll(pollData) {
         `;
     }
 
-    html += `</tbody>`;
-    doodleTable.innerHTML = html;
+    html += `
+            </tbody>
+        </table>
+    </div>
+    `;
+    doodleContentContainer.innerHTML = html;
+}
 
-    // Événement de soumission du vote
+// Rendu en format vertical (Cartes + Modale)
+function renderVerticalPoll(pollData, playerNames, totals, isClosed, isAdmin) {
+    const dates = pollData.dates || [];
+    const responses = pollData.responses || {};
+
+    let html = "";
+
+    // Saisie du pseudo au-dessus des cartes (si non clôturé)
     if (!isClosed) {
-        document.getElementById('btn-submit-vote').addEventListener('click', submitVote);
+        html += `
+            <div style="display: flex; justify-content: flex-start; align-items: flex-end; gap: 15px; margin-bottom: 2rem; flex-wrap: wrap;">
+                <div id="doodle-voter-input-vertical" style="text-align: left; width: 100%; max-width: 450px;">
+                    <label for="voter-name-vertical" style="display: block; font-family: var(--font-heading); color: var(--gold); margin-bottom: 0.5rem; font-weight: bold; font-size: 0.95rem;">Ton pseudo pour voter :</label>
+                    <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
+                        <input type="text" id="voter-name-vertical" placeholder="Ton pseudo..." style="flex: 1; min-width: 150px; padding: 8px 12px; border: 1px solid var(--border-subtle); background: rgba(0,0,0,0.3); color: var(--text-primary); border-radius: var(--radius-sm);">
+                        <button id="btn-submit-vote-vertical" class="btn-primary" style="margin: 0; padding: 8px 20px; font-size: 0.9rem; white-space: nowrap;">Valider mon vote</button>
+                    </div>
+                    <span id="vote-error-vertical" style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: none;"></span>
+                </div>
+            </div>
+        `;
     }
 
-    // Événements de modification de réponse joueur par clic (remplit le formulaire)
+    // Liste des cartes
+    html += `<div class="doodle-cards-list" style="display: flex; flex-direction: column; gap: 0.8rem;">`;
+
+    dates.forEach((date, dateIndex) => {
+        const dateTotal = totals[dateIndex] || 0;
+        
+        html += `
+            <div class="doodle-card">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    ${!isClosed ? `
+                        <label class="custom-checkbox-container" style="display: inline-block; position: relative; cursor: pointer; user-select: none; width: 22px; height: 22px; margin: 0;">
+                            <input type="checkbox" class="voter-checkbox" data-index="${dateIndex}" style="width: 22px; height: 22px; cursor: pointer; margin: 0;">
+                        </label>
+                    ` : ''}
+                    <span style="font-family: var(--font-heading); color: var(--text-primary); font-size: 1.05rem; font-weight: bold;">
+                        ${date}
+                    </span>
+                </div>
+                
+                <div>
+                    <button class="btn-show-votes" data-index="${dateIndex}" style="background: rgba(201, 168, 76, 0.05); border: 1px solid var(--border-gold); color: var(--gold); border-radius: var(--radius-sm); padding: 6px 12px; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: var(--font-heading); transition: all var(--transition-fast);">
+                        👥 Votes : ${dateTotal} Oui
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+
+    // Bouton de validation doublé en bas (si non clôturé)
     if (!isClosed) {
-        document.querySelectorAll('.btn-edit-player-response').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const playerName = e.currentTarget.dataset.player;
-                const voterNameInput = document.getElementById('voter-name');
-                if (voterNameInput) {
-                    voterNameInput.value = playerName;
-                    
-                    const playerVotes = responses[playerName] || [];
-                    const checkboxes = document.querySelectorAll('.voter-checkbox');
-                    checkboxes.forEach((cb, idx) => {
-                        cb.checked = !!playerVotes[idx];
-                    });
-                    
-                    voterNameInput.focus();
-                }
-            });
-        });
+        html += `
+            <div style="display: flex; justify-content: flex-start; margin-top: 1.5rem;">
+                <button id="btn-submit-vote-vertical-bottom" class="btn-primary" style="margin: 0; padding: 10px 24px; font-size: 0.95rem;">
+                    Valider mon vote
+                </button>
+            </div>
+        `;
     }
 
-    // Événements de suppression de réponse joueur par l'admin
-    if (isAdmin) {
-        document.querySelectorAll('.btn-delete-player-response').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const playerToDelete = e.currentTarget.dataset.player;
-                if (confirm(`Supprimer la réponse de ${playerToDelete} ?`)) {
-                    try {
-                        await setDoc(docRef, {
-                            responses: {
-                                [playerToDelete]: deleteField()
-                            }
-                        }, { merge: true });
-                    } catch (err) {
-                        console.error("Erreur lors de la suppression de la réponse :", err);
-                        alert("Erreur de suppression : " + err.message);
-                    }
-                }
-            });
-        });
-    }
+    doodleContentContainer.innerHTML = html;
 }
 
 // Soumission du vote joueur
 async function submitVote() {
-    const voterNameInput = document.getElementById('voter-name');
-    const voterName = voterNameInput.value.trim();
-    const voteError = document.getElementById('vote-error');
-    const btnSubmit = document.getElementById('btn-submit-vote');
+    const isVertical = currentLayout === 'vertical';
+    const voterNameInput = document.getElementById(isVertical ? 'voter-name-vertical' : 'voter-name');
+    const voterName = voterNameInput ? voterNameInput.value.trim() : "";
+    const voteError = document.getElementById(isVertical ? 'vote-error-vertical' : 'vote-error');
+    
+    // Récupérer tous les boutons de soumission du layout actuel
+    const btnSubmitList = [];
+    if (isVertical) {
+        const btnTop = document.getElementById('btn-submit-vote-vertical');
+        const btnBottom = document.getElementById('btn-submit-vote-vertical-bottom');
+        if (btnTop) btnSubmitList.push(btnTop);
+        if (btnBottom) btnSubmitList.push(btnBottom);
+    } else {
+        const btnHoriz = document.getElementById('btn-submit-vote');
+        if (btnHoriz) btnSubmitList.push(btnHoriz);
+    }
 
-    voteError.style.display = 'none';
+    if (voteError) voteError.style.display = 'none';
 
     if (!voterName) {
-        voteError.textContent = "Saisis ton nom pour voter.";
-        voteError.style.display = 'inline';
-        voterNameInput.focus();
+        if (voteError) {
+            voteError.textContent = "Saisis ton nom pour voter.";
+            voteError.style.display = 'inline';
+        }
+        if (voterNameInput) voterNameInput.focus();
         return;
     }
 
     if (voterName.toLowerCase() === 'david' && (!auth.currentUser || auth.currentUser.email !== ADMIN_EMAIL)) {
-        voteError.textContent = "Le nom 'David' est réservé au MDJ.";
-        voteError.style.display = 'inline';
-        voterNameInput.focus();
+        if (voteError) {
+            voteError.textContent = "Le nom 'David' est réservé au MDJ.";
+            voteError.style.display = 'inline';
+        }
+        if (voterNameInput) voterNameInput.focus();
         return;
     }
 
@@ -463,8 +662,10 @@ async function submitVote() {
     
     const votes = checkboxes.map(cb => cb.checked);
 
-    btnSubmit.disabled = true;
-    btnSubmit.textContent = "Envoi...";
+    btnSubmitList.forEach(btn => {
+        btn.disabled = true;
+        btn.textContent = "Envoi...";
+    });
 
     try {
         await setDoc(docRef, {
@@ -473,7 +674,7 @@ async function submitVote() {
             }
         }, { merge: true });
 
-        // Envoi d'un email de notification via l'extension Firebase Trigger Email
+        // Envoi d'un email de notification
         try {
             await addDoc(collection(db, 'mail'), {
                 to: ADMIN_EMAIL,
@@ -487,18 +688,193 @@ async function submitVote() {
                 }
             });
         } catch (mailErr) {
-            // On ne bloque pas le vote si la création de l'email échoue (ex: règles Firestore non mises à jour)
             console.error("Erreur lors de la création de la notification d'email :", mailErr);
         }
 
         // Vider le champ de texte
-        voterNameInput.value = "";
+        if (voterNameInput) voterNameInput.value = "";
     } catch (err) {
         console.error("Erreur lors de la soumission du vote :", err);
-        voteError.textContent = "Erreur : " + err.message;
-        voteError.style.display = 'inline';
+        if (voteError) {
+            voteError.textContent = "Erreur : " + err.message;
+            voteError.style.display = 'inline';
+        }
     } finally {
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = "Valider mon vote";
+        btnSubmitList.forEach(btn => {
+            btn.disabled = false;
+            btn.textContent = "Valider mon vote";
+        });
+    }
+}
+
+// Logique de la Modale de détail des votes
+let activeFilter = 'all';
+
+function openVotesModal(pollData, dateIndex, playerNames) {
+    const dates = pollData.dates || [];
+    const responses = pollData.responses || {};
+    const dateText = dates[dateIndex] || "";
+    const isClosed = pollData.closed === true;
+    
+    const user = auth.currentUser;
+    const isAdmin = user && user.email === ADMIN_EMAIL;
+
+    if (modalDateDetails) {
+        modalDateDetails.textContent = dateText;
+    }
+
+    activeFilter = 'all';
+    updateFilterButtonStyles();
+
+    function renderVoters() {
+        if (!modalVotersList) return;
+        
+        let votersHtml = "";
+        
+        playerNames.forEach(name => {
+            const votes = responses[name] || [];
+            const available = votes[dateIndex] === true;
+            
+            // Appliquer le filtre
+            if (activeFilter === 'yes' && !available) return;
+            if (activeFilter === 'no' && available) return;
+            
+            const badgeClass = available ? 'doodle-voter-badge-yes' : 'doodle-voter-badge-no';
+            const badgeText = available ? 'Oui' : 'Non';
+            const initials = name ? name.charAt(0).toUpperCase() : "?";
+
+            // Boutons d'action édition / suppression
+            let actionsHtml = "";
+            if (!isClosed) {
+                if (isAdmin) {
+                    actionsHtml = `
+                        <div style="display: flex; gap: 4px;">
+                            <button class="modal-btn-edit" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px; font-size: 0.9rem;" title="Modifier">✏️</button>
+                            <button class="modal-btn-delete" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px; font-size: 0.9rem;" title="Supprimer">🗑️</button>
+                        </div>
+                    `;
+                } else {
+                    actionsHtml = `
+                        <button class="modal-btn-edit" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px;" title="Modifier">✏️</button>
+                    `;
+                }
+            } else if (isAdmin) {
+                actionsHtml = `
+                    <button class="modal-btn-delete" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px;" title="Supprimer">🗑️</button>
+                `;
+            }
+            
+            votersHtml += `
+                <div class="doodle-voter-item">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="doodle-voter-avatar">${initials}</div>
+                        <span style="font-family: var(--font-body); font-weight: bold; color: var(--text-primary);">${name}</span>
+                        ${actionsHtml}
+                    </div>
+                    <span class="${badgeClass}">${badgeText}</span>
+                </div>
+            `;
+        });
+        
+        if (votersHtml === "") {
+            votersHtml = `<div style="text-align: center; color: var(--text-muted); font-style: italic; padding: 10px 0;">Aucun vote à afficher</div>`;
+        }
+        
+        modalVotersList.innerHTML = votersHtml;
+
+        // Attacher les écouteurs sur les boutons d'édition dans la modale
+        modalVotersList.querySelectorAll('.modal-btn-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const playerName = e.currentTarget.dataset.player;
+                const voterNameInput = document.getElementById('voter-name-vertical');
+                if (voterNameInput) {
+                    voterNameInput.value = playerName;
+                    
+                    const playerVotes = responses[playerName] || [];
+                    const checkboxes = document.querySelectorAll('.voter-checkbox');
+                    checkboxes.forEach((cb) => {
+                        const idx = parseInt(cb.dataset.index);
+                        if (!isNaN(idx) && idx < playerVotes.length) {
+                            cb.checked = !!playerVotes[idx];
+                        }
+                    });
+                    
+                    voterNameInput.focus();
+                }
+                closeModal();
+            });
+        });
+
+        // Attacher les écouteurs sur les boutons de suppression dans la modale
+        modalVotersList.querySelectorAll('.modal-btn-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const playerToDelete = e.currentTarget.dataset.player;
+                if (confirm(`Supprimer la réponse de ${playerToDelete} ?`)) {
+                    try {
+                        await setDoc(docRef, {
+                            responses: {
+                                [playerToDelete]: deleteField()
+                            }
+                        }, { merge: true });
+                        closeModal();
+                    } catch (err) {
+                        console.error("Erreur lors de la suppression de la réponse :", err);
+                        alert("Erreur de suppression : " + err.message);
+                    }
+                }
+            });
+        });
+    }
+
+    const setFilter = (filterName) => {
+        activeFilter = filterName;
+        updateFilterButtonStyles();
+        renderVoters();
+    };
+
+    const cloneAndAddClick = (id, filterVal) => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', () => setFilter(filterVal));
+        }
+    };
+    
+    cloneAndAddClick('btn-filter-all', 'all');
+    cloneAndAddClick('btn-filter-yes', 'yes');
+    cloneAndAddClick('btn-filter-no', 'no');
+
+    if (doodleVotesModal) {
+        doodleVotesModal.style.display = 'flex';
+    }
+
+    renderVoters();
+}
+
+function updateFilterButtonStyles() {
+    const btnAll = document.getElementById('btn-filter-all');
+    const btnYes = document.getElementById('btn-filter-yes');
+    const btnNo = document.getElementById('btn-filter-no');
+
+    if (btnAll) btnAll.classList.toggle('active', activeFilter === 'all');
+    if (btnYes) btnYes.classList.toggle('active', activeFilter === 'yes');
+    if (btnNo) btnNo.classList.toggle('active', activeFilter === 'no');
+}
+
+if (btnCloseModal) {
+    btnCloseModal.addEventListener('click', closeModal);
+}
+if (doodleVotesModal) {
+    doodleVotesModal.addEventListener('click', (e) => {
+        if (e.target === doodleVotesModal) {
+            closeModal();
+        }
+    });
+}
+
+function closeModal() {
+    if (doodleVotesModal) {
+        doodleVotesModal.style.display = 'none';
     }
 }

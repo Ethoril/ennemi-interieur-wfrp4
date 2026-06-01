@@ -84,13 +84,26 @@
                 </div>
 
                 <!-- Tableau du Sondage -->
-                <div id="doodle-table-container" class="sheet-table-wrapper" style="display: none; margin-bottom: 2rem;">
+                <div id="doodle-table-container" style="display: none; margin-bottom: 2rem;">
+                    <!-- Sélecteur de format -->
+                    <div class="sheet-tabs" id="doodle-view-selector" style="margin-bottom: 1.5rem; justify-content: flex-end;">
+                        <button class="sheet-tab active" id="btn-view-horizontal" title="Format Horizontal">
+                            <span class="sheet-tab-icon">↔️</span>
+                            <span class="sheet-tab-name">Format Horizontal</span>
+                        </button>
+                        <button class="sheet-tab" id="btn-view-vertical" title="Format Vertical">
+                            <span class="sheet-tab-icon">↕️</span>
+                            <span class="sheet-tab-name">Format Vertical</span>
+                        </button>
+                    </div>
+
                     <div id="doodle-closed-banner" style="display: none; background: rgba(201, 168, 76, 0.1); border: 1px solid var(--border-gold); padding: 1rem; border-radius: var(--radius-md); text-align: center; margin-bottom: 1.5rem; color: var(--gold); font-family: var(--font-heading); font-size: 1.05rem;">
                         🔒 Ce sondage est clôturé. Les votes ne sont plus modifiables.
                     </div>
-                    <table class="rules-table" id="doodle-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+                    <!-- Conteneur pour le tableau ou les cartes -->
+                    <div id="doodle-content-container">
                         <!-- Rempli en JS -->
-                    </table>
+                    </div>
                 </div>
 
                 <!-- Barre d'Auth -->
@@ -104,6 +117,29 @@
         <div class="ornament">⚜</div>
         <footer class="footer" id="site-footer"></footer>
 
+    </div>
+
+    <!-- Modale de détail des votes -->
+    <div id="doodle-votes-modal" class="pnj-modal-overlay" style="display: none;">
+        <div class="pnj-modal-content" style="position: relative; max-width: 450px;">
+            <button id="btn-close-modal" style="position: absolute; top: 1rem; right: 1.2rem; background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            <h3 style="margin-top: 0; font-family: var(--font-heading); color: var(--gold); border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.8rem; margin-bottom: 1rem;">Votes</h3>
+            
+            <div id="modal-date-details" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 1.5rem; color: var(--gold);"></div>
+            
+            <!-- Filtres -->
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                <span style="font-size: 0.9rem; color: var(--text-muted);">Afficher :</span>
+                <button class="sheet-tab active" id="btn-filter-all" style="padding: 4px 8px; font-size: 0.75rem;">Tous</button>
+                <button class="sheet-tab" id="btn-filter-yes" style="padding: 4px 8px; font-size: 0.75rem;">Oui</button>
+                <button class="sheet-tab" id="btn-filter-no" style="padding: 4px 8px; font-size: 0.75rem;">Non</button>
+            </div>
+            
+            <!-- Liste des votants -->
+            <div id="modal-voters-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+                <!-- Rempli en JS -->
+            </div>
+        </div>
     </div>
 
     <script type="module" src="js/layout.js"></script>

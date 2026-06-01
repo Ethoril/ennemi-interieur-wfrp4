@@ -78,3 +78,65 @@
   background: var(--gold-bright);
 }
 
+/* -- Doodle Cards Layout (Vertical) -- */
+.doodle-card {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 0.8rem;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.doodle-card:hover {
+  border-color: var(--border-gold);
+  background: rgba(201, 168, 76, 0.03);
+}
+
+/* -- Doodle Votes Modal -- */
+.doodle-voter-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.2s ease;
+}
+.doodle-voter-item:hover {
+  border-color: var(--border-gold);
+}
+.doodle-voter-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--border-gold);
+  color: var(--bg-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+}
+.doodle-voter-badge-yes {
+  background: #2ecc71;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+.doodle-voter-badge-no {
+  background: #e74c3c;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
