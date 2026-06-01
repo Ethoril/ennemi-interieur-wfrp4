@@ -1,3 +1,16 @@
+## [2.11.6] - 2026-06-01
+
+### Planification & Calendrier
+- **Mode vertical par défaut** : La vue verticale est désormais activée par défaut pour faciliter la navigation sur de longues listes de dates.
+- **Format vertical en cartes** : Refonte complète de la disposition verticale qui affiche chaque date sous forme de carte individuelle, masquant le tableau croisé volumineux par défaut.
+- **Modale de détail des votes** : Ajout d'une modale interactive accessible en cliquant sur le compteur de votes d'une carte. Elle affiche les votants avec des avatars dynamiques et propose des filtres rapides (Tous/Oui/Non) ainsi que des boutons de modification/suppression directe.
+- **Saisie du pseudo au-dessus** : Repositionnement ergonomique du champ de saisie du pseudo et du bouton de validation en haut à gauche (au-dessus des cartes).
+- **Validation doublée** : Ajout d'un second bouton de validation du vote en bas de la liste des cartes pour un confort de vote optimal.
+- **Synchronisation du pseudo** : Le pseudo saisi est conservé de manière bidirectionnelle lors de la bascule entre les formats horizontal et vertical.
+
+### PWA & Cache
+- **Incrémentation du cache** : Passage du cache en version `wfrp-cache-v3` pour rafraîchir immédiatement les fichiers du service worker.
+
 ## [2.11.5] - 2026-05-28
 
 ### Corrections

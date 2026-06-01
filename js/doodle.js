@@ -45,7 +45,7 @@ const docRef = doc(db, 'doodle', 'current');
 // Etat local
 let currentPoll = null;
 let forceCreateMode = false;
-let currentLayout = localStorage.getItem('doodle_layout') || 'horizontal';
+let currentLayout = localStorage.getItem('doodle_layout') || 'vertical';
 
 // Gestion du format d'affichage (Horizontal/Vertical)
 function updateLayoutButtons() {
