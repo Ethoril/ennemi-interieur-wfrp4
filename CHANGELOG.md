@@ -1,3 +1,12 @@
+## [2.11.7] - 2026-06-02
+
+### Personnages
+- **Titre dynamique** : Le grand titre "FICHE DE PERSONNAGE" a été remplacé par le nom du personnage actif. Le titre de l'onglet du navigateur s'actualise également en direct.
+- **Portraits des personnages** : Intégration d'un espace premium affichant le portrait du personnage (Bhelgi, Caelel, Elysia, Hellaya, Wren) de manière circulaire avec cadre doré et ombrage, s'adaptant automatiquement sur mobile (responsive) et s'intégrant au thème Parchemin.
+
+### PWA & Cache
+- **Incrémentation du cache** : Passage du cache en version `wfrp-cache-v4` pour rafraîchir immédiatement les fichiers du service worker.
+
 ## [2.11.6] - 2026-06-01
 
 ### Planification & Calendrier

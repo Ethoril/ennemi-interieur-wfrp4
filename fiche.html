@@ -27,7 +27,7 @@
     <div class="page-container">
 
         <div class="page-header fade-in fiche-page-header">
-            <h1>Fiche de Personnage</h1>
+            <h1 id="fiche-page-title">Fiche de Personnage</h1>
             <div id="fiche-auth-bar" class="fiche-auth-bar"></div>
         </div>
 
@@ -43,44 +43,49 @@
             <div class="container">
                 <div class="fiche-sheet">
 
-                    <!-- ══ INFORMATIONS GÉNÉRALES ══ -->
-                    <div class="fiche-header">
-                        <div class="fiche-field">
-                            <label>Nom</label>
-                            <input type="text" id="nom" placeholder="Nom du personnage">
+                    <!-- ══ PORTRAIT & INFORMATIONS GÉNÉRALES ══ -->
+                    <div class="fiche-identity-block">
+                        <div class="fiche-portrait-wrapper">
+                            <div id="fiche-portrait" class="character-portrait character-portrait--placeholder">📜</div>
                         </div>
-                        <div class="fiche-field">
-                            <label>Race</label>
-                            <select id="race">
-                                <option value="humain">Humain.e</option>
-                                <option value="elfe-sylvain">Elfe Sylvain.e</option>
-                                <option value="haut-elfe">Haut.e Elfe</option>
-                                <option value="halfelin">Halfelin.ne</option>
-                                <option value="ogre">Ogre</option>
-                            </select>
-                        </div>
-                        <div class="fiche-field">
-                            <label>Carrière actuelle</label>
-                            <input type="text" id="carriere" placeholder="Carrière" list="career-names-list" autocomplete="off">
-                            <datalist id="career-names-list"></datalist>
-                        </div>
-                        <div class="fiche-field">
-                            <label>Rang</label>
-                            <input type="number" id="rang" min="1" max="4" value="1">
-                        </div>
+                        <div class="fiche-header">
+                            <div class="fiche-field">
+                                <label>Nom</label>
+                                <input type="text" id="nom" placeholder="Nom du personnage">
+                            </div>
+                            <div class="fiche-field">
+                                <label>Race</label>
+                                <select id="race">
+                                    <option value="humain">Humain.e</option>
+                                    <option value="elfe-sylvain">Elfe Sylvain.e</option>
+                                    <option value="haut-elfe">Haut.e Elfe</option>
+                                    <option value="halfelin">Halfelin.ne</option>
+                                    <option value="ogre">Ogre</option>
+                                </select>
+                            </div>
+                            <div class="fiche-field">
+                                <label>Carrière actuelle</label>
+                                <input type="text" id="carriere" placeholder="Carrière" list="career-names-list" autocomplete="off">
+                                <datalist id="career-names-list"></datalist>
+                            </div>
+                            <div class="fiche-field">
+                                <label>Rang</label>
+                                <input type="number" id="rang" min="1" max="4" value="1">
+                            </div>
 
-                        <div class="fiche-xp-block">
-                            <div class="xp-dispo">
-                                <label>XP Total <span class="xp-from-log">(depuis journal)</span></label>
-                                <span class="xp-dispo-val" id="xp-total-display">0</span>
-                            </div>
-                            <div class="xp-dispo">
-                                <label>XP Dépensé <span class="xp-from-log">(depuis journal)</span></label>
-                                <span class="xp-dispo-val" id="xp-spent-display">0</span>
-                            </div>
-                            <div class="xp-dispo">
-                                <label>XP Disponible</label>
-                                <span class="xp-dispo-val xp-dispo-avail" id="xp-dispo">0</span>
+                            <div class="fiche-xp-block">
+                                <div class="xp-dispo">
+                                    <label>XP Total <span class="xp-from-log">(depuis journal)</span></label>
+                                    <span class="xp-dispo-val" id="xp-total-display">0</span>
+                                </div>
+                                <div class="xp-dispo">
+                                    <label>XP Dépensé <span class="xp-from-log">(depuis journal)</span></label>
+                                    <span class="xp-dispo-val" id="xp-spent-display">0</span>
+                                </div>
+                                <div class="xp-dispo">
+                                    <label>XP Disponible</label>
+                                    <span class="xp-dispo-val xp-dispo-avail" id="xp-dispo">0</span>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -15,6 +15,15 @@ const MOUVEMENT = {
 const _charParam = new URLSearchParams(window.location.search).get('char');
 const STORAGE_KEY = 'wfrp4-fiche-' + (_charParam || 'test');
 
+const PORTRAITS = {
+    bhelgi: { webp: 'img/Bhelgi.webp', png: 'img/Bhelgi.png', alt: 'Bhelgi' },
+    caelel: { webp: 'img/Caelel.webp', png: 'img/Caelel.png', alt: 'Caelel' },
+    elysia: { webp: 'img/Elysia.webp', png: 'img/Elysia.png', alt: 'Elysia' },
+    hellaya: { webp: 'img/Hellaya.webp', png: 'img/Hellaya.png', alt: 'Hellaya' },
+    wren: { webp: 'img/Wren.webp', png: 'img/Wren.png', alt: 'Wren' }
+};
+const PORTRAIT_KEYS = Object.keys(PORTRAITS);
+
 // Slot de carrière ouvert : "(au choix)" ou catégorie générique à choisir
 const OPEN_SPEC_PATTERN   = /\((?:.*?\bchoix\b|n'importe quelle|celle du lanceur).*?\)$/i;
 const GENERIC_SPEC_WORDS  = new Set(['Région','Localité','Langue','Commerce','Peuple','Matériau','Arme','Ennemi','Organisation','Divinité','Vent']);
@@ -1835,6 +1844,42 @@ window.addEventListener('beforeunload', () => {
     if (_saveLocalTimer) saveNow();
 });
 
+function updatePageTitle() {
+    const nomVal = (document.getElementById('nom')?.value || '').trim();
+    const titleEl = document.getElementById('fiche-page-title');
+    if (titleEl) {
+        titleEl.textContent = nomVal || 'Fiche de Personnage';
+    }
+    document.title = nomVal ? `${nomVal} — Fiche de Personnage` : "Fiche de Personnage — L'Ennemi Intérieur";
+}
+
+function updateCharacterPortrait() {
+    const portraitEl = document.getElementById('fiche-portrait');
+    if (!portraitEl) return;
+
+    // Resolve key: first try URL param, then lowercase stripped name input
+    let charKey = (_charParam || '').toLowerCase().trim();
+    if (!PORTRAIT_KEYS.includes(charKey)) {
+        const nomVal = (document.getElementById('nom')?.value || '').toLowerCase().trim();
+        const nomClean = typeof stripAccents === 'function' ? stripAccents(nomVal) : nomVal;
+        charKey = nomClean;
+    }
+
+    const portrait = PORTRAITS[charKey];
+    if (portrait) {
+        portraitEl.classList.remove('character-portrait--placeholder');
+        portraitEl.innerHTML = `
+            <picture>
+                <source srcset="${portrait.webp}" type="image/webp">
+                <img src="${portrait.png}" alt="${portrait.alt}" loading="lazy">
+            </picture>
+        `;
+    } else {
+        portraitEl.classList.add('character-portrait--placeholder');
+        portraitEl.innerHTML = '📜';
+    }
+}
+
 function resetState() {
     invalidateCareerCache();
     CARACS.forEach(c => { state.carac[c] = { base: 0, adv: 0 }; });
@@ -1892,6 +1937,8 @@ function applyData(d) {
     if (d.chosenVariants)  Object.assign(state.chosenVariants, d.chosenVariants);
     if (d.careerOverrides) Object.assign(state.careerOverrides, d.careerOverrides);
     if (d.optVisible)      Object.assign(state.optVisible, d.optVisible);
+    updatePageTitle();
+    updateCharacterPortrait();
 }
 
 function load() {
@@ -1957,8 +2004,14 @@ function bindAll() {
     });
 
     // Champs simples
-    ['nom','carriere','rang','blessures-act','resilience','determination','chance','destin','corruption','possessions']
+    ['carriere','rang','blessures-act','resilience','determination','chance','destin','corruption','possessions']
         .forEach(id => document.getElementById(id)?.addEventListener('input', save));
+
+    document.getElementById('nom')?.addEventListener('input', () => {
+        updatePageTitle();
+        updateCharacterPortrait();
+        save();
+    });
 
     // Panneau référence carrière
     // Le changement de carrière ou de rang change le set "dans la carrière" :
@@ -2067,4 +2120,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     bindAll();
     recalc();
+    updatePageTitle();
+    updateCharacterPortrait();
 });
