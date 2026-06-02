@@ -1,3 +1,11 @@
+## [2.11.8] - 2026-06-02
+
+### Personnages
+- **Mise en page du portrait** : Le portrait du personnage occupe désormais l'intégralité du rectangle de son conteneur (au lieu d'être rogné dans un cercle) pour éviter de couper les illustrations (chevelure, écus, équipements). Le format s'adapte aussi sur mobile sous forme de carte carrée à bords arrondis.
+
+### PWA & Cache
+- **Incrémentation du cache** : Passage du cache en version `wfrp-cache-v5` pour rafraîchir immédiatement les fichiers du service worker.
+
 ## [2.11.7] - 2026-06-02
 
 ### Personnages
