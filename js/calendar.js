@@ -1,5 +1,5 @@
-import { db, auth, ADMIN_EMAIL } from './firebase-init.js';
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { db } from './firebase-init.js';
+import { watchAuth } from './auth.js';
 import { doc, onSnapshot, updateDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // ── Constants & Calendar Structure ──────────────────────────────────────────
@@ -261,8 +261,8 @@ function init() {
         }
     });
 
-    onAuthStateChanged(auth, (user) => {
-        isAdmin = !!(user && user.email === ADMIN_EMAIL);
+    watchAuth((user, isUserAdmin) => {
+        isAdmin = isUserAdmin;
         updateAdminControlsVisibility();
     });
 }

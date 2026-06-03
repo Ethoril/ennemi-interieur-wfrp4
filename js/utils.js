@@ -31,9 +31,4 @@ export function parseCSV(csv) {
     return rows;
 }
 
-// Exposition globale pour les scripts classiques (fiche.js) qui ne peuvent
-// pas importer un module. Évalué quand le module est chargé en deferred ;
-// disponible avant le DOMContentLoaded, donc avant tout handler utilisateur.
-if (typeof window !== 'undefined') {
-    Object.assign(window, { esc, cap, stripAccents, parseCSV });
-}
+

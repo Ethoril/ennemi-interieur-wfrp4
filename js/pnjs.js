@@ -1,5 +1,5 @@
-import { auth, db, storage, ADMIN_EMAIL } from './firebase-init.js';
-import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { db, storage } from './firebase-init.js';
+import { watchAuth, loginWithGoogle, logout } from './auth.js';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch, deleteField, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
@@ -106,8 +106,8 @@ async function uploadImage(blob) {
 }
 
 // ── Auth ───────────────────────────────────────────────────────
-onAuthStateChanged(auth, user => {
-    state.isAdmin = !!(user && user.email === ADMIN_EMAIL);
+watchAuth((user, isAdmin) => {
+    state.isAdmin = isAdmin;
     document.getElementById('auth-btn').textContent = state.isAdmin ? '🔓 Déconnexion' : '🔑 Admin';
     document.getElementById('add-pnj-btn').style.display = state.isAdmin ? '' : 'none';
     if (state.panelId) {
@@ -119,9 +119,9 @@ onAuthStateChanged(auth, user => {
 
 document.getElementById('auth-btn').addEventListener('click', async () => {
     if (state.isAdmin) {
-        await signOut(auth);
+        await logout();
     } else {
-        try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+        try { await loginWithGoogle(); }
         catch (e) { if (e.code !== 'auth/popup-closed-by-user') alert('Connexion impossible : ' + e.message); }
     }
 });

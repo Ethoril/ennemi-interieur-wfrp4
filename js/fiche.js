@@ -1,8 +1,13 @@
-'use strict';
+import { esc, stripAccents, parseCSV } from './utils.js';
+import { cloudSave } from './fiche-cloud.js';
 
 // Promesse de chargement des bases de données JSON et statut du cloud
-window.dbLoadingPromise = Promise.all([loadCareersData(), loadSkillsData()]);
-window.isCloudLoaded = false;
+export const dbLoadingPromise = Promise.all([loadCareersData(), loadSkillsData()]);
+export let isCloudLoaded = false;
+export function setCloudLoaded(val) {
+    isCloudLoaded = val;
+}
+
 
 // ── Constantes ────────────────────────────────────────
 
@@ -1056,8 +1061,8 @@ async function fetchTalentData() {
     try {
         const res = await fetch(TALENT_SHEET_URL);
         if (!res.ok) return null;
-        // window.parseCSV posé par js/utils.js (chargé en module avant le DOMContentLoaded)
-        const rows = window.parseCSV(await res.text());
+        // parseCSV importé de js/utils.js
+        const rows = parseCSV(await res.text());
         if (rows.length < 2) return null;
         const [headers, ...data] = rows;
         _talentCache = { headers, data };
@@ -1093,9 +1098,8 @@ async function showTalentModal(nom) {
     modal.style.display = 'flex';
 
     const td = await fetchTalentData();
-    // window.esc est posé par js/utils.js (chargé en module deferred avant le
-    // DOMContentLoaded). On l'utilise plutôt qu'une copie locale.
-    const _e = window.esc;
+    // esc importé de js/utils.js
+    const _e = esc;
 
     if (!td) { body.innerHTML = `<h3>${_e(nom)}</h3><p>Impossible de charger les données.</p>`; return; }
 
@@ -1789,7 +1793,7 @@ function applyOptVisible() {
 
 // ── Persistence ───────────────────────────────────────
 
-function exportData() {
+export function exportData() {
     return {
         nom:           getVal('nom'),
         race:          getVal('race'),
@@ -1833,9 +1837,9 @@ function saveNow() {
     const data = exportData();
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ _savedAt: Date.now(), ...data }));
 
-    // Cloud save debounced 2 s — window.cloudSave injecté par fiche-cloud.js
+    // Cloud save debounced 2 s — cloudSave importé de fiche-cloud.js
     clearTimeout(saveNow._t);
-    saveNow._t = setTimeout(() => window.cloudSave?.(data), 2000);
+    saveNow._t = setTimeout(() => cloudSave?.(data), 2000);
 }
 
 // Flush la sauvegarde en attente avant fermeture/onglet : sinon le dernier
@@ -1861,7 +1865,7 @@ function updateCharacterPortrait() {
     let charKey = (_charParam || '').toLowerCase().trim();
     if (!PORTRAIT_KEYS.includes(charKey)) {
         const nomVal = (document.getElementById('nom')?.value || '').toLowerCase().trim();
-        const nomClean = typeof stripAccents === 'function' ? stripAccents(nomVal) : nomVal;
+        const nomClean = stripAccents(nomVal);
         charKey = nomClean;
     }
 
@@ -1956,8 +1960,8 @@ function load() {
 
 // Appelée par fiche-cloud.js quand la fiche Firestore est disponible
 // cloudMillis : timestamp Firestore en ms (updatedAt.toMillis())
-window.ficheLoadCloud = async function(data, cloudMillis) {
-    await window.dbLoadingPromise;
+export async function ficheLoadCloud(data, cloudMillis) {
+    await dbLoadingPromise;
 
     // Préférer la source la plus récente pour éviter d'écraser des données
     // locales plus fraîches que le cloud (fenêtre debounce de 2s).
@@ -1967,8 +1971,8 @@ window.ficheLoadCloud = async function(data, cloudMillis) {
             const local = JSON.parse(raw);
             if (local._savedAt && cloudMillis && local._savedAt > cloudMillis) {
                 // Local plus récent → pousser vers le cloud, ne pas écraser
-                window.cloudSave?.(exportData());
-                window.isCloudLoaded = true;
+                cloudSave?.(exportData());
+                isCloudLoaded = true;
                 return;
             }
         } catch {}
@@ -1985,10 +1989,10 @@ window.ficheLoadCloud = async function(data, cloudMillis) {
     renderXpLog();
     applyOptVisible();
     recalc();
-    window.isCloudLoaded = true;
+    isCloudLoaded = true;
     // Miroir localStorage avec timestamp cloud pour référence future
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ _savedAt: cloudMillis || Date.now(), ...data }));
-};
+}
 
 // ── Listeners ─────────────────────────────────────────
 
@@ -2104,9 +2108,9 @@ async function loadSkillsData() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await window.dbLoadingPromise;
+    await dbLoadingPromise;
     buildCareerDatalist();
-    if (!window.isCloudLoaded) {
+    if (!isCloudLoaded) {
         load();             // charger l'état en premier
         buildBasicSkills(); // puis rendre avec les valeurs restaurées
         renderCareerDetail();

@@ -1,5 +1,5 @@
-import { auth, db, ADMIN_EMAIL } from './firebase-init.js';
-import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { db } from './firebase-init.js';
+import { auth, ADMIN_EMAIL, watchAuth, loginWithGoogle, logout } from './auth.js';
 import { doc, setDoc, deleteDoc, onSnapshot, collection, addDoc, deleteField } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // Elements du DOM
@@ -87,7 +87,7 @@ if (btnViewHorizontal && btnViewVertical) {
 updateLayoutButtons();
 
 // Initialisation de la surveillance de l'état d'authentification
-onAuthStateChanged(auth, (user) => {
+watchAuth((user, isAdmin) => {
     updateAuthBar(user);
     updateAdminPanel();
 });
@@ -244,14 +244,14 @@ function updateAuthBar(user) {
             <span style="color: var(--text-muted);">Connecté en tant que <strong style="color: var(--gold);">${user.displayName || user.email}</strong></span>
             <button id="btn-signout" class="btn-ghost" style="padding: 6px 12px; font-size: 0.8rem;">Déconnexion</button>
         `;
-        document.getElementById('btn-signout').addEventListener('click', () => signOut(auth));
+        document.getElementById('btn-signout').addEventListener('click', () => logout());
     } else {
         doodleAuthBar.innerHTML = `
             <span style="color: var(--text-muted);">Tu es Maître de Jeu ?</span>
             <button id="btn-signin" class="btn-primary" style="margin: 0; padding: 6px 12px; font-size: 0.8rem;">🔑 Connexion Admin</button>
         `;
         document.getElementById('btn-signin').addEventListener('click', () => {
-            signInWithPopup(auth, new GoogleAuthProvider()).catch(err => {
+            loginWithGoogle().catch(err => {
                 if (err.code !== 'auth/popup-closed-by-user') {
                     alert("Erreur de connexion : " + err.message);
                 }

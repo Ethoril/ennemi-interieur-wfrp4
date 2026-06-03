@@ -1,3 +1,17 @@
+## [2.12.0] - 2026-06-03
+
+### Réflectorisation & Architecture ESM
+- **Nettoyage de l'espace global (`window.*`)** : Suppression des assignations de variables globales dans `js/utils.js`. Les fonctions `esc`, `cap`, `stripAccents`, et `parseCSV` sont désormais importées explicitement dans les scripts sous forme de modules ES.
+- **Modulisation Fiche & Cloud** : Connexion explicite en ES Modules entre `js/fiche.js` et `js/fiche-cloud.js` via imports/exports (suppression des liaisons via l'objet global `window`).
+- **Allègement HTML** : Retrait de la balise script obsolète pour `js/utils.js` dans `fiche.html`, le script étant importé directement en JS.
+
+### Authentification & Administration Centralisée
+- **Création du service `js/auth.js`** : Regroupement de toute la logique de surveillance d'état d'authentification (`watchAuth`), de connexion (`loginWithGoogle`), de déconnexion (`logout`) et de vérification d'adresse administrateur.
+- **Suppression de la redondance** : Remplacement des imports Firebase Auth en doublon et de la logique de connexion/déconnexion réécrite dans `pnjs.js`, `enquetes.js`, `doodle.js`, `calendar.js` et `fiche-cloud.js`.
+
+### PWA & Cache
+- **Incrémentation du cache** : Passage du cache en version `wfrp-cache-v6` pour rafraîchir immédiatement les fichiers du service worker.
+
 ## [2.11.8] - 2026-06-02
 
 ### Personnages

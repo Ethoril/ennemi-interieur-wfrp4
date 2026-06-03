@@ -1,6 +1,7 @@
-import { auth, db } from './firebase-init.js';
-import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { db } from './firebase-init.js';
+import { auth, watchAuth, loginWithGoogle, logout, ADMIN_EMAIL as GM_EMAIL } from './auth.js';
 import { doc, setDoc, getDoc, serverTimestamp, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { ficheLoadCloud, exportData } from './fiche.js';
 
 /* ── Configuration Personnage et Accès ─────────────────────────── */
 const urlParams = new URLSearchParams(window.location.search);
@@ -11,7 +12,7 @@ if (!charId) {
     window.location.href = "groupe.html";
 }
 
-const GM_EMAIL = 'ethoril@gmail.com';
+
 const CHAR_OWNERS = {
     bhelgi: [],
     caelel: [],
@@ -38,7 +39,7 @@ function setStatus(msg, cls = '') {
 
 /* ── Sauvegarde cloud (appelée depuis fiche.js via window.cloudSave) */
 let _isSaving = false;
-window.cloudSave = async (data) => {
+export const cloudSave = async (data) => {
     const user = auth.currentUser;
     if (!user) return;
     if (!isUserAuthorized(user, charId)) return;
@@ -72,7 +73,7 @@ function showLoginWall(msg = '') {
 
 function bindSignIn(btnId) {
     document.getElementById(btnId)?.addEventListener('click', () => {
-        signInWithPopup(auth, new GoogleAuthProvider()).catch(e => {
+        loginWithGoogle().catch(e => {
             if (e.code !== 'auth/popup-closed-by-user')
                 alert('Connexion impossible : ' + e.message);
         });
@@ -80,7 +81,7 @@ function bindSignIn(btnId) {
 }
 
 /* ── Auth state ────────────────────────────────────────────────── */
-onAuthStateChanged(auth, async (user) => {
+watchAuth(async (user, isAdmin) => {
     const bar = document.getElementById('fiche-auth-bar');
     if (!bar) return;
 
@@ -91,7 +92,7 @@ onAuthStateChanged(auth, async (user) => {
                 <span class="fiche-auth-user">☁ ${user.displayName || user.email}</span>
                 <button class="fiche-auth-btn" id="btn-cloud-signout">Déconnexion</button>`;
             document.getElementById('btn-cloud-signout')
-                ?.addEventListener('click', () => signOut(auth));
+                ?.addEventListener('click', () => logout());
             
             showLoginWall("Vous n'avez pas l'autorisation d'accéder à la fiche de " + charId + ".");
             return;
@@ -99,7 +100,7 @@ onAuthStateChanged(auth, async (user) => {
 
         // ── Connecté et autorisé ──
         let resetButtonHtml = '';
-        if (user.email === GM_EMAIL) {
+        if (isAdmin) {
             resetButtonHtml = `<button class="fiche-auth-btn" id="btn-cloud-reset" style="background-color: var(--color-danger); color: white; border-color: darkred; margin-right: 10px;">🗑️ Reset Fiche</button>`;
         }
 
@@ -109,7 +110,7 @@ onAuthStateChanged(auth, async (user) => {
             ${resetButtonHtml}
             <button class="fiche-auth-btn" id="btn-cloud-signout">Déconnexion</button>`;
         document.getElementById('btn-cloud-signout')
-            ?.addEventListener('click', () => signOut(auth));
+            ?.addEventListener('click', () => logout());
 
         const btnReset = document.getElementById('btn-cloud-reset');
         if (btnReset) {
@@ -136,10 +137,10 @@ onAuthStateChanged(auth, async (user) => {
         setStatus('Chargement…', 'saving');
         try {
             const snap = await getDoc(doc(db, 'fiches', charId));
-            if (snap.exists() && typeof window.ficheLoadCloud === 'function') {
+            if (snap.exists() && typeof ficheLoadCloud === 'function') {
                 const snapData   = snap.data();
                 const cloudMillis = snapData.updatedAt?.toMillis?.() ?? 0;
-                window.ficheLoadCloud(snapData.data, cloudMillis);
+                ficheLoadCloud(snapData.data, cloudMillis);
                 setStatus('☁ Chargé', 'saved');
                 setTimeout(() => setStatus(''), 2000);
             } else {
