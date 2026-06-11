@@ -57,9 +57,10 @@ html.hero3d-active .section {
   justify-content: center;
 }
 
-/* Chapitre 4 — Altdorf en contrebas */
+/* Chapitre 4 — Altdorf en contrebas : assez haut pour que les cartes
+   du chapitre 3 soient sorties de l'écran avant la vue finale */
 html.hero3d-active .ornament {
-  min-height: 40vh;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
