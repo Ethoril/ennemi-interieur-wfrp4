@@ -1,4 +1,4 @@
-const APP_VERSION = 'v2.12.0';
+const APP_VERSION = 'v2.13.0';
 
 const NAV_ITEMS = [
     { href: 'index.html',   label: 'Accueil' },
@@ -14,10 +14,16 @@ const NAV_ITEMS = [
 
 // ── Thème ───────────────────────────────────────────
 (function initTheme() {
+    // v2.13 : le thème sombre devient le défaut pour tous (il porte la scène
+    // 3D de l'accueil). On réinitialise UNE fois les préférences stockées
+    // (beaucoup avaient hérité du parchemin via prefers-color-scheme) ;
+    // tout choix manuel fait ensuite via le bouton ☀️/🌙 reste respecté.
+    if (!localStorage.getItem('themeResetV213')) {
+        localStorage.removeItem('theme');
+        localStorage.setItem('themeResetV213', '1');
+    }
     const saved = localStorage.getItem('theme');
-    // Premier visiteur : suit prefers-color-scheme (light → parchment, dark → sombre).
-    const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-    const initial = saved || (prefersLight ? 'parchment' : 'dark');
+    const initial = saved || 'dark';
     if (initial === 'parchment') document.documentElement.setAttribute('data-theme', 'parchment');
 
     const link = document.createElement('link');
@@ -38,6 +44,9 @@ function setTheme(theme) {
     }
     localStorage.setItem('theme', theme);
     updateToggleLabel();
+    
+    // Notifier le changement de thème (pour la scène 3D)
+    document.dispatchEvent(new CustomEvent('themechange', { detail: theme }));
 }
 
 function updateToggleLabel() {

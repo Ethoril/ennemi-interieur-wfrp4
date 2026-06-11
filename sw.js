@@ -1,10 +1,19 @@
-const CACHE_NAME = 'wfrp-cache-v6';
+const CACHE_NAME = 'wfrp-cache-v7';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './css/style.css',
+  './css/hero3d.css',
   './js/main.js',
   './js/layout.js',
+  './js/hero3d/index.js',
+  './js/hero3d/scene.js',
+  './js/hero3d/scroll-timeline.js',
+  './js/hero3d/starfield.js',
+  './js/hero3d/comet.js',
+  './js/hero3d/morrslieb.js',
+  './js/hero3d/skyline.js',
+  './js/hero3d/textures.js',
   './favicon.svg'
   // Ne pas cacher tout le dossier tiles/ ou Firebase
 ];

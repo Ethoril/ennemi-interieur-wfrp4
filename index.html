@@ -16,11 +16,23 @@
   <meta name="description"
     content="Site compagnon pour la campagne Warhammer Fantasy RPG 4e édition — L'Ennemi Intérieur">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <!-- Three.js Import Map -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
   <link rel="stylesheet" href="css/style.css">
     <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
+
+  <!-- Hero 3D Canvas -->
+  <canvas id="hero3d-canvas" aria-hidden="true"></canvas>
 
   <!-- Navigation -->
   <nav class="navbar" id="navbar"></nav>
@@ -28,7 +40,7 @@
   <div class="page-container">
 
     <!-- Hero -->
-    <section class="hero" id="hero" style="min-height: 30vh;">
+    <section class="hero" id="hero">
       <div class="hero-content fade-in">
         <p class="hero-subtitle">Warhammer Fantasy — 4e Édition</p>
         <h1>Ennemi Intérieur</h1>
@@ -101,7 +113,10 @@
 
   </div>
 
+  <!-- layout.js doit s'exécuter avant hero3d : il pose data-theme sur <html>,
+       que hero3d lit pour décider d'activer ou non la scène 3D -->
   <script type="module" src="js/layout.js"></script>
+  <script type="module" src="js/hero3d/index.js"></script>
   <script type="module" src="js/main.js"></script>
   <script type="module" src="js/calendar.js"></script>
 </body>

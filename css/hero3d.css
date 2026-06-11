@@ -1,0 +1,93 @@
+/* ═══════════════════════════════════════════════════
+   Expérience 3D « La Comète à deux queues » (Three.js)
+   Tout est scopé sous html.hero3d-active : sans la
+   classe, le site garde exactement son design actuel.
+   ═══════════════════════════════════════════════════ */
+
+/* Canvas masqué par défaut (mobile, parchemin, reduced-motion, échec CDN) */
+#hero3d-canvas {
+  display: none;
+}
+
+html.hero3d-active #hero3d-canvas {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
+
+html.hero3d-active .page-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* La texture radiale fixe du body et les gradients du hero
+   feraient double emploi par-dessus le ciel 3D */
+html.hero3d-active body::before,
+html.hero3d-active .hero::before,
+html.hero3d-active .hero::after {
+  display: none;
+}
+
+/* ── Chapitres de scroll ─────────────────────────── */
+
+/* Chapitre 1 — Le Présage */
+html.hero3d-active #hero {
+  min-height: 100vh;
+}
+
+/* Chapitre 2 — La Comète approche */
+html.hero3d-active #next-session {
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Chapitre 3 — Morrslieb veille (cartes de navigation) */
+html.hero3d-active .section {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Chapitre 4 — Altdorf en contrebas */
+html.hero3d-active .ornament {
+  min-height: 40vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Lisibilité par-dessus le ciel étoilé ────────── */
+
+html.hero3d-active .hero-content {
+  text-shadow: 0 2px 12px rgba(7, 7, 13, 0.9);
+  background: radial-gradient(ellipse at center, rgba(7, 7, 13, 0.55) 0%, transparent 70%);
+  padding: var(--space-xl);
+  border-radius: var(--radius-lg);
+}
+
+html.hero3d-active #next-session {
+  text-shadow: 0 2px 12px rgba(7, 7, 13, 0.95), 0 0 24px rgba(7, 7, 13, 0.7);
+}
+
+html.hero3d-active #site-footer {
+  background: linear-gradient(to top, rgba(7, 7, 13, 0.95) 60%, transparent);
+}
+
+/* Bonus accessibilité : neutraliser le translate des fade-in
+   pour les visiteurs préférant les animations réduites */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .stagger-children > * {
+    transition: none;
+    transform: none;
+  }
+}
