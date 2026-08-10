@@ -31,9 +31,14 @@ l'ancien JavaScript depuis son cache.
 
 ### 1. Rattraper les deux entrées manquantes
 
-À reconstituer depuis les commits `526b749` (« feat: accueil immersif Three.js - La Comete a
-deux queues (v2.13.0) ») et `dc748bd` (« fix: espace de scroll supplementaire avant la vue
-finale (v2.13.1) »), et depuis les fichiers `js/hero3d/` et `css/hero3d.css`.
+À reconstituer depuis deux commits — « feat: accueil immersif Three.js - La Comete a deux queues
+(v2.13.0) » et « fix: espace de scroll supplementaire avant la vue finale (v2.13.1) », soit
+`ce25906` et `7e0dfd5` au moment d'écrire ce brief — et depuis les fichiers `js/hero3d/` et
+`css/hero3d.css`.
+
+Les retrouver par leur intitulé plutôt que par leur SHA : l'historique a été réécrit le
+10 août 2026 pour uniformiser l'identité des commits, et les SHA antérieurs à cette date ne sont
+plus ceux d'origine.
 
 Suivre exactement le format des entrées existantes : titre de niveau 2 avec version et date,
 puis des rubriques de niveau 3, puis des puces dont le début est en gras.

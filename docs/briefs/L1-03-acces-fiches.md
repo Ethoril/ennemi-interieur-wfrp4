@@ -16,7 +16,8 @@
 ## Pourquoi
 
 Dans `js/fiche-cloud.js`, la table d'autorisation est vide et l'a toujours été depuis le commit
-`668ee09` qui l'a introduite :
+qui l'a introduite — « feat: deploiement des fiches de personnages individuelles et
+securisation firebase », `63f7471` au moment d'écrire ce brief :
 
 ```js
 const CHAR_OWNERS = {
