@@ -1,3 +1,13 @@
+## [Non publié]
+
+### Documentation
+- **Briefs de correction** : ajout de `docs/briefs/` — vingt briefs de développement issus de
+  l'audit technique de la v2.13.1, répartis en deux lots (v2.13.2 sécurité, v2.14.0 qualité),
+  accompagnés d'un socle de contraintes communes (`00-CONVENTIONS.md`). Aucune modification du
+  code du site : `APP_VERSION` reste à v2.13.1.
+- **Entrées 2.13.0 et 2.13.1 manquantes** : à rédiger lors de la clôture du lot 1 (brief
+  `L1-05`), l'accueil Three.js n'ayant jamais été documenté ici.
+
 ## [2.12.0] - 2026-06-03
 
 ### Réflectorisation & Architecture ESM
