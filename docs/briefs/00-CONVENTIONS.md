@@ -163,12 +163,49 @@ Points à vérifier systématiquement, même quand le brief ne le redit pas :
 
 ## 9. Git
 
+### Identité de commit — à vérifier avant le premier commit
+
+Le dépôt est public et **une seule identité y est admise**, auteur comme committer :
+
+```
+Ethoril <ethoril@users.noreply.github.com>
+```
+
+L'historique a été entièrement réécrit le 10 août 2026 pour l'uniformiser : 43 des 125 commits
+exposaient un nom civil et des adresses professionnelles, parce que Git avait déduit une
+identité du nom de machine faute de configuration. **Ne pas réintroduire une autre identité.**
+
+Avant le premier commit, dans l'environnement de travail quel qu'il soit :
+
+```bash
+git config user.name  "Ethoril"
+git config user.email "ethoril@users.noreply.github.com"
+git config --global user.useConfigOnly true   # Git refuse de deviner une identité
+```
+
+`useConfigOnly` est posé en global sur la machine du mainteneur, mais **pas** dans un conteneur,
+une machine virtuelle ou un environnement distant : l'y reposer systématiquement. Vérifier
+après le premier commit :
+
+```bash
+git log -1 --format='%an <%ae> | %cn <%ce>'
+```
+
+Toute autre valeur que `Ethoril <ethoril@users.noreply.github.com>` des deux côtés doit être
+corrigée **avant** de pousser — après, la correction demande une réécriture d'historique et une
+intervention du support GitHub.
+
+### Le reste
+
 - **Un brief = un commit** (ou une courte série cohérente). Ne pas mélanger deux briefs.
 - Message de commit au format conventionnel, en français, avec la référence du constat
   d'audit entre parenthèses. Chaque brief fournit le message à utiliser.
 - **Ne pas lancer `deploy.ps1` en cours de lot.** Le script pousse directement sur `master`,
   donc en production. Il ne s'utilise qu'en fin de lot, après vérification.
-- Ne jamais réécrire l'historique (`push --force`, `rebase` de commits poussés).
+- Ne jamais réécrire l'historique (`push --force`, `rebase` de commits poussés), ne jamais
+  utiliser `--author` ni `--amend` sur un commit déjà poussé.
+- Les SHA antérieurs au 10 août 2026 cités dans une documentation ancienne ne correspondent
+  plus à rien : retrouver un commit par son intitulé.
 
 ## 10. Ordre de traitement
 
