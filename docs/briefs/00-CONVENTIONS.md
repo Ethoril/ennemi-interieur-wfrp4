@@ -180,7 +180,32 @@ Points à vérifier systématiquement, même quand le brief ne le redit pas :
 - **Le service worker** ne sert pas une version périmée : vider le cache dans les outils de
   développement avant de conclure qu'un correctif ne marche pas.
 
-## 8. Comptes et données de test
+## 8. Données personnelles — le dépôt est public
+
+`github.com/Ethoril/ennemi-interieur-wfrp4` est un dépôt **public**. Tout ce qui y est commis
+est consultable, et le rester : une donnée retirée dans un commit ultérieur demeure dans
+l'historique, et l'en effacer exige une réécriture d'historique plus une intervention du support
+GitHub. Ce cas s'est déjà produit sur ce dépôt en août 2026.
+
+**Ne jamais commiter** :
+
+- une adresse électronique de joueur, même en exemple ou en commentaire ;
+- le nom civil de quiconque ;
+- un jeton, une clé privée, un identifiant de service.
+
+La seule adresse admise dans le code est celle du MJ, `ethoril@gmail.com`, déjà publique dans
+`js/firebase-init.js`.
+
+Les données personnelles des joueurs vivent **dans Firestore uniquement**, saisies à la main
+dans la console par le MJ. Le code y accède par les règles de sécurité, côté serveur — il ne les
+télécharge pas dans le navigateur. Voir les briefs `L1-03` et `L1-04`.
+
+Corollaire pour les sauvegardes et les exports : un fichier contenant des pseudos ou des
+adresses de joueurs se place **hors du dépôt** (par exemple à côté de lui, jamais dedans), et ne
+s'ajoute pas à `.gitignore` pour « pouvoir le garder au même endroit » — hors du dépôt veut dire
+hors du dossier.
+
+## 9. Comptes et données de test
 
 - L'administrateur (MJ) est `ethoril@gmail.com`, constante `ADMIN_EMAIL` dans
   `js/firebase-init.js`. C'est le seul compte privilégié.
@@ -190,7 +215,7 @@ Points à vérifier systématiquement, même quand le brief ne le redit pas :
   `doodle` (document `current`), `campagne` (documents `state` et, à créer, `acces`), `mail`.
 - Chemins Storage : `portraits/`, `indices/`.
 
-## 9. Git
+## 10. Git
 
 ### Identité de commit — à vérifier avant le premier commit
 
@@ -236,7 +261,7 @@ intervention du support GitHub.
 - Les SHA antérieurs au 10 août 2026 cités dans une documentation ancienne ne correspondent
   plus à rien : retrouver un commit par son intitulé.
 
-## 10. Ordre de traitement
+## 11. Ordre de traitement
 
 Le **lot 1** (`L1-*`) referme deux failles d'autorisation et débloque l'accès des joueurs à
 leur fiche. Il est prioritaire et se livre seul.
