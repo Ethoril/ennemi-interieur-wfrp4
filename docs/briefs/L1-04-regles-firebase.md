@@ -83,10 +83,12 @@ service cloud.firestore {
             && request.auth.token.email in acces().get(charId, []));
     }
 
-    // ── Table d'accès : lisible par tout compte connecté, écrite par le MJ ──
+    // ── Table d'accès : contient les adresses des joueurs, donc des données
+    //    personnelles. Lecture réservée au MJ, jamais exposée au navigateur.
+    //    La fonction acces() ci-dessus la consulte côté serveur, ce qui ne
+    //    demande aucun droit de lecture au client. ──
     match /campagne/acces {
-      allow read:  if request.auth != null;
-      allow write: if isGM();
+      allow read, write: if isGM();
     }
 
     // ── Calendrier impérial : lecture publique, avance réservée au MJ ──
@@ -275,6 +277,13 @@ le SDK Firebase est déjà chargé (`pnjs.html` par exemple), en état **déconn
 - [ ] Écrire sur `campagne/state` (avancer le calendrier) : refusé.
 - [ ] Avec un **compte joueur** : lire `fiches/wren` en n'y étant pas listé : refusé.
 - [ ] Avec un **compte joueur** : écrire dans `campagne/acces` : refusé.
+- [ ] Avec un **compte joueur** : **lire** `campagne/acces` : refusé. C'est ce qui garantit que
+      les adresses des joueurs ne circulent pas — le vérifier explicitement, c'est la raison
+      d'être de cette règle.
+- [ ] Avec un compte joueur autorisé : sa fiche se lit **quand même**, ce qui prouve que la
+      fonction `acces()` consulte bien le document côté serveur sans droit de lecture client.
+- [ ] Onglet Réseau, connecté en joueur : aucune réponse Firestore ne contient d'adresse
+      électronique d'un autre joueur.
 
 ### Ce qui doit continuer de fonctionner
 

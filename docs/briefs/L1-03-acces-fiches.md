@@ -59,82 +59,109 @@ Chaque valeur est un tableau : un personnage peut avoir plusieurs propriétaires
 son conjoint qui tient la fiche, par exemple). Le personnage `test` n'a pas d'entrée — seul le
 MJ y accède, par la règle qui le concerne.
 
-**Les adresses sont à demander au MJ.** Si elles ne sont pas disponibles au moment de traiter
-le brief, créer le document avec cinq tableaux vides : le code sera correct et il n'y aura plus
-qu'à remplir la console.
+### Les adresses sont des données personnelles — elles ne sortent pas de Firestore
 
-### 2. Remplacer `CHAR_OWNERS` par une lecture mise en cache
+**Le MJ saisit les cinq adresses lui-même, directement dans la console Firebase.** Elles ne
+doivent apparaître dans **aucun** fichier du dépôt, aucun commit, aucun brief, aucun message,
+aucune capture d'écran. Le dépôt est public : une adresse commise y reste dans l'historique et
+n'en sort qu'au prix d'une réécriture et d'une intervention du support GitHub.
 
-Supprimer la constante et écrire à sa place :
+Le développeur n'a pas besoin de les connaître : il crée le document avec cinq tableaux vides,
+écrit le code, et le MJ remplit les valeurs. C'est aussi pour cela que la table vit dans
+Firestore et non dans le JavaScript.
 
-```js
-// La table d'accès vit dans Firestore (campagne/acces) pour qu'ajouter un joueur
-// ne demande pas de déploiement, et pour que les règles Firestore lisent la même
-// source de vérité que le client. Lue une fois par chargement de page.
-let _accesPromise = null;
+Conséquence sur la conception, développée aux points 2 et 3 : **le navigateur ne lit jamais
+cette table.** Seules les règles Firestore la consultent, côté serveur.
 
-function getAcces() {
-    if (!_accesPromise) {
-        _accesPromise = getDoc(doc(db, 'campagne', 'acces'))
-            .then(s => (s.exists() ? s.data() : {}))
-            .catch(e => {
-                console.error('[fiche-cloud] lecture campagne/acces:', e);
-                return {};   // en cas d'échec : aucun accès, jamais l'inverse
-            });
-    }
-    return _accesPromise;
-}
+### 2. Supprimer `CHAR_OWNERS` et `isUserAuthorized()` — sans rien lire à la place
 
-async function isUserAuthorized(user, charId) {
-    if (!user?.email) return false;
-    if (user.email === GM_EMAIL) return true;
-    const acces = await getAcces();
-    return (acces[charId] || []).includes(user.email);
-}
-```
+Supprimer les deux, **sans les remplacer par une lecture de `campagne/acces`.** Un contrôle
+d'autorisation écrit en JavaScript est de l'affichage : il se contourne depuis la console du
+navigateur, et il obligerait à télécharger les cinq adresses dans le navigateur de chaque
+visiteur connecté.
 
-Le `catch` qui renvoie `{}` est important : en cas d'erreur réseau, l'utilisateur n'a **aucun**
-accès. Ne jamais choisir l'inverse par confort.
+**L'autorisation est décidée par les règles Firestore** (`L1-04`), qui consultent
+`campagne/acces` côté serveur via `get()`. Le rôle du client se réduit à : tenter la lecture de
+la fiche, et interpréter le refus.
 
-### 3. Propager le passage en asynchrone
+C'est à la fois plus sûr et plus simple que la version initialement prévue — un aller-retour
+réseau au lieu de deux, et plus aucune propagation d'`async` à travers le module.
 
-`isUserAuthorized()` devient une fonction `async`. Deux appelants à adapter :
+### 3. Réécrire le callback de `watchAuth()`
 
-**`cloudSave()`** — l'appel doit être attendu :
+Le contrôle d'autorisation disparaît au profit du résultat de la lecture :
 
 ```js
-const user = auth.currentUser;
-if (!user) return;
-if (!(await isUserAuthorized(user, charId))) return;
-```
+watchAuth(async (user, isAdmin) => {
+    const bar = document.getElementById('fiche-auth-bar');
+    if (!bar) return;
 
-Attention : `cloudSave` est appelée depuis un `setTimeout` dans `js/fiche.js`
-(`saveNow._t`). L'échec d'autorisation doit y rester **silencieux**, comme aujourd'hui, sans
-rejet de promesse non capturé dans la console.
-
-**Le callback de `watchAuth()`** — il est déjà `async`, il suffit d'ajouter `await` aux deux
-tests `isUserAuthorized(user, charId)`.
-
-### 4. Traiter la fenêtre de vérification
-
-Aujourd'hui, `showLoginWall()` affiche immédiatement le message de refus. Avec une lecture
-asynchrone, ce message apparaîtrait à tort pendant la durée de la requête.
-
-Dans le callback de `watchAuth`, quand un utilisateur est connecté : afficher d'abord
-« Vérification des accès… » via `showLoginWall()`, puis n'afficher le refus qu'une fois la
-réponse obtenue.
-
-```js
-if (user) {
-    showLoginWall('Vérification des accès…');
-    const autorise = await isUserAuthorized(user, charId);
-    if (!autorise) {
-        // … barre d'authentification + message de refus
-        showLoginWall("Vous n'avez pas l'autorisation d'accéder à cette fiche.");
+    if (!user) {
+        // … branche non connectée, inchangée
         return;
     }
-    // … suite inchangée
+
+    // L'autorisation est tranchée par les règles Firestore, qui lisent
+    // campagne/acces côté serveur : le navigateur ne voit jamais les adresses
+    // des joueurs. Un refus se manifeste par une erreur permission-denied.
+    showLoginWall('Vérification des accès…');
+
+    let snap;
+    try {
+        snap = await getDoc(doc(db, 'fiches', charId));
+    } catch (e) {
+        if (e.code === 'permission-denied') {
+            bar.innerHTML = `
+                <span class="fiche-auth-user">☁ ${esc(user.displayName || user.email)}</span>
+                <button class="fiche-auth-btn" id="btn-cloud-signout">Déconnexion</button>`;
+            document.getElementById('btn-cloud-signout')
+                ?.addEventListener('click', () => logout());
+            showLoginWall("Vous n'avez pas l'autorisation d'accéder à cette fiche.");
+            return;
+        }
+        setStatus('⚠ Erreur de chargement', 'error');
+        console.error('[fiche-cloud] load error:', e);
+        showLoginWall('Chargement impossible. Réessayez plus tard.');
+        return;
+    }
+
+    // … construction de la barre d'authentification et du bouton de reset (isAdmin)
+    // … puis, si snap.exists(), ficheLoadCloud(snap.data().data, millis)
+    // … puis showFiche()
+});
+```
+
+Deux points à respecter :
+
+- **Un échec réseau n'est pas un refus.** Ne traiter comme refus que
+  `e.code === 'permission-denied'`. Toute autre erreur laisse le mur affiché avec un message
+  distinct, jamais la fiche ouverte.
+- **Une fiche inexistante n'est pas un refus.** Pour un personnage dont le document n'a jamais
+  été créé, la règle autorise la lecture et `snap.exists()` vaut `false` : la fiche s'ouvre
+  vide, comme aujourd'hui.
+
+### 4. Adapter `cloudSave()`
+
+Retirer l'appel à `isUserAuthorized()` : c'est la règle qui refuse l'écriture. Distinguer le
+refus d'autorisation d'une vraie erreur, pour ne pas afficher « ⚠ Erreur » à quelqu'un qui voit
+déjà le mur :
+
+```js
+} catch (e) {
+    if (e.code === 'permission-denied') {
+        setStatus('');           // le mur est déjà affiché, ne pas alarmer
+        return;
+    }
+    setStatus('⚠ Erreur', 'error');
+    console.error('[fiche-cloud] save error:', e);
+} finally {
+    _saving = false;
 }
+```
+
+Après ces suppressions, l'import `ADMIN_EMAIL as GM_EMAIL` peut devenir inutilisé dans ce
+fichier — le retirer si c'est le cas. `isAdmin`, fourni par `watchAuth`, reste utilisé pour le
+bouton de réinitialisation.
 ```
 
 Profiter du passage pour retirer `charId` du message de refus : le nom technique du personnage
@@ -144,12 +171,16 @@ n'apporte rien au joueur, qui sait sur quelle page il est.
 
 ## Ne pas faire
 
+- **Ne jamais écrire une adresse de joueur dans un fichier du dépôt**, même en exemple, même en
+  commentaire, même « en attendant ». Le dépôt est public.
 - **Ne pas mettre les adresses en dur dans le JavaScript**, même « en attendant ». C'est
   exactement ce que ce brief supprime.
-- **Ne pas utiliser `onSnapshot`** pour la table d'accès. Une lecture unique par chargement
-  suffit, un abonnement temps réel serait du quota consommé pour rien.
+- **Ne pas lire `campagne/acces` depuis le navigateur**, ni avec `getDoc`, ni avec
+  `onSnapshot`, ni pour « afficher la liste des joueurs autorisés ». Ce document ne quitte pas
+  Firestore : la règle de `L1-04` en réserve la lecture au MJ, et toute tentative côté client
+  échouerait de toute façon en `permission-denied`.
 - **Ne pas mettre la table d'accès en cache dans `localStorage`.** Un cache local d'une
-  décision d'autorisation est manipulable par l'utilisateur.
+  décision d'autorisation est manipulable par l'utilisateur — et il y déposerait les adresses.
 - **Ne pas considérer ce brief comme suffisant.** Le contrôle reste côté client et se contourne
   depuis la console du navigateur : c'est le brief `L1-04` qui rend l'autorisation réelle, en
   appliquant la même table dans les règles Firestore. Les deux vont ensemble.
