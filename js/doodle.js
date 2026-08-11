@@ -1,6 +1,7 @@
 import { db } from './firebase-init.js';
 import { auth, ADMIN_EMAIL, watchAuth, loginWithGoogle, logout } from './auth.js';
 import { doc, setDoc, deleteDoc, onSnapshot, collection, addDoc, deleteField } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { esc } from './utils.js';
 
 // Elements du DOM
 const adminPanel = document.getElementById('admin-panel');
@@ -241,7 +242,7 @@ btnAdminDelete.addEventListener('click', async () => {
 function updateAuthBar(user) {
     if (user) {
         doodleAuthBar.innerHTML = `
-            <span style="color: var(--text-muted);">Connecté en tant que <strong style="color: var(--gold);">${user.displayName || user.email}</strong></span>
+            <span style="color: var(--text-muted);">Connecté en tant que <strong style="color: var(--gold);">${esc(user.displayName || user.email)}</strong></span>
             <button id="btn-signout" class="btn-ghost" style="padding: 6px 12px; font-size: 0.8rem;">Déconnexion</button>
         `;
         document.getElementById('btn-signout').addEventListener('click', () => logout());
@@ -446,7 +447,7 @@ function renderHorizontalPoll(pollData, playerNames, totals, isClosed, isAdmin) 
                 <thead>
                     <tr>
                         <th style="text-align: left; padding: 12px; border-bottom: 2px solid var(--border-strong); min-width: 180px; width: 180px;">Joueurs</th>
-                        ${dates.map(date => `<th style="padding: 12px; border-bottom: 2px solid var(--border-strong); min-width: 120px; font-size: 0.85rem; line-height: 1.2;">${date}</th>`).join('')}
+                        ${dates.map(date => `<th style="padding: 12px; border-bottom: 2px solid var(--border-strong); min-width: 120px; font-size: 0.85rem; line-height: 1.2;">${esc(date)}</th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
@@ -455,31 +456,31 @@ function renderHorizontalPoll(pollData, playerNames, totals, isClosed, isAdmin) 
     playerNames.forEach(name => {
         const votes = responses[name] || [];
         
-        let nameHtml = name;
+        let nameHtml = esc(name);
         if (!isClosed) {
             if (isAdmin) {
                 nameHtml = `
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                        <span>${name}</span>
+                        <span>${esc(name)}</span>
                         <div style="display: flex; gap: 4px;">
-                            <button class="btn-edit-player-response" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px 4px; font-size: 0.95rem;" title="Modifier la réponse de ${name}">✏️</button>
-                            <button class="btn-delete-player-response" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px 4px; font-size: 0.95rem;" title="Supprimer la réponse de ${name}">🗑️</button>
+                            <button class="btn-edit-player-response" data-player="${esc(name)}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px 4px; font-size: 0.95rem;" title="Modifier la réponse de ${esc(name)}">✏️</button>
+                            <button class="btn-delete-player-response" data-player="${esc(name)}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px 4px; font-size: 0.95rem;" title="Supprimer la réponse de ${esc(name)}">🗑️</button>
                         </div>
                     </div>
                 `;
             } else {
                 nameHtml = `
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                        <span>${name}</span>
-                        <button class="btn-edit-player-response" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px 6px; font-size: 0.95rem;" title="Modifier ma réponse">✏️</button>
+                        <span>${esc(name)}</span>
+                        <button class="btn-edit-player-response" data-player="${esc(name)}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px 6px; font-size: 0.95rem;" title="Modifier ma réponse">✏️</button>
                     </div>
                 `;
             }
         } else if (isAdmin) {
             nameHtml = `
                 <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                    <span>${name}</span>
-                    <button class="btn-delete-player-response" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px 6px; font-size: 0.95rem;" title="Supprimer la réponse de ${name}">🗑️</button>
+                    <span>${esc(name)}</span>
+                    <button class="btn-delete-player-response" data-player="${esc(name)}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px 6px; font-size: 0.95rem;" title="Supprimer la réponse de ${esc(name)}">🗑️</button>
                 </div>
             `;
         }
@@ -578,7 +579,7 @@ function renderVerticalPoll(pollData, playerNames, totals, isClosed, isAdmin) {
                         </label>
                     ` : ''}
                     <span style="font-family: var(--font-heading); color: var(--text-primary); font-size: 1.05rem; font-weight: bold;">
-                        ${date}
+                        ${esc(date)}
                     </span>
                 </div>
                 
@@ -646,6 +647,18 @@ async function submitVote() {
         return;
     }
 
+    // Le pseudo est une clé de la map `responses` : les règles Firestore ne peuvent pas
+    // en valider le contenu (pas de boucle dans le langage de règles). Borne côté client.
+    const MAX_PSEUDO = 40;
+    if (voterName.length > MAX_PSEUDO || /[\x00-\x1f\x7f]/.test(voterName)) {
+        if (voteError) {
+            voteError.textContent = `Pseudo trop long ou caractères non autorisés (${MAX_PSEUDO} caractères maximum).`;
+            voteError.style.display = 'inline';
+        }
+        if (voterNameInput) voterNameInput.focus();
+        return;
+    }
+
     // Vérifier si le nom existe déjà pour demander confirmation
     const existingName = Object.keys(currentPoll.responses || {}).find(name => name.toLowerCase() === voterName.toLowerCase());
     if (existingName) {
@@ -682,7 +695,7 @@ async function submitVote() {
                     subject: `[Calendrier] Disponibilités mises à jour par ${nameToSave}`,
                     html: `
                         <p>Salut David,</p>
-                        <p>Le joueur <strong>${nameToSave}</strong> vient de mettre à jour ses disponibilités pour le Doodle de session.</p>
+                        <p>Le joueur <strong>${esc(nameToSave)}</strong> vient de mettre à jour ses disponibilités pour le Doodle de session.</p>
                         <p><a href="https://campagne-wrpg.firebaseapp.com/doodle.html" target="_blank">Consulter le calendrier</a></p>
                     `
                 }
@@ -749,26 +762,26 @@ function openVotesModal(pollData, dateIndex, playerNames) {
                 if (isAdmin) {
                     actionsHtml = `
                         <div style="display: flex; gap: 4px;">
-                            <button class="modal-btn-edit" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px; font-size: 0.9rem;" title="Modifier">✏️</button>
-                            <button class="modal-btn-delete" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px; font-size: 0.9rem;" title="Supprimer">🗑️</button>
+                            <button class="modal-btn-edit" data-player="${esc(name)}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px; font-size: 0.9rem;" title="Modifier">✏️</button>
+                            <button class="modal-btn-delete" data-player="${esc(name)}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px; font-size: 0.9rem;" title="Supprimer">🗑️</button>
                         </div>
                     `;
                 } else {
                     actionsHtml = `
-                        <button class="modal-btn-edit" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px;" title="Modifier">✏️</button>
+                        <button class="modal-btn-edit" data-player="${esc(name)}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px;" title="Modifier">✏️</button>
                     `;
                 }
             } else if (isAdmin) {
                 actionsHtml = `
-                    <button class="modal-btn-delete" data-player="${name.replace(/"/g, '&quot;')}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px;" title="Supprimer">🗑️</button>
+                    <button class="modal-btn-delete" data-player="${esc(name)}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px;" title="Supprimer">🗑️</button>
                 `;
             }
             
             votersHtml += `
                 <div class="doodle-voter-item">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <div class="doodle-voter-avatar">${initials}</div>
-                        <span style="font-family: var(--font-body); font-weight: bold; color: var(--text-primary);">${name}</span>
+                        <div class="doodle-voter-avatar">${esc(initials)}</div>
+                        <span style="font-family: var(--font-body); font-weight: bold; color: var(--text-primary);">${esc(name)}</span>
                         ${actionsHtml}
                     </div>
                     <span class="${badgeClass}">${badgeText}</span>
