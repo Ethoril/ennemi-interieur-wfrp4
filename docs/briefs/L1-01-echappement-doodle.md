@@ -49,13 +49,32 @@ bougeront au fil des modifications — se repérer aux noms de fonction.
 
 **`renderHorizontalPoll()`** — ~l. 449 à 482
 - `${date}` dans les `<th>` du `<thead>` (les libellés de dates sont saisis par le MJ).
-- `${name}` dans les trois branches de `nameHtml` (admin / non-admin / sondage clôturé),
-  à chaque fois dans un `<span>`.
+- `${name}` dans les **trois** branches de `nameHtml` — trois `<span>` distincts, aux
+  environs des lignes 463, 473 et 481 :
+  1. sondage ouvert, connecté en MJ (crayon + poubelle) ;
+  2. sondage ouvert, visiteur (crayon seul) ;
+  3. **sondage clôturé, connecté en MJ** (poubelle seule) — c'est la branche la plus facile à
+     oublier, parce qu'il faut clôturer un sondage pour la voir.
 - Les attributs `data-player="${name.replace(/"/g, '&quot;')}"` — **remplacer ce
   `replace()` par `esc(name)`**. Neutraliser le guillemet sans neutraliser `<` ne protège
   rien : le navigateur reprend l'analyse au premier `<` et l'attribut est refermé.
 - Les attributs `title="Modifier la réponse de ${name}"` et
-  `title="Supprimer la réponse de ${name}"`.
+  `title="Supprimer la réponse de ${name}"` (trois occurrences ; le
+  `title="Modifier ma réponse"` de la branche visiteur ne contient pas de nom).
+
+**Ne pas échapper `${nameHtml}`** à la ligne ~489 : c'est le fragment de balisage assemblé
+juste au-dessus, pas une donnée. Cf. section 3 des conventions.
+
+**Compte de contrôle** — après modification, ces trois commandes doivent renvoyer `0` :
+
+```bash
+grep -c '\${name}'                  js/doodle.js   # 7 sites avant, 0 après
+grep -c '\${date}'                  js/doodle.js   # 2 sites avant, 0 après
+grep -c "replace(/\"/g, '&quot;')"  js/doodle.js   # 8 sites avant, 0 après
+```
+
+Les `${esc(name)}` ne sont pas comptés par ces motifs : un compte non nul signale un site
+oublié.
 
 **`renderVerticalPoll()`** — ~l. 581
 `${date}` dans le `<span>` de titre de chaque carte.
@@ -125,8 +144,15 @@ pour rester cohérent avec les messages d'erreur existants.
       l'apostrophe en `&#39;`, il faut vérifier que les comparaisons de noms côté JS
       utilisent bien la valeur brute et non la valeur échappée.
 - [ ] Un pseudo de 41 caractères est refusé avec un message clair, sans écriture Firestore.
-- [ ] Les deux formats (horizontal et vertical) fonctionnent, connecté en MJ et déconnecté.
-- [ ] Sondage clôturé : l'affichage reste correct et les boutons de suppression du MJ marchent.
+- [ ] Les deux formats (horizontal et vertical) fonctionnent, **connecté en MJ puis
+      déconnecté** — c'est l'état de connexion qui sélectionne la branche de `nameHtml`, donc
+      les deux doivent être vus.
+- [ ] **Sondage clôturé, connecté en MJ** : le nom des joueurs s'affiche correctement et le
+      bouton poubelle fonctionne. C'est la troisième branche de `nameHtml`, invisible sans
+      clôturer un sondage — la vérifier explicitement, pas par déduction.
+- [ ] Le nom du joueur s'affiche bien à l'écran dans les trois branches : aucun `<span>` ni
+      `<button>` visible en clair, ce qui signalerait un fragment de balisage échappé par
+      erreur.
 - [ ] Console du navigateur vide.
 
 ---

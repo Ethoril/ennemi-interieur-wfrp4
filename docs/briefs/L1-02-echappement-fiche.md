@@ -44,10 +44,10 @@ les numéros de ligne bougeront.
 
 | Fonction | Interpolations à échapper |
 |---|---|
-| `renderXpLog()` | `${e.achat}` en contexte texte (**le cas critique**), `${e.type}`, et les `value="${e.raison}"`, `value="${e.achat}"`, `value="${e.note}"` des trois variantes de ligne |
-| `renderAdvancedSkills()` | `value="${sk.nom}"` |
-| `renderCareers()` | `value="${c.nom}"`, `value="${c.note}"` |
-| `renderSorts()` | `value="${s.nom}"`, `${s.portee}`, `${s.duree}`, `${s.resume}` |
+| `renderXpLog()` | `${e.achat}` **et** `${e.cout}` en contexte texte (**les deux cas critiques**, l. 1699 et 1700), `${e.type}`, et les `value="${e.raison}"`, `value="${e.montant}"`, `value="${e.achat}"`, `value="${e.cout}"`, `value="${e.note}"` des trois variantes de ligne |
+| `renderAdvancedSkills()` | `value="${sk.nom}"`, `value="${sk.adv}"` |
+| `renderCareers()` | `value="${c.nom}"`, `value="${c.rang}"`, `value="${c.note}"` |
+| `renderSorts()` | `value="${s.nom}"`, `value="${s.cn}"`, `${s.portee}`, `${s.duree}`, `${s.resume}` |
 | `renderPrieres()` | `value="${p.nom}"`, `value="${p.resume}"` |
 | `renderTalents()` | `${t.nom}` en contexte texte, `title="${t.note}"` |
 | `renderCareerChips()` | `data-talent="${item}"`, `data-name="${item}"`, et `${item}` en contexte texte — pour les chips officielles **et** les chips ajoutées (★) |
@@ -58,6 +58,22 @@ les numéros de ligne bougeront.
 Les trois derniers sont faciles à oublier : les spécialisations personnalisées sont saisies
 librement par le joueur (« Autre (personnalisé)… ») puis réinjectées dans les listes de
 suggestions à chaque ouverture du formulaire XP.
+
+Les champs numériques (`e.cout`, `e.montant`, `sk.adv`, `c.rang`, `s.cn`) sont à échapper eux
+aussi : `applyData()` recopie Firestore et `localStorage` dans `state` **sans coercion de
+type**, donc un document écrit par un autre client peut y placer une chaîne. `${e.cout}` de la
+ligne 1700 est en contexte texte, exactement comme `${e.achat}` — même gravité.
+
+### Ce qu'il ne faut PAS échapper
+
+Onze variables de ce fichier contiennent du HTML déjà assemblé. Les échapper afficherait le
+balisage en clair et casserait le panneau de carrière :
+
+`skillsH`, `talentsH`, `rangsHtml`, `prereqHtml`, `statusBadge`, `modifiedBadge`,
+`variantPicker`, `editBtn`, `actionBtn`, `talAttr`, `noneOpt`, `hors`.
+
+Elles se reconnaissent à leur nom et au fait qu'elles sont construites quelques lignes plus
+haut par un littéral de gabarit. Cf. section 3 des conventions.
 
 ### 2. `js/fiche.js` — sites à échapper aussi, par uniformité
 
@@ -134,10 +150,17 @@ Utiliser `fiche.html?char=test` pour tous les essais destructifs.
 - [ ] **Non-régression apostrophe** : une compétence avancée nommée `Conduite d'attelage`
       reste éditable, se sauvegarde, et le surlignage « dans la carrière » fonctionne toujours.
       Vérifier aussi un nom de personnage avec apostrophe.
-- [ ] Le panneau de référence de carrière s'affiche normalement pour une carrière à variantes
-      (essayer `Artisan` rang 2) et pour une sous-carrière à prérequis
-      (`Prêtre-Forgeron de Vaul`).
+- [ ] **Panneau de carrière, carrière à variantes** : saisir `Artisan` et passer au rang 2. Le
+      sélecteur de variante doit lister « Artisan » et « Façonneur de Pierre », les chips de
+      compétences et de talents doivent s'afficher **comme des puces stylées, pas comme du
+      texte contenant `<span>`**. C'est le test qui détecte un fragment `skillsH` / `talentsH`
+      échappé par erreur.
+- [ ] **Panneau de carrière, sous-carrière à prérequis** : saisir `Prêtre-Forgeron de Vaul`, le
+      bandeau « Prérequis : Mage (HE) — rang 2 minimum » doit s'afficher correctement.
+- [ ] Le mode « ✎ Personnaliser » d'un rang affiche bien les boutons `×` et `↺` sur les chips,
+      et non leur code HTML.
 - [ ] Les lignes fantômes de compétences de carrière s'affichent et restent cliquables.
+- [ ] Journal XP : une ligne d'achat appliqué affiche son coût et son badge `✓` normalement.
 - [ ] `fiche.html` sans paramètre, puis avec `?char=inexistant` : redirection vers
       `groupe.html`, et **aucune** clé `wfrp4-fiche-inexistant` créée dans `localStorage`.
 - [ ] Console vide.

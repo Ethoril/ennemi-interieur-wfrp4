@@ -69,6 +69,35 @@ systématiquement. `js/doodle.js` et `js/fiche.js` sont ceux à corriger.
 `name.replace(/"/g, '&quot;')`. Neutraliser le guillemet sans neutraliser `<` ne protège
 rien.
 
+### Ce qu'il ne faut surtout PAS échapper
+
+Le code construit ses rendus par fragments : une variable interpolée contient souvent **du HTML
+déjà assemblé**. L'échapper afficherait le balisage en clair à l'écran et casserait la page.
+C'est le risque principal d'un passage d'échappement mené trop uniformément.
+
+Repères pour distinguer les deux cas :
+
+- **À échapper** : une valeur qui vient de `state`, de Firestore, de Google Sheets, de l'URL ou
+  d'un champ de saisie. C'est une *donnée*.
+- **À laisser tel quel** : une variable dont le nom se termine par `Html`, `H`, `Btn`, `Badge`,
+  `Picker`, `Attr`, `chips`, ou qui est construite quelques lignes plus haut par un
+  `` `<span…>` ``. C'est un *fragment de balisage*.
+
+Les fragments concernés, à ne pas toucher — `js/fiche.js` : `skillsH`, `talentsH`, `rangsHtml`,
+`prereqHtml`, `statusBadge`, `modifiedBadge`, `variantPicker`, `editBtn`, `actionBtn`,
+`talAttr`, `noneOpt`, `hors` ; `js/doodle.js` : `nameHtml`, `actionsHtml` ;
+`js/fiche-cloud.js` : `resetButtonHtml`.
+
+En cas de doute : afficher la page après modification. Un `<span>` visible en clair à l'écran
+signale un fragment échappé par erreur.
+
+### Les valeurs numériques comptent aussi
+
+`state` est rempli par `applyData()` depuis Firestore ou `localStorage` **sans aucune coercion
+de type**. Un champ censé être un nombre (`cout`, `montant`, `adv`, `rang`, `cn`) peut donc
+contenir une chaîne arbitraire si le document a été écrit par un autre client ou importé depuis
+un fichier. Les `value="${…}"` de champs numériques doivent être échappés comme les autres.
+
 ## 4. Style de code
 
 - **Indentation** : 4 espaces dans `js/`, 2 espaces dans `js/main.js`, `sw.js` et les fichiers
