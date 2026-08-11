@@ -105,7 +105,10 @@ service cloud.firestore {
       allow write: if isGM();
     }
 
-    // ── Sondage : un anonyme ne touche que responses, une clé à la fois ──
+    // ── Sondage : le vote reste anonyme, par choix de conception.
+    //    Un visiteur sans compte peut ajouter ou modifier SA réponse, une à
+    //    la fois. Il ne peut ni supprimer une réponse existante, ni toucher
+    //    aux dates, ni clôturer, ni supprimer le sondage. ──
     match /doodle/current {
       allow read: if true;
       allow create, delete: if isGM();
@@ -115,6 +118,10 @@ service cloud.firestore {
         && request.resource.data.responses.size() <= 30
         && request.resource.data.responses.diff(resource.data.responses)
                  .affectedKeys().size() == 1
+        // Aucun votant existant ne disparaît : interdit la suppression
+        // d'une réponse par un anonyme, que le MJ conserve via isGM().
+        && request.resource.data.responses.keys()
+                 .hasAll(resource.data.responses.keys())
       );
     }
 
@@ -197,6 +204,20 @@ une migration du document existant et la réécriture de `renderPoll()`, `submit
 **Cette alternative n'est pas à mettre en œuvre dans ce brief.** Elle demande une validation
 préalable. Implémenter la solution par défaut ci-dessus.
 
+### Le vote anonyme est un choix assumé, pas une faiblesse à corriger
+
+Décision du 11 août 2026 : **les joueurs votent sans compte, et cela ne change pas.** Ne pas
+proposer de connexion obligatoire, ne pas ajouter de règle exigeant `request.auth != null` sur
+`doodle/current`.
+
+Ce que la conception accepte donc, en connaissance de cause : quelqu'un qui saisit le pseudo
+d'un autre joueur écrase sa réponse. C'est déjà le cas aujourd'hui, la confirmation
+« est-ce bien toi ? » n'étant qu'un garde-fou côté client. La règle `hasAll` ci-dessus réduit
+tout de même la casse : un anonyme peut modifier une réponse, jamais en faire disparaître une.
+
+La protection qui compte contre un visiteur malveillant reste l'échappement du brief `L1-01`,
+pas l'authentification.
+
 ### La règle `indices` impose la forme des requêtes
 
 `allow read: if isGM() || resource.data.decouvert == true` n'autorise une lecture **en liste**
@@ -244,6 +265,12 @@ le SDK Firebase est déjà chargé (`pnjs.html` par exemple), en état **déconn
 - [ ] Écrire dans `mail` un document avec une clé supplémentaire (`replyTo`, `cc`…) : refusé.
 - [ ] Écrire `{ closed: true }` sur `doodle/current` : refusé.
 - [ ] Écrire deux pseudos d'un coup dans `responses` : refusé.
+- [ ] Remplacer ou supprimer les 15 dates du sondage : refusé.
+- [ ] Supprimer la réponse d'un joueur existant (`deleteField()` sur une clé de `responses`) :
+      refusé — c'est ce que garantit la clause `hasAll`.
+- [ ] **Voter normalement, sans être connecté : accepté.** C'est le comportement à préserver ;
+      si ce point échoue, la règle est trop stricte et c'est elle qu'il faut corriger, pas
+      l'application.
 - [ ] Écrire dans `pnjs`, `relations` ou `indices` : refusé.
 - [ ] Écrire sur `campagne/state` (avancer le calendrier) : refusé.
 - [ ] Avec un **compte joueur** : lire `fiches/wren` en n'y étant pas listé : refusé.
