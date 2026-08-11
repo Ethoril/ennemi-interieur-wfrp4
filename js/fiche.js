@@ -469,7 +469,7 @@ function buildTalentsDatalistHtml() {
         specs.forEach(spec => set.add(`${baseName} (${spec})`))
     );
     const html = [...set].sort((a, b) => a.localeCompare(b, 'fr'))
-        .map(t => `<option value="${t}">`).join('');
+        .map(t => `<option value="${esc(t)}">`).join('');
     _talentsDatalistCache = { sig, html };
     return html;
 }
@@ -507,7 +507,7 @@ function buildXfTalentSpecPicker(groupBase, wrap) {
     specSel.id = 'xf-talent-spec-sel';
     specSel.className = 'xf-spec-sel';
     specSel.innerHTML =
-        allSpecs.map(s => `<option value="${s}">${s}</option>`).join('') +
+        allSpecs.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('') +
         '<option value="_custom">Autre (personnalisé)…</option>';
     if (allSpecs.length === 0) specSel.value = '_custom';
     wrap.appendChild(specSel);
@@ -553,7 +553,7 @@ function buildXfSpecPicker(group, wrap) {
     specSel.id = 'xf-spec-sel';
     specSel.className = 'xf-spec-sel';
     specSel.innerHTML =
-        allSpecs.map(s => `<option value="${s}">${s}</option>`).join('') +
+        allSpecs.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('') +
         '<option value="_custom">Autre (personnalisé)…</option>';
     wrap.appendChild(specSel);
 
@@ -930,7 +930,7 @@ function buildBasicSkills() {
             <td class="sk-nom">${sk.nom}</td>
             <td class="sk-carac-lbl">${CARAC_LABELS[sk.carac]}</td>
             <td class="sk-carac-val" id="sk-carac-${s}">0</td>
-            <td><input class="sk-adv" type="number" data-skill="${sk.nom}" min="0" max="30" value="${adv}"></td>
+            <td><input class="sk-adv" type="number" data-skill="${sk.nom}" min="0" max="30" value="${esc(adv)}"></td>
             <td class="sk-total" id="sk-total-${s}">0</td>
         </tr>`;
     }).join('');
@@ -954,7 +954,7 @@ function ensureSkillsDatalist() {
     const dl = document.createElement('datalist');
     dl.id = 'wfrp-skills-list';
     if (window.WFRP_SKILLS) {
-        dl.innerHTML = WFRP_SKILLS.map(s => `<option value="${s.nom}">`).join('');
+        dl.innerHTML = WFRP_SKILLS.map(s => `<option value="${esc(s.nom)}">`).join('');
     }
     document.body.appendChild(dl);
 }
@@ -986,12 +986,12 @@ function renderAdvancedSkills() {
         ? `<tr class="empty-row"><td colspan="6">Aucune compétence avancée</td></tr>`
         : state.skillsAdvanced.map((sk, i) => `<tr>
             <td><input class="sk-nom-input" type="text" list="wfrp-skills-list"
-                       data-idx="${i}" value="${sk.nom}" placeholder="Nom ou Groupe (Spécialisation)"></td>
+                       data-idx="${i}" value="${esc(sk.nom)}" placeholder="Nom ou Groupe (Spécialisation)"></td>
             <td><select class="sk-carac-sel" data-idx="${i}">
                 ${CARACS.map(c => `<option value="${c}" ${sk.carac===c?'selected':''}>${CARAC_LABELS[c]}</option>`).join('')}
             </select></td>
             <td class="sk-carac-val" id="adv-carac-val-${i}">0</td>
-            <td><input class="sk-adv sk-adv-adv" type="number" data-idx="${i}" min="0" max="30" value="${sk.adv ?? 0}"></td>
+            <td><input class="sk-adv sk-adv-adv" type="number" data-idx="${i}" min="0" max="30" value="${esc(sk.adv ?? 0)}"></td>
             <td class="sk-total" id="adv-total-${i}">0</td>
             <td><button class="btn-rm" data-type="adv-skill" data-idx="${i}" title="Supprimer">×</button></td>
         </tr>`).join('');
@@ -1205,8 +1205,8 @@ function renderCareerAdvGhosts() {
         const title    = isOpen
             ? 'Slot ouvert — cliquez pour choisir une spécialisation dans le journal XP'
             : 'Non achetée — cliquez pour l\'ouvrir dans le journal XP';
-        return `<tr class="${cls}" data-ghost-nom="${nom}" data-ghost-open="${isOpen}" title="${title}" role="button" tabindex="0">
-            <td class="sk-nom">${nom}</td>
+        return `<tr class="${cls}" data-ghost-nom="${esc(nom)}" data-ghost-open="${isOpen}" title="${title}" role="button" tabindex="0">
+            <td class="sk-nom">${esc(nom)}</td>
             <td class="sk-carac-lbl">${CARAC_LABELS[carac]}</td>
             <td class="sk-carac-val">${caracVal}</td>
             <td><input class="sk-adv" type="number" disabled value="0" tabindex="-1"></td>
@@ -1237,7 +1237,7 @@ function renderCareerAdvGhosts() {
 function buildCareerDatalist() {
     const dl = document.getElementById('career-names-list');
     if (!dl || !window.WFRP_CAREERS) return;
-    dl.innerHTML = WFRP_CAREERS.map(c => `<option value="${c.nom}">`).join('');
+    dl.innerHTML = WFRP_CAREERS.map(c => `<option value="${esc(c.nom)}">`).join('');
 }
 
 // Construit le HTML d'une liste de chips (compétences ou talents) pour un rang,
@@ -1258,22 +1258,22 @@ function renderCareerChips(career, rang, variant, kind, editing) {
         if (isRem && !editing) return;
         const baseCls = `career-tag${isTalent ? ' career-tag-talent' : ''}${isRem ? ' career-tag-removed' : ''}`;
         const talAttr = isTalent && !isRem
-            ? ` data-talent="${item}" role="button" tabindex="0" title="Voir la description"` : '';
+            ? ` data-talent="${esc(item)}" role="button" tabindex="0" title="Voir la description"` : '';
         const actionBtn = editing
-            ? `<button class="career-tag-action" data-rang="${rang}" data-kind="${kind}" data-action="${isRem ? 'restore' : 'remove'}" data-name="${item}" title="${isRem ? 'Restaurer' : 'Retirer'}">${isRem ? '↺' : '×'}</button>`
+            ? `<button class="career-tag-action" data-rang="${rang}" data-kind="${kind}" data-action="${isRem ? 'restore' : 'remove'}" data-name="${esc(item)}" title="${isRem ? 'Restaurer' : 'Retirer'}">${isRem ? '↺' : '×'}</button>`
             : '';
-        chips.push(`<span class="${baseCls}"${talAttr}>${item}${actionBtn}</span>`);
+        chips.push(`<span class="${baseCls}"${talAttr}>${esc(item)}${actionBtn}</span>`);
     });
 
     // Chips ajoutées (★)
     added.forEach(item => {
         const baseCls = `career-tag career-tag-added${isTalent ? ' career-tag-talent' : ''}`;
         const talAttr = isTalent
-            ? ` data-talent="${item}" role="button" tabindex="0" title="Voir la description"` : '';
+            ? ` data-talent="${esc(item)}" role="button" tabindex="0" title="Voir la description"` : '';
         const actionBtn = editing
-            ? `<button class="career-tag-action" data-rang="${rang}" data-kind="${kind}" data-action="remove-added" data-name="${item}" title="Retirer cet ajout">×</button>`
+            ? `<button class="career-tag-action" data-rang="${rang}" data-kind="${kind}" data-action="remove-added" data-name="${esc(item)}" title="Retirer cet ajout">×</button>`
             : '';
-        chips.push(`<span class="${baseCls}"${talAttr}><span class="career-tag-added-mark">★</span> ${item}${actionBtn}</span>`);
+        chips.push(`<span class="${baseCls}"${talAttr}><span class="career-tag-added-mark">★</span> ${esc(item)}${actionBtn}</span>`);
     });
 
     if (editing) {
@@ -1322,7 +1322,7 @@ function renderCareerDetail() {
         prereqHtml = `
         <div class="career-prereq-banner" title="Prérequis d'entrée dans cette sous-carrière">
             <span class="career-prereq-icon">⚑</span>
-            Prérequis : <strong>${career.prereq.career}</strong> — rang ${career.prereq.minRang} minimum
+            Prérequis : <strong>${esc(career.prereq.career)}</strong> — rang ${esc(career.prereq.minRang)} minimum
         </div>`;
     }
 
@@ -1348,7 +1348,7 @@ function renderCareerDetail() {
             <select class="career-variant-sel" data-rang="${r}" title="Choisir la variante de ce rang">
                 ${noneOpt}
                 ${variants.map(v =>
-                    `<option value="${v.titre}" ${chosen?.titre === v.titre ? 'selected' : ''}>${v.titre}</option>`
+                    `<option value="${esc(v.titre)}" ${chosen?.titre === v.titre ? 'selected' : ''}>${esc(v.titre)}</option>`
                 ).join('')}
             </select>`;
         }
@@ -1369,7 +1369,7 @@ function renderCareerDetail() {
         <div class="career-rang-section${isPast ? ' career-rang-past' : ''}${editing ? ' career-rang-editing' : ''}">
             <div class="career-rang-header">
                 <span class="career-rang-badge${isPast ? ' career-rang-badge-past' : ''}">Rang ${r}</span>
-                <span class="career-rang-titre">${displayed.titre}</span>
+                <span class="career-rang-titre">${esc(displayed.titre)}</span>
                 ${statusBadge}
                 ${modifiedBadge}
                 ${variantPicker}
@@ -1391,7 +1391,7 @@ function renderCareerDetail() {
     panel.style.display = '';
     panel.innerHTML = `
         <div class="fiche-section career-detail-section">
-            <h2>${career.nom} — ${currentVariant.titre} <span class="career-rang-badge">Rang ${rang}</span></h2>
+            <h2>${esc(career.nom)} — ${esc(currentVariant.titre)} <span class="career-rang-badge">Rang ${esc(rang)}</span></h2>
             ${prereqHtml}
             <div class="career-detail-carac">
                 <span class="career-detail-label">Caractéristiques :</span>
@@ -1493,9 +1493,9 @@ function renderCareers() {
     tbody.innerHTML = state.careers.length === 0
         ? `<tr class="empty-row"><td colspan="4">Aucune ancienne carrière</td></tr>`
         : state.careers.map((c, i) => `<tr>
-            <td><input class="career-input" type="text" data-idx="${i}" data-field="nom" value="${c.nom}" placeholder="Nom de la carrière"></td>
-            <td><input class="career-rang" type="number" data-idx="${i}" data-field="rang" min="1" max="4" value="${c.rang ?? 1}"></td>
-            <td><input class="career-note" type="text" data-idx="${i}" data-field="note" value="${c.note}" placeholder="Notes…"></td>
+            <td><input class="career-input" type="text" data-idx="${i}" data-field="nom" value="${esc(c.nom)}" placeholder="Nom de la carrière"></td>
+            <td><input class="career-rang" type="number" data-idx="${i}" data-field="rang" min="1" max="4" value="${esc(c.rang ?? 1)}"></td>
+            <td><input class="career-note" type="text" data-idx="${i}" data-field="note" value="${esc(c.note)}" placeholder="Notes…"></td>
             <td><button class="btn-rm" data-type="career" data-idx="${i}" title="Supprimer">×</button></td>
         </tr>`).join('');
     if (!_careersBound) {
@@ -1545,10 +1545,10 @@ function renderTalents() {
                     <button class="btn-rm talent-rm" data-idx="${i}" title="Annuler">×</button>
                 </span>`;
             }
-            const hors = t.note ? ` <span class="talent-hors-badge" title="${t.note}">!</span>` : '';
+            const hors = t.note ? ` <span class="talent-hors-badge" title="${esc(t.note)}">!</span>` : '';
             return `<span class="talent-chip-wrap">
                 <button class="talent-chip career-tag-talent" data-idx="${i}"
-                        title="Cliquer pour voir la description">${t.nom}${hors}</button>
+                        title="Cliquer pour voir la description">${esc(t.nom)}${hors}</button>
                 <button class="btn-rm talent-rm" data-idx="${i}" title="Supprimer">×</button>
             </span>`;
         }).join('');
@@ -1594,14 +1594,14 @@ function renderSorts() {
     tbody.innerHTML = state.sorts.length === 0
         ? `<tr class="empty-row"><td colspan="7">Aucun sort</td></tr>`
         : state.sorts.map((s, i) => `<tr>
-            <td><input class="sort-input" type="text" data-idx="${i}" data-field="nom" value="${s.nom}" placeholder="Nom du sort"></td>
+            <td><input class="sort-input" type="text" data-idx="${i}" data-field="nom" value="${esc(s.nom)}" placeholder="Nom du sort"></td>
             <td><select class="sort-vent" data-idx="${i}">
                 ${VENTS.map(v => `<option value="${v}" ${s.vent===v?'selected':''}>${v}</option>`).join('')}
             </select></td>
-            <td><input class="sort-cn" type="number" data-idx="${i}" data-field="cn" min="0" value="${s.cn ?? 0}" style="width:52px"></td>
-            <td><input class="sort-input" type="text" data-idx="${i}" data-field="portee" value="${s.portee}" placeholder="Portée"></td>
-            <td><input class="sort-input" type="text" data-idx="${i}" data-field="duree" value="${s.duree}" placeholder="Durée"></td>
-            <td><input class="sort-input sort-wide" type="text" data-idx="${i}" data-field="resume" value="${s.resume}" placeholder="Résumé de l'effet"></td>
+            <td><input class="sort-cn" type="number" data-idx="${i}" data-field="cn" min="0" value="${esc(s.cn ?? 0)}" style="width:52px"></td>
+            <td><input class="sort-input" type="text" data-idx="${i}" data-field="portee" value="${esc(s.portee)}" placeholder="Portée"></td>
+            <td><input class="sort-input" type="text" data-idx="${i}" data-field="duree" value="${esc(s.duree)}" placeholder="Durée"></td>
+            <td><input class="sort-input sort-wide" type="text" data-idx="${i}" data-field="resume" value="${esc(s.resume)}" placeholder="Résumé de l'effet"></td>
             <td><button class="btn-rm" data-type="sort" data-idx="${i}" title="Supprimer">×</button></td>
         </tr>`).join('');
     if (!_sortsBound) {
@@ -1641,12 +1641,12 @@ function renderPrieres() {
     tbody.innerHTML = state.prieres.length === 0
         ? `<tr class="empty-row"><td colspan="4">Aucune prière / miracle</td></tr>`
         : state.prieres.map((p, i) => `<tr>
-            <td><input class="priere-input" type="text" data-idx="${i}" data-field="nom" value="${p.nom}" placeholder="Nom"></td>
+            <td><input class="priere-input" type="text" data-idx="${i}" data-field="nom" value="${esc(p.nom)}" placeholder="Nom"></td>
             <td><select class="priere-type" data-idx="${i}">
                 <option value="Bénédiction" ${p.type==='Bénédiction'?'selected':''}>Bénédiction</option>
                 <option value="Miracle"     ${p.type==='Miracle'?'selected':''}>Miracle</option>
             </select></td>
-            <td><input class="priere-input sort-wide" type="text" data-idx="${i}" data-field="resume" value="${p.resume}" placeholder="Résumé des effets"></td>
+            <td><input class="priere-input sort-wide" type="text" data-idx="${i}" data-field="resume" value="${esc(p.resume)}" placeholder="Résumé des effets"></td>
             <td><button class="btn-rm" data-type="priere" data-idx="${i}" title="Supprimer">×</button></td>
         </tr>`).join('');
     if (!_prieresBound) {
@@ -1687,18 +1687,18 @@ function renderXpLog() {
         if (e.kind === 'gain') {
             return `<tr class="xp-gain-row">
                 <td><span class="xp-gain-badge">Gain</span></td>
-                <td><input class="xp-gain-raison" type="text" data-idx="${i}" value="${e.raison ?? ''}" placeholder="Raison…"></td>
-                <td class="col-num"><input class="xp-gain-montant" type="number" data-idx="${i}" min="0" value="${e.montant ?? 0}" style="width:60px"></td>
+                <td><input class="xp-gain-raison" type="text" data-idx="${i}" value="${esc(e.raison ?? '')}" placeholder="Raison…"></td>
+                <td class="col-num"><input class="xp-gain-montant" type="number" data-idx="${i}" min="0" value="${esc(e.montant ?? 0)}" style="width:60px"></td>
                 <td></td>
                 <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer">×</button></td>
             </tr>`;
         }
         if (e.applied) {
             return `<tr class="xp-applied-row">
-                <td>${e.type}</td>
-                <td>${e.achat} <span class="xp-applied-badge">✓</span></td>
-                <td class="col-num">${e.cout}</td>
-                <td><input class="xp-note" type="text" data-idx="${i}" data-field="note" value="${e.note ?? ''}" placeholder="Note…"></td>
+                <td>${esc(e.type)}</td>
+                <td>${esc(e.achat)} <span class="xp-applied-badge">✓</span></td>
+                <td class="col-num">${esc(e.cout)}</td>
+                <td><input class="xp-note" type="text" data-idx="${i}" data-field="note" value="${esc(e.note ?? '')}" placeholder="Note…"></td>
                 <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer (annule l'effet)">×</button></td>
             </tr>`;
         }
@@ -1706,9 +1706,9 @@ function renderXpLog() {
             <td><select class="xp-type-sel" data-idx="${i}">
                 ${XP_TYPES.map(t => `<option value="${t}" ${e.type===t?'selected':''}>${t}</option>`).join('')}
             </select></td>
-            <td><input class="xp-achat" type="text" data-idx="${i}" data-field="achat" value="${e.achat ?? ''}" placeholder="Achat (ex: +5 CC)"></td>
-            <td><input class="xp-cout" type="number" data-idx="${i}" data-field="cout" min="0" value="${e.cout ?? 0}" style="width:60px"></td>
-            <td><input class="xp-note" type="text" data-idx="${i}" data-field="note" value="${e.note ?? ''}" placeholder="Note…"></td>
+            <td><input class="xp-achat" type="text" data-idx="${i}" data-field="achat" value="${esc(e.achat ?? '')}" placeholder="Achat (ex: +5 CC)"></td>
+            <td><input class="xp-cout" type="number" data-idx="${i}" data-field="cout" min="0" value="${esc(e.cout ?? 0)}" style="width:60px"></td>
+            <td><input class="xp-note" type="text" data-idx="${i}" data-field="note" value="${esc(e.note ?? '')}" placeholder="Note…"></td>
             <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer">×</button></td>
         </tr>`;
     }

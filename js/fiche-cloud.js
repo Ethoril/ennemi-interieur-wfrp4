@@ -2,14 +2,17 @@ import { db } from './firebase-init.js';
 import { auth, watchAuth, loginWithGoogle, logout, ADMIN_EMAIL as GM_EMAIL } from './auth.js';
 import { doc, setDoc, getDoc, serverTimestamp, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { ficheLoadCloud, exportData } from './fiche.js';
+import { esc } from './utils.js';
 
 /* ── Configuration Personnage et Accès ─────────────────────────── */
+const CHAR_IDS = ['bhelgi', 'caelel', 'elysia', 'hellaya', 'wren', 'test'];
 const urlParams = new URLSearchParams(window.location.search);
 const charId = urlParams.get('char');
 
-if (!charId) {
-    alert("Aucun personnage spécifié. Redirection vers le groupe...");
-    window.location.href = "groupe.html";
+if (!charId || !CHAR_IDS.includes(charId)) {
+    alert("Aucun personnage valide spécifié. Redirection vers le groupe…");
+    window.location.href = 'groupe.html';
+    throw new Error('charId invalide');   // stoppe l'évaluation du module
 }
 
 
@@ -89,7 +92,7 @@ watchAuth(async (user, isAdmin) => {
         if (!isUserAuthorized(user, charId)) {
             // Utilisateur connecté mais sans accès
             bar.innerHTML = `
-                <span class="fiche-auth-user">☁ ${user.displayName || user.email}</span>
+                <span class="fiche-auth-user">☁ ${esc(user.displayName || user.email)}</span>
                 <button class="fiche-auth-btn" id="btn-cloud-signout">Déconnexion</button>`;
             document.getElementById('btn-cloud-signout')
                 ?.addEventListener('click', () => logout());
@@ -105,7 +108,7 @@ watchAuth(async (user, isAdmin) => {
         }
 
         bar.innerHTML = `
-            <span class="fiche-auth-user">☁ ${user.displayName || user.email}</span>
+            <span class="fiche-auth-user">☁ ${esc(user.displayName || user.email)}</span>
             <span class="fiche-cloud-status" id="fiche-cloud-status"></span>
             ${resetButtonHtml}
             <button class="fiche-auth-btn" id="btn-cloud-signout">Déconnexion</button>`;
