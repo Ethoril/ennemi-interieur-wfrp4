@@ -1,12 +1,37 @@
-## [Non publié]
+## [2.13.2] - 2026-08-11
 
-### Documentation
-- **Briefs de correction** : ajout de `docs/briefs/` — vingt briefs de développement issus de
-  l'audit technique de la v2.13.1, répartis en deux lots (v2.13.2 sécurité, v2.14.0 qualité),
-  accompagnés d'un socle de contraintes communes (`00-CONVENTIONS.md`). Aucune modification du
-  code du site : `APP_VERSION` reste à v2.13.1.
-- **Entrées 2.13.0 et 2.13.1 manquantes** : à rédiger lors de la clôture du lot 1 (brief
-  `L1-05`), l'accueil Three.js n'ayant jamais été documenté ici.
+### Sécurité
+- **Injection HTML sur le Calendrier (critique)** : les pseudos des votants et les libellés de dates sont désormais échappés avant affichage, dans les trois états de la page (sondage ouvert vu par le MJ, vu par un visiteur, et sondage clôturé) ainsi que dans la modale de détail des votes et dans le courriel de notification. Le vote étant anonyme, n'importe quel visiteur pouvait jusqu'ici faire exécuter du script chez tous les autres, dont le Maître de Jeu — la seule session disposant d'un accès en écriture aux fiches, aux PNJs et aux indices. Le pseudo est également borné à 40 caractères et refuse les caractères de contrôle.
+- **Injection HTML sur les fiches de personnages** : échappement des libellés d'achat XP, coûts, noms de sorts, notes de carrières, résumés de prières, noms de compétences, spécialisations personnalisées et talents ajoutés à la main. Ces valeurs étant stockées dans le cloud, une fiche de joueur pouvait atteindre la session du Maître de Jeu à l'ouverture. Les listes de suggestions et les puces du panneau de carrière sont couvertes.
+- **Validation du personnage demandé** : le paramètre `char` de la fiche est vérifié contre la liste des personnages connus ; une valeur inconnue redirige vers Le Groupe sans créer de sauvegarde locale parasite.
+- **Règles Firebase versionnées** *(préparé, déploiement à venir)* : les règles Firestore et Storage entrent dans le dépôt sous forme de briefs, en vue de rendre les indices non découverts illisibles hors Maître de Jeu et d'empêcher la collection `mail` de servir de relais.
+
+### Qualité
+- **Documentation de correction** : ajout de `docs/briefs/` — vingt briefs de développement issus de l'audit technique de la v2.13.1, répartis en deux lots (v2.13.2 sécurité, v2.14.0 qualité), accompagnés d'un socle de contraintes communes.
+
+### PWA & Cache
+- **Incrémentation du cache** : passage en `wfrp-cache-v8` pour que les correctifs de sécurité remplacent immédiatement les fichiers stockés dans les navigateurs.
+
+## [2.13.1] - 2026-06-11
+
+### Accueil
+- **Espace de défilement supplémentaire** : ajout de hauteur avant la vue finale, pour que les cartes de navigation soient sorties de l'écran au moment où la caméra plonge sur les toits d'Altdorf.
+
+## [2.13.0] - 2026-06-11
+
+### Accueil — « La Comète à deux queues »
+- **Scène 3D au défilement** : l'accueil s'ouvre sur une scène en quatre chapitres qui se déroule au fil du scroll — ciel étoilé, comète à deux queues de Sigmar, Morrslieb la lune du Chaos, puis la silhouette d'Altdorf en contrebas.
+- **Le visage de Morrslieb** : un visage démoniaque se révèle dans la lune en fin de défilement, clin d'œil à la Geheimnisnacht.
+- **Textures entièrement procédurales** : aucune image n'est téléchargée pour la scène, tout est généré au chargement.
+- **Thème sombre par défaut** : le thème sombre devient celui de tous les visiteurs, puisqu'il porte la scène. Les préférences enregistrées ont été réinitialisées une seule fois ; tout choix manuel fait ensuite avec le bouton ☀️/🌙 reste respecté.
+- **Repli intégral sur le design classique** : la scène est ignorée sans WebGL, sur mobile (moins de 768 px), en thème parchemin, et pour les visiteurs préférant les animations réduites. Le site garde alors exactement son apparence précédente.
+- **Ménagement des machines** : qualité réduite entre 768 et 1200 px, rendu en pause quand l'onglet est masqué, et passage à 30 images par seconde après cinq secondes sans défilement.
+
+### Technique
+- **Three.js 0.180.0** chargé par carte d'import depuis le CDN.
+
+### PWA & Cache
+- **Incrémentation du cache** : passage en `wfrp-cache-v7` avec les nouveaux fichiers de la scène.
 
 ## [2.12.0] - 2026-06-03
 
