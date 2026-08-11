@@ -119,6 +119,63 @@ pour rester cohérent avec les messages d'erreur existants.
 
 ---
 
+## Données en production — un sondage est en cours
+
+**Au 11 août 2026, `doodle/current` contient un sondage ouvert : 15 dates et 4 réponses de
+joueurs.** Ces réponses ne doivent être écrasées sous aucun prétexte. Une sauvegarde du
+document existe hors dépôt (`../doodle-current-BACKUP-2026-08-11.json`), mais elle est un
+filet, pas une autorisation.
+
+### Les deux chemins de destruction
+
+**1. Perdre `{ merge: true }`.** L'écriture de `submitVote()` est :
+
+```js
+await setDoc(docRef, { responses: { [nameToSave]: votes } }, { merge: true });
+```
+
+Sans `{ merge: true }`, ce `setDoc` **remplace le document entier** : les 15 dates, le drapeau
+`closed` et les réponses des trois autres joueurs disparaissent. Cette option n'est pas un
+détail de style, c'est ce qui rend l'écriture non destructrice. Même remarque pour les écritures
+de `btnSaveDates`, `btnAdminClose` et de la suppression d'une réponse.
+
+Seul `btnCreatePoll` écrit **sans** `merge`, et c'est volontaire : il crée un nouveau sondage.
+Ne pas y toucher, et ne pas cliquer sur « Lancer le sondage » pendant les essais.
+
+**2. Échapper `nameToSave` avant l'écriture.** La variable est utilisée à trois endroits, et un
+seul demande un échappement :
+
+| Usage | Traitement |
+|---|---|
+| clé de la map `responses` dans `setDoc` | **valeur brute** — l'échapper créerait un votant en double (`Jean-Loup d&#39;Altdorf`) et orphelinerait la réponse d'origine |
+| `subject` du courriel | **valeur brute** — c'est un champ texte, pas du HTML |
+| `html` du courriel | **`esc(nameToSave)`** — seul site à échapper |
+
+Règle générale : **`esc()` s'applique au rendu, jamais avant une écriture.** Firestore et
+`state` contiennent toujours la valeur brute.
+
+### Essais sans toucher au sondage réel
+
+Les charges utiles de la checklist (`<img src=x onerror=alert(1)>`, pseudo de 41 caractères)
+créeraient de vrais votants parasites dans le sondage en cours, que le MJ devrait ensuite
+supprimer un par un.
+
+Pendant les essais uniquement, faire pointer le module sur un document de test :
+
+```js
+// js/doodle.js, ~l. 43 — TEMPORAIRE, à remettre sur 'current' avant de committer
+const docRef = doc(db, 'doodle', 'test');
+```
+
+Créer le sondage de test depuis l'interface MJ, dérouler la checklist dessus, puis **rétablir
+`'current'`**. Contrôle obligatoire avant le commit :
+
+```bash
+grep -n "doc(db, 'doodle'" js/doodle.js    # doit afficher 'current', jamais 'test'
+```
+
+Un commit qui laisse `'test'` casse le calendrier pour tous les joueurs sans erreur visible.
+
 ## Ne pas faire
 
 - **Ne pas réécrire les rendus en `createElement`/`textContent`.** Cette option a été
@@ -127,6 +184,14 @@ pour rester cohérent avec les messages d'erreur existants.
 - **Ne pas toucher au CSS ni aux attributs `style=`.** Les 56 styles en ligne de ce fichier
   sont traités par le brief `L2-04`. Ce brief ne doit rien changer à l'apparence.
 - **Ne pas modifier la logique de vote**, ni le tri des joueurs, ni le calcul des totaux.
+- **Ne toucher à aucun chemin d'écriture Firestore.** Ce brief ajoute des appels à `esc()` dans
+  les fonctions de rendu et une validation en amont d'une écriture. Les appels `setDoc`,
+  `deleteDoc` et `addDoc` eux-mêmes, leurs arguments et leurs options restent identiques au
+  caractère près — à la seule exception de `esc()` appliqué au champ `html` du courriel.
+- **Ne pas restructurer `submitVote()`.** La validation du pseudo s'insère telle quelle, après
+  le contrôle du nom réservé au MJ et avant tout le reste. Ne pas déplacer les lignes
+  existantes, ne pas factoriser, ne pas extraire de fonction : c'est la fonction qui écrit dans
+  le sondage en cours.
 
 ---
 
@@ -154,6 +219,18 @@ pour rester cohérent avec les messages d'erreur existants.
       `<button>` visible en clair, ce qui signalerait un fragment de balisage échappé par
       erreur.
 - [ ] Console du navigateur vide.
+
+### Intégrité du sondage en cours — à vérifier en dernier, avant le commit
+
+- [ ] `grep -n "doc(db, 'doodle'" js/doodle.js` affiche `'current'` et non `'test'`.
+- [ ] `grep -c "merge: true" js/doodle.js` renvoie la même valeur qu'avant modification.
+- [ ] `nameToSave` n'est **pas** échappé dans l'appel `setDoc` ni dans le `subject` du courriel.
+- [ ] Sur la page réelle : les **15 dates** sont là, les **4 votants** (Marie, David, rodo,
+      Morgane) sont là avec leurs disponibilités inchangées, le sondage est toujours ouvert.
+- [ ] Aucun votant parasite issu des essais (`<img…>`, pseudo de 41 caractères) ne subsiste
+      dans le sondage réel. S'il y en a, les supprimer via le bouton poubelle du MJ.
+- [ ] En cas de doute sur l'état du document, le comparer à
+      `../doodle-current-BACKUP-2026-08-11.json`.
 
 ---
 
