@@ -1,3 +1,14 @@
+## [2.13.4] - 2026-08-17
+
+### Personnages — perte de données corrigée
+- **Consulter une fiche ne peut plus en détruire le contenu (critique).** Le code choisissait entre la copie du cloud et celle du navigateur en comparant deux horloges différentes, celle du poste et celle du serveur. Or afficher une fiche suffisait à marquer la copie locale comme la plus récente : ouvrir une fiche pour la lire pouvait donc reverser un vieux cache par-dessus les modifications de quelqu'un d'autre. L'arbitrage repose désormais sur une information vérifiable — cette copie porte-t-elle des modifications qui n'ont pas encore été envoyées.
+- **Les modifications faites juste avant de quitter la page ne sont plus perdues.** La sauvegarde vers le cloud attendait deux secondes ; fermer l'onglet, changer de page ou verrouiller son téléphone dans cet intervalle l'annulait sans rien dire. L'envoi est maintenant forcé au moment où la page disparaît, y compris sur mobile où l'ancien mécanisme ne se déclenchait pas du tout.
+- **Deux modifications rapprochées ne s'écrasent plus.** Une sauvegarde demandée pendant qu'une autre était en cours était purement abandonnée ; elle est désormais mise en file et envoyée à la suite.
+- **Un échec d'enregistrement est visible.** Le message « ⚠ Non enregistré » s'affiche au lieu d'un silence qui laissait croire que tout était sauvegardé.
+
+### PWA & Cache
+- **Incrémentation du cache** : passage en `wfrp-cache-v10`.
+
 ## [2.13.3] - 2026-08-17
 
 ### Sécurité
