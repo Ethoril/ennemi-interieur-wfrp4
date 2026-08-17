@@ -21,11 +21,11 @@ const _charParam = new URLSearchParams(window.location.search).get('char');
 const STORAGE_KEY = 'wfrp4-fiche-' + (_charParam || 'test');
 
 const PORTRAITS = {
-    bhelgi: { webp: 'img/Bhelgi.webp', png: 'img/Bhelgi.png', alt: 'Bhelgi' },
-    caelel: { webp: 'img/Caelel.webp', png: 'img/Caelel.png', alt: 'Caelel' },
-    elysia: { webp: 'img/Elysia.webp', png: 'img/Elysia.png', alt: 'Elysia' },
-    hellaya: { webp: 'img/Hellaya.webp', png: 'img/Hellaya.png', alt: 'Hellaya' },
-    wren: { webp: 'img/Wren.webp', png: 'img/Wren.png', alt: 'Wren' }
+    bhelgi:  { src: 'img/Bhelgi.webp',  alt: 'Bhelgi'  },
+    caelel:  { src: 'img/Caelel.webp',  alt: 'Caelel'  },
+    elysia:  { src: 'img/Elysia.webp',  alt: 'Elysia'  },
+    hellaya: { src: 'img/Hellaya.webp', alt: 'Hellaya' },
+    wren:    { src: 'img/Wren.webp',    alt: 'Wren'    },
 };
 const PORTRAIT_KEYS = Object.keys(PORTRAITS);
 
@@ -1925,12 +1925,7 @@ function updateCharacterPortrait() {
     const portrait = PORTRAITS[charKey];
     if (portrait) {
         portraitEl.classList.remove('character-portrait--placeholder');
-        portraitEl.innerHTML = `
-            <picture>
-                <source srcset="${portrait.webp}" type="image/webp">
-                <img src="${portrait.png}" alt="${portrait.alt}" loading="lazy">
-            </picture>
-        `;
+        portraitEl.innerHTML = `<img src="${portrait.src}" alt="${esc(portrait.alt)}" loading="lazy">`;
     } else {
         portraitEl.classList.add('character-portrait--placeholder');
         portraitEl.innerHTML = '📜';
