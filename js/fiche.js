@@ -4,9 +4,6 @@ import { cloudSave } from './fiche-cloud.js';
 // Promesse de chargement des bases de données JSON et statut du cloud
 export const dbLoadingPromise = Promise.all([loadCareersData(), loadSkillsData()]);
 export let isCloudLoaded = false;
-export function setCloudLoaded(val) {
-    isCloudLoaded = val;
-}
 
 
 // ── Constantes ────────────────────────────────────────

@@ -5,6 +5,13 @@ let targetProgress = 0;
 let anchors = [];
 let ro = null;
 
+// Point d'entrée de test, utilisé par les captures d'écran : il sert à figer la
+// caméra sur un chapitre précis sans avoir à défiler. Conditionné pour ne pas
+// laisser en production un levier qui modifie la scène depuis la console.
+// Usage : ouvrir `index.html?hero3dDebug=1`, puis affecter
+// `window.__HERO3D_PROGRESS` à une valeur de 0 (départ) à 4 (fin du défilement).
+const debugProgression = new URLSearchParams(window.location.search).get('hero3dDebug') === '1';
+
 // Points clés de la caméra (x, y, z)
 // Chapitre 1: Base (0)
 // Chapitre 2: Avancée vers la comète (1)
@@ -116,8 +123,7 @@ export function isIdle() {
 }
 
 export function updateCamera(camera, deltaTime) {
-  // Hook de test : force la progression (utilisé par les captures headless)
-  if (window.__HERO3D_PROGRESS != null) {
+  if (debugProgression && window.__HERO3D_PROGRESS != null) {
     targetProgress = window.__HERO3D_PROGRESS;
     scrollProgress = targetProgress;
   }
