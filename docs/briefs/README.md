@@ -45,9 +45,9 @@ et `L2-01` avant `L2-02`.
 | [L2-09](L2-09-libelles-annonces.md) | Libellés de formulaire et annonces | N3 | 1 h |
 | [L2-10](L2-10-reperes-focus.md) | Repères de page et indicateur de focus | N3 | 45 min |
 | [L2-11](L2-11-modale-confirmation.md) | Modale de confirmation | N4 | 2 h |
-| [L2-12](L2-12-service-worker.md) | Service worker : hors-ligne et version liée | N5, N8 | 1 h 30 |
+| [L2-12](L2-12-service-worker.md) | Service worker : hors-ligne et version liée — **relu, en attente de livraison** | N5, N8 | — |
 | [L2-13](L2-13-hygiene.md) | Encodage, code mort, fichiers obsolètes | N2, N6 | 1 h |
-| [L2-14](L2-14-ci-lint.md) | Contrôles de syntaxe et ESLint en CI | N7 | 1 h 30 |
+| [L2-14](L2-14-ci-lint.md) | Contrôles de syntaxe et ESLint en CI — **relu, en attente de livraison** | N7 | — |
 | ~~[L2-16](L2-16-calendrier-date-reelle.md)~~ | ~~Calendrier impérial calé sur la date du jour~~ — **livré en v2.13.3** | hors audit | — |
 | [L2-15](L2-15-cloture-lot2.md) | CHANGELOG, version, livraison | N1 | 45 min |
 
@@ -65,7 +65,17 @@ et `L2-01` avant `L2-02`.
   de pré-cache citait `css/style.css`, supprimé par ce même brief, ce qui faisait échouer
   l'installation du service worker en silence (`cache.addAll()` est atomique).
 
-Il reste donc **9 briefs** au lot 2 : `L2-04`, `L2-08` à `L2-15`.
+### Relus, sur branche, pas encore livrés
+
+- **`L2-12`** et **`L2-14`**, sur `lot-2-outillage` (`e4d401f`, `f96fddb`, plus `3105cfa` qui solde
+  la relecture). Vérifié hors navigateur : les 50 ressources locales et les 6 URL CDN du pré-cache
+  répondent 200, `npm run lint` sort 0 erreur et 0 avertissement sur 27 fichiers, `node --check`
+  passe sur 26, et le contrôle de cohérence de version fonctionne malgré le `"type": "module"`
+  ajouté par `L2-14`. **Checklist navigateur validée par le MJ** le 17 août 2026. Une scorie est
+  reportée dans `L2-15` étape 3 : `offline.html` n'a pas de `<link rel="icon">` et sa CSP bloque
+  la requête implicite vers `/favicon.ico`.
+
+Il reste donc **7 briefs** à traiter au lot 2 : `L2-04`, `L2-08` à `L2-11`, `L2-13`, `L2-15`.
 
 ## Hors périmètre
 
