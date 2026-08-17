@@ -1,0 +1,10 @@
+# Fins de ligne LF dans le dépôt quel que soit le poste : c'est ce que
+# l'historique contient déjà, on l'y fixe pour que core.autocrlf d'un poste
+# Windows ne puisse plus faire diverger l'index.
+* text=auto eol=lf
+
+# Binaires : jamais de normalisation, ni de tentative de diff.
+*.webp  binary
+*.png   binary
+*.jpg   binary
+*.svg   text eol=lf
