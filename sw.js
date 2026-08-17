@@ -2,7 +2,9 @@ const CACHE_NAME = 'wfrp-cache-v11';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './css/style.css',
+  './css/base.css',
+  './css/components.css',
+  './css/theme-parchment.css',
   './css/hero3d.css',
   './js/main.js',
   './js/layout.js',
