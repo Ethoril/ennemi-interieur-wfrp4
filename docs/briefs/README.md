@@ -101,29 +101,22 @@ Il reste donc **6 briefs** à traiter au lot 2 : `L2-04`, `L2-08` à `L2-11`, `L
   sur fiche papier. Le volet export et import JSON du constat I3 reste, lui, au programme
   (`L2-02`).
 
-## Décisions ouvertes
+## Ce que la règle des données personnelles ne couvre pas
 
-### Des prénoms civils subsistent dans le dépôt, dont un comme clé de données
+La convention [§8](00-CONVENTIONS.md) interdit le nom civil de quiconque dans ce dépôt public.
+**Les prénoms des votants du Calendrier n'entrent pas dans cette interdiction** : ils sont le
+principe même de la fonctionnalité — on vote sous son prénom, et celui du MJ est réservé pour que
+sa ligne soit créée d'office et triée en premier. Tranché par le MJ le 17 août 2026 après un
+signalement à tort pendant `L2-13`.
 
-Relevé pendant `L2-13`, le 17 août 2026. La convention [§8](00-CONVENTIONS.md) interdit le nom
-civil de quiconque dans ce dépôt public. Il en reste sept occurrences, réparties en trois
-catégories qui ne se traitent pas de la même façon :
+Sont donc normaux, et à ne pas « corriger » : la clé de la map `responses` écrite par
+`js/doodle.js`, le nom réservé, le tri, le modèle d'e-mail, et les prénoms cités en exemple dans
+les checklists des briefs et le CHANGELOG.
 
-1. **`js/doodle.js` — dont une clé de données.** À la création d'un sondage, le module écrit une
-   entrée de la map `responses` dont la clé est un prénom civil ; trois autres occurrences servent
-   au tri, à la réservation du nom et au modèle d'e-mail. **Ce n'est pas une correction
-   mécanique** : renommer la clé orpheline les votes déjà enregistrés dans Firestore et demande
-   une migration de données. Décision du MJ, pas du code.
-2. **`CHANGELOG.md`** — une occurrence, texte rédactionnel, sans risque à corriger.
-3. **Deux briefs de `docs/briefs/`** — texte également, mais l'une des occurrences relève d'une
-   catégorie plus sensible que celle du MJ. Voir le relevé remis au MJ hors dépôt.
+Ce que §8 visait reste entier : **adresses électroniques de joueurs, jetons, clés privées**, et le
+nom civil de personnes qui ne se sont pas exposées elles-mêmes.
 
-`L2-13` n'a traité que le cas sans conséquence : le plan archivé dans `docs/archives/`. Dans tous
-les cas, corriger le fichier ne retire rien de l'historique Git, et l'en effacer exigerait la
-réécriture plus l'intervention du support GitHub déjà subies en août 2026. À trancher : agir sur
-le texte seulement, migrer la donnée, ou assumer.
-
-### La validation du pseudo des votants
+## Une décision reste ouverte
 
 Elle se pose dans le brief `L1-04` et **ne doit pas être tranchée sans validation** :
 
