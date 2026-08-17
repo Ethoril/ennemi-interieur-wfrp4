@@ -1,3 +1,14 @@
+## [2.14.0] - 2026-08-17
+
+### Personnages
+- **Export et import de la fiche** : deux boutons en bas de la fiche permettent de télécharger une sauvegarde complète au format JSON et de la restaurer. Le fichier est daté et identifié, à conserver hors du navigateur — c'est le filet de sécurité qui manquait. Réimporter écrase la fiche courante après confirmation, et l'état restauré part aussitôt vers le cloud.
+
+### Performance
+- **31 Mo d'images supprimés** : un fond décoratif de 14 Mo qui n'était référencé nulle part, et les cinq images de repli au format PNG, devenues inutiles depuis que tous les navigateurs lisent le WebP. Le dossier d'images passe de 32 Mo à moins de 1 Mo.
+
+### PWA & Cache
+- **Incrémentation du cache** : passage en `wfrp-cache-v11`.
+
 ## [2.13.4] - 2026-08-17
 
 ### Personnages — perte de données corrigée
