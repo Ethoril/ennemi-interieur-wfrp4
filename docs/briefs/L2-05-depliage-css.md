@@ -9,7 +9,7 @@
 | **Estimation** | 1 h |
 | **Fichiers** | les 11 pages HTML, `js/layout.js`, `css/base.css` ; suppression de `css/style.css`, `css/layout.css`, `css/pnjs.css` |
 | **Dépend de** | — |
-| **À traiter avant** | `L2-12` — la liste de pré-cache du service worker cite `css/style.css` |
+| **À traiter avant** | `L2-12` — voir le point 6, obligatoire dans ce brief |
 
 ---
 
@@ -98,6 +98,26 @@ git rm css/style.css css/layout.css css/pnjs.css
 `css/style.css` ne contenait que les `@import`. Les deux autres sont vides — vérifier avant
 suppression qu'ils le sont bien restés.
 
+### 6. Corriger `sw.js` dans le MÊME commit — obligatoire
+
+`ASSETS_TO_CACHE` cite `./css/style.css`. Ce fichier n'existant plus, la liste contient une URL
+qui renvoie 404 — et **`cache.addAll()` est atomique** : une seule URL en échec fait rejeter
+l'installation entière du service worker, **silencieusement**. Le nouveau service worker
+n'atteint jamais l'état `activated`, le cache n'est plus jamais purgé, et rien ne le signale
+dans la console.
+
+Remplacer la ligne par les trois feuilles réelles :
+
+```js
+  './css/base.css',
+  './css/components.css',
+  './css/theme-parchment.css',
+```
+
+Ce n'est pas le travail de `L2-12`, qui élargira la liste plus tard : c'est la réparation
+immédiate de ce que ce brief casse. Vérifier ensuite dans l'onglet Application des outils de
+développement que le service worker passe bien en `activated`.
+
 ---
 
 ## Ne pas faire
@@ -138,6 +158,9 @@ de toutes les pages. La vérification page par page n'est pas optionnelle.
 - [ ] `pnjs.html` : le graphe s'affiche, la modale de recadrage Cropper est stylée.
 - [ ] Rendu mobile 375 px sur les onze pages.
 - [ ] Aucune 404 dans la console sur aucune page.
+- [ ] **Onglet Application → Service Workers : le worker est en état `activated`.** Une
+      installation échouée est silencieuse ; c'est le seul endroit où elle se voit.
+- [ ] Cache Storage : `wfrp-cache-*` contient les feuilles réelles, pas d'entrée manquante.
 
 ---
 
