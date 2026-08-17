@@ -1826,26 +1826,79 @@ export function exportData() {
 // Debounce local de 400 ms : évite un JSON.stringify + setItem à chaque keystroke.
 // Cloud save reste à 2 s. saveNow() reste utilisable pour les actions discrètes
 // (ajout d'item, toggle) qui doivent être persistées sans attendre.
+// Pendant le rendu initial et le chargement cloud, les helpers appellent recalc(),
+// qui se termine par save(). Sans cette garde, le simple fait d'OUVRIR une fiche la
+// marquait comme modifiée : la copie locale paraissait alors plus fraîche que le
+// cloud, et une visite suivante repoussait ce cache par-dessus les modifications
+// d'un autre. Consulter une fiche pouvait donc en détruire le contenu.
+let _suppressSave = false;
+function withoutSaving(fn) {
+    _suppressSave = true;
+    try { fn(); } finally { _suppressSave = false; }
+}
+
 let _saveLocalTimer = null;
 function save() {
+    if (_suppressSave) return;
     clearTimeout(_saveLocalTimer);
     _saveLocalTimer = setTimeout(saveNow, 400);
 }
 
-function saveNow() {
-    if (_saveLocalTimer) { clearTimeout(_saveLocalTimer); _saveLocalTimer = null; }
+// `_dirty` remplace la comparaison d'horodatages entre `_savedAt` (horloge du
+// client) et `updatedAt` (horloge du serveur), qui n'était pas fiable. Le drapeau
+// dit une chose vérifiable : cette copie locale porte des modifications qui n'ont
+// pas encore atteint le cloud. Il est posé à l'écriture locale et levé par
+// markCloudSaved(), appelée par fiche-cloud.js après une écriture réussie.
+function writeLocal(dirty) {
     const data = exportData();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ _savedAt: Date.now(), ...data }));
-
-    // Cloud save debounced 2 s — cloudSave importé de fiche-cloud.js
-    clearTimeout(saveNow._t);
-    saveNow._t = setTimeout(() => cloudSave?.(data), 2000);
+    localStorage.setItem(STORAGE_KEY,
+        JSON.stringify({ _savedAt: Date.now(), _dirty: dirty, ...data }));
+    return data;
 }
 
-// Flush la sauvegarde en attente avant fermeture/onglet : sinon le dernier
-// keystroke (dans la fenêtre de 400 ms) serait perdu.
-window.addEventListener('beforeunload', () => {
-    if (_saveLocalTimer) saveNow();
+export function markCloudSaved() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const local = JSON.parse(raw);
+        local._dirty = false;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(local));
+    } catch { /* cache illisible : sans conséquence, il sera réécrit */ }
+}
+
+function saveNow() {
+    if (_saveLocalTimer) { clearTimeout(_saveLocalTimer); _saveLocalTimer = null; }
+    const data = writeLocal(true);
+
+    // Cloud save debounced 2 s — cloudSave importé de fiche-cloud.js.
+    // `saveNow._t` est remis à null au déclenchement : sans cela il resterait un
+    // identifiant vrai indéfiniment, et flushAll() croirait avoir une écriture en
+    // attente à chaque passage en arrière-plan.
+    clearTimeout(saveNow._t);
+    saveNow._t = setTimeout(() => { saveNow._t = null; cloudSave?.(data); }, 2000);
+}
+
+// Vidage complet avant disparition de la page : local ET cloud. `beforeunload`
+// seul ne suffisait pas — saveNow() y réarmait un minuteur cloud de 2 s qui ne se
+// déclenchait jamais, donc la dernière modification n'atteignait jamais Firestore.
+// `pagehide` et `visibilitychange` sont par ailleurs les seuls événements fiables
+// sur mobile, où l'onglet peut être supprimé sans émettre `beforeunload`.
+function flushAll() {
+    const enAttente = _saveLocalTimer !== null;
+    if (_saveLocalTimer) { clearTimeout(_saveLocalTimer); _saveLocalTimer = null; }
+    let data;
+    if (enAttente) data = writeLocal(true);
+
+    // Rien à envoyer si aucune modification n'est en attente côté cloud.
+    if (!enAttente && !saveNow._t) return;
+    clearTimeout(saveNow._t);
+    saveNow._t = null;
+    cloudSave?.(data ?? exportData());
+}
+
+window.addEventListener('pagehide', flushAll);
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushAll();
 });
 
 function updatePageTitle() {
@@ -1963,35 +2016,43 @@ function load() {
 export async function ficheLoadCloud(data, cloudMillis) {
     await dbLoadingPromise;
 
-    // Préférer la source la plus récente pour éviter d'écraser des données
-    // locales plus fraîches que le cloud (fenêtre debounce de 2s).
+    // Le cloud est la source de vérité, à une exception près : une copie locale
+    // portant des modifications qui ne l'ont jamais atteint (`_dirty`). On ne
+    // compare plus `_savedAt` à `updatedAt` — deux horloges différentes, dont l'une
+    // était stampée par la simple ouverture de la fiche.
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
         try {
             const local = JSON.parse(raw);
-            if (local._savedAt && cloudMillis && local._savedAt > cloudMillis) {
-                // Local plus récent → pousser vers le cloud, ne pas écraser
+            if (local._dirty === true) {
+                console.warn('[fiche] modifications locales non synchronisées : envoi au cloud');
                 cloudSave?.(exportData());
                 isCloudLoaded = true;
                 return;
             }
-        } catch {}
+        } catch { /* cache illisible : le cloud fait foi */ }
     }
-    resetState();
-    applyData(data);
-    buildBasicSkills();
-    renderCareerDetail();
-    renderAdvancedSkills();
-    renderCareers();
-    renderTalents();
-    renderSorts();
-    renderPrieres();
-    renderXpLog();
-    applyOptVisible();
-    recalc();
+
+    // Le rendu appelle recalc(), donc save() : le neutraliser, sinon charger une
+    // fiche la marquerait aussitôt comme modifiée.
+    withoutSaving(() => {
+        resetState();
+        applyData(data);
+        buildBasicSkills();
+        renderCareerDetail();
+        renderAdvancedSkills();
+        renderCareers();
+        renderTalents();
+        renderSorts();
+        renderPrieres();
+        renderXpLog();
+        applyOptVisible();
+        recalc();
+    });
     isCloudLoaded = true;
-    // Miroir localStorage avec timestamp cloud pour référence future
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ _savedAt: cloudMillis || Date.now(), ...data }));
+    // Miroir local propre : il reflète le cloud, il n'a rien en attente.
+    localStorage.setItem(STORAGE_KEY,
+        JSON.stringify({ _savedAt: cloudMillis || Date.now(), _dirty: false, ...data }));
 }
 
 // ── Listeners ─────────────────────────────────────────
@@ -2110,20 +2171,24 @@ async function loadSkillsData() {
 document.addEventListener('DOMContentLoaded', async () => {
     await dbLoadingPromise;
     buildCareerDatalist();
-    if (!isCloudLoaded) {
-        load();             // charger l'état en premier
-        buildBasicSkills(); // puis rendre avec les valeurs restaurées
-        renderCareerDetail();
-        renderAdvancedSkills();
-        renderCareers();
-        renderTalents();
-        renderSorts();
-        renderPrieres();
-        renderXpLog();
-        applyOptVisible();
-    }
-    bindAll();
-    recalc();
+    // Rendu initial neutralisé côté sauvegarde : afficher une fiche n'est pas la
+    // modifier. C'est ce qui marquait le cache local comme plus frais que le cloud.
+    withoutSaving(() => {
+        if (!isCloudLoaded) {
+            load();             // charger l'état en premier
+            buildBasicSkills(); // puis rendre avec les valeurs restaurées
+            renderCareerDetail();
+            renderAdvancedSkills();
+            renderCareers();
+            renderTalents();
+            renderSorts();
+            renderPrieres();
+            renderXpLog();
+            applyOptVisible();
+        }
+        bindAll();
+        recalc();
+    });
     updatePageTitle();
     updateCharacterPortrait();
 });

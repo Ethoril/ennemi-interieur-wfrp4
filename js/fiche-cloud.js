@@ -1,7 +1,7 @@
 import { db } from './firebase-init.js';
 import { auth, watchAuth, loginWithGoogle, logout } from './auth.js';
 import { doc, setDoc, getDoc, serverTimestamp, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { ficheLoadCloud, exportData } from './fiche.js';
+import { ficheLoadCloud, exportData, markCloudSaved } from './fiche.js';
 import { esc } from './utils.js';
 
 /* ── Configuration Personnage et Accès ─────────────────────────── */
@@ -25,25 +25,41 @@ function setStatus(msg, cls = '') {
 
 /* ── Sauvegarde cloud (appelée depuis fiche.js via window.cloudSave) */
 let _isSaving = false;
+let _enAttente = null;
+
 export const cloudSave = async (data) => {
     const user = auth.currentUser;
     if (!user) return;
-    if (_isSaving) return;
+
+    // Une écriture est en vol : mémoriser la demande au lieu de la jeter. Seule la
+    // dernière image de l'état compte, d'où l'écrasement. L'ancienne garde
+    // abandonnait silencieusement toute modification arrivant dans cette fenêtre.
+    if (_isSaving) { _enAttente = data; return; }
+
     _isSaving = true;
     setStatus('Sauvegarde…', 'saving');
     try {
         await setDoc(doc(db, 'fiches', charId), { data, updatedAt: serverTimestamp() });
+        markCloudSaved();            // lève `_dirty` sur la copie locale
         setStatus('☁ Sauvegardé', 'saved');
         setTimeout(() => setStatus(''), 3000);
     } catch (e) {
+        // Un refus n'est plus silencieux : la lecture peut réussir et l'écriture
+        // échouer, et le joueur n'avait alors aucun retour — il croyait avoir
+        // enregistré. C'est ce qui a masqué la perte de données du 17 août 2026.
         if (e.code === 'permission-denied') {
-            setStatus('');           // le mur est déjà affiché, ne pas alarmer
-            return;
+            setStatus('⚠ Non enregistré — droits insuffisants', 'error');
+        } else {
+            setStatus('⚠ Non enregistré', 'error');
         }
-        setStatus('⚠ Erreur', 'error');
         console.error('[fiche-cloud] save error:', e);
     } finally {
         _isSaving = false;
+        if (_enAttente) {
+            const suivant = _enAttente;
+            _enAttente = null;
+            cloudSave(suivant);
+        }
     }
 };
 
