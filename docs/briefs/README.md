@@ -46,7 +46,7 @@ et `L2-01` avant `L2-02`.
 | [L2-10](L2-10-reperes-focus.md) | Repères de page et indicateur de focus | N3 | 45 min |
 | [L2-11](L2-11-modale-confirmation.md) | Modale de confirmation | N4 | 2 h |
 | [L2-12](L2-12-service-worker.md) | Service worker : hors-ligne et version liée — **relu, en attente de livraison** | N5, N8 | — |
-| [L2-13](L2-13-hygiene.md) | Encodage, code mort, fichiers obsolètes | N2, N6 | 1 h |
+| [L2-13](L2-13-hygiene.md) | Encodage, code mort, fichiers obsolètes — **traité, en attente de livraison** | N2, N6 | — |
 | [L2-14](L2-14-ci-lint.md) | Contrôles de syntaxe et ESLint en CI — **relu, en attente de livraison** | N7 | — |
 | ~~[L2-16](L2-16-calendrier-date-reelle.md)~~ | ~~Calendrier impérial calé sur la date du jour~~ — **livré en v2.13.3** | hors audit | — |
 | [L2-15](L2-15-cloture-lot2.md) | CHANGELOG, version, livraison | N1 | 45 min |
@@ -74,8 +74,16 @@ et `L2-01` avant `L2-02`.
   ajouté par `L2-14`. **Checklist navigateur validée par le MJ** le 17 août 2026. Une scorie est
   reportée dans `L2-15` étape 3 : `offline.html` n'a pas de `<link rel="icon">` et sa CSP bloque
   la requête implicite vers `/favicon.ico`.
+- **`L2-13`**, sur `lot-2-outillage` (`738fefc`, `3c40280`). L'encodage du CHANGELOG est rétabli :
+  891 séquences par aller-retour cp1252, plus 7 irrécupérables reconstituées d'après le glyphe
+  réellement présent dans le source (`━` de `js/pnjs.js:697`, `✏`, `←`, le sélecteur de variante
+  emoji) — les octets `0x81`, `0x8F` et `0x90` n'existant pas en cp1252, le convertisseur les
+  avait remplacés par `U+FFFD`. Vérifié : le fichier privé de ses caractères non-ASCII est
+  identique à l'original, donc aucun mot n'a bougé. Les sept points de code mort sont faits.
+  **Reste à vérifier au navigateur** : les huit onglets des Aides de Jeux (la branche
+  `firstRowCorrupted` de `js/sheets.js` a été retouchée) et `index.html?hero3dDebug=1`.
 
-Il reste donc **7 briefs** à traiter au lot 2 : `L2-04`, `L2-08` à `L2-11`, `L2-13`, `L2-15`.
+Il reste donc **6 briefs** à traiter au lot 2 : `L2-04`, `L2-08` à `L2-11`, `L2-15`.
 
 ## Hors périmètre
 
@@ -93,7 +101,29 @@ Il reste donc **7 briefs** à traiter au lot 2 : `L2-04`, `L2-08` à `L2-11`, `L
   sur fiche papier. Le volet export et import JSON du constat I3 reste, lui, au programme
   (`L2-02`).
 
-## Une décision reste ouverte
+## Décisions ouvertes
+
+### Des prénoms civils subsistent dans le dépôt, dont un comme clé de données
+
+Relevé pendant `L2-13`, le 17 août 2026. La convention [§8](00-CONVENTIONS.md) interdit le nom
+civil de quiconque dans ce dépôt public. Il en reste sept occurrences, réparties en trois
+catégories qui ne se traitent pas de la même façon :
+
+1. **`js/doodle.js` — dont une clé de données.** À la création d'un sondage, le module écrit une
+   entrée de la map `responses` dont la clé est un prénom civil ; trois autres occurrences servent
+   au tri, à la réservation du nom et au modèle d'e-mail. **Ce n'est pas une correction
+   mécanique** : renommer la clé orpheline les votes déjà enregistrés dans Firestore et demande
+   une migration de données. Décision du MJ, pas du code.
+2. **`CHANGELOG.md`** — une occurrence, texte rédactionnel, sans risque à corriger.
+3. **Deux briefs de `docs/briefs/`** — texte également, mais l'une des occurrences relève d'une
+   catégorie plus sensible que celle du MJ. Voir le relevé remis au MJ hors dépôt.
+
+`L2-13` n'a traité que le cas sans conséquence : le plan archivé dans `docs/archives/`. Dans tous
+les cas, corriger le fichier ne retire rien de l'historique Git, et l'en effacer exigerait la
+réécriture plus l'intervention du support GitHub déjà subies en août 2026. À trancher : agir sur
+le texte seulement, migrer la donnée, ou assumer.
+
+### La validation du pseudo des votants
 
 Elle se pose dans le brief `L1-04` et **ne doit pas être tranchée sans validation** :
 
