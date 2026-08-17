@@ -80,7 +80,11 @@ service cloud.firestore {
     match /fiches/{charId} {
       allow read, write: if isGM()
         || (request.auth != null
-            && request.auth.token.email in acces().get(charId, []));
+            // .lower() sur l'adresse entrante : Google la renvoie en minuscules,
+            // mais rien ne le garantit. Les valeurs de campagne/acces doivent
+            // donc être saisies en minuscules — le langage de règles ne sait pas
+            // parcourir une liste pour les normaliser.
+            && request.auth.token.email.lower() in acces().get(charId, []));
     }
 
     // ── Table d'accès : contient les adresses des joueurs, donc des données

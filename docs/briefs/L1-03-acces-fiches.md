@@ -59,6 +59,15 @@ Chaque valeur est un tableau : un personnage peut avoir plusieurs propriétaires
 son conjoint qui tient la fiche, par exemple). Le personnage `test` n'a pas d'entrée — seul le
 MJ y accède, par la règle qui le concerne.
 
+**Deux contraintes de casse, sous peine d'une table inopérante :**
+
+- Les **noms de champs** reprennent exactement le paramètre `char` de l'URL, en minuscules :
+  `bhelgi`, `caelel`, `elysia`, `hellaya`, `wren`. Le code fait `acces[charId]`, une lecture de
+  clé sensible à la casse — `Bhelgi` ne serait jamais trouvé.
+- Les **adresses** sont saisies **en minuscules**. La règle Firestore compare avec
+  `request.auth.token.email.lower() in …` : elle normalise l'adresse entrante, mais le langage de
+  règles ne sait pas parcourir une liste pour normaliser les valeurs stockées.
+
 ### Les adresses sont des données personnelles — elles ne sortent pas de Firestore
 
 **Le MJ saisit les cinq adresses lui-même, directement dans la console Firebase.** Elles ne
