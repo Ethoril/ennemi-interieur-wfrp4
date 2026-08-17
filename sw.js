@@ -61,7 +61,9 @@ const ASSETS_CDN = [
   'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js',
   'https://cdn.jsdelivr.net/npm/d3@7/+esm',
   'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js',
-  'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css'
+  'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
 ];
 
 self.addEventListener('install', event => {
@@ -124,9 +126,12 @@ self.addEventListener('fetch', event => {
         .catch(async () => {
           const enCache = await caches.match(event.request);
           if (enCache) return enCache;
-          // Navigation sans rien en cache : page hors-ligne plutôt que
-          // l'erreur reseau brute du navigateur.
           if (event.request.mode === 'navigate') {
+            // Les URL a parametres (fiche.html?char=, carte.html?map=) ne
+            // correspondent pas a la page pre-cachee : ignorer la query string
+            // avant de conclure a l'absence de cache.
+            const coque = await caches.match(event.request, { ignoreSearch: true });
+            if (coque) return coque;
             return (await caches.match('./offline.html'))
               || new Response('Hors ligne', { status: 503, statusText: 'Hors ligne' });
           }

@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
   <title>Hors ligne — L'Ennemi Intérieur</title>
   <style>
     *, *::before, *::after {
@@ -84,7 +85,7 @@
     <h1>Hors Ligne</h1>
     <p>Cette page n'a pas encore été mise en cache et votre connexion réseau est actuellement indisponible.</p>
     <p class="hint">Les pages et aides de jeu déjà consultées restent accessibles hors ligne.</p>
-    <button class="btn" onclick="window.location.reload()">Réessayer</button>
+    <a href="" class="btn">Réessayer</a>
   </div>
 </body>
 </html>

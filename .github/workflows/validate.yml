@@ -36,6 +36,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - name: Verifier APP_VERSION, CACHE_NAME et CHANGELOG
         run: |
           node -e "
@@ -62,7 +65,7 @@ jobs:
       - name: node --check sur tous les modules
         run: |
           set -e
-          for f in js/*.js js/hero3d/*.js sw.js tools/*.mjs; do
+          for f in js/*.js js/hero3d/*.js sw.js tools/*.mjs tools/lib/*.mjs; do
             node --check "$f"
           done
 
