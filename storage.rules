@@ -1,0 +1,27 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isGM() {
+      return request.auth != null
+          && request.auth.token.email == 'ethoril@gmail.com';
+    }
+
+    match /portraits/{file} {
+      allow read:  if true;
+      allow write: if isGM()
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Note : les images d'indices ne sont pas protégées par le drapeau `decouvert`
+    // de Firestore car les règles Storage ne peuvent pas interroger Firestore.
+    // La protection repose sur l'obscurité des tokens de téléchargement Firebase Storage.
+    match /indices/{file} {
+      allow read:  if true;
+      allow write: if isGM()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

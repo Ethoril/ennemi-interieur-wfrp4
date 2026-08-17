@@ -1,0 +1,88 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isGM() {
+      return request.auth != null
+          && request.auth.token.email == 'ethoril@gmail.com'
+          && request.auth.token.email_verified == true;
+    }
+
+    // exists() avant get() : sur un document absent, get(...).data fait échouer
+    // l'évaluation de la règle, ce qui refuse l'accès à TOUT LE MONDE, MJ compris.
+    // En repli sur {}, les joueurs sont refusés mais la branche isGM() continue
+    // de fonctionner — panne partielle plutôt que verrouillage total.
+    function acces() {
+      let ref = /databases/$(database)/documents/campagne/acces;
+      return exists(ref) ? get(ref).data : {};
+    }
+
+    // ── Fiches : le MJ, ou une adresse listée dans campagne/acces ──
+    match /fiches/{charId} {
+      allow read, write: if isGM()
+        || (request.auth != null
+            // .lower() sur l'adresse entrante : Google la renvoie en minuscules,
+            // mais rien ne le garantit. Les valeurs de campagne/acces doivent
+            // donc être saisies en minuscules — le langage de règles ne sait pas
+            // parcourir une liste pour les normaliser.
+            && request.auth.token.email.lower() in acces().get(charId, []));
+    }
+
+    // ── Table d'accès : contient les adresses des joueurs, donc des données
+    //    personnelles. Lecture réservée au MJ, jamais exposée au navigateur.
+    //    La fonction acces() ci-dessus la consulte côté serveur, ce qui ne
+    //    demande aucun droit de lecture au client. ──
+    match /campagne/acces {
+      allow read, write: if isGM();
+    }
+
+    // ── Pas de règle pour campagne/state : le document n'existe pas et le
+    //    calendrier impérial ne lit plus Firestore depuis le brief L2-16,
+    //    où il est devenu une fonction pure de la date du jour. ──
+
+    // ── PNJs et relations : lecture publique, édition MJ ──
+    match /pnjs/{id}      { allow read: if true; allow write: if isGM(); }
+    match /relations/{id} { allow read: if true; allow write: if isGM(); }
+
+    // ── Indices : un secret non découvert n'est pas lisible ──
+    // Note : cette règle impose que les requêtes en liste portent la contrainte
+    // `where('decouvert', '==', true)` pour les utilisateurs non-MJ.
+    match /indices/{id} {
+      allow read:  if isGM() || resource.data.decouvert == true;
+      allow write: if isGM();
+    }
+
+    // ── Sondage : le vote reste anonyme, par choix de conception.
+    //    Un visiteur sans compte peut ajouter ou modifier SA réponse, une à
+    //    la fois. Il ne peut ni supprimer une réponse existante, ni toucher
+    //    aux dates, ni clôturer, ni supprimer le sondage.
+    //    Limite : le pseudo étant une clé de la map responses, il ne peut pas
+    //    être validé côté serveur ; sa protection repose sur l'échappement client. ──
+    match /doodle/current {
+      allow read: if true;
+      allow create, delete: if isGM();
+      allow update: if isGM() || (
+           request.resource.data.diff(resource.data)
+                 .affectedKeys().hasOnly(['responses'])
+        && request.resource.data.responses.size() <= 30
+        && request.resource.data.responses.diff(resource.data.responses)
+                 .affectedKeys().size() == 1
+        // Aucun votant existant ne disparaît : interdit la suppression
+        // d'une réponse par un anonyme, que le MJ conserve via isGM().
+        && request.resource.data.responses.keys()
+                 .hasAll(resource.data.responses.keys())
+      );
+    }
+
+    // ── Courriels : création seule, destinataire et forme imposés ──
+    match /mail/{id} {
+      allow read, update, delete: if false;
+      allow create: if
+           request.resource.data.keys().hasOnly(['to', 'message'])
+        && request.resource.data.to == 'ethoril@gmail.com'
+        && request.resource.data.message.keys().hasOnly(['subject', 'html'])
+        && request.resource.data.message.subject.size() <= 200
+        && request.resource.data.message.html.size() <= 2000;
+    }
+  }
+}
