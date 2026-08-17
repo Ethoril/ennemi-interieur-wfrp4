@@ -25,11 +25,6 @@ const NAV_ITEMS = [
     const saved = localStorage.getItem('theme');
     const initial = saved || 'dark';
     if (initial === 'parchment') document.documentElement.setAttribute('data-theme', 'parchment');
-
-    const link = document.createElement('link');
-    link.rel  = 'stylesheet';
-    link.href = 'css/theme-parchment.css';
-    document.head.appendChild(link);
 })();
 
 function getTheme() {
