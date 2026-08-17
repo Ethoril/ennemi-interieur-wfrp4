@@ -37,7 +37,7 @@ et `L2-01` avant `L2-02`.
 |---|---|---|---|
 | ~~[L2-01](L2-01-sauvegarde-cloud.md)~~ | ~~Fiabiliser la sauvegarde cloud~~ — **livré en v2.13.4** | I2 | — |
 | ~~[L2-02](L2-02-export-import-fiche.md)~~ | ~~Export et import JSON de la fiche~~ — **livré en v2.14.0** | I3 | — |
-| [L2-04](L2-04-css-calendrier.md) | Sortir la mise en forme du Calendrier du JS — **traité, à valider à l'écran** | I4 | — |
+| [L2-04](L2-04-css-calendrier.md) | Sortir la mise en forme du Calendrier du JS — **traité et validé** | I4 | — |
 | ~~[L2-05](L2-05-depliage-css.md)~~ | ~~Déplier la chaîne de chargement CSS~~ — **livré en v2.14.1** | M1 | — |
 | ~~[L2-06](L2-06-allegement-images.md)~~ | ~~Supprimer 31 Mo d'images~~ — **livré en v2.14.0** | M2 | — |
 | ~~[L2-07](L2-07-csp.md)~~ | ~~Resserrer la CSP~~ — **livré en v2.14.1** | M3 | — |
@@ -80,18 +80,19 @@ et `L2-01` avant `L2-02`.
   emoji) — les octets `0x81`, `0x8F` et `0x90` n'existant pas en cp1252, le convertisseur les
   avait remplacés par `U+FFFD`. Vérifié : le fichier privé de ses caractères non-ASCII est
   identique à l'original, donc aucun mot n'a bougé. Les sept points de code mort sont faits.
-  **Reste à vérifier au navigateur** : les huit onglets des Aides de Jeux (la branche
-  `firstRowCorrupted` de `js/sheets.js` a été retouchée) et `index.html?hero3dDebug=1`.
-  **Validé au navigateur par le MJ** le 17 août 2026.
+  **Validé au navigateur par le MJ** le 17 août 2026 : les huit onglets des Aides de Jeux (la
+  branche `firstRowCorrupted` de `js/sheets.js` a été retouchée) et `index.html?hero3dDebug=1`.
+  À noter pour plus tard : aucun des huit onglets ne déclenche cette branche aujourd'hui, les
+  huit feuilles ayant un en-tête simple. Elle ne sert donc à rien en l'état.
 - **`L2-04`**, sur `lot-2-outillage` (`306b208`). Les 99 attributs `style=` de `js/doodle.js` et
   `doodle.html` sont partis dans `css/doodle.css`, 78 classes nommées par rôle, zéro couleur
   littérale restante. `--statut-allie`, `--statut-ennemi` et `--statut-neutre` n'existaient que
   dans `theme-parchment.css` : ils sont désormais aussi dans le `:root` de `base.css`, avec les
   valeurs de repli sur lesquelles `js/pnjs.js` retombait déjà, donc sans effet visuel.
-  **C'est le brief du lot qui demande le plus de vérification à l'écran** : sa table de
-  correspondance change volontairement l'apparence en thème sombre (fond des champs, du panneau
-  MJ, de la ligne de vote, et les trois teintes de vote), ce que ses « ne pas faire » interdisent
-  par ailleurs. Le détail des écarts est dans le message de `306b208`.
+  Sa table de correspondance change volontairement l'apparence en thème sombre — fond des champs,
+  du panneau MJ, de la ligne de vote, et les trois teintes de vote — ce que ses « ne pas faire »
+  interdisent par ailleurs. **Ces écarts ont été validés à l'écran par le MJ** le 17 août 2026 ;
+  leur détail est dans le message de `306b208`.
 
 Il reste donc **5 briefs** à traiter au lot 2 : `L2-08` à `L2-11`, `L2-15`.
 
