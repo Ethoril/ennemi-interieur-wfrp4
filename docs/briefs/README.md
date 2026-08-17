@@ -1,6 +1,6 @@
 # Briefs de correction — audit de la v2.13.1
 
-Vingt briefs issus de l'audit technique du 10 août 2026, répartis en deux lots.
+Briefs issus de l'audit technique du 10 août 2026, répartis en deux lots.
 Chacun est autonome : un objectif, les fichiers concernés, le détail des modifications et une
 checklist de vérification.
 
@@ -37,7 +37,6 @@ et `L2-01` avant `L2-02`.
 |---|---|---|---|
 | ~~[L2-01](L2-01-sauvegarde-cloud.md)~~ | ~~Fiabiliser la sauvegarde cloud~~ — **livré en v2.13.4** | I2 | — |
 | [L2-02](L2-02-export-import-fiche.md) | Export et import JSON de la fiche | I3 | 1 h 30 |
-| [L2-03](L2-03-feuille-impression.md) | Feuille d'impression de la fiche | I3 | 1 h |
 | [L2-04](L2-04-css-calendrier.md) | Sortir la mise en forme du Calendrier du JS | I4 | 3 h |
 | [L2-05](L2-05-depliage-css.md) | Déplier la chaîne de chargement CSS | M1 | 1 h |
 | [L2-06](L2-06-allegement-images.md) | Supprimer 31 Mo d'images | M2 | 30 min |
@@ -62,12 +61,7 @@ et `L2-01` avant `L2-02`.
   `_dirty` et une garde `withoutSaving()`. Lire le commit `fe6d622` plutôt que le brief.
 - **`L2-16`**, en v2.13.3, avec les briefs `L1-03` et `L1-04`.
 
-Il reste donc **14 briefs** au lot 2 : `L2-02` à `L2-15`.
-
-`L2-16` ne vient pas de l'audit : c'est une demande du 11 août 2026, ajoutée après coup. Elle
-répare au passage un défaut que l'audit avait manqué — le calendrier de l'accueil affichait la
-même date depuis sa mise en ligne. Numérotée après `L2-14` pour ne pas renuméroter les briefs
-existants, mais à traiter **avant** `L2-15`, qui clôture le lot.
+Il reste donc **13 briefs** au lot 2 : `L2-02`, puis `L2-04` à `L2-15`.
 
 ## Hors périmètre
 
@@ -81,6 +75,9 @@ existants, mais à traiter **avant** `L2-15`, qui clôture le lot.
   maximum à 5 sont demandés (brief `L2-08`).
 - **N4 partiel** — seules les 7 actions destructives passent en modale ; les 6 `alert()`
   d'erreur restent en place.
+- **L2-03, feuille d'impression de la fiche** — supprimé le 17 août 2026 : le groupe ne joue pas
+  sur fiche papier. Le volet export et import JSON du constat I3 reste, lui, au programme
+  (`L2-02`).
 
 ## Une décision reste ouverte
 

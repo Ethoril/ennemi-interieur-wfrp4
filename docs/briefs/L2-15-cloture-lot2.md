@@ -37,8 +37,6 @@ traité.
 - **Export et import JSON** : deux boutons permettent de télécharger une sauvegarde complète de
   la fiche et de la restaurer. À conserver hors du navigateur : c'est le seul filet en cas de
   fausse manœuvre.
-- **Impression** : la fiche s'imprime sur 2 à 3 pages, sans navigation ni boutons, en noir sur
-  blanc.
 - **Sauvegardes cloud fiabilisées** : les modifications faites juste avant la fermeture de
   l'onglet ne sont plus perdues, et deux modifications rapprochées ne s'écrasent plus.
 - **Espèce Nain** ajoutée au sélecteur, et **rang maximum porté à 5** pour la carrière Mage (HE).
@@ -155,7 +153,6 @@ poste **et** sur mobile, dans les **deux** thèmes.
       rechargement la retrouve.
 - [ ] Achat XP appliqué puis annulé : la caractéristique revient à sa valeur.
 - [ ] Export, réinitialisation, réimport : l'état est identique.
-- [ ] Impression : 2 à 3 pages propres.
 - [ ] Panneau de carrière : variante de rang, personnalisation d'un rang, lignes fantômes.
 
 ### Bascule et régression

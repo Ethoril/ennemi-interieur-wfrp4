@@ -57,7 +57,7 @@ pages. Doivent y figurer :
 
 - les onze pages HTML, plus `./` et `offline.html` ;
 - les feuilles de style survivantes : `base.css`, `components.css`, `theme-parchment.css`,
-  `hero3d.css`, `fiche.css`, `doodle.css`, `fiche-print.css` ;
+  `hero3d.css`, `fiche.css`, `doodle.css` ;
 - tous les modules de `js/` et `js/hero3d/` ;
 - `js/data/careers.json` et `js/data/skills.json` ;
 - les cinq portraits WebP, les deux vignettes de cartes, `favicon.svg`, `manifest.json` ;

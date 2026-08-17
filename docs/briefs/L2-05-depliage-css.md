@@ -54,7 +54,7 @@ l'identique**, sans changer les graisses demandées.
 | Page | Feuilles supplémentaires |
 |---|---|
 | `index.html` | `css/hero3d.css` |
-| `fiche.html` | `css/fiche.css`, `css/fiche-print.css` (si `L2-03` est fait) |
+| `fiche.html` | `css/fiche.css` |
 | `groupe.html` | `css/fiche.css` |
 | `doodle.html` | `css/doodle.css` (si `L2-04` est fait) |
 | `carte.html` | Leaflet (CDN, déjà présent avec son SRI) |
