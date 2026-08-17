@@ -72,8 +72,13 @@ service cloud.firestore {
           && request.auth.token.email_verified == true;
     }
 
+    // exists() avant get() : sur un document absent, get(...).data fait échouer
+    // l'évaluation de la règle, ce qui refuse l'accès à TOUT LE MONDE, MJ compris.
+    // En repli sur {}, les joueurs sont refusés mais la branche isGM() continue
+    // de fonctionner — panne partielle plutôt que verrouillage total.
     function acces() {
-      return get(/databases/$(database)/documents/campagne/acces).data;
+      let ref = /databases/$(database)/documents/campagne/acces;
+      return exists(ref) ? get(ref).data : {};
     }
 
     // ── Fiches : le MJ, ou une adresse listée dans campagne/acces ──
@@ -247,8 +252,13 @@ plus tard. Le noter en commentaire dans `storage.rules`.
 
 ## Ne pas faire
 
+- **Ne pas déployer soi-même.** Le déploiement des règles et les essais depuis la console sont
+  la part du MJ : lui seul dispose du compte administrateur et peut constater l'effet réel.
+  Écrire les quatre fichiers, les committer, et s'arrêter là.
 - **Ne pas déployer avant d'avoir testé.** Une règle trop stricte casse le site pour tout le
   monde, y compris le MJ. Dérouler toute la checklist avant `firebase deploy`.
+- **Ne pas retirer le `exists()` de `acces()`** en le jugeant superflu. C'est la garde qui
+  transforme un verrouillage total en refus des seuls joueurs.
 - **Ne pas ajouter de section `hosting`** dans `firebase.json`.
 - **Ne pas remplacer le contrôle par email par un contrôle par UID.** Les UID ne sont pas
   connus à l'avance et le projet raisonne en adresses partout ailleurs.
