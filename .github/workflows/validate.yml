@@ -30,3 +30,23 @@ jobs:
         run: node -e "JSON.parse(require('node:fs').readFileSync('js/data/careers.json','utf8'))"
       - name: Parse skills.json
         run: node -e "JSON.parse(require('node:fs').readFileSync('js/data/skills.json','utf8'))"
+
+  version-coherence:
+    name: Coherence version / cache / CHANGELOG
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verifier APP_VERSION, CACHE_NAME et CHANGELOG
+        run: |
+          node -e "
+          const fs = require('node:fs');
+          const rd = f => fs.readFileSync(f, 'utf8');
+          const a = rd('js/layout.js').match(/APP_VERSION = '(.+?)'/)?.[1];
+          const b = rd('sw.js').match(/APP_VERSION = '(.+?)'/)?.[1];
+          if (!a || !b) { console.error('APP_VERSION introuvable'); process.exit(1); }
+          if (a !== b) { console.error('layout.js ' + a + ' != sw.js ' + b); process.exit(1); }
+          if (!rd('CHANGELOG.md').includes('[' + a.slice(1) + ']')) {
+            console.error('CHANGELOG.md sans entree pour ' + a); process.exit(1);
+          }
+          console.log('Version coherente : ' + a);
+          "
