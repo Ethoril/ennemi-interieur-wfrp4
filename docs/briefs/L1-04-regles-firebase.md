@@ -95,11 +95,9 @@ service cloud.firestore {
       allow read, write: if isGM();
     }
 
-    // ── Calendrier impérial : lecture publique, avance réservée au MJ ──
-    match /campagne/state {
-      allow read:  if true;
-      allow write: if isGM();
-    }
+    // ── Pas de règle pour campagne/state : le document n'existe pas et le
+    //    calendrier impérial ne lit plus Firestore depuis le brief L2-16,
+    //    où il est devenu une fonction pure de la date du jour. ──
 
     // ── PNJs et relations : lecture publique, édition MJ ──
     match /pnjs/{id}      { allow read: if true; allow write: if isGM(); }
@@ -278,7 +276,7 @@ le SDK Firebase est déjà chargé (`pnjs.html` par exemple), en état **déconn
       si ce point échoue, la règle est trop stricte et c'est elle qu'il faut corriger, pas
       l'application.
 - [ ] Écrire dans `pnjs`, `relations` ou `indices` : refusé.
-- [ ] Écrire sur `campagne/state` (avancer le calendrier) : refusé.
+- [ ] Écrire n'importe où dans `campagne` : refusé (aucune règle ne l'autorise hors MJ).
 - [ ] Avec un **compte joueur** : lire `fiches/wren` en n'y étant pas listé : refusé.
 - [ ] Avec un **compte joueur** : écrire dans `campagne/acces` : refusé.
 - [ ] Avec un **compte joueur** : **lire** `campagne/acces` : refusé. C'est ce qui garantit que
@@ -294,15 +292,15 @@ le SDK Firebase est déjà chargé (`pnjs.html` par exemple), en état **déconn
 - [ ] Lire `indices` **avec** `where('decouvert','==',true)`, déconnecté.
 - [ ] Le vote normal au Calendrier, déconnecté, y compris le courriel de notification
       effectivement reçu.
-- [ ] Le calendrier impérial de l'accueil s'affiche déconnecté.
+- [ ] Le calendrier impérial de l'accueil s'affiche déconnecté **et sans émettre de requête
+      Firestore** (il ne lit plus rien depuis `L2-16`).
 - [ ] Le graphe des PNJs et le panneau de détail s'affichent déconnecté, avec les indices
       découverts liés.
 - [ ] La page Enquêtes affiche les indices découverts, déconnecté.
 - [ ] Compte joueur : sa fiche s'ouvre, se charge et se sauvegarde.
 - [ ] Compte MJ : les six fiches, la création et la modification de PNJ, l'ajout et la
       suppression de relation, la création et la modification d'indice, le téléversement d'un
-      portrait et d'une illustration d'indice, l'avance du calendrier impérial, et les six
-      actions d'administration du sondage.
+      portrait et d'une illustration d'indice, et les six actions d'administration du sondage.
 
 ### Documentation
 

@@ -49,7 +49,13 @@ et `L2-01` avant `L2-02`.
 | [L2-12](L2-12-service-worker.md) | Service worker : hors-ligne et version liée | N5, N8 | 1 h 30 |
 | [L2-13](L2-13-hygiene.md) | Encodage, code mort, fichiers obsolètes | N2, N6 | 1 h |
 | [L2-14](L2-14-ci-lint.md) | Contrôles de syntaxe et ESLint en CI | N7 | 1 h 30 |
+| [L2-16](L2-16-calendrier-date-reelle.md) | Calendrier impérial calé sur la date du jour | hors audit | 1 h 30 |
 | [L2-15](L2-15-cloture-lot2.md) | CHANGELOG, version, livraison | N1 | 45 min |
+
+`L2-16` ne vient pas de l'audit : c'est une demande du 11 août 2026, ajoutée après coup. Elle
+répare au passage un défaut que l'audit avait manqué — le calendrier de l'accueil affichait la
+même date depuis sa mise en ligne. Numérotée après `L2-14` pour ne pas renuméroter les briefs
+existants, mais à traiter **avant** `L2-15`, qui clôture le lot.
 
 ## Hors périmètre
 
