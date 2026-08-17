@@ -8,7 +8,7 @@
 | **Constat d'audit** | N7 |
 | **Estimation** | 1 h 30 |
 | **Fichiers** | `eslint.config.mjs` et `package.json` (nouveaux), `.github/workflows/validate.yml` |
-| **Dépend de** | — (à traiter en dernier du lot : il faut lint un code déjà corrigé) |
+| **Dépend de** | `L2-12` — son contrôle de cohérence de version doit exister pour être éprouvé face au `package.json` ajouté ici |
 
 ---
 
@@ -53,11 +53,17 @@ Le projet n'en a pas. Le créer, minimal, en marquant clairement qu'il ne sert q
 Ajouter `node_modules/` et `package-lock.json` au `.gitignore` — ou committer le lock, au choix,
 mais **surtout pas** `node_modules/`.
 
-Le champ `"type": "module"` est cohérent avec les `.mjs` de `tools/`. Vérifier après ajout que
-`node tools/smoke-test.mjs` et `node tools/dev-server.mjs` fonctionnent toujours : le champ
-change l'interprétation par défaut des `.js` du projet côté Node, ce qui pourrait affecter les
-petits scripts en ligne du workflow (`node -e "…"` avec `require()`). Si c'est le cas, convertir
-ces scripts en ESM ou renommer en `.cjs`.
+Le champ `"type": "module"` est cohérent avec les `.mjs` de `tools/`. **Trois choses à
+vérifier après l'avoir ajouté**, car il change l'interprétation par défaut des `.js` côté Node :
+
+1. `node tools/smoke-test.mjs` et `node tools/dev-server.mjs` fonctionnent toujours ;
+2. **le contrôle de cohérence de version introduit par `L2-12`** passe encore : il utilise
+   `node -e` avec `require('node:fs')`, ce qui relève de CommonJS. Le comportement de `node -e`
+   face à `"type": "module"` est à constater, pas à supposer — lancer la commande et regarder.
+   Si elle casse, la convertir en ESM (`import`) ou la déplacer dans un fichier `.cjs` ;
+3. `sw.js` n'est pas un module ES et ne doit pas le devenir : il est chargé par le navigateur
+   comme worker classique. Vérifier que rien dans le `package.json` ne le fait interpréter
+   autrement par les outils.
 
 ### 2. `eslint.config.mjs`
 

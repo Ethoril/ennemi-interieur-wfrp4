@@ -56,11 +56,14 @@ valeurs littérales (`#07070d`, `#c9a84c`, `#e7e1d5`).
 pages. Doivent y figurer :
 
 - les onze pages HTML, plus `./` et `offline.html` ;
-- les feuilles de style survivantes : `base.css`, `components.css`, `theme-parchment.css`,
-  `hero3d.css`, `fiche.css`, `doodle.css` ;
+- les feuilles de style **réellement présentes** au moment du brief : `base.css`,
+  `components.css`, `theme-parchment.css`, `hero3d.css`, `fiche.css`. Pas `doodle.css` :
+  `L2-04` n'est pas encore fait, le fichier n'existe pas. Ne pas l'anticiper — une URL en 404
+  suffit à faire échouer l'installation ;
 - tous les modules de `js/` et `js/hero3d/` ;
 - `js/data/careers.json` et `js/data/skills.json` ;
-- les cinq portraits WebP, les deux vignettes de cartes, `favicon.svg`, `manifest.json` ;
+- les cinq portraits WebP et les deux vignettes de cartes — **uniquement les `.webp`**, les PNG
+  ayant été supprimés par `L2-06` ; plus `favicon.svg` et `manifest.json` ;
 - les trois URL CDN épinglées : Three.js, d3, Cropper (et sa feuille CSS).
 
 **Ne pas** y mettre les tuiles de cartes (2 618 fichiers), ni les URL Firebase, ni
@@ -115,7 +118,7 @@ contrôle, pas au partage de code.
 ```js
 // sw.js, en tête. Doit rester identique à APP_VERSION de js/layout.js :
 // la CI le vérifie (.github/workflows/validate.yml).
-const APP_VERSION = 'v2.14.0';
+const APP_VERSION = 'v2.14.1';          // valeur du jour, à reprendre de js/layout.js
 const CACHE_NAME  = 'wfrp-cache-' + APP_VERSION;
 ```
 
@@ -145,7 +148,18 @@ Puis une étape dans `.github/workflows/validate.yml` :
 
 Ce contrôle automatise la convention que le projet s'était fixée sans pouvoir la faire
 respecter : plus aucune version ne peut partir sans son entrée de CHANGELOG ni sans purge du
-cache.
+cache. Depuis le 10 août, six versions ont été publiées à la main en deux jours — le risque
+d'oubli est actif, pas théorique.
+
+Deux remarques sur le changement de nom du cache :
+
+- il passe de `wfrp-cache-v12` à `wfrp-cache-v2.14.1`. Le gestionnaire `activate` supprime déjà
+  tout cache dont le nom diffère de `CACHE_NAME`, donc l'ancien est purgé automatiquement.
+  Aucune action, mais ne pas s'en inquiéter en voyant deux caches un instant ;
+- `L2-14` ajoutera un `package.json` avec `"type": "module"`. Vérifier alors que le `node -e`
+  de ce contrôle, qui utilise `require()`, fonctionne toujours — sinon le convertir en ESM ou
+  le déplacer dans un fichier `.cjs`. **`L2-12` doit passer avant `L2-14`** pour que ce contrôle
+  existe au moment où on l'éprouve.
 
 ---
 
