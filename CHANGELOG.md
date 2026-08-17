@@ -1,3 +1,16 @@
+## [2.14.1] - 2026-08-17
+
+### Performance
+- **Chargement des styles accéléré** : les feuilles de style et la police étaient découvertes en cascade, chacune n'étant demandée qu'après l'analyse de la précédente — la police partait au troisième aller-retour, pendant lequel l'affichage était bloqué. Tout est désormais demandé en parallèle dès la lecture de la page. Deux feuilles vides et un fichier intermédiaire devenu inutile ont été supprimés au passage.
+- **Plus de clignotement au passage en thème Parchemin** : la feuille du thème est chargée d'emblée au lieu d'être ajoutée par le script.
+
+### Sécurité
+- **Politique de sécurité resserrée page par page** : l'autorisation des scripts en ligne, qui affaiblissait la protection contre les injections, ne subsiste que sur l'accueil, où la scène 3D l'exige. Chaque page n'autorise plus que les services qu'elle utilise réellement — l'accueil, par exemple, ne fait plus aucune référence à Firebase depuis que le calendrier n'en dépend plus.
+
+### Corrections
+- **Téléchargement de l'export de fiche** durci pour Firefox, où la révocation trop rapide du lien pouvait annuler l'enregistrement du fichier.
+- **Mise en cache hors ligne réparée** : la liste des ressources pré-chargées citait un fichier supprimé, ce qui faisait échouer l'installation du cache en silence.
+
 ## [2.14.0] - 2026-08-17
 
 ### Personnages
