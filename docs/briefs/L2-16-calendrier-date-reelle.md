@@ -93,7 +93,7 @@ Valeurs de contrôle, déjà vérifiées :
 | 1ᵉʳ janvier | 1 | Hexennacht, jour de fête |
 | 11 août 2026, **à n'importe quelle heure** | 244 | 11 Erntezeit, An 2512 C.I. |
 | 31 décembre | 400 | 33 Vorhexen |
-| 29 février 2028 (bissextile) | 65 | 32 Nachexen, An 2514 C.I. |
+| 29 février 2028 (bissextile) | 65 | 32 Jahrdrung, An 2514 C.I. |
 
 **Cas de non-régression à ne pas perdre** : `new Date(2026, 7, 11, 0, 30)` doit donner **244**,
 comme `new Date(2026, 7, 11, 14, 0)`. Une première version de ce brief utilisait une

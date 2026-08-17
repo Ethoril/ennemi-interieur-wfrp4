@@ -179,6 +179,27 @@ service firebase.storage {
 
 ### 4. Déployer
 
+### L'ordre de mise en production compte
+
+`L1-03` retire le contrôle d'autorisation du JavaScript pour le confier aux règles. Les deux
+briefs forment donc un tout, **et les règles doivent partir en premier**.
+
+Publier le code de `L1-03` sur `master` avant d'avoir déployé ces règles serait une régression :
+jusqu'ici, la table `CHAR_OWNERS` vide bloquait les joueurs côté client, quelles que soient les
+règles réellement en place. Sans elle, la décision revient entièrement aux règles déployées — et
+si celles d'aujourd'hui se contentent d'un `request.auth != null` sur `fiches`, toute personne
+disposant d'un compte Google pourrait lire n'importe quelle fiche.
+
+Séquence sûre :
+
+1. déployer `firestore.rules` et `storage.rules` depuis la branche ;
+2. dérouler la checklist ci-dessous en servant le site **en local** (`node tools/dev-server.mjs`),
+   qui parle au Firebase de production — le nouveau code est ainsi éprouvé contre les nouvelles
+   règles, sans rien publier ;
+3. fusionner sur `master` seulement ensuite.
+
+### Comment déployer
+
 Le déploiement des règles ne passe **pas** par GitHub Pages :
 
 ```bash
