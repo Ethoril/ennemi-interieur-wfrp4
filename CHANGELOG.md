@@ -1,3 +1,21 @@
+## [2.13.3] - 2026-08-17
+
+### Sécurité
+- **Règles Firebase versionnées et durcies (critique)** : les règles Firestore et Storage entrent dans le dépôt (`firestore.rules`, `storage.rules`) et sont déployées. Jusqu'ici le modèle d'autorisation n'existait que dans la console, non versionné et non relisible, tandis que tous les contrôles côté navigateur se contournaient depuis la console de développement. Désormais : les indices non découverts ne sont plus lisibles hors Maître de Jeu, la collection `mail` n'accepte que la création d'un message adressé au Maître de Jeu et de forme imposée — elle ne peut plus servir de relais —, l'écriture sur les PNJs, les relations et les indices est réservée au Maître de Jeu, et les téléversements d'images sont bornés en taille et en type.
+- **Sondage de session** : un visiteur sans compte peut toujours voter et modifier sa réponse, mais il ne peut plus supprimer la réponse d'un autre joueur, remplacer les dates, clôturer le sondage ni le supprimer. Le vote reste anonyme, par choix.
+- **Adresses des joueurs jamais exposées** : la table des accès aux fiches vit dans Firestore et n'est lisible que par le Maître de Jeu. Le navigateur ne la télécharge pas : ce sont les règles qui tranchent l'autorisation, côté serveur.
+
+### Personnages
+- **Accès des joueurs à leur fiche** : chaque joueur ouvre désormais sa fiche avec son compte Google. La fonctionnalité annoncée en 2.10.0 ne fonctionnait en réalité pour personne d'autre que le Maître de Jeu, la table d'autorisation étant restée vide depuis son introduction. Ajouter ou retirer un joueur se fait maintenant dans la console Firebase, sans mise en ligne.
+- **Message d'attente** : « Vérification des accès… » s'affiche pendant le contrôle, au lieu du message de refus qui apparaissait à tort pendant une fraction de seconde.
+
+### Accueil
+- **Le calendrier impérial suit enfin la date du jour.** Il affichait « Hexennacht, An 2512 » depuis sa mise en ligne, sans jamais avancer d'un jour : le document de campagne dont il dépendait n'avait jamais été créé, et l'échec de lecture était silencieux. Le calendrier est désormais calculé à partir de la date réelle — l'année civile décalée de 486 ans, et le jour de l'année étiré sur les 400 jours du calendrier impérial. Les douze mois et les six jours de fête défilent donc au cours de l'année.
+- **Plus aucune requête réseau depuis le calendrier** : les contrôles d'avance manuelle du Maître de Jeu, qui ne pouvaient de toute façon pas fonctionner, sont retirés. La date se rafraîchit d'elle-même au passage de minuit.
+
+### PWA & Cache
+- **Incrémentation du cache** : passage en `wfrp-cache-v9`.
+
 ## [2.13.2] - 2026-08-11
 
 ### Sécurité
