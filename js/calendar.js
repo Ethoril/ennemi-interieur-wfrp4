@@ -1,9 +1,10 @@
-import { db } from './firebase-init.js';
-import { watchAuth } from './auth.js';
-import { doc, onSnapshot, updateDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
 // ── Constants & Calendar Structure ──────────────────────────────────────────
-const START_YEAR = 2512; // Standard WFRP4 Campaign Year starting point
+// Le calendrier impérial compte 400 jours, l'année civile 365 ou 366. On étire
+// linéairement, de sorte que le 1er janvier tombe sur le jour 1 et le 31 décembre
+// sur le jour 400. Conséquence assumée : environ un jour impérial sur dix est
+// sauté, la progression n'est donc pas d'exactement un jour par jour.
+const DECALAGE_ANNEES = 486;   // 2026 → 2512
+const JOURS_IMPERIAUX = 400;
 
 const CALENDAR_STRUCTURE = [
     { type: 'festival', name: 'Hexennacht' },
@@ -87,11 +88,34 @@ const PHASE_EMOJIS = {
     "Gibbeuse Croissante": "🌔"
 };
 
-// ── State ───────────────────────────────────────────────────────────────────
-let currentDay = 1;
-let isAdmin = false;
-
 // ── Helper Logic ────────────────────────────────────────────────────────────
+function dateImperiale(maintenant = new Date()) {
+    const annee = maintenant.getFullYear();
+
+    // Arithmétique en UTC, et non en heure locale : soustraire deux dates locales
+    // séparées par un changement d'heure fait perdre ou gagner une heure, ce qui
+    // décale le jour de l'année entre minuit et 1 h du matin pendant tout l'été.
+    // Date.UTC ignore les fuseaux et les heures d'été.
+    const jourCivil = Math.round(
+        (Date.UTC(annee, maintenant.getMonth(), maintenant.getDate())
+         - Date.UTC(annee, 0, 1)) / 86400000
+    ) + 1;                                                    // 1..365/366
+    const joursAnnee = Math.round(
+        (Date.UTC(annee + 1, 0, 1) - Date.UTC(annee, 0, 1)) / 86400000
+    );                                                        // 365 ou 366
+
+    const jourImperial = 1 + Math.floor(
+        (jourCivil - 1) * (JOURS_IMPERIAUX - 1) / (joursAnnee - 1)
+    );
+
+    const anneeImperiale = annee + DECALAGE_ANNEES;
+    // globalDay conserve la sémantique attendue par getWeekday() et
+    // getMorrsliebPhase() : un compteur continu depuis le jour 1 de l'an 2512.
+    const globalDay = (anneeImperiale - 2512) * JOURS_IMPERIAUX + jourImperial;
+
+    return { anneeImperiale, jourImperial, globalDay };
+}
+
 function getImperialDateDetails(dayOfYear) {
     let current = 0;
     let festivalsBefore = 0;
@@ -155,14 +179,13 @@ function updateCalendarUI() {
     const widget = document.getElementById('imperial-calendar-widget');
     if (!widget) return;
 
-    const year = Math.floor((currentDay - 1) / 400) + START_YEAR;
-    const dayOfYear = ((currentDay - 1) % 400) + 1;
-    const details = getImperialDateDetails(dayOfYear);
+    const { anneeImperiale, jourImperial, globalDay } = dateImperiale();
+    const details = getImperialDateDetails(jourImperial);
     if (!details) return;
 
-    const weekday = getWeekday(currentDay, details);
-    const mannsliebPhase = getMannsliebPhase(dayOfYear);
-    const morrsliebPhase = getMorrsliebPhase(currentDay, details.isFestival);
+    const weekday = getWeekday(globalDay, details);
+    const mannsliebPhase = getMannsliebPhase(jourImperial);
+    const morrsliebPhase = getMorrsliebPhase(globalDay, details.isFestival);
 
     const mannsliebEmoji = PHASE_EMOJIS[mannsliebPhase];
     const morrsliebEmoji = PHASE_EMOJIS[morrsliebPhase];
@@ -183,7 +206,7 @@ function updateCalendarUI() {
         ${weekdayHtml}
         <div class="calendar-date-container">
             ${dateHtml}
-            <div class="calendar-year">An ${year} C.I.</div>
+            <div class="calendar-year">An ${anneeImperiale} C.I.</div>
         </div>
         <div class="calendar-moons">
             <div class="moon-card mannslieb">
@@ -197,74 +220,21 @@ function updateCalendarUI() {
                 <span class="moon-phase">${morrsliebPhase}</span>
             </div>
         </div>
-        <div class="calendar-controls" id="calendar-admin-controls" style="display: ${isAdmin ? 'flex' : 'none'};">
-            <button class="btn-ctrl" id="btn-sub-week" title="Reculer d'une semaine">-1 Semaine</button>
-            <button class="btn-ctrl" id="btn-sub-day" title="Reculer d'un jour">-1 Jour</button>
-            <button class="btn-ctrl" id="btn-add-day" title="Avancer d'un jour">+1 Jour</button>
-            <button class="btn-ctrl" id="btn-add-week" title="Avancer d'une semaine">+1 Semaine</button>
-        </div>
     `;
-
-    // Bind event listeners for admin controls if displayed
-    if (isAdmin) {
-        document.getElementById('btn-sub-week').addEventListener('click', () => adjustDay(-8));
-        document.getElementById('btn-sub-day').addEventListener('click', () => adjustDay(-1));
-        document.getElementById('btn-add-day').addEventListener('click', () => adjustDay(1));
-        document.getElementById('btn-add-week').addEventListener('click', () => adjustDay(8));
-    }
 }
 
-async function adjustDay(amount) {
-    if (!isAdmin) return;
-    const campaignDocRef = doc(db, 'campagne', 'state');
-    const newDay = Math.max(1, currentDay + amount);
-    try {
-        await updateDoc(campaignDocRef, { currentDay: newDay });
-    } catch (e) {
-        console.error("Error updating campaign currentDay:", e);
-        alert("Erreur de mise à jour du calendrier: " + e.message);
-    }
-}
-
-function updateAdminControlsVisibility() {
-    const controls = document.getElementById('calendar-admin-controls');
-    if (controls) {
-        controls.style.display = isAdmin ? 'flex' : 'none';
-    }
-    // Re-render to bind/unbind event listeners properly depending on auth status
-    updateCalendarUI();
+function programmerMinuit() {
+    const maintenant = new Date();
+    const minuit = new Date(maintenant);
+    minuit.setHours(24, 0, 5, 0);          // 5 s après minuit, marge d'arrondi
+    setTimeout(() => { updateCalendarUI(); programmerMinuit(); },
+               minuit - maintenant);
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 function init() {
-    const container = document.getElementById('imperial-calendar-section');
-    if (container) {
-        container.style.display = '';
-    }
-
-    const campaignDocRef = doc(db, 'campagne', 'state');
-    
-    // Realtime listener
-    onSnapshot(campaignDocRef, (snapshot) => {
-        if (!snapshot.exists()) {
-            setDoc(campaignDocRef, { currentDay: 1 })
-                .catch(err => console.error("Error initializing currentDay:", err));
-        } else {
-            const data = snapshot.data();
-            if (data && typeof data.currentDay === 'number') {
-                currentDay = data.currentDay;
-                updateCalendarUI();
-            } else {
-                updateDoc(campaignDocRef, { currentDay: 1 })
-                    .catch(err => console.error("Error updating currentDay:", err));
-            }
-        }
-    });
-
-    watchAuth((user, isUserAdmin) => {
-        isAdmin = isUserAdmin;
-        updateAdminControlsVisibility();
-    });
+    updateCalendarUI();
+    programmerMinuit();
 }
 
 if (document.readyState === 'loading') {
@@ -272,3 +242,4 @@ if (document.readyState === 'loading') {
 } else {
     init();
 }
+

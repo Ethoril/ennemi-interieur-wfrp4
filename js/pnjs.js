@@ -709,6 +709,8 @@ async function openPanel(d) {
         </div>`;
 
     // Query Firestore for indices linked to this PNJ
+    // Note : la contrainte decouvert == true est requise par la règle Firestore
+    // pour les non-MJ ; ne pas la retirer sous peine de refus d'autorisation.
     let linkedClues = [];
     try {
         const indicesRef = collection(db, 'indices');

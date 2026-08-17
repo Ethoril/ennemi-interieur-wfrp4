@@ -61,6 +61,8 @@ async function loadData() {
         state.pnjs = pnjSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
 
         // 2. Fetch Clues based on auth state
+        // Note : la contrainte decouvert == true est requise par la règle Firestore
+        // pour les non-MJ ; ne pas la retirer sous peine de refus d'autorisation.
         let cluesSnap;
         if (state.isAdmin) {
             cluesSnap = await getDocs(collection(db, 'indices'));
