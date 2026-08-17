@@ -35,7 +35,7 @@ et `L2-01` avant `L2-02`.
 
 | Brief | Objet | Constat | Estim. |
 |---|---|---|---|
-| [L2-01](L2-01-sauvegarde-cloud.md) | Fiabiliser la sauvegarde cloud | I2 | 1 h 30 |
+| ~~[L2-01](L2-01-sauvegarde-cloud.md)~~ | ~~Fiabiliser la sauvegarde cloud~~ — **livré en v2.13.4** | I2 | — |
 | [L2-02](L2-02-export-import-fiche.md) | Export et import JSON de la fiche | I3 | 1 h 30 |
 | [L2-03](L2-03-feuille-impression.md) | Feuille d'impression de la fiche | I3 | 1 h |
 | [L2-04](L2-04-css-calendrier.md) | Sortir la mise en forme du Calendrier du JS | I4 | 3 h |
@@ -49,8 +49,20 @@ et `L2-01` avant `L2-02`.
 | [L2-12](L2-12-service-worker.md) | Service worker : hors-ligne et version liée | N5, N8 | 1 h 30 |
 | [L2-13](L2-13-hygiene.md) | Encodage, code mort, fichiers obsolètes | N2, N6 | 1 h |
 | [L2-14](L2-14-ci-lint.md) | Contrôles de syntaxe et ESLint en CI | N7 | 1 h 30 |
-| [L2-16](L2-16-calendrier-date-reelle.md) | Calendrier impérial calé sur la date du jour | hors audit | 1 h 30 |
+| ~~[L2-16](L2-16-calendrier-date-reelle.md)~~ | ~~Calendrier impérial calé sur la date du jour~~ — **livré en v2.13.3** | hors audit | — |
 | [L2-15](L2-15-cloture-lot2.md) | CHANGELOG, version, livraison | N1 | 45 min |
+
+### Déjà livrés — ne pas reprendre
+
+- **`L2-01`**, en v2.13.4. Traité en hotfix le 17 août 2026 après une perte de données en
+  production, et **dépassé** : le brief ne couvrait que la file d'attente et le vidage avant
+  fermeture. Le vrai coupable était l'arbitrage local/cloud, qui comparait deux horloges et
+  faisait qu'ouvrir une fiche la marquait comme modifiée — une simple consultation pouvait donc
+  reverser un cache périmé par-dessus les modifications d'autrui. Corrigé par un drapeau
+  `_dirty` et une garde `withoutSaving()`. Lire le commit `fe6d622` plutôt que le brief.
+- **`L2-16`**, en v2.13.3, avec les briefs `L1-03` et `L1-04`.
+
+Il reste donc **14 briefs** au lot 2 : `L2-02` à `L2-15`.
 
 `L2-16` ne vient pas de l'audit : c'est une demande du 11 août 2026, ajoutée après coup. Elle
 répare au passage un défaut que l'audit avait manqué — le calendrier de l'accueil affichait la
