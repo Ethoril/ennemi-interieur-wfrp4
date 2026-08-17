@@ -22,6 +22,7 @@ const ASSETS_LOCAUX = [
   './css/theme-parchment.css',
   './css/hero3d.css',
   './css/fiche.css',
+  './css/doodle.css',
   './js/auth.js',
   './js/calendar.js',
   './js/doodle.js',

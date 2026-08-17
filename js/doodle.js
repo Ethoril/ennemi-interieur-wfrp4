@@ -106,7 +106,7 @@ onSnapshot(docRef, (docSnap) => {
     updateAdminPanel();
 }, (error) => {
     console.error("Erreur lors de l'écoute du sondage : ", error);
-    doodleLoader.innerHTML = `<span style="color: #c94c4c;">Erreur de chargement du sondage.</span>`;
+    doodleLoader.innerHTML = `<span class="doodle-loader-error">Erreur de chargement du sondage.</span>`;
 });
 
 // Affichage/Masquage et rendu du panneau d'administration
@@ -239,14 +239,14 @@ btnAdminDelete.addEventListener('click', async () => {
 function updateAuthBar(user) {
     if (user) {
         doodleAuthBar.innerHTML = `
-            <span style="color: var(--text-muted);">Connecté en tant que <strong style="color: var(--gold);">${esc(user.displayName || user.email)}</strong></span>
-            <button id="btn-signout" class="btn-ghost" style="padding: 6px 12px; font-size: 0.8rem;">Déconnexion</button>
+            <span class="doodle-muted">Connecté en tant que <strong class="doodle-auth-name">${esc(user.displayName || user.email)}</strong></span>
+            <button id="btn-signout" class="btn-ghost doodle-btn-auth">Déconnexion</button>
         `;
         document.getElementById('btn-signout').addEventListener('click', () => logout());
     } else {
         doodleAuthBar.innerHTML = `
-            <span style="color: var(--text-muted);">Tu es Maître de Jeu ?</span>
-            <button id="btn-signin" class="btn-primary" style="margin: 0; padding: 6px 12px; font-size: 0.8rem;">🔑 Connexion Admin</button>
+            <span class="doodle-muted">Tu es Maître de Jeu ?</span>
+            <button id="btn-signin" class="btn-primary doodle-btn-auth">🔑 Connexion Admin</button>
         `;
         document.getElementById('btn-signin').addEventListener('click', () => {
             loginWithGoogle().catch(err => {
@@ -440,11 +440,11 @@ function renderHorizontalPoll(pollData, playerNames, totals, isClosed, isAdmin) 
 
     let html = `
         <div class="sheet-table-wrapper">
-            <table class="rules-table" style="width: 100%; border-collapse: collapse; text-align: center;">
+            <table class="rules-table doodle-table">
                 <thead>
                     <tr>
-                        <th style="text-align: left; padding: 12px; border-bottom: 2px solid var(--border-strong); min-width: 180px; width: 180px;">Joueurs</th>
-                        ${dates.map(date => `<th style="padding: 12px; border-bottom: 2px solid var(--border-strong); min-width: 120px; font-size: 0.85rem; line-height: 1.2;">${esc(date)}</th>`).join('')}
+                        <th class="doodle-th-player">Joueurs</th>
+                        ${dates.map(date => `<th class="doodle-th-date">${esc(date)}</th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
@@ -457,41 +457,41 @@ function renderHorizontalPoll(pollData, playerNames, totals, isClosed, isAdmin) 
         if (!isClosed) {
             if (isAdmin) {
                 nameHtml = `
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <div class="doodle-player-name-wrap">
                         <span>${esc(name)}</span>
-                        <div style="display: flex; gap: 4px;">
-                            <button class="btn-edit-player-response" data-player="${esc(name)}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px 4px; font-size: 0.95rem;" title="Modifier la réponse de ${esc(name)}">✏️</button>
-                            <button class="btn-delete-player-response" data-player="${esc(name)}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px 4px; font-size: 0.95rem;" title="Supprimer la réponse de ${esc(name)}">🗑️</button>
+                        <div class="doodle-player-actions">
+                            <button class="btn-edit-player-response doodle-btn-icon" data-player="${esc(name)}" title="Modifier la réponse de ${esc(name)}">✏️</button>
+                            <button class="btn-delete-player-response doodle-btn-icon doodle-btn-icon-danger" data-player="${esc(name)}" title="Supprimer la réponse de ${esc(name)}">🗑️</button>
                         </div>
                     </div>
                 `;
             } else {
                 nameHtml = `
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <div class="doodle-player-name-wrap">
                         <span>${esc(name)}</span>
-                        <button class="btn-edit-player-response" data-player="${esc(name)}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px 6px; font-size: 0.95rem;" title="Modifier ma réponse">✏️</button>
+                        <button class="btn-edit-player-response doodle-btn-icon" data-player="${esc(name)}" title="Modifier ma réponse">✏️</button>
                     </div>
                 `;
             }
         } else if (isAdmin) {
             nameHtml = `
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <div class="doodle-player-name-wrap">
                     <span>${esc(name)}</span>
-                    <button class="btn-delete-player-response" data-player="${esc(name)}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px 6px; font-size: 0.95rem;" title="Supprimer la réponse de ${esc(name)}">🗑️</button>
+                    <button class="btn-delete-player-response doodle-btn-icon doodle-btn-icon-danger" data-player="${esc(name)}" title="Supprimer la réponse de ${esc(name)}">🗑️</button>
                 </div>
             `;
         }
 
         html += `
-            <tr style="border-bottom: 1px solid var(--border-subtle);">
-                <td style="text-align: left; padding: 12px; font-weight: bold; min-width: 180px; width: 180px;">${nameHtml}</td>
+            <tr class="doodle-player-row">
+                <td class="doodle-td-player">${nameHtml}</td>
                 ${dates.map((_, index) => {
                     const available = votes[index] === true;
                     return `
-                        <td style="padding: 12px; text-align: center;">
-                            ${available 
-                                ? `<span style="color: #2ecc71; font-weight: bold; font-size: 1.2rem;" title="Disponible">✔</span>` 
-                                : `<span style="color: #e74c3c; font-weight: bold; font-size: 1.2rem;" title="Indisponible">✘</span>`
+                        <td class="doodle-td-vote">
+                            ${available
+                                ? `<span class="doodle-vote-yes" title="Disponible">✔</span>`
+                                : `<span class="doodle-vote-no" title="Indisponible">✘</span>`
                             }
                         </td>
                     `;
@@ -501,30 +501,30 @@ function renderHorizontalPoll(pollData, playerNames, totals, isClosed, isAdmin) 
     });
 
     html += `
-        <tr style="border-bottom: 2px solid var(--border-strong); background: rgba(201, 168, 76, 0.05); font-weight: bold;">
-            <td style="text-align: left; padding: 12px; color: var(--gold); min-width: 180px; width: 180px;">Total dispos</td>
-            ${totals.map(t => `<td style="padding: 12px; text-align: center; color: var(--gold);">${t}</td>`).join('')}
+        <tr class="doodle-row-total">
+            <td class="doodle-td-total-label">Total dispos</td>
+            ${totals.map(t => `<td class="doodle-td-total">${t}</td>`).join('')}
         </tr>
     `;
 
     if (!isClosed) {
         html += `
-            <tr class="voter-row" style="background: rgba(0, 0, 0, 0.15);">
-                <td style="text-align: left; padding: 12px; vertical-align: middle; min-width: 180px; width: 180px;">
-                    <input type="text" id="voter-name" placeholder="Ton pseudo..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--border-subtle); background: rgba(0,0,0,0.3); color: var(--text-primary); border-radius: var(--radius-sm);">
+            <tr class="voter-row doodle-voter-row">
+                <td class="doodle-td-voter-name">
+                    <input type="text" id="voter-name" class="doodle-input doodle-input-voter" placeholder="Ton pseudo...">
                 </td>
                 ${dates.map((_, index) => `
-                    <td style="padding: 12px; text-align: center; vertical-align: middle;">
-                        <label class="custom-checkbox-container" style="display: inline-block; position: relative; cursor: pointer; user-select: none; width: 22px; height: 22px;">
-                            <input type="checkbox" class="voter-checkbox" data-index="${index}" style="width: 22px; height: 22px; cursor: pointer; margin: 0;">
+                    <td class="doodle-td-voter-check">
+                        <label class="doodle-checkbox-wrap">
+                            <input type="checkbox" class="voter-checkbox doodle-checkbox" data-index="${index}">
                         </label>
                     </td>
                 `).join('')}
             </tr>
             <tr>
-                <td colspan="${dates.length + 1}" style="text-align: right; padding: 12px;">
-                    <span id="vote-error" style="color: #e74c3c; font-size: 0.9rem; margin-right: 15px; display: none;"></span>
-                    <button id="btn-submit-vote" class="btn-primary" style="margin: 0; padding: 8px 24px;">Valider mon vote</button>
+                <td colspan="${dates.length + 1}" class="doodle-td-submit">
+                    <span id="vote-error" class="doodle-vote-error doodle-vote-error-horizontal"></span>
+                    <button id="btn-submit-vote" class="btn-primary doodle-btn-submit">Valider mon vote</button>
                 </td>
             </tr>
         `;
@@ -547,40 +547,40 @@ function renderVerticalPoll(pollData, playerNames, totals, isClosed, isAdmin) {
     // Saisie du pseudo au-dessus des cartes (si non clôturé)
     if (!isClosed) {
         html += `
-            <div style="display: flex; justify-content: flex-start; align-items: flex-end; gap: 15px; margin-bottom: 2rem; flex-wrap: wrap;">
-                <div id="doodle-voter-input-vertical" style="text-align: left; width: 100%; max-width: 450px;">
-                    <label for="voter-name-vertical" style="display: block; font-family: var(--font-heading); color: var(--gold); margin-bottom: 0.5rem; font-weight: bold; font-size: 0.95rem;">Ton pseudo pour voter :</label>
-                    <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
-                        <input type="text" id="voter-name-vertical" placeholder="Ton pseudo..." style="flex: 1; min-width: 150px; padding: 8px 12px; border: 1px solid var(--border-subtle); background: rgba(0,0,0,0.3); color: var(--text-primary); border-radius: var(--radius-sm);">
-                        <button id="btn-submit-vote-vertical" class="btn-primary" style="margin: 0; padding: 8px 20px; font-size: 0.9rem; white-space: nowrap;">Valider mon vote</button>
+            <div class="doodle-voter-form">
+                <div id="doodle-voter-input-vertical" class="doodle-voter-field">
+                    <label for="voter-name-vertical" class="doodle-voter-label">Ton pseudo pour voter :</label>
+                    <div class="doodle-voter-input-row">
+                        <input type="text" id="voter-name-vertical" class="doodle-input doodle-input-voter-inline" placeholder="Ton pseudo...">
+                        <button id="btn-submit-vote-vertical" class="btn-primary doodle-btn-submit-inline">Valider mon vote</button>
                     </div>
-                    <span id="vote-error-vertical" style="color: #e74c3c; font-size: 0.9rem; margin-top: 5px; display: none;"></span>
+                    <span id="vote-error-vertical" class="doodle-vote-error doodle-vote-error-vertical"></span>
                 </div>
             </div>
         `;
     }
 
     // Liste des cartes
-    html += `<div class="doodle-cards-list" style="display: flex; flex-direction: column; gap: 0.8rem;">`;
+    html += `<div class="doodle-cards-list">`;
 
     dates.forEach((date, dateIndex) => {
         const dateTotal = totals[dateIndex] || 0;
         
         html += `
             <div class="doodle-card">
-                <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="doodle-card-info">
                     ${!isClosed ? `
-                        <label class="custom-checkbox-container" style="display: inline-block; position: relative; cursor: pointer; user-select: none; width: 22px; height: 22px; margin: 0;">
-                            <input type="checkbox" class="voter-checkbox" data-index="${dateIndex}" style="width: 22px; height: 22px; cursor: pointer; margin: 0;">
+                        <label class="doodle-checkbox-wrap">
+                            <input type="checkbox" class="voter-checkbox doodle-checkbox" data-index="${dateIndex}">
                         </label>
                     ` : ''}
-                    <span style="font-family: var(--font-heading); color: var(--text-primary); font-size: 1.05rem; font-weight: bold;">
+                    <span class="doodle-card-date">
                         ${esc(date)}
                     </span>
                 </div>
-                
+
                 <div>
-                    <button class="btn-show-votes" data-index="${dateIndex}" style="background: rgba(201, 168, 76, 0.05); border: 1px solid var(--border-gold); color: var(--gold); border-radius: var(--radius-sm); padding: 6px 12px; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; font-family: var(--font-heading); transition: all var(--transition-fast);">
+                    <button class="btn-show-votes doodle-btn-votes" data-index="${dateIndex}">
                         👥 Votes : ${dateTotal} Oui
                     </button>
                 </div>
@@ -593,8 +593,8 @@ function renderVerticalPoll(pollData, playerNames, totals, isClosed, isAdmin) {
     // Bouton de validation doublé en bas (si non clôturé)
     if (!isClosed) {
         html += `
-            <div style="display: flex; justify-content: flex-start; margin-top: 1.5rem;">
-                <button id="btn-submit-vote-vertical-bottom" class="btn-primary" style="margin: 0; padding: 10px 24px; font-size: 0.95rem;">
+            <div class="doodle-submit-bottom">
+                <button id="btn-submit-vote-vertical-bottom" class="btn-primary">
                     Valider mon vote
                 </button>
             </div>
@@ -757,27 +757,27 @@ function openVotesModal(pollData, dateIndex, playerNames) {
             if (!isClosed) {
                 if (isAdmin) {
                     actionsHtml = `
-                        <div style="display: flex; gap: 4px;">
-                            <button class="modal-btn-edit" data-player="${esc(name)}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px; font-size: 0.9rem;" title="Modifier">✏️</button>
-                            <button class="modal-btn-delete" data-player="${esc(name)}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px; font-size: 0.9rem;" title="Supprimer">🗑️</button>
+                        <div class="doodle-player-actions">
+                            <button class="modal-btn-edit doodle-btn-icon" data-player="${esc(name)}" title="Modifier">✏️</button>
+                            <button class="modal-btn-delete doodle-btn-icon doodle-btn-icon-danger" data-player="${esc(name)}" title="Supprimer">🗑️</button>
                         </div>
                     `;
                 } else {
                     actionsHtml = `
-                        <button class="modal-btn-edit" data-player="${esc(name)}" style="background: none; border: none; color: var(--gold); cursor: pointer; padding: 2px;" title="Modifier">✏️</button>
+                        <button class="modal-btn-edit doodle-btn-icon" data-player="${esc(name)}" title="Modifier">✏️</button>
                     `;
                 }
             } else if (isAdmin) {
                 actionsHtml = `
-                    <button class="modal-btn-delete" data-player="${esc(name)}" style="background: none; border: none; color: #c94c4c; cursor: pointer; padding: 2px;" title="Supprimer">🗑️</button>
+                    <button class="modal-btn-delete doodle-btn-icon doodle-btn-icon-danger" data-player="${esc(name)}" title="Supprimer">🗑️</button>
                 `;
             }
-            
+
             votersHtml += `
                 <div class="doodle-voter-item">
-                    <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="doodle-voter-identity">
                         <div class="doodle-voter-avatar">${esc(initials)}</div>
-                        <span style="font-family: var(--font-body); font-weight: bold; color: var(--text-primary);">${esc(name)}</span>
+                        <span class="doodle-voter-name">${esc(name)}</span>
                         ${actionsHtml}
                     </div>
                     <span class="${badgeClass}">${badgeText}</span>
@@ -786,7 +786,7 @@ function openVotesModal(pollData, dateIndex, playerNames) {
         });
         
         if (votersHtml === "") {
-            votersHtml = `<div style="text-align: center; color: var(--text-muted); font-style: italic; padding: 10px 0;">Aucun vote à afficher</div>`;
+            votersHtml = `<div class="doodle-modal-empty">Aucun vote à afficher</div>`;
         }
         
         modalVotersList.innerHTML = votersHtml;

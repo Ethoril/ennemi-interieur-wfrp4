@@ -30,6 +30,23 @@
   --border-gold: rgba(201, 168, 76, 0.35);
   --border-strong: rgba(201, 168, 76, 0.6);
 
+  /* Couleurs de statut. Elles n'existaient que dans theme-parchment.css :
+     en thème sombre, js/pnjs.js retombait sur la valeur de repli de son
+     var(). Ces trois lignes reprennent exactement ces valeurs de repli,
+     donc rien ne change à l'écran — le jeton existe enfin des deux côtés,
+     comme la convention le suppose. */
+  --statut-allie:  #4caf7d;
+  --statut-ennemi: #c94c4c;
+  --statut-neutre: #8a8a9a;
+
+  /* Lavis doré, pour les fonds à peine teintés (ligne de totaux du
+     Calendrier, bannière de clôture, boutons secondaires). */
+  --gold-wash: rgba(201, 168, 76, 0.07);
+
+  /* Texte posé sur une pastille de statut saturée. Volontairement
+     identique dans les deux thèmes : le fond porte déjà la couleur. */
+  --text-on-status: #fff;
+
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.6);
