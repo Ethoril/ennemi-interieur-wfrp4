@@ -36,10 +36,10 @@ et `L2-01` avant `L2-02`.
 | Brief | Objet | Constat | Estim. |
 |---|---|---|---|
 | ~~[L2-01](L2-01-sauvegarde-cloud.md)~~ | ~~Fiabiliser la sauvegarde cloud~~ — **livré en v2.13.4** | I2 | — |
-| [L2-02](L2-02-export-import-fiche.md) | Export et import JSON de la fiche | I3 | 1 h 30 |
+| ~~[L2-02](L2-02-export-import-fiche.md)~~ | ~~Export et import JSON de la fiche~~ — **livré en v2.14.0** | I3 | — |
 | [L2-04](L2-04-css-calendrier.md) | Sortir la mise en forme du Calendrier du JS | I4 | 3 h |
 | [L2-05](L2-05-depliage-css.md) | Déplier la chaîne de chargement CSS | M1 | 1 h |
-| [L2-06](L2-06-allegement-images.md) | Supprimer 31 Mo d'images | M2 | 30 min |
+| ~~[L2-06](L2-06-allegement-images.md)~~ | ~~Supprimer 31 Mo d'images~~ — **livré en v2.14.0** | M2 | — |
 | [L2-07](L2-07-csp.md) | Resserrer la CSP | M3 | 1 h |
 | [L2-08](L2-08-correctifs-cibles.md) | Trois correctifs ciblés | M4, M5, M7 | 1 h |
 | [L2-09](L2-09-libelles-annonces.md) | Libellés de formulaire et annonces | N3 | 1 h |
@@ -60,8 +60,9 @@ et `L2-01` avant `L2-02`.
   reverser un cache périmé par-dessus les modifications d'autrui. Corrigé par un drapeau
   `_dirty` et une garde `withoutSaving()`. Lire le commit `fe6d622` plutôt que le brief.
 - **`L2-16`**, en v2.13.3, avec les briefs `L1-03` et `L1-04`.
+- **`L2-02`** et **`L2-06`**, en v2.14.0.
 
-Il reste donc **13 briefs** au lot 2 : `L2-02`, puis `L2-04` à `L2-15`.
+Il reste donc **11 briefs** au lot 2 : `L2-04`, `L2-05`, `L2-07` à `L2-15`.
 
 ## Hors périmètre
 
