@@ -1840,8 +1840,10 @@ function exportToFile() {
     const jour = new Date().toISOString().slice(0, 10);
     a.href = url;
     a.download = `fiche-${payload._charId}-${jour}.json`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 async function importFromFile(file) {
