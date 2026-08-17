@@ -1823,6 +1823,50 @@ export function exportData() {
     };
 }
 
+function exportToFile() {
+    const APP_VERSION_FICHE = document.querySelector('.nav-version')?.textContent?.trim() || '';
+    const payload = {
+        _format:     'wfrp4-fiche',
+        _version:    1,
+        _app:        APP_VERSION_FICHE,
+        _charId:     _charParam || 'test',
+        _exportedAt: new Date().toISOString(),
+        ...exportData(),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)],
+                          { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const jour = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `fiche-${payload._charId}-${jour}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+async function importFromFile(file) {
+    let payload;
+    try {
+        payload = JSON.parse(await file.text());
+    } catch {
+        alert("Fichier illisible : ce n'est pas un JSON valide.");
+        return;
+    }
+    if (payload?._format !== 'wfrp4-fiche') {
+        alert("Ce fichier n'est pas un export de fiche de personnage.");
+        return;
+    }
+    if (!confirm("Remplacer la fiche actuelle par le contenu de ce fichier ? "
+               + "L'état actuel sera perdu.")) return;
+
+    resetState();
+    applyData(payload);
+    renderAll();
+    recalc();          // recalc() appelle save(), qui propage vers le cloud
+    updatePageTitle();
+    updateCharacterPortrait();
+}
+
 // Debounce local de 400 ms : évite un JSON.stringify + setItem à chaque keystroke.
 // Cloud save reste à 2 s. saveNow() reste utilisable pour les actions discrètes
 // (ajout d'item, toggle) qui doivent être persistées sans attendre.
@@ -1993,6 +2037,20 @@ function applyData(d) {
     updateCharacterPortrait();
 }
 
+// Re-rendu complet de la fiche depuis `state`. Appelée après tout
+// remplacement global de l'état : chargement cloud, chargement local, import.
+function renderAll() {
+    buildBasicSkills();
+    renderCareerDetail();
+    renderAdvancedSkills();
+    renderCareers();
+    renderTalents();
+    renderSorts();
+    renderPrieres();
+    renderXpLog();
+    applyOptVisible();
+}
+
 function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
@@ -2033,15 +2091,7 @@ export async function ficheLoadCloud(data, cloudMillis) {
     withoutSaving(() => {
         resetState();
         applyData(data);
-        buildBasicSkills();
-        renderCareerDetail();
-        renderAdvancedSkills();
-        renderCareers();
-        renderTalents();
-        renderSorts();
-        renderPrieres();
-        renderXpLog();
-        applyOptVisible();
+        renderAll();
         recalc();
     });
     isCloudLoaded = true;
@@ -2124,6 +2174,16 @@ function bindAll() {
             save();
         });
     });
+
+    // Sauvegarde locale & Export / Import
+    document.getElementById('btn-export-fiche')?.addEventListener('click', exportToFile);
+    document.getElementById('btn-import-fiche')?.addEventListener('click',
+        () => document.getElementById('file-import-fiche')?.click());
+    document.getElementById('file-import-fiche')?.addEventListener('change', e => {
+        const f = e.target.files?.[0];
+        if (f) importFromFile(f);
+        e.target.value = '';   // permet de réimporter le même fichier
+    });
 }
 
 // ── Init ──────────────────────────────────────────────
@@ -2171,15 +2231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     withoutSaving(() => {
         if (!isCloudLoaded) {
             load();             // charger l'état en premier
-            buildBasicSkills(); // puis rendre avec les valeurs restaurées
-            renderCareerDetail();
-            renderAdvancedSkills();
-            renderCareers();
-            renderTalents();
-            renderSorts();
-            renderPrieres();
-            renderXpLog();
-            applyOptVisible();
+            renderAll();        // puis rendre avec les valeurs restaurées
         }
         bindAll();
         recalc();

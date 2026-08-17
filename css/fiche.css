@@ -1415,6 +1415,27 @@ tr.sk-ghost-open td.sk-nom::after {
   background: rgba(var(--accent-rgb, 180,140,60), 0.06);
 }
 
+/* ── Sauvegarde locale & Export / Import ─────────── */
+.fiche-backup-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  padding: var(--space-sm) 0;
+}
+
+.fiche-backup-row .btn-add {
+  margin-top: 0;
+}
+
+.fiche-backup-hint {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-style: italic;
+  margin-left: var(--space-sm);
+}
+
 @media (max-width: 700px) {
   .career-detail-grid,
   .career-detail-grid-2col { grid-template-columns: 1fr; }
@@ -1433,4 +1454,5 @@ tr.sk-ghost-open td.sk-nom::after {
   .fiche-header       { grid-template-columns: 1fr; }
   .fiche-xp-block     { grid-column: span 1; grid-template-columns: 1fr 1fr 1fr; }
   .derived-grid       { grid-template-columns: repeat(3, 1fr); }
+  .fiche-backup-hint  { margin-left: 0; width: 100%; }
 }

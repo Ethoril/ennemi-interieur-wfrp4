@@ -331,6 +331,14 @@
                         <textarea id="possessions" placeholder="Équipement, argent, objets notables…"></textarea>
                     </div>
 
+                    <!-- ══ SAUVEGARDE LOCALE & EXPORT ══ -->
+                    <div class="fiche-backup-row">
+                        <button class="btn-add" id="btn-export-fiche" type="button">⬇ Exporter en JSON</button>
+                        <button class="btn-add" id="btn-import-fiche" type="button">⬆ Importer un JSON</button>
+                        <input type="file" id="file-import-fiche" accept=".json,application/json" hidden>
+                        <span class="fiche-backup-hint">Sauvegarde locale de la fiche, à conserver hors du navigateur.</span>
+                    </div>
+
                 </div>
             </div>
         </section><!-- /fiche-content-section -->
