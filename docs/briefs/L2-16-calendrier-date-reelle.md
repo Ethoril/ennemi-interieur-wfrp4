@@ -60,9 +60,18 @@ const JOURS_IMPERIAUX = 400;
 
 function dateImperiale(maintenant = new Date()) {
     const annee = maintenant.getFullYear();
-    const debut = new Date(annee, 0, 1);
-    const jourCivil = Math.floor((maintenant - debut) / 86400000) + 1;   // 1..365/366
-    const joursAnnee = (new Date(annee, 11, 31) - debut) / 86400000 + 1; // 365 ou 366
+
+    // Arithmétique en UTC, et non en heure locale : soustraire deux dates locales
+    // séparées par un changement d'heure fait perdre ou gagner une heure, ce qui
+    // décale le jour de l'année entre minuit et 1 h du matin pendant tout l'été.
+    // Date.UTC ignore les fuseaux et les heures d'été.
+    const jourCivil = Math.round(
+        (Date.UTC(annee, maintenant.getMonth(), maintenant.getDate())
+         - Date.UTC(annee, 0, 1)) / 86400000
+    ) + 1;                                                    // 1..365/366
+    const joursAnnee = Math.round(
+        (Date.UTC(annee + 1, 0, 1) - Date.UTC(annee, 0, 1)) / 86400000
+    );                                                        // 365 ou 366
 
     const jourImperial = 1 + Math.floor(
         (jourCivil - 1) * (JOURS_IMPERIAUX - 1) / (joursAnnee - 1)
@@ -82,8 +91,15 @@ Valeurs de contrôle, déjà vérifiées :
 | Date réelle | Jour impérial | Affichage attendu |
 |---|---|---|
 | 1ᵉʳ janvier | 1 | Hexennacht, jour de fête |
-| 11 août 2026 | 244 | 11 Erntezeit, An 2512 C.I. |
+| 11 août 2026, **à n'importe quelle heure** | 244 | 11 Erntezeit, An 2512 C.I. |
 | 31 décembre | 400 | 33 Vorhexen |
+| 29 février 2028 (bissextile) | 65 | 32 Nachexen, An 2514 C.I. |
+
+**Cas de non-régression à ne pas perdre** : `new Date(2026, 7, 11, 0, 30)` doit donner **244**,
+comme `new Date(2026, 7, 11, 14, 0)`. Une première version de ce brief utilisait une
+soustraction de dates locales et renvoyait 243 pour le premier — l'heure d'été fait perdre un
+jour entre minuit et 1 h, pendant les sept mois où elle s'applique. C'est ce que l'arithmétique
+UTC corrige.
 
 Les 12 mois **et** les 6 jours de fête sont tous atteints au cours d'une année, y compris
 Mondstille et Vorhexen. Vérifié sur les 365 jours, et sur une année bissextile.
@@ -178,6 +194,10 @@ dès le premier rendu **améliore** cette situation — mais le vérifier.
 - [ ] Modifier temporairement la date du système (ou forcer une date dans `dateImperiale()`) et
       vérifier : 1ᵉʳ janvier donne Hexennacht, 31 décembre donne 33 Vorhexen, le 29 février d'une
       année bissextile ne casse rien.
+- [ ] **Insensibilité à l'heure d'été** : `dateImperiale(new Date(2026, 7, 11, 0, 30))` et
+      `dateImperiale(new Date(2026, 7, 11, 14, 0))` renvoient le **même** jour impérial, 244.
+      Tester aussi une date en heure d'hiver (15 janvier 00 h 30) et le lendemain d'un changement
+      d'heure (fin mars, fin octobre).
 - [ ] Les deux lunes s'affichent avec leur phase et leur emoji.
 - [ ] Le jour de la semaine s'affiche pour un jour ordinaire, et « Jour de Fête » pour un festival.
 - [ ] **Aucun bouton d'administration** n'apparaît, même connecté en MJ.
