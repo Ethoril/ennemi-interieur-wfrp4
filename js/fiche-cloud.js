@@ -1,7 +1,7 @@
 import { db } from './firebase-init.js';
 import { auth, watchAuth, loginWithGoogle, logout } from './auth.js';
 import { doc, setDoc, getDoc, serverTimestamp, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { ficheLoadCloud, exportData, markCloudSaved } from './fiche.js';
+import { ficheLoadCloud, markCloudSaved } from './fiche.js';
 import { esc } from './utils.js';
 
 /* ── Configuration Personnage et Accès ─────────────────────────── */

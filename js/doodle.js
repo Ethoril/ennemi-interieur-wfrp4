@@ -36,9 +36,6 @@ const doodleVotesModal = document.getElementById('doodle-votes-modal');
 const btnCloseModal = document.getElementById('btn-close-modal');
 const modalDateDetails = document.getElementById('modal-date-details');
 const modalVotersList = document.getElementById('modal-voters-list');
-const btnFilterAll = document.getElementById('btn-filter-all');
-const btnFilterYes = document.getElementById('btn-filter-yes');
-const btnFilterNo = document.getElementById('btn-filter-no');
 
 // Reference du document dans Firestore
 const docRef = doc(db, 'doodle', 'current');
@@ -544,7 +541,6 @@ function renderHorizontalPoll(pollData, playerNames, totals, isClosed, isAdmin) 
 // Rendu en format vertical (Cartes + Modale)
 function renderVerticalPoll(pollData, playerNames, totals, isClosed, isAdmin) {
     const dates = pollData.dates || [];
-    const responses = pollData.responses || {};
 
     let html = "";
 

@@ -1,0 +1,15 @@
+{
+  "name": "ennemi-interieur-wfrp4",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Outillage de developpement uniquement. Le site est statique et ne charge aucune dependance npm.",
+  "scripts": {
+    "lint": "eslint .",
+    "check": "node tools/smoke-test.mjs",
+    "dev": "node tools/dev-server.mjs"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  }
+}
