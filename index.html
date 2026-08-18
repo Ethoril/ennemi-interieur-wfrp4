@@ -42,15 +42,18 @@
   <canvas id="hero3d-canvas" aria-hidden="true"></canvas>
 
   <!-- Navigation -->
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
   <nav class="navbar" id="navbar"></nav>
 
-  <div class="page-container">
+  <main class="page-container" id="contenu">
 
     <!-- Hero -->
     <section class="hero" id="hero">
       <div class="hero-content fade-in">
         <p class="hero-subtitle">Warhammer Fantasy — 4e Édition</p>
         <h1>Ennemi Intérieur</h1>
+        <p id="next-session"
+          style="text-align: center; font-size: 1.4rem; font-weight: bold; color: var(--gold); margin: var(--space-md) 0 var(--space-lg); letter-spacing: 0.05em;"></p>
         <p class="hero-description">
           Bienvenue Camarade !<br><br>
           Ici tu trouveras tout ce dont tu as besoin : vidéos sur le monde,
@@ -59,11 +62,6 @@
         </p>
       </div>
     </section>
-
-    <!-- Next Session -->
-    <p id="next-session"
-      style="text-align: center; font-size: 1.4rem; font-weight: bold; color: var(--gold); margin: var(--space-sm) 0; letter-spacing: 0.05em;">
-    </p>
 
     <!-- Calendrier Impérial Widget -->
     <section class="section-calendar fade-in" id="imperial-calendar-section">
@@ -108,6 +106,34 @@
             <span class="card-arrow">Lire →</span>
           </a>
 
+          <a href="cartes.html" class="card" id="card-cartes">
+            <span class="card-icon">🗺️</span>
+            <h3>Cartes du Vieux Monde</h3>
+            <p>Explore les cartes de l'Empire et du Vieux Monde.</p>
+            <span class="card-arrow">Explorer →</span>
+          </a>
+
+          <a href="pnjs.html" class="card" id="card-pnjs">
+            <span class="card-icon">🎭</span>
+            <h3>PNJs &amp; Relations</h3>
+            <p>Parcours les personnages non-joueurs et le réseau de leurs relations.</p>
+            <span class="card-arrow">Découvrir →</span>
+          </a>
+
+          <a href="enquetes.html" class="card" id="card-enquetes">
+            <span class="card-icon">🔍</span>
+            <h3>Carnet d'Enquêtes</h3>
+            <p>Consulte les indices découverts au fil de la campagne.</p>
+            <span class="card-arrow">Enquêter →</span>
+          </a>
+
+          <a href="doodle.html" class="card" id="card-doodle">
+            <span class="card-icon">📅</span>
+            <h3>Calendrier</h3>
+            <p>Vote pour la date de la prochaine session.</p>
+            <span class="card-arrow">Voter →</span>
+          </a>
+
         </div>
       </div>
     </section>
@@ -118,7 +144,7 @@
     <!-- Footer -->
     <footer class="footer" id="site-footer"></footer>
 
-  </div>
+  </main>
 
   <!-- layout.js doit s'exécuter avant hero3d : il pose data-theme sur <html>,
        que hero3d lit pour décider d'activer ou non la scène 3D -->

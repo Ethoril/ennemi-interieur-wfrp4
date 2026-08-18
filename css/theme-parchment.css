@@ -24,11 +24,11 @@
   /* Textes — bruns foncés */
   --text-primary:   #2a1008;
   --text-secondary: #5a3015;
-  --text-muted:     #8a6040;
+  --text-muted:     #77502a;
   --text-heading:   #2d0a0a;
 
   /* Bordures — ambrés/brun chaud */
-  --border-subtle: rgba(100, 65, 20, 0.18);
+  --border-subtle: rgba(100, 65, 20, 0.36);
   --border-gold:   rgba(100, 65, 20, 0.42);
   --border-strong: rgba(100, 65, 20, 0.65);
 
@@ -43,6 +43,14 @@
   --statut-allie:   #2d6f47; /* Vert forêt riche */
   --statut-ennemi:  #9a2a2a; /* Rouge bordeaux foncé */
   --statut-neutre:  #5c5c66; /* Gris ardoise */
+
+  /* Lavis doré : plus dense qu'en sombre, un aplat trop léger disparaît
+     sur un fond clair. */
+  --gold-wash:      rgba(122, 92, 16, 0.10);
+
+  /* Inchangé : les couleurs de statut restent saturées sur parchemin,
+     le blanc y est toujours le bon contraste. */
+  --text-on-status: #fff;
 
   /* Couleurs de relations adaptées au parchemin */
   --link-allie:     #2d6f47;

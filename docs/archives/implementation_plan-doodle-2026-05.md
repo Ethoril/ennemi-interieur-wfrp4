@@ -1,5 +1,18 @@
 # Feature: Doodle - Planification de parties
 
+> [!NOTE]
+> **Document historique — archivé le 17 août 2026, ne décrit pas l'état actuel.**
+>
+> Plan de conception rédigé en mai 2026, *avant* implémentation. La fonctionnalité
+> est livrée depuis la **v2.11.0** (27 mai 2026) et a beaucoup évolué depuis :
+> deux formats d'affichage, modale de votes, panneau MJ remanié, échappement
+> durci par `L1-01`. Les sections « User Review Required » et « Open Questions »
+> ci-dessous ont été tranchées à l'usage — ce ne sont plus des questions
+> ouvertes, et les réponses ne figurent pas ici.
+>
+> Conservé pour retrouver l'intention d'origine. Pour l'état réel, lire
+> `js/doodle.js` et le brief `L2-04`.
+
 Ce plan décrit l'implémentation de la fonctionnalité de sondage (doodle) permettant de planifier les prochaines sessions de jeu.
 
 ## User Review Required
@@ -14,7 +27,7 @@ Ce plan décrit l'implémentation de la fonctionnalité de sondage (doodle) perm
 
 > [!WARNING]
 > 1. **Modification des votes** : Est-ce que les joueurs doivent pouvoir modifier leur vote après l'avoir soumis ? Si oui, le plus simple est d'écraser la ligne si le nom saisi existe déjà. Êtes-vous d'accord avec ce comportement ?
-> 2. **Format des dates** : Le MDJ (David) pourra-t-il simplement entrer du texte libre pour les dates (ex: "Samedi 12", "Dimanche 13", "Mardi 15 soir"), séparé par des virgules, pour créer le sondage ?
+> 2. **Format des dates** : Le MJ pourra-t-il simplement entrer du texte libre pour les dates (ex: "Samedi 12", "Dimanche 13", "Mardi 15 soir"), séparé par des virgules, pour créer le sondage ?
 
 ## Proposed Changes
 
@@ -35,7 +48,7 @@ Ce plan décrit l'implémentation de la fonctionnalité de sondage (doodle) perm
 - **Authentification** : Utiliser `onAuthStateChanged` pour vérifier si l'utilisateur est connecté et s'il s'agit de `ethoril@gmail.com`.
 - **Mode Admin** :
   - Afficher un champ de saisie pour créer un nouveau sondage avec les dates souhaitées.
-  - Lors de la création, écraser le document `doodle/current` dans Firestore avec la liste des dates, et une première réponse automatique pour "David" (toutes les dates cochées).
+  - Lors de la création, écraser le document `doodle/current` dans Firestore avec la liste des dates, et une première réponse automatique pour le MJ (toutes les dates cochées).
 - **Mode Joueur (Sondage)** :
   - Écouter en temps réel (`onSnapshot`) les modifications de `doodle/current`.
   - Générer un tableau HTML :
@@ -54,6 +67,6 @@ Ce plan décrit l'implémentation de la fonctionnalité de sondage (doodle) perm
 ### Manual Verification
 1. Me connecter en tant que MDJ (`ethoril@gmail.com`) et vérifier l'apparition du panneau d'administration.
 2. Créer un sondage avec 3 dates (ex: "10 Juin, 12 Juin, 15 Juin").
-3. Vérifier que la ligne de "David" est automatiquement ajoutée avec les 3 dates cochées.
+3. Vérifier que la ligne du MJ est automatiquement ajoutée avec les 3 dates cochées.
 4. Me déconnecter (ou ouvrir en navigation privée), saisir un nom de joueur (ex: "Bhelgi"), cocher 2 dates et valider.
 5. Constater que la ligne de Bhelgi apparaît instantanément dans le tableau.

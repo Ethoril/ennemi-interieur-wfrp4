@@ -27,9 +27,10 @@
 
 <body>
 
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
     <nav class="navbar" id="navbar"></nav>
 
-    <div class="page-container">
+    <main class="page-container" id="contenu">
 
         <div class="page-header fade-in">
             <h1>Personnages</h1>
@@ -130,11 +131,11 @@
                 <form id="pnj-form">
                     <div class="form-row">
                         <div class="form-col">
-                            <label>Nom *</label>
+                            <label for="f-nom">Nom *</label>
                             <input type="text" id="f-nom" required placeholder="Nom du personnage">
                         </div>
                         <div class="form-col">
-                            <label>Statut</label>
+                            <label for="f-statut">Statut</label>
                             <select id="f-statut">
                                 <option value="">— Inconnu —</option>
                                 <option value="allié">Allié</option>
@@ -145,7 +146,7 @@
                     </div>
                     <div class="form-row">
                         <div class="form-col">
-                            <label>Vivant</label>
+                            <label for="f-vivant">Vivant</label>
                             <select id="f-vivant">
                                 <option value="oui">Oui</option>
                                 <option value="inconnu">Inconnu</option>
@@ -153,25 +154,25 @@
                             </select>
                         </div>
                         <div class="form-col">
-                            <label>Lieu</label>
+                            <label for="f-lieu">Lieu</label>
                             <input type="text" id="f-lieu" placeholder="Altdorf, Bögenhafen…">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-col form-col-full">
-                            <label>Groupe social</label>
+                            <label for="f-groupe">Groupe social</label>
                             <input type="text" id="f-groupe" placeholder="Marchand, Culte, Garde…">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-col form-col-full">
-                            <label>Description</label>
+                            <label for="f-description">Description</label>
                             <textarea id="f-description" rows="4" placeholder="Description, notes…"></textarea>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-col form-col-full">
-                            <label>Portrait</label>
+                            <label for="f-image">Portrait</label>
                             <input type="file" id="f-image" accept="image/*">
                             <div id="f-image-preview" class="image-preview"></div>
                         </div>
@@ -188,7 +189,7 @@
         <div class="ornament">⚜</div>
         <footer class="footer" id="site-footer"></footer>
 
-    </div>
+    </main>
 
     <script type="module" src="js/layout.js"></script>
     <script type="module" src="js/main.js"></script>

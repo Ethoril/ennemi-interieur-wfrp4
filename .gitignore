@@ -5,3 +5,6 @@ img/Carte Vieux Monde.png
 # Script de génération de tuiles (usage local uniquement)
 generate-tiles.cjs
 tiles-log.txt
+
+# Node / Outillage de développement
+node_modules/

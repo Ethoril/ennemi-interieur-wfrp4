@@ -37,19 +37,16 @@ async function fetchSheetData(sheetName) {
         if (rows.length < 2) return { headers: [], data: [] };
 
         let headers = rows[0];
-        let dataStart = 1;
+        const dataStart = 1;
 
-        // Fix: detect corrupted first row from merged cells in Google Sheets
-        // If a header cell contains newlines, it means multiple data values got merged
+        // Une cellule fusionnée dans le Google Sheet fait remonter plusieurs
+        // valeurs dans le même en-tête, séparées par des retours à la ligne.
+        // On ne garde que la première ligne de chaque cellule : le nom réel de
+        // la colonne. Les données commencent de toute façon à la ligne 2, cette
+        // branche ne décale donc rien — elle nettoie les en-têtes, c'est tout.
         const firstRowCorrupted = headers.some(h => h.includes('\n'));
         if (firstRowCorrupted) {
-            // Extract real header names (first word/line of each cell)
-            headers = headers.map(h => {
-                const firstLine = h.split('\n')[0].trim();
-                return firstLine;
-            });
-            // Skip this corrupted row entirely (data starts from row 2)
-            dataStart = 1;
+            headers = headers.map(h => h.split('\n')[0].trim());
         }
 
         const data = rows.slice(dataStart).filter(r => r.some(c => c !== ''));
@@ -196,7 +193,7 @@ function formatText(text) {
 
 // ── Search / Filter ───────────────────────────────
 function filterCards(container, query) {
-    const cards = container.querySelectorAll('.sheet-card, .sheet-definition, .sheet-table-wrapper tr');
+    const cards = container.querySelectorAll('.sheet-card, .sheet-definition, .sheet-table-wrapper tbody tr');
     const q = stripAccents(query.toLowerCase());
 
     cards.forEach(card => {

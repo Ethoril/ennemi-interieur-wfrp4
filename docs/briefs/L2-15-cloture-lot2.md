@@ -10,6 +10,14 @@
 | **Fichiers** | `CHANGELOG.md`, `js/layout.js`, `sw.js` |
 | **Dépend de** | les quatorze briefs `L2-01` à `L2-14`, terminés et vérifiés |
 
+> ⚠ **Le `v2.14.0` écrit partout dans ce brief est périmé.** `v2.14.0` **et** `v2.14.1` sont déjà
+> publiées, et `sw.js` porte déjà `v2.14.1` depuis `L2-12`. Le numéro de clôture est donc à
+> trancher avant de commencer — `v2.14.2` si le reste du lot ne fait que corriger, `v2.15.0` s'il
+> ajoute des fonctions. **Ne pas suivre ce brief à la lettre sur ce point** : repasser à `v2.14.0`
+> serait une régression de numéro, et le contrôle CI de `L2-12` ne l'attraperait pas — les deux
+> constantes concorderaient et `CHANGELOG.md` contient déjà une entrée `[2.14.0]`. La CI garantit
+> la cohérence des trois valeurs, pas leur progression.
+
 ---
 
 ## Pourquoi
@@ -112,7 +120,26 @@ const CACHE_NAME  = 'wfrp-cache-' + APP_VERSION;
 Le contrôle CI ajouté par `L2-12` vérifie que les deux correspondent **et** que le CHANGELOG a
 son entrée. Si la CI échoue, c'est qu'un des trois a été oublié — c'est exactement son rôle.
 
-### 3. Relecture complète
+### 3. Solder la scorie d'`offline.html`
+
+Relevé à la relecture de `lot-2-outillage` (commit `3105cfa`) et reporté ici volontairement, pour
+ne pas rouvrir `L2-12` : `offline.html` est **la seule des douze pages sans `<link rel="icon">`**.
+Sa CSP étant `default-src 'none'`, la requête implicite du navigateur vers `/favicon.ico` est
+bloquée et journalise une violation — sur la page dont le rôle est justement d'être le repli
+propre. La convention §7 exige une console vide.
+
+Deux lignes, alignées sur les onze autres pages. `favicon.svg` est déjà pré-caché par `sw.js`,
+donc l'icône s'affiche aussi hors ligne :
+
+```html
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'self'">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+```
+
+**Dans un commit séparé, avant celui de livraison** — la règle « ce commit ne contient que le
+CHANGELOG et les deux constantes » ci-dessous reste entière.
+
+### 4. Relecture complète
 
 Le lot a touché aux styles de toutes les pages. Dérouler la checklist ci-dessous en entier, sur
 poste **et** sur mobile, dans les **deux** thèmes.
@@ -161,7 +188,11 @@ poste **et** sur mobile, dans les **deux** thèmes.
 - [ ] Depuis une machine ayant visité la v2.13.2 : un rechargement sert bien la v2.14.0
       (numéro visible dans la barre de navigation).
 - [ ] Mode hors-ligne : la page hors-ligne s'affiche pour une page jamais visitée.
-- [ ] Console vide sur les onze pages — aucune erreur, aucune violation de CSP, aucune 404.
+- [ ] Mode hors-ligne, `fiche.html?char=…` **jamais ouverte** : c'est bien la fiche qui s'affiche,
+      pas la page hors-ligne — le repli `ignoreSearch` de `3105cfa` sert la coque pré-cachée. Même
+      essai pour `carte.html?map=…`.
+- [ ] Console vide sur les onze pages **et sur `offline.html`** — aucune erreur, aucune violation
+      de CSP, aucune 404. C'est ce point qui rend l'étape 3 nécessaire.
 - [ ] La CI est verte sur les quatre tâches (smoke-test, json-lint, syntaxe, lint) plus la
       cohérence de version.
 

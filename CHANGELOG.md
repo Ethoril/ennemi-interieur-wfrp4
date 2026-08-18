@@ -1,3 +1,39 @@
+## [2.15.0] - 2026-08-18
+
+### Accueil
+- **La date de la prochaine session s'affiche dans le hero**, juste sous le titre, visible dès l'arrivée sur la page au lieu d'être reléguée sous la ligne de flottaison.
+- **Quatre cartes de navigation ajoutées** pour les pages apparues depuis : Cartes, PNJs, Enquêtes et Calendrier.
+- **La scène 3D se termine sur un gros plan de Morrslieb** : en passant sous les cartes, la lune du Chaos revient et grossit jusqu'à révéler son visage démoniaque, au lieu de s'attarder sur la ville.
+
+### Accessibilité
+- **Tous les champs de formulaire ont enfin un libellé associé** (fiche, PNJs, enquêtes), y compris ceux générés à la volée — compétences, journal d'XP, sorts, prières, boutons de suppression. Un lecteur d'écran les annonce désormais correctement au lieu de « champ de saisie, vide ».
+- **L'état de sauvegarde de la fiche et les erreurs de vote du Calendrier sont annoncés vocalement.**
+- **Repère de contenu et lien d'évitement sur les onze pages** : au clavier, la première tabulation propose d'aller droit au contenu sans traverser les neuf entrées de la navigation. L'indicateur de focus est visible partout, dans les deux thèmes.
+- **Contraste renforcé** des libellés de formulaire et des bordures de champs, dans les deux thèmes.
+
+### Personnages
+- **Espèce Nain** disponible sur la fiche (Mouvement 3), et le **rang maximum passe de 4 à 5** pour couvrir la carrière Mage (Haut Elfe).
+
+### Interface
+- **Les actions destructives passent par une modale de confirmation** thématisée, au lieu des fenêtres système : réinitialisation de fiche (nommant le personnage), suppression de PNJ, de relation, d'indice, de sondage, de la réponse d'un joueur, et remplacement de fiche à l'import. Le focus se place d'office sur « Annuler », et Échap ou un clic sur le voile annulent.
+
+### Corrections
+- **Aides de Jeux** : les en-têtes de colonnes ne disparaissent plus quand on tape dans la recherche.
+- **Enquêtes** : lorsque la liste d'indices est vide, le message « Aucun indice » ne recouvre plus la page et ne bloque plus les boutons (dont la connexion).
+
+### Performance
+- **Scène 3D de l'accueil** : les positions de défilement ne sont plus recalculées à chaque événement de défilement, ce qui allège le rendu.
+
+### PWA & Cache
+- **Fonctionnement hors-ligne fiabilisé** : page de repli dédiée, pré-cache élargi (Leaflet, modale de confirmation) et cache lié à la version de l'application.
+- **Incrémentation du cache** : passage en `wfrp-cache-v2.15.0`.
+
+### Calendrier
+- **Mise en forme du Calendrier sortie du JavaScript** vers la feuille de style, avec suivi du thème parchemin.
+
+### Sous le capot
+- Contrôles d'intégration continue ajoutés (syntaxe des modules, ESLint, cohérence version / cache / CHANGELOG), nettoyage de code mort et de fichiers obsolètes.
+
 ## [2.14.1] - 2026-08-17
 
 ### Performance
@@ -189,159 +225,159 @@
 - **Responsive** : Ajustements des conteneurs du graphe D3 et des cartes Leaflet pour une meilleure manipulation sur mobile.
 ## [2.8.2] - 2026-05-26
 
-### ThÃ¨me Parchemin (Clair) & AccessibilitÃ©
-- **PNJs (Graphe)** : Correction du contraste des nÅ“uds. Le fond des cadres (`.node-card`) n'est plus noir mais s'adapte au thÃ¨me (blanc chaud `#faf4e8` sur parchemin) afin de rendre les noms en brun foncÃ© parfaitement lisibles.
-- **PNJs (Portrait placeholders)** : Le fond des cercles placeholders de portrait s'adapte dÃ©sormais au thÃ¨me (`var(--bg-surface)`) pour contraster avec les initiales.
-- **PNJs (Badges et chips)** : Refonte des teintes de statut (alliÃ©, ennemi, neutre, vivant, dÃ©cÃ©dÃ©, inconnu) et de relations (mentor, rival, etc.) pour utiliser des variables CSS adaptÃ©es Ã  fort contraste (ratio > 4.5:1 WCAG AA) sur le thÃ¨me parchemin.
-- **PNJs (LuminositÃ© dynamique)** : La fonction `stringToColor` adapte automatiquement la luminositÃ© des teintes calculÃ©es pour les relations personnalisÃ©es en fonction du thÃ¨me actif.
+### Thème Parchemin (Clair) & Accessibilité
+- **PNJs (Graphe)** : Correction du contraste des nœuds. Le fond des cadres (`.node-card`) n'est plus noir mais s'adapte au thème (blanc chaud `#faf4e8` sur parchemin) afin de rendre les noms en brun foncé parfaitement lisibles.
+- **PNJs (Portrait placeholders)** : Le fond des cercles placeholders de portrait s'adapte désormais au thème (`var(--bg-surface)`) pour contraster avec les initiales.
+- **PNJs (Badges et chips)** : Refonte des teintes de statut (allié, ennemi, neutre, vivant, décédé, inconnu) et de relations (mentor, rival, etc.) pour utiliser des variables CSS adaptées à fort contraste (ratio > 4.5:1 WCAG AA) sur le thème parchemin.
+- **PNJs (Luminosité dynamique)** : La fonction `stringToColor` adapte automatiquement la luminosité des teintes calculées pour les relations personnalisées en fonction du thème actif.
 - **PNJs (Texture)** : Application de la texture grain fin au conteneur du graphe `#pnj-graph` pour l'unifier visuellement avec le reste du site.
-- **Indices & Fiches** : AmÃ©lioration du contraste des boutons danger, des chips d'indices (Page EnquÃªtes) et des badges de statut cloud (Page Fiche).
+- **Indices & Fiches** : Amélioration du contraste des boutons danger, des chips d'indices (Page Enquêtes) et des badges de statut cloud (Page Fiche).
 
 ## [2.8.1] - 2026-05-26
 
 ### Corrections & Audit technique
-- **Fiche (Race condition)** : RÃ©solution d'une faille de chargement concurrent entre le cache local (localStorage) et Firestore. L'initialisation attend dÃ©sormais le chargement complet des bases de donnÃ©es JSON (`careers.json` et `skills.json`) et Ã©vite d'exÃ©cuter le rendu local si les donnÃ©es cloud ont dÃ©jÃ  pris le dessus, ce qui provoquait une duplication des listes de compÃ©tences/talents/XP et la corruption de la fiche.
-- **PNJs (Marqueurs SVG)** : Correction de la gÃ©nÃ©ration des IDs des marqueurs de flÃ¨ches SVG. Les couleurs de relation en HSL (gÃ©nÃ©rÃ©es dynamiquement) contenaient des parenthÃ¨ses et virgules invalides qui cassaient les liens D3. Les identifiants sont dÃ©sormais nettoyÃ©s et purement alphanumÃ©riques.
-- **PNJs (Vue Tableau)** : RafraÃ®chissement automatique et immÃ©diat des boutons d'Ã©dition administrative sur la vue tableau lors d'une connexion ou dÃ©connexion.
-- **EnquÃªtes (Race condition)** : Ajout d'une sÃ©curitÃ© par ID de chargement unique dans `enquetes.js` pour Ã©liminer tout conflit d'exÃ©cution en parallÃ¨le des requÃªtes Firestore (par exemple, lors d'un login ultra-rapide).
+- **Fiche (Race condition)** : Résolution d'une faille de chargement concurrent entre le cache local (localStorage) et Firestore. L'initialisation attend désormais le chargement complet des bases de données JSON (`careers.json` et `skills.json`) et évite d'exécuter le rendu local si les données cloud ont déjà pris le dessus, ce qui provoquait une duplication des listes de compétences/talents/XP et la corruption de la fiche.
+- **PNJs (Marqueurs SVG)** : Correction de la génération des IDs des marqueurs de flèches SVG. Les couleurs de relation en HSL (générées dynamiquement) contenaient des parenthèses et virgules invalides qui cassaient les liens D3. Les identifiants sont désormais nettoyés et purement alphanumériques.
+- **PNJs (Vue Tableau)** : Rafraîchissement automatique et immédiat des boutons d'édition administrative sur la vue tableau lors d'une connexion ou déconnexion.
+- **Enquêtes (Race condition)** : Ajout d'une sécurité par ID de chargement unique dans `enquetes.js` pour éliminer tout conflit d'exécution en parallèle des requêtes Firestore (par exemple, lors d'un login ultra-rapide).
 - **Groupe** : Suppression du sous-titre de test temporaire sous le bouton "Fiche HTML".
 
 ## [2.8.0] - 2026-05-26
 
-### SÃ©curitÃ© (CSP) â€” Authentification Firebase
-- **Fix Firebase Auth** : rÃ©solution de l'erreur `Firebase: Error (auth/internal-error)` lors de la connexion Google en autorisant les scripts `'unsafe-inline'` et les connexions/frames vers les domaines nÃ©cessaires (`https://*.firebaseapp.com`, `https://apis.google.com`, `https://accounts.google.com`, `https://www.google.com`) dans les directives `script-src`, `connect-src` et `frame-src` de la politique de sÃ©curitÃ© du contenu (CSP) de toutes les pages.
-- **SÃ©curisation du Carnet d'EnquÃªtes** : ajout de la balise meta CSP sur la page `enquetes.html` avec les mÃªmes rÃ¨gles de sÃ©curitÃ© adaptÃ©es.
+### Sécurité (CSP) — Authentification Firebase
+- **Fix Firebase Auth** : résolution de l'erreur `Firebase: Error (auth/internal-error)` lors de la connexion Google en autorisant les scripts `'unsafe-inline'` et les connexions/frames vers les domaines nécessaires (`https://*.firebaseapp.com`, `https://apis.google.com`, `https://accounts.google.com`, `https://www.google.com`) dans les directives `script-src`, `connect-src` et `frame-src` de la politique de sécurité du contenu (CSP) de toutes les pages.
+- **Sécurisation du Carnet d'Enquêtes** : ajout de la balise meta CSP sur la page `enquetes.html` avec les mêmes règles de sécurité adaptées.
 
-### Carnet d'EnquÃªtes
-- **Nouvelle page d'enquÃªtes** (`enquetes.html` / `js/enquetes.js`) : interface interactive pour le suivi des indices dÃ©couverts durant la campagne.
-- **Mode Administration** : bouton d'accÃ¨s admin Google avec formulaires d'ajout/Ã©dition d'indices (titre, description, illustration facultative par image, statut de dÃ©couverte, liaison dynamique avec la liste des PNJs).
-- **Filtrage et recherche** : recherche d'indices par mots-clÃ©s et filtres rapides (tous / dÃ©couverts / secrets pour l'administrateur).
+### Carnet d'Enquêtes
+- **Nouvelle page d'enquêtes** (`enquetes.html` / `js/enquetes.js`) : interface interactive pour le suivi des indices découverts durant la campagne.
+- **Mode Administration** : bouton d'accès admin Google avec formulaires d'ajout/édition d'indices (titre, description, illustration facultative par image, statut de découverte, liaison dynamique avec la liste des PNJs).
+- **Filtrage et recherche** : recherche d'indices par mots-clés et filtres rapides (tous / découverts / secrets pour l'administrateur).
 
-### Calendrier ImpÃ©rial
-- **Widget sur l'accueil** : intÃ©gration d'un widget de calendrier impÃ©rial interactif sur la page d'accueil (gÃ©rant les mois, phases de lunes et Ã©vÃ©nements spÃ©ciaux de la campagne).
+### Calendrier Impérial
+- **Widget sur l'accueil** : intégration d'un widget de calendrier impérial interactif sur la page d'accueil (gérant les mois, phases de lunes et événements spéciaux de la campagne).
 
-### Technique & DonnÃ©es
-- **DonnÃ©es compÃ©tences (JSON)** : transition de `skills.js` vers un format structurÃ© `skills.json` avec validation par l'intÃ©gration continue. Ajout de compÃ©tences et spÃ©cialitÃ©s manquantes.
+### Technique & Données
+- **Données compétences (JSON)** : transition de `skills.js` vers un format structuré `skills.json` avec validation par l'intégration continue. Ajout de compétences et spécialités manquantes.
 - **Factorisation** : centralisation des parseurs CSV et utilitaires de texte dans `js/utils.js`.
-- **PNJs** : correction d'un bug de rÃ©initialisation de couleur de la lÃ©gende dans le graphe PNJ lors des changements de snapshot de couleur.
+- **PNJs** : correction d'un bug de réinitialisation de couleur de la légende dans le graphe PNJ lors des changements de snapshot de couleur.
 
 ---
 
 ## [2.7.0] - 2026-05-21
 
-### Fiche â€” Multi-utilisateur & Centralisation Firebase
-- **Fiches multi-utilisateurs** : suppression des restrictions d'adresse email codÃ©es en dur cÃ´tÃ© client. Tout utilisateur connectÃ© via Google dispose dÃ©sormais de sa propre fiche sauvegardÃ©e dans son espace cloud Firestore (`fiches/{uid}`).
-- **Centralisation technique** : regroupement de l'initialisation de Firebase et du chargement des services dans un module unique `js/firebase-init.js` partagÃ©.
-- **Robustesse DOM (PNJ)** : sÃ©curisation du ciblage du message de chargement/erreur sur `#pnj-loading` pour Ã©viter les crashs si le squelette HTML est modifiÃ©.
+### Fiche — Multi-utilisateur & Centralisation Firebase
+- **Fiches multi-utilisateurs** : suppression des restrictions d'adresse email codées en dur côté client. Tout utilisateur connecté via Google dispose désormais de sa propre fiche sauvegardée dans son espace cloud Firestore (`fiches/{uid}`).
+- **Centralisation technique** : regroupement de l'initialisation de Firebase et du chargement des services dans un module unique `js/firebase-init.js` partagé.
+- **Robustesse DOM (PNJ)** : sécurisation du ciblage du message de chargement/erreur sur `#pnj-loading` pour éviter les crashs si le squelette HTML est modifié.
 
 ---
 
 ## [2.6.0] - 2026-05-20
 
-### Fiche â€” Personnalisation par-fiche d'une carriÃ¨re
-- **Mode Ã©dition par rang** : bouton **âœŽ Personnaliser** dans le header de chaque rang du panneau de rÃ©fÃ©rence. Active des contrÃ´les d'Ã©dition sans toucher Ã  la base de donnÃ©es globale â€” utile quand le MJ accorde une modification spÃ©cifique Ã  un joueur (Ã©changer une compÃ©tence de carriÃ¨re contre une autre, p. ex.)
-- **Retirer une compÃ©tence/talent** : en mode Ã©dition, un `Ã—` apparaÃ®t sur chaque chip pour la retirer. Les chips retirÃ©es s'affichent barrÃ©es en Ã©dition (avec un `â†º` pour restaurer), et sont masquÃ©es en mode normal
-- **Ajouter une compÃ©tence/talent custom** : champ avec autocomplÃ©tion (datalist) en bas de chaque liste â€” les ajouts s'affichent avec un â˜… vert et participent Ã  la dÃ©tection Â« dans la carriÃ¨re Â» pour les achats XP
-- **Badge âœŽ modifiÃ©** dans le header des rangs personnalisÃ©s, en mode normal â€” repÃ¨re visuel pour ne pas oublier qu'on a divergÃ© du livre
-- **Persistance** : les overrides sont stockÃ©s dans `state.careerOverrides[careerId][rang]` (sync cloud + localStorage). IndÃ©pendants par fiche : changer la carriÃ¨re courante ou rÃ©importer la base globale les laisse intacts
-- Comportement intÃ©grÃ© aux helpers existants : `isSkillInCareer`, `isTalentInCareer`, `getCareerAllSkills`, highlighting, ghost rows â€” tous tiennent compte des overrides
+### Fiche — Personnalisation par-fiche d'une carrière
+- **Mode édition par rang** : bouton **✎ Personnaliser** dans le header de chaque rang du panneau de référence. Active des contrôles d'édition sans toucher à la base de données globale — utile quand le MJ accorde une modification spécifique à un joueur (échanger une compétence de carrière contre une autre, p. ex.)
+- **Retirer une compétence/talent** : en mode édition, un `×` apparaît sur chaque chip pour la retirer. Les chips retirées s'affichent barrées en édition (avec un `↺` pour restaurer), et sont masquées en mode normal
+- **Ajouter une compétence/talent custom** : champ avec autocomplétion (datalist) en bas de chaque liste — les ajouts s'affichent avec un ★ vert et participent à la détection « dans la carrière » pour les achats XP
+- **Badge ✎ modifié** dans le header des rangs personnalisés, en mode normal — repère visuel pour ne pas oublier qu'on a divergé du livre
+- **Persistance** : les overrides sont stockés dans `state.careerOverrides[careerId][rang]` (sync cloud + localStorage). Indépendants par fiche : changer la carrière courante ou réimporter la base globale les laisse intacts
+- Comportement intégré aux helpers existants : `isSkillInCareer`, `isTalentInCareer`, `getCareerAllSkills`, highlighting, ghost rows — tous tiennent compte des overrides
 
 ---
 
 ## [2.5.0] - 2026-05-20
 
-### Fiche â€” Base de donnÃ©es complÃ¨te des carriÃ¨res
-- **132 carriÃ¨res** importÃ©es depuis le Google Sheet (Livre de base, Dwarf Player Guide, High Elf Player Guide, Deft Steps, Up in Arms, Winds of Magic, Archives 1-3, Middenheim) en remplacement des 3 carriÃ¨res mock initiales â€” couverture exhaustive du panneau de rÃ©fÃ©rence carriÃ¨re, autocomplÃ©tion et dÃ©tection Â« dans la carriÃ¨re Â»
-- **Script d'import** (`tools/import-careers.mjs`) qui fetche le sheet, normalise les apostrophes typographiques, regroupe les variantes et rÃ©gÃ©nÃ¨re `js/data/careers.js` â€” relancer aprÃ¨s chaque modification du sheet pour synchroniser
-- **Variantes de rang** : certains rangs ont plusieurs versions (ex: rang 2 d'Artisan a la version Â« Artisan Â» classique et Â« FaÃ§onneur de Pierre Â» du Dwarf PG). Le panneau de rÃ©fÃ©rence affiche un sÃ©lecteur de variante quand plusieurs sont disponibles ; le choix est persistÃ© dans `chosenVariants` et utilisÃ© pour la dÃ©tection Â« dans la carriÃ¨re Â» et le highlighting
-- **Sous-carriÃ¨res avec prÃ©requis** : les 3 sous-carriÃ¨res de Mage (HE) (PrÃªtre-Forgeron de Vaul, Tisseur de TempÃªtes, MaÃ®tre du Savoir de Hoeth) affichent un bandeau Â« PrÃ©requis : Mage (HE) â€” rang 2 minimum Â» informatif (non bloquant â€” la rÃ¨gle de jeu se fait Ã  l'oral)
-- **Comportement gÃ©nÃ©reux par dÃ©faut** : tant qu'une variante n'a pas Ã©tÃ© explicitement choisie, toutes les variantes du rang sont considÃ©rÃ©es comme Â« dans la carriÃ¨re Â» pour Ã©viter les faux nÃ©gatifs pendant les achats XP
+### Fiche — Base de données complète des carrières
+- **132 carrières** importées depuis le Google Sheet (Livre de base, Dwarf Player Guide, High Elf Player Guide, Deft Steps, Up in Arms, Winds of Magic, Archives 1-3, Middenheim) en remplacement des 3 carrières mock initiales — couverture exhaustive du panneau de référence carrière, autocomplétion et détection « dans la carrière »
+- **Script d'import** (`tools/import-careers.mjs`) qui fetche le sheet, normalise les apostrophes typographiques, regroupe les variantes et régénère `js/data/careers.js` — relancer après chaque modification du sheet pour synchroniser
+- **Variantes de rang** : certains rangs ont plusieurs versions (ex: rang 2 d'Artisan a la version « Artisan » classique et « Façonneur de Pierre » du Dwarf PG). Le panneau de référence affiche un sélecteur de variante quand plusieurs sont disponibles ; le choix est persisté dans `chosenVariants` et utilisé pour la détection « dans la carrière » et le highlighting
+- **Sous-carrières avec prérequis** : les 3 sous-carrières de Mage (HE) (Prêtre-Forgeron de Vaul, Tisseur de Tempêtes, Maître du Savoir de Hoeth) affichent un bandeau « Prérequis : Mage (HE) — rang 2 minimum » informatif (non bloquant — la règle de jeu se fait à l'oral)
+- **Comportement généreux par défaut** : tant qu'une variante n'a pas été explicitement choisie, toutes les variantes du rang sont considérées comme « dans la carrière » pour éviter les faux négatifs pendant les achats XP
 
-### CompÃ©tences & spÃ©cialisations ajoutÃ©es
-- Nouvelles compÃ©tences : `Augure`, `PsychomÃ©trie` (Winds of Magic)
-- Nouvelles spÃ©cialisations : `Voile (Skycraft)`, `Conduite (Skycutter)`, `Soins aux animaux (Roc)` (Dwarf / High Elf Player Guides)
+### Compétences & spécialisations ajoutées
+- Nouvelles compétences : `Augure`, `Psychométrie` (Winds of Magic)
+- Nouvelles spécialisations : `Voile (Skycraft)`, `Conduite (Skycutter)`, `Soins aux animaux (Roc)` (Dwarf / High Elf Player Guides)
 
 ### Technique
-- Bug prÃ©-existant corrigÃ© : `});` orphelin dans `bindAll()` qui fermait la fonction prÃ©maturÃ©ment ; les listeners `btn-add-sort` / `btn-add-priere` / `btn-add-xp(-gain)` / toggles de sections optionnelles sont maintenant bien dans le scope de la fonction
-- Le rang max d'une carriÃ¨re est dÃ©sormais lu dynamiquement (Mage HE va jusqu'Ã  5, les autres restent Ã  4)
+- Bug pré-existant corrigé : `});` orphelin dans `bindAll()` qui fermait la fonction prématurément ; les listeners `btn-add-sort` / `btn-add-priere` / `btn-add-xp(-gain)` / toggles de sections optionnelles sont maintenant bien dans le scope de la fonction
+- Le rang max d'une carrière est désormais lu dynamiquement (Mage HE va jusqu'à 5, les autres restent à 4)
 
 ---
 
 ## [2.4.3] - 2026-05-06
 
-### PNJs â€” Ã‰tiquette unique sur lien bidirectionnel
-- **Label unique** : un lien bidirectionnel (Aâ†’B + Bâ†’A) chevauchant naturellement, seule l'Ã©tiquette du premier sens est affichÃ©e â€” plus de doublon de texte au milieu de la courbe
+### PNJs — Étiquette unique sur lien bidirectionnel
+- **Label unique** : un lien bidirectionnel (A→B + B→A) chevauchant naturellement, seule l'étiquette du premier sens est affichée — plus de doublon de texte au milieu de la courbe
 
 ---
 
 ## [2.4.2] - 2026-05-06
 
-### PNJs â€” DirectionnalitÃ© des liens
-- **FlÃ¨ches sur les liens** : chaque lien porte un embout flÃ¨che (marqueur SVG) colorÃ© de la mÃªme teinte que le lien, pointant vers le personnage cible
-- **Liens partant/arrivant sur les bordures des cartes** : les chemins bezier sont tronquÃ©s aux bordures des cartouches (calcul de l'intersection tangente/rectangle) â€” plus de traits qui commencent ou finissent au centre d'une carte
-- **Bidirectionnel** : nouvelle case Ã  cocher dans le formulaire de crÃ©ation â€” si cochÃ©e, deux records Firestore sont crÃ©Ã©s (Aâ†’B et Bâ†’A) ; les deux liens reÃ§oivent chacun une flÃ¨che et s'Ã©cartent naturellement grÃ¢ce aux courbes anti-chevauchement
+### PNJs — Directionnalité des liens
+- **Flèches sur les liens** : chaque lien porte un embout flèche (marqueur SVG) coloré de la même teinte que le lien, pointant vers le personnage cible
+- **Liens partant/arrivant sur les bordures des cartes** : les chemins bezier sont tronqués aux bordures des cartouches (calcul de l'intersection tangente/rectangle) — plus de traits qui commencent ou finissent au centre d'une carte
+- **Bidirectionnel** : nouvelle case à cocher dans le formulaire de création — si cochée, deux records Firestore sont créés (A→B et B→A) ; les deux liens reçoivent chacun une flèche et s'écartent naturellement grâce aux courbes anti-chevauchement
 
 ---
 
 ## [2.4.1] - 2026-05-06
 
-### PNJs â€” Liens (suite)
-- **Palette 16 couleurs** : le sÃ©lecteur de couleur du lien est remplacÃ© par une palette de 16 teintes douces â€” swatches cliquables avec indicateur d'Ã©tat actif
-- **Liens parallÃ¨les non chevauchants** : deux liens entre les mÃªmes personnages courbent dans des directions opposÃ©es (courbes de BÃ©zier avec Ã©chelle alternÃ©e Ã—1/âˆ’1/Ã—2/âˆ’2â€¦)
-- **Ã‰dition de relation** : en mode admin, un bouton âœ� apparaÃ®t sur chaque relation du panneau latÃ©ral pour modifier type, label, couleur et style sans recrÃ©er la relation
+### PNJs — Liens (suite)
+- **Palette 16 couleurs** : le sélecteur de couleur du lien est remplacé par une palette de 16 teintes douces — swatches cliquables avec indicateur d'état actif
+- **Liens parallèles non chevauchants** : deux liens entre les mêmes personnages courbent dans des directions opposées (courbes de Bézier avec échelle alternée ×1/−1/×2/−2…)
+- **Édition de relation** : en mode admin, un bouton ✏ apparaît sur chaque relation du panneau latéral pour modifier type, label, couleur et style sans recréer la relation
 
 ---
 
 ## [2.4.0] - 2026-05-06
 
-### PNJs â€” Vue graphe refonte (carte mentale)
-- **Cartouches** : les nÅ“uds circulaires sont remplacÃ©s par des cartes rectangulaires affichant portrait, nom et statut Â· lieu
-- **Barre accent** : une barre colorÃ©e Ã  gauche de chaque carte reflÃ¨te le colorBy actif (statut, lieu ou groupe)
-- **Liens en courbes** : les liens droits sont remplacÃ©s par des courbes de BÃ©zier quadratiques
-- **Labels sur les liens** : le type ou label de la relation est affichÃ© directement sur le lien (textPath SVG)
-- **Ã‰pinglage aprÃ¨s dÃ©placement** : glisser une carte la fixe en place (comportement carte mentale) ; au chargement initial, le layout s'auto-stabilise puis se fige
-- **Trait plus Ã©pais** : stroke-width des liens passÃ© Ã  3.5px (Ã©tait 2px)
+### PNJs — Vue graphe refonte (carte mentale)
+- **Cartouches** : les nœuds circulaires sont remplacés par des cartes rectangulaires affichant portrait, nom et statut · lieu
+- **Barre accent** : une barre colorée à gauche de chaque carte reflète le colorBy actif (statut, lieu ou groupe)
+- **Liens en courbes** : les liens droits sont remplacés par des courbes de Bézier quadratiques
+- **Labels sur les liens** : le type ou label de la relation est affiché directement sur le lien (textPath SVG)
+- **Épinglage après déplacement** : glisser une carte la fixe en place (comportement carte mentale) ; au chargement initial, le layout s'auto-stabilise puis se fige
+- **Trait plus épais** : stroke-width des liens passé à 3.5px (était 2px)
 
-### PNJs â€” Personnalisation des liens
-- **Couleur custom** : color picker dans le formulaire "Ajouter une relation" â€” la couleur est stockÃ©e dans Firestore et appliquÃ©e dans le graphe et les chips du panneau dÃ©tail
-- **Style continu / pointillÃ©** : toggle â”�â”� / â•Œâ•Œ pour choisir le style du trait au moment de la crÃ©ation
-- CompatibilitÃ© ascendante : les relations existantes sans couleur ni style continuent d'utiliser les couleurs par type (alliÃ©, ennemi, familleâ€¦)
+### PNJs — Personnalisation des liens
+- **Couleur custom** : color picker dans le formulaire "Ajouter une relation" — la couleur est stockée dans Firestore et appliquée dans le graphe et les chips du panneau détail
+- **Style continu / pointillé** : toggle ━━ / ╌╌ pour choisir le style du trait au moment de la création
+- Compatibilité ascendante : les relations existantes sans couleur ni style continuent d'utiliser les couleurs par type (allié, ennemi, famille…)
 
 ---
 
 ## [2.3.0] - 2026-05-06
 
-### Fiche â€” Journal XP repensÃ©
-- **Gains XP journalisÃ©s** : nouveau bouton "+ Gain XP" â€” raison + montant â€” les gains s'affichent en vert dans le journal
-- **XP Total calculÃ© automatiquement** : la somme des entrÃ©es de gain remplace le champ manuel
-- **XP Disponible = Total gagnÃ© âˆ’ Total dÃ©pensÃ©**, tous deux issus du journal
-- **Migration automatique** : les anciennes fiches avec un `xpTotal` manuel sont converties en entrÃ©e "XP initial (migrÃ©)" au premier chargement
-- Raccourcis clavier dans le formulaire de gain (EntrÃ©e pour passer au champ suivant / valider)
+### Fiche — Journal XP repensé
+- **Gains XP journalisés** : nouveau bouton "+ Gain XP" — raison + montant — les gains s'affichent en vert dans le journal
+- **XP Total calculé automatiquement** : la somme des entrées de gain remplace le champ manuel
+- **XP Disponible = Total gagné − Total dépensé**, tous deux issus du journal
+- **Migration automatique** : les anciennes fiches avec un `xpTotal` manuel sont converties en entrée "XP initial (migré)" au premier chargement
+- Raccourcis clavier dans le formulaire de gain (Entrée pour passer au champ suivant / valider)
 
 ---
 
 ## [2.2.1] - 2026-05-01
 
 ### Fix
-- **Perte de donnÃ©es corrigÃ©e** : synchronisation cloud/local basÃ©e sur les timestamps â€” si les donnÃ©es locales sont plus rÃ©centes que le cloud (ex: modification dans la fenÃªtre de debounce de 2s), elles sont conservÃ©es et poussÃ©es vers le cloud plutÃ´t qu'Ã©crasÃ©es
-- `save()` enregistre dÃ©sormais `_savedAt: Date.now()` dans le localStorage pour comparaison
-- `ficheLoadCloud` reÃ§oit le timestamp Firestore (`updatedAt`) et prÃ©fÃ¨re la source la plus fraÃ®che
+- **Perte de données corrigée** : synchronisation cloud/local basée sur les timestamps — si les données locales sont plus récentes que le cloud (ex: modification dans la fenêtre de debounce de 2s), elles sont conservées et poussées vers le cloud plutôt qu'écrasées
+- `save()` enregistre désormais `_savedAt: Date.now()` dans le localStorage pour comparaison
+- `ficheLoadCloud` reçoit le timestamp Firestore (`updatedAt`) et préfère la source la plus fraîche
 
 ---
 
 ## [2.2.0] - 2026-04-30
 
-### Fiche â€” Section Talents refonte
-- **Talents acquis en chips cliquables** : chaque talent s'affiche comme un badge cliquable qui ouvre directement la modale de description â€” plus d'entrÃ©e texte ni de colonne Notes
-- **Badge hors carriÃ¨re** : un marqueur `!` orange signale les talents acquis hors carriÃ¨re (info prÃ©servÃ©e dans le state)
-- **Ajout manuel** : le bouton "+ Ajouter manuellement" insÃ¨re un champ de saisie inline ; dÃ¨s que le nom est confirmÃ©, il devient un chip cliquable
-- **Section "Talents achetables" supprimÃ©e** : redondante avec le panneau de rÃ©fÃ©rence carriÃ¨re et le journal XP
+### Fiche — Section Talents refonte
+- **Talents acquis en chips cliquables** : chaque talent s'affiche comme un badge cliquable qui ouvre directement la modale de description — plus d'entrée texte ni de colonne Notes
+- **Badge hors carrière** : un marqueur `!` orange signale les talents acquis hors carrière (info préservée dans le state)
+- **Ajout manuel** : le bouton "+ Ajouter manuellement" insère un champ de saisie inline ; dès que le nom est confirmé, il devient un chip cliquable
+- **Section "Talents achetables" supprimée** : redondante avec le panneau de référence carrière et le journal XP
 
 ---
 
 # Changelog
 
-Toutes les modifications notables du site sont documentÃ©es dans ce fichier.
+Toutes les modifications notables du site sont documentées dans ce fichier.
 
 Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
@@ -349,45 +385,45 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [2.1.2] - 2026-04-30
 
-### Fiche de Personnage â€” Talents "au choix"
-- **SÃ©lecteur de spÃ©cialisation pour les talents** : quand on saisit le nom de base d'un talent qui existe en version "au choix" dans une carriÃ¨re (ex: "MaÃ®tre artisan"), un sÃ©lecteur de spÃ©cialisation apparaÃ®t automatiquement avec les variantes connues + "Autre (personnalisÃ©)â€¦"
-- **Persistance `customTalents`** : une spÃ©cialisation de talent saisie manuellement est mÃ©morisÃ©e et rÃ©apparaÃ®t dans le sÃ©lecteur aux prochains achats (sauvegardÃ©e dans le cloud)
-- **DÃ©tection carriÃ¨re** : `isTalentInCareer("MaÃ®tre artisan (Forgeron)")` reconnaÃ®t le talent comme dans la carriÃ¨re si celle-ci possÃ¨de "MaÃ®tre artisan (au choix)"
+### Fiche de Personnage — Talents "au choix"
+- **Sélecteur de spécialisation pour les talents** : quand on saisit le nom de base d'un talent qui existe en version "au choix" dans une carrière (ex: "Maître artisan"), un sélecteur de spécialisation apparaît automatiquement avec les variantes connues + "Autre (personnalisé)…"
+- **Persistance `customTalents`** : une spécialisation de talent saisie manuellement est mémorisée et réapparaît dans le sélecteur aux prochains achats (sauvegardée dans le cloud)
+- **Détection carrière** : `isTalentInCareer("Maître artisan (Forgeron)")` reconnaît le talent comme dans la carrière si celle-ci possède "Maître artisan (au choix)"
 
 ---
 
 ## [2.1.1] - 2026-04-30
 
-### Fiche de Personnage â€” CarriÃ¨res
-- **Surbrillance des compÃ©tences avancÃ©es achetÃ©es** : les compÃ©tences avancÃ©es dÃ©jÃ  achetÃ©es qui font partie de la carriÃ¨re active sont maintenant surlignÃ©es comme les compÃ©tences de base
-- **Panneau carriÃ¨re cumulatif** : Ã  partir du rang 2, le panneau de rÃ©fÃ©rence affiche tous les rangs acquis (rang 1, rang 2â€¦) avec leurs compÃ©tences et talents respectifs, plus le rang en cours â€” chaque rang passÃ© est marquÃ© "âœ“ acquis"
+### Fiche de Personnage — Carrières
+- **Surbrillance des compétences avancées achetées** : les compétences avancées déjà achetées qui font partie de la carrière active sont maintenant surlignées comme les compétences de base
+- **Panneau carrière cumulatif** : à partir du rang 2, le panneau de référence affiche tous les rangs acquis (rang 1, rang 2…) avec leurs compétences et talents respectifs, plus le rang en cours — chaque rang passé est marqué "✓ acquis"
 
 ---
 
 ## [2.1.0] - 2026-04-30
 
-### Fiche de Personnage â€” CarriÃ¨res & CompÃ©tences
-- **SpÃ©cialisations personnalisÃ©es persistantes** : une spÃ©cialisation saisie manuellement dans le journal XP est mÃ©morisÃ©e dans `customSpecs` et rÃ©apparaÃ®t dans le dropdown lors des prochains achats (sauvegardÃ©e dans le cloud)
-- **Slots "au choix"** : les entrÃ©es carriÃ¨re de type `MÃ©tier (au choix)` ou `Savoir (RÃ©gion)` sont dÃ©tectÃ©es automatiquement ; un tel slot est considÃ©rÃ© rempli dÃ¨s qu'une compÃ©tence du mÃªme groupe de base est achetÃ©e â€” plus besoin de les saisir deux fois
-- **Ghost rows cliquables** : cliquer sur une compÃ©tence carriÃ¨re grisÃ©e (non achetÃ©e) ouvre directement le formulaire XP prÃ©-rempli avec le bon groupe et la spÃ©cialisation ; les slots ouverts s'affichent en ambre avec une `â˜…`
-- **Fix correspondance carriÃ¨re** : `isSkillInCareer()` utilise dÃ©sormais le match exact par dÃ©faut ; le match par groupe de base ne s'applique qu'aux slots ouverts (Ã©vitait de faux positifs entre, p.ex., Corps Ã  corps Base et Corps Ã  corps Flambard)
-- **Talents "au choix"** : un talent de carriÃ¨re de type `Savoir-vivre (au choix)` reconnaÃ®t tout talent du mÃªme groupe comme Ã©tant dans la carriÃ¨re
+### Fiche de Personnage — Carrières & Compétences
+- **Spécialisations personnalisées persistantes** : une spécialisation saisie manuellement dans le journal XP est mémorisée dans `customSpecs` et réapparaît dans le dropdown lors des prochains achats (sauvegardée dans le cloud)
+- **Slots "au choix"** : les entrées carrière de type `Métier (au choix)` ou `Savoir (Région)` sont détectées automatiquement ; un tel slot est considéré rempli dès qu'une compétence du même groupe de base est achetée — plus besoin de les saisir deux fois
+- **Ghost rows cliquables** : cliquer sur une compétence carrière grisée (non achetée) ouvre directement le formulaire XP pré-rempli avec le bon groupe et la spécialisation ; les slots ouverts s'affichent en ambre avec une `★`
+- **Fix correspondance carrière** : `isSkillInCareer()` utilise désormais le match exact par défaut ; le match par groupe de base ne s'applique qu'aux slots ouverts (évitait de faux positifs entre, p.ex., Corps à corps Base et Corps à corps Flambard)
+- **Talents "au choix"** : un talent de carrière de type `Savoir-vivre (au choix)` reconnaît tout talent du même groupe comme étant dans la carrière
 
 ---
 
 ## [2.0.0] - 2026-04-30
 
-### Sauvegarde cloud â€” Fiche de Personnage
-- **Firebase Auth** : bouton "Connexion Google" dans l'en-tÃªte de la fiche ; seul `ethoril@gmail.com` est autorisÃ© pour l'instant
-- **Firestore** : la fiche est sauvegardÃ©e dans `fiches/{uid}` avec debounce 2 s aprÃ¨s chaque modification ; rechargement automatique au login
-- **Fallback localStorage** : si non connectÃ©, la fiche continue de se sauvegarder localement ; la connexion charge le cloud par-dessus
-- **Fix bug** : les avances des compÃ©tences de base ne se restoraient pas aprÃ¨s rechargement de page (`buildBasicSkills` s'exÃ©cutait avant `load`) â€” corrigÃ© en inversant l'ordre d'init
+### Sauvegarde cloud — Fiche de Personnage
+- **Firebase Auth** : bouton "Connexion Google" dans l'en-tête de la fiche ; seul `ethoril@gmail.com` est autorisé pour l'instant
+- **Firestore** : la fiche est sauvegardée dans `fiches/{uid}` avec debounce 2 s après chaque modification ; rechargement automatique au login
+- **Fallback localStorage** : si non connecté, la fiche continue de se sauvegarder localement ; la connexion charge le cloud par-dessus
+- **Fix bug** : les avances des compétences de base ne se restoraient pas après rechargement de page (`buildBasicSkills` s'exécutait avant `load`) — corrigé en inversant l'ordre d'init
 
 ### Technique
 - `exportData()` / `resetState()` / `applyData()` extraits de `save()` / `load()` pour permettre le rechargement propre depuis le cloud
-- `js/fiche-cloud.js` : nouveau module ES isolÃ© pour toute la logique Firebase de la fiche
+- `js/fiche-cloud.js` : nouveau module ES isolé pour toute la logique Firebase de la fiche
 
-> **RÃ¨gle Firestore Ã  ajouter manuellement** dans la console Firebase :
+> **Règle Firestore à ajouter manuellement** dans la console Firebase :
 > ```
 > match /fiches/{userId} {
 >   allow read, write: if request.auth != null && request.auth.uid == userId;
@@ -398,357 +434,357 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [1.9.3] - 2026-04-29
 
-### Fiche â€” CarriÃ¨re & Talents
-- **Highlighting** : les colonnes de caractÃ©ristiques liÃ©es Ã  la carriÃ¨re et les lignes de compÃ©tences de base concernÃ©es sont mis en Ã©vidence par une couleur de fond
-- **CompÃ©tences avancÃ©es fantÃ´me** : les compÃ©tences avancÃ©es de la carriÃ¨re (rangs 1 au rang actuel) non encore achetÃ©es apparaissent en grisÃ© dans la section avancÃ©es â€” non Ã©ditables tant qu'elles ne sont pas achetÃ©es via le journal XP
-- **Modale talent** : cliquer sur un talent dans le panneau de carriÃ¨re ouvre une modale avec sa description complÃ¨te (chargÃ©e depuis le mÃªme Google Sheet que l'aide de jeu)
-- **Races corrigÃ©es** : Humain.e / Elfe Sylvain.e / Haut.e Elfe / Halfelin.ne / Ogre
+### Fiche — Carrière & Talents
+- **Highlighting** : les colonnes de caractéristiques liées à la carrière et les lignes de compétences de base concernées sont mis en évidence par une couleur de fond
+- **Compétences avancées fantôme** : les compétences avancées de la carrière (rangs 1 au rang actuel) non encore achetées apparaissent en grisé dans la section avancées — non éditables tant qu'elles ne sont pas achetées via le journal XP
+- **Modale talent** : cliquer sur un talent dans le panneau de carrière ouvre une modale avec sa description complète (chargée depuis le même Google Sheet que l'aide de jeu)
+- **Races corrigées** : Humain.e / Elfe Sylvain.e / Haut.e Elfe / Halfelin.ne / Ogre
 
 ---
 
 ## [1.9.2] - 2026-04-29
 
-### Fiche â€” CarriÃ¨re
-- **AutocomplÃ©tion** : le champ "CarriÃ¨re actuelle" propose les carriÃ¨res connues de la base de donnÃ©es
-- **Panneau rÃ©fÃ©rence carriÃ¨re** : quand une carriÃ¨re reconnue est saisie, un panneau s'affiche avec les caractÃ©ristiques, compÃ©tences et talents disponibles pour le rang sÃ©lectionnÃ©
+### Fiche — Carrière
+- **Autocomplétion** : le champ "Carrière actuelle" propose les carrières connues de la base de données
+- **Panneau référence carrière** : quand une carrière reconnue est saisie, un panneau s'affiche avec les caractéristiques, compétences et talents disponibles pour le rang sélectionné
 
 ---
 
 ## [1.9.1] - 2026-04-29
 
 ### Correctif
-- **Hotfix `window.WFRP_SKILLS`** : `const` en balise `<script>` ne s'attache pas Ã  `window` â€” ajout de `window.WFRP_SKILLS`, `window.WFRP_SKILL_GROUPS_WITH_SPECS` et `window.WFRP_CAREERS` Ã  la fin des fichiers de donnÃ©es pour que toutes les fonctions de `fiche.js` (autocomplete, dropdown groupe/spÃ©c, dÃ©tection carriÃ¨re) fonctionnent correctement
+- **Hotfix `window.WFRP_SKILLS`** : `const` en balise `<script>` ne s'attache pas à `window` — ajout de `window.WFRP_SKILLS`, `window.WFRP_SKILL_GROUPS_WITH_SPECS` et `window.WFRP_CAREERS` à la fin des fichiers de données pour que toutes les fonctions de `fiche.js` (autocomplete, dropdown groupe/spéc, détection carrière) fonctionnent correctement
 
 ---
 
 ## [1.9.0] - 2026-04-29
 
-### DonnÃ©es & compÃ©tences
-- **`skills.js` complet** : 158 entrÃ©es (44 de base + 114 avancÃ©es) issues du sheet officiel â€” chaque spÃ©cialisation est une entrÃ©e distincte avec `group`, `spec`, `nom`, `carac`, `basic`
-- **`BASIC_SKILLS` corrigÃ©** : 25 compÃ©tences conformes au sheet (suppression des erreurs d'Ã©dition, ajout Chevaucher/Divertissement/Orientation/Ramer/etc., Corps Ã  corps affichÃ© comme "Corps Ã  corps (Base)")
+### Données & compétences
+- **`skills.js` complet** : 158 entrées (44 de base + 114 avancées) issues du sheet officiel — chaque spécialisation est une entrée distincte avec `group`, `spec`, `nom`, `carac`, `basic`
+- **`BASIC_SKILLS` corrigé** : 25 compétences conformes au sheet (suppression des erreurs d'édition, ajout Chevaucher/Divertissement/Orientation/Ramer/etc., Corps à corps affiché comme "Corps à corps (Base)")
 
-### Journal XP â€” sÃ©lecteur Ã  deux niveaux
-- **Groupe â†’ SpÃ©cialisation** : le formulaire d'achat propose d'abord le groupe de compÃ©tence, puis un dropdown des spÃ©cialisations connues issues de la DB
-- **Option "Autre (personnalisÃ©)â€¦"** : permet de crÃ©er une nouvelle spÃ©cialisation non listÃ©e
-- CoÃ»t distinguÃ© : compÃ©tences de base 5/10/15â€¦ XP, avancÃ©es 10/15/20â€¦ XP
-- DÃ©tection "dans la carriÃ¨re" mise Ã  jour pour le nouveau sÃ©lecteur
+### Journal XP — sélecteur à deux niveaux
+- **Groupe → Spécialisation** : le formulaire d'achat propose d'abord le groupe de compétence, puis un dropdown des spécialisations connues issues de la DB
+- **Option "Autre (personnalisé)…"** : permet de créer une nouvelle spécialisation non listée
+- Coût distingué : compétences de base 5/10/15… XP, avancées 10/15/20… XP
+- Détection "dans la carrière" mise à jour pour le nouveau sélecteur
 
-### CompÃ©tences avancÃ©es â€” autocomplete
-- Le champ de nom de compÃ©tence avancÃ©e supporte maintenant `<datalist>` avec les 158 compÃ©tences de la DB
-- La caractÃ©ristique est **auto-remplie** quand un nom reconnu est sÃ©lectionnÃ©
+### Compétences avancées — autocomplete
+- Le champ de nom de compétence avancée supporte maintenant `<datalist>` avec les 158 compétences de la DB
+- La caractéristique est **auto-remplie** quand un nom reconnu est sélectionné
 
 ---
 
 ## [1.8.0] - 2026-04-28
 
-### AjoutÃ© â€” SystÃ¨me d'avancement XP (fiche de personnage)
-- **Base de donnÃ©es compÃ©tences** (`js/data/skills.js`) : 31 compÃ©tences de base + 27 avancÃ©es avec carac associÃ©e et flag spÃ©cialisation
-- **Base de donnÃ©es carriÃ¨res** (`js/data/careers.js`) : 3 carriÃ¨res initiales (Agitateur, Artisan, Bourgeois) avec 4 rangs chacune â€” compÃ©tences et talents par rang
-- **Calme & Ragot** ajoutÃ©s aux compÃ©tences de base du tableau de fiche
-- **Formulaire d'achat XP transactionnel** : sÃ©lection guidÃ©e (type â†’ cible â†’ avances) avec calcul automatique du coÃ»t selon les rÃ¨gles WFRP4 (tranches 25/30/40/50/70/90 pour les caracs, 5/10/15/20/25/30 pour les compÃ©tences â€” Ã—2 hors carriÃ¨re)
-- **DÃ©tection automatique "dans la carriÃ¨re"** : la case est prÃ©-cochÃ©e si la compÃ©tence/carac/talent figure dans la carriÃ¨re active au rang actuel
-- **Application immÃ©diate sur la fiche** : valider un achat met Ã  jour la carac, la compÃ©tence ou le talent directement
-- **Annulation avec revert** : supprimer une entrÃ©e appliquÃ©e (badge âœ“) revient en arriÃ¨re sur la fiche
+### Ajouté — Système d'avancement XP (fiche de personnage)
+- **Base de données compétences** (`js/data/skills.js`) : 31 compétences de base + 27 avancées avec carac associée et flag spécialisation
+- **Base de données carrières** (`js/data/careers.js`) : 3 carrières initiales (Agitateur, Artisan, Bourgeois) avec 4 rangs chacune — compétences et talents par rang
+- **Calme & Ragot** ajoutés aux compétences de base du tableau de fiche
+- **Formulaire d'achat XP transactionnel** : sélection guidée (type → cible → avances) avec calcul automatique du coût selon les règles WFRP4 (tranches 25/30/40/50/70/90 pour les caracs, 5/10/15/20/25/30 pour les compétences — ×2 hors carrière)
+- **Détection automatique "dans la carrière"** : la case est pré-cochée si la compétence/carac/talent figure dans la carrière active au rang actuel
+- **Application immédiate sur la fiche** : valider un achat met à jour la carac, la compétence ou le talent directement
+- **Annulation avec revert** : supprimer une entrée appliquée (badge ✓) revient en arrière sur la fiche
 
 ---
 
 ## [1.7.1] - 2026-04-29
 
-### AmÃ©liorÃ© â€” Fiche de personnage
-- **Fortune â†’ Chance** (renommage)
-- **Historique des carriÃ¨res** : tableau d'anciennes carriÃ¨res (nom, rang atteint, notes)
-- **Sorts** : section optionnelle (masquÃ©e par dÃ©faut) avec nom, vent de magie, CN, portÃ©e, durÃ©e, rÃ©sumÃ©
-- **PriÃ¨res & Miracles** : section optionnelle avec type (BÃ©nÃ©diction / Miracle) et rÃ©sumÃ©
-- **Journal XP** : tableau de dÃ©penses avec type, achat, coÃ»t â€” XP dÃ©pensÃ© auto-calculÃ© depuis le journal
-- **Talents** : tableaux "Acquis" et "Achetables" Ã©ditables (ajout/suppression dynamique)
+### Amélioré — Fiche de personnage
+- **Fortune → Chance** (renommage)
+- **Historique des carrières** : tableau d'anciennes carrières (nom, rang atteint, notes)
+- **Sorts** : section optionnelle (masquée par défaut) avec nom, vent de magie, CN, portée, durée, résumé
+- **Prières & Miracles** : section optionnelle avec type (Bénédiction / Miracle) et résumé
+- **Journal XP** : tableau de dépenses avec type, achat, coût — XP dépensé auto-calculé depuis le journal
+- **Talents** : tableaux "Acquis" et "Achetables" éditables (ajout/suppression dynamique)
 
 ---
 
 ## [1.7.0] - 2026-04-29
 
-### AjoutÃ©
-- **Fiche de personnage HTML** (`fiche.html`) : premiÃ¨re version interactive
-  - 10 caractÃ©ristiques avec base / avances / total auto-calculÃ©
-  - Stats dÃ©rivÃ©es : Mouvement (selon race), Blessures max (FB + 2Ã—EB + FMB), trackers Ã©ditables
-  - 29 compÃ©tences de base avec valeur de caractÃ©ristique et total auto-calculÃ©s
-  - CompÃ©tences avancÃ©es ajoutables dynamiquement
+### Ajouté
+- **Fiche de personnage HTML** (`fiche.html`) : première version interactive
+  - 10 caractéristiques avec base / avances / total auto-calculé
+  - Stats dérivées : Mouvement (selon race), Blessures max (FB + 2×EB + FMB), trackers éditables
+  - 29 compétences de base avec valeur de caractéristique et total auto-calculés
+  - Compétences avancées ajoutables dynamiquement
   - Sections Talents et Possessions
   - Sauvegarde automatique en localStorage
-- **Le Groupe** : 6Ã¨me carte "Fiche HTML" pointant vers `fiche.html`
+- **Le Groupe** : 6ème carte "Fiche HTML" pointant vers `fiche.html`
 
 ---
 
 ## [1.6.12] - 2026-04-28
 
-### SupprimÃ©
-- **Footer** : retrait de l'attribution Vecteezy (SVG texture non utilisÃ©)
+### Supprimé
+- **Footer** : retrait de l'attribution Vecteezy (SVG texture non utilisé)
 
 ---
 
 ## [1.6.11] - 2026-04-28
 
-### AjoutÃ©
-- **VidÃ©os** : 3 nouveaux Ã©pisodes â€” Middenheim : La CitÃ© du Loup Blanc (7), Les Vents de Magie (8), Les Voisins de l'Empire (9)
+### Ajouté
+- **Vidéos** : 3 nouveaux épisodes — Middenheim : La Cité du Loup Blanc (7), Les Vents de Magie (8), Les Voisins de l'Empire (9)
 
 ---
 
 ## [1.6.10] - 2026-04-28
 
-### CorrigÃ©
-- **Le Groupe** : suppression du `max-width: 1100px` codÃ© en dur sur `.character-grid` â€” la grille utilise dÃ©sormais toute la largeur du conteneur (1600 px)
+### Corrigé
+- **Le Groupe** : suppression du `max-width: 1100px` codé en dur sur `.character-grid` — la grille utilise désormais toute la largeur du conteneur (1600 px)
 
 ---
 
 ## [1.6.9] - 2026-04-28
 
-### ModifiÃ©
-- **Mise en page** : largeur maximale Ã©tendue de 1200 px Ã  1600 px â€” meilleure utilisation de l'espace sur les Ã©crans larges, mobile inchangÃ©
+### Modifié
+- **Mise en page** : largeur maximale étendue de 1200 px à 1600 px — meilleure utilisation de l'espace sur les écrans larges, mobile inchangé
 
 ---
 
 ## [1.6.8] - 2026-04-28
 
-### ModifiÃ©
-- **ThÃ¨me parchemin â€” fond** : suppression du SVG Vecteezy, remplacement par un dÃ©gradÃ© CSS en trois teintes (#E9DDC3 â†’ #E7DAC1 â†’ #E2D7BB)
+### Modifié
+- **Thème parchemin — fond** : suppression du SVG Vecteezy, remplacement par un dégradé CSS en trois teintes (#E9DDC3 → #E7DAC1 → #E2D7BB)
 
 ---
 
 ## [1.6.7] - 2026-04-28
 
-### AmÃ©liorÃ©
-- **ThÃ¨me parchemin â€” texture rÃ©elle** : remplacement de la texture CSS gÃ©nÃ©rÃ©e par un SVG Vecteezy (photo parchemin IA embarquÃ©e en base64) â€” `cover` + `fixed` pour remplir l'Ã©cran
-- **Attribution** : lien Vecteezy ajoutÃ© dans le footer, affichÃ© uniquement en thÃ¨me parchemin
+### Amélioré
+- **Thème parchemin — texture réelle** : remplacement de la texture CSS générée par un SVG Vecteezy (photo parchemin IA embarquée en base64) — `cover` + `fixed` pour remplir l'écran
+- **Attribution** : lien Vecteezy ajouté dans le footer, affiché uniquement en thème parchemin
 
 ---
 
 ## [1.6.6] - 2026-04-28
 
-### CorrigÃ©
-- **Navbar desktop** : `white-space: nowrap` + `flex-shrink: 0` sur le brand et les liens â€” "LE GROUPE" et "AIDES DE JEUX" ne se replient plus sur deux lignes
-- **Navbar desktop** : padding horizontal des liens rÃ©duit (16 px â†’ 10 px) pour laisser plus de place
-- **Accueil** : `card-grid` minmax 300 px â†’ 260 px â€” les 4 cartes tiennent sur une ligne dans un conteneur 1200 px
+### Corrigé
+- **Navbar desktop** : `white-space: nowrap` + `flex-shrink: 0` sur le brand et les liens — "LE GROUPE" et "AIDES DE JEUX" ne se replient plus sur deux lignes
+- **Navbar desktop** : padding horizontal des liens réduit (16 px → 10 px) pour laisser plus de place
+- **Accueil** : `card-grid` minmax 300 px → 260 px — les 4 cartes tiennent sur une ligne dans un conteneur 1200 px
 
 ---
 
 ## [1.6.5] - 2026-04-28
 
-### AmÃ©liorÃ©
-- **ThÃ¨me parchemin â€” texture** : fond de page avec fibres horizontales et surfaces (cartes, panneaux, modals) avec grain fin, gÃ©nÃ©rÃ©s en CSS pur via filtre SVG `feTurbulence` (aucun fichier image supplÃ©mentaire)
+### Amélioré
+- **Thème parchemin — texture** : fond de page avec fibres horizontales et surfaces (cartes, panneaux, modals) avec grain fin, générés en CSS pur via filtre SVG `feTurbulence` (aucun fichier image supplémentaire)
 
 ---
 
 ## [1.6.4] - 2026-04-28
 
-### AjoutÃ©
-- **ThÃ¨me parchemin** : deuxiÃ¨me thÃ¨me visuel clair (tons papier vieilli, bordeaux foncÃ©) activable via un bouton â˜€ï¸�/ðŸŒ™ dans la navbar â€” persistÃ© en localStorage sur toutes les pages
+### Ajouté
+- **Thème parchemin** : deuxième thème visuel clair (tons papier vieilli, bordeaux foncé) activable via un bouton ☀️/🌙 dans la navbar — persisté en localStorage sur toutes les pages
 
 ---
 
 ## [1.6.3] - 2026-04-28
 
-### AmÃ©liorÃ©
-- **Graphe PNJs** : les nÅ“uds affichent dÃ©sormais le portrait du personnage clipÃ© en cercle, avec un anneau colorÃ© indiquant le statut (ou la dimension active). Fallback sur le cercle colorÃ© pour les PNJs sans portrait. Anneau pointillÃ© conservÃ© pour les dÃ©cÃ©dÃ©s.
+### Amélioré
+- **Graphe PNJs** : les nœuds affichent désormais le portrait du personnage clipé en cercle, avec un anneau coloré indiquant le statut (ou la dimension active). Fallback sur le cercle coloré pour les PNJs sans portrait. Anneau pointillé conservé pour les décédés.
 
 ---
 
 ## [1.6.2] - 2026-04-28
 
-### AjoutÃ©
-- **Cadrage portrait** : sÃ©lecteur de rognage carrÃ© (Cropper.js) affichÃ© au moment de l'upload â€” permet de choisir la zone Ã  conserver avant sauvegarde
+### Ajouté
+- **Cadrage portrait** : sélecteur de rognage carré (Cropper.js) affiché au moment de l'upload — permet de choisir la zone à conserver avant sauvegarde
 
 ---
 
 ## [1.6.1] - 2026-04-28
 
-### CorrigÃ©
-- **Portraits PNJs** : remplacement d'Uploadcare (clÃ© invalide, images en 404) par Firebase Storage (`europe-west9`) â€” upload et affichage des portraits fonctionnels
+### Corrigé
+- **Portraits PNJs** : remplacement d'Uploadcare (clé invalide, images en 404) par Firebase Storage (`europe-west9`) — upload et affichage des portraits fonctionnels
 
 ---
 
 ## [1.6.0] - 2026-04-28
 
 ### Technique
-- **Ã‰tat centralisÃ©** : les 12 variables globales de `pnjs.js` regroupÃ©es dans un objet `state` â€” dÃ©bogage et lisibilitÃ© amÃ©liorÃ©s
-- **Fusion loadData/reloadData** : une seule fonction `loadData({ init })` remplace les deux â€” moins de duplication, gestion d'erreur unifiÃ©e
-- **DÃ©lÃ©gation d'Ã©vÃ©nements** : le panneau de dÃ©tail PNJ utilise un unique listener sur le conteneur statique au lieu de rebinder 6-8 handlers Ã  chaque ouverture
-- **Module utils.js** : `esc`, `cap`, `stripAccents` extraits dans un module partagÃ© â€” suppression des doublons entre `pnjs.js` et `sheets.js`
-- **Recherche insensible aux accents (PNJs)** : "elysia" trouve dÃ©sormais "Ã‰lysia" dans le graphe et le tableau
+- **État centralisé** : les 12 variables globales de `pnjs.js` regroupées dans un objet `state` — débogage et lisibilité améliorés
+- **Fusion loadData/reloadData** : une seule fonction `loadData({ init })` remplace les deux — moins de duplication, gestion d'erreur unifiée
+- **Délégation d'événements** : le panneau de détail PNJ utilise un unique listener sur le conteneur statique au lieu de rebinder 6-8 handlers à chaque ouverture
+- **Module utils.js** : `esc`, `cap`, `stripAccents` extraits dans un module partagé — suppression des doublons entre `pnjs.js` et `sheets.js`
+- **Recherche insensible aux accents (PNJs)** : "elysia" trouve désormais "Élysia" dans le graphe et le tableau
 
 ---
 
 ## [1.5.0] - 2026-04-27
 
-### AjoutÃ©
-- **PNJs Ã©ditable** : les donnÃ©es sont dÃ©sormais stockÃ©es dans Firestore (Firebase) au lieu de Google Sheets
-- **Authentification Google** : bouton "Admin" en toolbar â€” connexion via Google OAuth (email autorisÃ© uniquement)
-- **CrÃ©ation / modification de PNJ** : modal complet avec nom, statut, vivant, lieu, groupe social, description, portrait (upload Uploadcare)
+### Ajouté
+- **PNJs éditable** : les données sont désormais stockées dans Firestore (Firebase) au lieu de Google Sheets
+- **Authentification Google** : bouton "Admin" en toolbar — connexion via Google OAuth (email autorisé uniquement)
+- **Création / modification de PNJ** : modal complet avec nom, statut, vivant, lieu, groupe social, description, portrait (upload Uploadcare)
 - **Suppression de PNJ** : cascade sur toutes les relations du personnage (batch Firestore)
-- **Ajout de relation** : formulaire inline dans le panneau de dÃ©tail (cible, type, label)
-- **Suppression de relation** : bouton Ã— sur chaque chip de relation (mode admin)
-- **Upload portrait** : hÃ©bergement via Uploadcare (serveurs europÃ©ens, GDPR), URL CDN WebP 500 px stockÃ©e dans Firestore
-- **Ã‰tat vide** : message affichÃ© si Firestore ne contient aucun PNJ
-- Bouton âœ� dans le panneau de dÃ©tail et la vue tableau (admin uniquement)
+- **Ajout de relation** : formulaire inline dans le panneau de détail (cible, type, label)
+- **Suppression de relation** : bouton × sur chaque chip de relation (mode admin)
+- **Upload portrait** : hébergement via Uploadcare (serveurs européens, GDPR), URL CDN WebP 500 px stockée dans Firestore
+- **État vide** : message affiché si Firestore ne contient aucun PNJ
+- Bouton ✏ dans le panneau de détail et la vue tableau (admin uniquement)
 
 ### Technique
-- `js/pnjs.js` converti en module ES (`type="module"`) â€” D3 importÃ© via jsDelivr ESM, Firebase v10.12.0 via gstatic CDN
-- Suppression du tag `<script src="d3.v7.min.js">` dans `pnjs.html` (import gÃ©rÃ© dans le module)
+- `js/pnjs.js` converti en module ES (`type="module"`) — D3 importé via jsDelivr ESM, Firebase v10.12.0 via gstatic CDN
+- Suppression du tag `<script src="d3.v7.min.js">` dans `pnjs.html` (import géré dans le module)
 - Champs Firestore en minuscules : `nom, statut, vivant, lieu, groupe, description, imageUrl`
 
 ---
 
 ## [1.4.2] - 2026-04-27
 
-### CorrigÃ©
-- **PNJs** : ajout de `main.js` manquant sur `pnjs.html` (toolbar et header invisibles Ã  cause du `fade-in` non dÃ©clenchÃ©)
-- **PNJs** : direction des relations affichÃ©e dans le panneau de dÃ©tail (`â†’` si le PNJ courant est source, `â†�` s'il est cible)
+### Corrigé
+- **PNJs** : ajout de `main.js` manquant sur `pnjs.html` (toolbar et header invisibles à cause du `fade-in` non déclenché)
+- **PNJs** : direction des relations affichée dans le panneau de détail (`→` si le PNJ courant est source, `←` s'il est cible)
 
 ---
 
 ## [1.4.1] - 2026-04-27
 
-### AmÃ©liorÃ© (PNJs)
-- **Toggle Graphe / Tableau** : bascule entre le rÃ©seau interactif et un tableau triÃ© par clic sur les en-tÃªtes
-- **Couleur par** : boutons Statut / Lieu / Groupe recolorent les nÅ“uds et animent un clustering spatial par force D3
+### Amélioré (PNJs)
+- **Toggle Graphe / Tableau** : bascule entre le réseau interactif et un tableau trié par clic sur les en-têtes
+- **Couleur par** : boutons Statut / Lieu / Groupe recolorent les nœuds et animent un clustering spatial par force D3
 - Recherche textuelle active dans les deux vues (graphe et tableau)
-- Filtres actifs appliquÃ©s au tableau
-- Compteur de rÃ©sultats en vue tableau
-- Descriptions tronquÃ©es dans le tableau avec texte complet au survol
+- Filtres actifs appliqués au tableau
+- Compteur de résultats en vue tableau
+- Descriptions tronquées dans le tableau avec texte complet au survol
 
 ---
 
 ## [1.4.0] - 2026-04-27
 
-### AjoutÃ©
-- **Page PNJs** : rÃ©seau interactif force-directed (D3.js) des personnages non-joueurs de la campagne
-- DonnÃ©es pilotÃ©es par deux onglets Google Sheets (`pnjs` et `relations`)
+### Ajouté
+- **Page PNJs** : réseau interactif force-directed (D3.js) des personnages non-joueurs de la campagne
+- Données pilotées par deux onglets Google Sheets (`pnjs` et `relations`)
 - Filtres dynamiques par Statut, Vivant, Lieu et Groupe Social
 - Recherche textuelle par nom et description
-- Panneau de dÃ©tail latÃ©ral avec portrait, badges, description et relations cliquables
+- Panneau de détail latéral avec portrait, badges, description et relations cliquables
 - Navigation entre fiches PNJs via les chips de relations
-- NÅ“uds Ã  opacitÃ© rÃ©duite pour les PNJs dÃ©cÃ©dÃ©s (cercle en pointillÃ©s) ou au statut inconnu
-- LÃ©gende intÃ©grÃ©e dans le graphe
+- Nœuds à opacité réduite pour les PNJs décédés (cercle en pointillés) ou au statut inconnu
+- Légende intégrée dans le graphe
 
 ---
 
 ## [1.3.1] - 2026-04-27
 
-### AjoutÃ©
-- **Favicon** : icÃ´ne âšœ SVG (fleur de lys dorÃ©e sur fond sombre) affichÃ©e dans l'onglet du navigateur sur toutes les pages
+### Ajouté
+- **Favicon** : icône ⚜ SVG (fleur de lys dorée sur fond sombre) affichée dans l'onglet du navigateur sur toutes les pages
 
 ---
 
 ## [1.3.0] - 2026-04-27
 
-### AjoutÃ©
-- **Page "Cartes"** : nouvelle page avec visionneuse interactive (Leaflet.js) pour deux cartes haute rÃ©solution
-- **Carte de l'Empire** : 14 400Ã—14 400 px, 1 365 tuiles WebP sur 6 niveaux de zoom
-- **Carte du Vieux Monde** : 32 000Ã—28 050 px, 1 253 tuiles WebP sur 6 niveaux de zoom
-- Lien "Cartes" ajoutÃ© Ã  la navigation sur toutes les pages
+### Ajouté
+- **Page "Cartes"** : nouvelle page avec visionneuse interactive (Leaflet.js) pour deux cartes haute résolution
+- **Carte de l'Empire** : 14 400×14 400 px, 1 365 tuiles WebP sur 6 niveaux de zoom
+- **Carte du Vieux Monde** : 32 000×28 050 px, 1 253 tuiles WebP sur 6 niveaux de zoom
+- Lien "Cartes" ajouté à la navigation sur toutes les pages
 
 ---
 
 ## [1.2.5] - 2026-04-27
 
-### CorrigÃ©
-- **Aides de Jeux** : l'onglet "CoÃ»ts XP" localise dÃ©sormais ses colonnes par nom de header â€” rÃ©sistant aux rÃ©organisations du Google Sheet
-- **RÃ¨gles** : fermeture d'un accordÃ©on aprÃ¨s ouverture d'une table de critique s'anime correctement (transition fluide au lieu d'un saut)
+### Corrigé
+- **Aides de Jeux** : l'onglet "Coûts XP" localise désormais ses colonnes par nom de header — résistant aux réorganisations du Google Sheet
+- **Règles** : fermeture d'un accordéon après ouverture d'une table de critique s'anime correctement (transition fluide au lieu d'un saut)
 
 ---
 
 ## [1.2.4] - 2026-04-27
 
-### CorrigÃ©
-- **Aides de Jeux** : Ã©chappement HTML sur toutes les valeurs injectÃ©es depuis Google Sheets â€” une cellule contenant `<` ou `>` ne peut plus briser la mise en page
-- **Accueil** : suppression du texte "(soonâ„¢ pour Ã§a)"
+### Corrigé
+- **Aides de Jeux** : échappement HTML sur toutes les valeurs injectées depuis Google Sheets — une cellule contenant `<` ou `>` ne peut plus briser la mise en page
+- **Accueil** : suppression du texte "(soon™ pour ça)"
 
 ---
 
 ## [1.2.3] - 2026-04-27
 
-### AmÃ©liorÃ©
-- **Accueil** : date de la prochaine session lue dynamiquement depuis Google Sheets (onglet "date prochaine session", cellule B1) â€” plus besoin de modifier le code pour la mettre Ã  jour
+### Amélioré
+- **Accueil** : date de la prochaine session lue dynamiquement depuis Google Sheets (onglet "date prochaine session", cellule B1) — plus besoin de modifier le code pour la mettre à jour
 
 ---
 
 ## [1.2.2] - 2026-04-27
 
-### AmÃ©liorÃ©
-- **Le Groupe** : portraits convertis en WebP (-96% de poids, 18 MB â†’ 774 KB) avec fallback PNG pour les navigateurs anciens
-- **Le Groupe** : attribut `loading="lazy"` ajoutÃ© sur tous les portraits
+### Amélioré
+- **Le Groupe** : portraits convertis en WebP (-96% de poids, 18 MB → 774 KB) avec fallback PNG pour les navigateurs anciens
+- **Le Groupe** : attribut `loading="lazy"` ajouté sur tous les portraits
 
 ---
 
 ## [1.2.1] - 2026-04-27
 
-### ModifiÃ©
-- **Technique** : navbar et footer centralisÃ©s dans `js/layout.js` (source unique pour la version, les liens de navigation et le contenu du footer)
+### Modifié
+- **Technique** : navbar et footer centralisés dans `js/layout.js` (source unique pour la version, les liens de navigation et le contenu du footer)
 
 ---
 
 ## [1.2.0] - 2026-03-29
 
-### AjoutÃ©
-- **Le Groupe** : les vignettes de personnages sont dÃ©sormais cliquables et ouvrent la fiche de perso Google Sheets correspondante (nouvel onglet)
+### Ajouté
+- **Le Groupe** : les vignettes de personnages sont désormais cliquables et ouvrent la fiche de perso Google Sheets correspondante (nouvel onglet)
 
 ---
 
 ## [1.1.1] - 2026-02-28
 
-### AjoutÃ©
-- **Aides de Jeux** : 2 nouveaux onglets â€” Armures (ðŸ›¡ï¸�) et Talents (ðŸŽ­)
+### Ajouté
+- **Aides de Jeux** : 2 nouveaux onglets — Armures (🛡️) et Talents (🎭)
 
 ---
 
 ## [1.1.0] - 2026-02-27
 
-### AjoutÃ©
+### Ajouté
 - **Page "Le Groupe"** : nouvelle page avec les portraits des 5 personnages (Bhelgi, Caelel, Elysia, Hellaya, Wren) en vignettes circulaires
-- Lien "Le Groupe" ajoutÃ© Ã  la navigation sur toutes les pages
+- Lien "Le Groupe" ajouté à la navigation sur toutes les pages
 
 ---
 
 ## [1.0.0] - 2026-02-27
 
-### AmÃ©liorÃ©
-- **Accueil mobile** : espaces rÃ©duits pour voir les cartouches sans scroller
-- **Aides de Jeux** : bouton "Ouvrir dans Google Sheets (idÃ©al sur PC)" dÃ©placÃ© au-dessus des onglets
-- **Magie** : fond des cartouches de sort teintÃ© selon le Vent de Magie (Aqshy=rouge, Azyr=bleu, Chamon=or, Ghur=ambre, Ghyran=vert, Hysh=blanc, Shyish=violet, Ulgu=gris)
+### Amélioré
+- **Accueil mobile** : espaces réduits pour voir les cartouches sans scroller
+- **Aides de Jeux** : bouton "Ouvrir dans Google Sheets (idéal sur PC)" déplacé au-dessus des onglets
+- **Magie** : fond des cartouches de sort teinté selon le Vent de Magie (Aqshy=rouge, Azyr=bleu, Chamon=or, Ghur=ambre, Ghyran=vert, Hysh=blanc, Shyish=violet, Ulgu=gris)
 
 ---
 
 ## [0.11.0] - 2026-02-27
 
-### AjoutÃ©
-- **Tables de Mutations** dans la section Corruption : Physiques (55 entrÃ©es), Sous-tableau TÃªte Bestiale (10 animaux), Mentales (34 entrÃ©es)
+### Ajouté
+- **Tables de Mutations** dans la section Corruption : Physiques (55 entrées), Sous-tableau Tête Bestiale (10 animaux), Mentales (34 entrées)
 - Colonnes par Dieu du Chaos (Universel, Khorne, Nurgle, Slaanesh, Tzeentch)
-- Notes de visibilitÃ© (Â¹ cachable, Â² dÃ©marche, Â³ incachable)
+- Notes de visibilité (¹ cachable, ² démarche, ³ incachable)
 
 ---
 
 ## [0.10.0] - 2026-02-27
 
-### AjoutÃ©
-- **Tables des Incantations Imparfaites** : 2 tables collapsibles (Mineures + Majeures, 20 entrÃ©es chacune) dans la section Magie
+### Ajouté
+- **Tables des Incantations Imparfaites** : 2 tables collapsibles (Mineures + Majeures, 20 entrées chacune) dans la section Magie
 
-### ModifiÃ©
-- Section "Blessures & Coups Critiques" renommÃ©e â†’ "SantÃ©, Critiques et Survie"
+### Modifié
+- Section "Blessures & Coups Critiques" renommée → "Santé, Critiques et Survie"
 
 ---
 
 ## [0.9.0] - 2026-02-27
 
-### AjoutÃ©
-- **Tables des Coups Critiques** : 4 tables collapsibles (TÃªte, Bras, Corps, Jambe) dans la section Combat
-- Section renommÃ©e "Localisation des dÃ©gÃ¢ts & Tables Critiques"
-- Chaque table avec 20 entrÃ©es (D100, Nom, Effet)
+### Ajouté
+- **Tables des Coups Critiques** : 4 tables collapsibles (Tête, Bras, Corps, Jambe) dans la section Combat
+- Section renommée "Localisation des dégâts & Tables Critiques"
+- Chaque table avec 20 entrées (D100, Nom, Effet)
 
 ---
 
 ## [0.8.0] - 2026-02-27
 
-### CorrigÃ©
-- Onglet CoÃ»ts XP : sÃ©paration en 2 tableaux distincts + correction coÃ»t "+1 Talent" manquant
-- Recherche insensible aux accents (ex: "regeneration" â†’ "rÃ©gÃ©nÃ©ration")
+### Corrigé
+- Onglet Coûts XP : séparation en 2 tableaux distincts + correction coût "+1 Talent" manquant
+- Recherche insensible aux accents (ex: "regeneration" → "régénération")
 - Gestion des CSV corrompus par le format de cellules Google Sheets
 - Onglets en wrap (multi-lignes) sur mobile, plus de scroll horizontal
 
@@ -756,12 +792,12 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [0.7.0] - 2026-02-27
 
-### AjoutÃ©
+### Ajouté
 - **Aides de Jeux dynamique** : remplacement de l'iframe Google Sheets par un affichage custom
-- 6 onglets cliquables (CoÃ»ts XP, Magie, Miracles, Armes CÃ C, Armes Ã  Distance, Mots ClÃ©s)
-- DonnÃ©es chargÃ©es en temps rÃ©el depuis Google Sheets (API CSV)
+- 6 onglets cliquables (Coûts XP, Magie, Miracles, Armes CàC, Armes à Distance, Mots Clés)
+- Données chargées en temps réel depuis Google Sheets (API CSV)
 - Cartes responsives pour chaque sort, arme, miracle
-- Barre de recherche avec filtrage instantanÃ©
+- Barre de recherche avec filtrage instantané
 - Bouton "Ouvrir dans Google Sheets"
 - Spinner de chargement
 
@@ -769,58 +805,58 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [0.6.0] - 2026-02-26
 
-### ModifiÃ©
-- Passage complet au tutoiement sur toutes les pages (accueil, vidÃ©os, rÃ¨gles, aides de jeux)
+### Modifié
+- Passage complet au tutoiement sur toutes les pages (accueil, vidéos, règles, aides de jeux)
 - Correction d'encodage UTF-8 sur tous les fichiers HTML
 
 ---
 
 ## [0.5.0] - 2026-02-26
 
-### ModifiÃ©
-- Titre hero : "Ennemi IntÃ©rieur" (simplifiÃ©)
-- Texte d'accueil : ton informel, tutoiement, mention feuille de perso (soonâ„¢)
-- Hero rÃ©duit en hauteur pour rapprocher les cartes
-- Carte VidÃ©os : tutoiement + "..."
-- Carte RÃ¨gles renommÃ©e â†’ "RÃ¨gles du Jeu"
+### Modifié
+- Titre hero : "Ennemi Intérieur" (simplifié)
+- Texte d'accueil : ton informel, tutoiement, mention feuille de perso (soon™)
+- Hero réduit en hauteur pour rapprocher les cartes
+- Carte Vidéos : tutoiement + "..."
+- Carte Règles renommée → "Règles du Jeu"
 
 ---
 
 ## [0.4.0] - 2026-02-26
 
-### ModifiÃ©
-- Onglet "Tableau" renommÃ© en "Aides de Jeux" (navbar + page d'accueil)
-- Titre et description de la page mis Ã  jour
-- Google Sheet Ã©largi Ã  95% de la largeur de la page
+### Modifié
+- Onglet "Tableau" renommé en "Aides de Jeux" (navbar + page d'accueil)
+- Titre et description de la page mis à jour
+- Google Sheet élargi à 95% de la largeur de la page
 
 ---
 
 ## [0.3.0] - 2026-02-26
 
-### AjoutÃ©
-- Badge de version affichÃ© dans la navbar (en haut Ã  droite) sur toutes les pages
+### Ajouté
+- Badge de version affiché dans la navbar (en haut à droite) sur toutes les pages
 - Style `.nav-version` dans le design system
 
 ---
 
 ## [1.0.0] - 2026-02-26
 
-### CorrigÃ©
+### Corrigé
 - Miniatures YouTube : utilisation de `hqdefault.jpg` (toujours disponible) au lieu de `maxresdefault.jpg`
 
-### AjoutÃ©
-- Script de dÃ©ploiement `deploy.ps1`
+### Ajouté
+- Script de déploiement `deploy.ps1`
 
 ---
 
 ## [0.1.0] - 2026-02-26
 
-### AjoutÃ©
+### Ajouté
 - **Page d'accueil** : hero section + 3 cartes de navigation
-- **Page VidÃ©os** : galerie de 6 vidÃ©os YouTube avec modal lightbox
-- **Page Tableau** : intÃ©gration Google Sheets en lecture seule
-- **Page RÃ¨gles** : 5 sections en accordÃ©on (Combat, Critiques, Magie, Peur, Corruption)
-- **Design system** : thÃ¨me dark fantasy (Cinzel + Crimson Text, palette or/bordeaux/noir)
+- **Page Vidéos** : galerie de 6 vidéos YouTube avec modal lightbox
+- **Page Tableau** : intégration Google Sheets en lecture seule
+- **Page Règles** : 5 sections en accordéon (Combat, Critiques, Magie, Peur, Corruption)
+- **Design system** : thème dark fantasy (Cinzel + Crimson Text, palette or/bordeaux/noir)
 - **Anti-indexation** : `robots.txt` + meta `noindex, nofollow` sur chaque page
 - **Navigation** : navbar responsive avec burger menu mobile
 - **Animations** : scroll reveal, hover effects, transitions fluides

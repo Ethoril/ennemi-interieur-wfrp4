@@ -1,4 +1,4 @@
-const APP_VERSION = 'v2.14.1';
+const APP_VERSION = 'v2.15.0';
 
 const NAV_ITEMS = [
     { href: 'index.html',   label: 'Accueil' },
@@ -111,7 +111,7 @@ async function loadNextSession() {
         // B1 = second CSV field, strip surrounding quotes
         const b1 = firstRow.replace(/^[^,]*,\s*/, '').replace(/^"|"$/g, '').trim();
         if (b1) el.textContent = `🗡️ Prochaine session ${b1} 🗡️`;
-    } catch (_) {}
+    } catch {}
 }
 
 injectNav();

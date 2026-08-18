@@ -21,77 +21,79 @@
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/theme-parchment.css">
+    <link rel="stylesheet" href="css/doodle.css">
     <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
 
+    <a class="skip-link" href="#contenu">Aller au contenu</a>
     <nav class="navbar" id="navbar"></nav>
 
-    <div class="page-container">
+    <main class="page-container" id="contenu">
 
         <div class="page-header fade-in">
             <h1>Calendrier</h1>
             <p>Indique tes disponibilités pour planifier les prochaines parties de jeu.</p>
         </div>
 
-        <section class="section" style="padding-top: 0; min-height: 50vh;">
+        <section class="section doodle-section">
             <div class="container fade-in">
-                
+
                 <!-- Panneau Admin (MDJ) -->
-                <div id="admin-panel" style="display: none; margin-bottom: 2rem; padding: 1.5rem; border: 1px solid var(--border-gold); background: rgba(0, 0, 0, 0.2); border-radius: var(--radius-md);">
-                    
+                <div id="admin-panel" class="doodle-admin-panel">
+
                     <!-- Mode Création (affiché s'il n'y a pas de sondage actif) -->
-                    <div id="admin-create-container" style="display: none;">
-                        <h3 style="color: var(--gold); margin-top: 0; font-family: var(--font-heading);">🔧 Mode MDJ - Nouveau Sondage</h3>
-                        <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-muted);">Saisis les dates proposées, séparées par des virgules.</p>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <input type="text" id="new-dates-input" placeholder="ex: Samedi 12, Dimanche 13, Mardi 15 soir" style="flex: 1; min-width: 250px; padding: 8px 12px; border: 1px solid var(--border-subtle); background: rgba(0,0,0,0.3); color: var(--text-primary); border-radius: var(--radius-sm);">
-                            <button id="btn-create-poll" class="btn-primary" style="margin-left: 0;">Lancer le sondage</button>
+                    <div id="admin-create-container" class="doodle-admin-section">
+                        <h3 class="doodle-admin-title">🔧 Mode MDJ - Nouveau Sondage</h3>
+                        <p class="doodle-hint">Saisis les dates proposées, séparées par des virgules.</p>
+                        <div class="doodle-admin-actions">
+                            <input type="text" id="new-dates-input" class="doodle-input doodle-input-admin" placeholder="ex: Samedi 12, Dimanche 13, Mardi 15 soir">
+                            <button id="btn-create-poll" class="btn-primary">Lancer le sondage</button>
                         </div>
                     </div>
 
                     <!-- Mode Gestion de Sondage Actif (affiché s'il y a un sondage actif) -->
-                    <div id="admin-manage-container" style="display: none;">
-                        <h3 style="color: var(--gold); margin-top: 0; font-family: var(--font-heading);">🔧 Mode MDJ - Gestion du Sondage Actif</h3>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 0;">
-                            <button id="btn-admin-edit" class="btn-primary" style="margin-left: 0;">📅 Modifier les dates</button>
-                            <button id="btn-admin-close" class="btn-primary" style="margin-left: 0; background: rgba(201, 168, 76, 0.05); border-color: var(--border-gold); color: var(--gold);">🔒 Clôturer le sondage</button>
-                            <button id="btn-admin-delete" class="btn-danger" style="margin-left: 0;">🗑️ Supprimer le sondage</button>
+                    <div id="admin-manage-container" class="doodle-admin-section">
+                        <h3 class="doodle-admin-title">🔧 Mode MDJ - Gestion du Sondage Actif</h3>
+                        <div class="doodle-admin-actions">
+                            <button id="btn-admin-edit" class="btn-primary">📅 Modifier les dates</button>
+                            <button id="btn-admin-close" class="btn-primary doodle-btn-close-poll">🔒 Clôturer le sondage</button>
+                            <button id="btn-admin-delete" class="btn-danger">🗑️ Supprimer le sondage</button>
                         </div>
-                        
+
                         <!-- Formulaire d'édition des dates (masqué par défaut) -->
-                        <div id="admin-edit-dates-form" style="display: none; padding-top: 1rem; border-top: 1px solid var(--border-subtle); margin-top: 1rem;">
-                            <p style="margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">Modifie la liste des dates (séparées par des virgules) :</p>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                                <input type="text" id="edit-dates-input" style="flex: 1; min-width: 250px; padding: 8px 12px; border: 1px solid var(--border-subtle); background: rgba(0,0,0,0.3); color: var(--text-primary); border-radius: var(--radius-sm);">
-                                <button id="btn-save-dates" class="btn-primary" style="margin-left: 0;">Enregistrer</button>
-                                <button id="btn-cancel-edit" class="btn-ghost" style="margin-left: 0;">Annuler</button>
+                        <div id="admin-edit-dates-form" class="doodle-admin-subsection">
+                            <p class="doodle-hint-tight">Modifie la liste des dates (séparées par des virgules) :</p>
+                            <div class="doodle-admin-actions">
+                                <input type="text" id="edit-dates-input" class="doodle-input doodle-input-admin">
+                                <button id="btn-save-dates" class="btn-primary">Enregistrer</button>
+                                <button id="btn-cancel-edit" class="btn-ghost">Annuler</button>
                             </div>
                         </div>
-                        
+
                         <!-- Option de forcer la création d'un nouveau sondage -->
-                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); font-size: 0.85rem;">
-                            <span style="color: var(--text-muted);">Besoin de repartir à zéro ? </span>
-                            <button id="btn-admin-force-new" class="btn-ghost" style="padding: 4px 8px; font-size: 0.8rem; margin-left: 5px;">➕ Lancer un nouveau sondage</button>
+                        <div class="doodle-admin-reset">
+                            <span class="doodle-muted">Besoin de repartir à zéro ? </span>
+                            <button id="btn-admin-force-new" class="btn-ghost doodle-btn-reset">➕ Lancer un nouveau sondage</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Loader -->
-                <div id="doodle-loader" style="text-align: center; padding: 3rem;">
-                    <span style="color: var(--text-muted);">Chargement du sondage...</span>
+                <div id="doodle-loader" class="doodle-loader">
+                    <span class="doodle-muted">Chargement du sondage...</span>
                 </div>
 
                 <!-- Message si aucun sondage en cours -->
-                <div id="doodle-empty" style="display: none; text-align: center; padding: 3rem; border: 1px dashed var(--border-subtle); border-radius: var(--radius-md);">
-                    <p style="color: var(--text-muted); font-style: italic; margin: 0;">Aucun sondage de session n'est actif pour le moment.</p>
+                <div id="doodle-empty" class="doodle-empty">
+                    <p class="doodle-empty-text">Aucun sondage de session n'est actif pour le moment.</p>
                 </div>
 
                 <!-- Tableau du Sondage -->
-                <div id="doodle-table-container" style="display: none; margin-bottom: 2rem;">
+                <div id="doodle-table-container" class="doodle-table-container">
                     <!-- Sélecteur de format -->
-                    <div class="sheet-tabs" id="doodle-view-selector" style="margin-bottom: 1.5rem; justify-content: flex-end;">
+                    <div class="sheet-tabs doodle-view-selector" id="doodle-view-selector">
                         <button class="sheet-tab active" id="btn-view-horizontal" title="Format Horizontal">
                             <span class="sheet-tab-icon">↔️</span>
                             <span class="sheet-tab-name">Format Horizontal</span>
@@ -102,7 +104,7 @@
                         </button>
                     </div>
 
-                    <div id="doodle-closed-banner" style="display: none; background: rgba(201, 168, 76, 0.1); border: 1px solid var(--border-gold); padding: 1rem; border-radius: var(--radius-md); text-align: center; margin-bottom: 1.5rem; color: var(--gold); font-family: var(--font-heading); font-size: 1.05rem;">
+                    <div id="doodle-closed-banner" class="doodle-closed-banner">
                         🔒 Ce sondage est clôturé. Les votes ne sont plus modifiables.
                     </div>
                     <!-- Conteneur pour le tableau ou les cartes -->
@@ -112,7 +114,7 @@
                 </div>
 
                 <!-- Barre d'Auth -->
-                <div id="doodle-auth-bar" style="margin-top: 2rem; display: flex; justify-content: center; align-items: center; gap: 1rem; flex-wrap: wrap; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
+                <div id="doodle-auth-bar" class="doodle-auth-bar">
                     <!-- Rempli en JS -->
                 </div>
 
@@ -122,26 +124,26 @@
         <div class="ornament">⚜</div>
         <footer class="footer" id="site-footer"></footer>
 
-    </div>
+    </main>
 
     <!-- Modale de détail des votes -->
-    <div id="doodle-votes-modal" class="pnj-modal-overlay" style="display: none;">
-        <div class="pnj-modal-content" style="position: relative; max-width: 450px;">
-            <button id="btn-close-modal" style="position: absolute; top: 1rem; right: 1.2rem; background: none; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer;">&times;</button>
-            <h3 style="margin-top: 0; font-family: var(--font-heading); color: var(--gold); border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.8rem; margin-bottom: 1rem;">Votes</h3>
-            
-            <div id="modal-date-details" style="font-size: 1.1rem; font-weight: bold; margin-bottom: 1.5rem; color: var(--gold);"></div>
-            
+    <div id="doodle-votes-modal" class="pnj-modal-overlay doodle-votes-modal">
+        <div class="pnj-modal-content doodle-modal-content">
+            <button id="btn-close-modal" class="doodle-modal-close">&times;</button>
+            <h3 class="doodle-modal-title">Votes</h3>
+
+            <div id="modal-date-details" class="doodle-modal-date"></div>
+
             <!-- Filtres -->
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap;">
-                <span style="font-size: 0.9rem; color: var(--text-muted);">Afficher :</span>
-                <button class="sheet-tab active" id="btn-filter-all" style="padding: 4px 8px; font-size: 0.75rem;">Tous</button>
-                <button class="sheet-tab" id="btn-filter-yes" style="padding: 4px 8px; font-size: 0.75rem;">Oui</button>
-                <button class="sheet-tab" id="btn-filter-no" style="padding: 4px 8px; font-size: 0.75rem;">Non</button>
+            <div class="doodle-modal-filters">
+                <span class="doodle-modal-filters-label">Afficher :</span>
+                <button class="sheet-tab active doodle-filter-btn" id="btn-filter-all">Tous</button>
+                <button class="sheet-tab doodle-filter-btn" id="btn-filter-yes">Oui</button>
+                <button class="sheet-tab doodle-filter-btn" id="btn-filter-no">Non</button>
             </div>
-            
+
             <!-- Liste des votants -->
-            <div id="modal-voters-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+            <div id="modal-voters-list" class="doodle-voters-list">
                 <!-- Rempli en JS -->
             </div>
         </div>

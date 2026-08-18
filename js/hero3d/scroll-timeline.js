@@ -3,7 +3,15 @@ import * as THREE from 'three';
 let scrollProgress = 0;
 let targetProgress = 0;
 let anchors = [];
+let maxScroll = 0;
 let ro = null;
+
+// Point d'entrée de test, utilisé par les captures d'écran : il sert à figer la
+// caméra sur un chapitre précis sans avoir à défiler. Conditionné pour ne pas
+// laisser en production un levier qui modifie la scène depuis la console.
+// Usage : ouvrir `index.html?hero3dDebug=1`, puis affecter
+// `window.__HERO3D_PROGRESS` à une valeur de 0 (départ) à 4 (fin du défilement).
+const debugProgression = new URLSearchParams(window.location.search).get('hero3dDebug') === '1';
 
 // Points clés de la caméra (x, y, z)
 // Chapitre 1: Base (0)
@@ -14,17 +22,17 @@ let ro = null;
 const curve = new THREE.CatmullRomCurve3([
   new THREE.Vector3(0, -10, 150),    // 0. Départ (bas, regarde haut)
   new THREE.Vector3(0, 10, 80),      // 1. Approche comète
-  new THREE.Vector3(-50, 45, 0),     // 2. Pivot Morrslieb
-  new THREE.Vector3(-20, 18, 28),    // 3. Descente vers la ville
-  new THREE.Vector3(10, 5, 40)       // 4. Fin : au niveau des toits
+  new THREE.Vector3(-50, 45, 0),     // 2. Pivot Morrslieb (loin)
+  new THREE.Vector3(-100, 82, -25),  // 3. Rapprochement de Morrslieb (moyen)
+  new THREE.Vector3(-145, 105, -35)  // 4. Fin : gros plan sur Morrslieb
 ]);
 
 const lookAtCurve = new THREE.CatmullRomCurve3([
   new THREE.Vector3(0, 41, 0),       // 0. Regarde haut (étoiles) - Décalé pour éviter NaN
   new THREE.Vector3(45, 95, -40),    // 1. Regarde la comète (en haut à droite)
   new THREE.Vector3(-160, 110, -100),// 2. Regarde Morrslieb
-  new THREE.Vector3(-15, 8, -40),    // 3. Bascule vers la skyline
-  new THREE.Vector3(-30, 18, -40)    // 4. Fin : toits + Morrslieb au-dessus de la ville
+  new THREE.Vector3(-158, 110, -98), // 3. Reste sur Morrslieb (léger décalage anti-NaN)
+  new THREE.Vector3(-160, 110, -100) // 4. Fin : plein cadre sur Morrslieb
 ]);
 
 export function initTimeline() {
@@ -46,47 +54,50 @@ export function initTimeline() {
 
 function calculateAnchors() {
   anchors = [];
-  
+
   // Chapitre 1
   const hero = document.getElementById('hero');
-  anchors.push({ el: hero, chapter: 0 });
-  
-  // Chapitre 2
-  const nextSession = document.getElementById('next-session');
-  anchors.push({ el: nextSession, chapter: 1 });
-  
+  anchors.push({ el: hero, chapter: 0, top: getOffsetTop(hero) });
+
+  // Chapitre 2 — la date de prochaine session est desormais dans le hero ;
+  // l'ancre du chapitre 1 suit la section du calendrier, a la meme position.
+  const calendarSection = document.getElementById('imperial-calendar-section');
+  anchors.push({ el: calendarSection, chapter: 1, top: getOffsetTop(calendarSection) });
+
   // Chapitre 3
   // Le bloc .section (cartes)
   const navCards = document.querySelector('.card-grid');
-  anchors.push({ el: navCards, chapter: 2 });
-  
+  anchors.push({ el: navCards, chapter: 2, top: getOffsetTop(navCards) });
+
   // Chapitre 4
   const ornament = document.querySelector('.ornament');
-  anchors.push({ el: ornament, chapter: 3 });
-  
+  anchors.push({ el: ornament, chapter: 3, top: getOffsetTop(ornament) });
+
   // Fin
   const footer = document.getElementById('site-footer');
-  anchors.push({ el: footer, chapter: 4 });
+  anchors.push({ el: footer, chapter: 4, top: getOffsetTop(footer) });
+
+  // Mesuré ici, une fois : onScroll ne lit plus que window.scrollY et évite
+  // un getBoundingClientRect par ancre à chaque événement de défilement.
+  maxScroll = document.body.scrollHeight - window.innerHeight;
 }
 
 function onScroll() {
   const st = window.scrollY;
-  const wh = window.innerHeight;
-  
+
   // Calcul du targetProgress basé sur les ancres
   if (anchors.length < 5) return;
-  
+
   let p = 0;
   for (let i = 0; i < anchors.length - 1; i++) {
     const a1 = anchors[i];
     const a2 = anchors[i+1];
-    
-    // Simplification: on map le scrollTop entre l'élément actuel et le suivant
-    // En réalité, on veut mapper le centre de la fenêtre ou le haut de la fenêtre.
-    // Utilisons la position du haut de l'élément dans le document
-    const top1 = getOffsetTop(a1.el);
-    const top2 = getOffsetTop(a2.el);
-    
+
+    // Positions du haut de chaque élément dans le document, mémorisées par
+    // calculateAnchors : plus aucune mesure synchrone ici.
+    const top1 = a1.top;
+    const top2 = a2.top;
+
     if (st >= top1 && st < top2) {
       // ratio entre top1 et top2
       const range = top2 - top1;
@@ -95,13 +106,12 @@ function onScroll() {
       break;
     } else if (st >= top2 && i === anchors.length - 2) {
       // Au-delà du dernier
-      const maxScroll = document.body.scrollHeight - wh;
       const range = maxScroll - top2;
       const progressInRange = range > 0 ? Math.min((st - top2) / range, 1) : 1;
-      p = a2.chapter + progressInRange; // va jusqu'à 4 ou + 
+      p = a2.chapter + progressInRange; // va jusqu'à 4 ou +
     }
   }
-  
+
   targetProgress = Math.max(0, Math.min(p, 4));
 }
 
@@ -116,8 +126,7 @@ export function isIdle() {
 }
 
 export function updateCamera(camera, deltaTime) {
-  // Hook de test : force la progression (utilisé par les captures headless)
-  if (window.__HERO3D_PROGRESS != null) {
+  if (debugProgression && window.__HERO3D_PROGRESS != null) {
     targetProgress = window.__HERO3D_PROGRESS;
     scrollProgress = targetProgress;
   }

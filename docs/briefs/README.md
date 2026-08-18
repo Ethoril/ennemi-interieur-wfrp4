@@ -37,19 +37,19 @@ et `L2-01` avant `L2-02`.
 |---|---|---|---|
 | ~~[L2-01](L2-01-sauvegarde-cloud.md)~~ | ~~Fiabiliser la sauvegarde cloud~~ — **livré en v2.13.4** | I2 | — |
 | ~~[L2-02](L2-02-export-import-fiche.md)~~ | ~~Export et import JSON de la fiche~~ — **livré en v2.14.0** | I3 | — |
-| [L2-04](L2-04-css-calendrier.md) | Sortir la mise en forme du Calendrier du JS | I4 | 3 h |
+| ~~[L2-04](L2-04-css-calendrier.md)~~ | ~~Sortir la mise en forme du Calendrier du JS~~ — **livré en v2.15.0** | I4 | — |
 | ~~[L2-05](L2-05-depliage-css.md)~~ | ~~Déplier la chaîne de chargement CSS~~ — **livré en v2.14.1** | M1 | — |
 | ~~[L2-06](L2-06-allegement-images.md)~~ | ~~Supprimer 31 Mo d'images~~ — **livré en v2.14.0** | M2 | — |
 | ~~[L2-07](L2-07-csp.md)~~ | ~~Resserrer la CSP~~ — **livré en v2.14.1** | M3 | — |
-| [L2-08](L2-08-correctifs-cibles.md) | Trois correctifs ciblés | M4, M5, M7 | 1 h |
-| [L2-09](L2-09-libelles-annonces.md) | Libellés de formulaire et annonces | N3 | 1 h |
-| [L2-10](L2-10-reperes-focus.md) | Repères de page et indicateur de focus | N3 | 45 min |
-| [L2-11](L2-11-modale-confirmation.md) | Modale de confirmation | N4 | 2 h |
-| [L2-12](L2-12-service-worker.md) | Service worker : hors-ligne et version liée | N5, N8 | 1 h 30 |
-| [L2-13](L2-13-hygiene.md) | Encodage, code mort, fichiers obsolètes | N2, N6 | 1 h |
-| [L2-14](L2-14-ci-lint.md) | Contrôles de syntaxe et ESLint en CI | N7 | 1 h 30 |
+| ~~[L2-08](L2-08-correctifs-cibles.md)~~ | ~~Trois correctifs ciblés~~ — **livré en v2.15.0** | M4, M5, M7 | — |
+| ~~[L2-09](L2-09-libelles-annonces.md)~~ | ~~Libellés de formulaire et annonces~~ — **livré en v2.15.0** | N3 | — |
+| ~~[L2-10](L2-10-reperes-focus.md)~~ | ~~Repères de page et indicateur de focus~~ — **livré en v2.15.0** | N3 | — |
+| ~~[L2-11](L2-11-modale-confirmation.md)~~ | ~~Modale de confirmation~~ — **livré en v2.15.0** | N4 | — |
+| ~~[L2-12](L2-12-service-worker.md)~~ | ~~Service worker : hors-ligne et version liée~~ — **livré en v2.15.0** | N5, N8 | — |
+| ~~[L2-13](L2-13-hygiene.md)~~ | ~~Encodage, code mort, fichiers obsolètes~~ — **livré en v2.15.0** | N2, N6 | — |
+| ~~[L2-14](L2-14-ci-lint.md)~~ | ~~Contrôles de syntaxe et ESLint en CI~~ — **livré en v2.15.0** | N7 | — |
 | ~~[L2-16](L2-16-calendrier-date-reelle.md)~~ | ~~Calendrier impérial calé sur la date du jour~~ — **livré en v2.13.3** | hors audit | — |
-| [L2-15](L2-15-cloture-lot2.md) | CHANGELOG, version, livraison | N1 | 45 min |
+| ~~[L2-15](L2-15-cloture-lot2.md)~~ | ~~CHANGELOG, version, livraison~~ — **livré en v2.15.0** | N1 | — |
 
 ### Déjà livrés — ne pas reprendre
 
@@ -65,7 +65,49 @@ et `L2-01` avant `L2-02`.
   de pré-cache citait `css/style.css`, supprimé par ce même brief, ce qui faisait échouer
   l'installation du service worker en silence (`cache.addAll()` est atomique).
 
-Il reste donc **9 briefs** au lot 2 : `L2-04`, `L2-08` à `L2-15`.
+### Relus sur branche, livrés en v2.15.0
+
+- **`L2-12`** et **`L2-14`**, sur `lot-2-outillage` (`e4d401f`, `f96fddb`, plus `3105cfa` qui solde
+  la relecture). Vérifié hors navigateur : les 50 ressources locales et les 6 URL CDN du pré-cache
+  répondent 200, `npm run lint` sort 0 erreur et 0 avertissement sur 27 fichiers, `node --check`
+  passe sur 26, et le contrôle de cohérence de version fonctionne malgré le `"type": "module"`
+  ajouté par `L2-14`. **Checklist navigateur validée par le MJ** le 17 août 2026. Une scorie est
+  reportée dans `L2-15` étape 3 : `offline.html` n'a pas de `<link rel="icon">` et sa CSP bloque
+  la requête implicite vers `/favicon.ico`.
+- **`L2-13`**, sur `lot-2-outillage` (`738fefc`, `3c40280`). L'encodage du CHANGELOG est rétabli :
+  891 séquences par aller-retour cp1252, plus 7 irrécupérables reconstituées d'après le glyphe
+  réellement présent dans le source (`━` de `js/pnjs.js:697`, `✏`, `←`, le sélecteur de variante
+  emoji) — les octets `0x81`, `0x8F` et `0x90` n'existant pas en cp1252, le convertisseur les
+  avait remplacés par `U+FFFD`. Vérifié : le fichier privé de ses caractères non-ASCII est
+  identique à l'original, donc aucun mot n'a bougé. Les sept points de code mort sont faits.
+  **Validé au navigateur par le MJ** le 17 août 2026 : les huit onglets des Aides de Jeux (la
+  branche `firstRowCorrupted` de `js/sheets.js` a été retouchée) et `index.html?hero3dDebug=1`.
+  À noter pour plus tard : aucun des huit onglets ne déclenche cette branche aujourd'hui, les
+  huit feuilles ayant un en-tête simple. Elle ne sert donc à rien en l'état.
+- **`L2-04`**, sur `lot-2-outillage` (`306b208`). Les 99 attributs `style=` de `js/doodle.js` et
+  `doodle.html` sont partis dans `css/doodle.css`, 78 classes nommées par rôle, zéro couleur
+  littérale restante. `--statut-allie`, `--statut-ennemi` et `--statut-neutre` n'existaient que
+  dans `theme-parchment.css` : ils sont désormais aussi dans le `:root` de `base.css`, avec les
+  valeurs de repli sur lesquelles `js/pnjs.js` retombait déjà, donc sans effet visuel.
+  Sa table de correspondance change volontairement l'apparence en thème sombre — fond des champs,
+  du panneau MJ, de la ligne de vote, et les trois teintes de vote — ce que ses « ne pas faire »
+  interdisent par ailleurs. **Ces écarts ont été validés à l'écran par le MJ** le 17 août 2026 ;
+  leur détail est dans le message de `306b208`.
+
+**Le lot 2 est intégralement livré en v2.15.0** (18 août 2026), `L2-08` à `L2-15` validés
+au navigateur par le MJ.
+
+Livrés dans la même version, hors briefs :
+
+- **Correctif overlay Enquêtes** — l'état vide `#pnj-empty` (réutilisé de la page PNJs)
+  recouvrait toute la page et bloquait les clics dès que la liste d'indices rendait vide.
+  Bug préexistant révélé pendant la validation de `L2-11`.
+- **Contraste** — `--text-muted` et `--border-subtle` remontés dans les deux thèmes ; le
+  libellé de formulaire en sombre tombait à ~3:1, sous le seuil WCAG AA.
+- **Accueil** — la date de prochaine session remonte dans le hero, quatre cartes de
+  navigation ajoutées (Cartes, PNJs, Enquêtes, Calendrier), et la scène 3D se termine en
+  gros plan sur Morrslieb au lieu de la ville.
+- **Service worker** — `js/ui-confirm.js` ajouté au pré-cache (dépendance de la modale).
 
 ## Hors périmètre
 
@@ -82,6 +124,21 @@ Il reste donc **9 briefs** au lot 2 : `L2-04`, `L2-08` à `L2-15`.
 - **L2-03, feuille d'impression de la fiche** — supprimé le 17 août 2026 : le groupe ne joue pas
   sur fiche papier. Le volet export et import JSON du constat I3 reste, lui, au programme
   (`L2-02`).
+
+## Ce que la règle des données personnelles ne couvre pas
+
+La convention [§8](00-CONVENTIONS.md) interdit le nom civil de quiconque dans ce dépôt public.
+**Les prénoms des votants du Calendrier n'entrent pas dans cette interdiction** : ils sont le
+principe même de la fonctionnalité — on vote sous son prénom, et celui du MJ est réservé pour que
+sa ligne soit créée d'office et triée en premier. Tranché par le MJ le 17 août 2026 après un
+signalement à tort pendant `L2-13`.
+
+Sont donc normaux, et à ne pas « corriger » : la clé de la map `responses` écrite par
+`js/doodle.js`, le nom réservé, le tri, le modèle d'e-mail, et les prénoms cités en exemple dans
+les checklists des briefs et le CHANGELOG.
+
+Ce que §8 visait reste entier : **adresses électroniques de joueurs, jetons, clés privées**, et le
+nom civil de personnes qui ne se sont pas exposées elles-mêmes.
 
 ## Une décision reste ouverte
 

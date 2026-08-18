@@ -23,12 +23,29 @@
 
   --text-primary: #e8dcc8;
   --text-secondary: #a89b84;
-  --text-muted: #6b6155;
+  --text-muted: #a89d8a;
   --text-heading: #f0e6d3;
 
-  --border-subtle: rgba(201, 168, 76, 0.15);
+  --border-subtle: rgba(201, 168, 76, 0.34);
   --border-gold: rgba(201, 168, 76, 0.35);
   --border-strong: rgba(201, 168, 76, 0.6);
+
+  /* Couleurs de statut. Elles n'existaient que dans theme-parchment.css :
+     en thème sombre, js/pnjs.js retombait sur la valeur de repli de son
+     var(). Ces trois lignes reprennent exactement ces valeurs de repli,
+     donc rien ne change à l'écran — le jeton existe enfin des deux côtés,
+     comme la convention le suppose. */
+  --statut-allie:  #4caf7d;
+  --statut-ennemi: #c94c4c;
+  --statut-neutre: #8a8a9a;
+
+  /* Lavis doré, pour les fonds à peine teintés (ligne de totaux du
+     Calendrier, bannière de clôture, boutons secondaires). */
+  --gold-wash: rgba(201, 168, 76, 0.07);
+
+  /* Texte posé sur une pastille de statut saturée. Volontairement
+     identique dans les deux thèmes : le fond porte déjà la couleur. */
+  --text-on-status: #fff;
 
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -101,6 +118,37 @@ body {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Lien d'évitement : hors écran jusqu'à réception du focus clavier.
+   La navigation compte neuf entrées, ce lien évite de les traverser
+   à chaque page. z-index au-dessus de la navbar (1000) et du burger (1001). */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1002;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-card);
+  color: var(--gold);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-heading);
+  text-decoration: none;
+}
+.skip-link:focus {
+  left: var(--space-sm);
+  top: var(--space-sm);
+}
+
+/* Indicateur de focus unique pour tout le site. Les champs remplaçaient
+   le contour natif par un simple changement de couleur de bordure, signal
+   trop faible et absent des éléments sans bordure. :focus-visible ne
+   déclenche l'indicateur qu'à la navigation clavier, jamais au clic. */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* Subtle background texture */
@@ -735,7 +783,6 @@ strong {
 }
 
 .sheet-search:focus {
-  outline: none;
   border-color: var(--gold);
 }
 
@@ -1554,7 +1601,6 @@ strong {
 
 .pnj-search-wrapper input:focus {
   border-color: var(--border-gold);
-  outline: none;
 }
 
 .pnj-filters {
@@ -2219,7 +2265,6 @@ strong {
 .rel-add-form select:focus,
 .rel-add-form input:focus {
   border-color: var(--border-gold);
-  outline: none;
 }
 
 .rel-form-btns {
@@ -2405,7 +2450,8 @@ strong {
   flex: 1 1 100%;
 }
 
-.form-col label {
+.form-col label,
+.form-col .form-col-label {
   font-size: 0.72rem;
   color: var(--text-muted);
   font-family: var(--font-heading);
@@ -2432,7 +2478,6 @@ strong {
 .form-col select:focus,
 .form-col textarea:focus {
   border-color: var(--border-gold);
-  outline: none;
 }
 
 .form-col textarea {

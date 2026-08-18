@@ -50,7 +50,6 @@
 }
 .voter-row input[type="text"]:focus {
   border-color: var(--gold);
-  outline: none;
   box-shadow: 0 0 5px rgba(201, 168, 76, 0.3);
 }
 .voter-checkbox {
@@ -78,65 +77,83 @@
   background: var(--gold-bright);
 }
 
-/* -- Doodle Cards Layout (Vertical) -- */
-.doodle-card {
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 14px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 0.8rem;
-  transition: border-color var(--transition-fast), background var(--transition-fast);
-}
-.doodle-card:hover {
-  border-color: var(--border-gold);
-  background: rgba(201, 168, 76, 0.03);
-}
+/* Les règles du Calendrier vivent dans css/doodle.css depuis L2-04 :
+   elles ne servaient qu'à cette page, et leurs littéraux de couleur
+   devaient passer aux jetons pour suivre le thème parchemin. */
 
-/* -- Doodle Votes Modal -- */
-.doodle-voter-item {
+/* ── Modale de confirmation (js/ui-confirm.js) ─────────────────────
+   Construite sur <dialog> : le voile et le piège de focus sont natifs.
+   Stylée par les jetons, donc les deux thèmes suivent. Seul le backdrop
+   utilise une valeur littérale : ::backdrop n'hérite pas des variables
+   du document dans tous les navigateurs, et un voile neutre convient. */
+.ui-confirm {
+  max-width: 28rem;
+  width: calc(100% - 2 * var(--space-md));
+  padding: var(--space-lg);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+.ui-confirm[open] {
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.ui-confirm::backdrop {
+  background: rgba(7, 7, 13, 0.72);
+}
+.ui-confirm-titre {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-heading);
+  color: var(--text-heading);
+  font-size: 1.15rem;
+}
+.ui-confirm-message {
+  margin: 0 0 var(--space-lg);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+.ui-confirm-actions {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--border-subtle);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+.ui-confirm-actions button {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-gold);
   border-radius: var(--radius-sm);
-  transition: border-color 0.2s ease;
-}
-.doodle-voter-item:hover {
-  border-color: var(--border-gold);
-}
-.doodle-voter-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--border-gold);
-  color: var(--bg-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
   font-family: var(--font-heading);
   font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
-.doodle-voter-badge-yes {
-  background: #2ecc71;
-  color: #fff;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.75rem;
-  font-weight: bold;
+.ui-confirm-annuler {
+  background: transparent;
+  color: var(--text-primary);
 }
-.doodle-voter-badge-no {
-  background: #e74c3c;
-  color: #fff;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 0.75rem;
-  font-weight: bold;
+.ui-confirm-annuler:hover {
+  border-color: var(--border-strong);
+}
+.ui-confirm-valider {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--bg-darkest);
+}
+.ui-confirm-valider:hover {
+  background: var(--gold-bright);
+}
+.ui-confirm-valider.ui-confirm-danger {
+  background: var(--blood-bright);
+  border-color: var(--blood-bright);
+  color: var(--text-heading);
+}
+.ui-confirm-valider.ui-confirm-danger:hover {
+  background: var(--blood);
+  border-color: var(--blood);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-confirm[open] { animation: none; }
 }
 

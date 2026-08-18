@@ -1,0 +1,620 @@
+/* ================================================
+   CALENDRIER — mise en forme propre à la page
+   ================================================
+   Sortie de js/doodle.js et doodle.html, qui portaient 99 attributs
+   style= à eux deux. Plusieurs codaient un fond sombre en dur tout en
+   gardant color: var(--text-primary) : en thème parchemin, cela donnait
+   du brun très foncé sur un fond assombri, donc illisible.
+   Chargée par doodle.html uniquement, après theme-parchment.css.
+   Voir docs/briefs/L2-04-css-calendrier.md.
+   ================================================ */
+
+/* ── Page ─────────────────────────────────────── */
+
+.doodle-section {
+  padding-top: 0;
+  min-height: 50vh;
+}
+
+/* ── Panneau du Maître de Jeu ─────────────────── */
+
+/* Masqués par défaut : js/doodle.js les passe en display:block selon
+   l'authentification et l'existence d'un sondage. Le style en ligne
+   qu'il pose l'emporte sur ces règles, c'est voulu. */
+.doodle-admin-panel,
+.doodle-admin-section,
+.doodle-admin-subsection {
+  display: none;
+}
+
+.doodle-admin-panel {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border-gold);
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+}
+
+.doodle-admin-subsection {
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 1rem;
+}
+
+.doodle-admin-title {
+  color: var(--gold);
+  margin-top: 0;
+  font-family: var(--font-heading);
+}
+
+.doodle-admin-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* .btn-primary porte margin-left: auto, qui pousserait chaque bouton à
+   l'extrémité droite de la rangée flex. On ne touche pas au margin-right
+   de .btn-danger, qui reste à auto comme avant. */
+.doodle-admin-actions .btn-primary,
+.doodle-admin-actions .btn-ghost,
+.doodle-admin-actions .btn-danger,
+.doodle-admin-reset .btn-ghost {
+  margin-left: 0;
+}
+
+.doodle-admin-reset {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.85rem;
+}
+
+.doodle-btn-close-poll {
+  background: var(--gold-wash);
+  border-color: var(--border-gold);
+  color: var(--gold);
+}
+
+.doodle-btn-reset {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  margin-left: 5px;
+}
+
+/* ── Champs de saisie ─────────────────────────── */
+
+/* --bg-surface est le fond de champ du reste du site (css/fiche.css en
+   compte quinze). L'ancien rgba(0,0,0,0.3) était l'exception, et c'est
+   lui qui rendait la page illisible en parchemin. */
+.doodle-input {
+  padding: 8px 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+}
+
+.doodle-input-admin {
+  flex: 1;
+  min-width: 250px;
+}
+
+.doodle-input-voter {
+  width: 100%;
+}
+
+.doodle-input-voter-inline {
+  flex: 1;
+  min-width: 150px;
+}
+
+/* ── Textes utilitaires ───────────────────────── */
+
+.doodle-hint,
+.doodle-hint-tight {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.doodle-hint {
+  margin-bottom: 1rem;
+}
+
+.doodle-hint-tight {
+  margin-bottom: 0.5rem;
+}
+
+.doodle-muted {
+  color: var(--text-muted);
+}
+
+/* ── Chargement et état vide ──────────────────── */
+
+.doodle-loader {
+  text-align: center;
+  padding: 3rem;
+}
+
+.doodle-loader-error {
+  color: var(--blood-bright);
+}
+
+.doodle-empty {
+  display: none;
+  text-align: center;
+  padding: 3rem;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.doodle-empty-text {
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+/* ── Conteneur du sondage ─────────────────────── */
+
+.doodle-table-container {
+  display: none;
+  margin-bottom: 2rem;
+}
+
+.doodle-view-selector {
+  margin-bottom: 1.5rem;
+  justify-content: flex-end;
+}
+
+.doodle-closed-banner {
+  display: none;
+  background: var(--gold-wash);
+  border: 1px solid var(--border-gold);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--gold);
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+}
+
+/* ── Format horizontal : le tableau ───────────── */
+
+/* Le tableau garde la classe .rules-table pour son fond d'en-tête, ses
+   bordures et son alternance de lignes. Les règles ci-dessous ne
+   redéfinissent que ce que les attributs style= redéfinissaient déjà.
+   Elles portent .doodle-table en préfixe pour dépasser en spécificité
+   .rules-table th/td et .rules-table tr:nth-child(even). */
+.doodle-table {
+  text-align: center;
+}
+
+.doodle-table th.doodle-th-player {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 2px solid var(--border-strong);
+  min-width: 180px;
+  width: 180px;
+}
+
+/* Largeurs fonctionnelles, pas décoratives : le tableau défile
+   horizontalement dès 6 dates, la colonne des joueurs doit rester
+   lisible et les colonnes de dates ne pas se tasser. */
+.doodle-table th.doodle-th-date {
+  padding: 12px;
+  border-bottom: 2px solid var(--border-strong);
+  min-width: 120px;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.doodle-table tr.doodle-player-row {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.doodle-table td.doodle-td-player {
+  text-align: left;
+  padding: 12px;
+  font-weight: bold;
+  min-width: 180px;
+  width: 180px;
+}
+
+.doodle-table td.doodle-td-vote {
+  padding: 12px;
+  text-align: center;
+}
+
+.doodle-table tr.doodle-row-total {
+  border-bottom: 2px solid var(--border-strong);
+  background: var(--gold-wash);
+  font-weight: bold;
+}
+
+.doodle-table td.doodle-td-total-label {
+  text-align: left;
+  padding: 12px;
+  color: var(--gold);
+  min-width: 180px;
+  width: 180px;
+}
+
+.doodle-table td.doodle-td-total {
+  padding: 12px;
+  text-align: center;
+  color: var(--gold);
+}
+
+.doodle-table tr.doodle-voter-row {
+  background: var(--bg-card);
+}
+
+.doodle-table td.doodle-td-voter-name {
+  text-align: left;
+  padding: 12px;
+  vertical-align: middle;
+  min-width: 180px;
+  width: 180px;
+}
+
+.doodle-table td.doodle-td-voter-check {
+  padding: 12px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.doodle-table td.doodle-td-submit {
+  text-align: right;
+  padding: 12px;
+}
+
+/* ── Nom de joueur et ses actions ─────────────── */
+
+.doodle-player-name-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.doodle-player-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.doodle-btn-icon {
+  background: none;
+  border: none;
+  color: var(--gold);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 0.95rem;
+}
+
+.doodle-btn-icon-danger {
+  color: var(--blood-bright);
+}
+
+/* ── Votes ────────────────────────────────────── */
+
+.doodle-vote-yes,
+.doodle-vote-no {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.doodle-vote-yes {
+  color: var(--statut-allie);
+}
+
+.doodle-vote-no {
+  color: var(--statut-ennemi);
+}
+
+.doodle-checkbox-wrap {
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+}
+
+.doodle-checkbox {
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  margin: 0;
+}
+
+/* Masqué par défaut : js/doodle.js le passe en display:inline quand il a
+   un message à afficher. */
+.doodle-vote-error {
+  display: none;
+  color: var(--statut-ennemi);
+  font-size: 0.9rem;
+}
+
+.doodle-vote-error-horizontal {
+  margin-right: 15px;
+}
+
+.doodle-vote-error-vertical {
+  margin-top: 5px;
+}
+
+.doodle-btn-submit {
+  margin: 0;
+  padding: 8px 24px;
+}
+
+/* ── Format vertical : saisie et cartes ───────── */
+
+.doodle-voter-form {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-end;
+  gap: 15px;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.doodle-voter-field {
+  text-align: left;
+  width: 100%;
+  max-width: 450px;
+}
+
+.doodle-voter-label {
+  display: block;
+  font-family: var(--font-heading);
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.doodle-voter-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+}
+
+.doodle-btn-submit-inline {
+  margin: 0;
+  padding: 8px 20px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.doodle-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* .doodle-card, .doodle-voter-item, .doodle-voter-avatar et les deux
+   pastilles venaient de css/components.css. Elles ne servent qu'ici,
+   donc elles migrent, et leurs littéraux passent aux jetons. */
+.doodle-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 0.8rem;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.doodle-card:hover {
+  border-color: var(--border-gold);
+  background: var(--gold-wash);
+}
+
+.doodle-card-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.doodle-card-date {
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: bold;
+}
+
+.doodle-btn-votes {
+  background: var(--gold-wash);
+  border: 1px solid var(--border-gold);
+  color: var(--gold);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-heading);
+  transition: all var(--transition-fast);
+}
+
+.doodle-submit-bottom {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 1.5rem;
+}
+
+.doodle-submit-bottom .btn-primary {
+  margin: 0;
+  padding: 10px 24px;
+  font-size: 0.95rem;
+}
+
+/* ── Modale de détail des votes ───────────────── */
+
+/* .pnj-modal-overlay est en display:flex ; c'est js/doodle.js qui l'y
+   remet à l'ouverture. */
+.doodle-votes-modal {
+  display: none;
+}
+
+.doodle-modal-content {
+  position: relative;
+  max-width: 450px;
+}
+
+.doodle-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1.2rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* Deux classes en préfixe pour dépasser .pnj-modal-content h3. */
+.doodle-modal-content .doodle-modal-title {
+  margin-top: 0;
+  font-family: var(--font-heading);
+  color: var(--gold);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.doodle-modal-date {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
+  color: var(--gold);
+}
+
+.doodle-modal-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.doodle-modal-filters-label {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.doodle-filter-btn {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
+.doodle-voters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.doodle-voter-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.doodle-voter-item:hover {
+  border-color: var(--border-gold);
+}
+
+/* Dans la modale les boutons d'action sont plus serrés et un cran plus
+   petits que dans le tableau. */
+.doodle-voter-item .doodle-btn-icon {
+  padding: 2px;
+  font-size: 0.9rem;
+}
+
+.doodle-voter-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.doodle-voter-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--border-gold);
+  color: var(--bg-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-family: var(--font-heading);
+  font-size: 0.9rem;
+}
+
+.doodle-voter-name {
+  font-family: var(--font-body);
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.doodle-voter-badge-yes,
+.doodle-voter-badge-no {
+  color: var(--text-on-status);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
+.doodle-voter-badge-yes {
+  background: var(--statut-allie);
+}
+
+.doodle-voter-badge-no {
+  background: var(--statut-ennemi);
+}
+
+.doodle-modal-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 10px 0;
+}
+
+/* ── Barre d'authentification ─────────────────── */
+
+.doodle-auth-bar {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1.5rem;
+}
+
+.doodle-auth-name {
+  color: var(--gold);
+}
+
+.doodle-btn-auth {
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}

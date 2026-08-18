@@ -5,6 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/fireba
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 import Cropper from 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js';
 import { esc, cap, stripAccents } from './utils.js';
+import { confirmAction } from './ui-confirm.js';
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
@@ -207,7 +208,14 @@ async function savePnj(data, imageFile) {
 }
 
 async function deletePnj(id) {
-    if (!confirm('Supprimer ce personnage et toutes ses relations ?')) return;
+    const pnj = state.nodes.find(n => n.id === id);
+    const ok = await confirmAction({
+        titre: 'Supprimer le personnage',
+        message: `${pnj?.nom || 'Ce personnage'} et toutes ses relations seront définitivement supprimés.`,
+        libelleAction: 'Supprimer',
+        danger: true,
+    });
+    if (!ok) return;
     const relSnap = await getDocs(collection(db, 'relations'));
     const batch = writeBatch(db);
     relSnap.docs.forEach(d => {
@@ -245,7 +253,13 @@ async function updateRelation(relId, type, label, color, style) {
 }
 
 async function deleteRelation(relId) {
-    if (!confirm('Supprimer cette relation ?')) return;
+    const ok = await confirmAction({
+        titre: 'Supprimer la relation',
+        message: 'Cette relation sera définitivement supprimée.',
+        libelleAction: 'Supprimer',
+        danger: true,
+    });
+    if (!ok) return;
     await deleteDoc(doc(db, 'relations', relId));
     await loadData();
     const node = state.nodes.find(n => n.id === state.panelId);

@@ -28,7 +28,9 @@ let sceneModule = null;
 
 async function initHero3D() {
   if (!checkSupport()) {
-    console.log("Hero3D: Conditions non réunies (ou fallback actif), scène ignorée.");
+    // En debug : le diagnostic « pourquoi la scène ne s'affiche pas » reste
+    // utile, mais il n'a rien à faire dans la console par défaut.
+    console.debug("Hero3D: Conditions non réunies (ou fallback actif), scène ignorée.");
     return;
   }
 

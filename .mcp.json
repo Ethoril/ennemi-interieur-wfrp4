@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "firebase": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "firebase-tools@latest", "experimental:mcp", "--dir", "."]
+    },
+    "context7": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@upstash/context7-mcp"]
+    }
+  }
+}

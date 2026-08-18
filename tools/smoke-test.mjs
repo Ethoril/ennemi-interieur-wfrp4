@@ -8,6 +8,10 @@
 // Les incohérences déjà présentes dans le baseline sont tolérées : c'est la
 // dette connue, à résorber au fur et à mesure que skills.json est complété.
 // Quand des incohérences disparaissent, le script suggère --update-baseline.
+//
+// skills-baseline.json contient `[]`, et c'est un état VALIDE : il signifie
+// « aucune dette connue », pas « fichier jamais généré ». Ne pas le supprimer —
+// son absence, elle, fait échouer le test avec un message de régénération.
 
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
