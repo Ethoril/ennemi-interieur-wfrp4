@@ -50,7 +50,6 @@
 }
 .voter-row input[type="text"]:focus {
   border-color: var(--gold);
-  outline: none;
   box-shadow: 0 0 5px rgba(201, 168, 76, 0.3);
 }
 .voter-checkbox {

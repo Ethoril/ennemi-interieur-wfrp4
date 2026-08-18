@@ -120,6 +120,37 @@ body {
   border: 0;
 }
 
+/* Lien d'évitement : hors écran jusqu'à réception du focus clavier.
+   La navigation compte neuf entrées, ce lien évite de les traverser
+   à chaque page. z-index au-dessus de la navbar (1000) et du burger (1001). */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1002;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-card);
+  color: var(--gold);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-heading);
+  text-decoration: none;
+}
+.skip-link:focus {
+  left: var(--space-sm);
+  top: var(--space-sm);
+}
+
+/* Indicateur de focus unique pour tout le site. Les champs remplaçaient
+   le contour natif par un simple changement de couleur de bordure, signal
+   trop faible et absent des éléments sans bordure. :focus-visible ne
+   déclenche l'indicateur qu'à la navigation clavier, jamais au clic. */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 /* Subtle background texture */
 body::before {
   content: '';
@@ -752,7 +783,6 @@ strong {
 }
 
 .sheet-search:focus {
-  outline: none;
   border-color: var(--gold);
 }
 
@@ -1571,7 +1601,6 @@ strong {
 
 .pnj-search-wrapper input:focus {
   border-color: var(--border-gold);
-  outline: none;
 }
 
 .pnj-filters {
@@ -2236,7 +2265,6 @@ strong {
 .rel-add-form select:focus,
 .rel-add-form input:focus {
   border-color: var(--border-gold);
-  outline: none;
 }
 
 .rel-form-btns {
@@ -2450,7 +2478,6 @@ strong {
 .form-col select:focus,
 .form-col textarea:focus {
   border-color: var(--border-gold);
-  outline: none;
 }
 
 .form-col textarea {

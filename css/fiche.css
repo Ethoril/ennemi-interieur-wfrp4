@@ -116,7 +116,6 @@
 
 .fiche-field input:focus,
 .fiche-field select:focus {
-  outline: none;
   border-color: var(--border-gold);
 }
 
@@ -222,7 +221,6 @@
 }
 
 .carac-input:focus {
-  outline: none;
   border-color: var(--border-gold);
 }
 
@@ -278,7 +276,6 @@
 }
 
 .derived-stat input:focus {
-  outline: none;
   border-color: var(--gold);
 }
 
@@ -363,7 +360,6 @@
 }
 
 .sk-adv:focus {
-  outline: none;
   border-color: var(--border-gold);
 }
 
@@ -533,7 +529,6 @@
 }
 
 #possessions:focus {
-  outline: none;
   border-color: var(--border-gold);
 }
 
@@ -1410,7 +1405,6 @@ tr.sk-ghost-open td.sk-nom::after {
 }
 
 .career-add-input:focus {
-  outline: none;
   border-style: solid;
   border-color: var(--color-accent, #b48c3c);
   background: rgba(var(--accent-rgb, 180,140,60), 0.06);
