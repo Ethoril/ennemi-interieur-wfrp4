@@ -1,5 +1,6 @@
 import { esc, stripAccents, parseCSV } from './utils.js';
 import { cloudSave } from './fiche-cloud.js';
+import { confirmAction } from './ui-confirm.js';
 
 // Promesse de chargement des bases de données JSON et statut du cloud
 export const dbLoadingPromise = Promise.all([loadCareersData(), loadSkillsData()]);
@@ -1857,8 +1858,14 @@ async function importFromFile(file) {
         alert("Ce fichier n'est pas un export de fiche de personnage.");
         return;
     }
-    if (!confirm("Remplacer la fiche actuelle par le contenu de ce fichier ? "
-               + "L'état actuel sera perdu.")) return;
+    const ok = await confirmAction({
+        titre: 'Remplacer la fiche',
+        message: `Le contenu de « ${file.name} » remplacera la fiche actuelle. `
+               + `L'état actuel sera définitivement perdu.`,
+        libelleAction: 'Remplacer',
+        danger: true,
+    });
+    if (!ok) return;
 
     resetState();
     applyData(payload);

@@ -2,6 +2,7 @@ import { db } from './firebase-init.js';
 import { auth, ADMIN_EMAIL, watchAuth, loginWithGoogle, logout } from './auth.js';
 import { doc, setDoc, deleteDoc, onSnapshot, collection, addDoc, deleteField } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { esc } from './utils.js';
+import { confirmAction } from './ui-confirm.js';
 
 // Elements du DOM
 const adminPanel = document.getElementById('admin-panel');
@@ -201,8 +202,14 @@ btnSaveDates.addEventListener('click', async () => {
 
 btnAdminClose.addEventListener('click', async () => {
     const isClosed = currentPoll.closed === true;
-    const actionStr = isClosed ? "réouvrir" : "clôturer";
-    if (!confirm(`Es-tu sûr de vouloir ${actionStr} ce sondage ?`)) return;
+    const ok = await confirmAction({
+        titre: isClosed ? 'Rouvrir le sondage' : 'Clôturer le sondage',
+        message: isClosed
+            ? 'Le sondage sera rouvert : les joueurs pourront de nouveau voter.'
+            : 'Le sondage sera clôturé : les joueurs ne pourront plus voter.',
+        libelleAction: isClosed ? 'Rouvrir' : 'Clôturer',
+    });
+    if (!ok) return;
 
     btnAdminClose.disabled = true;
     try {
@@ -218,8 +225,14 @@ btnAdminClose.addEventListener('click', async () => {
 });
 
 btnAdminDelete.addEventListener('click', async () => {
-    if (!confirm("Es-tu sûr de vouloir supprimer le sondage actif ? Toutes les réponses seront perdues.")) return;
-    
+    const ok = await confirmAction({
+        titre: 'Supprimer le sondage',
+        message: 'Le sondage actif et toutes les réponses des joueurs seront définitivement perdus.',
+        libelleAction: 'Supprimer',
+        danger: true,
+    });
+    if (!ok) return;
+
     btnAdminDelete.disabled = true;
     btnAdminDelete.textContent = "Suppression...";
     
@@ -406,17 +419,22 @@ function renderPoll(pollData) {
         document.querySelectorAll('.btn-delete-player-response').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const playerToDelete = e.currentTarget.dataset.player;
-                if (confirm(`Supprimer la réponse de ${playerToDelete} ?`)) {
-                    try {
-                        await setDoc(docRef, {
-                            responses: {
-                                [playerToDelete]: deleteField()
-                            }
-                        }, { merge: true });
-                    } catch (err) {
-                        console.error("Erreur lors de la suppression de la réponse :", err);
-                        alert("Erreur de suppression : " + err.message);
-                    }
+                const ok = await confirmAction({
+                    titre: 'Supprimer la réponse',
+                    message: `La réponse de ${playerToDelete} sera définitivement supprimée.`,
+                    libelleAction: 'Supprimer',
+                    danger: true,
+                });
+                if (!ok) return;
+                try {
+                    await setDoc(docRef, {
+                        responses: {
+                            [playerToDelete]: deleteField()
+                        }
+                    }, { merge: true });
+                } catch (err) {
+                    console.error("Erreur lors de la suppression de la réponse :", err);
+                    alert("Erreur de suppression : " + err.message);
                 }
             });
         });
@@ -818,18 +836,23 @@ function openVotesModal(pollData, dateIndex, playerNames) {
         modalVotersList.querySelectorAll('.modal-btn-delete').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const playerToDelete = e.currentTarget.dataset.player;
-                if (confirm(`Supprimer la réponse de ${playerToDelete} ?`)) {
-                    try {
-                        await setDoc(docRef, {
-                            responses: {
-                                [playerToDelete]: deleteField()
-                            }
-                        }, { merge: true });
-                        closeModal();
-                    } catch (err) {
-                        console.error("Erreur lors de la suppression de la réponse :", err);
-                        alert("Erreur de suppression : " + err.message);
-                    }
+                const ok = await confirmAction({
+                    titre: 'Supprimer la réponse',
+                    message: `La réponse de ${playerToDelete} sera définitivement supprimée.`,
+                    libelleAction: 'Supprimer',
+                    danger: true,
+                });
+                if (!ok) return;
+                try {
+                    await setDoc(docRef, {
+                        responses: {
+                            [playerToDelete]: deleteField()
+                        }
+                    }, { merge: true });
+                    closeModal();
+                } catch (err) {
+                    console.error("Erreur lors de la suppression de la réponse :", err);
+                    alert("Erreur de suppression : " + err.message);
                 }
             });
         });

@@ -3,6 +3,7 @@ import { watchAuth, loginWithGoogle, logout } from './auth.js';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import { esc, stripAccents } from './utils.js';
+import { confirmAction } from './ui-confirm.js';
 
 // ── State ──────────────────────────────────────────────────────
 const state = {
@@ -307,8 +308,15 @@ document.getElementById('clue-form').addEventListener('submit', async e => {
 
 document.getElementById('clue-delete-btn').addEventListener('click', async () => {
     if (!state.editingId) return;
-    if (!confirm("Supprimer définitivement cet indice ?")) return;
-    
+    const clue = state.clues.find(c => c.id === state.editingId);
+    const ok = await confirmAction({
+        titre: "Supprimer l'indice",
+        message: `L'indice « ${clue?.titre || 'cet indice'} » sera définitivement supprimé.`,
+        libelleAction: 'Supprimer',
+        danger: true,
+    });
+    if (!ok) return;
+
     const btn = document.getElementById('clue-delete-btn');
     btn.disabled = true;
     btn.textContent = 'Suppression…';

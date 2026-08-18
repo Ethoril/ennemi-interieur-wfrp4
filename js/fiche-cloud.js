@@ -3,6 +3,7 @@ import { auth, watchAuth, loginWithGoogle, logout } from './auth.js';
 import { doc, setDoc, getDoc, serverTimestamp, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { ficheLoadCloud, markCloudSaved } from './fiche.js';
 import { esc } from './utils.js';
+import { confirmAction } from './ui-confirm.js';
 
 /* ── Configuration Personnage et Accès ─────────────────────────── */
 const CHAR_IDS = ['bhelgi', 'caelel', 'elysia', 'hellaya', 'wren', 'test'];
@@ -141,20 +142,23 @@ watchAuth(async (user, isAdmin) => {
     const btnReset = document.getElementById('btn-cloud-reset');
     if (btnReset) {
         btnReset.addEventListener('click', async () => {
-            const conf1 = confirm("ATTENTION : Vous êtes sur le point de supprimer TOUTES les données de cette fiche. Continuer ?");
-            if (conf1) {
-                const conf2 = confirm("Êtes-vous VRAIMENT sûr ? Cette action est irréversible !");
-                if (conf2) {
-                    try {
-                        await deleteDoc(doc(db, 'fiches', charId));
-                        localStorage.removeItem('wfrp4-fiche-' + charId);
-                        localStorage.removeItem('wfrp4-fiche-test'); // Nettoyage ancienne clé générique
-                        alert("Fiche réinitialisée avec succès ! La page va se recharger.");
-                        window.location.reload();
-                    } catch (e) {
-                        alert("Erreur lors de la réinitialisation : " + e.message);
-                    }
-                }
+            const ok = await confirmAction({
+                titre: 'Réinitialiser la fiche',
+                message: `Toutes les données de la fiche de ${charId} seront supprimées `
+                       + `définitivement : caractéristiques, compétences, talents, journal XP. `
+                       + `Cette action est irréversible.`,
+                libelleAction: 'Supprimer définitivement',
+                danger: true,
+            });
+            if (!ok) return;
+            try {
+                await deleteDoc(doc(db, 'fiches', charId));
+                localStorage.removeItem('wfrp4-fiche-' + charId);
+                localStorage.removeItem('wfrp4-fiche-test'); // Nettoyage ancienne clé générique
+                alert("Fiche réinitialisée avec succès ! La page va se recharger.");
+                window.location.reload();
+            } catch (e) {
+                alert("Erreur lors de la réinitialisation : " + e.message);
             }
         });
     }
