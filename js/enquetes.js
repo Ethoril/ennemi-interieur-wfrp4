@@ -131,7 +131,7 @@ function renderClues() {
 
     if (filtered.length === 0) {
         container.innerHTML = `
-            <div id="pnj-empty" class="pnj-loading" style="display:flex; flex-direction:column; align-items:center; width:100%; border:none; background:none;">
+            <div id="pnj-empty" class="pnj-loading" style="position:static; opacity:1; grid-column:1/-1; display:flex; flex-direction:column; align-items:center; width:100%; border:none; background:none; padding:var(--space-2xl) 0;">
                 <p>Aucun indice trouvé.</p>
                 ${state.isAdmin ? '<span class="pnj-empty-hint">Créez un nouvel indice à l\'aide du bouton ＋ Indice.</span>' : ''}
             </div>`;
