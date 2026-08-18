@@ -1,3 +1,39 @@
+## [2.15.0] - 2026-08-18
+
+### Accueil
+- **La date de la prochaine session s'affiche dans le hero**, juste sous le titre, visible dès l'arrivée sur la page au lieu d'être reléguée sous la ligne de flottaison.
+- **Quatre cartes de navigation ajoutées** pour les pages apparues depuis : Cartes, PNJs, Enquêtes et Calendrier.
+- **La scène 3D se termine sur un gros plan de Morrslieb** : en passant sous les cartes, la lune du Chaos revient et grossit jusqu'à révéler son visage démoniaque, au lieu de s'attarder sur la ville.
+
+### Accessibilité
+- **Tous les champs de formulaire ont enfin un libellé associé** (fiche, PNJs, enquêtes), y compris ceux générés à la volée — compétences, journal d'XP, sorts, prières, boutons de suppression. Un lecteur d'écran les annonce désormais correctement au lieu de « champ de saisie, vide ».
+- **L'état de sauvegarde de la fiche et les erreurs de vote du Calendrier sont annoncés vocalement.**
+- **Repère de contenu et lien d'évitement sur les onze pages** : au clavier, la première tabulation propose d'aller droit au contenu sans traverser les neuf entrées de la navigation. L'indicateur de focus est visible partout, dans les deux thèmes.
+- **Contraste renforcé** des libellés de formulaire et des bordures de champs, dans les deux thèmes.
+
+### Personnages
+- **Espèce Nain** disponible sur la fiche (Mouvement 3), et le **rang maximum passe de 4 à 5** pour couvrir la carrière Mage (Haut Elfe).
+
+### Interface
+- **Les actions destructives passent par une modale de confirmation** thématisée, au lieu des fenêtres système : réinitialisation de fiche (nommant le personnage), suppression de PNJ, de relation, d'indice, de sondage, de la réponse d'un joueur, et remplacement de fiche à l'import. Le focus se place d'office sur « Annuler », et Échap ou un clic sur le voile annulent.
+
+### Corrections
+- **Aides de Jeux** : les en-têtes de colonnes ne disparaissent plus quand on tape dans la recherche.
+- **Enquêtes** : lorsque la liste d'indices est vide, le message « Aucun indice » ne recouvre plus la page et ne bloque plus les boutons (dont la connexion).
+
+### Performance
+- **Scène 3D de l'accueil** : les positions de défilement ne sont plus recalculées à chaque événement de défilement, ce qui allège le rendu.
+
+### PWA & Cache
+- **Fonctionnement hors-ligne fiabilisé** : page de repli dédiée, pré-cache élargi (Leaflet, modale de confirmation) et cache lié à la version de l'application.
+- **Incrémentation du cache** : passage en `wfrp-cache-v2.15.0`.
+
+### Calendrier
+- **Mise en forme du Calendrier sortie du JavaScript** vers la feuille de style, avec suivi du thème parchemin.
+
+### Sous le capot
+- Contrôles d'intégration continue ajoutés (syntaxe des modules, ESLint, cohérence version / cache / CHANGELOG), nettoyage de code mort et de fichiers obsolètes.
+
 ## [2.14.1] - 2026-08-17
 
 ### Performance

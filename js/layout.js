@@ -1,4 +1,4 @@
-const APP_VERSION = 'v2.14.1';
+const APP_VERSION = 'v2.15.0';
 
 const NAV_ITEMS = [
     { href: 'index.html',   label: 'Accueil' },
