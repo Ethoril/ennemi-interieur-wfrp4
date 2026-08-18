@@ -22,17 +22,17 @@ const debugProgression = new URLSearchParams(window.location.search).get('hero3d
 const curve = new THREE.CatmullRomCurve3([
   new THREE.Vector3(0, -10, 150),    // 0. Départ (bas, regarde haut)
   new THREE.Vector3(0, 10, 80),      // 1. Approche comète
-  new THREE.Vector3(-50, 45, 0),     // 2. Pivot Morrslieb
-  new THREE.Vector3(-20, 18, 28),    // 3. Descente vers la ville
-  new THREE.Vector3(10, 5, 40)       // 4. Fin : au niveau des toits
+  new THREE.Vector3(-50, 45, 0),     // 2. Pivot Morrslieb (loin)
+  new THREE.Vector3(-100, 82, -25),  // 3. Rapprochement de Morrslieb (moyen)
+  new THREE.Vector3(-145, 105, -35)  // 4. Fin : gros plan sur Morrslieb
 ]);
 
 const lookAtCurve = new THREE.CatmullRomCurve3([
   new THREE.Vector3(0, 41, 0),       // 0. Regarde haut (étoiles) - Décalé pour éviter NaN
   new THREE.Vector3(45, 95, -40),    // 1. Regarde la comète (en haut à droite)
   new THREE.Vector3(-160, 110, -100),// 2. Regarde Morrslieb
-  new THREE.Vector3(-15, 8, -40),    // 3. Bascule vers la skyline
-  new THREE.Vector3(-30, 18, -40)    // 4. Fin : toits + Morrslieb au-dessus de la ville
+  new THREE.Vector3(-158, 110, -98), // 3. Reste sur Morrslieb (léger décalage anti-NaN)
+  new THREE.Vector3(-160, 110, -100) // 4. Fin : plein cadre sur Morrslieb
 ]);
 
 export function initTimeline() {
@@ -59,9 +59,10 @@ function calculateAnchors() {
   const hero = document.getElementById('hero');
   anchors.push({ el: hero, chapter: 0, top: getOffsetTop(hero) });
 
-  // Chapitre 2
-  const nextSession = document.getElementById('next-session');
-  anchors.push({ el: nextSession, chapter: 1, top: getOffsetTop(nextSession) });
+  // Chapitre 2 — la date de prochaine session est desormais dans le hero ;
+  // l'ancre du chapitre 1 suit la section du calendrier, a la meme position.
+  const calendarSection = document.getElementById('imperial-calendar-section');
+  anchors.push({ el: calendarSection, chapter: 1, top: getOffsetTop(calendarSection) });
 
   // Chapitre 3
   // Le bloc .section (cartes)
