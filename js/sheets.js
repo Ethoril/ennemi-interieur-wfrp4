@@ -193,7 +193,7 @@ function formatText(text) {
 
 // ── Search / Filter ───────────────────────────────
 function filterCards(container, query) {
-    const cards = container.querySelectorAll('.sheet-card, .sheet-definition, .sheet-table-wrapper tr');
+    const cards = container.querySelectorAll('.sheet-card, .sheet-definition, .sheet-table-wrapper tbody tr');
     const q = stripAccents(query.toLowerCase());
 
     cards.forEach(card => {
