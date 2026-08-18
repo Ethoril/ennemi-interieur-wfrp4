@@ -3,6 +3,7 @@ import * as THREE from 'three';
 let scrollProgress = 0;
 let targetProgress = 0;
 let anchors = [];
+let maxScroll = 0;
 let ro = null;
 
 // Point d'entrée de test, utilisé par les captures d'écran : il sert à figer la
@@ -53,47 +54,49 @@ export function initTimeline() {
 
 function calculateAnchors() {
   anchors = [];
-  
+
   // Chapitre 1
   const hero = document.getElementById('hero');
-  anchors.push({ el: hero, chapter: 0 });
-  
+  anchors.push({ el: hero, chapter: 0, top: getOffsetTop(hero) });
+
   // Chapitre 2
   const nextSession = document.getElementById('next-session');
-  anchors.push({ el: nextSession, chapter: 1 });
-  
+  anchors.push({ el: nextSession, chapter: 1, top: getOffsetTop(nextSession) });
+
   // Chapitre 3
   // Le bloc .section (cartes)
   const navCards = document.querySelector('.card-grid');
-  anchors.push({ el: navCards, chapter: 2 });
-  
+  anchors.push({ el: navCards, chapter: 2, top: getOffsetTop(navCards) });
+
   // Chapitre 4
   const ornament = document.querySelector('.ornament');
-  anchors.push({ el: ornament, chapter: 3 });
-  
+  anchors.push({ el: ornament, chapter: 3, top: getOffsetTop(ornament) });
+
   // Fin
   const footer = document.getElementById('site-footer');
-  anchors.push({ el: footer, chapter: 4 });
+  anchors.push({ el: footer, chapter: 4, top: getOffsetTop(footer) });
+
+  // Mesuré ici, une fois : onScroll ne lit plus que window.scrollY et évite
+  // un getBoundingClientRect par ancre à chaque événement de défilement.
+  maxScroll = document.body.scrollHeight - window.innerHeight;
 }
 
 function onScroll() {
   const st = window.scrollY;
-  const wh = window.innerHeight;
-  
+
   // Calcul du targetProgress basé sur les ancres
   if (anchors.length < 5) return;
-  
+
   let p = 0;
   for (let i = 0; i < anchors.length - 1; i++) {
     const a1 = anchors[i];
     const a2 = anchors[i+1];
-    
-    // Simplification: on map le scrollTop entre l'élément actuel et le suivant
-    // En réalité, on veut mapper le centre de la fenêtre ou le haut de la fenêtre.
-    // Utilisons la position du haut de l'élément dans le document
-    const top1 = getOffsetTop(a1.el);
-    const top2 = getOffsetTop(a2.el);
-    
+
+    // Positions du haut de chaque élément dans le document, mémorisées par
+    // calculateAnchors : plus aucune mesure synchrone ici.
+    const top1 = a1.top;
+    const top2 = a2.top;
+
     if (st >= top1 && st < top2) {
       // ratio entre top1 et top2
       const range = top2 - top1;
@@ -102,13 +105,12 @@ function onScroll() {
       break;
     } else if (st >= top2 && i === anchors.length - 2) {
       // Au-delà du dernier
-      const maxScroll = document.body.scrollHeight - wh;
       const range = maxScroll - top2;
       const progressInRange = range > 0 ? Math.min((st - top2) / range, 1) : 1;
-      p = a2.chapter + progressInRange; // va jusqu'à 4 ou + 
+      p = a2.chapter + progressInRange; // va jusqu'à 4 ou +
     }
   }
-  
+
   targetProgress = Math.max(0, Math.min(p, 4));
 }
 
