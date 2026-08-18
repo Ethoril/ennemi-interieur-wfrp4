@@ -24,11 +24,11 @@
   /* Textes — bruns foncés */
   --text-primary:   #2a1008;
   --text-secondary: #5a3015;
-  --text-muted:     #8a6040;
+  --text-muted:     #77502a;
   --text-heading:   #2d0a0a;
 
   /* Bordures — ambrés/brun chaud */
-  --border-subtle: rgba(100, 65, 20, 0.18);
+  --border-subtle: rgba(100, 65, 20, 0.36);
   --border-gold:   rgba(100, 65, 20, 0.42);
   --border-strong: rgba(100, 65, 20, 0.65);
 

@@ -23,10 +23,10 @@
 
   --text-primary: #e8dcc8;
   --text-secondary: #a89b84;
-  --text-muted: #6b6155;
+  --text-muted: #a89d8a;
   --text-heading: #f0e6d3;
 
-  --border-subtle: rgba(201, 168, 76, 0.15);
+  --border-subtle: rgba(201, 168, 76, 0.34);
   --border-gold: rgba(201, 168, 76, 0.35);
   --border-strong: rgba(201, 168, 76, 0.6);
 
