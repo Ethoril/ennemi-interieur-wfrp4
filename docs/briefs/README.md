@@ -37,19 +37,19 @@ et `L2-01` avant `L2-02`.
 |---|---|---|---|
 | ~~[L2-01](L2-01-sauvegarde-cloud.md)~~ | ~~Fiabiliser la sauvegarde cloud~~ — **livré en v2.13.4** | I2 | — |
 | ~~[L2-02](L2-02-export-import-fiche.md)~~ | ~~Export et import JSON de la fiche~~ — **livré en v2.14.0** | I3 | — |
-| [L2-04](L2-04-css-calendrier.md) | Sortir la mise en forme du Calendrier du JS — **traité et validé** | I4 | — |
+| ~~[L2-04](L2-04-css-calendrier.md)~~ | ~~Sortir la mise en forme du Calendrier du JS~~ — **livré en v2.15.0** | I4 | — |
 | ~~[L2-05](L2-05-depliage-css.md)~~ | ~~Déplier la chaîne de chargement CSS~~ — **livré en v2.14.1** | M1 | — |
 | ~~[L2-06](L2-06-allegement-images.md)~~ | ~~Supprimer 31 Mo d'images~~ — **livré en v2.14.0** | M2 | — |
 | ~~[L2-07](L2-07-csp.md)~~ | ~~Resserrer la CSP~~ — **livré en v2.14.1** | M3 | — |
-| [L2-08](L2-08-correctifs-cibles.md) | Trois correctifs ciblés | M4, M5, M7 | 1 h |
-| [L2-09](L2-09-libelles-annonces.md) | Libellés de formulaire et annonces | N3 | 1 h |
-| [L2-10](L2-10-reperes-focus.md) | Repères de page et indicateur de focus | N3 | 45 min |
-| [L2-11](L2-11-modale-confirmation.md) | Modale de confirmation | N4 | 2 h |
-| [L2-12](L2-12-service-worker.md) | Service worker : hors-ligne et version liée — **relu, en attente de livraison** | N5, N8 | — |
-| [L2-13](L2-13-hygiene.md) | Encodage, code mort, fichiers obsolètes — **traité, en attente de livraison** | N2, N6 | — |
-| [L2-14](L2-14-ci-lint.md) | Contrôles de syntaxe et ESLint en CI — **relu, en attente de livraison** | N7 | — |
+| ~~[L2-08](L2-08-correctifs-cibles.md)~~ | ~~Trois correctifs ciblés~~ — **livré en v2.15.0** | M4, M5, M7 | — |
+| ~~[L2-09](L2-09-libelles-annonces.md)~~ | ~~Libellés de formulaire et annonces~~ — **livré en v2.15.0** | N3 | — |
+| ~~[L2-10](L2-10-reperes-focus.md)~~ | ~~Repères de page et indicateur de focus~~ — **livré en v2.15.0** | N3 | — |
+| ~~[L2-11](L2-11-modale-confirmation.md)~~ | ~~Modale de confirmation~~ — **livré en v2.15.0** | N4 | — |
+| ~~[L2-12](L2-12-service-worker.md)~~ | ~~Service worker : hors-ligne et version liée~~ — **livré en v2.15.0** | N5, N8 | — |
+| ~~[L2-13](L2-13-hygiene.md)~~ | ~~Encodage, code mort, fichiers obsolètes~~ — **livré en v2.15.0** | N2, N6 | — |
+| ~~[L2-14](L2-14-ci-lint.md)~~ | ~~Contrôles de syntaxe et ESLint en CI~~ — **livré en v2.15.0** | N7 | — |
 | ~~[L2-16](L2-16-calendrier-date-reelle.md)~~ | ~~Calendrier impérial calé sur la date du jour~~ — **livré en v2.13.3** | hors audit | — |
-| [L2-15](L2-15-cloture-lot2.md) | CHANGELOG, version, livraison | N1 | 45 min |
+| ~~[L2-15](L2-15-cloture-lot2.md)~~ | ~~CHANGELOG, version, livraison~~ — **livré en v2.15.0** | N1 | — |
 
 ### Déjà livrés — ne pas reprendre
 
@@ -65,7 +65,7 @@ et `L2-01` avant `L2-02`.
   de pré-cache citait `css/style.css`, supprimé par ce même brief, ce qui faisait échouer
   l'installation du service worker en silence (`cache.addAll()` est atomique).
 
-### Relus, sur branche, pas encore livrés
+### Relus sur branche, livrés en v2.15.0
 
 - **`L2-12`** et **`L2-14`**, sur `lot-2-outillage` (`e4d401f`, `f96fddb`, plus `3105cfa` qui solde
   la relecture). Vérifié hors navigateur : les 50 ressources locales et les 6 URL CDN du pré-cache
@@ -94,7 +94,20 @@ et `L2-01` avant `L2-02`.
   interdisent par ailleurs. **Ces écarts ont été validés à l'écran par le MJ** le 17 août 2026 ;
   leur détail est dans le message de `306b208`.
 
-Il reste donc **5 briefs** à traiter au lot 2 : `L2-08` à `L2-11`, `L2-15`.
+**Le lot 2 est intégralement livré en v2.15.0** (18 août 2026), `L2-08` à `L2-15` validés
+au navigateur par le MJ.
+
+Livrés dans la même version, hors briefs :
+
+- **Correctif overlay Enquêtes** — l'état vide `#pnj-empty` (réutilisé de la page PNJs)
+  recouvrait toute la page et bloquait les clics dès que la liste d'indices rendait vide.
+  Bug préexistant révélé pendant la validation de `L2-11`.
+- **Contraste** — `--text-muted` et `--border-subtle` remontés dans les deux thèmes ; le
+  libellé de formulaire en sombre tombait à ~3:1, sous le seuil WCAG AA.
+- **Accueil** — la date de prochaine session remonte dans le hero, quatre cartes de
+  navigation ajoutées (Cartes, PNJs, Enquêtes, Calendrier), et la scène 3D se termine en
+  gros plan sur Morrslieb au lieu de la ville.
+- **Service worker** — `js/ui-confirm.js` ajouté au pré-cache (dépendance de la modale).
 
 ## Hors périmètre
 
