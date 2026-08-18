@@ -523,7 +523,7 @@ function renderHorizontalPoll(pollData, playerNames, totals, isClosed, isAdmin) 
             </tr>
             <tr>
                 <td colspan="${dates.length + 1}" class="doodle-td-submit">
-                    <span id="vote-error" class="doodle-vote-error doodle-vote-error-horizontal"></span>
+                    <span id="vote-error" class="doodle-vote-error doodle-vote-error-horizontal" role="alert"></span>
                     <button id="btn-submit-vote" class="btn-primary doodle-btn-submit">Valider mon vote</button>
                 </td>
             </tr>
@@ -554,7 +554,7 @@ function renderVerticalPoll(pollData, playerNames, totals, isClosed, isAdmin) {
                         <input type="text" id="voter-name-vertical" class="doodle-input doodle-input-voter-inline" placeholder="Ton pseudo...">
                         <button id="btn-submit-vote-vertical" class="btn-primary doodle-btn-submit-inline">Valider mon vote</button>
                     </div>
-                    <span id="vote-error-vertical" class="doodle-vote-error doodle-vote-error-vertical"></span>
+                    <span id="vote-error-vertical" class="doodle-vote-error doodle-vote-error-vertical" role="alert"></span>
                 </div>
             </div>
         `;

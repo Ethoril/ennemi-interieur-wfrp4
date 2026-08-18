@@ -132,7 +132,7 @@ watchAuth(async (user, isAdmin) => {
 
     bar.innerHTML = `
         <span class="fiche-auth-user">☁ ${esc(user.displayName || user.email)}</span>
-        <span class="fiche-cloud-status" id="fiche-cloud-status"></span>
+        <span class="fiche-cloud-status" id="fiche-cloud-status" role="status" aria-live="polite"></span>
         ${resetButtonHtml}
         <button class="fiche-auth-btn" id="btn-cloud-signout">Déconnexion</button>`;
     document.getElementById('btn-cloud-signout')

@@ -2422,7 +2422,8 @@ strong {
   flex: 1 1 100%;
 }
 
-.form-col label {
+.form-col label,
+.form-col .form-col-label {
   font-size: 0.72rem;
   color: var(--text-muted);
   font-family: var(--font-heading);

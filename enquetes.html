@@ -75,28 +75,28 @@
                 <form id="clue-form">
                     <div class="form-row">
                         <div class="form-col form-col-full">
-                            <label>Titre *</label>
+                            <label for="f-titre">Titre *</label>
                             <input type="text" id="f-titre" required placeholder="Titre de l'indice">
                         </div>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-col form-col-full">
-                            <label>Description *</label>
+                            <label for="f-description">Description *</label>
                             <textarea id="f-description" rows="5" required placeholder="Description détaillée de l'indice..."></textarea>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-col">
-                            <label>Statut</label>
+                            <label for="f-decouvert">Statut</label>
                             <select id="f-decouvert">
                                 <option value="true">Découvert par les joueurs</option>
                                 <option value="false">Non découvert (secret)</option>
                             </select>
                         </div>
                         <div class="form-col">
-                            <label>Illustration (Optionnelle)</label>
+                            <label for="f-image">Illustration (Optionnelle)</label>
                             <input type="file" id="f-image" accept="image/*">
                             <div id="f-image-preview" class="image-preview"></div>
                         </div>
@@ -104,8 +104,8 @@
 
                     <div class="form-row">
                         <div class="form-col form-col-full">
-                            <label>Personnages liés (PNJs)</label>
-                            <div class="pnjs-checkbox-grid" id="f-pnjs-grid">
+                            <span class="form-col-label" id="f-pnjs-grid-label">Personnages liés (PNJs)</span>
+                            <div class="pnjs-checkbox-grid" id="f-pnjs-grid" role="group" aria-labelledby="f-pnjs-grid-label">
                                 <!-- Checkboxes generated dynamically -->
                             </div>
                         </div>

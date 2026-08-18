@@ -136,7 +136,7 @@
   gap: 4px;
 }
 
-.xp-dispo label {
+.xp-dispo .derived-label {
   font-family: var(--font-heading);
   font-size: 0.65rem;
   letter-spacing: 0.1em;
@@ -249,7 +249,8 @@
   text-align: center;
 }
 
-.derived-stat label {
+.derived-stat label,
+.derived-stat .derived-label {
   font-family: var(--font-heading);
   font-size: 0.62rem;
   letter-spacing: 0.1em;

@@ -927,7 +927,7 @@ function buildBasicSkills() {
             <td class="sk-nom">${sk.nom}</td>
             <td class="sk-carac-lbl">${CARAC_LABELS[sk.carac]}</td>
             <td class="sk-carac-val" id="sk-carac-${s}">0</td>
-            <td><input class="sk-adv" type="number" data-skill="${sk.nom}" min="0" max="30" value="${esc(adv)}"></td>
+            <td><input class="sk-adv" type="number" data-skill="${sk.nom}" min="0" max="30" value="${esc(adv)}" aria-label="Avances en ${esc(sk.nom)}"></td>
             <td class="sk-total" id="sk-total-${s}">0</td>
         </tr>`;
     }).join('');
@@ -983,14 +983,15 @@ function renderAdvancedSkills() {
         ? `<tr class="empty-row"><td colspan="6">Aucune compétence avancée</td></tr>`
         : state.skillsAdvanced.map((sk, i) => `<tr>
             <td><input class="sk-nom-input" type="text" list="wfrp-skills-list"
-                       data-idx="${i}" value="${esc(sk.nom)}" placeholder="Nom ou Groupe (Spécialisation)"></td>
-            <td><select class="sk-carac-sel" data-idx="${i}">
+                       data-idx="${i}" value="${esc(sk.nom)}" placeholder="Nom ou Groupe (Spécialisation)"
+                       aria-label="Nom de la compétence, ligne ${i + 1}"></td>
+            <td><select class="sk-carac-sel" data-idx="${i}" aria-label="Caractéristique, ligne ${i + 1}">
                 ${CARACS.map(c => `<option value="${c}" ${sk.carac===c?'selected':''}>${CARAC_LABELS[c]}</option>`).join('')}
             </select></td>
             <td class="sk-carac-val" id="adv-carac-val-${i}">0</td>
-            <td><input class="sk-adv sk-adv-adv" type="number" data-idx="${i}" min="0" max="30" value="${esc(sk.adv ?? 0)}"></td>
+            <td><input class="sk-adv sk-adv-adv" type="number" data-idx="${i}" min="0" max="30" value="${esc(sk.adv ?? 0)}" aria-label="Avances, ligne ${i + 1}"></td>
             <td class="sk-total" id="adv-total-${i}">0</td>
-            <td><button class="btn-rm" data-type="adv-skill" data-idx="${i}" title="Supprimer">×</button></td>
+            <td><button class="btn-rm" data-type="adv-skill" data-idx="${i}" title="Supprimer" aria-label="Supprimer la compétence, ligne ${i + 1}">×</button></td>
         </tr>`).join('');
     if (!_advSkillsBound) {
         bindAdvancedSkillsDelegated(tbody);
@@ -1490,10 +1491,10 @@ function renderCareers() {
     tbody.innerHTML = state.careers.length === 0
         ? `<tr class="empty-row"><td colspan="4">Aucune ancienne carrière</td></tr>`
         : state.careers.map((c, i) => `<tr>
-            <td><input class="career-input" type="text" data-idx="${i}" data-field="nom" value="${esc(c.nom)}" placeholder="Nom de la carrière"></td>
-            <td><input class="career-rang" type="number" data-idx="${i}" data-field="rang" min="1" max="4" value="${esc(c.rang ?? 1)}"></td>
-            <td><input class="career-note" type="text" data-idx="${i}" data-field="note" value="${esc(c.note)}" placeholder="Notes…"></td>
-            <td><button class="btn-rm" data-type="career" data-idx="${i}" title="Supprimer">×</button></td>
+            <td><input class="career-input" type="text" data-idx="${i}" data-field="nom" value="${esc(c.nom)}" placeholder="Nom de la carrière" aria-label="Nom de la carrière, ligne ${i + 1}"></td>
+            <td><input class="career-rang" type="number" data-idx="${i}" data-field="rang" min="1" max="4" value="${esc(c.rang ?? 1)}" aria-label="Rang, ligne ${i + 1}"></td>
+            <td><input class="career-note" type="text" data-idx="${i}" data-field="note" value="${esc(c.note)}" placeholder="Notes…" aria-label="Notes, ligne ${i + 1}"></td>
+            <td><button class="btn-rm" data-type="career" data-idx="${i}" title="Supprimer" aria-label="Supprimer la carrière, ligne ${i + 1}">×</button></td>
         </tr>`).join('');
     if (!_careersBound) {
         tbody.addEventListener('input', e => {
@@ -1538,15 +1539,16 @@ function renderTalents() {
                 // Entrée vide (ajout manuel en cours) → input de saisie
                 return `<span class="talent-entry-new">
                     <input class="talent-name-new" type="text" data-idx="${i}"
-                           placeholder="Nom du talent…" autocomplete="off" list="xf-talent-datalist">
-                    <button class="btn-rm talent-rm" data-idx="${i}" title="Annuler">×</button>
+                           placeholder="Nom du talent…" autocomplete="off" list="xf-talent-datalist"
+                           aria-label="Nom du nouveau talent">
+                    <button class="btn-rm talent-rm" data-idx="${i}" title="Annuler" aria-label="Annuler l'ajout du talent">×</button>
                 </span>`;
             }
             const hors = t.note ? ` <span class="talent-hors-badge" title="${esc(t.note)}">!</span>` : '';
             return `<span class="talent-chip-wrap">
                 <button class="talent-chip career-tag-talent" data-idx="${i}"
                         title="Cliquer pour voir la description">${esc(t.nom)}${hors}</button>
-                <button class="btn-rm talent-rm" data-idx="${i}" title="Supprimer">×</button>
+                <button class="btn-rm talent-rm" data-idx="${i}" title="Supprimer" aria-label="Supprimer le talent ${esc(t.nom)}">×</button>
             </span>`;
         }).join('');
 
@@ -1591,15 +1593,15 @@ function renderSorts() {
     tbody.innerHTML = state.sorts.length === 0
         ? `<tr class="empty-row"><td colspan="7">Aucun sort</td></tr>`
         : state.sorts.map((s, i) => `<tr>
-            <td><input class="sort-input" type="text" data-idx="${i}" data-field="nom" value="${esc(s.nom)}" placeholder="Nom du sort"></td>
-            <td><select class="sort-vent" data-idx="${i}">
+            <td><input class="sort-input" type="text" data-idx="${i}" data-field="nom" value="${esc(s.nom)}" placeholder="Nom du sort" aria-label="Nom du sort, ligne ${i + 1}"></td>
+            <td><select class="sort-vent" data-idx="${i}" aria-label="Vent de magie, ligne ${i + 1}">
                 ${VENTS.map(v => `<option value="${v}" ${s.vent===v?'selected':''}>${v}</option>`).join('')}
             </select></td>
-            <td><input class="sort-cn" type="number" data-idx="${i}" data-field="cn" min="0" value="${esc(s.cn ?? 0)}" style="width:52px"></td>
-            <td><input class="sort-input" type="text" data-idx="${i}" data-field="portee" value="${esc(s.portee)}" placeholder="Portée"></td>
-            <td><input class="sort-input" type="text" data-idx="${i}" data-field="duree" value="${esc(s.duree)}" placeholder="Durée"></td>
-            <td><input class="sort-input sort-wide" type="text" data-idx="${i}" data-field="resume" value="${esc(s.resume)}" placeholder="Résumé de l'effet"></td>
-            <td><button class="btn-rm" data-type="sort" data-idx="${i}" title="Supprimer">×</button></td>
+            <td><input class="sort-cn" type="number" data-idx="${i}" data-field="cn" min="0" value="${esc(s.cn ?? 0)}" style="width:52px" aria-label="Nombre de conjuration, ligne ${i + 1}"></td>
+            <td><input class="sort-input" type="text" data-idx="${i}" data-field="portee" value="${esc(s.portee)}" placeholder="Portée" aria-label="Portée, ligne ${i + 1}"></td>
+            <td><input class="sort-input" type="text" data-idx="${i}" data-field="duree" value="${esc(s.duree)}" placeholder="Durée" aria-label="Durée, ligne ${i + 1}"></td>
+            <td><input class="sort-input sort-wide" type="text" data-idx="${i}" data-field="resume" value="${esc(s.resume)}" placeholder="Résumé de l'effet" aria-label="Résumé de l'effet, ligne ${i + 1}"></td>
+            <td><button class="btn-rm" data-type="sort" data-idx="${i}" title="Supprimer" aria-label="Supprimer le sort, ligne ${i + 1}">×</button></td>
         </tr>`).join('');
     if (!_sortsBound) {
         tbody.addEventListener('input', e => {
@@ -1638,13 +1640,13 @@ function renderPrieres() {
     tbody.innerHTML = state.prieres.length === 0
         ? `<tr class="empty-row"><td colspan="4">Aucune prière / miracle</td></tr>`
         : state.prieres.map((p, i) => `<tr>
-            <td><input class="priere-input" type="text" data-idx="${i}" data-field="nom" value="${esc(p.nom)}" placeholder="Nom"></td>
-            <td><select class="priere-type" data-idx="${i}">
+            <td><input class="priere-input" type="text" data-idx="${i}" data-field="nom" value="${esc(p.nom)}" placeholder="Nom" aria-label="Nom de la prière, ligne ${i + 1}"></td>
+            <td><select class="priere-type" data-idx="${i}" aria-label="Type, ligne ${i + 1}">
                 <option value="Bénédiction" ${p.type==='Bénédiction'?'selected':''}>Bénédiction</option>
                 <option value="Miracle"     ${p.type==='Miracle'?'selected':''}>Miracle</option>
             </select></td>
-            <td><input class="priere-input sort-wide" type="text" data-idx="${i}" data-field="resume" value="${esc(p.resume)}" placeholder="Résumé des effets"></td>
-            <td><button class="btn-rm" data-type="priere" data-idx="${i}" title="Supprimer">×</button></td>
+            <td><input class="priere-input sort-wide" type="text" data-idx="${i}" data-field="resume" value="${esc(p.resume)}" placeholder="Résumé des effets" aria-label="Résumé des effets, ligne ${i + 1}"></td>
+            <td><button class="btn-rm" data-type="priere" data-idx="${i}" title="Supprimer" aria-label="Supprimer la prière, ligne ${i + 1}">×</button></td>
         </tr>`).join('');
     if (!_prieresBound) {
         tbody.addEventListener('input', e => {
@@ -1684,10 +1686,10 @@ function renderXpLog() {
         if (e.kind === 'gain') {
             return `<tr class="xp-gain-row">
                 <td><span class="xp-gain-badge">Gain</span></td>
-                <td><input class="xp-gain-raison" type="text" data-idx="${i}" value="${esc(e.raison ?? '')}" placeholder="Raison…"></td>
-                <td class="col-num"><input class="xp-gain-montant" type="number" data-idx="${i}" min="0" value="${esc(e.montant ?? 0)}" style="width:60px"></td>
+                <td><input class="xp-gain-raison" type="text" data-idx="${i}" value="${esc(e.raison ?? '')}" placeholder="Raison…" aria-label="Raison du gain, ligne ${i + 1}"></td>
+                <td class="col-num"><input class="xp-gain-montant" type="number" data-idx="${i}" min="0" value="${esc(e.montant ?? 0)}" style="width:60px" aria-label="Montant du gain en XP, ligne ${i + 1}"></td>
                 <td></td>
-                <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer">×</button></td>
+                <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer" aria-label="Supprimer le gain, ligne ${i + 1}">×</button></td>
             </tr>`;
         }
         if (e.applied) {
@@ -1695,18 +1697,18 @@ function renderXpLog() {
                 <td>${esc(e.type)}</td>
                 <td>${esc(e.achat)} <span class="xp-applied-badge">✓</span></td>
                 <td class="col-num">${esc(e.cout)}</td>
-                <td><input class="xp-note" type="text" data-idx="${i}" data-field="note" value="${esc(e.note ?? '')}" placeholder="Note…"></td>
-                <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer (annule l'effet)">×</button></td>
+                <td><input class="xp-note" type="text" data-idx="${i}" data-field="note" value="${esc(e.note ?? '')}" placeholder="Note…" aria-label="Note, ligne ${i + 1}"></td>
+                <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer (annule l'effet)" aria-label="Supprimer l'achat, ligne ${i + 1}">×</button></td>
             </tr>`;
         }
         return `<tr>
-            <td><select class="xp-type-sel" data-idx="${i}">
+            <td><select class="xp-type-sel" data-idx="${i}" aria-label="Type de dépense, ligne ${i + 1}">
                 ${XP_TYPES.map(t => `<option value="${t}" ${e.type===t?'selected':''}>${t}</option>`).join('')}
             </select></td>
-            <td><input class="xp-achat" type="text" data-idx="${i}" data-field="achat" value="${esc(e.achat ?? '')}" placeholder="Achat (ex: +5 CC)"></td>
-            <td><input class="xp-cout" type="number" data-idx="${i}" data-field="cout" min="0" value="${esc(e.cout ?? 0)}" style="width:60px"></td>
-            <td><input class="xp-note" type="text" data-idx="${i}" data-field="note" value="${esc(e.note ?? '')}" placeholder="Note…"></td>
-            <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer">×</button></td>
+            <td><input class="xp-achat" type="text" data-idx="${i}" data-field="achat" value="${esc(e.achat ?? '')}" placeholder="Achat (ex: +5 CC)" aria-label="Achat, ligne ${i + 1}"></td>
+            <td><input class="xp-cout" type="number" data-idx="${i}" data-field="cout" min="0" value="${esc(e.cout ?? 0)}" style="width:60px" aria-label="Coût en XP, ligne ${i + 1}"></td>
+            <td><input class="xp-note" type="text" data-idx="${i}" data-field="note" value="${esc(e.note ?? '')}" placeholder="Note…" aria-label="Note, ligne ${i + 1}"></td>
+            <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer" aria-label="Supprimer la dépense, ligne ${i + 1}">×</button></td>
         </tr>`;
     }
 
@@ -1756,7 +1758,7 @@ function showXpGainForm() {
             <input type="text" id="xg-raison" placeholder="Raison du gain (ex: fin de session)…" style="flex:1">
             <input type="number" id="xg-montant" placeholder="XP" min="1" style="width:80px">
             <button class="btn-add" id="xg-save-btn">Ajouter</button>
-            <button class="btn-rm" id="xg-cancel-btn" title="Annuler">×</button>
+            <button class="btn-rm" id="xg-cancel-btn" title="Annuler" aria-label="Annuler">×</button>
         </div>`;
     document.getElementById('xg-raison').focus();
     document.getElementById('xg-save-btn').addEventListener('click', () => {
