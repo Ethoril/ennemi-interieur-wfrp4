@@ -35,6 +35,7 @@ const ASSETS_LOCAUX = [
   './js/maps.js',
   './js/pnjs.js',
   './js/sheets.js',
+  './js/ui-confirm.js',
   './js/utils.js',
   './js/hero3d/comet.js',
   './js/hero3d/index.js',
