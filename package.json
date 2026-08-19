@@ -6,8 +6,11 @@
   "description": "Outillage de developpement uniquement. Le site est statique et ne charge aucune dependance npm.",
   "scripts": {
     "lint": "eslint .",
-    "check": "node tools/smoke-test.mjs && node tools/mobile-fixture.mjs --check && node --test tools/mobile-fixture.test.mjs tools/mobile-backup.test.mjs tools/mobile-emulator-runner.guard.test.mjs",
+    "check": "node tools/smoke-test.mjs && node tools/mobile-fixture.mjs --check && node --test tools/mobile-fixture.test.mjs tools/mobile-backup.test.mjs tools/mobile-emulator-runner.guard.test.mjs tools/migrations/m1-01-visibility.test.mjs tools/migrations/m1-01-emulator-runner.guard.test.mjs",
     "test:mobile": "node --test tools/mobile-fixture.test.mjs tools/mobile-backup.test.mjs tools/mobile-emulator-runner.guard.test.mjs",
+    "test:m1-01": "node --test tools/migrations/m1-01-visibility.test.mjs",
+    "test:m1-01-emulator": "node tools/migrations/m1-01-emulator-run.mjs",
+    "migrate:m1-01": "node tools/migrations/m1-01-visibility.mjs",
     "test:mobile-emulator": "node tools/mobile-backup-emulator.test.mjs",
     "test:mobile-backup-restore": "node tools/mobile-backup-restore-emulator.test.mjs",
     "dev": "node tools/dev-server.mjs"

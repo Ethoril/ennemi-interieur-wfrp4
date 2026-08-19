@@ -1,9 +1,10 @@
 import { db, storage } from './firebase-init.js';
 import { watchAuth, loginWithGoogle, logout } from './auth.js';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import { esc, stripAccents } from './utils.js';
 import { confirmAction } from './ui-confirm.js';
+import { visiblePourJoueurs } from './visibility.js';
 
 // ── State ──────────────────────────────────────────────────────
 const state = {
@@ -19,11 +20,18 @@ let currentLoadId = 0;
 
 // ── Auth Monitoring ────────────────────────────────────────────
 watchAuth((user, isAdmin) => {
+    const roleChanged = state.isAdmin !== isAdmin;
     state.isAdmin = isAdmin;
     document.getElementById('auth-btn').textContent = state.isAdmin ? '🔓 Déconnexion' : '🔑 Admin';
     document.getElementById('add-clue-btn').style.display = state.isAdmin ? '' : 'none';
     document.getElementById('filter-group').style.display = state.isAdmin ? 'flex' : 'none';
     document.getElementById('admin-sep').style.display = state.isAdmin ? '' : 'none';
+    if (roleChanged && !state.isAdmin) {
+        // Déconnexion : retirer les indices MJ et les PNJs masqués avant tout nouveau chargement.
+        state.pnjs = [];
+        state.clues = [];
+        renderClues();
+    }
     
     loadData();
 });
@@ -59,7 +67,11 @@ async function loadData() {
         // 1. Fetch PNJs list
         const pnjSnap = await getDocs(collection(db, 'pnjs'));
         if (loadId !== currentLoadId) return;
-        state.pnjs = pnjSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+        const loadedPnjs = pnjSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Les règles M1-02 filtreront côté serveur ; cette garde transitoire évite qu'Enquêtes
+        // expose déjà un PNJ masqué dans les liens d'un indice.
+        state.pnjs = (state.isAdmin ? loadedPnjs : loadedPnjs.filter(visiblePourJoueurs).map(toPublicPnj))
+            .sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
 
         // 2. Fetch Clues based on auth state
         // Note : la contrainte decouvert == true est requise par la règle Firestore
@@ -93,6 +105,12 @@ async function loadData() {
                 </div>`;
         }
     }
+}
+
+function toPublicPnj(pnj) {
+    return Object.fromEntries(['id', 'nom', 'statut', 'vivant', 'lieu', 'groupe', 'description',
+        'imageUrl', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre']
+        .filter(key => Object.hasOwn(pnj, key)).map(key => [key, pnj[key]]));
 }
 
 // ── Populate PNJ checkbox grid in form ──────────────────────────
@@ -287,12 +305,14 @@ document.getElementById('clue-form').addEventListener('submit', async e => {
             description,
             decouvert,
             pnjsLies: checkedPnjs,
-            imageUrl
+            imageUrl,
+            updatedAt: serverTimestamp(),
         };
 
         if (state.editingId) {
             await updateDoc(doc(db, 'indices', state.editingId), clueData);
         } else {
+            clueData.createdAt = serverTimestamp();
             await addDoc(collection(db, 'indices'), clueData);
         }
 

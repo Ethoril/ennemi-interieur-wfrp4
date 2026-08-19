@@ -1,11 +1,14 @@
 import { db, storage } from './firebase-init.js';
 import { watchAuth, loginWithGoogle, logout } from './auth.js';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch, deleteField, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { collection, getDocs, addDoc, updateDoc, getDoc, serverTimestamp, deleteDoc, doc, writeBatch, deleteField, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 import Cropper from 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js';
 import { esc, cap, stripAccents } from './utils.js';
 import { confirmAction } from './ui-confirm.js';
+import { visiblePourJoueurs } from './visibility.js';
+import { legacyPrivateNoteInfo, privateLoadCanApply } from './private-notes.js';
+import { isCurrentLoad, isCurrentPanel, isCurrentGeneration } from './load-generation.js';
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
@@ -52,7 +55,17 @@ const state = {
     sortCol: 'nom', sortDir: 1,
     editingId: null, panelId: null,
     croppedBlob: null,
+    privateLoadId: 0,
+    privateDocExists: false,
+    privateLoadError: false,
 };
+
+let currentLoadId = 0;
+let currentPanelGeneration = 0;
+let cropperInstance = null;
+let cropGeneration = 0;
+let cropSourceUrl = null;
+let localPreviewUrl = null;
 
 // ── Utils ──────────────────────────────────────────────────────
 const getStatutColor = s => STATUT_COLOR[(s || '').toLowerCase()] || '#7a7a8a';
@@ -108,9 +121,33 @@ async function uploadImage(blob) {
 
 // ── Auth ───────────────────────────────────────────────────────
 watchAuth((user, isAdmin) => {
+    const roleChanged = state.isAdmin !== isAdmin;
     state.isAdmin = isAdmin;
     document.getElementById('auth-btn').textContent = state.isAdmin ? '🔓 Déconnexion' : '🔑 Admin';
     document.getElementById('add-pnj-btn').style.display = state.isAdmin ? '' : 'none';
+    document.getElementById('pnj-private-fields').style.display = state.isAdmin ? '' : 'none';
+    if (roleChanged) {
+        currentLoadId += 1;
+        currentPanelGeneration += 1;
+    }
+    if (!state.isAdmin) {
+        state.privateLoadId += 1;
+        document.getElementById('f-notes-privees').value = '';
+        state.privateDocExists = false;
+        state.privateLoadError = false;
+        document.getElementById('pnj-private-status').textContent = '';
+        if (roleChanged) {
+            // Déconnexion : retirer immédiatement l'état MJ avant le nouveau chargement public.
+            closePnjModal();
+            closeCropModal();
+            state.nodes = [];
+            state.links = [];
+            state.searchQ = '';
+            Object.values(state.active).forEach(values => values.clear());
+            resetPnjView();
+        }
+    }
+    if (roleChanged) { void loadData({ init: true }); return; }
     if (state.panelId) {
         const node = state.nodes.find(n => n.id === state.panelId);
         if (node) openPanel(node);
@@ -130,11 +167,16 @@ document.getElementById('auth-btn').addEventListener('click', async () => {
 // ── Data ───────────────────────────────────────────────────────
 function applySnapshots(pnjSnap, relSnap) {
     const rawNodes = pnjSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const nodeIds  = new Set(rawNodes.map(n => n.id));
-    state.nodes = rawNodes;
+    // Avant M1-02, les règles peuvent encore retourner l'ancien format : le filtrage client
+    // empêche néanmoins un visiteur de conserver ou d'afficher un PNJ masqué.
+    state.nodes = state.isAdmin ? rawNodes : rawNodes
+        .filter(visiblePourJoueurs)
+        .map(toPublicPnj);
+    const nodeIds  = new Set(state.nodes.map(n => n.id));
     state.links = relSnap.docs
         .map(d => ({ id: d.id, ...d.data() }))
-        .filter(l => nodeIds.has(l.source) && nodeIds.has(l.cible))
+        .filter(l => nodeIds.has(l.source) && nodeIds.has(l.cible)
+            && (state.isAdmin || visiblePourJoueurs(l)))
         .map(l => ({ ...l, source: l.source, target: l.cible }));
     // La palette des couleurs "par lieu/groupe" dépend de la liste actuelle :
     // sans reset, une valeur disparue garderait sa case dans la légende et un
@@ -142,12 +184,20 @@ function applySnapshots(pnjSnap, relSnap) {
     state.dimColorMap = null;
 }
 
+function toPublicPnj(node) {
+    return Object.fromEntries(['id', 'nom', 'statut', 'vivant', 'lieu', 'groupe', 'description',
+        'imageUrl', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre']
+        .filter(key => Object.hasOwn(node, key)).map(key => [key, node[key]]));
+}
+
 async function loadData({ init = false } = {}) {
+    const loadId = ++currentLoadId;
     try {
         const [ps, rs] = await Promise.all([
             getDocs(collection(db, 'pnjs')),
             getDocs(collection(db, 'relations')),
         ]);
+        if (!isCurrentLoad(loadId, currentLoadId)) return;
         applySnapshots(ps, rs);
 
         d3.select('#pnj-graph svg').remove();
@@ -173,6 +223,7 @@ async function loadData({ init = false } = {}) {
         }
 
     } catch (e) {
+        if (!isCurrentLoad(loadId, currentLoadId)) return;
         console.error("Erreur lors du chargement des données :", e);
         if (init) {
             const el = document.getElementById('pnj-loading');
@@ -190,8 +241,28 @@ async function savePnj(data, imageFile) {
     btn.textContent = imageFile ? 'Upload…' : 'Enregistrement…';
     try {
         if (imageFile) data.imageUrl = await uploadImage(imageFile);
-        if (state.editingId) await updateDoc(doc(db, 'pnjs', state.editingId), data);
-        else                 await addDoc(collection(db, 'pnjs'), data);
+        if (state.editingId && state.privateLoadError) {
+            throw new Error('Notes privées indisponibles : enregistrement annulé. Vérifiez les règles M1-02.');
+        }
+        const pnjRef = state.editingId ? doc(db, 'pnjs', state.editingId) : doc(collection(db, 'pnjs'));
+        const publicData = {
+            nom: data.nom || '', statut: data.statut || '', vivant: data.vivant || 'oui',
+            lieu: data.lieu || '', groupe: data.groupe || '', description: data.description || '',
+            imageUrl: data.imageUrl || '', visibleJoueurs: data.visibleJoueurs !== false,
+            updatedAt: serverTimestamp(),
+        };
+        if (!state.editingId) publicData.createdAt = serverTimestamp();
+        const batch = writeBatch(db);
+        if (state.editingId) batch.update(pnjRef, publicData);
+        else                 batch.set(pnjRef, publicData);
+        // Les deux documents sont engagés ensemble : un refus de pnjs_prives ne peut donc
+        // laisser qu'une moitié de modification publique.
+        if (Boolean(data.notesPrivees) || state.privateDocExists) {
+            batch.set(doc(db, 'pnjs_prives', pnjRef.id), {
+                notes: data.notesPrivees || '', updatedAt: serverTimestamp(),
+            }, { merge: true });
+        }
+        await batch.commit();
         const prevEditingId = state.editingId;
         closePnjModal();
         await loadData();
@@ -230,7 +301,8 @@ async function deletePnj(id) {
 
 async function saveRelation(sourceId, cibleId, type, label, color, style, bidir) {
     if (!sourceId || !cibleId || !type) { alert('Choisissez un PNJ et entrez un type de relation.'); return; }
-    const relData = { source: sourceId, cible: cibleId, type, label: label || type };
+    const relData = { source: sourceId, cible: cibleId, type, label: label || type,
+        visibleJoueurs: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
     if (color) relData.color = color;
     if (style === 'dashed') relData.style = style;
     await addDoc(collection(db, 'relations'), relData);
@@ -243,7 +315,7 @@ async function saveRelation(sourceId, cibleId, type, label, color, style, bidir)
 
 async function updateRelation(relId, type, label, color, style) {
     if (!type) { alert('Le type de relation est requis.'); return; }
-    const data = { type, label: label || type };
+    const data = { type, label: label || type, updatedAt: serverTimestamp() };
     data.color = color || deleteField();
     data.style = style === 'dashed' ? 'dashed' : deleteField();
     await updateDoc(doc(db, 'relations', relId), data);
@@ -268,14 +340,22 @@ async function deleteRelation(relId) {
 
 // ── PNJ Modal ──────────────────────────────────────────────────
 function openPnjModal(pnjId = null) {
+    // Invalide toute lecture privée encore en vol avant de réinitialiser le formulaire.
+    state.privateLoadId += 1;
+    closeCropModal();
     state.editingId  = pnjId;
     state.croppedBlob = null;
     const preview = document.getElementById('f-image-preview');
     document.getElementById('pnj-form').reset();
-    preview.innerHTML = '';
-    preview.dataset.existingUrl = '';
+    clearPnjPreview();
     document.getElementById('pnj-modal-title').textContent = pnjId ? 'Modifier le personnage' : 'Nouveau personnage';
     document.getElementById('pnj-delete-btn').style.display = pnjId ? '' : 'none';
+    document.getElementById('pnj-private-fields').style.display = state.isAdmin ? '' : 'none';
+    document.getElementById('f-visible-joueurs').value = 'true';
+    document.getElementById('f-notes-privees').value = '';
+    state.privateDocExists = false;
+    state.privateLoadError = false;
+    document.getElementById('pnj-private-status').textContent = '';
 
     if (pnjId) {
         const p = state.nodes.find(n => n.id === pnjId);
@@ -286,6 +366,8 @@ function openPnjModal(pnjId = null) {
             document.getElementById('f-lieu').value        = p.lieu        || '';
             document.getElementById('f-groupe').value      = p.groupe      || '';
             document.getElementById('f-description').value = p.description || '';
+            document.getElementById('f-visible-joueurs').value = String(p.visibleJoueurs !== false);
+            void loadPrivateNotes(pnjId, p);
             if (p.imageUrl) {
                 preview.innerHTML = `<img src="${esc(p.imageUrl)}" alt="Portrait actuel">`;
                 preview.dataset.existingUrl = p.imageUrl;
@@ -295,10 +377,60 @@ function openPnjModal(pnjId = null) {
     document.getElementById('pnj-modal').style.display = 'flex';
 }
 
+function legacyNote(pnj) {
+    return legacyPrivateNoteInfo(pnj).value;
+}
+
+function legacyNoteError(pnj) {
+    const info = legacyPrivateNoteInfo(pnj);
+    if (info.invalid) return 'Note legacy invalide : correction manuelle requise.';
+    if (info.conflict) return 'Notes legacy contradictoires : correction manuelle requise.';
+    return '';
+}
+
+async function loadPrivateNotes(pnjId, pnj) {
+    const loadId = ++state.privateLoadId;
+    try {
+        const snap = await getDoc(doc(db, 'pnjs_prives', pnjId));
+        if (!privateLoadCanApply(loadId, state.privateLoadId, state.isAdmin)) return;
+        state.privateDocExists = snap.exists();
+        if (snap.exists()) {
+            const notes = snap.data().notes;
+            if (typeof notes !== 'string') {
+                state.privateLoadError = true;
+                document.getElementById('pnj-private-status').textContent = 'Notes privées invalides : correction manuelle requise.';
+                return;
+            }
+            document.getElementById('f-notes-privees').value = notes;
+            return;
+        }
+        document.getElementById('f-notes-privees').value = legacyNote(pnj);
+        const legacyError = legacyNoteError(pnj);
+        if (legacyError) {
+            state.privateLoadError = true;
+            document.getElementById('pnj-private-status').textContent = legacyError;
+        }
+    } catch {
+        if (privateLoadCanApply(loadId, state.privateLoadId, state.isAdmin)) {
+            state.privateLoadError = true;
+            // Compatibilité M1-01 : le fallback est explicite, jamais silencieux.
+            document.getElementById('f-notes-privees').value = legacyNote(pnj);
+            document.getElementById('pnj-private-status').textContent = `Lecture des notes privées impossible : sauvegarde désactivée.${legacyNoteError(pnj) ? ` ${legacyNoteError(pnj)}` : ''}`;
+        }
+    }
+}
+
 function closePnjModal() {
+    // Une réponse Firestore tardive ne doit jamais remplir le PNJ ouvert ensuite.
+    state.privateLoadId += 1;
+    closeCropModal();
+    clearPnjPreview();
+    document.getElementById('f-image').value = '';
     document.getElementById('pnj-modal').style.display = 'none';
     state.editingId   = null;
     state.croppedBlob = null;
+    state.privateDocExists = false;
+    state.privateLoadError = false;
 }
 
 document.getElementById('pnj-form').addEventListener('submit', async e => {
@@ -312,6 +444,8 @@ document.getElementById('pnj-form').addEventListener('submit', async e => {
         groupe:      document.getElementById('f-groupe').value.trim(),
         description: document.getElementById('f-description').value.trim(),
         imageUrl:    preview.dataset.existingUrl || '',
+        visibleJoueurs: document.getElementById('f-visible-joueurs').value === 'true',
+        notesPrivees: document.getElementById('f-notes-privees').value,
     }, state.croppedBlob);
 });
 
@@ -322,14 +456,29 @@ document.getElementById('f-image').addEventListener('change', e => {
 });
 
 // ── Crop Modal ─────────────────────────────────────────────────
-let cropperInstance = null;
+
+function clearLocalPreview() {
+    if (localPreviewUrl) {
+        URL.revokeObjectURL(localPreviewUrl);
+        localPreviewUrl = null;
+    }
+}
+
+function clearPnjPreview() {
+    clearLocalPreview();
+    const preview = document.getElementById('f-image-preview');
+    preview.innerHTML = '';
+    preview.dataset.existingUrl = '';
+}
 
 function openCropModal(file) {
+    const generation = ++cropGeneration;
     const img = document.getElementById('crop-img');
     if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
-    img.src = URL.createObjectURL(file);
-    document.getElementById('crop-modal').style.display = 'flex';
+    if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl);
+    cropSourceUrl = URL.createObjectURL(file);
     img.onload = () => {
+        if (!isCurrentGeneration(generation, cropGeneration)) return;
         cropperInstance = new Cropper(img, {
             aspectRatio: 1,
             viewMode: 1,
@@ -340,19 +489,31 @@ function openCropModal(file) {
             guides: true,
         });
     };
+    img.src = cropSourceUrl;
+    document.getElementById('crop-modal').style.display = 'flex';
 }
 
 function closeCropModal() {
+    cropGeneration += 1;
     document.getElementById('crop-modal').style.display = 'none';
     if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
+    const img = document.getElementById('crop-img');
+    img.onload = null;
+    if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl);
+    cropSourceUrl = null;
+    img.src = '';
 }
 
 document.getElementById('crop-confirm-btn').addEventListener('click', () => {
     if (!cropperInstance) return;
+    const generation = cropGeneration;
     cropperInstance.getCroppedCanvas({ width: 500, height: 500 }).toBlob(blob => {
+        if (!isCurrentGeneration(generation, cropGeneration) || !blob) return;
         state.croppedBlob = blob;
         const preview = document.getElementById('f-image-preview');
-        preview.innerHTML = `<img src="${URL.createObjectURL(blob)}" alt="Aperçu">`;
+        clearLocalPreview();
+        localPreviewUrl = URL.createObjectURL(blob);
+        preview.innerHTML = `<img src="${localPreviewUrl}" alt="Aperçu">`;
         preview.dataset.existingUrl = '';
         closeCropModal();
     }, 'image/webp', 0.85);
@@ -643,7 +804,21 @@ function updateVisibility() {
 
 // ── Detail panel ───────────────────────────────────────────────
 async function openPanel(d) {
+    const panelGeneration = ++currentPanelGeneration;
+    const panelRole = state.isAdmin;
     state.panelId = d.id;
+    const panelIsCurrent = () => {
+        const currentNode = state.nodes.find(node => node.id === d.id);
+        return isCurrentPanel(
+            panelGeneration,
+            currentPanelGeneration,
+            d.id,
+            state.panelId,
+            panelRole,
+            state.isAdmin,
+            Boolean(currentNode) && (panelRole || visiblePourJoueurs(currentNode)),
+        );
+    };
     const nodeById = new Map(state.nodes.map(n => [n.id, n]));
 
     const related = state.links.filter(l => {
@@ -673,14 +848,14 @@ async function openPanel(d) {
             <p class="pnj-desc">${esc(d.description).replace(/\n/g, '<br>')}</p>
         </div>` : '';
 
-    const editActions = state.isAdmin ? `
+    const editActions = panelRole ? `
         <div class="pnj-edit-actions">
             <button class="btn-edit" id="panel-edit-btn">✏ Modifier</button>
         </div>` : '';
 
-    const relDeleteBtn = relId => state.isAdmin
+    const relDeleteBtn = relId => panelRole
         ? `<button class="rel-delete-btn" data-rel="${esc(relId)}" title="Supprimer">×</button>` : '';
-    const relEditBtn = relId => state.isAdmin
+    const relEditBtn = relId => panelRole
         ? `<button class="rel-edit-btn" data-rel="${esc(relId)}" title="Modifier">✏</button>` : '';
 
     const relHtml = `
@@ -696,7 +871,7 @@ async function openPanel(d) {
                         ${relEditBtn(r.relId)}${relDeleteBtn(r.relId)}
                     </div>`).join('')}
             </div>
-            ${state.isAdmin ? `
+            ${panelRole ? `
                 <button class="btn-add-rel" id="add-rel-btn">＋ Relation</button>
                 <div class="rel-add-form" id="rel-add-form" style="display:none;">
                     <select id="rel-target">
@@ -729,7 +904,7 @@ async function openPanel(d) {
     try {
         const indicesRef = collection(db, 'indices');
         let q;
-        if (state.isAdmin) {
+        if (panelRole) {
             q = query(indicesRef, where('pnjsLies', 'array-contains', d.id));
         } else {
             q = query(indicesRef, where('pnjsLies', 'array-contains', d.id), where('decouvert', '==', true));
@@ -737,8 +912,11 @@ async function openPanel(d) {
         const querySnapshot = await getDocs(q);
         linkedClues = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (e) {
+        if (!panelIsCurrent()) return;
         console.error("Erreur lors de la récupération des indices liés :", e);
     }
+
+    if (!panelIsCurrent()) return;
 
     const cluesHtml = linkedClues.length ? `
         <div class="pnj-detail-section">
@@ -768,9 +946,32 @@ async function openPanel(d) {
 }
 
 function closePanel() {
+    currentPanelGeneration += 1;
     document.getElementById('pnj-detail').classList.remove('open');
     state.panelId = null;
     updateVisibility();
+}
+
+function resetPnjView() {
+    currentPanelGeneration += 1;
+    if (state.simulation) { state.simulation.stop(); state.simulation = null; }
+    d3.select('#pnj-graph svg').remove();
+    state.nodeSel = null;
+    state.linkSel = null;
+    state.linkLabelSel = null;
+    state.dimColorMap = null;
+    state.panelId = null;
+    state.searchQ = '';
+    clearFilters();
+    document.getElementById('pnj-search').value = '';
+    document.getElementById('pnj-table-container').innerHTML = '';
+    document.getElementById('pnj-detail-content').innerHTML = '';
+    document.getElementById('pnj-detail').classList.remove('open');
+    document.getElementById('pnj-empty').style.display = 'flex';
+    document.getElementById('graph-legend').style.display = 'none';
+    document.getElementById('pnj-loading').style.display = 'flex';
+    document.getElementById('pnj-loading').querySelector('.pnj-spinner').style.display = '';
+    document.getElementById('pnj-loading').querySelector('.loading-text').textContent = 'Chargement des personnages...';
 }
 
 function highlightConnected(id) {

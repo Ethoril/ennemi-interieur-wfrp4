@@ -166,8 +166,23 @@
                     </div>
                     <div class="form-row">
                         <div class="form-col form-col-full">
-                            <label for="f-description">Description</label>
-                            <textarea id="f-description" rows="4" placeholder="Description, notes…"></textarea>
+                            <label for="f-description">Description publique</label>
+                            <textarea id="f-description" rows="4" placeholder="Texte visible par les joueurs…"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row" id="pnj-private-fields" style="display:none">
+                        <div class="form-col form-col-full">
+                            <label for="f-visible-joueurs">Visibilité joueurs</label>
+                            <select id="f-visible-joueurs">
+                                <option value="true">Visible par les joueurs</option>
+                                <option value="false">Masqué (MJ uniquement)</option>
+                            </select>
+                        </div>
+                        <div class="form-col form-col-full">
+                            <label for="f-notes-privees">Notes privées MJ</label>
+                            <textarea id="f-notes-privees" rows="4" placeholder="Notes réservées au MJ…" autocomplete="off"></textarea>
+                            <small id="pnj-private-status" class="form-help" role="status"></small>
+                            <small class="form-help">Ce champ est séparé de la description publique et nécessite les règles M1-02.</small>
                         </div>
                     </div>
                     <div class="form-row">
@@ -197,4 +212,3 @@
 </body>
 
 </html>
-
