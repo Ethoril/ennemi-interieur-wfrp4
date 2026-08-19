@@ -2497,6 +2497,37 @@ strong {
   object-fit: cover;
 }
 
+.protected-image-placeholder,
+.clue-image-placeholder {
+  align-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+  color: var(--text-secondary);
+  display: flex;
+  font-size: 0.78rem;
+  justify-content: center;
+  min-height: 56px;
+  padding: var(--space-sm);
+  text-align: center;
+  width: 100%;
+}
+
+.col-portrait .protected-image-placeholder {
+  border-radius: 50%;
+  font-size: 0;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  width: 40px;
+}
+
+.col-portrait .protected-image-placeholder::before {
+  content: '—';
+  font-size: 0.9rem;
+}
+
 .form-actions {
   display: flex;
   align-items: center;

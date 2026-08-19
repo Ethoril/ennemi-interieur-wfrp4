@@ -17,6 +17,16 @@ service cloud.firestore {
           || (data[field] is string && data[field].size() <= maximum);
     }
 
+    function validImagePath(data, ownerId, prefix) {
+      return !data.keys().hasAny(['imagePath'])
+          || (data.imagePath is string
+              && data.imagePath.split('/').size() == 3
+              && data.imagePath.split('/')[0] == prefix
+              && data.imagePath.split('/')[1] == ownerId
+              && data.imagePath.split('/')[2].size() > 0
+              && data.imagePath.split('/')[2].size() <= 128);
+    }
+
     function validTimestamp(data, field) {
       return !data.keys().hasAny([field]) || data[field] is timestamp;
     }
@@ -97,6 +107,11 @@ service cloud.firestore {
           || newData.createdAt == oldData.createdAt;
     }
 
+    function legacyImageUrlUnchanged(oldData, newData) {
+      return !newData.keys().hasAny(['imageUrl'])
+          || (oldData.keys().hasAny(['imageUrl']) && newData.imageUrl == oldData.imageUrl);
+    }
+
     function serverCreatedAndUpdated(data) {
       return data.createdAt == request.time && data.updatedAt == request.time;
     }
@@ -149,13 +164,17 @@ service cloud.firestore {
     match /pnjs/{id} {
       allow read: if isGM() || resource.data.visibleJoueurs == true;
       allow create: if isGM() && validPnj(request.resource.data)
+          && validImagePath(request.resource.data, id, 'portraits')
+          && !request.resource.data.keys().hasAny(['imageUrl'])
           && hasWriteTimestamps(request.resource.data)
           && serverCreatedAndUpdated(request.resource.data);
       allow update: if isGM() && validPnj(request.resource.data)
+          && validImagePath(request.resource.data, id, 'portraits')
           && validUpdate(resource.data, request.resource.data,
               ['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description', 'imageUrl',
                'imagePath', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre'])
           && createdAtUnchanged(resource.data, request.resource.data)
+          && legacyImageUrlUnchanged(resource.data, request.resource.data)
           && hasUpdatedTimestamp(request.resource.data)
           && serverUpdated(request.resource.data);
       allow delete: if isGM();
@@ -201,13 +220,17 @@ service cloud.firestore {
     match /indices/{id} {
       allow read:  if isGM() || resource.data.decouvert == true;
       allow create: if isGM() && validIndice(request.resource.data)
+          && validImagePath(request.resource.data, id, 'indices')
+          && !request.resource.data.keys().hasAny(['imageUrl'])
           && hasWriteTimestamps(request.resource.data)
           && serverCreatedAndUpdated(request.resource.data);
       allow update: if isGM() && validIndice(request.resource.data)
+          && validImagePath(request.resource.data, id, 'indices')
           && validUpdate(resource.data, request.resource.data,
               ['titre', 'description', 'decouvert', 'pnjsLies', 'imageUrl', 'imagePath',
                'dateDecouverte', 'source', 'type', 'createdAt', 'updatedAt', 'ordre'])
           && createdAtUnchanged(resource.data, request.resource.data)
+          && legacyImageUrlUnchanged(resource.data, request.resource.data)
           && hasUpdatedTimestamp(request.resource.data)
           && serverUpdated(request.resource.data);
       allow delete: if isGM();

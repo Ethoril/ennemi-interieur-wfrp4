@@ -1,27 +1,44 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-
     function isGM() {
       return request.auth != null
-          && request.auth.token.email == 'ethoril@gmail.com';
+          && request.auth.token.email == 'ethoril@gmail.com'
+          && request.auth.token.email_verified == true;
     }
 
-    match /portraits/{file} {
-      allow read:  if true;
-      allow write: if isGM()
-        && request.resource.size < 2 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
+    function publicPnj(pnjId) {
+      return firestore.exists(/databases/(default)/documents/pnjs/$(pnjId))
+          && firestore.get(/databases/(default)/documents/pnjs/$(pnjId)).data.visibleJoueurs == true;
     }
 
-    // Note : les images d'indices ne sont pas protégées par le drapeau `decouvert`
-    // de Firestore car les règles Storage ne peuvent pas interroger Firestore.
-    // La protection repose sur l'obscurité des tokens de téléchargement Firebase Storage.
-    match /indices/{file} {
-      allow read:  if true;
-      allow write: if isGM()
-        && request.resource.size < 5 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
+    function publicIndice(indiceId) {
+      return firestore.exists(/databases/(default)/documents/indices/$(indiceId))
+          && firestore.get(/databases/(default)/documents/indices/$(indiceId)).data.decouvert == true;
+    }
+
+    // La callable Admin est la seule à créer les nouveaux objets. Les clients,
+    // y compris le MJ, peuvent supprimer pour compenser un échec Firestore mais
+    // ne peuvent pas réintroduire un token par un upload Web direct.
+    match /portraits/{pnjId}/{fileName} {
+      allow read: if isGM() || publicPnj(pnjId);
+      allow create, update: if false;
+      allow delete: if isGM();
+    }
+
+    match /indices/{indiceId}/{fileName} {
+      allow read: if isGM() || publicIndice(indiceId);
+      allow create, update: if false;
+      allow delete: if isGM();
+    }
+
+    // Les objets plats legacy peuvent encore être lus/supprimés par le MJ vérifié,
+    // mais aucune nouvelle écriture ne doit prolonger la fuite.
+    match /portraits/{legacyFile} {
+      allow read, delete: if isGM();
+    }
+    match /indices/{legacyFile} {
+      allow read, delete: if isGM();
     }
   }
 }

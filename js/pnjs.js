@@ -1,7 +1,7 @@
 import { db, storage } from './firebase-init.js';
 import { watchAuth, loginWithGoogle, logout } from './auth.js';
 import { collection, getDocs, addDoc, updateDoc, getDoc, serverTimestamp, deleteDoc, doc, writeBatch, deleteField, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+import { ref, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 import Cropper from 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js';
 import { esc, cap, stripAccents } from './utils.js';
@@ -10,6 +10,11 @@ import { visiblePourJoueurs } from './visibility.js';
 import { legacyPrivateNoteInfo, privateLoadCanApply } from './private-notes.js';
 import { isCurrentLoad, isCurrentPanel, isCurrentGeneration } from './load-generation.js';
 import { FIRESTORE_BATCH_LIMIT, cascadeWriteCount, publicRelationsForPnj } from './visibility-cascade.js';
+import { uploadProtectedImage } from './protected-upload.js';
+import { forgetProtectedUpload, rememberProtectedUpload } from './protected-upload-journal.js';
+import { recoverPendingProtectedUploads } from './protected-upload-recovery.js';
+import { safeStorageReference } from './storage-reference.js';
+import { createProtectedImageScope } from './protected-images.js';
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
@@ -62,16 +67,26 @@ const state = {
 };
 
 let currentLoadId = 0;
+let editorSession = 0;
+let authSessionKey = '';
 let currentPanelGeneration = 0;
 let cropperInstance = null;
 let cropGeneration = 0;
 let cropSourceUrl = null;
 let localPreviewUrl = null;
+const imageScope = createProtectedImageScope(storage);
+window.addEventListener('pagehide', () => imageScope.invalidate());
 
 // ── Utils ──────────────────────────────────────────────────────
 const getStatutColor = s => STATUT_COLOR[(s || '').toLowerCase()] || '#7a7a8a';
 const getLinkColor   = s => LINK_COLORS[(s || '').toLowerCase()]  || stringToColor(s || '');
 const getNodeOpacity = d => VIVANT_OPACITY[(d.vivant || '').toLowerCase()] ?? 1;
+
+function protectedImagePlaceholder(item, label) {
+    if (!item.imagePath) return '';
+    const text = item.imageState === 'access-denied' ? 'Image protégée inaccessible' : 'Image indisponible';
+    return `<div class="protected-image-placeholder" role="status" aria-label="${esc(label)}">${text}</div>`;
+}
 
 function stringToColor(str) {
     let h = 0;
@@ -114,20 +129,25 @@ function bezierPath(x1, y1, x2, y2, curveScale = 1) {
     return `M${sx},${sy} Q${mx},${my} ${ex},${ey}`;
 }
 
-async function uploadImage(blob) {
-    const fileRef = ref(storage, `portraits/${Date.now()}.webp`);
-    await uploadBytes(fileRef, blob, { contentType: 'image/webp' });
-    return getDownloadURL(fileRef);
+async function uploadImage(blob, pnjId) {
+    const result = await uploadProtectedImage(blob, { kind: 'portrait', ownerId: pnjId, contentType: 'image/webp' });
+    const fileRef = ref(storage, result.imagePath);
+    return { path: result.imagePath, ref: fileRef };
 }
 
 // ── Auth ───────────────────────────────────────────────────────
 watchAuth((user, isAdmin) => {
     const roleChanged = state.isAdmin !== isAdmin;
+    const nextAuthSessionKey = user?.uid || '';
+    const identityChanged = authSessionKey !== nextAuthSessionKey;
+    authSessionKey = nextAuthSessionKey;
     state.isAdmin = isAdmin;
+    if (isAdmin) void recoverPendingProtectedUploads(db, storage);
     document.getElementById('auth-btn').textContent = state.isAdmin ? '🔓 Déconnexion' : '🔑 Admin';
     document.getElementById('add-pnj-btn').style.display = state.isAdmin ? '' : 'none';
     document.getElementById('pnj-private-fields').style.display = state.isAdmin ? '' : 'none';
-    if (roleChanged) {
+    if (roleChanged || identityChanged) {
+        editorSession += 1;
         currentLoadId += 1;
         currentPanelGeneration += 1;
     }
@@ -137,7 +157,7 @@ watchAuth((user, isAdmin) => {
         state.privateDocExists = false;
         state.privateLoadError = false;
         document.getElementById('pnj-private-status').textContent = '';
-        if (roleChanged) {
+        if (roleChanged || identityChanged) {
             // Déconnexion : retirer immédiatement l'état MJ avant le nouveau chargement public.
             closePnjModal();
             closeCropModal();
@@ -148,7 +168,7 @@ watchAuth((user, isAdmin) => {
             resetPnjView();
         }
     }
-    if (roleChanged) { void loadData({ init: true }); return; }
+    if (roleChanged || identityChanged) { void loadData({ init: true }); return; }
     if (state.panelId) {
         const node = state.nodes.find(n => n.id === state.panelId);
         if (node) openPanel(node);
@@ -187,13 +207,14 @@ function applySnapshots(pnjSnap, relSnap) {
 
 function toPublicPnj(node) {
     return Object.fromEntries(['id', 'nom', 'statut', 'vivant', 'lieu', 'groupe', 'description',
-        'imageUrl', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre']
+        'imagePath', 'imageUrl', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre']
         .filter(key => Object.hasOwn(node, key)).map(key => [key, node[key]]));
 }
 
 async function loadData({ init = false } = {}) {
     const loadId = ++currentLoadId;
     try {
+        const imageGeneration = imageScope.beginGeneration();
         const pnjQuery = state.isAdmin
             ? collection(db, 'pnjs')
             : query(collection(db, 'pnjs'), where('visibleJoueurs', '==', true));
@@ -206,6 +227,20 @@ async function loadData({ init = false } = {}) {
         ]);
         if (!isCurrentLoad(loadId, currentLoadId)) return;
         applySnapshots(ps, rs);
+        await Promise.all(state.nodes.map(async node => {
+            node.legacyImageUrl = node.imageUrl || '';
+            if (!node.imagePath) {
+                node.imageState = node.imageUrl ? 'legacy' : 'missing';
+                node.imageError = null;
+                return;
+            }
+            const result = await imageScope.load(node.imagePath, imageGeneration);
+            node.imageState = result.url ? 'ready' : (['storage/unauthorized', 'storage/unauthenticated'].includes(result.error?.code) ? 'access-denied' : 'missing');
+            node.imageError = result.error?.code || null;
+            if (result.url) node.imageUrl = result.url;
+            else node.imageUrl = '';
+        }));
+        if (!isCurrentLoad(loadId, currentLoadId)) return;
 
         d3.select('#pnj-graph svg').remove();
         state.nodeSel = null;
@@ -247,23 +282,33 @@ async function loadData({ init = false } = {}) {
 // ── CRUD ───────────────────────────────────────────────────────
 async function savePnj(data, imageFile) {
     const btn = document.getElementById('pnj-save-btn');
+    const capturedEditingId = state.editingId;
+    const capturedSession = editorSession;
+    const capturedRole = state.isAdmin;
+    const editorStillCurrent = () => capturedSession === editorSession
+        && capturedEditingId === state.editingId && capturedRole === state.isAdmin
+        && document.getElementById('pnj-modal')?.style.display !== 'none';
+    const requireCurrentEditor = () => { if (!editorStillCurrent()) throw new Error('Édition annulée : la session ou le rôle a changé.'); };
     btn.disabled = true;
     btn.textContent = imageFile ? 'Upload…' : 'Enregistrement…';
     try {
-        if (state.editingId && state.privateLoadError) {
+        if (capturedEditingId && state.privateLoadError) {
             throw new Error('Notes privées indisponibles : enregistrement annulé. Vérifiez les règles M1-02.');
         }
-        const pnjRef = state.editingId ? doc(db, 'pnjs', state.editingId) : doc(collection(db, 'pnjs'));
+        const pnjRef = capturedEditingId ? doc(db, 'pnjs', capturedEditingId) : doc(collection(db, 'pnjs'));
+        const previousImagePath = data.imagePath || '';
+        const previousLegacyUrl = data.imageUrl || '';
         const publicData = {
             nom: data.nom || '', statut: data.statut || '', vivant: data.vivant || 'oui',
             lieu: data.lieu || '', groupe: data.groupe || '', description: data.description || '',
-            imageUrl: data.imageUrl || '', visibleJoueurs: data.visibleJoueurs !== false,
+            visibleJoueurs: data.visibleJoueurs !== false,
             updatedAt: serverTimestamp(),
         };
-        if (!state.editingId) publicData.createdAt = serverTimestamp();
+        if (data.imagePath) publicData.imagePath = data.imagePath;
+        if (!capturedEditingId) publicData.createdAt = serverTimestamp();
         const privateWrite = Boolean(data.notesPrivees) || state.privateDocExists;
         let relationsToHide = [];
-        if (state.editingId && publicData.visibleJoueurs === false) {
+        if (capturedEditingId && publicData.visibleJoueurs === false) {
             // Le masquage et la révocation des liens publics doivent rester dans le même batch.
             const relationSnap = await getDocs(collection(db, 'relations'));
             relationsToHide = publicRelationsForPnj(
@@ -275,10 +320,27 @@ async function savePnj(data, imageFile) {
             throw new Error('Masquage annulé : trop de relations à révoquer en une seule opération (limite Firestore de 500 écritures).');
         }
         // L'upload vient après le garde de taille : une opération refusée ne laisse pas d'image orpheline.
-        if (imageFile) data.imageUrl = await uploadImage(imageFile);
-        publicData.imageUrl = data.imageUrl || '';
+        let uploadedImage = null;
+        if (imageFile) {
+            requireCurrentEditor();
+            uploadedImage = await uploadImage(imageFile, pnjRef.id);
+            if (!rememberProtectedUpload({ collection: 'pnjs', ownerId: pnjRef.id, path: uploadedImage.path })) {
+                try { await deleteObject(uploadedImage.ref); }
+                catch { throw new Error(`Upload annulé. Nettoyage manuel requis pour ${uploadedImage.path}.`); }
+                throw new Error('Upload annulé : impossible de journaliser sa reprise locale.');
+            }
+            if (!editorStillCurrent()) {
+                try { await deleteObject(uploadedImage.ref); forgetProtectedUpload(uploadedImage.path); }
+                catch { throw new Error(`Édition annulée. Nettoyage manuel requis pour ${uploadedImage.path}.`); }
+                throw new Error('Édition annulée : la session ou le rôle a changé.');
+            }
+            publicData.imagePath = uploadedImage.path;
+            // Une nouvelle écriture ne crée ni ne conserve une URL durable legacy.
+            if (capturedEditingId) publicData.imageUrl = deleteField();
+        }
         const batch = writeBatch(db);
-        if (state.editingId) batch.update(pnjRef, publicData);
+        requireCurrentEditor();
+        if (capturedEditingId) batch.update(pnjRef, publicData);
         else                 batch.set(pnjRef, publicData);
         // Les deux documents sont engagés ensemble : un refus de pnjs_prives ne peut donc
         // laisser qu'une moitié de modification publique.
@@ -292,8 +354,36 @@ async function savePnj(data, imageFile) {
                 visibleJoueurs: false, updatedAt: serverTimestamp(),
             });
         });
-        await batch.commit();
-        const prevEditingId = state.editingId;
+        try {
+            await batch.commit();
+        } catch (error) {
+            if (uploadedImage) {
+                try { await deleteObject(uploadedImage.ref); forgetProtectedUpload(uploadedImage.path); }
+                catch { throw new Error(`${error.message}. Nettoyage manuel requis pour ${uploadedImage.path}.`); }
+            }
+            throw error;
+        }
+        if (uploadedImage) forgetProtectedUpload(uploadedImage.path);
+        if (uploadedImage) {
+            const oldReferences = [previousImagePath, previousLegacyUrl].filter(Boolean);
+            const removed = new Set();
+            for (const oldReference of oldReferences) {
+                if (oldReference === uploadedImage.path || removed.has(oldReference)) continue;
+                removed.add(oldReference);
+                try {
+                    const oldStorageRef = safeStorageReference(storage, oldReference);
+                    if (!oldStorageRef) continue;
+                    try {
+                        await deleteObject(oldStorageRef);
+                    } catch {
+                        alert(`Enregistrement réussi, mais ancienne image à nettoyer : ${oldStorageRef.fullPath}`);
+                    }
+                } catch {
+                    // Une ancienne URL externe ou malformée n’est pas une référence Storage locale.
+                }
+            }
+        }
+        const prevEditingId = capturedEditingId;
         closePnjModal();
         await loadData();
         if (prevEditingId && state.panelId === prevEditingId) {
@@ -309,6 +399,10 @@ async function savePnj(data, imageFile) {
 }
 
 async function deletePnj(id) {
+    const capturedSession = editorSession;
+    const capturedRole = state.isAdmin;
+    const deletionStillCurrent = () => id === state.editingId
+        && capturedSession === editorSession && capturedRole === state.isAdmin;
     const pnj = state.nodes.find(n => n.id === id);
     const ok = await confirmAction({
         titre: 'Supprimer le personnage',
@@ -316,8 +410,9 @@ async function deletePnj(id) {
         libelleAction: 'Supprimer',
         danger: true,
     });
-    if (!ok) return;
+    if (!ok || !deletionStillCurrent()) return;
     const relSnap = await getDocs(collection(db, 'relations'));
+    if (!deletionStillCurrent()) return;
     const batch = writeBatch(db);
     relSnap.docs.forEach(d => {
         const { source, cible } = d.data();
@@ -325,6 +420,7 @@ async function deletePnj(id) {
     });
     batch.delete(doc(db, 'pnjs', id));
     await batch.commit();
+    closePnjModal();
     closePanel();
     await loadData();
 }
@@ -370,6 +466,7 @@ async function deleteRelation(relId) {
 
 // ── PNJ Modal ──────────────────────────────────────────────────
 function openPnjModal(pnjId = null) {
+    editorSession += 1;
     // Invalide toute lecture privée encore en vol avant de réinitialiser le formulaire.
     state.privateLoadId += 1;
     closeCropModal();
@@ -402,6 +499,8 @@ function openPnjModal(pnjId = null) {
                 preview.innerHTML = `<img src="${esc(p.imageUrl)}" alt="Portrait actuel">`;
                 preview.dataset.existingUrl = p.imageUrl;
             }
+            preview.dataset.existingPath = p.imagePath || '';
+            preview.dataset.existingLegacyUrl = p.legacyImageUrl || (!p.imagePath ? (p.imageUrl || '') : '');
         }
     }
     document.getElementById('pnj-modal').style.display = 'flex';
@@ -451,6 +550,7 @@ async function loadPrivateNotes(pnjId, pnj) {
 }
 
 function closePnjModal() {
+    editorSession += 1;
     // Une réponse Firestore tardive ne doit jamais remplir le PNJ ouvert ensuite.
     state.privateLoadId += 1;
     closeCropModal();
@@ -473,7 +573,8 @@ document.getElementById('pnj-form').addEventListener('submit', async e => {
         lieu:        document.getElementById('f-lieu').value.trim(),
         groupe:      document.getElementById('f-groupe').value.trim(),
         description: document.getElementById('f-description').value.trim(),
-        imageUrl:    preview.dataset.existingUrl || '',
+        imagePath:   preview.dataset.existingPath || '',
+        imageUrl:    preview.dataset.existingLegacyUrl || '',
         visibleJoueurs: document.getElementById('f-visible-joueurs').value === 'true',
         notesPrivees: document.getElementById('f-notes-privees').value,
     }, state.croppedBlob);
@@ -499,6 +600,8 @@ function clearPnjPreview() {
     const preview = document.getElementById('f-image-preview');
     preview.innerHTML = '';
     preview.dataset.existingUrl = '';
+    preview.dataset.existingPath = '';
+    preview.dataset.existingLegacyUrl = '';
 }
 
 function openCropModal(file) {
@@ -865,7 +968,7 @@ async function openPanel(d) {
 
     const portraitHtml = d.imageUrl
         ? `<img src="${esc(d.imageUrl)}" class="pnj-detail-portrait" alt="${esc(d.nom)}">`
-        : `<div class="pnj-portrait-placeholder">${esc((d.nom || '?').charAt(0).toUpperCase())}</div>`;
+        : (protectedImagePlaceholder(d, d.nom) || `<div class="pnj-portrait-placeholder">${esc((d.nom || '?').charAt(0).toUpperCase())}</div>`);
 
     const metaHtml = (d.lieu || d.groupe) ? `
         <div class="pnj-detail-meta">
@@ -927,7 +1030,7 @@ async function openPanel(d) {
                 </div>` : ''}
         </div>`;
 
-    // Query Firestore for indices linked to this PNJ
+    // Interroge Firestore pour les indices liés à ce PNJ.
     // Note : la contrainte decouvert == true est requise par la règle Firestore
     // pour les non-MJ ; ne pas la retirer sous peine de refus d'autorisation.
     let linkedClues = [];
@@ -1146,7 +1249,7 @@ function renderTable() {
     const tbody = sorted.map(d => {
         const portraitCell = d.imageUrl
             ? `<td class="col-portrait"><img src="${esc(d.imageUrl)}" class="table-portrait" alt="${esc(d.nom)}"></td>`
-            : `<td class="col-portrait"><div class="table-portrait-placeholder">${esc((d.nom || '?').charAt(0).toUpperCase())}</div></td>`;
+            : `<td class="col-portrait">${protectedImagePlaceholder(d, d.nom) || `<div class="table-portrait-placeholder">${esc((d.nom || '?').charAt(0).toUpperCase())}</div>`}</td>`;
 
         const cells = TABLE_COLS.map(c => {
             if (c.key === 'statut') return `<td><span class="pnj-badge statut-${esc((d.statut || '').toLowerCase())}">${esc(cap(d.statut) || '—')}</span></td>`;

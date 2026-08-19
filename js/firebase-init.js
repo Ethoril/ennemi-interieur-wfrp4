@@ -2,6 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth }        from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getStorage }     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+import { getFunctions }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
 
 const FIREBASE_CONFIG = {
     apiKey:            'AIzaSyD5W5U2fyXkiPzUzOOgAGusoiXn2iZbp5U',
@@ -18,3 +19,4 @@ export const app     = initializeApp(FIREBASE_CONFIG);
 export const auth    = getAuth(app);
 export const db      = getFirestore(app);
 export const storage = getStorage(app);
+export const functions = getFunctions(app, 'europe-west1');

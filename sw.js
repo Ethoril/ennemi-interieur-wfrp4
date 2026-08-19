@@ -34,6 +34,13 @@ const ASSETS_LOCAUX = [
   './js/main.js',
   './js/maps.js',
   './js/pnjs.js',
+  './js/protected-images.js',
+  './js/protected-image-scope.js',
+  './js/storage-reference.js',
+  './js/protected-upload.js',
+  './js/protected-upload-id.js',
+  './js/protected-upload-journal.js',
+  './js/protected-upload-recovery.js',
   './js/sheets.js',
   './js/ui-confirm.js',
   './js/utils.js',
@@ -80,19 +87,38 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      );
-    })
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(async key => {
+      if (key !== CACHE_NAME) return caches.delete(key);
+      // Une version antérieure a pu mettre en cache une URL Storage durable.
+      // Le worker mis à jour purge aussi son cache courant, même sans bump.
+      const cache = await caches.open(key);
+      const requests = await cache.keys();
+      await Promise.all(requests
+        .filter(request => isStorageBlobRequest(request.url))
+        .map(request => cache.delete(request)));
+      return true;
+    }));
+    await self.clients.claim();
+  })());
 });
 
+// Les blobs Storage ne doivent jamais entrer dans Cache Storage.
+function isStorageBlobRequest(value) {
+  try {
+    const hostname = new URL(value).hostname;
+    return hostname === 'storage.googleapis.com'
+      || hostname === 'firebasestorage.googleapis.com'
+      || hostname.endsWith('.firebasestorage.app');
+  } catch { return false; }
+}
+
 self.addEventListener('fetch', event => {
+
   // Ignorer les requêtes non-GET et les appels Firebase/Google
   if (event.request.method !== 'GET' || 
+      isStorageBlobRequest(event.request.url) ||
       event.request.url.includes('firestore.googleapis.com') ||
       event.request.url.includes('identitytoolkit.googleapis.com') ||
       event.request.url.includes('securetoken.googleapis.com') ||
