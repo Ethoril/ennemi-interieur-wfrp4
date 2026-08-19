@@ -1,0 +1,195 @@
+{
+  "format": "mobile-baseline-fixture",
+  "version": 2,
+  "description": "Jeu fictif M0-01 : aucun compte ni contenu de campagne réel.",
+  "pnjs": [
+    {
+      "id": "fixture-alrik",
+      "nom": "Alrik l'Étourdi",
+      "visibleJoueurs": true,
+      "statut": "allié",
+      "description": "Un guide naïf, avec l'apostrophe et les accents de la baseline.",
+      "imagePath": "portraits/fixture-alrik/alrik.webp"
+    },
+    {
+      "id": "fixture-brunhilde",
+      "nom": "Brünhilde <la Veilleuse>",
+      "visibleJoueurs": true,
+      "statut": "neutre",
+      "description": "Une pisteuse qui parle d'Überwald et de vieux secrets.",
+      "imagePath": "portraits/fixture-brunhilde/brunhilde.webp"
+    },
+    {
+      "id": "fixture-cassandre",
+      "nom": "Cassandre d'Azincourt",
+      "visibleJoueurs": true,
+      "statut": "ennemi",
+      "description": "Une antagoniste fictive pour les filtres et la recherche.",
+      "imagePath": "portraits/fixture-cassandre/cassandre.webp"
+    },
+    {
+      "id": "fixture-dorothee",
+      "nom": "Dorothée sans portrait",
+      "visibleJoueurs": true,
+      "statut": "allié",
+      "description": "Ce PNJ vérifie l'état vide du portrait.",
+      "imagePath": null
+    },
+    {
+      "id": "fixture-masque",
+      "nom": "Le Masque <secret>",
+      "visibleJoueurs": false,
+      "statut": "ennemi",
+      "description": "PNJ masqué fictif, inaccessible au joueur.",
+      "imagePath": "portraits/fixture-masque/masque.webp"
+    }
+  ],
+  "pnjs_prives": [
+    {
+      "id": "fixture-alrik",
+      "notes": "Texte privé fictif : <à ne jamais afficher au joueur>."
+    },
+    {
+      "id": "fixture-masque",
+      "notes": "Indice narratif entièrement fictif."
+    }
+  ],
+  "relations": [
+    {
+      "id": "fixture-relation-simple",
+      "source": "fixture-alrik",
+      "cible": "fixture-brunhilde",
+      "visibleJoueurs": true,
+      "type": "confiance",
+      "label": "protège",
+      "fixtureCase": "simple"
+    },
+    {
+      "id": "fixture-relation-pair-ab",
+      "source": "fixture-brunhilde",
+      "cible": "fixture-cassandre",
+      "visibleJoueurs": true,
+      "type": "rivalité",
+      "label": "s'oppose à",
+      "bidirectionalGroup": "fixture-pair"
+    },
+    {
+      "id": "fixture-relation-pair-ba",
+      "source": "fixture-cassandre",
+      "cible": "fixture-brunhilde",
+      "visibleJoueurs": true,
+      "type": "rivalité",
+      "label": "s'oppose à",
+      "bidirectionalGroup": "fixture-pair"
+    },
+    {
+      "id": "fixture-relation-broken",
+      "source": "fixture-alrik",
+      "cible": "fixture-inexistant",
+      "visibleJoueurs": false,
+      "type": "rumeur",
+      "label": "référence cassée volontaire",
+      "fixtureCase": "broken-reference"
+    }
+  ],
+  "indices": [
+    {
+      "id": "fixture-indice-lettre",
+      "titre": "Une lettre à l'encre bleue",
+      "description": "Indice découvert fictif contenant <b>du balisage à échapper</b>.",
+      "decouvert": true,
+      "pnjsLies": ["fixture-alrik"],
+      "imagePath": "indices/fixture-indice-lettre/lettre.webp"
+    },
+    {
+      "id": "fixture-indice-cle",
+      "titre": "Clé d'Überwald",
+      "description": "Deuxième indice public fictif.",
+      "decouvert": true,
+      "pnjsLies": ["fixture-brunhilde", "fixture-cassandre"],
+      "imagePath": "indices/fixture-indice-cle/cle.webp"
+    },
+    {
+      "id": "fixture-indice-secret",
+      "titre": "Le symbole interdit",
+      "description": "Indice secret fictif, réservé au MJ.",
+      "decouvert": false,
+      "pnjsLies": ["fixture-masque"],
+      "imagePath": "indices/fixture-indice-secret/symbole.webp"
+    },
+    {
+      "id": "fixture-indice-multiple",
+      "titre": "Carte des alliances",
+      "description": "Indice fictif lié à plusieurs PNJs.",
+      "decouvert": true,
+      "pnjsLies": ["fixture-alrik", "fixture-brunhilde", "fixture-cassandre"],
+      "imagePath": "indices/fixture-indice-multiple/carte.webp"
+    }
+  ],
+  "storage": [
+    {
+      "path": "portraits/fixture-alrik/alrik.webp",
+      "ownerType": "pnj",
+      "ownerId": "fixture-alrik",
+      "kind": "portrait",
+      "shouldBeProtected": false
+    },
+    {
+      "path": "portraits/fixture-brunhilde/brunhilde.webp",
+      "ownerType": "pnj",
+      "ownerId": "fixture-brunhilde",
+      "kind": "portrait",
+      "shouldBeProtected": false
+    },
+    {
+      "path": "portraits/fixture-cassandre/cassandre.webp",
+      "ownerType": "pnj",
+      "ownerId": "fixture-cassandre",
+      "kind": "portrait",
+      "shouldBeProtected": false
+    },
+    {
+      "path": "portraits/fixture-masque/masque.webp",
+      "ownerType": "pnj",
+      "ownerId": "fixture-masque",
+      "kind": "portrait",
+      "shouldBeProtected": true
+    },
+    {
+      "path": "indices/fixture-indice-lettre/lettre.webp",
+      "ownerType": "indice",
+      "ownerId": "fixture-indice-lettre",
+      "kind": "indice",
+      "shouldBeProtected": false
+    },
+    {
+      "path": "indices/fixture-indice-cle/cle.webp",
+      "ownerType": "indice",
+      "ownerId": "fixture-indice-cle",
+      "kind": "indice",
+      "shouldBeProtected": false
+    },
+    {
+      "path": "indices/fixture-indice-secret/symbole.webp",
+      "ownerType": "indice",
+      "ownerId": "fixture-indice-secret",
+      "kind": "indice",
+      "shouldBeProtected": true
+    },
+    {
+      "path": "indices/fixture-indice-multiple/carte.webp",
+      "ownerType": "indice",
+      "ownerId": "fixture-indice-multiple",
+      "kind": "indice",
+      "shouldBeProtected": false
+    },
+    {
+      "path": "portraits/fixture-orphelin/orphan.webp",
+      "ownerType": "pnj",
+      "ownerId": "fixture-orphelin",
+      "kind": "portrait",
+      "shouldBeProtected": false,
+      "fixtureCase": "orphan"
+    }
+  ]
+}

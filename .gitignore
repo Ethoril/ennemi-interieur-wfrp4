@@ -8,3 +8,10 @@ tiles-log.txt
 
 # Node / Outillage de développement
 node_modules/
+
+# Firebase Emulator Suite : état local et journaux non destinés au dépôt.
+.firebase/
+firebase-debug.log
+firestore-debug.log
+storage-debug.log
+ui-debug.log

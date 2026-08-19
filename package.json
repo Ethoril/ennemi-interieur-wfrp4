@@ -6,7 +6,10 @@
   "description": "Outillage de developpement uniquement. Le site est statique et ne charge aucune dependance npm.",
   "scripts": {
     "lint": "eslint .",
-    "check": "node tools/smoke-test.mjs",
+    "check": "node tools/smoke-test.mjs && node tools/mobile-fixture.mjs --check && node --test tools/mobile-fixture.test.mjs tools/mobile-backup.test.mjs tools/mobile-emulator-runner.guard.test.mjs",
+    "test:mobile": "node --test tools/mobile-fixture.test.mjs tools/mobile-backup.test.mjs tools/mobile-emulator-runner.guard.test.mjs",
+    "test:mobile-emulator": "node tools/mobile-backup-emulator.test.mjs",
+    "test:mobile-backup-restore": "node tools/mobile-backup-restore-emulator.test.mjs",
     "dev": "node tools/dev-server.mjs"
   },
   "devDependencies": {
