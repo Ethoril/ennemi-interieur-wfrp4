@@ -15,6 +15,18 @@ checklist de vérification.
 Les briefs ne recopient pas le code existant : ils donnent le fichier, la fonction et la ligne.
 Le dépôt est la source de vérité.
 
+## Chantier mobile PWA — PNJs et Enquêtes
+
+Le nouveau chantier est découpé en **28 briefs ordonnés**, de la sauvegarde initiale à l'activation
+publique. Le mobile propose une consultation joueur et une administration MJ complète sur la même
+sauvegarde Firestore, avec une interface dédiée et installable.
+
+- [Index, ordre et dépendances des briefs mobiles](mobile/README.md)
+- [Plan d'action et décisions d'architecture](../PLAN-PWA-MOBILE.md)
+
+Les briefs M0 à M2 sécurisent et mutualisent d'abord les données. M3 à M5 livrent les interfaces
+mobiles. M6 rend la PWA installable ; M7 organise la production et le retour arrière.
+
 ## Lot 1 — sécurité et déblocage (v2.13.2)
 
 Se livre seul et en premier. Ne touche pas à l'apparence du site, ce qui limite le risque de

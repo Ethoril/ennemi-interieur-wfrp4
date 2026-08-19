@@ -21,3 +21,8 @@ Ce site est hébergé via [GitHub Pages](https://pages.github.com/).
 2. Activer GitHub Pages (branche `master`, dossier `/`)
 3. Le site sera accessible à `https://<username>.github.io/ennemi-interieur-wfrp4/`
 
+## Documentation
+
+- [Plan d'action — Application mobile PWA PNJs & Enquêtes](docs/PLAN-PWA-MOBILE.md)
+- [Briefs d'implémentation — découpage, ordre et dépendances](docs/briefs/mobile/README.md)
+
