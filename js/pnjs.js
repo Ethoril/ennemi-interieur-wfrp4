@@ -9,6 +9,7 @@ import { confirmAction } from './ui-confirm.js';
 import { visiblePourJoueurs } from './visibility.js';
 import { legacyPrivateNoteInfo, privateLoadCanApply } from './private-notes.js';
 import { isCurrentLoad, isCurrentPanel, isCurrentGeneration } from './load-generation.js';
+import { FIRESTORE_BATCH_LIMIT, cascadeWriteCount, publicRelationsForPnj } from './visibility-cascade.js';
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
@@ -167,8 +168,8 @@ document.getElementById('auth-btn').addEventListener('click', async () => {
 // ── Data ───────────────────────────────────────────────────────
 function applySnapshots(pnjSnap, relSnap) {
     const rawNodes = pnjSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-    // Avant M1-02, les règles peuvent encore retourner l'ancien format : le filtrage client
-    // empêche néanmoins un visiteur de conserver ou d'afficher un PNJ masqué.
+    // La règle filtre déjà côté serveur ; cette garde protège aussi un cache ou une réponse
+    // transitoire si un ancien client conserve encore des documents.
     state.nodes = state.isAdmin ? rawNodes : rawNodes
         .filter(visiblePourJoueurs)
         .map(toPublicPnj);
@@ -193,9 +194,15 @@ function toPublicPnj(node) {
 async function loadData({ init = false } = {}) {
     const loadId = ++currentLoadId;
     try {
+        const pnjQuery = state.isAdmin
+            ? collection(db, 'pnjs')
+            : query(collection(db, 'pnjs'), where('visibleJoueurs', '==', true));
+        const relationQuery = state.isAdmin
+            ? collection(db, 'relations')
+            : query(collection(db, 'relations'), where('visibleJoueurs', '==', true));
         const [ps, rs] = await Promise.all([
-            getDocs(collection(db, 'pnjs')),
-            getDocs(collection(db, 'relations')),
+            getDocs(pnjQuery),
+            getDocs(relationQuery),
         ]);
         if (!isCurrentLoad(loadId, currentLoadId)) return;
         applySnapshots(ps, rs);
@@ -229,10 +236,13 @@ async function loadData({ init = false } = {}) {
             const el = document.getElementById('pnj-loading');
             el.querySelector('.pnj-spinner').style.display = 'none';
             const txt = el.querySelector('.loading-text');
-            if (txt) txt.textContent = 'Impossible de charger les données.';
+            if (txt) txt.textContent = e?.code === 'permission-denied'
+                ? 'Accès refusé : les données publiques doivent être marquées visibles par le MJ.'
+                : 'Impossible de charger les données. Réessayez dans un instant.';
         }
     }
 }
+
 
 // ── CRUD ───────────────────────────────────────────────────────
 async function savePnj(data, imageFile) {
@@ -240,7 +250,6 @@ async function savePnj(data, imageFile) {
     btn.disabled = true;
     btn.textContent = imageFile ? 'Upload…' : 'Enregistrement…';
     try {
-        if (imageFile) data.imageUrl = await uploadImage(imageFile);
         if (state.editingId && state.privateLoadError) {
             throw new Error('Notes privées indisponibles : enregistrement annulé. Vérifiez les règles M1-02.');
         }
@@ -252,16 +261,37 @@ async function savePnj(data, imageFile) {
             updatedAt: serverTimestamp(),
         };
         if (!state.editingId) publicData.createdAt = serverTimestamp();
+        const privateWrite = Boolean(data.notesPrivees) || state.privateDocExists;
+        let relationsToHide = [];
+        if (state.editingId && publicData.visibleJoueurs === false) {
+            // Le masquage et la révocation des liens publics doivent rester dans le même batch.
+            const relationSnap = await getDocs(collection(db, 'relations'));
+            relationsToHide = publicRelationsForPnj(
+                relationSnap.docs.map(relation => ({ id: relation.id, ...relation.data() })),
+                pnjRef.id,
+            );
+        }
+        if (cascadeWriteCount({ relationCount: relationsToHide.length, privateWrite }) > FIRESTORE_BATCH_LIMIT) {
+            throw new Error('Masquage annulé : trop de relations à révoquer en une seule opération (limite Firestore de 500 écritures).');
+        }
+        // L'upload vient après le garde de taille : une opération refusée ne laisse pas d'image orpheline.
+        if (imageFile) data.imageUrl = await uploadImage(imageFile);
+        publicData.imageUrl = data.imageUrl || '';
         const batch = writeBatch(db);
         if (state.editingId) batch.update(pnjRef, publicData);
         else                 batch.set(pnjRef, publicData);
         // Les deux documents sont engagés ensemble : un refus de pnjs_prives ne peut donc
         // laisser qu'une moitié de modification publique.
-        if (Boolean(data.notesPrivees) || state.privateDocExists) {
+        if (privateWrite) {
             batch.set(doc(db, 'pnjs_prives', pnjRef.id), {
                 notes: data.notesPrivees || '', updatedAt: serverTimestamp(),
             }, { merge: true });
         }
+        relationsToHide.forEach(relation => {
+            batch.update(doc(db, 'relations', relation.id), {
+                visibleJoueurs: false, updatedAt: serverTimestamp(),
+            });
+        });
         await batch.commit();
         const prevEditingId = state.editingId;
         closePnjModal();

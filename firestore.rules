@@ -8,6 +8,111 @@ service cloud.firestore {
           && request.auth.token.email_verified == true;
     }
 
+    function hasOnly(data, fields) {
+      return data.keys().hasOnly(fields);
+    }
+
+    function validText(data, field, maximum) {
+      return !data.keys().hasAny([field])
+          || (data[field] is string && data[field].size() <= maximum);
+    }
+
+    function validTimestamp(data, field) {
+      return !data.keys().hasAny([field]) || data[field] is timestamp;
+    }
+
+    function hasWriteTimestamps(data) {
+      return data.keys().hasAll(['createdAt', 'updatedAt'])
+          && data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
+    function hasUpdatedTimestamp(data) {
+      return data.keys().hasAny(['updatedAt']) && data.updatedAt is timestamp;
+    }
+
+    function validPnj(data) {
+      return hasOnly(data, ['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description',
+          'imageUrl', 'imagePath', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre'])
+        && data.visibleJoueurs is bool
+        && data.nom is string && data.nom.size() > 0 && data.nom.size() <= 200
+        && validText(data, 'statut', 64)
+        && validText(data, 'vivant', 32)
+        && validText(data, 'lieu', 200)
+        && validText(data, 'groupe', 200)
+        && validText(data, 'description', 20000)
+        && validText(data, 'imageUrl', 2048)
+        && validText(data, 'imagePath', 512)
+        && (!data.keys().hasAny(['ordre']) || data.ordre == null
+            || data.ordre is int || data.ordre is float)
+        && validTimestamp(data, 'createdAt')
+        && validTimestamp(data, 'updatedAt');
+    }
+
+    function validRelation(data) {
+      return hasOnly(data, ['source', 'cible', 'type', 'label', 'color', 'style',
+          'visibleJoueurs', 'createdAt', 'updatedAt'])
+        && data.visibleJoueurs is bool
+        && data.source is string && data.source.size() > 0 && data.source.size() <= 150
+        && data.cible is string && data.cible.size() > 0 && data.cible.size() <= 150
+        && data.type is string && data.type.size() > 0 && data.type.size() <= 100
+        && validText(data, 'label', 300)
+        && (!data.keys().hasAny(['color']) || data.color == null || validText(data, 'color', 32))
+        && (!data.keys().hasAny(['style']) || data.style == 'solid' || data.style == 'dashed')
+        && validTimestamp(data, 'createdAt')
+        && validTimestamp(data, 'updatedAt');
+    }
+
+    function validPrivatePnj(data) {
+      return hasOnly(data, ['notes', 'updatedAt'])
+        && data.notes is string && data.notes.size() <= 30000
+        && validTimestamp(data, 'updatedAt');
+    }
+
+    function validIndice(data) {
+      return hasOnly(data, ['titre', 'description', 'decouvert', 'pnjsLies', 'imageUrl',
+          'imagePath', 'dateDecouverte', 'source', 'type', 'createdAt', 'updatedAt', 'ordre'])
+        && data.titre is string && data.titre.size() > 0 && data.titre.size() <= 200
+        && data.decouvert is bool
+        && data.pnjsLies is list
+        && data.pnjsLies.size() <= 100
+        && validText(data, 'description', 30000)
+        && validText(data, 'imageUrl', 2048)
+        && validText(data, 'imagePath', 512)
+        && (!data.keys().hasAny(['dateDecouverte']) || data.dateDecouverte == null
+            || data.dateDecouverte is timestamp)
+        && validText(data, 'source', 150)
+        && validText(data, 'type', 100)
+        && (!data.keys().hasAny(['ordre']) || data.ordre == null
+            || data.ordre is int || data.ordre is float)
+        && validTimestamp(data, 'createdAt')
+        && validTimestamp(data, 'updatedAt');
+    }
+
+    function validUpdate(oldData, newData, validator) {
+      return newData.diff(oldData).affectedKeys().hasOnly(validator);
+    }
+
+    function createdAtUnchanged(oldData, newData) {
+      return !oldData.keys().hasAny(['createdAt'])
+          || newData.createdAt == oldData.createdAt;
+    }
+
+    function serverCreatedAndUpdated(data) {
+      return data.createdAt == request.time && data.updatedAt == request.time;
+    }
+
+    function serverUpdated(data) {
+      return data.updatedAt == request.time;
+    }
+
+    function publicRelationEndpointsExist(data) {
+      let sourceRef = /databases/$(database)/documents/pnjs/$(data.source);
+      let cibleRef = /databases/$(database)/documents/pnjs/$(data.cible);
+      return exists(sourceRef) && exists(cibleRef)
+          && get(sourceRef).data.visibleJoueurs == true
+          && get(cibleRef).data.visibleJoueurs == true;
+    }
+
     // exists() avant get() : sur un document absent, get(...).data fait échouer
     // l'évaluation de la règle, ce qui refuse l'accès à TOUT LE MONDE, MJ compris.
     // En repli sur {}, les joueurs sont refusés mais la branche isGM() continue
@@ -40,16 +145,72 @@ service cloud.firestore {
     //    calendrier impérial ne lit plus Firestore depuis le brief L2-16,
     //    où il est devenu une fonction pure de la date du jour. ──
 
-    // ── PNJs et relations : lecture publique, édition MJ ──
-    match /pnjs/{id}      { allow read: if true; allow write: if isGM(); }
-    match /relations/{id} { allow read: if true; allow write: if isGM(); }
+    // ── PNJs et relations : lecture publique explicitement filtrée, édition MJ ──
+    match /pnjs/{id} {
+      allow read: if isGM() || resource.data.visibleJoueurs == true;
+      allow create: if isGM() && validPnj(request.resource.data)
+          && hasWriteTimestamps(request.resource.data)
+          && serverCreatedAndUpdated(request.resource.data);
+      allow update: if isGM() && validPnj(request.resource.data)
+          && validUpdate(resource.data, request.resource.data,
+              ['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description', 'imageUrl',
+               'imagePath', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre'])
+          && createdAtUnchanged(resource.data, request.resource.data)
+          && hasUpdatedTimestamp(request.resource.data)
+          && serverUpdated(request.resource.data);
+      allow delete: if isGM();
+    }
+    match /relations/{id} {
+      // Les règles ne peuvent pas prouver une jointure PNJ pour chaque document d'une liste.
+      // L'invariant est donc imposé aux écritures et contrôlé par le préflight avant activation.
+      allow read: if isGM() || resource.data.visibleJoueurs == true;
+      allow create: if isGM() && validRelation(request.resource.data)
+          && hasWriteTimestamps(request.resource.data)
+          && serverCreatedAndUpdated(request.resource.data)
+          && (request.resource.data.visibleJoueurs != true
+              || publicRelationEndpointsExist(request.resource.data));
+      allow update: if isGM() && validRelation(request.resource.data)
+          && validUpdate(resource.data, request.resource.data,
+              ['source', 'cible', 'type', 'label', 'color', 'style', 'visibleJoueurs',
+               'createdAt', 'updatedAt'])
+          && createdAtUnchanged(resource.data, request.resource.data)
+          && hasUpdatedTimestamp(request.resource.data)
+          && serverUpdated(request.resource.data)
+          && (request.resource.data.visibleJoueurs != true
+              || publicRelationEndpointsExist(request.resource.data));
+      allow delete: if isGM();
+    }
+
+    // ── Notes privées : aucune lecture ou écriture hors MJ vérifié ──
+    match /pnjs_prives/{id} {
+      allow read: if isGM();
+      allow create: if isGM() && validPrivatePnj(request.resource.data)
+          && request.resource.data.keys().hasAny(['updatedAt'])
+          && request.resource.data.updatedAt is timestamp
+          && serverUpdated(request.resource.data);
+      allow update: if isGM() && validPrivatePnj(request.resource.data)
+          && validUpdate(resource.data, request.resource.data, ['notes', 'updatedAt'])
+          && hasUpdatedTimestamp(request.resource.data)
+          && serverUpdated(request.resource.data);
+      allow delete: if isGM();
+    }
 
     // ── Indices : un secret non découvert n'est pas lisible ──
     // Note : cette règle impose que les requêtes en liste portent la contrainte
     // `where('decouvert', '==', true)` pour les utilisateurs non-MJ.
     match /indices/{id} {
       allow read:  if isGM() || resource.data.decouvert == true;
-      allow write: if isGM();
+      allow create: if isGM() && validIndice(request.resource.data)
+          && hasWriteTimestamps(request.resource.data)
+          && serverCreatedAndUpdated(request.resource.data);
+      allow update: if isGM() && validIndice(request.resource.data)
+          && validUpdate(resource.data, request.resource.data,
+              ['titre', 'description', 'decouvert', 'pnjsLies', 'imageUrl', 'imagePath',
+               'dateDecouverte', 'source', 'type', 'createdAt', 'updatedAt', 'ordre'])
+          && createdAtUnchanged(resource.data, request.resource.data)
+          && hasUpdatedTimestamp(request.resource.data)
+          && serverUpdated(request.resource.data);
+      allow delete: if isGM();
     }
 
     // ── Sondage : le vote reste anonyme, par choix de conception.

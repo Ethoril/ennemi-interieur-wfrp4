@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "indices",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "pnjsLies", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "decouvert", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

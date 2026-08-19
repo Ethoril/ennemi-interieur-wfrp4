@@ -65,11 +65,14 @@ async function loadData() {
         }
 
         // 1. Fetch PNJs list
-        const pnjSnap = await getDocs(collection(db, 'pnjs'));
+        const pnjQuery = state.isAdmin
+            ? collection(db, 'pnjs')
+            : query(collection(db, 'pnjs'), where('visibleJoueurs', '==', true));
+        const pnjSnap = await getDocs(pnjQuery);
         if (loadId !== currentLoadId) return;
         const loadedPnjs = pnjSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        // Les règles M1-02 filtreront côté serveur ; cette garde transitoire évite qu'Enquêtes
-        // expose déjà un PNJ masqué dans les liens d'un indice.
+        // La règle filtre côté serveur ; cette garde évite aussi qu'un cache ancien expose un
+        // PNJ masqué dans les liens d'un indice.
         state.pnjs = (state.isAdmin ? loadedPnjs : loadedPnjs.filter(visiblePourJoueurs).map(toPublicPnj))
             .sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
 
@@ -101,7 +104,9 @@ async function loadData() {
         if (container) {
             container.innerHTML = `
                 <div class="pnj-loading">
-                    <span class="loading-text">Impossible de charger le grimoire d'enquêtes.</span>
+                    <span class="loading-text">${e?.code === 'permission-denied'
+                        ? 'Accès refusé : certaines données ne sont pas visibles pour ce compte.'
+                        : 'Impossible de charger le grimoire d’enquêtes. Réessayez dans un instant.'}</span>
                 </div>`;
         }
     }
