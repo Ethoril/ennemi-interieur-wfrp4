@@ -9,10 +9,9 @@ Le socle de sécurité M1 est déployé. Le client `v2.16.0` a été publié sur
 durcissement serveur, puis la callable d’upload, les règles Firestore et les règles Storage ont été
 activées. La lecture publique des onglets PNJs et Enquêtes reste fonctionnelle après migration.
 
-La clôture fonctionnelle MJ conserve deux vérifications manuelles : un upload authentifié réel et
-la purge visuelle des données privées après déconnexion. Elles doivent être exécutées avec le compte
-MJ avant de déclarer la recette utilisateur entièrement terminée. La recette Android physique reste
-le jalon appareil ; la recette iPhone est différée faute d’appareil disponible.
+La recette fonctionnelle MJ est validée : upload authentifié réel, lecture de l’image protégée,
+suppression sans résidu, puis purge visuelle des données privées après déconnexion. La recette
+Android physique reste le jalon appareil ; la recette iPhone est différée faute d’appareil disponible.
 
 ## Sauvegarde et migration
 
@@ -57,10 +56,15 @@ retrait annoncée au 30 octobre 2026. Ce suivi ne remet pas en cause le déploie
 - Émulateurs : restauration de sauvegarde validée ; matrices M1-01 à M1-04 vertes, dont la suite
   d’intégrité M1-04 2/2.
 - App Check : requête sans jeton refusée en `401`; faux jeton refusé en `401`; chargement du client
-  de production sans erreur App Check. Le test positif callable avec session MJ reste à consigner.
+  de production sans erreur App Check. Le test positif callable avec session MJ a créé un PNJ privé
+  temporaire et un portrait WebP de 178 octets, tous deux lisibles sans erreur.
 - Production visiteur : 3 PNJ chargés, images protégées accessibles, aucun message « Image protégée
   inaccessible » et aucune erreur console. Enquêtes charge correctement et affiche l’état vide prévu.
-- Après cleanup Storage : les 3 PNJ et leurs portraits protégés restent accessibles sans erreur.
+- Suppression du test : l’impact annoncé était 0 relation, 0 indice, 1 note privée et 1 portrait.
+  Après confirmation, le PNJ a disparu et l’inventaire est revenu à 3 références, aucune source
+  legacy et exactement les 2 orphelins conservés.
+- Déconnexion : commandes MJ absentes, champs privés cachés et vidés, 3 PNJ publics et leurs portraits
+  toujours accessibles, aucune erreur console.
 
 ## Retour arrière
 
@@ -72,9 +76,9 @@ l’outillage reste volontairement interdite vers un projet de production.
 
 ## Actions de clôture restantes
 
-- [ ] Connexion MJ sur le site public, upload protégé avec une image de test contrôlée, puis contrôle
+- [x] Connexion MJ sur le site public, upload protégé avec une image de test contrôlée, puis contrôle
   qu’une requête valide atteint la validation métier sans objet orphelin.
-- [ ] Déconnexion MJ et vérification que notes, états administratifs et blobs privés disparaissent.
+- [x] Déconnexion MJ et vérification que notes, états administratifs et blobs privés disparaissent.
 - [ ] Rotation du mot de passe d’application SMTP qui a pu apparaître dans un journal opérateur, puis
   vérification de l’extension d’envoi sans exposer la nouvelle valeur.
 - [ ] Recette Android physique ; recette iPhone explicitement différée.

@@ -61,8 +61,9 @@ Storage↔Firestore limité au compte technique Firebase Storage et aucune enfor
 globale. Le client `v2.16.0` a été publié avant la callable ; `uploadProtectedImage`, les règles
 Firestore et les règles Storage ont ensuite été déployées dans cet ordre. Une requête sans jeton et
 une requête avec un faux jeton App Check sont refusées en `401`, tandis que le client de production
-obtient ses données et ses images protégées sans erreur App Check. La validation positive d’un
-upload MJ réel reste à consigner lors de la recette authentifiée.
+obtient ses données et ses images protégées sans erreur App Check. Un upload MJ réel a ensuite créé
+un PNJ privé temporaire et son portrait protégé ; leur suppression a ramené l’inventaire à ses
+3 références initiales et aux 2 seuls orphelins volontairement conservés.
 Si la callable détecte des métadonnées non conformes et que sa suppression compensatoire échoue,
 elle émet l’événement structuré `protected-image-cleanup-required` dans Cloud Logging avec le seul
 chemin et le code d’erreur. Ce signal et l’inventaire M1-03 constituent la reprise opérateur.
