@@ -20,22 +20,21 @@ test('les écrans protégés utilisent uniquement le dépôt callable et autoris
     assert.doesNotMatch(pnjs, /uploadBytes|updateMetadata|getMetadata/u);
     assert.doesNotMatch(enquetes, /uploadBytes|updateMetadata|getMetadata/u);
     for (const screen of [pnjs, enquetes]) {
+        assert.doesNotMatch(screen, /import\s*\{[^}]*\b(?:collection|doc|getDoc|getDocs|runTransaction|updateDoc|deleteDoc|writeBatch|ref|deleteObject)\b[^}]*\}\s*from ['"]\.\/bureau-data\.js['"]/su);
+        assert.doesNotMatch(screen, /(?:collection|doc|getDoc|getDocs|runTransaction|updateDoc|deleteDoc|writeBatch|ref|deleteObject)\s*\(/u);
         assert.match(screen, /editorSession/u);
         assert.match(screen, /authSessionKey/u);
         assert.match(screen, /identityChanged/u);
         assert.match(screen, /capturedEditingId/u);
-        assert.match(screen, /requireCurrentEditor/u);
-        assert.match(screen, /deleteObject\(uploadedImage/u);
-        assert.match(screen, /rememberProtectedUpload/u);
-        assert.match(screen, /forgetProtectedUpload/u);
-        assert.match(screen, /recoverPendingProtectedUploads/u);
+        assert.match(screen, /requireCurrentEditor|stillCurrent/u);
+        assert.match(screen, /createBureauData/u);
         assert.doesNotMatch(screen, /randomUUID/u);
     }
-    assert.match(pnjs, /protected-upload\.js/u);
-    assert.match(enquetes, /protected-upload\.js/u);
-    assert.match(pnjs, /deletionStillCurrent/u);
-    assert.match(enquetes, /deletionStillCurrent/u);
-    assert.match(enquetes, /deleteDoc\(doc\(db, 'indices', capturedEditingId\)\)/u);
+    const bureauData = await readFile(resolve('js/bureau-data.js'), 'utf8');
+    assert.match(bureauData, /uploadProtectedImage/u);
+    assert.match(bureauData, /cleanupUnreferencedImage/u);
+    assert.match(pnjs, /inspectRemovalLock|resumeRemoval/u);
+    assert.match(enquetes, /repository\.remove/u);
     assert.match(protectedImages, /getBlob\(ref\(storage, imagePath\)\)/u);
     assert.match(protectedUpload, /httpsCallable\(functions, 'uploadProtectedImage'\)/u);
     assert.match(imageLifecycle, /safeStorageReference\(storage, reference\)/u);

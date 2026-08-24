@@ -133,6 +133,26 @@ test('les fabriques séparent public/MJ et les abonnements sont filtrés, ordonn
     assert.ok(oneQuery.constraints.some(item => item.field === '__name__' && item.value === 'a'));
 });
 
+test('le dépôt PNJ canonise les portraits legacy et marque les références invalides', () => {
+    const fake = makeFirestore();
+    const repo = createPublicPnjRepository(fake);
+    const received = [];
+    repo.subscribeVisible(items => received.push(items));
+    fake.state.subscriptions[0].next({ docs: [
+        publicPnj('safe', true, {
+            imageUrl: 'https://storage.googleapis.com/campagne-wrpg.firebasestorage.app/portraits/safe/a.webp?token=secret',
+        }),
+        publicPnj('bad', true, {
+            imageUrl: 'https://user:secret@storage.googleapis.com/campagne-wrpg.firebasestorage.app/portraits/bad/a.webp',
+        }),
+    ], metadata: {} });
+    const items = received.at(-1);
+    assert.equal(items.find(item => item.id === 'safe').imageUrl.endsWith('/a.webp'), true);
+    assert.doesNotMatch(JSON.stringify(items), /token=|user:secret|secret/u);
+    assert.equal(items.find(item => item.id === 'bad').imageUrl, null);
+    assert.equal(items.find(item => item.id === 'bad').legacyImageInvalid, true);
+});
+
 test('subscribeOne et subscribePrivate émettent l’absence, dédupliquent et conservent les métadonnées', () => {
     const fake = makeFirestore();
     const repo = createMjPnjRepository(fake);
@@ -168,6 +188,24 @@ test('les relations publiques filtrent les endpoints visibles et réémettent ap
     assert.deepEqual(received.at(-1).map(item => item.id), ['r-ok']);
     repo.setVisiblePnjIds(['a', 'x']);
     assert.deepEqual(received.at(-1).map(item => item.id), ['r-hidden']);
+});
+
+test('les émissions annotent uniquement un miroir exact et unique', () => {
+    const fake = makeFirestore();
+    const repo = createPublicRelationsRepository({ ...fake, visiblePnjIds: ['a', 'b'] });
+    const received = [];
+    repo.subscribeVisible(items => received.push(items));
+    const subscription = fake.state.subscriptions[0];
+    const base = { type: 'allié', label: 'allié', color: '#fff', style: 'solid', visibleJoueurs: true };
+    subscription.next({ docs: [
+        { id: 'forward', data: () => ({ ...base, source: 'a', cible: 'b' }) },
+        { id: 'reverse', data: () => ({ ...base, source: 'b', cible: 'a' }) },
+        { id: 'partial', data: () => ({ ...base, label: 'autre', source: 'b', cible: 'a' }) },
+    ], metadata: {} });
+    const items = received.at(-1);
+    assert.equal(items.find(item => item.id === 'forward').reciprocalId, 'reverse');
+    assert.equal(items.find(item => item.id === 'reverse').reciprocalId, 'forward');
+    assert.equal(items.find(item => item.id === 'partial').reciprocalId, null);
 });
 
 test('les mutations MJ PNJ/relations sont transactionnelles, bornées et conflictuelles', async () => {

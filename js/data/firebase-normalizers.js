@@ -109,7 +109,16 @@ function legacyImageUrl(data, issues) {
     const value = data.imageUrl;
     if (value === undefined || value === null || value === '') return null;
     if (typeof value === 'string' && value.length <= 2048
-        && /^(?:https?:\/\/|gs:\/\/)/u.test(value) && validLegacyImageReference(value)) return value;
+        && /^(?:https?:\/\/|gs:\/\/)/u.test(value) && validLegacyImageReference(value)) {
+        try {
+            if (value.startsWith('gs://')) return value.split(/[?#]/u)[0];
+            const url = new URL(value);
+            if (url.username || url.password) throw new Error('legacy-userinfo');
+            url.search = '';
+            url.hash = '';
+            return url.toString();
+        } catch { /* fall through to the explicit issue below */ }
+    }
     issues.push(issue('imageUrl', 'invalid-reference'));
     return null;
 }

@@ -1,22 +1,14 @@
-import { db, storage } from './firebase-init.js';
 import { watchAuth, loginWithGoogle, logout } from './auth.js';
-import { collection, getDocs, updateDoc, getDoc, serverTimestamp, deleteDoc, doc, writeBatch, deleteField, query, where, arrayRemove, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { ref, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+import { createBureauData } from './bureau-data.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 import Cropper from 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js';
 import { esc, cap, stripAccents } from './utils.js';
 import { confirmAction } from './ui-confirm.js';
 import { visiblePourJoueurs } from './visibility.js';
+import { createRenderGate, createPendingRecovery } from './bureau-view-lifecycle.js';
 import { legacyPrivateNoteInfo, privateLoadCanApply } from './private-notes.js';
 import { isCurrentLoad, isCurrentPanel, isCurrentGeneration } from './load-generation.js';
-import { FIRESTORE_BATCH_LIMIT, cascadeWriteCount, publicRelationsForPnj } from './visibility-cascade.js';
-import { uploadProtectedImage } from './protected-upload.js';
-import { forgetProtectedUpload, rememberProtectedUpload } from './protected-upload-journal.js';
-import { recoverPendingProtectedUploads } from './protected-upload-recovery.js';
-import { createProtectedImageScope } from './protected-images.js';
-import { cleanupUnreferencedImage } from './image-lifecycle.js';
-import { safeStorageReference } from './storage-reference.js';
-import { relationExists, relationId, reconcileFilterSets, panelIsStillCurrent, commitCascadeBatches, safeRelationColorValue } from './pnj-integrity.js';
+import { reconcileFilterSets, panelIsStillCurrent, safeRelationColorValue } from './pnj-integrity.js';
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
@@ -60,12 +52,14 @@ const state = {
     colorBy: 'statut', dimColorMap: null,
     graphW: 800, graphH: 550,
     view: 'graph',
+    zoomTransform: null,
     sortCol: 'nom', sortDir: 1,
     editingId: null, panelId: null,
     croppedBlob: null,
     privateLoadId: 0,
     privateDocExists: false,
     privateLoadError: false,
+    editingUpdatedAt: null,
 };
 
 let currentLoadId = 0;
@@ -76,11 +70,41 @@ let cropperInstance = null;
 let cropGeneration = 0;
 let cropSourceUrl = null;
 let localPreviewUrl = null;
-const PNJ_DELETION_KEY = 'wfrp:pnj-deletion:v1';
-let pendingPnjCleanupRunning = false;
-let globalPnjLockRecoveryRunning = false;
-const imageScope = createProtectedImageScope(storage);
-window.addEventListener('pagehide', () => imageScope.invalidate());
+window.addEventListener('pagehide', () => {
+    bureauGeneration += 1;
+    currentLoadId += 1;
+    editorSession += 1;
+    closePnjModal();
+    closePanel();
+    cancelLinkedIndices();
+    document.getElementById('pnj-form')?.reset();
+    if (document.getElementById('f-notes-privees')) document.getElementById('f-notes-privees').value = '';
+    if (document.getElementById('pnj-private-status')) document.getElementById('pnj-private-status').textContent = '';
+    state.nodes = [];
+    state.links = [];
+    d3.select('#pnj-graph svg').remove();
+    renderTable();
+    unsubscribeAuth?.();
+    unsubscribeAuth = null;
+    unsubscribePnjs?.();
+    unsubscribeRelations?.();
+    unsubscribePrivateNotes?.();
+    renderedImageHandles.forEach(release => release());
+    renderedImageHandles.clear();
+    void bureauData?.close();
+    bureauData = null;
+});
+window.addEventListener('pageshow', () => {
+    if (!unsubscribeAuth) unsubscribeAuth = watchAuth(handleAuth);
+});
+let bureauData = null;
+let unsubscribePnjs = null;
+let unsubscribeRelations = null;
+let unsubscribePrivateNotes = null;
+let unsubscribeLinkedIndices = null;
+let linkedIndicesGeneration = 0;
+let bureauGeneration = 0;
+const renderedImageHandles = new Map();
 
 // ── Utils ──────────────────────────────────────────────────────
 const getStatutColor = s => STATUT_COLOR[(s || '').toLowerCase()] || '#7a7a8a';
@@ -92,6 +116,17 @@ function protectedImagePlaceholder(item, label) {
     if (!item.imagePath) return '';
     const text = item.imageState === 'access-denied' ? 'Image protégée inaccessible' : 'Image indisponible';
     return `<div class="protected-image-placeholder" role="status" aria-label="${esc(label)}">${text}</div>`;
+}
+
+function showPnjReadStatus(metadata, error = null) {
+    const target = document.getElementById('pnj-read-status') || document.createElement('p');
+    target.id = 'pnj-read-status';
+    target.className = 'pnj-cleanup-status';
+    target.textContent = error ? 'Lecture PNJs/relations indisponible ; les dernières données restent affichées.'
+        : metadata?.fromCache ? (metadata.hasPendingWrites ? 'Données locales, écritures en attente.' : 'Données locales en cours de synchronisation.')
+            : metadata?.hasPendingWrites ? 'Écriture en attente de confirmation serveur.' : '';
+    if (target.textContent) document.getElementById('pnj-loading')?.after(target);
+    else target.remove();
 }
 
 function stringToColor(str) {
@@ -135,74 +170,13 @@ function bezierPath(x1, y1, x2, y2, curveScale = 1) {
     return `M${sx},${sy} Q${mx},${my} ${ex},${ey}`;
 }
 
-async function uploadImage(blob, pnjId) {
-    const result = await uploadProtectedImage(blob, { kind: 'portrait', ownerId: pnjId, contentType: 'image/webp' });
-    const fileRef = ref(storage, result.imagePath);
-    return { path: result.imagePath, ref: fileRef };
-}
-
-function portraitPathsForDeletionLock(pnjId, data) {
-    return [...new Set([data?.imagePath, data?.imageUrl].map(reference => safeStorageReference(storage, reference))
-        .filter(imageRef => imageRef?.fullPath.startsWith(`portraits/${pnjId}/`))
-        .map(imageRef => imageRef.fullPath))].slice(0, 2);
-}
-
-function readPendingPnjDeletion() {
-    try {
-        const value = JSON.parse(localStorage.getItem(PNJ_DELETION_KEY) || 'null');
-        return value && typeof value.id === 'string' && Array.isArray(value.images) ? value : null;
-    } catch { return null; }
-}
-
-function writePendingPnjDeletion(value) {
-    try {
-        localStorage.setItem(PNJ_DELETION_KEY, JSON.stringify(value));
-        return true;
-    } catch { return false; }
-}
-
-function clearPendingPnjDeletion() {
-    try { localStorage.removeItem(PNJ_DELETION_KEY); } catch { /* stockage local indisponible */ }
-}
-
-async function retryPendingPnjImageCleanup(pending) {
-    if (!pending?.firestoreDone) return false;
-    if (pendingPnjCleanupRunning) return false;
-    const recoveryAuthKey = authSessionKey;
-    pendingPnjCleanupRunning = true;
-    try {
-        for (const reference of pending.images) {
-            await cleanupUnreferencedImage({
-                db, storage, reference, ownerCollection: 'pnjs', ownerId: pending.id,
-            });
-        }
-        clearPendingPnjDeletion();
-        document.getElementById('pnj-cleanup-status')?.remove();
-        return true;
-    } catch (error) {
-        if (!state.isAdmin || authSessionKey !== recoveryAuthKey) return false;
-        const status = document.getElementById('pnj-cleanup-status') || document.createElement('p');
-        status.id = 'pnj-cleanup-status';
-        status.className = 'pnj-cleanup-status';
-        status.textContent = 'Nettoyage du portrait à reprendre : vérifiez la connexion et réessayez.';
-        document.getElementById('pnj-loading')?.after(status);
-        console.warn('Nettoyage du portrait PNJ à reprendre.', { id: pending.id, error: error?.message });
-        return false;
-    } finally { pendingPnjCleanupRunning = false; }
-}
-
-function clearPnjAdminStatuses() {
-    const deletionStatus = document.getElementById('pnj-deletion-status');
-    if (deletionStatus) {
-        deletionStatus.replaceChildren();
-        deletionStatus.hidden = true;
-    }
-    document.getElementById('pnj-cleanup-status')?.remove();
-}
-
-function retryPendingPnjCleanupIfNeeded() {
-    const pending = readPendingPnjDeletion();
-    if (pending?.firestoreDone) void retryPendingPnjImageCleanup(pending);
+function repositoryPnjToPage(node) {
+    return {
+        ...node,
+        imagePath: node?.imagePath || '',
+        imageUrl: node?.imagePath ? '' : (node?.imageUrl || ''),
+        legacyImageUrl: node?.imagePath ? '' : (node?.imageUrl || ''),
+    };
 }
 
 function showPnjDeletionStatus(message, action) {
@@ -224,72 +198,92 @@ function showPnjDeletionStatus(message, action) {
     loading?.after(status);
 }
 
-async function recoverGlobalPnjDeletionLock() {
-    if (!state.isAdmin || globalPnjLockRecoveryRunning) return;
+function clearPnjAdminStatuses() {
+    document.getElementById('pnj-deletion-status')?.remove();
+    document.getElementById('pnj-read-status')?.remove();
+    document.getElementById('pnj-image-recovery-status')?.remove();
+}
+
+function showPnjImageRecoveryStatus(message, recover) {
+    const status = document.getElementById('pnj-image-recovery-status') || document.createElement('p');
+    status.id = 'pnj-image-recovery-status';
+    status.className = 'pnj-cleanup-status';
+    status.textContent = message;
+    status.querySelector('button')?.remove();
+    if (recover) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn-ghost-sm';
+        button.textContent = 'Reprendre le nettoyage';
+        button.addEventListener('click', recover, { once: true });
+        status.append(' ', button);
+    }
+    document.getElementById('pnj-loading')?.after(status);
+}
+
+function retryPendingPnjCleanupIfNeeded() {
+    void bureauData?.images?.recover?.().catch(error => console.warn('Reprise image PNJ différée.', error));
+}
+
+const globalPnjRecovery = createPendingRecovery(generation => performGlobalPnjDeletionLockRecovery(generation));
+
+function recoverGlobalPnjDeletionLock() {
+    return globalPnjRecovery.request(bureauGeneration);
+}
+
+async function performGlobalPnjDeletionLockRecovery(expectedGeneration) {
+    if (!state.isAdmin || expectedGeneration !== bureauGeneration || !bureauData?.pnjs?.inspectRemovalLock) return;
     const recoveryAuthKey = authSessionKey;
-    const recoveryStillCurrent = () => state.isAdmin && authSessionKey === recoveryAuthKey;
-    globalPnjLockRecoveryRunning = true;
-    const lockRef = doc(db, 'integrity_locks', 'pnj-deletion');
+    const capturedData = bureauData;
+    const capturedRepository = capturedData.pnjs;
+    const capturedGeneration = bureauGeneration;
+    const stillCurrent = () => recoveryAuthKey === authSessionKey && capturedGeneration === bureauGeneration
+        && capturedData === bureauData && capturedRepository === bureauData?.pnjs && state.isAdmin;
     try {
-        const lockSnapshot = await getDoc(lockRef);
-        if (!recoveryStillCurrent()) return;
-        if (!lockSnapshot.exists()) {
+        const lock = await capturedRepository.inspectRemovalLock();
+        if (!stillCurrent()) return;
+        if (!lock?.pnjId) {
             document.getElementById('pnj-deletion-status')?.remove();
             return;
         }
-        const lock = lockSnapshot.data() || {};
-        const pnjId = typeof lock.pnjId === 'string' ? lock.pnjId : '';
-        const pnjSnapshot = pnjId ? await getDoc(doc(db, 'pnjs', pnjId)) : null;
-        if (!recoveryStillCurrent()) return;
-        if (pnjSnapshot?.exists()) {
-            const marked = pnjSnapshot.data()?.suppressionEnCours === true;
-            showPnjDeletionStatus(
-                marked ? `Suppression PNJ ${pnjId} verrouillée : reprenez la cascade.`
-                    : `Verrou PNJ ${pnjId} incohérent : vérification administrateur requise.`,
-                marked ? {
-                    label: 'Reprendre',
-                    run: async () => {
-                        const node = state.nodes.find(item => item.id === pnjId);
-                        if (node) openPnjModal(node.id);
-                        else {
-                            await loadData();
-                            if (state.nodes.some(item => item.id === pnjId)) openPnjModal(pnjId);
-                        }
-                    },
-                } : null,
-            );
+        const node = state.nodes.find(item => item.id === lock.pnjId);
+        if (node) {
+            showPnjDeletionStatus('Suppression PNJ ' + lock.pnjId + ' verrouillée : reprenez la cascade.', {
+                label: 'Reprendre',
+                run: () => {
+                    if (!stillCurrent()) return;
+                    void capturedRepository.resumeRemoval(lock.pnjId).then(() => {
+                        if (stillCurrent()) document.getElementById('pnj-deletion-status')?.remove();
+                    }).catch(error => {
+                        if (!stillCurrent()) return;
+                    showPnjDeletionStatus('Reprise du verrou PNJ impossible : vérifiez la connexion.', {
+                        label: 'Réessayer', run: () => void recoverGlobalPnjDeletionLock(),
+                    });
+                    console.warn('Reprise du verrou PNJ différée.', { error: error?.message });
+                    });
+                },
+            });
             return;
         }
-        if (!pnjId || !Array.isArray(lock.imagePaths)) {
-            throw new Error('Verrou PNJ incomplet : imagePaths manquant.');
-        }
-        for (const reference of Array.isArray(lock.imagePaths) ? lock.imagePaths : []) {
-            await cleanupUnreferencedImage({
-                db, storage, reference, ownerCollection: 'pnjs', ownerId: pnjId, skipJournal: true,
-            });
-            if (!recoveryStillCurrent()) return;
-        }
-        await deleteDoc(lockRef);
-        if (!recoveryStillCurrent()) return;
-        document.getElementById('pnj-deletion-status')?.remove();
+        await capturedRepository.resumeRemoval(lock.pnjId);
+        if (stillCurrent()) document.getElementById('pnj-deletion-status')?.remove();
     } catch (error) {
-        if (!recoveryStillCurrent()) return;
+        if (!stillCurrent()) return;
         showPnjDeletionStatus('Reprise du verrou PNJ impossible : vérifiez la connexion.', {
             label: 'Réessayer', run: () => void recoverGlobalPnjDeletionLock(),
         });
         console.warn('Reprise du verrou global PNJ différée.', { error: error?.message });
-    } finally { globalPnjLockRecoveryRunning = false; }
+    }
 }
-
 // ── Auth ───────────────────────────────────────────────────────
-watchAuth((user, isAdmin) => {
+function handleAuth(user, isAdmin) {
+    const nextBureauGeneration = ++bureauGeneration;
     const roleChanged = state.isAdmin !== isAdmin;
     const nextAuthSessionKey = user?.uid || '';
     const identityChanged = authSessionKey !== nextAuthSessionKey;
     authSessionKey = nextAuthSessionKey;
     state.isAdmin = isAdmin;
     if (isAdmin) {
-        void recoverPendingProtectedUploads(db, storage);
         retryPendingPnjCleanupIfNeeded();
         void recoverGlobalPnjDeletionLock();
     }
@@ -297,6 +291,21 @@ watchAuth((user, isAdmin) => {
     document.getElementById('add-pnj-btn').style.display = state.isAdmin ? '' : 'none';
     document.getElementById('pnj-private-fields').style.display = state.isAdmin ? '' : 'none';
     if (roleChanged || identityChanged) {
+        cancelLinkedIndices();
+        unsubscribePnjs?.();
+        unsubscribeRelations?.();
+        unsubscribePnjs = null;
+        unsubscribeRelations = null;
+        unsubscribePrivateNotes?.();
+        unsubscribePrivateNotes = null;
+        const previousData = bureauData;
+        bureauData = null;
+        void previousData?.close().catch(error => console.warn('Fermeture du client bureau différée.', error));
+        try { bureauData = createBureauData({ isAdmin }); }
+        catch (error) {
+            console.error('Initialisation des dépôts bureau impossible.', error);
+            bureauData = null;
+        }
         editorSession += 1;
         currentLoadId += 1;
         currentPanelGeneration += 1;
@@ -319,13 +328,22 @@ watchAuth((user, isAdmin) => {
             resetPnjView();
         }
     }
-    if (roleChanged || identityChanged) { void loadData({ init: true }); return; }
+    if (roleChanged || identityChanged || !bureauData) {
+        if (!bureauData) {
+            try { bureauData = createBureauData({ isAdmin }); }
+            catch (error) { console.error('Initialisation des dépôts bureau impossible.', error); }
+        }
+        void loadData({ init: true, generation: nextBureauGeneration });
+        return;
+    }
     if (state.panelId) {
         const node = state.nodes.find(n => n.id === state.panelId);
         if (node) openPanel(node);
     }
     if (state.view === 'table') renderTable();
-});
+}
+let unsubscribeAuth = watchAuth(handleAuth);
+
 
 document.getElementById('auth-btn').addEventListener('click', async () => {
     if (state.isAdmin) {
@@ -337,66 +355,65 @@ document.getElementById('auth-btn').addEventListener('click', async () => {
 });
 
 // ── Data ───────────────────────────────────────────────────────
-function applySnapshots(pnjSnap, relSnap) {
-    const rawNodes = pnjSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-    // La règle filtre déjà côté serveur ; cette garde protège aussi un cache ou une réponse
-    // transitoire si un ancien client conserve encore des documents.
-    state.nodes = state.isAdmin ? rawNodes : rawNodes
-        .filter(visiblePourJoueurs)
-        .map(toPublicPnj);
-    const nodeIds  = new Set(state.nodes.map(n => n.id));
-    state.links = relSnap.docs
-        .map(d => ({ id: d.id, ...d.data() }))
-        .filter(l => nodeIds.has(l.source) && nodeIds.has(l.cible)
-            && (state.isAdmin || visiblePourJoueurs(l)))
-        .map(l => ({ ...l, source: l.source, target: l.cible }));
-    // La palette des couleurs "par lieu/groupe" dépend de la liste actuelle :
-    // sans reset, une valeur disparue garderait sa case dans la légende et un
-    // nouveau lieu/groupe n'aurait pas de couleur jusqu'au prochain switch.
-    state.dimColorMap = null;
-}
-
-function toPublicPnj(node) {
-    return Object.fromEntries(['id', 'nom', 'statut', 'vivant', 'lieu', 'groupe', 'description',
-        'imagePath', 'imageUrl', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre']
-        .filter(key => Object.hasOwn(node, key)).map(key => [key, node[key]]));
-}
-
-async function loadData({ init = false } = {}) {
+async function loadData({ init = false, generation = bureauGeneration } = {}) {
     const loadId = ++currentLoadId;
     try {
+        if (generation !== bureauGeneration || !bureauData) return;
         if (state.isAdmin) {
-            void recoverPendingProtectedUploads(db, storage);
             retryPendingPnjCleanupIfNeeded();
             void recoverGlobalPnjDeletionLock();
         }
-        const imageGeneration = imageScope.beginGeneration();
-        const pnjQuery = state.isAdmin
-            ? collection(db, 'pnjs')
-            : query(collection(db, 'pnjs'), where('visibleJoueurs', '==', true));
-        const relationQuery = state.isAdmin
-            ? collection(db, 'relations')
-            : query(collection(db, 'relations'), where('visibleJoueurs', '==', true));
-        const [ps, rs] = await Promise.all([
-            getDocs(pnjQuery),
-            getDocs(relationQuery),
-        ]);
-        if (!isCurrentLoad(loadId, currentLoadId)) return;
-        applySnapshots(ps, rs);
-        await Promise.all(state.nodes.map(async node => {
+        const onError = error => {
+            if (generation !== bureauGeneration || !isCurrentLoad(loadId, currentLoadId)) return;
+            console.error('Erreur de lecture temps réel PNJs/relations.', error);
+            showPnjReadStatus(null, error);
+            const target = document.getElementById('pnj-loading');
+            if (target && init) target.querySelector('.loading-text')?.replaceChildren(
+                document.createTextNode('Impossible de charger les données. Réessayez dans un instant.'),
+            );
+        };
+        const render = async (nodes, relations, token) => {
+            if (generation !== bureauGeneration || !isCurrentLoad(loadId, currentLoadId) || !renderGate.isCurrent(token)) return;
+            const previousPanelId = state.panelId;
+            renderedImageHandles.forEach(release => release());
+            renderedImageHandles.clear();
+            state.nodes = nodes.map(repositoryPnjToPage).filter(node => state.isAdmin || visiblePourJoueurs(node));
+            const nodeIds = new Set(state.nodes.map(node => node.id));
+            if (state.editingId && !nodeIds.has(state.editingId)) {
+                closePnjModal();
+                showPnjDeletionStatus('Ce PNJ n’est plus visible ou a été supprimé.', null);
+            }
+            if (state.panelId && !nodeIds.has(state.panelId)) {
+                closePnjModal();
+                closePanel();
+                showPnjDeletionStatus('Ce PNJ n’est plus visible ou a été supprimé.', null);
+            }
+            state.links = relations.filter(link => nodeIds.has(link.source) && nodeIds.has(link.cible))
+                .map(link => ({ ...link, target: link.cible }));
+            bureauData.relations.setVisiblePnjIds?.([...nodeIds]);
+            await Promise.all(state.nodes.map(async node => {
             node.legacyImageUrl = node.imageUrl || '';
             if (!node.imagePath) {
                 node.imageState = node.imageUrl ? 'legacy' : 'missing';
                 node.imageError = null;
                 return;
             }
-            const result = await imageScope.load(node.imagePath, imageGeneration);
-            node.imageState = result.url ? 'ready' : (['storage/unauthorized', 'storage/unauthenticated'].includes(result.error?.code) ? 'access-denied' : 'missing');
-            node.imageError = result.error?.code || null;
-            if (result.url) node.imageUrl = result.url;
-            else node.imageUrl = '';
-        }));
-        if (!isCurrentLoad(loadId, currentLoadId)) return;
+            try {
+                const handle = bureauData.images.loadObjectUrl(node.imagePath);
+                const result = await handle;
+                if (generation !== bureauGeneration || !renderGate.isCurrent(token)) { result.release?.(); return; }
+                renderedImageHandles.set(node.id, result.release);
+                node.imageState = 'ready';
+                node.imageError = null;
+                node.imageUrl = result.url;
+            } catch (error) {
+                node.imageState = ['storage/unauthorized', 'storage/unauthenticated'].includes(error?.cause?.code)
+                    ? 'access-denied' : 'missing';
+                node.imageError = error?.code || null;
+                node.imageUrl = '';
+            }
+            }));
+            if (generation !== bureauGeneration || !isCurrentLoad(loadId, currentLoadId) || !renderGate.isCurrent(token)) return;
 
         d3.select('#pnj-graph svg').remove();
         state.nodeSel = null;
@@ -408,17 +425,43 @@ async function loadData({ init = false } = {}) {
         buildFilters();
         if (state.nodes.length) buildGraph();
 
-        if (init) document.getElementById('pnj-loading').style.display = 'none';
+            if (init) document.getElementById('pnj-loading').style.display = 'none';
         document.getElementById('pnj-empty').style.display    = state.nodes.length ? 'none' : 'flex';
         document.getElementById('graph-legend').style.display = state.nodes.length ? 'flex' : 'none';
         if (state.view === 'table') renderTable();
 
-        const urlParams = new URLSearchParams(window.location.search);
+            const urlParams = new URLSearchParams(window.location.search);
         const pnjId = urlParams.get('id') || urlParams.get('pnj');
-        if (pnjId) {
-            const node = state.nodes.find(n => n.id === pnjId);
-            if (node) openPanel(node);
-        }
+            if (pnjId) {
+                const node = state.nodes.find(n => n.id === pnjId);
+                if (node) openPanel(node);
+            }
+            else if (previousPanelId) {
+                const node = state.nodes.find(item => item.id === previousPanelId);
+                if (node) openPanel(node);
+            }
+        };
+        unsubscribePnjs?.();
+        unsubscribeRelations?.();
+        const pnjSubscribe = state.isAdmin ? bureauData.pnjs.subscribeAll : bureauData.pnjs.subscribeVisible;
+        const relationSubscribe = state.isAdmin ? bureauData.relations.subscribeAll : bureauData.relations.subscribeVisible;
+        let latestNodes = [];
+        let latestRelations = [];
+        const renderGate = createRenderGate();
+        const update = () => {
+            const token = renderGate.next();
+            void render(latestNodes, latestRelations, token);
+        };
+        unsubscribePnjs = pnjSubscribe.call(bureauData.pnjs, (nodes, metadata) => {
+            latestNodes = nodes;
+            showPnjReadStatus(metadata);
+            update();
+        }, onError);
+        unsubscribeRelations = relationSubscribe.call(bureauData.relations, (relations, metadata) => {
+            latestRelations = relations;
+            showPnjReadStatus(metadata);
+            update();
+        }, onError, { visiblePnjIds: state.nodes.map(node => node.id) });
 
     } catch (e) {
         if (!isCurrentLoad(loadId, currentLoadId)) return;
@@ -443,103 +486,54 @@ async function savePnj(data, imageFile) {
     const capturedPanelGeneration = currentPanelGeneration;
     const capturedSession = editorSession;
     const capturedRole = state.isAdmin;
+    const capturedData = bureauData;
+    const pnjRepository = capturedData?.pnjs;
     const editorStillCurrent = () => capturedSession === editorSession
         && capturedEditingId === state.editingId && capturedRole === state.isAdmin
-        && document.getElementById('pnj-modal')?.style.display !== 'none';
+        && document.getElementById('pnj-modal')?.style.display !== 'none'
+        && capturedData === bureauData;
     const requireCurrentEditor = () => { if (!editorStillCurrent()) throw new Error('Édition annulée : la session ou le rôle a changé.'); };
     btn.disabled = true;
     btn.textContent = imageFile ? 'Upload…' : 'Enregistrement…';
     try {
+        if (!pnjRepository || !capturedData?.images || !state.isAdmin) throw new Error('Session MJ indisponible.');
         if (capturedEditingId && state.privateLoadError) {
             throw new Error('Notes privées indisponibles : enregistrement annulé. Vérifiez les règles M1-02.');
         }
-        const pnjRef = capturedEditingId ? doc(db, 'pnjs', capturedEditingId) : doc(collection(db, 'pnjs'));
+        requireCurrentEditor();
+        const id = capturedEditingId || `pnj-${Date.now().toString(36)}`;
         const previousImagePath = data.imagePath || '';
-        const previousLegacyUrl = data.imageUrl || '';
         const publicData = {
             nom: data.nom || '', statut: data.statut || '', vivant: data.vivant || 'oui',
             lieu: data.lieu || '', groupe: data.groupe || '', description: data.description || '',
             visibleJoueurs: data.visibleJoueurs !== false,
-            updatedAt: serverTimestamp(),
         };
         if (data.imagePath) publicData.imagePath = data.imagePath;
-        if (!capturedEditingId) publicData.createdAt = serverTimestamp();
-        const privateWrite = Boolean(data.notesPrivees) || state.privateDocExists;
-        let relationsToHide = [];
-        if (capturedEditingId && publicData.visibleJoueurs === false) {
-            // Le masquage et la révocation des liens publics doivent rester dans le même batch.
-            const relationSnap = await getDocs(collection(db, 'relations'));
-            relationsToHide = publicRelationsForPnj(
-                relationSnap.docs.map(relation => ({ id: relation.id, ...relation.data() })),
-                pnjRef.id,
-            );
-        }
-        if (cascadeWriteCount({ relationCount: relationsToHide.length, privateWrite }) > FIRESTORE_BATCH_LIMIT) {
-            throw new Error('Masquage annulé : trop de relations à révoquer en une seule opération (limite Firestore de 500 écritures).');
-        }
-        // L'upload vient après le garde de taille : une opération refusée ne laisse pas d'image orpheline.
-        let uploadedImage = null;
-        if (imageFile) {
+        const privateData = { notes: data.notesPrivees || '' };
+        let result;
+        const expectedUpdatedAt = state.editingUpdatedAt;
+        const commitPnj = async imagePath => {
             requireCurrentEditor();
-            uploadedImage = await uploadImage(imageFile, pnjRef.id);
-            if (!rememberProtectedUpload({ collection: 'pnjs', ownerId: pnjRef.id, path: uploadedImage.path })) {
-                try { await deleteObject(uploadedImage.ref); }
-                catch { throw new Error(`Upload annulé. Nettoyage manuel requis pour ${uploadedImage.path}.`); }
-                throw new Error('Upload annulé : impossible de journaliser sa reprise locale.');
-            }
-            if (!editorStillCurrent()) {
-                try { await deleteObject(uploadedImage.ref); forgetProtectedUpload(uploadedImage.path); }
-                catch { throw new Error(`Édition annulée. Nettoyage manuel requis pour ${uploadedImage.path}.`); }
-                throw new Error('Édition annulée : la session ou le rôle a changé.');
-            }
-            publicData.imagePath = uploadedImage.path;
-            // Une nouvelle écriture ne crée ni ne conserve une URL durable legacy.
-            if (capturedEditingId) publicData.imageUrl = deleteField();
+            const nextPublicData = imagePath ? { ...publicData, imagePath } : publicData;
+            return capturedEditingId
+                ? pnjRepository.update(capturedEditingId, nextPublicData, privateData, expectedUpdatedAt)
+                : pnjRepository.create(nextPublicData, privateData, { id });
+        };
+        if (imageFile) {
+            btn.textContent = 'Upload…';
+            result = await capturedData.images.replace(previousImagePath || null,
+                { kind: 'portrait', ownerId: id }, imageFile, { commit: commitPnj });
+        } else {
+            result = capturedEditingId
+                ? await pnjRepository.update(capturedEditingId, publicData, privateData, expectedUpdatedAt)
+                : await pnjRepository.create(publicData, privateData, { id });
         }
-        const batch = writeBatch(db);
         requireCurrentEditor();
-        if (capturedEditingId) batch.update(pnjRef, publicData);
-        else                 batch.set(pnjRef, publicData);
-        // Les deux documents sont engagés ensemble : un refus de pnjs_prives ne peut donc
-        // laisser qu'une moitié de modification publique.
-        if (privateWrite) {
-            batch.set(doc(db, 'pnjs_prives', pnjRef.id), {
-                notes: data.notesPrivees || '', updatedAt: serverTimestamp(),
-            }, { merge: true });
-        }
-        relationsToHide.forEach(relation => {
-            batch.update(doc(db, 'relations', relation.id), {
-                visibleJoueurs: false, updatedAt: serverTimestamp(),
-            });
-        });
-        try {
-            await batch.commit();
-        } catch (error) {
-            if (uploadedImage) {
-                try { await deleteObject(uploadedImage.ref); forgetProtectedUpload(uploadedImage.path); }
-                catch { throw new Error(`${error.message}. Nettoyage manuel requis pour ${uploadedImage.path}.`); }
-            }
-            throw error;
-        }
-        if (uploadedImage) forgetProtectedUpload(uploadedImage.path);
-        if (uploadedImage) {
-            const oldReferences = [previousImagePath, previousLegacyUrl].filter(Boolean);
-            const removed = new Set();
-            for (const oldReference of oldReferences) {
-                if (oldReference === uploadedImage.path || removed.has(oldReference)) continue;
-                removed.add(oldReference);
-                try {
-                    await cleanupUnreferencedImage({
-                        db, storage, reference: oldReference, ownerCollection: 'pnjs', ownerId: pnjRef.id,
-                    });
-                } catch (error) {
-                    alert(`Enregistrement réussi, mais ancienne image à nettoyer : ${error.message}`);
-                }
-            }
-        }
+        void result;
         const prevEditingId = capturedEditingId;
         closePnjModal();
         await loadData();
+        if (capturedSession !== editorSession || capturedData !== bureauData) return;
         if (prevEditingId && panelIsStillCurrent({
             capturedGeneration: capturedPanelGeneration, currentGeneration: currentPanelGeneration,
             capturedId: capturedPanelId, currentId: state.panelId,
@@ -548,7 +542,32 @@ async function savePnj(data, imageFile) {
             if (node) openPanel(node);
         }
     } catch (e) {
-        alert('Erreur : ' + e.message);
+        const imageState = e?.state;
+        if (imageState?.commitDone || imageState?.commitUnknown) {
+            const message = imageState.commitDone
+                ? 'PNJ enregistré ; le nettoyage de l’ancien portrait reste à reprendre.'
+                : 'État du portrait incertain ; la sauvegarde doit être réconciliée avant une nouvelle tentative.';
+            const recoveryGeneration = bureauGeneration;
+            const recover = () => {
+                if (capturedData !== bureauData || recoveryGeneration !== bureauGeneration) return;
+                void capturedData.images.recover().then(() => {
+                    if (capturedData !== bureauData || recoveryGeneration !== bureauGeneration) return;
+                    showPnjImageRecoveryStatus('Nettoyage du portrait repris.', null);
+                }).catch(() => {
+                    if (capturedData !== bureauData || recoveryGeneration !== bureauGeneration) return;
+                    showPnjImageRecoveryStatus('Reprise impossible pour le moment. Réessayez.', recover);
+                });
+            };
+            const wasCurrent = editorStillCurrent();
+            if (wasCurrent && imageState.commitDone) {
+                closePnjModal();
+                await loadData();
+            }
+            showPnjImageRecoveryStatus(message, recover);
+            if (imageState.commitUnknown) alert(message);
+        } else {
+            alert('Erreur : ' + e.message);
+        }
     } finally {
         btn.disabled = false;
         btn.textContent = 'Enregistrer';
@@ -558,298 +577,106 @@ async function savePnj(data, imageFile) {
 async function deletePnj(id) {
     const capturedSession = editorSession;
     const capturedRole = state.isAdmin;
-    const deletionStillCurrent = () => id === state.editingId
-        && capturedSession === editorSession && capturedRole === state.isAdmin;
-    const pending = readPendingPnjDeletion();
-    if (pending?.firestoreDone) await retryPendingPnjImageCleanup(pending);
-    const refreshedPending = readPendingPnjDeletion();
-    const pnj = state.nodes.find(n => n.id === id);
-    if (refreshedPending?.id === id) {
-        alert('Une suppression précédente est à reprendre. Le contrôle va vérifier les références restantes.');
-    }
-    let impactRelations;
-    let impactIndices;
-    let impactPrivate;
-    try {
-        [impactRelations, impactIndices, impactPrivate] = await Promise.all([
-            getDocs(collection(db, 'relations')),
-            getDocs(collection(db, 'indices')),
-            getDoc(doc(db, 'pnjs_prives', id)),
-        ]);
-    } catch (error) {
-        alert(`Suppression annulée : impossible de calculer son impact (${error.message}).`);
-        return;
-    }
-    if (!deletionStillCurrent()) return;
-    const relationCount = impactRelations.docs.filter(item => {
-        const relation = item.data() || {};
-        return relation.source === id || relation.cible === id;
-    }).length;
-    const indiceCount = impactIndices.docs.filter(item => (item.data()?.pnjsLies || []).includes(id)).length;
-    const portraitReference = pnj?.imagePath || pnj?.imageUrl || '';
-    const portraitIsProtected = safeStorageReference(storage, portraitReference)?.fullPath.split('/').length === 3;
+    const repository = bureauData?.pnjs;
+    const capturedPanelGeneration = currentPanelGeneration;
+    const capturedPanelId = state.panelId;
+    const stillCurrent = () => capturedSession === editorSession && capturedRole === state.isAdmin
+        && capturedRole && capturedPanelGeneration === currentPanelGeneration
+        && capturedPanelId === state.panelId && repository === bureauData?.pnjs;
+    const pnj = state.nodes.find(node => node.id === id);
     const ok = await confirmAction({
         titre: 'Supprimer le personnage',
-        message: `${pnj?.nom || 'Ce personnage'} sera supprimé : ${relationCount} relation${relationCount > 1 ? 's' : ''}, ${indiceCount} indice${indiceCount > 1 ? 's' : ''} lié${indiceCount > 1 ? 's' : ''}, ${impactPrivate.exists() ? '1 note privée' : 'aucune note privée'}${portraitIsProtected ? ' et 1 portrait protégé' : portraitReference ? ' ; le portrait legacy sera signalé pour nettoyage' : ', aucun portrait'}.`,
-        libelleAction: 'Supprimer',
-        danger: true,
+        message: (pnj?.nom || 'Ce personnage') + ' sera définitivement supprimé avec ses relations et indices liés.',
+        libelleAction: 'Supprimer', danger: true,
     });
-    if (!ok || !deletionStillCurrent()) return;
-    const pnjRef = doc(db, 'pnjs', id);
-    const deletionLockRef = doc(db, 'integrity_locks', 'pnj-deletion');
-    let deletionImagePaths = [];
+    if (!ok || !stillCurrent()) return;
+    if (!repository?.remove) { alert('Dépôt PNJ indisponible.'); return; }
     try {
-        const lockResult = await runTransaction(db, async transaction => {
-            const lockSnapshot = await transaction.get(deletionLockRef);
-            const snapshot = await transaction.get(pnjRef);
-            if (!snapshot.exists()) throw new Error('PNJ introuvable.');
-            const lockPnjId = lockSnapshot.exists() ? lockSnapshot.data()?.pnjId : null;
-            if (lockPnjId && lockPnjId !== id) {
-                throw new Error(`Une autre suppression est déjà en cours (${lockPnjId}).`);
-            }
-            const imagePaths = lockSnapshot.exists() && Array.isArray(lockSnapshot.data()?.imagePaths)
-                ? lockSnapshot.data().imagePaths
-                : portraitPathsForDeletionLock(id, snapshot.data());
-            if (snapshot.data()?.suppressionEnCours !== true) {
-                transaction.update(pnjRef, { suppressionEnCours: true, updatedAt: serverTimestamp() });
-            }
-            if (!lockSnapshot.exists()) {
-                transaction.set(deletionLockRef, {
-                    pnjId: id, imagePaths, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
-                });
-            }
-            return { imagePaths };
-        });
-        deletionImagePaths = lockResult?.imagePaths || [];
+        if (!stillCurrent()) return;
+        await repository.remove(id);
+        if (!stillCurrent()) return;
+        closePnjModal();
+        closePanel();
     } catch (error) {
-        alert(`Suppression annulée : impossible de poser le verrou de suppression (${error.message}).`);
-        return;
+        if (!stillCurrent()) return;
+        const message = error?.state?.imageCleanupPending
+            ? 'PNJ supprimé dans Firestore ; le nettoyage du portrait sera repris automatiquement.'
+            : 'Suppression impossible : ' + (error?.message || 'réessayez plus tard.');
+        alert(message);
     }
-    let relSnap, clueSnap, pnjSnap, imageReferences, protectedImageReferences, legacyImageCount, pendingDeletion;
-    try {
-        [relSnap, clueSnap, pnjSnap] = await Promise.all([
-            getDocs(collection(db, 'relations')),
-            getDocs(collection(db, 'indices')),
-            getDoc(doc(db, 'pnjs', id)),
-        ]);
-        if (!deletionStillCurrent()) throw new Error('La session ou le rôle a changé après le verrouillage.');
-        const currentPnj = pnjSnap.exists() ? { id, ...pnjSnap.data() } : pnj;
-        imageReferences = [currentPnj?.imagePath, currentPnj?.imageUrl].filter(Boolean);
-        protectedImageReferences = deletionImagePaths;
-        const protectedPaths = new Set(protectedImageReferences);
-        legacyImageCount = imageReferences.filter(reference => {
-            const imageRef = safeStorageReference(storage, reference);
-            return !imageRef || !protectedPaths.has(imageRef.fullPath);
-        }).length;
-        pendingDeletion = {
-            id,
-            images: protectedImageReferences,
-            firestoreDone: false,
-            startedAt: Date.now(),
-        };
-        if (!writePendingPnjDeletion(pendingDeletion)) {
-            console.warn('Journal local PNJ indisponible ; le verrou Firestore reste la source de reprise.', { id });
-        }
-        for (const path of protectedImageReferences) {
-            if (!rememberProtectedUpload({ collection: 'pnjs', ownerId: id, path })) {
-                console.warn('Journal local Storage indisponible ; le verrou image/PNJ reste la source de reprise.', { path });
-            }
-        }
-    } catch (error) {
-        alert(`Suppression verrouillée mais non poursuivie : ${error.message}. Reprenez-la dès que la connexion revient.`);
-        void recoverGlobalPnjDeletionLock();
-        return;
-    }
-    const cascadeOperations = (relations, clues) => [
-        ...clues.filter(d => (d.data().pnjsLies || []).includes(id))
-            .map(d => ({ type: 'update', ref: d.ref })),
-        ...relations.filter(d => d.data().source === id || d.data().cible === id)
-            .map(d => ({ type: 'delete', ref: d.ref })),
-    ];
-    const commitCascadeOperations = async operations => {
-        await commitCascadeBatches(operations, async operationSet => {
-            const batch = writeBatch(db);
-            operationSet.forEach(operation => {
-                if (operation.type === 'update') batch.update(operation.ref, {
-                    pnjsLies: arrayRemove(id), updatedAt: serverTimestamp(),
-                });
-                else batch.delete(operation.ref);
-            });
-            await batch.commit();
-            if (!deletionStillCurrent()) throw new Error('Suppression annulée : la session ou le rôle a changé.');
-        }, FIRESTORE_BATCH_LIMIT, 2);
-    };
-    // Les étapes de nettoyage restent sous 500 opérations ; le document PNJ et sa note
-    // privée ne sont supprimés qu’après la réussite de toutes les étapes précédentes.
-    try {
-        await commitCascadeOperations(cascadeOperations(relSnap.docs, clueSnap.docs));
-        // Une relation ou une référence peut être créée pendant les premiers lots. Trois
-        // relectures stabilisent la cascade ; sinon on laisse l’état de reprise, sans supprimer
-        // le PNJ ni annoncer une réussite partielle.
-        let stable = false;
-        for (let pass = 0; pass < 3; pass += 1) {
-            const [freshRelations, freshClues] = await Promise.all([
-                getDocs(collection(db, 'relations')),
-                getDocs(collection(db, 'indices')),
-            ]);
-            if (!deletionStillCurrent()) throw new Error('Suppression annulée : la session ou le rôle a changé.');
-            const newOperations = cascadeOperations(freshRelations.docs, freshClues.docs);
-            if (!newOperations.length) { stable = true; break; }
-            await commitCascadeOperations(newOperations);
-        }
-        if (!stable) throw new Error('La cascade change encore ; reprise requise avant suppression finale.');
-        const finalBatch = writeBatch(db);
-        finalBatch.delete(doc(db, 'pnjs_prives', id));
-        finalBatch.delete(doc(db, 'pnjs', id));
-        await finalBatch.commit();
-        pendingDeletion.firestoreDone = true;
-        if (!writePendingPnjDeletion(pendingDeletion)) {
-            console.warn('État PNJ local non actualisé après suppression Firestore.', { id });
-        }
-    } catch (error) {
-        alert(`Suppression incomplète : ${error.message}. Les éléments restants sont journalisés pour reprise.`);
-        void recoverGlobalPnjDeletionLock();
-        return;
-    }
-    closePnjModal();
-    closePanel();
-    let storageError = null;
-    for (const reference of protectedImageReferences) {
-        try {
-            await cleanupUnreferencedImage({
-                db, storage, reference, ownerCollection: 'pnjs', ownerId: id, skipJournal: true,
-            });
-        } catch (error) { storageError = error; }
-    }
-    if (storageError) {
-        alert(`PNJ supprimé dans Firestore, mais le verrou reste actif pendant la reprise Storage : ${storageError.message}`);
-    } else {
-        try {
-            await deleteDoc(deletionLockRef);
-            clearPendingPnjDeletion();
-        } catch (error) {
-            alert(`PNJ supprimé et images nettoyées, mais le verrou reste actif : ${error.message}`);
-        }
-    }
-    if (legacyImageCount) alert('PNJ supprimé. Le portrait legacy ou externe reste signalé pour nettoyage contrôlé.');
-    await loadData();
 }
 
 async function saveRelation(sourceId, cibleId, type, label, color, style, bidir) {
     if (!sourceId || !cibleId || !type) { alert('Choisissez un PNJ et entrez un type de relation.'); return; }
     if (sourceId === cibleId) { alert('Un PNJ ne peut pas être relié à lui-même.'); return; }
-    if (!state.nodes.some(node => node.id === sourceId) || !state.nodes.some(node => node.id === cibleId)) {
-        alert('La relation fait référence à un PNJ introuvable.');
-        return;
-    }
+    const repository = bureauData?.relations;
+    if (!repository?.create) { alert('Dépôt relations indisponible.'); return; }
     const capturedSession = editorSession;
     const capturedRole = state.isAdmin;
+    const capturedGeneration = currentPanelGeneration;
     const panelId = state.panelId;
-    const panelGeneration = currentPanelGeneration;
-    const mutationStillCurrent = () => capturedRole === true && state.isAdmin === true
-        && capturedSession === editorSession
-        && panelIsStillCurrent({
-            capturedGeneration: panelGeneration, currentGeneration: currentPanelGeneration,
-            capturedId: panelId, currentId: state.panelId,
-        });
-    if (!mutationStillCurrent()) return;
-    const relData = { source: sourceId, cible: cibleId, type, label: label || type,
-        color: safeRelationColor(color, type), style: style === 'dashed' ? 'dashed' : 'solid', visibleJoueurs: true };
-    if (relationExists(state.links, relData, bidir)) {
-        alert('Cette relation existe déjà dans ce sens.');
-        return;
-    }
-    const firstRef = doc(db, 'relations', relationId(relData));
-    const secondData = { ...relData, source: cibleId, cible: sourceId };
-    const secondRef = bidir ? doc(db, 'relations', relationId(secondData)) : null;
-    await runTransaction(db, async transaction => {
-        const sourceRef = doc(db, 'pnjs', sourceId);
-        const cibleRef = doc(db, 'pnjs', cibleId);
-        const sourceSnapshot = await transaction.get(sourceRef);
-        const cibleSnapshot = await transaction.get(cibleRef);
-        const firstSnapshot = await transaction.get(firstRef);
-        const secondSnapshot = secondRef ? await transaction.get(secondRef) : null;
-        if (!sourceSnapshot.exists() || !cibleSnapshot.exists()
-            || sourceSnapshot.data()?.suppressionEnCours === true
-            || cibleSnapshot.data()?.suppressionEnCours === true) {
-            throw new Error('Relation refusée : un PNJ est absent ou en cours de suppression.');
-        }
-        if (firstSnapshot.exists() || secondSnapshot?.exists()) {
-            throw new Error('Cette relation existe déjà dans ce sens.');
-        }
-        if (!mutationStillCurrent()) throw new Error('Création annulée : la session ou le panneau a changé.');
-        const timestamps = { createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
-        transaction.set(firstRef, { ...relData, ...timestamps });
-        if (secondRef) transaction.set(secondRef, { ...secondData, ...timestamps });
-    });
-    if (!mutationStillCurrent()) return;
-    await loadData();
-    if (panelIsStillCurrent({ capturedGeneration: panelGeneration, currentGeneration: currentPanelGeneration,
-        capturedId: panelId, currentId: state.panelId })) {
-        const node = state.nodes.find(n => n.id === sourceId);
+    const stillCurrent = () => capturedRole && state.isAdmin && capturedSession === editorSession
+        && capturedGeneration === currentPanelGeneration && panelId === state.panelId
+        && repository === bureauData?.relations;
+    try {
+        const result = await repository.create({ source: sourceId, cible: cibleId, type,
+            label: label || type, color: safeRelationColor(color, type),
+            style: style === 'dashed' ? 'dashed' : 'solid', visibleJoueurs: true }, bidir);
+        if (!stillCurrent()) return;
+        void result;
+        const node = state.nodes.find(item => item.id === sourceId);
         if (node) openPanel(node);
-    }
+    } catch (error) { if (stillCurrent()) alert('Création de la relation impossible : ' + (error?.message || 'réessayez.')); }
 }
 
 async function updateRelation(relId, type, label, color, style) {
     if (!type) { alert('Le type de relation est requis.'); return; }
+    const repository = bureauData?.relations;
+    if (!repository?.update) { alert('Dépôt relations indisponible.'); return; }
     const capturedSession = editorSession;
     const capturedRole = state.isAdmin;
+    const capturedGeneration = currentPanelGeneration;
     const panelId = state.panelId;
-    const panelGeneration = currentPanelGeneration;
-    const relationRef = doc(db, 'relations', relId);
-    const mutationStillCurrent = () => capturedRole === true && state.isAdmin === true
-        && capturedSession === editorSession
-        && panelIsStillCurrent({
-            capturedGeneration: panelGeneration, currentGeneration: currentPanelGeneration,
-            capturedId: panelId, currentId: state.panelId,
-        });
-    const data = { type, label: label || type, updatedAt: serverTimestamp() };
-    data.color = color ? safeRelationColor(color, type) : deleteField();
-    data.style = style === 'dashed' ? 'dashed' : deleteField();
-    const confirmation = await getDoc(relationRef);
-    if (!confirmation.exists()) { alert('Cette relation n’existe plus.'); return; }
-    if (!mutationStillCurrent()) return;
-    await updateDoc(relationRef, data);
-    if (!mutationStillCurrent()) return;
-    await loadData();
-    if (panelIsStillCurrent({ capturedGeneration: panelGeneration, currentGeneration: currentPanelGeneration,
-        capturedId: panelId, currentId: state.panelId })) {
-        const node = state.nodes.find(n => n.id === panelId);
+    const capturedRepository = repository;
+    const current = state.links.find(relation => relation.id === relId);
+    const reciprocal = current?.reciprocalId ? state.links.find(relation => relation.id === current.reciprocalId) : null;
+    const pair = Boolean(reciprocal && reciprocal.source === current?.cible && reciprocal.cible === current?.source);
+    const stillCurrent = () => capturedRole && state.isAdmin && capturedSession === editorSession
+        && capturedGeneration === currentPanelGeneration && panelId === state.panelId
+        && capturedRepository === bureauData?.relations;
+    try {
+        if (!stillCurrent()) return;
+        await repository.update(relId, {
+            type, label: label || type, color: color ? safeRelationColor(color, type) : undefined,
+            style: style === 'dashed' ? 'dashed' : 'solid',
+        }, current?.updatedAt, pair ? { pair: true, reciprocalId: reciprocal.id } : {});
+        if (!stillCurrent()) return;
+        const node = state.nodes.find(item => item.id === panelId);
         if (node) openPanel(node);
-    }
+    } catch (error) { if (stillCurrent()) alert('Modification de la relation impossible : ' + (error?.message || 'réessayez.')); }
 }
 
 async function deleteRelation(relId) {
     const capturedSession = editorSession;
     const capturedRole = state.isAdmin;
-    const panelId = state.panelId;
-    const panelGeneration = currentPanelGeneration;
-    const relationRef = doc(db, 'relations', relId);
-    const mutationStillCurrent = () => capturedRole === true && state.isAdmin === true
-        && capturedSession === editorSession
-        && panelIsStillCurrent({
-            capturedGeneration: panelGeneration, currentGeneration: currentPanelGeneration,
-            capturedId: panelId, currentId: state.panelId,
-        });
-    const ok = await confirmAction({
-        titre: 'Supprimer la relation',
-        message: 'Cette relation sera définitivement supprimée.',
-        libelleAction: 'Supprimer',
-        danger: true,
-    });
-    if (!ok || !mutationStillCurrent()) return;
-    const relationSnapshot = await getDoc(relationRef);
-    if (!relationSnapshot.exists()) { alert('Cette relation n’existe plus.'); return; }
-    if (!mutationStillCurrent()) return;
-    await deleteDoc(relationRef);
-    if (!mutationStillCurrent()) return;
-    await loadData();
-    if (panelIsStillCurrent({ capturedGeneration: panelGeneration, currentGeneration: currentPanelGeneration,
-        capturedId: panelId, currentId: state.panelId })) {
-        const node = state.nodes.find(n => n.id === panelId);
-        if (node) openPanel(node);
-    }
+    const capturedGeneration = currentPanelGeneration;
+    const capturedPanelId = state.panelId;
+    const repository = bureauData?.relations;
+    if (!repository?.remove) { alert('Dépôt relations indisponible.'); return; }
+    const current = state.links.find(relation => relation.id === relId);
+    const reciprocal = current?.reciprocalId ? state.links.find(relation => relation.id === current.reciprocalId) : null;
+    const pair = Boolean(reciprocal && reciprocal.source === current?.cible && reciprocal.cible === current?.source);
+    const stillCurrent = () => capturedRole && state.isAdmin && capturedSession === editorSession
+        && capturedGeneration === currentPanelGeneration && capturedPanelId === state.panelId
+        && repository === bureauData?.relations;
+    const ok = await confirmAction({ titre: 'Supprimer la relation',
+        message: 'Cette relation sera définitivement supprimée.', libelleAction: 'Supprimer', danger: true });
+    if (!ok || !stillCurrent()) return;
+    try {
+        if (!stillCurrent()) return;
+        await repository.remove(relId, pair ? { pair: true, reciprocalId: reciprocal.id } : false);
+        if (!stillCurrent()) return;
+    } catch (error) { if (stillCurrent()) alert('Suppression de la relation impossible : ' + (error?.message || 'réessayez.')); }
 }
 
 // ── PNJ Modal ──────────────────────────────────────────────────
@@ -859,6 +686,7 @@ function openPnjModal(pnjId = null) {
     state.privateLoadId += 1;
     closeCropModal();
     state.editingId  = pnjId;
+    state.editingUpdatedAt = null;
     state.croppedBlob = null;
     const preview = document.getElementById('f-image-preview');
     document.getElementById('pnj-form').reset();
@@ -875,6 +703,7 @@ function openPnjModal(pnjId = null) {
     if (pnjId) {
         const p = state.nodes.find(n => n.id === pnjId);
         if (p) {
+            state.editingUpdatedAt = p.updatedAt ?? null;
             document.getElementById('f-nom').value         = p.nom         || '';
             document.getElementById('f-statut').value      = p.statut      || '';
             document.getElementById('f-vivant').value      = p.vivant      || 'oui';
@@ -907,12 +736,24 @@ function legacyNoteError(pnj) {
 
 async function loadPrivateNotes(pnjId, pnj) {
     const loadId = ++state.privateLoadId;
+    const capturedGeneration = bureauGeneration;
+    const capturedAuth = authSessionKey;
+    const canApply = () => privateLoadCanApply(loadId, state.privateLoadId, state.isAdmin)
+        && capturedGeneration === bureauGeneration && capturedAuth === authSessionKey;
+    unsubscribePrivateNotes?.();
+    unsubscribePrivateNotes = null;
     try {
-        const snap = await getDoc(doc(db, 'pnjs_prives', pnjId));
-        if (!privateLoadCanApply(loadId, state.privateLoadId, state.isAdmin)) return;
-        state.privateDocExists = snap.exists();
-        if (snap.exists()) {
-            const notes = snap.data().notes;
+        if (!bureauData?.pnjs?.subscribePrivate) throw new Error('Dépôt privé indisponible.');
+        unsubscribePrivateNotes = bureauData.pnjs.subscribePrivate(pnjId, snap => {
+            if (!canApply()) return;
+            state.privateDocExists = Boolean(snap);
+            if (snap) {
+            if (snap.issues?.some(issue => issue.field === 'notes')) {
+                state.privateLoadError = true;
+                document.getElementById('pnj-private-status').textContent = 'Notes privées invalides : correction manuelle requise.';
+                return;
+            }
+                const notes = snap.notes;
             if (typeof notes !== 'string') {
                 state.privateLoadError = true;
                 document.getElementById('pnj-private-status').textContent = 'Notes privées invalides : correction manuelle requise.';
@@ -927,8 +768,15 @@ async function loadPrivateNotes(pnjId, pnj) {
             state.privateLoadError = true;
             document.getElementById('pnj-private-status').textContent = legacyError;
         }
+        }, () => {
+            if (canApply()) {
+                state.privateLoadError = true;
+                document.getElementById('f-notes-privees').value = legacyNote(pnj);
+                document.getElementById('pnj-private-status').textContent = `Lecture des notes privées impossible : sauvegarde désactivée.${legacyNoteError(pnj) ? ` ${legacyNoteError(pnj)}` : ''}`;
+            }
+        });
     } catch {
-        if (privateLoadCanApply(loadId, state.privateLoadId, state.isAdmin)) {
+        if (canApply()) {
             state.privateLoadError = true;
             // Compatibilité M1-01 : le fallback est explicite, jamais silencieux.
             document.getElementById('f-notes-privees').value = legacyNote(pnj);
@@ -946,6 +794,7 @@ function closePnjModal() {
     document.getElementById('f-image').value = '';
     document.getElementById('pnj-modal').style.display = 'none';
     state.editingId   = null;
+    state.editingUpdatedAt = null;
     state.croppedBlob = null;
     state.privateDocExists = false;
     state.privateLoadError = false;
@@ -1138,9 +987,12 @@ function buildGraph() {
     const g   = svg.append('g');
 
     const initialScale = 0.8;
-    const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', e => g.attr('transform', e.transform));
+    const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', e => {
+        state.zoomTransform = e.transform;
+        g.attr('transform', e.transform);
+    });
     svg.call(zoom);
-    svg.call(zoom.transform, d3.zoomIdentity
+    svg.call(zoom.transform, state.zoomTransform || d3.zoomIdentity
         .translate(state.graphW / 2 * (1 - initialScale), state.graphH / 2 * (1 - initialScale))
         .scale(initialScale));
     svg.on('click', () => closePanel());
@@ -1339,8 +1191,44 @@ function updateVisibility() {
 }
 
 // ── Detail panel ───────────────────────────────────────────────
+function readLinkedIndices(pnjId) {
+    if (!bureauData?.indices?.subscribeLinked) return Promise.resolve([]);
+    const capturedData = bureauData;
+    const capturedAuth = authSessionKey;
+    const capturedGeneration = currentPanelGeneration;
+    const token = ++linkedIndicesGeneration;
+    return new Promise((resolve, reject) => {
+        let sourceUnsubscribe = null;
+        let settled = false;
+        const finish = (callback, value) => {
+            if (settled) return;
+            settled = true;
+            sourceUnsubscribe?.();
+            if (unsubscribeLinkedIndices === sourceUnsubscribe) unsubscribeLinkedIndices = null;
+            const current = token === linkedIndicesGeneration && capturedData === bureauData
+                && capturedAuth === authSessionKey && capturedGeneration === currentPanelGeneration;
+            callback(current ? value : (callback === resolve ? [] : new Error('Lecture obsolète')));
+        };
+        try {
+            sourceUnsubscribe = capturedData.indices.subscribeLinked(pnjId,
+                items => finish(resolve, items),
+                error => finish(reject, error));
+            if (!settled) unsubscribeLinkedIndices = sourceUnsubscribe;
+            else sourceUnsubscribe?.();
+        } catch (error) { finish(reject, error); }
+    });
+}
+
+function cancelLinkedIndices() {
+    linkedIndicesGeneration += 1;
+    const unsubscribe = unsubscribeLinkedIndices;
+    unsubscribeLinkedIndices = null;
+    unsubscribe?.();
+}
+
 async function openPanel(d) {
     const panelGeneration = ++currentPanelGeneration;
+    cancelLinkedIndices();
     const panelRole = state.isAdmin;
     state.panelId = d.id;
     const panelIsCurrent = () => {
@@ -1433,20 +1321,9 @@ async function openPanel(d) {
                 </div>` : ''}
         </div>`;
 
-    // Interroge Firestore pour les indices liés à ce PNJ.
-    // Note : la contrainte decouvert == true est requise par la règle Firestore
-    // pour les non-MJ ; ne pas la retirer sous peine de refus d'autorisation.
     let linkedClues = [];
     try {
-        const indicesRef = collection(db, 'indices');
-        let q;
-        if (panelRole) {
-            q = query(indicesRef, where('pnjsLies', 'array-contains', d.id));
-        } else {
-            q = query(indicesRef, where('pnjsLies', 'array-contains', d.id), where('decouvert', '==', true));
-        }
-        const querySnapshot = await getDocs(q);
-        linkedClues = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        linkedClues = await readLinkedIndices(d.id);
     } catch (e) {
         if (!panelIsCurrent()) return;
         console.error("Erreur lors de la récupération des indices liés :", e);
@@ -1483,6 +1360,7 @@ async function openPanel(d) {
 
 function closePanel() {
     currentPanelGeneration += 1;
+    cancelLinkedIndices();
     document.getElementById('pnj-detail').classList.remove('open');
     state.panelId = null;
     updateVisibility();

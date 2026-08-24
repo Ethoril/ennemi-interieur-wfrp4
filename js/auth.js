@@ -9,7 +9,7 @@ export { auth, ADMIN_EMAIL };
  * @returns {boolean} True if the user is the admin/GM.
  */
 export function isUserAdmin(user) {
-    return !!(user && user.email === ADMIN_EMAIL);
+    return !!(user && user.email === ADMIN_EMAIL && user.emailVerified === true);
 }
 
 /**

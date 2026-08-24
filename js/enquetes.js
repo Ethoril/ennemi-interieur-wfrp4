@@ -1,20 +1,29 @@
-import { db, storage } from './firebase-init.js';
 import { watchAuth, loginWithGoogle, logout } from './auth.js';
-import { collection, getDocs, deleteDoc, doc, query, where, serverTimestamp, deleteField, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { ref, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+import { createBureauData } from './bureau-data.js';
 import { esc, stripAccents } from './utils.js';
 import { confirmAction } from './ui-confirm.js';
 import { visiblePourJoueurs } from './visibility.js';
-import { createProtectedImageScope } from './protected-images.js';
-import { uploadProtectedImage } from './protected-upload.js';
-import { forgetProtectedUpload, rememberProtectedUpload } from './protected-upload-journal.js';
-import { recoverPendingProtectedUploads } from './protected-upload-recovery.js';
-import { cleanupUnreferencedImage } from './image-lifecycle.js';
-import { safeStorageReference } from './storage-reference.js';
+import { createRenderGate, preserveCheckedValues } from './bureau-view-lifecycle.js';
+
+
+
+
+
 
 function clueImagePlaceholder(clue) {
     if (!clue.imagePath) return '';
     return `<div class="clue-image-placeholder" role="status">${clue.imageState === 'access-denied' ? 'Image protégée inaccessible' : 'Image indisponible'}</div>`;
+}
+
+function showIndiceReadStatus(metadata, error = null) {
+    const target = document.getElementById('indice-read-status') || document.createElement('p');
+    target.id = 'indice-read-status';
+    target.className = 'pnj-cleanup-status';
+    target.textContent = error ? 'Lecture des enquêtes indisponible ; les dernières données restent affichées.'
+        : metadata?.fromCache ? (metadata.hasPendingWrites ? 'Données locales, écritures en attente.' : 'Données locales en cours de synchronisation.')
+            : metadata?.hasPendingWrites ? 'Écriture en attente de confirmation serveur.' : '';
+    if (target.textContent) document.getElementById('clues-container')?.before(target);
+    else target.remove();
 }
 
 // ── State ──────────────────────────────────────────────────────
@@ -24,33 +33,68 @@ const state = {
     pnjs: [],
     searchQ: '',
     filter: 'all', // 'all', 'discovered', 'hidden'
-    editingId: null
+    editingId: null,
+    editingUpdatedAt: null,
 };
 
 let currentLoadId = 0;
 let editorSession = 0;
 let authSessionKey = '';
-const imageScope = createProtectedImageScope(storage);
 let localPreviewUrl = null;
-window.addEventListener('pagehide', () => imageScope.invalidate());
+let bureauData = null;
+let unsubscribePnjs = null;
+let unsubscribeIndices = null;
+let bureauGeneration = 0;
+const renderedImageHandles = new Map();
+window.addEventListener('pagehide', () => {
+    bureauGeneration += 1;
+    currentLoadId += 1;
+    editorSession += 1;
+    closeClueModal();
+    state.pnjs = [];
+    state.clues = [];
+    renderClues();
+    unsubscribeAuth?.();
+    unsubscribeAuth = null;
+    unsubscribePnjs?.();
+    unsubscribeIndices?.();
+    renderedImageHandles.forEach(release => release());
+    renderedImageHandles.clear();
+    void bureauData?.close();
+    bureauData = null;
+});
+window.addEventListener('pageshow', () => {
+    if (!unsubscribeAuth) unsubscribeAuth = watchAuth(handleAuth);
+});
 
 // ── Auth Monitoring ────────────────────────────────────────────
-watchAuth((user, isAdmin) => {
+function handleAuth(user, isAdmin) {
+    const nextBureauGeneration = ++bureauGeneration;
     const roleChanged = state.isAdmin !== isAdmin;
     const nextAuthSessionKey = user?.uid || '';
     const identityChanged = authSessionKey !== nextAuthSessionKey;
     authSessionKey = nextAuthSessionKey;
     state.isAdmin = isAdmin;
-    if (isAdmin) void recoverPendingProtectedUploads(db, storage);
     document.getElementById('auth-btn').textContent = state.isAdmin ? '🔓 Déconnexion' : '🔑 Admin';
     document.getElementById('add-clue-btn').style.display = state.isAdmin ? '' : 'none';
     document.getElementById('filter-group').style.display = state.isAdmin ? 'flex' : 'none';
     document.getElementById('admin-sep').style.display = state.isAdmin ? '' : 'none';
     if (roleChanged || identityChanged) {
+        unsubscribePnjs?.();
+        unsubscribeIndices?.();
+        unsubscribePnjs = null;
+        unsubscribeIndices = null;
+        const previousData = bureauData;
+        bureauData = null;
+        void previousData?.close().catch(error => console.warn('Fermeture du client bureau différée.', error));
+        try { bureauData = createBureauData({ isAdmin }); }
+        catch (error) { console.error('Initialisation des dépôts bureau impossible.', error); }
         // Un changement d’identité invalide les lectures et vide la fenêtre immédiatement.
         editorSession += 1;
         currentLoadId += 1;
-        imageScope.invalidate();
+        renderedImageHandles.forEach(release => release());
+        renderedImageHandles.clear();
+        bureauData?.images.revokeAll?.();
         closeClueModal();
     }
     if ((roleChanged || identityChanged) && !state.isAdmin) {
@@ -60,8 +104,16 @@ watchAuth((user, isAdmin) => {
         renderClues();
     }
     
-    loadData();
-});
+    if (roleChanged || identityChanged || !bureauData) {
+        if (!bureauData) {
+            try { bureauData = createBureauData({ isAdmin }); }
+            catch (error) { console.error('Initialisation des dépôts bureau impossible.', error); }
+        }
+        loadData({ generation: nextBureauGeneration, init: true });
+    }
+}
+let unsubscribeAuth = watchAuth(handleAuth);
+
 
 // ── Auth Button Click ──────────────────────────────────────────
 document.getElementById('auth-btn').addEventListener('click', async () => {
@@ -79,12 +131,11 @@ document.getElementById('auth-btn').addEventListener('click', async () => {
 });
 
 // ── Data Fetching ──────────────────────────────────────────────
-async function loadData() {
+async function loadData({ generation = bureauGeneration, init = false } = {}) {
     const loadId = ++currentLoadId;
     try {
-        if (state.isAdmin) void recoverPendingProtectedUploads(db, storage);
+        if (generation !== bureauGeneration || !bureauData) return;
         clearLocalPreview();
-        const imageGeneration = imageScope.beginGeneration();
         const container = document.getElementById('clues-container');
         if (container) {
             container.innerHTML = `
@@ -94,51 +145,72 @@ async function loadData() {
                 </div>`;
         }
 
-        // 1. Fetch PNJs list
-        const pnjQuery = state.isAdmin
-            ? collection(db, 'pnjs')
-            : query(collection(db, 'pnjs'), where('visibleJoueurs', '==', true));
-        const pnjSnap = await getDocs(pnjQuery);
-        if (loadId !== currentLoadId) return;
-        const loadedPnjs = pnjSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-        // La règle filtre côté serveur ; cette garde évite aussi qu'un cache ancien expose un
-        // PNJ masqué dans les liens d'un indice.
-        state.pnjs = (state.isAdmin ? loadedPnjs : loadedPnjs.filter(visiblePourJoueurs).map(toPublicPnj))
-            .sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
-
-        // 2. Fetch Clues based on auth state
-        // Note : la contrainte decouvert == true est requise par la règle Firestore
-        // pour les non-MJ ; ne pas la retirer sous peine de refus d'autorisation.
-        let cluesSnap;
-        if (state.isAdmin) {
-            cluesSnap = await getDocs(collection(db, 'indices'));
-        } else {
-            cluesSnap = await getDocs(query(collection(db, 'indices'), where('decouvert', '==', true)));
-        }
-        if (loadId !== currentLoadId) return;
-        state.clues = cluesSnap.docs.map(d => ({ id: d.id, ...d.data(), legacyImageUrl: d.data().imageUrl || '' }));
-        await Promise.all(state.clues.map(async clue => {
+        const renderGate = createRenderGate();
+        const render = async (pnjs, clues, token) => {
+            if (generation !== bureauGeneration || loadId !== currentLoadId || !renderGate.isCurrent(token)) return;
+            renderedImageHandles.forEach(release => release());
+            renderedImageHandles.clear();
+            state.pnjs = pnjs.map(repositoryPnjToPage).filter(pnj => state.isAdmin || visiblePourJoueurs(pnj))
+                .sort((a, b) => (a.nom || '').localeCompare(b.nom || ''));
+            state.clues = clues.map(repositoryIndiceToPage);
+            if (state.editingId && !state.clues.some(clue => clue.id === state.editingId)) {
+                closeClueModal();
+                const status = document.getElementById('clue-edit-status') || document.createElement('p');
+                status.id = 'clue-edit-status';
+                status.className = 'pnj-cleanup-status';
+                status.textContent = 'Cet indice a été supprimé ou n’est plus accessible.';
+                document.getElementById('clues-container')?.before(status);
+            }
+            await Promise.all(state.clues.map(async clue => {
             if (!clue.imagePath) {
                 clue.imageState = clue.imageUrl ? 'legacy' : 'missing';
                 clue.imageError = null;
                 return;
             }
-            const result = await imageScope.load(clue.imagePath, imageGeneration);
-            clue.imageState = result.url ? 'ready' : (['storage/unauthorized', 'storage/unauthenticated'].includes(result.error?.code) ? 'access-denied' : 'missing');
-            clue.imageError = result.error?.code || null;
-            if (result.url) clue.imageUrl = result.url;
-            else clue.imageUrl = '';
-        }));
-        if (loadId !== currentLoadId) return;
+            try {
+                const handle = bureauData.images.loadObjectUrl(clue.imagePath);
+                const result = await handle;
+                if (generation !== bureauGeneration || !renderGate.isCurrent(token)) { result.release?.(); return; }
+                renderedImageHandles.set(clue.id, result.release);
+                clue.imageState = 'ready';
+                clue.imageError = null;
+                clue.imageUrl = result.url;
+            } catch (error) {
+                clue.imageState = ['storage/unauthorized', 'storage/unauthenticated'].includes(error?.cause?.code) ? 'access-denied' : 'missing';
+                clue.imageError = error?.code || null;
+                clue.imageUrl = '';
+            }
+            }));
+            if (generation !== bureauGeneration || loadId !== currentLoadId || !renderGate.isCurrent(token)) return;
 
-        // 3. Render
+        // 3. Render en conservant la position de lecture malgré l'émission temps réel.
+        const scrollTop = document.getElementById('clues-container')?.scrollTop ?? 0;
         renderClues();
+        const cluesContainer = document.getElementById('clues-container');
+        if (cluesContainer) cluesContainer.scrollTop = scrollTop;
 
         // 4. Fill form checkboxes
         populatePnjsCheckboxGrid();
 
         // 5. Highlight clue if requested in URL
         highlightClueFromUrl();
+        };
+        unsubscribePnjs?.();
+        unsubscribeIndices?.();
+        let latestPnjs = [];
+        let latestClues = [];
+        const update = () => {
+            const token = renderGate.next();
+            void render(latestPnjs, latestClues, token);
+        };
+        const pnjSubscribe = state.isAdmin ? bureauData.pnjs.subscribeAll : bureauData.pnjs.subscribeVisible;
+        const indiceSubscribe = state.isAdmin ? bureauData.indices.subscribeAll : bureauData.indices.subscribeDiscovered;
+        unsubscribePnjs = pnjSubscribe.call(bureauData.pnjs, (pnjs, metadata) => {
+            latestPnjs = pnjs; showIndiceReadStatus(metadata); update();
+        }, error => { console.error('Lecture PNJs impossible.', error); showIndiceReadStatus(null, error); });
+        unsubscribeIndices = indiceSubscribe.call(bureauData.indices, (clues, metadata) => {
+            latestClues = clues; showIndiceReadStatus(metadata); update();
+        }, error => { console.error('Lecture des indices impossible.', error); showIndiceReadStatus(null, error); });
 
     } catch (e) {
         if (loadId !== currentLoadId) return;
@@ -155,22 +227,38 @@ async function loadData() {
     }
 }
 
-function toPublicPnj(pnj) {
-    return Object.fromEntries(['id', 'nom', 'statut', 'vivant', 'lieu', 'groupe', 'description',
-        'imagePath', 'imageUrl', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre']
-        .filter(key => Object.hasOwn(pnj, key)).map(key => [key, pnj[key]]));
+function repositoryPnjToPage(pnj) {
+    return {
+        ...pnj,
+        imagePath: pnj?.imagePath || '',
+        imageUrl: pnj?.imagePath ? '' : (pnj?.imageUrl || ''),
+    };
+}
+
+function repositoryIndiceToPage(indice) {
+    const image = indice?.image || {};
+    return {
+        ...indice,
+        imagePath: image.legacy || image.invalid ? '' : (image.path || ''),
+        imageUrl: image.legacy && !image.invalid ? image.path : '',
+        legacyImageUrl: image.legacy && !image.invalid ? image.path : '',
+    };
 }
 
 // ── Populate PNJ checkbox grid in form ──────────────────────────
 function populatePnjsCheckboxGrid() {
     const grid = document.getElementById('f-pnjs-grid');
     if (!grid) return;
+    const selected = [...grid.querySelectorAll('input[name="pnjsLies"]:checked')].map(input => input.value);
+    const available = state.pnjs.map(p => p.id);
+    const selectedValues = new Set(preserveCheckedValues(selected, available));
     grid.innerHTML = state.pnjs.map(p => `
         <label class="pnjs-checkbox-label" title="${esc(p.nom)}">
             <input type="checkbox" name="pnjsLies" value="${esc(p.id)}">
             <span>${esc(p.nom)}</span>
         </label>
     `).join('');
+    grid.querySelectorAll('input[name="pnjsLies"]').forEach(input => { input.checked = selectedValues.has(input.value); });
 }
 
 // ── Render Clues ────────────────────────────────────────────────
@@ -276,6 +364,7 @@ function openClueModal(clueId = null) {
     editorSession += 1;
     clearLocalPreview();
     state.editingId = clueId;
+    state.editingUpdatedAt = null;
     document.getElementById('clue-form').reset();
     document.getElementById('f-image-preview').innerHTML = '';
     document.getElementById('f-image-preview').dataset.existingUrl = '';
@@ -291,6 +380,7 @@ function openClueModal(clueId = null) {
     if (clueId) {
         const c = state.clues.find(cl => cl.id === clueId);
         if (c) {
+            state.editingUpdatedAt = c.updatedAt ?? null;
             document.getElementById('f-titre').value = c.titre || '';
             document.getElementById('f-description').value = c.description || '';
             document.getElementById('f-decouvert').value = String(!!c.decouvert);
@@ -322,6 +412,7 @@ function closeClueModal() {
     document.getElementById('f-image-preview').dataset.existingLegacyUrl = '';
     document.getElementById('f-image').value = '';
     state.editingId = null;
+    state.editingUpdatedAt = null;
 }
 
 function clearLocalPreview() {
@@ -346,111 +437,34 @@ document.getElementById('clue-form').addEventListener('submit', async e => {
     const capturedEditingId = state.editingId;
     const capturedSession = editorSession;
     const capturedRole = state.isAdmin;
-    const editorStillCurrent = () => capturedSession === editorSession
-        && capturedEditingId === state.editingId && capturedRole === state.isAdmin
-        && document.getElementById('clue-modal')?.style.display !== 'none';
-    const requireCurrentEditor = () => {
-        if (!editorStillCurrent()) throw new Error('Édition annulée : la session ou le rôle a changé.');
-    };
+    const repository = bureauData?.indices;
+    const current = state.clues.find(clue => clue.id === capturedEditingId);
+    const stillCurrent = () => capturedSession === editorSession
+        && capturedRole === state.isAdmin && capturedRole
+        && capturedEditingId === state.editingId
+        && document.getElementById('clue-modal')?.style.display !== 'none'
+        && repository === bureauData?.indices;
     btn.disabled = true;
     btn.textContent = 'Enregistrement…';
-
     try {
+        if (!repository?.create) throw new Error('Dépôt indices indisponible.');
         const titre = document.getElementById('f-titre').value.trim();
         const description = document.getElementById('f-description').value.trim();
         const decouvert = document.getElementById('f-decouvert').value === 'true';
-        
-        // Récupère les PNJ liés.
-        const checkedPnjs = [];
-        document.querySelectorAll('#f-pnjs-grid input[name="pnjsLies"]:checked').forEach(cb => {
-            checkedPnjs.push(cb.value);
-        });
-
-        const preview = document.getElementById('f-image-preview');
-        let imagePath = preview.dataset.existingPath || '';
-        let uploadedImage = null;
-        const previousImagePath = imagePath;
-        const previousLegacyUrl = preview.dataset.existingLegacyUrl || '';
-        const clueRef = capturedEditingId ? doc(db, 'indices', capturedEditingId) : doc(collection(db, 'indices'));
-
-        const fileInput = document.getElementById('f-image');
-        if (fileInput.files && fileInput.files[0]) {
-            const file = fileInput.files[0];
-            // L’identifiant Firestore est réservé avant l’upload pour obtenir un
-            // dossier déterministe et une référence rejouable.
-            btn.textContent = 'Upload image…';
-            requireCurrentEditor();
-            const result = await uploadProtectedImage(file, { kind: 'indice', ownerId: clueRef.id, contentType: file.type });
-            imagePath = result.imagePath;
-            uploadedImage = ref(storage, result.imagePath);
-            if (!rememberProtectedUpload({ collection: 'indices', ownerId: clueRef.id, path: result.imagePath })) {
-                try { await deleteObject(uploadedImage); }
-                catch { throw new Error(`Upload annulé. Nettoyage manuel requis pour ${result.imagePath}.`); }
-                throw new Error('Upload annulé : impossible de journaliser sa reprise locale.');
-            }
-            if (!editorStillCurrent()) {
-                try { await deleteObject(uploadedImage); forgetProtectedUpload(result.imagePath); }
-                catch { throw new Error(`Édition annulée. Nettoyage manuel requis pour ${uploadedImage.fullPath}.`); }
-                throw new Error('Édition annulée : la session ou le rôle a changé.');
-            }
-        }
-
-        const clueData = {
-            titre,
-            description,
-            decouvert,
-            pnjsLies: checkedPnjs,
-            updatedAt: serverTimestamp(),
-        };
-        if (imagePath) clueData.imagePath = imagePath;
-        if (uploadedImage && capturedEditingId) clueData.imageUrl = deleteField();
-
-        try {
-            requireCurrentEditor();
-            await runTransaction(db, async transaction => {
-                const pnjSnapshots = [];
-                for (const pnjId of checkedPnjs) pnjSnapshots.push(await transaction.get(doc(db, 'pnjs', pnjId)));
-                const clueSnapshot = capturedEditingId ? await transaction.get(clueRef) : null;
-                if (pnjSnapshots.some(snapshot => !snapshot.exists()
-                    || snapshot.data()?.suppressionEnCours === true)) {
-                    throw new Error('Enregistrement refusé : un PNJ lié est absent ou en cours de suppression.');
-                }
-                requireCurrentEditor();
-                if (capturedEditingId) {
-                    if (!clueSnapshot?.exists()) throw new Error('Indice introuvable.');
-                    transaction.update(clueRef, clueData);
-                } else {
-                    transaction.set(clueRef, { ...clueData, createdAt: serverTimestamp() });
-                }
-            });
-        } catch (error) {
-            if (uploadedImage) {
-                try { await deleteObject(uploadedImage); forgetProtectedUpload(imagePath); }
-                catch { throw new Error(`${error.message}. Nettoyage manuel requis pour ${uploadedImage.fullPath}.`); }
-            }
-            throw error;
-        }
-        if (uploadedImage) forgetProtectedUpload(imagePath);
-        if (uploadedImage) {
-            const oldReferences = [previousImagePath, previousLegacyUrl].filter(Boolean);
-            const removed = new Set();
-            for (const oldReference of oldReferences) {
-                if (oldReference === imagePath || removed.has(oldReference)) continue;
-                removed.add(oldReference);
-                try {
-                    await cleanupUnreferencedImage({
-                        db, storage, reference: oldReference, ownerCollection: 'indices', ownerId: clueRef.id,
-                    });
-                } catch (error) {
-                    alert(`Enregistrement réussi, mais ancienne image à nettoyer : ${error.message}`);
-                }
-            }
-        }
-
+        const pnjsLies = [...document.querySelectorAll('#f-pnjs-grid input[name="pnjsLies"]:checked')].map(input => input.value);
+        const file = document.getElementById('f-image').files?.[0] || null;
+        const id = capturedEditingId || 'indice-' + Date.now().toString(36);
+        if (!stillCurrent()) throw new Error('Édition annulée : la session ou le rôle a changé.');
+        const payload = { titre, description, decouvert, pnjsLies };
+        if (capturedEditingId && !file && current?.imagePath) payload.imagePath = current.imagePath;
+        const result = capturedEditingId
+            ? await repository.update(capturedEditingId, payload, state.editingUpdatedAt, { imageFile: file })
+            : await repository.create(payload, { id, imageFile: file });
+        if (!stillCurrent()) return;
+        void result;
         closeClueModal();
-        await loadData();
-    } catch (err) {
-        alert("Erreur lors de l'enregistrement : " + err.message);
+    } catch (error) {
+        if (stillCurrent()) alert('Erreur lors de l’enregistrement : ' + (error?.message || 'réessayez.'));
     } finally {
         btn.disabled = false;
         btn.textContent = 'Enregistrer';
@@ -461,51 +475,23 @@ document.getElementById('clue-delete-btn').addEventListener('click', async () =>
     if (!state.editingId) return;
     const capturedEditingId = state.editingId;
     const capturedSession = editorSession;
-    const capturedRole = state.isAdmin;
-    const deletionStillCurrent = () => capturedEditingId === state.editingId
-        && capturedSession === editorSession && capturedRole === state.isAdmin;
-    const clue = state.clues.find(c => c.id === capturedEditingId);
+    const repository = bureauData?.indices;
+    const clue = state.clues.find(item => item.id === capturedEditingId);
     const ok = await confirmAction({
         titre: "Supprimer l'indice",
-        message: `L'indice « ${clue?.titre || 'cet indice'} » sera définitivement supprimé.`,
-        libelleAction: 'Supprimer',
-        danger: true,
+        message: "L'indice « " + (clue?.titre || 'cet indice') + " » sera définitivement supprimé.",
+        libelleAction: 'Supprimer', danger: true,
     });
-    if (!ok || !deletionStillCurrent()) return;
-    const imageReferences = [clue?.imagePath, clue?.imageUrl].filter(Boolean);
-    const protectedImageReferences = imageReferences.map(reference => safeStorageReference(storage, reference))
-        .filter(imageRef => imageRef?.fullPath.split('/').length === 3)
-        .map(imageRef => imageRef.fullPath);
-    const legacyImageCount = imageReferences.length - protectedImageReferences.length;
-
+    if (!ok || capturedSession !== editorSession) return;
     const btn = document.getElementById('clue-delete-btn');
     btn.disabled = true;
     btn.textContent = 'Suppression…';
-    
     try {
-        if (!deletionStillCurrent()) return;
-        for (const path of protectedImageReferences) {
-            if (!rememberProtectedUpload({
-                collection: 'indices', ownerId: capturedEditingId, path,
-            })) throw new Error(`Suppression annulée : impossible de journaliser ${path}.`);
-        }
-        await deleteDoc(doc(db, 'indices', capturedEditingId));
-        let storageError = null;
-        for (const reference of protectedImageReferences) {
-            try {
-                await cleanupUnreferencedImage({
-                    db, storage, reference, ownerCollection: 'indices', ownerId: capturedEditingId,
-                });
-            } catch (error) { storageError = error; }
-        }
-        if (storageError) {
-            alert(`Indice supprimé dans Firestore, mais nettoyage Storage à reprendre : ${storageError.message}`);
-        }
-        if (legacyImageCount) alert('Indice supprimé. L’image legacy reste signalée dans l’inventaire administratif pour nettoyage contrôlé.');
-        closeClueModal();
-        await loadData();
-    } catch (err) {
-        alert("Erreur lors de la suppression : " + err.message);
+        if (!repository?.remove) throw new Error('Dépôt indices indisponible.');
+        await repository.remove(capturedEditingId);
+        if (capturedSession === editorSession && repository === bureauData?.indices) closeClueModal();
+    } catch (error) {
+        if (capturedSession === editorSession) alert('Erreur lors de la suppression : ' + (error?.message || 'réessayez.'));
     } finally {
         btn.disabled = false;
         btn.textContent = '🗑 Supprimer';

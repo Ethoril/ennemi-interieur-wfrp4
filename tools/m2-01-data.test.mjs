@@ -86,6 +86,23 @@ test('les normaliseurs imposent l’id du snapshot et échouent fermement sur le
     assert.ok(indice.issues.some(item => item.code === 'too-many-references'));
 });
 
+test('les URLs legacy PNJ sont canoniques et ne relaient ni token ni userinfo', () => {
+    const tokenized = normalizePnjPublic({ id: 'p-1', data: {
+        visibleJoueurs: true,
+        imageUrl: 'https://storage.googleapis.com/campagne-wrpg.firebasestorage.app/portraits/p-1/a.webp?alt=media&token=secret',
+    } });
+    assert.equal(tokenized.imageUrl, 'https://storage.googleapis.com/campagne-wrpg.firebasestorage.app/portraits/p-1/a.webp');
+    assert.doesNotMatch(JSON.stringify(tokenized), /token=|secret/u);
+
+    const userinfo = normalizePnjPublic({ id: 'p-1', data: {
+        visibleJoueurs: true,
+        imageUrl: 'https://user:secret@storage.googleapis.com/campagne-wrpg.firebasestorage.app/portraits/p-1/a.webp',
+    } });
+    assert.equal(userinfo.imageUrl, null);
+    assert.ok(userinfo.issues.some(item => item.field === 'imageUrl'));
+    assert.doesNotMatch(JSON.stringify(userinfo), /user:secret|secret/u);
+});
+
 test('un PNJ marqué en suppression est toujours masqué et signalé', () => {
     const marked = normalizePnjPublic({ id: 'p-1', data: { visibleJoueurs: true, suppressionEnCours: true } });
     assert.equal(marked.visibleJoueurs, false);

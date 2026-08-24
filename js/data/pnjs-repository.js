@@ -1,5 +1,6 @@
 import { normalizePnjPrivate, normalizePnjPublic } from './firebase-normalizers.js';
 import { FirebaseClientError, ERROR_KINDS, normalizeFirebaseError } from './firebase-errors.js';
+import { describeImage } from './images-repository.js';
 import { commitCascadeBatches } from '../pnj-integrity.js';
 import {
     collectionRef, compareOrder, compareUnicode, documentIdConstraint, documentRef, getDocument, getDocuments,
@@ -101,6 +102,18 @@ function emitNormalized(snapshot, normalizer, compare, onData, state, filter = (
     if (key === state.lastKey) return;
     state.lastKey = key;
     onData(items, metadata);
+}
+
+function normalizePnjForRepository(snapshot) {
+    const normalized = normalizePnjPublic(snapshot);
+    const image = describeImage(normalized, normalized.id, 'portrait');
+    return {
+        ...normalized,
+        image,
+        imagePath: image.invalid || image.legacy ? null : image.path,
+        imageUrl: image.legacy && !image.invalid ? image.path : null,
+        legacyImageInvalid: image.legacy && image.invalid,
+    };
 }
 
 function queryAll(sdk, db, collectionName, constraints = []) {
@@ -209,13 +222,13 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
 
     function subscribeVisible(onData, onError) {
         const target = queryAll(sdk, db, 'pnjs', [whereConstraint(sdk, 'visibleJoueurs', '==', true)]);
-        return subscribeCollection(target, normalizePnjPublic, comparePnj, onData, onError,
+        return subscribeCollection(target, normalizePnjForRepository, comparePnj, onData, onError,
             pnj => pnj.visibleJoueurs === true && pnj.suppressionEnCours !== true);
     }
 
     function subscribeAll(onData, onError) {
         if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'subscribe-all-pnjs' });
-        return subscribeCollection(queryAll(sdk, db, 'pnjs'), normalizePnjPublic, comparePnj, onData, onError);
+        return subscribeCollection(queryAll(sdk, db, 'pnjs'), normalizePnjForRepository, comparePnj, onData, onError);
     }
 
     function subscribeOne(id, onData, onError) {
@@ -232,9 +245,9 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                 let normalized = null;
                 if (Array.isArray(snapshot?.docs)) {
                     const found = docsFromSnapshot(snapshot).find(item => snapshotId(item) === id);
-                    normalized = found ? normalizePnjPublic(found) : null;
+                    normalized = found ? normalizePnjForRepository(found) : null;
                 } else if (snapshotExists(snapshot)) {
-                    normalized = normalizePnjPublic(snapshot);
+                    normalized = normalizePnjForRepository(snapshot);
                 }
                 if (!isMj && !(normalized?.visibleJoueurs === true && normalized.suppressionEnCours !== true)) normalized = null;
                 const metadata = snapshotMetadata(snapshot);
@@ -518,9 +531,15 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         }
     }
 
+    async function inspectRemovalLock() {
+        if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'inspect-pnj-removal' });
+        const snapshot = await getDocument(sdk, documentRef(sdk, db, 'integrity_locks', 'pnj-deletion'));
+        return snapshotExists(snapshot) ? snapshotData(snapshot) : null;
+    }
+
     const repository = { subscribeVisible, subscribeOne };
     if (isMj) Object.assign(repository, {
-        subscribeAll, subscribePrivate, create, update, remove, resumeRemoval,
+        subscribeAll, subscribePrivate, create, update, remove, resumeRemoval, inspectRemovalLock,
     });
     return Object.freeze(repository);
 }

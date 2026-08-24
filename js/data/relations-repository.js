@@ -74,6 +74,28 @@ function sameRelationFields(left, right) {
     return RELATION_FIELDS.every(field => left[field] === right[field]);
 }
 
+function relationFieldsKey(relation) {
+    return JSON.stringify(RELATION_FIELDS.map(field => relation[field]));
+}
+
+function withExactReciprocalIds(items) {
+    const byKey = new Map();
+    for (const item of items) {
+        const key = relationFieldsKey(item);
+        const list = byKey.get(key) || [];
+        list.push(item);
+        byKey.set(key, list);
+    }
+    return items.map(item => {
+        const candidates = byKey.get(relationFieldsKey(reverseRelation(item))) || [];
+        // Une paire n'est prouvée que si le miroir inverse est unique et
+        // strictement égal sur tous les champs métier.
+        const reciprocal = candidates.length === 1 && candidates[0].id !== item.id
+            && sameRelationFields(candidates[0], reverseRelation(item)) ? candidates[0] : null;
+        return { ...item, reciprocalId: reciprocal?.id ?? null };
+    });
+}
+
 function snapshotExists(snapshot) {
     return typeof snapshot?.exists === 'function' ? snapshot.exists() : snapshot?.exists === true;
 }
@@ -102,7 +124,8 @@ function ensureExpected(snapshot, expectedUpdatedAt) {
 }
 
 function emitRelations(snapshot, onData, state, filter) {
-    const items = sortedBy(docs(snapshot).map(normalizeRelation).filter(filter), compareRelation);
+    const normalized = docs(snapshot).map(normalizeRelation).filter(filter);
+    const items = sortedBy(withExactReciprocalIds(normalized), compareRelation);
     const metadata = snapshotMetadata(snapshot);
     const key = `${valueKey(items)}|${metadata.fromCache}|${metadata.hasPendingWrites}`;
     if (key === state.lastKey) return;

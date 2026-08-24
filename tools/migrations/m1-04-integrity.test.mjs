@@ -9,6 +9,9 @@ import {
 const files = await Promise.all([
     readFile('js/pnjs.js', 'utf8'),
     readFile('js/enquetes.js', 'utf8'),
+    readFile('js/data/pnjs-repository.js', 'utf8'),
+    readFile('js/data/relations-repository.js', 'utf8'),
+    readFile('js/bureau-data.js', 'utf8'),
     readFile('js/image-lifecycle.js', 'utf8'),
     readFile('js/protected-upload-recovery.js', 'utf8'),
     readFile('pnjs.html', 'utf8'),
@@ -16,32 +19,27 @@ const files = await Promise.all([
     readFile('js/storage-reference.js', 'utf8'),
     readFile('js/protected-upload-journal.js', 'utf8'),
 ]);
-const [pnjs, enquetes, lifecycle, recovery, pnjsHtml, rules, storageReference, journal] = files;
+const [pnjs, enquetes, pnjRepository, relationsRepository, bureauData, lifecycle, recovery, pnjsHtml, rules, storageReference, journal] = files;
 
 test('les relations bidirectionnelles sont préparées dans une transaction et refusent l’auto-relation', () => {
-    assert.match(pnjs, /runTransaction\(db/u);
-    assert.match(pnjs, /const firstRef = doc\(db, 'relations', relationId\(relData\)\)/u);
-    assert.match(pnjs, /transaction\.set\(firstRef, \{ \.\.\.relData/u);
+    assert.match(relationsRepository, /runTransaction\(db, callback\)/u);
+    assert.match(relationsRepository, /const primaryRef = documentRef\(sdk, db, 'relations', relationId\(primary\)\)/u);
+    assert.match(relationsRepository, /transaction\.set\(primaryRef, \{ \.\.\.primary/u);
     assert.match(pnjs, /if \(sourceId === cibleId\)/u);
-    assert.match(pnjs, /Création annulée : la session ou le panneau a changé/u);
+    assert.match(pnjs, /capturedSession|capturedGeneration/u);
     assert.match(pnjs, /Création de la relation impossible/u);
     assert.doesNotMatch(pnjs, /await addDoc\(collection\(db, 'relations'\)/u);
-    assert.match(enquetes, /runTransaction\(db/u);
+    assert.match(enquetes, /repository\.create|repository\.update/u);
 });
 
 test('la suppression PNJ retire indices, relations et privé avant le portrait', () => {
-    assert.match(pnjs, /pnjsLies: arrayRemove\(id\)/u);
-    assert.match(pnjs, /commitCascadeBatches\(operations/u);
-    assert.match(pnjs, /doc\(db, 'pnjs_prives', id\)/u);
-    assert.match(pnjs, /finalBatch\.delete\(doc\(db, 'pnjs', id\)\)/u);
-    assert.match(pnjs, /cleanupUnreferencedImage/u);
-    assert.match(pnjs, /PNJ_DELETION_KEY/u);
+    assert.match(pnjRepository, /pnjsLies: arrayRemoveValue\(sdk, id\)/u);
+    assert.match(pnjRepository, /commitCascadeBatches\(operations/u);
+    assert.match(pnjRepository, /finalBatch\.delete\(privateRef\)/u);
+    assert.match(pnjRepository, /finalBatch\.delete\(pnjRef\)/u);
+    assert.match(bureauData, /cleanupUnreferencedImage/u);
     assert.match(pnjs, /function clearPnjAdminStatuses/u);
-    assert.match(pnjs, /if \(!recoveryStillCurrent\(\)\) return/u);
-    assert.match(pnjs, /button\.className = 'btn-ghost-sm'/u);
-    assert.match(pnjs, /impossible de calculer son impact/u);
-    assert.match(pnjs, /const relationCount = impactRelations/u);
-    assert.match(pnjs, /const indiceCount = impactIndices/u);
+    assert.match(pnjs, /resumeRemoval/u);
     assert.match(pnjs, /safeRelationColor/u);
     assert.match(rules, /suppressionEnCours/u);
     assert.match(rules, /!resource\.data\.get\('suppressionEnCours', false\)/u);
@@ -49,13 +47,12 @@ test('la suppression PNJ retire indices, relations et privé avant le portrait',
     assert.match(rules, /lockAfterTargetsPnj/u);
     assert.match(rules, /cascadeIndiceUpdate/u);
     assert.match(rules, /ownerId\.matches\('\^\[A-Za-z0-9_-\]\+\$'\)/u);
-    assert.match(pnjs, /integrity_locks', 'pnj-deletion'/u);
-    assert.match(pnjs, /await deleteDoc\(deletionLockRef\)/u);
-    assert.match(pnjs, /portraitPathsForDeletionLock/u);
+    assert.match(pnjRepository, /integrity_locks', 'pnj-deletion'/u);
+    assert.match(pnjRepository, /unlockBatch\.delete\(lockRef\)/u);
+    assert.match(pnjRepository, /imagePaths/u);
     assert.match(rules, /publicRelationEndpointsExist\(request\.resource\.data\)/u);
     assert.match(rules, /relationEndpointsExist\(request\.resource\.data\)/u);
-    assert.match(pnjs, /const relationSnapshot = await getDoc\(relationRef\)/u);
-    assert.match(pnjs, /const confirmation = await getDoc\(relationRef\)/u);
+    assert.match(pnjRepository, /relationSnapshots/u);
 });
 
 test('le cycle de vie compare des références canoniques et peut reprendre automatiquement', () => {
@@ -65,7 +62,7 @@ test('le cycle de vie compare des références canoniques et peut reprendre auto
     assert.match(recovery, /integrity_locks', 'images'/u);
     assert.match(recovery, /cleanupUnreferencedImage/u);
     assert.match(recovery, /RETRY_DELAY_MS/u);
-    assert.match(enquetes, /cleanupUnreferencedImage/u);
+    assert.match(bureauData, /cleanupUnreferencedImage/u);
     assert.match(storageReference, /segment !== '\.' && segment !== '\.\.'/u);
     assert.match(journal, /validJournalPath/u);
 });
