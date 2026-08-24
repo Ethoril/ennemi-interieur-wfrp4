@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07070d">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'">
+  <title>PNJs — L'Ennemi Intérieur</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/theme-parchment.css">
+  <link rel="stylesheet" href="../css/mobile-app.css">
+</head>
+<body>
+  <a class="m-skip-link" href="#m-main">Aller au contenu</a>
+  <div class="m-app" id="m-app">
+    <header class="m-header" aria-label="En-tête de l'application">
+      <button class="m-icon-button m-back-button" id="m-back" type="button" aria-label="Retour" hidden>‹</button>
+      <div class="m-header-copy">
+        <p class="m-eyebrow">L'Ennemi Intérieur</p>
+        <h1 id="m-title" tabindex="-1">PNJs</h1>
+      </div>
+      <button class="m-icon-button" id="m-header-action" type="button" aria-label="Actions" hidden>⋯</button>
+    </header>
+
+    <div class="m-status" id="m-status" role="status" aria-live="polite" aria-atomic="true"></div>
+    <main class="m-main" id="m-main" tabindex="-1"></main>
+
+    <nav class="m-bottom-nav" aria-label="Navigation principale">
+      <a href="#/pnjs" data-route="pnjs" aria-current="page">
+        <span class="m-nav-icon" aria-hidden="true">♙</span><span>PNJs</span>
+      </a>
+      <a href="#/enquetes" data-route="enquetes">
+        <span class="m-nav-icon" aria-hidden="true">✦</span><span>Enquêtes</span>
+      </a>
+      <a href="#/reglages" data-route="reglages">
+        <span class="m-nav-icon" aria-hidden="true">⚙</span><span>Réglages</span>
+      </a>
+    </nav>
+  </div>
+
+  <dialog class="m-dialog" id="m-dialog" aria-labelledby="m-dialog-title">
+    <div class="m-dialog-card">
+      <div class="m-dialog-heading">
+        <h2 id="m-dialog-title">Réglages</h2>
+        <button class="m-icon-button" id="m-dialog-close" type="button" aria-label="Fermer">×</button>
+      </div>
+      <p>Les préférences et la connexion seront disponibles dans un prochain lot.</p>
+      <button class="m-button" id="m-theme-toggle" type="button">Passer au thème parchemin</button>
+      <button class="m-button m-button-primary" id="m-dialog-ok" type="button">Fermer</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="../js/mobile/app.js"></script>
+</body>
+</html>
