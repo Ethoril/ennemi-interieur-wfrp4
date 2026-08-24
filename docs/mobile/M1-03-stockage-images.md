@@ -55,11 +55,14 @@ pas initialisé : cela permet d’utiliser les émulateurs sans introduire de je
 de développement qui pointe par erreur vers la callable de production est donc refusé par le
 serveur, ce qui évite de transformer le mode local en contournement de sécurité.
 
-État opérateur vérifié le 24 août 2026 : provider reCAPTCHA Enterprise enregistré, domaine unique
-`ethoril.github.io`, TTL d’une heure, seuil de score `0,5`, plan Blaze actif, IAM Storage↔Firestore
-présent et aucune enforcement App Check globale. Cela ne constitue pas une preuve de déploiement :
-la callable et les règles Firebase doivent encore être publiées et testées. La commande prévue est
-`firebase deploy --only functions:uploadProtectedImage` après validation finale du client.
+État opérateur déployé et revérifié le 24 août 2026 : provider reCAPTCHA Enterprise enregistré,
+domaine unique `ethoril.github.io`, TTL d’une heure, seuil de score `0,5`, plan Blaze actif, IAM
+Storage↔Firestore limité au compte technique Firebase Storage et aucune enforcement App Check
+globale. Le client `v2.16.0` a été publié avant la callable ; `uploadProtectedImage`, les règles
+Firestore et les règles Storage ont ensuite été déployées dans cet ordre. Une requête sans jeton et
+une requête avec un faux jeton App Check sont refusées en `401`, tandis que le client de production
+obtient ses données et ses images protégées sans erreur App Check. La validation positive d’un
+upload MJ réel reste à consigner lors de la recette authentifiée.
 Si la callable détecte des métadonnées non conformes et que sa suppression compensatoire échoue,
 elle émet l’événement structuré `protected-image-cleanup-required` dans Cloud Logging avec le seul
 chemin et le code d’erreur. Ce signal et l’inventaire M1-03 constituent la reprise opérateur.
@@ -93,17 +96,18 @@ guardée (jamais exécutée ici) est :
 node tools/migrations/m1-03-cors-preflight.mjs apply --project=campagne-wrpg --bucket=campagne-wrpg.firebasestorage.app --execute --confirm-production=campagne-wrpg --confirm-cors=campagne-wrpg
 ```
 
-L’inspection read-only confirme désormais que la CORS production est conforme à la configuration
-versionnée. Cela ne signifie pas que les règles Storage ou la callable ont été déployées. Pour un
+L’inspection read-only confirme que la CORS production est conforme à la configuration versionnée.
+Les règles Storage et la callable ont été déployées le 24 août 2026. Pour un
 rollback, restaurer l’export CORS préalable avec l’outil opérateur Google Cloud, puis réinspecter ;
 ce script n’applique volontairement que la configuration canonique du dépôt.
 
 Les écrans chargent `imagePath` via le SDK Storage (`getBlob`), fabriquent une URL objet mémoire et
 la révoquent lors d’un rechargement/changement de vue. Dès qu’un `imagePath` existe, toute erreur
 (`permission-denied`, absence ou réseau) laisse l’image absente : il n’y a jamais de repli URL. Le
-fallback URL legacy ne sert que lorsque `imagePath` est absent. Les URL legacy déjà connues restent une fuite
-possible jusqu’au cleanup explicitement confirmé : la date et le résultat du cleanup doivent être
-consignés dans la recette de livraison.
+fallback URL legacy ne sert que lorsque `imagePath` est absent. Le cleanup production a été
+explicitement confirmé et exécuté le 24 août 2026 : les trois sources référencées ont été supprimées
+après vérification de leur copie protégée et de leur référence Firestore. Les deux objets orphelins
+connus n’ont pas été supprimés et restent signalés dans l’inventaire opérateur.
 `getDownloadURL()` est interdit côté client : Firebase peut recréer un token lorsqu’il n’en existe
 plus un et réintroduire une URL contournant les règles. Le client utilise exclusivement `getBlob()`
 et des URL objet mémoire révoquées.
@@ -111,7 +115,7 @@ et des URL objet mémoire révoquées.
 Le Service Worker exclut les endpoints Storage des stratégies Cache Storage et, à son activation,
 purge aussi toute réponse Storage héritée dans le cache courant. Le module App Check fait partie du
 précache local. Le bump global M1-05 aligne désormais `APP_VERSION` et `CACHE_NAME` sur `v2.16.0` ;
-la version cliente doit encore être publiée et validée avec les règles Firebase.
+la version cliente et les règles Firebase correspondantes sont publiées.
 Les objets créés ou migrés portent également `Cache-Control: no-store`, afin que le cache HTTP du
 navigateur ne conserve pas un blob après un passage public → secret.
 
@@ -119,8 +123,7 @@ navigateur ne conserve pas un blob après un passage public → secret.
 
 Le contrôle Firebase/Google Cloud du 24 août 2026 confirme que l’intégration des règles Storage
 avec Firestore (accès `firestore.get/exists`, service account/IAM requis par Firebase) est active
-pour le projet. Ce constat ne vaut pas déploiement des règles versionnées : celui-ci reste une étape
-distincte à exécuter et à consigner.
+pour le projet. Les règles versionnées ont été compilées puis déployées le même jour.
 
 Déployer le nouveau client (qui écrit `imagePath`) avant la restriction Firestore qui interdit la
 création ou la modification d’un `imageUrl` legacy. Sur remplacement explicite depuis l’interface,

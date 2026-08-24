@@ -2,7 +2,7 @@
 
 ### Sécurité et mobile
 - **App Check progressif** : le client initialise reCAPTCHA Enterprise sur l’origine de production, tandis que la callable d’upload protégé exige désormais App Check. Le développement local reste sans jeton de debug et ne peut pas utiliser accidentellement la callable de production.
-- **Socle M1 préparé** : les migrations de visibilité, les règles d’intégrité et le cycle de vie des images disposent de leurs contrôles et mécanismes de reprise. Cette version ne prétend pas que les migrations ou déploiements Firebase ont déjà été exécutés.
+- **Socle M1 déployé** : la visibilité Firestore, les règles d’intégrité, les images protégées, la fonction d’upload et App Check sont actifs sur `campagne-wrpg`. Les trois anciennes copies référencées ont été migrées puis nettoyées ; les deux portraits orphelins connus restent volontairement conservés.
 
 ### PWA & Cache
 - **Précache App Check** : le module local de configuration est inclus dans le Service Worker.

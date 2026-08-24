@@ -10,6 +10,9 @@
 | Fichiers | `CHANGELOG.md`, `js/layout.js`, `sw.js`, documentation de migration |
 | Dépend de | M1-01, M1-02, M1-03, M1-04 |
 
+Le journal d’exécution production est conservé dans
+[`../../mobile/M1-05-cloture-production.md`](../../mobile/M1-05-cloture-production.md).
+
 ## Préconditions
 
 Ne commencer que lorsque les migrations ont été exécutées et contrôlées, les index sont prêts et les
