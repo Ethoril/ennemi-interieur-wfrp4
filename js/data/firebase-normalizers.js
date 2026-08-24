@@ -187,7 +187,9 @@ export function normalizeRelation(snapshot) {
     if (!validId(source)) issues.push(issue('source', 'invalid-reference'));
     if (!validId(cible)) issues.push(issue('cible', 'invalid-reference'));
     if (source && source === cible) issues.push(issue('cible', 'self-reference'));
-    const style = data.style === 'solid' || data.style === 'dashed' ? data.style : '';
+    const style = data.style === undefined || data.style === null
+        ? 'solid'
+        : (data.style === 'solid' || data.style === 'dashed' ? data.style : '');
     const color = data.color === null || data.color === undefined ? null : text(data, 'color', issues, { max: 32 });
     const safeColor = /^(?:#[0-9a-f]{3}|#[0-9a-f]{4}|#[0-9a-f]{6}|#[0-9a-f]{8})$/iu.test(color) ? color : null;
     if (color && !safeColor) issues.push(issue('color', 'invalid-css-color'));
