@@ -41,6 +41,8 @@ const ASSETS_LOCAUX = [
   './js/protected-upload-id.js',
   './js/protected-upload-journal.js',
   './js/protected-upload-recovery.js',
+  './js/image-lifecycle.js',
+  './js/pnj-integrity.js',
   './js/sheets.js',
   './js/ui-confirm.js',
   './js/utils.js',

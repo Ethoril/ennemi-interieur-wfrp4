@@ -1,5 +1,6 @@
 // Compatibilité M1-01 : l'ancien format n'avait pas de drapeau, mais toute autre valeur
-// atypique doit rester masquée côté visiteur jusqu'à décision du MJ.
+// atypique ou suppression en cours doit rester masquée côté visiteur.
 export function visiblePourJoueurs(data) {
-    return data?.visibleJoueurs === true || !Object.hasOwn(data ?? {}, 'visibleJoueurs');
+    return data?.suppressionEnCours !== true
+        && (data?.visibleJoueurs === true || !Object.hasOwn(data ?? {}, 'visibleJoueurs'));
 }

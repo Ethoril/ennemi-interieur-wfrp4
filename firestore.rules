@@ -27,6 +27,21 @@ service cloud.firestore {
               && data.imagePath.split('/')[2].size() <= 128);
     }
 
+    function validOwnerId(ownerId) {
+      return ownerId is string && ownerId.size() > 0 && ownerId.size() <= 100
+          && ownerId.matches('^[A-Za-z0-9_-]+$');
+    }
+
+    function validOwnedImagePath(path, ownerId, prefix) {
+      return validOwnerId(ownerId) && path is string
+          && path.split('/').size() == 3
+          && path.split('/')[0] == prefix
+          && path.split('/')[1] == ownerId
+          && path.split('/')[2].size() > 0
+          && path.split('/')[2].size() <= 128
+          && path.split('/')[2] != '.' && path.split('/')[2] != '..';
+    }
+
     function validTimestamp(data, field) {
       return !data.keys().hasAny([field]) || data[field] is timestamp;
     }
@@ -42,7 +57,8 @@ service cloud.firestore {
 
     function validPnj(data) {
       return hasOnly(data, ['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description',
-          'imageUrl', 'imagePath', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre'])
+          'imageUrl', 'imagePath', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre',
+          'suppressionEnCours'])
         && data.visibleJoueurs is bool
         && data.nom is string && data.nom.size() > 0 && data.nom.size() <= 200
         && validText(data, 'statut', 64)
@@ -58,12 +74,18 @@ service cloud.firestore {
         && validTimestamp(data, 'updatedAt');
     }
 
+    function validDeletionMarker(data) {
+      return !data.keys().hasAny(['suppressionEnCours'])
+          || data.suppressionEnCours is bool;
+    }
+
     function validRelation(data) {
       return hasOnly(data, ['source', 'cible', 'type', 'label', 'color', 'style',
           'visibleJoueurs', 'createdAt', 'updatedAt'])
         && data.visibleJoueurs is bool
         && data.source is string && data.source.size() > 0 && data.source.size() <= 150
         && data.cible is string && data.cible.size() > 0 && data.cible.size() <= 150
+        && data.source != data.cible
         && data.type is string && data.type.size() > 0 && data.type.size() <= 100
         && validText(data, 'label', 300)
         && (!data.keys().hasAny(['color']) || data.color == null || validText(data, 'color', 32))
@@ -120,12 +142,81 @@ service cloud.firestore {
       return data.updatedAt == request.time;
     }
 
+    function relationEndpointsExist(data) {
+      let sourceRef = /databases/$(database)/documents/pnjs/$(data.source);
+      let cibleRef = /databases/$(database)/documents/pnjs/$(data.cible);
+      return existsAfter(sourceRef) && existsAfter(cibleRef)
+          && getAfter(sourceRef).data.get('suppressionEnCours', false) != true
+          && getAfter(cibleRef).data.get('suppressionEnCours', false) != true;
+    }
+
+    function activePnjAfter(id) {
+      let pnjRef = /databases/$(database)/documents/pnjs/$(id);
+      return existsAfter(pnjRef)
+          && getAfter(pnjRef).data.get('suppressionEnCours', false) != true;
+    }
+
+    function deletionLockRef() {
+      return /databases/$(database)/documents/integrity_locks/pnj-deletion;
+    }
+
+    function deletionLockActive() {
+      return exists(deletionLockRef());
+    }
+
+    function validDeletionLock(data) {
+      return hasOnly(data, ['pnjId', 'imagePaths', 'createdAt', 'updatedAt'])
+          && data.pnjId is string && data.pnjId.size() > 0 && data.pnjId.size() <= 150
+          && data.imagePaths is list && data.imagePaths.size() <= 2
+          && (data.imagePaths.size() == 0
+              || validOwnedImagePath(data.imagePaths[0], data.pnjId, 'portraits'))
+          && (data.imagePaths.size() < 2
+              || validOwnedImagePath(data.imagePaths[1], data.pnjId, 'portraits'))
+          && hasWriteTimestamps(data);
+    }
+
+    function lockAfterTargetsPnj(id) {
+      return existsAfter(deletionLockRef())
+          && getAfter(deletionLockRef()).data.get('pnjId', '') == id;
+    }
+
+    function cascadeIndiceUpdate(oldData, newData) {
+      return deletionLockActive()
+          && newData.diff(oldData).affectedKeys().hasOnly(['pnjsLies', 'updatedAt'])
+          && oldData.pnjsLies is list && newData.pnjsLies is list
+          && oldData.pnjsLies.hasAny([get(deletionLockRef()).data.pnjId])
+          && !newData.pnjsLies.hasAny([get(deletionLockRef()).data.pnjId])
+          && oldData.pnjsLies.hasAll(newData.pnjsLies)
+          && newData.pnjsLies.size() == oldData.pnjsLies.size() - 1;
+    }
+
+    function imageLockRef(ownerCollection, ownerId) {
+      return /databases/$(database)/documents/integrity_locks/images/$(ownerCollection)/$(ownerId);
+    }
+
+    function imageLockActive(ownerCollection, ownerId) {
+      return exists(imageLockRef(ownerCollection, ownerId));
+    }
+
+    function changesImage(oldData, newData) {
+      return newData.diff(oldData).affectedKeys().hasAny(['imagePath', 'imageUrl']);
+    }
+
+    function validImageCleanupLock(data, ownerCollection, ownerId) {
+      let prefix = ownerCollection == 'pnjs' ? 'portraits' : 'indices';
+      return hasOnly(data, ['ownerCollection', 'ownerId', 'path', 'createdAt', 'updatedAt'])
+          && data.ownerCollection == ownerCollection
+          && data.ownerId == ownerId
+          && validOwnedImagePath(data.path, ownerId, prefix)
+          && hasWriteTimestamps(data);
+    }
+
     function publicRelationEndpointsExist(data) {
       let sourceRef = /databases/$(database)/documents/pnjs/$(data.source);
       let cibleRef = /databases/$(database)/documents/pnjs/$(data.cible);
-      return exists(sourceRef) && exists(cibleRef)
-          && get(sourceRef).data.visibleJoueurs == true
-          && get(cibleRef).data.visibleJoueurs == true;
+      return relationEndpointsExist(data)
+          && getAfter(sourceRef).data.visibleJoueurs == true
+          && getAfter(cibleRef).data.visibleJoueurs == true;
     }
 
     // exists() avant get() : sur un document absent, get(...).data fait échouer
@@ -165,18 +256,62 @@ service cloud.firestore {
       allow read: if isGM() || resource.data.visibleJoueurs == true;
       allow create: if isGM() && validPnj(request.resource.data)
           && validImagePath(request.resource.data, id, 'portraits')
+          && !deletionLockActive()
+          && !imageLockActive('pnjs', id)
+          && validDeletionMarker(request.resource.data)
+          && !request.resource.data.keys().hasAny(['suppressionEnCours'])
           && !request.resource.data.keys().hasAny(['imageUrl'])
           && hasWriteTimestamps(request.resource.data)
           && serverCreatedAndUpdated(request.resource.data);
-      allow update: if isGM() && validPnj(request.resource.data)
+      allow update: if isGM() && !resource.data.get('suppressionEnCours', false)
+          && validPnj(request.resource.data)
           && validImagePath(request.resource.data, id, 'portraits')
+          && validDeletionMarker(request.resource.data)
           && validUpdate(resource.data, request.resource.data,
               ['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description', 'imageUrl',
-               'imagePath', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre'])
+               'imagePath', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre', 'suppressionEnCours'])
           && createdAtUnchanged(resource.data, request.resource.data)
           && legacyImageUrlUnchanged(resource.data, request.resource.data)
           && hasUpdatedTimestamp(request.resource.data)
-          && serverUpdated(request.resource.data);
+          && serverUpdated(request.resource.data)
+          && (!changesImage(resource.data, request.resource.data)
+              || !imageLockActive('pnjs', id))
+          && (
+            (request.resource.data.get('suppressionEnCours', false) == true
+              && !resource.data.get('suppressionEnCours', false)
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['suppressionEnCours', 'updatedAt'])
+              && lockAfterTargetsPnj(id))
+            || (request.resource.data.get('suppressionEnCours', false) != true
+              && !deletionLockActive())
+          );
+      allow delete: if isGM()
+          && resource.data.get('suppressionEnCours', false) == true
+          && deletionLockActive()
+          && get(deletionLockRef()).data.get('pnjId', '') == id;
+    }
+
+    match /integrity_locks/{id} {
+      allow read: if isGM();
+      allow create: if isGM() && id == 'pnj-deletion'
+          && validDeletionLock(request.resource.data)
+          && serverCreatedAndUpdated(request.resource.data)
+          && existsAfter(/databases/$(database)/documents/pnjs/$(request.resource.data.pnjId))
+          && getAfter(/databases/$(database)/documents/pnjs/$(request.resource.data.pnjId))
+               .data.get('suppressionEnCours', false) == true;
+      allow update: if false;
+      allow delete: if isGM() && id == 'pnj-deletion'
+          && resource.data.pnjId is string
+          && !existsAfter(/databases/$(database)/documents/pnjs/$(resource.data.pnjId));
+    }
+
+    match /integrity_locks/images/{ownerCollection}/{ownerId} {
+      allow read: if isGM();
+      allow create: if isGM()
+          && (ownerCollection == 'pnjs' || ownerCollection == 'indices')
+          && validImageCleanupLock(request.resource.data, ownerCollection, ownerId)
+          && serverCreatedAndUpdated(request.resource.data);
+      allow update: if false;
       allow delete: if isGM();
     }
     match /relations/{id} {
@@ -186,6 +321,7 @@ service cloud.firestore {
       allow create: if isGM() && validRelation(request.resource.data)
           && hasWriteTimestamps(request.resource.data)
           && serverCreatedAndUpdated(request.resource.data)
+          && relationEndpointsExist(request.resource.data)
           && (request.resource.data.visibleJoueurs != true
               || publicRelationEndpointsExist(request.resource.data));
       allow update: if isGM() && validRelation(request.resource.data)
@@ -195,6 +331,7 @@ service cloud.firestore {
           && createdAtUnchanged(resource.data, request.resource.data)
           && hasUpdatedTimestamp(request.resource.data)
           && serverUpdated(request.resource.data)
+          && relationEndpointsExist(request.resource.data)
           && (request.resource.data.visibleJoueurs != true
               || publicRelationEndpointsExist(request.resource.data));
       allow delete: if isGM();
@@ -204,10 +341,12 @@ service cloud.firestore {
     match /pnjs_prives/{id} {
       allow read: if isGM();
       allow create: if isGM() && validPrivatePnj(request.resource.data)
+          && activePnjAfter(id)
           && request.resource.data.keys().hasAny(['updatedAt'])
           && request.resource.data.updatedAt is timestamp
           && serverUpdated(request.resource.data);
       allow update: if isGM() && validPrivatePnj(request.resource.data)
+          && activePnjAfter(id)
           && validUpdate(resource.data, request.resource.data, ['notes', 'updatedAt'])
           && hasUpdatedTimestamp(request.resource.data)
           && serverUpdated(request.resource.data);
@@ -221,18 +360,23 @@ service cloud.firestore {
       allow read:  if isGM() || resource.data.decouvert == true;
       allow create: if isGM() && validIndice(request.resource.data)
           && validImagePath(request.resource.data, id, 'indices')
+          && !deletionLockActive()
+          && !imageLockActive('indices', id)
           && !request.resource.data.keys().hasAny(['imageUrl'])
           && hasWriteTimestamps(request.resource.data)
           && serverCreatedAndUpdated(request.resource.data);
       allow update: if isGM() && validIndice(request.resource.data)
           && validImagePath(request.resource.data, id, 'indices')
+          && (!deletionLockActive() || cascadeIndiceUpdate(resource.data, request.resource.data))
           && validUpdate(resource.data, request.resource.data,
               ['titre', 'description', 'decouvert', 'pnjsLies', 'imageUrl', 'imagePath',
                'dateDecouverte', 'source', 'type', 'createdAt', 'updatedAt', 'ordre'])
           && createdAtUnchanged(resource.data, request.resource.data)
           && legacyImageUrlUnchanged(resource.data, request.resource.data)
           && hasUpdatedTimestamp(request.resource.data)
-          && serverUpdated(request.resource.data);
+          && serverUpdated(request.resource.data)
+          && (!changesImage(resource.data, request.resource.data)
+              || !imageLockActive('indices', id));
       allow delete: if isGM();
     }
 

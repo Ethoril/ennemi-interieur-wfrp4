@@ -68,6 +68,7 @@
 
                     <!-- Filtres -->
                     <div class="pnj-filters">
+                        <span id="pnj-filter-count" class="filter-count" aria-live="polite"></span>
                         <div class="filter-group" id="filter-statut"></div>
                         <div class="filter-sep">|</div>
                         <div class="filter-group" id="filter-vivant"></div>
@@ -91,6 +92,7 @@
                         <div class="pnj-spinner"></div>
                         <span class="loading-text">Chargement des personnages...</span>
                     </div>
+                    <p id="pnj-deletion-status" class="pnj-cleanup-status" hidden></p>
                     <div id="pnj-empty" style="display:none;">
                         <p>Aucun personnage pour l'instant.</p>
                         <span class="pnj-empty-hint">Connecte-toi en mode Admin pour en ajouter.</span>

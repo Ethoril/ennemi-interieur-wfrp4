@@ -99,6 +99,24 @@ test('préflight exige des timestamps strictement numériques et bornés', () =>
     assert.ok(result.signaux.includes('pnjs/bad-time:updatedAt-invalide'));
 });
 
+test('préflight accepte le marqueur de suppression booléen et bloque ses relations', () => {
+    const result = validateSnapshot({
+        pnjs: [validPnj('marked', true), validPnj('other', true),
+            { id: 'marked', data: { ...validPnj('marked').data, suppressionEnCours: true } }],
+        relations: [{ id: 'r', data: {
+            source: 'marked', cible: 'other', type: 'rumeur', visibleJoueurs: false,
+            createdAt: timestamp, updatedAt: timestamp,
+        } }],
+        indices: [], pnjs_prives: [],
+    });
+    assert.ok(result.signaux.some(signal => signal.includes('source-suppression-en-cours')));
+    const invalid = validateSnapshot({
+        pnjs: [{ ...validPnj('bad'), data: { ...validPnj('bad').data, suppressionEnCours: 'oui' } }],
+        relations: [], indices: [], pnjs_prives: [],
+    });
+    assert.ok(invalid.signaux.includes('pnjs/bad:suppressionEnCours-invalide'));
+});
+
 test('la collecte du préflight n utilise que des lectures', async () => {
     const calls = [];
     const db = { collection(name) {

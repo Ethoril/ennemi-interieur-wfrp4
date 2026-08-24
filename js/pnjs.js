@@ -1,6 +1,6 @@
 import { db, storage } from './firebase-init.js';
 import { watchAuth, loginWithGoogle, logout } from './auth.js';
-import { collection, getDocs, addDoc, updateDoc, getDoc, serverTimestamp, deleteDoc, doc, writeBatch, deleteField, query, where } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { collection, getDocs, updateDoc, getDoc, serverTimestamp, deleteDoc, doc, writeBatch, deleteField, query, where, arrayRemove, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { ref, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
 import Cropper from 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js';
@@ -13,8 +13,10 @@ import { FIRESTORE_BATCH_LIMIT, cascadeWriteCount, publicRelationsForPnj } from 
 import { uploadProtectedImage } from './protected-upload.js';
 import { forgetProtectedUpload, rememberProtectedUpload } from './protected-upload-journal.js';
 import { recoverPendingProtectedUploads } from './protected-upload-recovery.js';
-import { safeStorageReference } from './storage-reference.js';
 import { createProtectedImageScope } from './protected-images.js';
+import { cleanupUnreferencedImage } from './image-lifecycle.js';
+import { safeStorageReference } from './storage-reference.js';
+import { relationExists, relationId, reconcileFilterSets, panelIsStillCurrent, commitCascadeBatches, safeRelationColorValue } from './pnj-integrity.js';
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
@@ -74,12 +76,16 @@ let cropperInstance = null;
 let cropGeneration = 0;
 let cropSourceUrl = null;
 let localPreviewUrl = null;
+const PNJ_DELETION_KEY = 'wfrp:pnj-deletion:v1';
+let pendingPnjCleanupRunning = false;
+let globalPnjLockRecoveryRunning = false;
 const imageScope = createProtectedImageScope(storage);
 window.addEventListener('pagehide', () => imageScope.invalidate());
 
 // ── Utils ──────────────────────────────────────────────────────
 const getStatutColor = s => STATUT_COLOR[(s || '').toLowerCase()] || '#7a7a8a';
 const getLinkColor   = s => LINK_COLORS[(s || '').toLowerCase()]  || stringToColor(s || '');
+const safeRelationColor = (color, type) => safeRelationColorValue(color, getLinkColor(type));
 const getNodeOpacity = d => VIVANT_OPACITY[(d.vivant || '').toLowerCase()] ?? 1;
 
 function protectedImagePlaceholder(item, label) {
@@ -135,6 +141,146 @@ async function uploadImage(blob, pnjId) {
     return { path: result.imagePath, ref: fileRef };
 }
 
+function portraitPathsForDeletionLock(pnjId, data) {
+    return [...new Set([data?.imagePath, data?.imageUrl].map(reference => safeStorageReference(storage, reference))
+        .filter(imageRef => imageRef?.fullPath.startsWith(`portraits/${pnjId}/`))
+        .map(imageRef => imageRef.fullPath))].slice(0, 2);
+}
+
+function readPendingPnjDeletion() {
+    try {
+        const value = JSON.parse(localStorage.getItem(PNJ_DELETION_KEY) || 'null');
+        return value && typeof value.id === 'string' && Array.isArray(value.images) ? value : null;
+    } catch { return null; }
+}
+
+function writePendingPnjDeletion(value) {
+    try {
+        localStorage.setItem(PNJ_DELETION_KEY, JSON.stringify(value));
+        return true;
+    } catch { return false; }
+}
+
+function clearPendingPnjDeletion() {
+    try { localStorage.removeItem(PNJ_DELETION_KEY); } catch { /* stockage local indisponible */ }
+}
+
+async function retryPendingPnjImageCleanup(pending) {
+    if (!pending?.firestoreDone) return false;
+    if (pendingPnjCleanupRunning) return false;
+    const recoveryAuthKey = authSessionKey;
+    pendingPnjCleanupRunning = true;
+    try {
+        for (const reference of pending.images) {
+            await cleanupUnreferencedImage({
+                db, storage, reference, ownerCollection: 'pnjs', ownerId: pending.id,
+            });
+        }
+        clearPendingPnjDeletion();
+        document.getElementById('pnj-cleanup-status')?.remove();
+        return true;
+    } catch (error) {
+        if (!state.isAdmin || authSessionKey !== recoveryAuthKey) return false;
+        const status = document.getElementById('pnj-cleanup-status') || document.createElement('p');
+        status.id = 'pnj-cleanup-status';
+        status.className = 'pnj-cleanup-status';
+        status.textContent = 'Nettoyage du portrait à reprendre : vérifiez la connexion et réessayez.';
+        document.getElementById('pnj-loading')?.after(status);
+        console.warn('Nettoyage du portrait PNJ à reprendre.', { id: pending.id, error: error?.message });
+        return false;
+    } finally { pendingPnjCleanupRunning = false; }
+}
+
+function clearPnjAdminStatuses() {
+    const deletionStatus = document.getElementById('pnj-deletion-status');
+    if (deletionStatus) {
+        deletionStatus.replaceChildren();
+        deletionStatus.hidden = true;
+    }
+    document.getElementById('pnj-cleanup-status')?.remove();
+}
+
+function retryPendingPnjCleanupIfNeeded() {
+    const pending = readPendingPnjDeletion();
+    if (pending?.firestoreDone) void retryPendingPnjImageCleanup(pending);
+}
+
+function showPnjDeletionStatus(message, action) {
+    const loading = document.getElementById('pnj-loading');
+    const status = document.getElementById('pnj-deletion-status') || document.createElement('p');
+    status.id = 'pnj-deletion-status';
+    status.className = 'pnj-cleanup-status';
+    status.hidden = false;
+    status.textContent = message;
+    status.querySelector('button')?.remove();
+    if (action) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn-ghost-sm';
+        button.textContent = action.label;
+        button.addEventListener('click', action.run, { once: true });
+        status.append(' ', button);
+    }
+    loading?.after(status);
+}
+
+async function recoverGlobalPnjDeletionLock() {
+    if (!state.isAdmin || globalPnjLockRecoveryRunning) return;
+    const recoveryAuthKey = authSessionKey;
+    const recoveryStillCurrent = () => state.isAdmin && authSessionKey === recoveryAuthKey;
+    globalPnjLockRecoveryRunning = true;
+    const lockRef = doc(db, 'integrity_locks', 'pnj-deletion');
+    try {
+        const lockSnapshot = await getDoc(lockRef);
+        if (!recoveryStillCurrent()) return;
+        if (!lockSnapshot.exists()) {
+            document.getElementById('pnj-deletion-status')?.remove();
+            return;
+        }
+        const lock = lockSnapshot.data() || {};
+        const pnjId = typeof lock.pnjId === 'string' ? lock.pnjId : '';
+        const pnjSnapshot = pnjId ? await getDoc(doc(db, 'pnjs', pnjId)) : null;
+        if (!recoveryStillCurrent()) return;
+        if (pnjSnapshot?.exists()) {
+            const marked = pnjSnapshot.data()?.suppressionEnCours === true;
+            showPnjDeletionStatus(
+                marked ? `Suppression PNJ ${pnjId} verrouillée : reprenez la cascade.`
+                    : `Verrou PNJ ${pnjId} incohérent : vérification administrateur requise.`,
+                marked ? {
+                    label: 'Reprendre',
+                    run: async () => {
+                        const node = state.nodes.find(item => item.id === pnjId);
+                        if (node) openPnjModal(node.id);
+                        else {
+                            await loadData();
+                            if (state.nodes.some(item => item.id === pnjId)) openPnjModal(pnjId);
+                        }
+                    },
+                } : null,
+            );
+            return;
+        }
+        if (!pnjId || !Array.isArray(lock.imagePaths)) {
+            throw new Error('Verrou PNJ incomplet : imagePaths manquant.');
+        }
+        for (const reference of Array.isArray(lock.imagePaths) ? lock.imagePaths : []) {
+            await cleanupUnreferencedImage({
+                db, storage, reference, ownerCollection: 'pnjs', ownerId: pnjId, skipJournal: true,
+            });
+            if (!recoveryStillCurrent()) return;
+        }
+        await deleteDoc(lockRef);
+        if (!recoveryStillCurrent()) return;
+        document.getElementById('pnj-deletion-status')?.remove();
+    } catch (error) {
+        if (!recoveryStillCurrent()) return;
+        showPnjDeletionStatus('Reprise du verrou PNJ impossible : vérifiez la connexion.', {
+            label: 'Réessayer', run: () => void recoverGlobalPnjDeletionLock(),
+        });
+        console.warn('Reprise du verrou global PNJ différée.', { error: error?.message });
+    } finally { globalPnjLockRecoveryRunning = false; }
+}
+
 // ── Auth ───────────────────────────────────────────────────────
 watchAuth((user, isAdmin) => {
     const roleChanged = state.isAdmin !== isAdmin;
@@ -142,7 +288,11 @@ watchAuth((user, isAdmin) => {
     const identityChanged = authSessionKey !== nextAuthSessionKey;
     authSessionKey = nextAuthSessionKey;
     state.isAdmin = isAdmin;
-    if (isAdmin) void recoverPendingProtectedUploads(db, storage);
+    if (isAdmin) {
+        void recoverPendingProtectedUploads(db, storage);
+        retryPendingPnjCleanupIfNeeded();
+        void recoverGlobalPnjDeletionLock();
+    }
     document.getElementById('auth-btn').textContent = state.isAdmin ? '🔓 Déconnexion' : '🔑 Admin';
     document.getElementById('add-pnj-btn').style.display = state.isAdmin ? '' : 'none';
     document.getElementById('pnj-private-fields').style.display = state.isAdmin ? '' : 'none';
@@ -152,6 +302,7 @@ watchAuth((user, isAdmin) => {
         currentPanelGeneration += 1;
     }
     if (!state.isAdmin) {
+        clearPnjAdminStatuses();
         state.privateLoadId += 1;
         document.getElementById('f-notes-privees').value = '';
         state.privateDocExists = false;
@@ -214,6 +365,11 @@ function toPublicPnj(node) {
 async function loadData({ init = false } = {}) {
     const loadId = ++currentLoadId;
     try {
+        if (state.isAdmin) {
+            void recoverPendingProtectedUploads(db, storage);
+            retryPendingPnjCleanupIfNeeded();
+            void recoverGlobalPnjDeletionLock();
+        }
         const imageGeneration = imageScope.beginGeneration();
         const pnjQuery = state.isAdmin
             ? collection(db, 'pnjs')
@@ -283,6 +439,8 @@ async function loadData({ init = false } = {}) {
 async function savePnj(data, imageFile) {
     const btn = document.getElementById('pnj-save-btn');
     const capturedEditingId = state.editingId;
+    const capturedPanelId = state.panelId;
+    const capturedPanelGeneration = currentPanelGeneration;
     const capturedSession = editorSession;
     const capturedRole = state.isAdmin;
     const editorStillCurrent = () => capturedSession === editorSession
@@ -371,22 +529,21 @@ async function savePnj(data, imageFile) {
                 if (oldReference === uploadedImage.path || removed.has(oldReference)) continue;
                 removed.add(oldReference);
                 try {
-                    const oldStorageRef = safeStorageReference(storage, oldReference);
-                    if (!oldStorageRef) continue;
-                    try {
-                        await deleteObject(oldStorageRef);
-                    } catch {
-                        alert(`Enregistrement réussi, mais ancienne image à nettoyer : ${oldStorageRef.fullPath}`);
-                    }
-                } catch {
-                    // Une ancienne URL externe ou malformée n’est pas une référence Storage locale.
+                    await cleanupUnreferencedImage({
+                        db, storage, reference: oldReference, ownerCollection: 'pnjs', ownerId: pnjRef.id,
+                    });
+                } catch (error) {
+                    alert(`Enregistrement réussi, mais ancienne image à nettoyer : ${error.message}`);
                 }
             }
         }
         const prevEditingId = capturedEditingId;
         closePnjModal();
         await loadData();
-        if (prevEditingId && state.panelId === prevEditingId) {
+        if (prevEditingId && panelIsStillCurrent({
+            capturedGeneration: capturedPanelGeneration, currentGeneration: currentPanelGeneration,
+            capturedId: capturedPanelId, currentId: state.panelId,
+        })) {
             const node = state.nodes.find(n => n.id === prevEditingId);
             if (node) openPanel(node);
         }
@@ -403,65 +560,296 @@ async function deletePnj(id) {
     const capturedRole = state.isAdmin;
     const deletionStillCurrent = () => id === state.editingId
         && capturedSession === editorSession && capturedRole === state.isAdmin;
+    const pending = readPendingPnjDeletion();
+    if (pending?.firestoreDone) await retryPendingPnjImageCleanup(pending);
+    const refreshedPending = readPendingPnjDeletion();
     const pnj = state.nodes.find(n => n.id === id);
+    if (refreshedPending?.id === id) {
+        alert('Une suppression précédente est à reprendre. Le contrôle va vérifier les références restantes.');
+    }
+    let impactRelations;
+    let impactIndices;
+    let impactPrivate;
+    try {
+        [impactRelations, impactIndices, impactPrivate] = await Promise.all([
+            getDocs(collection(db, 'relations')),
+            getDocs(collection(db, 'indices')),
+            getDoc(doc(db, 'pnjs_prives', id)),
+        ]);
+    } catch (error) {
+        alert(`Suppression annulée : impossible de calculer son impact (${error.message}).`);
+        return;
+    }
+    if (!deletionStillCurrent()) return;
+    const relationCount = impactRelations.docs.filter(item => {
+        const relation = item.data() || {};
+        return relation.source === id || relation.cible === id;
+    }).length;
+    const indiceCount = impactIndices.docs.filter(item => (item.data()?.pnjsLies || []).includes(id)).length;
+    const portraitReference = pnj?.imagePath || pnj?.imageUrl || '';
+    const portraitIsProtected = safeStorageReference(storage, portraitReference)?.fullPath.split('/').length === 3;
     const ok = await confirmAction({
         titre: 'Supprimer le personnage',
-        message: `${pnj?.nom || 'Ce personnage'} et toutes ses relations seront définitivement supprimés.`,
+        message: `${pnj?.nom || 'Ce personnage'} sera supprimé : ${relationCount} relation${relationCount > 1 ? 's' : ''}, ${indiceCount} indice${indiceCount > 1 ? 's' : ''} lié${indiceCount > 1 ? 's' : ''}, ${impactPrivate.exists() ? '1 note privée' : 'aucune note privée'}${portraitIsProtected ? ' et 1 portrait protégé' : portraitReference ? ' ; le portrait legacy sera signalé pour nettoyage' : ', aucun portrait'}.`,
         libelleAction: 'Supprimer',
         danger: true,
     });
     if (!ok || !deletionStillCurrent()) return;
-    const relSnap = await getDocs(collection(db, 'relations'));
-    if (!deletionStillCurrent()) return;
-    const batch = writeBatch(db);
-    relSnap.docs.forEach(d => {
-        const { source, cible } = d.data();
-        if (source === id || cible === id) batch.delete(d.ref);
-    });
-    batch.delete(doc(db, 'pnjs', id));
-    await batch.commit();
+    const pnjRef = doc(db, 'pnjs', id);
+    const deletionLockRef = doc(db, 'integrity_locks', 'pnj-deletion');
+    let deletionImagePaths = [];
+    try {
+        const lockResult = await runTransaction(db, async transaction => {
+            const lockSnapshot = await transaction.get(deletionLockRef);
+            const snapshot = await transaction.get(pnjRef);
+            if (!snapshot.exists()) throw new Error('PNJ introuvable.');
+            const lockPnjId = lockSnapshot.exists() ? lockSnapshot.data()?.pnjId : null;
+            if (lockPnjId && lockPnjId !== id) {
+                throw new Error(`Une autre suppression est déjà en cours (${lockPnjId}).`);
+            }
+            const imagePaths = lockSnapshot.exists() && Array.isArray(lockSnapshot.data()?.imagePaths)
+                ? lockSnapshot.data().imagePaths
+                : portraitPathsForDeletionLock(id, snapshot.data());
+            if (snapshot.data()?.suppressionEnCours !== true) {
+                transaction.update(pnjRef, { suppressionEnCours: true, updatedAt: serverTimestamp() });
+            }
+            if (!lockSnapshot.exists()) {
+                transaction.set(deletionLockRef, {
+                    pnjId: id, imagePaths, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+                });
+            }
+            return { imagePaths };
+        });
+        deletionImagePaths = lockResult?.imagePaths || [];
+    } catch (error) {
+        alert(`Suppression annulée : impossible de poser le verrou de suppression (${error.message}).`);
+        return;
+    }
+    let relSnap, clueSnap, pnjSnap, imageReferences, protectedImageReferences, legacyImageCount, pendingDeletion;
+    try {
+        [relSnap, clueSnap, pnjSnap] = await Promise.all([
+            getDocs(collection(db, 'relations')),
+            getDocs(collection(db, 'indices')),
+            getDoc(doc(db, 'pnjs', id)),
+        ]);
+        if (!deletionStillCurrent()) throw new Error('La session ou le rôle a changé après le verrouillage.');
+        const currentPnj = pnjSnap.exists() ? { id, ...pnjSnap.data() } : pnj;
+        imageReferences = [currentPnj?.imagePath, currentPnj?.imageUrl].filter(Boolean);
+        protectedImageReferences = deletionImagePaths;
+        const protectedPaths = new Set(protectedImageReferences);
+        legacyImageCount = imageReferences.filter(reference => {
+            const imageRef = safeStorageReference(storage, reference);
+            return !imageRef || !protectedPaths.has(imageRef.fullPath);
+        }).length;
+        pendingDeletion = {
+            id,
+            images: protectedImageReferences,
+            firestoreDone: false,
+            startedAt: Date.now(),
+        };
+        if (!writePendingPnjDeletion(pendingDeletion)) {
+            console.warn('Journal local PNJ indisponible ; le verrou Firestore reste la source de reprise.', { id });
+        }
+        for (const path of protectedImageReferences) {
+            if (!rememberProtectedUpload({ collection: 'pnjs', ownerId: id, path })) {
+                console.warn('Journal local Storage indisponible ; le verrou image/PNJ reste la source de reprise.', { path });
+            }
+        }
+    } catch (error) {
+        alert(`Suppression verrouillée mais non poursuivie : ${error.message}. Reprenez-la dès que la connexion revient.`);
+        void recoverGlobalPnjDeletionLock();
+        return;
+    }
+    const cascadeOperations = (relations, clues) => [
+        ...clues.filter(d => (d.data().pnjsLies || []).includes(id))
+            .map(d => ({ type: 'update', ref: d.ref })),
+        ...relations.filter(d => d.data().source === id || d.data().cible === id)
+            .map(d => ({ type: 'delete', ref: d.ref })),
+    ];
+    const commitCascadeOperations = async operations => {
+        await commitCascadeBatches(operations, async operationSet => {
+            const batch = writeBatch(db);
+            operationSet.forEach(operation => {
+                if (operation.type === 'update') batch.update(operation.ref, {
+                    pnjsLies: arrayRemove(id), updatedAt: serverTimestamp(),
+                });
+                else batch.delete(operation.ref);
+            });
+            await batch.commit();
+            if (!deletionStillCurrent()) throw new Error('Suppression annulée : la session ou le rôle a changé.');
+        }, FIRESTORE_BATCH_LIMIT, 2);
+    };
+    // Les étapes de nettoyage restent sous 500 opérations ; le document PNJ et sa note
+    // privée ne sont supprimés qu’après la réussite de toutes les étapes précédentes.
+    try {
+        await commitCascadeOperations(cascadeOperations(relSnap.docs, clueSnap.docs));
+        // Une relation ou une référence peut être créée pendant les premiers lots. Trois
+        // relectures stabilisent la cascade ; sinon on laisse l’état de reprise, sans supprimer
+        // le PNJ ni annoncer une réussite partielle.
+        let stable = false;
+        for (let pass = 0; pass < 3; pass += 1) {
+            const [freshRelations, freshClues] = await Promise.all([
+                getDocs(collection(db, 'relations')),
+                getDocs(collection(db, 'indices')),
+            ]);
+            if (!deletionStillCurrent()) throw new Error('Suppression annulée : la session ou le rôle a changé.');
+            const newOperations = cascadeOperations(freshRelations.docs, freshClues.docs);
+            if (!newOperations.length) { stable = true; break; }
+            await commitCascadeOperations(newOperations);
+        }
+        if (!stable) throw new Error('La cascade change encore ; reprise requise avant suppression finale.');
+        const finalBatch = writeBatch(db);
+        finalBatch.delete(doc(db, 'pnjs_prives', id));
+        finalBatch.delete(doc(db, 'pnjs', id));
+        await finalBatch.commit();
+        pendingDeletion.firestoreDone = true;
+        if (!writePendingPnjDeletion(pendingDeletion)) {
+            console.warn('État PNJ local non actualisé après suppression Firestore.', { id });
+        }
+    } catch (error) {
+        alert(`Suppression incomplète : ${error.message}. Les éléments restants sont journalisés pour reprise.`);
+        void recoverGlobalPnjDeletionLock();
+        return;
+    }
     closePnjModal();
     closePanel();
+    let storageError = null;
+    for (const reference of protectedImageReferences) {
+        try {
+            await cleanupUnreferencedImage({
+                db, storage, reference, ownerCollection: 'pnjs', ownerId: id, skipJournal: true,
+            });
+        } catch (error) { storageError = error; }
+    }
+    if (storageError) {
+        alert(`PNJ supprimé dans Firestore, mais le verrou reste actif pendant la reprise Storage : ${storageError.message}`);
+    } else {
+        try {
+            await deleteDoc(deletionLockRef);
+            clearPendingPnjDeletion();
+        } catch (error) {
+            alert(`PNJ supprimé et images nettoyées, mais le verrou reste actif : ${error.message}`);
+        }
+    }
+    if (legacyImageCount) alert('PNJ supprimé. Le portrait legacy ou externe reste signalé pour nettoyage contrôlé.');
     await loadData();
 }
 
 async function saveRelation(sourceId, cibleId, type, label, color, style, bidir) {
     if (!sourceId || !cibleId || !type) { alert('Choisissez un PNJ et entrez un type de relation.'); return; }
+    if (sourceId === cibleId) { alert('Un PNJ ne peut pas être relié à lui-même.'); return; }
+    if (!state.nodes.some(node => node.id === sourceId) || !state.nodes.some(node => node.id === cibleId)) {
+        alert('La relation fait référence à un PNJ introuvable.');
+        return;
+    }
+    const capturedSession = editorSession;
+    const capturedRole = state.isAdmin;
+    const panelId = state.panelId;
+    const panelGeneration = currentPanelGeneration;
+    const mutationStillCurrent = () => capturedRole === true && state.isAdmin === true
+        && capturedSession === editorSession
+        && panelIsStillCurrent({
+            capturedGeneration: panelGeneration, currentGeneration: currentPanelGeneration,
+            capturedId: panelId, currentId: state.panelId,
+        });
+    if (!mutationStillCurrent()) return;
     const relData = { source: sourceId, cible: cibleId, type, label: label || type,
-        visibleJoueurs: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
-    if (color) relData.color = color;
-    if (style === 'dashed') relData.style = style;
-    await addDoc(collection(db, 'relations'), relData);
-    if (bidir) await addDoc(collection(db, 'relations'), { ...relData, source: cibleId, cible: sourceId });
-
+        color: safeRelationColor(color, type), style: style === 'dashed' ? 'dashed' : 'solid', visibleJoueurs: true };
+    if (relationExists(state.links, relData, bidir)) {
+        alert('Cette relation existe déjà dans ce sens.');
+        return;
+    }
+    const firstRef = doc(db, 'relations', relationId(relData));
+    const secondData = { ...relData, source: cibleId, cible: sourceId };
+    const secondRef = bidir ? doc(db, 'relations', relationId(secondData)) : null;
+    await runTransaction(db, async transaction => {
+        const sourceRef = doc(db, 'pnjs', sourceId);
+        const cibleRef = doc(db, 'pnjs', cibleId);
+        const sourceSnapshot = await transaction.get(sourceRef);
+        const cibleSnapshot = await transaction.get(cibleRef);
+        const firstSnapshot = await transaction.get(firstRef);
+        const secondSnapshot = secondRef ? await transaction.get(secondRef) : null;
+        if (!sourceSnapshot.exists() || !cibleSnapshot.exists()
+            || sourceSnapshot.data()?.suppressionEnCours === true
+            || cibleSnapshot.data()?.suppressionEnCours === true) {
+            throw new Error('Relation refusée : un PNJ est absent ou en cours de suppression.');
+        }
+        if (firstSnapshot.exists() || secondSnapshot?.exists()) {
+            throw new Error('Cette relation existe déjà dans ce sens.');
+        }
+        if (!mutationStillCurrent()) throw new Error('Création annulée : la session ou le panneau a changé.');
+        const timestamps = { createdAt: serverTimestamp(), updatedAt: serverTimestamp() };
+        transaction.set(firstRef, { ...relData, ...timestamps });
+        if (secondRef) transaction.set(secondRef, { ...secondData, ...timestamps });
+    });
+    if (!mutationStillCurrent()) return;
     await loadData();
-    const node = state.nodes.find(n => n.id === sourceId);
-    if (node) openPanel(node);
+    if (panelIsStillCurrent({ capturedGeneration: panelGeneration, currentGeneration: currentPanelGeneration,
+        capturedId: panelId, currentId: state.panelId })) {
+        const node = state.nodes.find(n => n.id === sourceId);
+        if (node) openPanel(node);
+    }
 }
 
 async function updateRelation(relId, type, label, color, style) {
     if (!type) { alert('Le type de relation est requis.'); return; }
+    const capturedSession = editorSession;
+    const capturedRole = state.isAdmin;
+    const panelId = state.panelId;
+    const panelGeneration = currentPanelGeneration;
+    const relationRef = doc(db, 'relations', relId);
+    const mutationStillCurrent = () => capturedRole === true && state.isAdmin === true
+        && capturedSession === editorSession
+        && panelIsStillCurrent({
+            capturedGeneration: panelGeneration, currentGeneration: currentPanelGeneration,
+            capturedId: panelId, currentId: state.panelId,
+        });
     const data = { type, label: label || type, updatedAt: serverTimestamp() };
-    data.color = color || deleteField();
+    data.color = color ? safeRelationColor(color, type) : deleteField();
     data.style = style === 'dashed' ? 'dashed' : deleteField();
-    await updateDoc(doc(db, 'relations', relId), data);
+    const confirmation = await getDoc(relationRef);
+    if (!confirmation.exists()) { alert('Cette relation n’existe plus.'); return; }
+    if (!mutationStillCurrent()) return;
+    await updateDoc(relationRef, data);
+    if (!mutationStillCurrent()) return;
     await loadData();
-    const node = state.nodes.find(n => n.id === state.panelId);
-    if (node) openPanel(node);
+    if (panelIsStillCurrent({ capturedGeneration: panelGeneration, currentGeneration: currentPanelGeneration,
+        capturedId: panelId, currentId: state.panelId })) {
+        const node = state.nodes.find(n => n.id === panelId);
+        if (node) openPanel(node);
+    }
 }
 
 async function deleteRelation(relId) {
+    const capturedSession = editorSession;
+    const capturedRole = state.isAdmin;
+    const panelId = state.panelId;
+    const panelGeneration = currentPanelGeneration;
+    const relationRef = doc(db, 'relations', relId);
+    const mutationStillCurrent = () => capturedRole === true && state.isAdmin === true
+        && capturedSession === editorSession
+        && panelIsStillCurrent({
+            capturedGeneration: panelGeneration, currentGeneration: currentPanelGeneration,
+            capturedId: panelId, currentId: state.panelId,
+        });
     const ok = await confirmAction({
         titre: 'Supprimer la relation',
         message: 'Cette relation sera définitivement supprimée.',
         libelleAction: 'Supprimer',
         danger: true,
     });
-    if (!ok) return;
-    await deleteDoc(doc(db, 'relations', relId));
+    if (!ok || !mutationStillCurrent()) return;
+    const relationSnapshot = await getDoc(relationRef);
+    if (!relationSnapshot.exists()) { alert('Cette relation n’existe plus.'); return; }
+    if (!mutationStillCurrent()) return;
+    await deleteDoc(relationRef);
+    if (!mutationStillCurrent()) return;
     await loadData();
-    const node = state.nodes.find(n => n.id === state.panelId);
-    if (node) openPanel(node);
+    if (panelIsStillCurrent({ capturedGeneration: panelGeneration, currentGeneration: currentPanelGeneration,
+        capturedId: panelId, currentId: state.panelId })) {
+        const node = state.nodes.find(n => n.id === panelId);
+        if (node) openPanel(node);
+    }
 }
 
 // ── PNJ Modal ──────────────────────────────────────────────────
@@ -692,16 +1080,23 @@ function clearFilters() {
         const el = document.getElementById(id);
         if (el) el.innerHTML = '';
     });
+    const badge = document.getElementById('pnj-filter-count');
+    if (badge) badge.textContent = 'Aucun filtre';
 }
 
 function buildFilters() {
     const uniq = arr => [...new Set(arr.filter(Boolean))].sort();
-    [
+    const definitions = [
         ['filter-statut', 'Statut', 'statut', uniq(state.nodes.map(d => d.statut))],
         ['filter-vivant', 'Vivant', 'vivant', uniq(state.nodes.map(d => d.vivant))],
         ['filter-lieu',   'Lieu',   'lieu',   uniq(state.nodes.map(d => d.lieu))],
         ['filter-groupe', 'Groupe', 'groupe', uniq(state.nodes.map(d => d.groupe))],
-    ].forEach(([id, label, key, vals]) => {
+    ];
+    const available = Object.fromEntries(definitions.map(([, , key, vals]) => [key, vals]));
+    // Les ensembles de filtres survivent à un rechargement ; une valeur disparue
+    // doit être retirée avant de rendre les boutons, sinon le graphe reste masqué.
+    reconcileFilterSets(state.active, available);
+    definitions.forEach(([id, label, key, vals]) => {
         if (!vals.length) return;
         const el  = document.getElementById(id);
         const lbl = document.createElement('span');
@@ -715,12 +1110,20 @@ function buildFilters() {
             btn.addEventListener('click', () => {
                 state.active[key].has(v) ? state.active[key].delete(v) : state.active[key].add(v);
                 btn.classList.toggle('active', state.active[key].has(v));
+                updateFilterBadge();
                 updateVisibility();
                 if (state.view === 'table') renderTable();
             });
             el.appendChild(btn);
         });
     });
+    updateFilterBadge();
+}
+
+function updateFilterBadge() {
+    const activeCount = Object.values(state.active).reduce((count, values) => count + values.size, 0);
+    const badge = document.getElementById('pnj-filter-count');
+    if (badge) badge.textContent = activeCount ? `${activeCount} filtre${activeCount > 1 ? 's' : ''}` : 'Aucun filtre';
 }
 
 // ── Graph ──────────────────────────────────────────────────────
@@ -758,7 +1161,7 @@ function buildGraph() {
 
     // Marqueurs de flèches (un par couleur unique)
     const defs = svg.append('defs');
-    [...new Set(state.links.map(l => l.color || getLinkColor(l.type)))].forEach(color => {
+    [...new Set(state.links.map(l => safeRelationColor(l.color, l.type)))].forEach(color => {
         defs.append('marker')
             .attr('id', `arrow-${color.replace(/[^a-zA-Z0-9]/g, '')}`)
             .attr('viewBox', '0 -4 10 8').attr('refX', 10).attr('refY', 0)
@@ -772,10 +1175,10 @@ function buildGraph() {
     state.linkSel = linkG.selectAll('path').data(state.links).join('path')
         .attr('id', (d, i) => `pnj-lp-${i}`)
         .attr('class', 'pnj-link')
-        .attr('stroke', d => d.color || getLinkColor(d.type))
+        .attr('stroke', d => safeRelationColor(d.color, d.type))
         .attr('stroke-width', 3.5)
         .attr('stroke-dasharray', d => d.style === 'dashed' ? '8 5' : null)
-        .attr('marker-end', d => `url(#arrow-${(d.color || getLinkColor(d.type)).replace(/[^a-zA-Z0-9]/g, '')})`)
+        .attr('marker-end', d => `url(#arrow-${safeRelationColor(d.color, d.type).replace(/[^a-zA-Z0-9]/g, '')})`)
         .attr('opacity', 0.8).attr('fill', 'none');
 
     const linkTextSel = linkG.selectAll('text.pnj-link-label').data(state.links).join('text')
@@ -960,7 +1363,7 @@ async function openPanel(d) {
     }).map(l => {
         const s = l.source.id ?? l.source, t = l.target.id ?? l.target;
         const isSource = s === d.id;
-        return { relId: l.id, node: nodeById.get(isSource ? t : s), type: l.type, label: l.label || l.type || 'Lié', dir: isSource ? '→' : '←', color: l.color, style: l.style };
+        return { relId: l.id, node: nodeById.get(isSource ? t : s), type: l.type, label: l.label || l.type || 'Lié', dir: isSource ? '→' : '←', color: safeRelationColor(l.color, l.type), style: l.style };
     }).filter(r => r.node);
 
     const vKey   = (d.vivant || '').toLowerCase();
@@ -1087,6 +1490,7 @@ function closePanel() {
 
 function resetPnjView() {
     currentPanelGeneration += 1;
+    clearPnjAdminStatuses();
     if (state.simulation) { state.simulation.stop(); state.simulation = null; }
     d3.select('#pnj-graph svg').remove();
     state.nodeSel = null;
@@ -1135,7 +1539,10 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
     }
 
     const delBtn = e.target.closest('.rel-delete-btn');
-    if (delBtn) { deleteRelation(delBtn.dataset.rel); return; }
+    if (delBtn) {
+        void deleteRelation(delBtn.dataset.rel).catch(error => alert(`Suppression de la relation impossible : ${error.message}`));
+        return;
+    }
 
     if (e.target.closest('#panel-edit-btn')) { openPnjModal(state.panelId); return; }
 
@@ -1166,7 +1573,7 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
         const relId = relEditBtn.dataset.rel;
         const link = state.links.find(l => l.id === relId);
         if (!link) return;
-        const currentColor = link.color || REL_PALETTE[0];
+        const currentColor = safeRelationColor(link.color, link.type);
         const currentStyle = link.style || 'solid';
         const formHtml = `
             <div class="rel-edit-form-inline" data-rel="${esc(relId)}" data-chip-row-id="rel-row-${esc(relId)}">
@@ -1192,13 +1599,13 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
     if (e.target.closest('.rel-edit-save-btn')) {
         const btn = e.target.closest('.rel-edit-save-btn');
         const form = btn.closest('.rel-edit-form-inline');
-        updateRelation(
+        void updateRelation(
             form.dataset.rel,
             form.querySelector('.rel-edit-type').value.trim(),
             form.querySelector('.rel-edit-label').value.trim(),
             document.getElementById('rel-edit-color')?.value || REL_PALETTE[0],
             form.querySelector('.style-btn.active')?.dataset.style || 'solid',
-        );
+        ).catch(error => alert(`Modification de la relation impossible : ${error.message}`));
         return;
     }
 
@@ -1222,7 +1629,7 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
     }
 
     if (e.target.closest('#rel-save-btn')) {
-        saveRelation(
+        void saveRelation(
             state.panelId,
             document.getElementById('rel-target').value,
             document.getElementById('rel-type').value.trim(),
@@ -1230,7 +1637,7 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
             document.getElementById('rel-color').value,
             document.querySelector('#rel-add-form .style-btn.active')?.dataset.style || 'solid',
             document.getElementById('rel-bidir')?.checked || false,
-        );
+        ).catch(error => alert(`Création de la relation impossible : ${error.message}`));
         return;
     }
 });

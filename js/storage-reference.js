@@ -3,7 +3,8 @@ import { ref } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage
 // Transforme une ancienne référence en chemin local sans accepter une cible externe.
 function validStoragePath(path) {
     return typeof path === 'string' && path.length > 0 && path.length <= 512
-        && /^(?:portraits|indices)\/[^/]+(?:\/[^/]+)?$/u.test(path);
+        && /^(?:portraits|indices)\/[^/]+(?:\/[^/]+)?$/u.test(path)
+        && path.split('/').every(segment => segment !== '.' && segment !== '..');
 }
 
 function expectedBucket(storage) {

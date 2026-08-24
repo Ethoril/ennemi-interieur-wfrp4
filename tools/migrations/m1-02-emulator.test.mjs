@@ -5,7 +5,8 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import {
-    collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where,
+    collection, deleteDoc, doc, getDoc, getDocs, query, runTransaction, serverTimestamp, setDoc, updateDoc, where,
+    writeBatch,
 } from 'firebase/firestore';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -21,7 +22,7 @@ before(async () => {
     });
     await env.withSecurityRulesDisabled(async context => {
         const db = context.firestore();
-        for (const collectionName of ['pnjs', 'pnjs_prives', 'relations', 'indices']) {
+        for (const collectionName of ['pnjs', 'pnjs_prives', 'relations', 'indices', 'integrity_locks']) {
             const snapshot = await getDocs(collection(db, collectionName));
             await Promise.all(snapshot.docs.map(item => deleteDoc(item.ref)));
         }
@@ -178,24 +179,37 @@ secured('seul le MJ vérifié écrit et peut supprimer', async () => {
     await setDoc(doc(gm, 'pnjs', 'write-gm'), validPnj);
     await setDoc(doc(gm, 'relations', 'write-gm-relation'), validRelation);
     await setDoc(doc(gm, 'relations', 'write-gm-public-relation'), {
-        source: 'public', cible: 'public', type: 'public', label: 'public', visibleJoueurs: true,
+        source: 'public', cible: 'public-1', type: 'public', label: 'public', visibleJoueurs: true,
         ...timestamps,
     });
-    await setDoc(doc(gm, 'pnjs_prives', 'write-gm-private'), validPrivate);
+    await setDoc(doc(gm, 'pnjs_prives', 'write-gm'), validPrivate);
     await setDoc(doc(gm, 'indices', 'write-gm-indice'), validIndice);
     await updateDoc(doc(gm, 'pnjs', 'write-gm'), { visibleJoueurs: true, updatedAt: serverTimestamp() });
     await updateDoc(doc(gm, 'relations', 'write-gm-relation'), {
         label: 'modifié', updatedAt: serverTimestamp(),
     });
-    await updateDoc(doc(gm, 'pnjs_prives', 'write-gm-private'), {
+    await updateDoc(doc(gm, 'pnjs_prives', 'write-gm'), {
         notes: 'note modifiée', updatedAt: serverTimestamp(),
     });
     await updateDoc(doc(gm, 'indices', 'write-gm-indice'), {
         description: 'modifié', updatedAt: serverTimestamp(),
     });
-    await deleteDoc(doc(gm, 'pnjs', 'write-gm'));
+    await runTransaction(gm, async transaction => {
+        const pnjRef = doc(gm, 'pnjs', 'write-gm');
+        const lockRef = doc(gm, 'integrity_locks', 'pnj-deletion');
+        assert.equal((await transaction.get(lockRef)).exists(), false);
+        assert.equal((await transaction.get(pnjRef)).exists(), true);
+        transaction.update(pnjRef, { suppressionEnCours: true, updatedAt: serverTimestamp() });
+        transaction.set(lockRef, {
+            pnjId: 'write-gm', imagePaths: [], createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+        });
+    });
+    const finalDeletion = writeBatch(gm);
+    finalDeletion.delete(doc(gm, 'pnjs_prives', 'write-gm'));
+    finalDeletion.delete(doc(gm, 'pnjs', 'write-gm'));
+    finalDeletion.delete(doc(gm, 'integrity_locks', 'pnj-deletion'));
+    await finalDeletion.commit();
     await deleteDoc(doc(gm, 'relations', 'write-gm-relation'));
     await deleteDoc(doc(gm, 'relations', 'write-gm-public-relation'));
-    await deleteDoc(doc(gm, 'pnjs_prives', 'write-gm-private'));
     await deleteDoc(doc(gm, 'indices', 'write-gm-indice'));
 });

@@ -109,6 +109,7 @@ test('le filtrage visiteur est fail-closed sur les valeurs atypiques', () => {
     assert.equal(visiblePourJoueurs({ visibleJoueurs: false }), false);
     assert.equal(visiblePourJoueurs({ visibleJoueurs: 'true' }), false);
     assert.equal(visiblePourJoueurs({ visibleJoueurs: null }), false);
+    assert.equal(visiblePourJoueurs({ visibleJoueurs: true, suppressionEnCours: true }), false);
 });
 
 test('les legacy privées contradictoires sont bloquées, les valeurs identiques admises', () => {

@@ -15,4 +15,7 @@ test('le journal local conserve puis acquitte un upload à compenser', () => {
     assert.equal(forgetProtectedUpload(entry.path, storage), true);
     assert.deepEqual(pendingProtectedUploads(storage), []);
     assert.equal(rememberProtectedUpload({ ...entry, path: '../secret' }, storage), false);
+    assert.equal(rememberProtectedUpload({ ...entry, path: 'indices/pnj-1/portrait-abc.webp' }, storage), false);
+    assert.equal(rememberProtectedUpload({ ...entry, ownerId: 'pnj-2' }, storage), false);
+    assert.equal(rememberProtectedUpload({ ...entry, path: 'portraits/other/portrait-abc.webp' }, storage), false);
 });

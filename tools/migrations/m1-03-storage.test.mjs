@@ -5,7 +5,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { assertFails, assertSucceeds, initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { deleteField, doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { arrayRemove, deleteField, doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
 import { createAdminClient } from '../mobile-backup.mjs';
 import { hasDownloadToken, runMigration } from './m1-03-storage.mjs';
 
@@ -123,6 +123,74 @@ test('Firestore M1-03: une URL legacy existante reste stable ou peut être suppr
     await assertSucceeds(updateDoc(doc(gmDb, 'indices', 'legacy-existing'), { titre: 'Legacy indice renommé', imageUrl: 'indices/legacy-existing.png', updatedAt: serverTimestamp() }));
     await assertFails(updateDoc(doc(gmDb, 'indices', 'legacy-existing'), { imageUrl: 'indices/changed.png', updatedAt: serverTimestamp() }));
     await assertSucceeds(updateDoc(doc(gmDb, 'indices', 'legacy-existing'), { imageUrl: deleteField(), updatedAt: serverTimestamp() }));
+});
+
+test('Firestore M1-04: le verrou PNJ bloque les écritures concurrentes et les demi-relations', { skip }, async () => {
+    const gmDb = env.authenticatedContext('gm-integrity', { email: 'ethoril@gmail.com', email_verified: true }).firestore();
+    const pnj = id => doc(gmDb, 'pnjs', id);
+    for (const id of ['lock-source', 'active-a', 'active-b']) {
+        await assertSucceeds(setDoc(pnj(id), {
+            nom: id, visibleJoueurs: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+        }));
+    }
+    await assertSucceeds(setDoc(doc(gmDb, 'pnjs_prives', 'lock-source'), {
+        notes: 'privé', updatedAt: serverTimestamp(),
+    }));
+    const linkedIndice = doc(gmDb, 'indices', 'locked-index');
+    await assertSucceeds(setDoc(linkedIndice, {
+        titre: 'Indice verrouillé', decouvert: true, pnjsLies: ['lock-source', 'active-a'],
+        createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+    }));
+    await assertFails(updateDoc(pnj('lock-source'), {
+        suppressionEnCours: true, updatedAt: serverTimestamp(),
+    }));
+    const lockRef = doc(gmDb, 'integrity_locks', 'pnj-deletion');
+    const startDeletion = writeBatch(gmDb);
+    startDeletion.set(lockRef, {
+        pnjId: 'lock-source', imagePaths: [], createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+    });
+    startDeletion.update(pnj('lock-source'), {
+        suppressionEnCours: true, updatedAt: serverTimestamp(),
+    });
+    await assertSucceeds(startDeletion.commit());
+    await assertFails(updateDoc(pnj('lock-source'), { nom: 'trop tard', updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(pnj('active-a'), { nom: 'bloqué pendant la cascade', updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(gmDb, 'pnjs_prives', 'lock-source'), {
+        notes: 'trop tard', updatedAt: serverTimestamp(),
+    }));
+    await assertFails(setDoc(doc(gmDb, 'indices', 'late-index'), {
+        titre: 'Trop tard', decouvert: true, pnjsLies: ['lock-source'],
+        createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+    }));
+    await assertFails(updateDoc(linkedIndice, {
+        titre: 'Écriture ancienne concurrente', updatedAt: serverTimestamp(),
+    }));
+    await assertSucceeds(updateDoc(linkedIndice, {
+        pnjsLies: arrayRemove('lock-source'), updatedAt: serverTimestamp(),
+    }));
+    await assertFails(updateDoc(pnj('active-a'), {
+        suppressionEnCours: true, updatedAt: serverTimestamp(),
+    }));
+    const relation = (source, cible) => ({
+        source, cible, type: 'allié', label: 'Allié', color: '#fff', style: 'solid',
+        visibleJoueurs: true, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+    });
+    await assertFails(setDoc(doc(gmDb, 'relations', 'toward-lock'), relation('active-a', 'lock-source')));
+    await assertFails(setDoc(doc(gmDb, 'relations', 'self'), relation('active-a', 'active-a')));
+    const batch = writeBatch(gmDb);
+    const first = doc(gmDb, 'relations', 'atomic-first');
+    batch.set(first, relation('active-a', 'active-b'));
+    batch.set(doc(gmDb, 'relations', 'atomic-invalid'), relation('active-a', 'missing'));
+    await assertFails(batch.commit());
+    assert.equal((await getDoc(first)).exists(), false);
+    const finishDeletion = writeBatch(gmDb);
+    finishDeletion.delete(doc(gmDb, 'pnjs_prives', 'lock-source'));
+    finishDeletion.delete(pnj('lock-source'));
+    finishDeletion.delete(lockRef);
+    await assertSucceeds(finishDeletion.commit());
+    assert.equal((await getDoc(pnj('lock-source'))).exists(), false);
+    assert.equal((await getDoc(lockRef)).exists(), false);
+    await assertSucceeds(updateDoc(pnj('active-a'), { nom: 'déverrouillé', updatedAt: serverTimestamp() }));
 });
 
 test('Migration M1-03: copy, référence, cleanup et reprise sont atomiques et sans token', { skip }, async () => {

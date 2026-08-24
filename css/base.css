@@ -1610,6 +1610,18 @@ strong {
   align-items: center;
 }
 
+.filter-count {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.pnj-cleanup-status {
+  color: var(--blood-bright);
+  font-size: 0.85rem;
+  margin: var(--space-2) 0;
+}
+
 .filter-group {
   display: flex;
   align-items: center;

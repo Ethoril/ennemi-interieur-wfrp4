@@ -1,6 +1,6 @@
 import { db, storage } from './firebase-init.js';
 import { watchAuth, loginWithGoogle, logout } from './auth.js';
-import { collection, getDocs, updateDoc, deleteDoc, doc, query, where, serverTimestamp, setDoc, deleteField } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { collection, getDocs, deleteDoc, doc, query, where, serverTimestamp, deleteField, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { ref, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import { esc, stripAccents } from './utils.js';
 import { confirmAction } from './ui-confirm.js';
@@ -9,6 +9,7 @@ import { createProtectedImageScope } from './protected-images.js';
 import { uploadProtectedImage } from './protected-upload.js';
 import { forgetProtectedUpload, rememberProtectedUpload } from './protected-upload-journal.js';
 import { recoverPendingProtectedUploads } from './protected-upload-recovery.js';
+import { cleanupUnreferencedImage } from './image-lifecycle.js';
 import { safeStorageReference } from './storage-reference.js';
 
 function clueImagePlaceholder(clue) {
@@ -81,6 +82,7 @@ document.getElementById('auth-btn').addEventListener('click', async () => {
 async function loadData() {
     const loadId = ++currentLoadId;
     try {
+        if (state.isAdmin) void recoverPendingProtectedUploads(db, storage);
         clearLocalPreview();
         const imageGeneration = imageScope.beginGeneration();
         const container = document.getElementById('clues-container');
@@ -405,11 +407,22 @@ document.getElementById('clue-form').addEventListener('submit', async e => {
 
         try {
             requireCurrentEditor();
-            if (capturedEditingId) {
-                await updateDoc(clueRef, clueData);
-            } else {
-                await setDoc(clueRef, { ...clueData, createdAt: serverTimestamp() });
-            }
+            await runTransaction(db, async transaction => {
+                const pnjSnapshots = [];
+                for (const pnjId of checkedPnjs) pnjSnapshots.push(await transaction.get(doc(db, 'pnjs', pnjId)));
+                const clueSnapshot = capturedEditingId ? await transaction.get(clueRef) : null;
+                if (pnjSnapshots.some(snapshot => !snapshot.exists()
+                    || snapshot.data()?.suppressionEnCours === true)) {
+                    throw new Error('Enregistrement refusé : un PNJ lié est absent ou en cours de suppression.');
+                }
+                requireCurrentEditor();
+                if (capturedEditingId) {
+                    if (!clueSnapshot?.exists()) throw new Error('Indice introuvable.');
+                    transaction.update(clueRef, clueData);
+                } else {
+                    transaction.set(clueRef, { ...clueData, createdAt: serverTimestamp() });
+                }
+            });
         } catch (error) {
             if (uploadedImage) {
                 try { await deleteObject(uploadedImage); forgetProtectedUpload(imagePath); }
@@ -425,12 +438,11 @@ document.getElementById('clue-form').addEventListener('submit', async e => {
                 if (oldReference === imagePath || removed.has(oldReference)) continue;
                 removed.add(oldReference);
                 try {
-                    const oldStorageRef = safeStorageReference(storage, oldReference);
-                    if (!oldStorageRef) continue;
-                    try { await deleteObject(oldStorageRef); }
-                    catch { alert(`Enregistrement réussi, mais ancienne image à nettoyer : ${oldStorageRef.fullPath}`); }
-                } catch {
-                    // Une ancienne URL externe ou malformée n’est pas une référence Storage locale.
+                    await cleanupUnreferencedImage({
+                        db, storage, reference: oldReference, ownerCollection: 'indices', ownerId: clueRef.id,
+                    });
+                } catch (error) {
+                    alert(`Enregistrement réussi, mais ancienne image à nettoyer : ${error.message}`);
                 }
             }
         }
@@ -460,6 +472,11 @@ document.getElementById('clue-delete-btn').addEventListener('click', async () =>
         danger: true,
     });
     if (!ok || !deletionStillCurrent()) return;
+    const imageReferences = [clue?.imagePath, clue?.imageUrl].filter(Boolean);
+    const protectedImageReferences = imageReferences.map(reference => safeStorageReference(storage, reference))
+        .filter(imageRef => imageRef?.fullPath.split('/').length === 3)
+        .map(imageRef => imageRef.fullPath);
+    const legacyImageCount = imageReferences.length - protectedImageReferences.length;
 
     const btn = document.getElementById('clue-delete-btn');
     btn.disabled = true;
@@ -467,7 +484,24 @@ document.getElementById('clue-delete-btn').addEventListener('click', async () =>
     
     try {
         if (!deletionStillCurrent()) return;
+        for (const path of protectedImageReferences) {
+            if (!rememberProtectedUpload({
+                collection: 'indices', ownerId: capturedEditingId, path,
+            })) throw new Error(`Suppression annulée : impossible de journaliser ${path}.`);
+        }
         await deleteDoc(doc(db, 'indices', capturedEditingId));
+        let storageError = null;
+        for (const reference of protectedImageReferences) {
+            try {
+                await cleanupUnreferencedImage({
+                    db, storage, reference, ownerCollection: 'indices', ownerId: capturedEditingId,
+                });
+            } catch (error) { storageError = error; }
+        }
+        if (storageError) {
+            alert(`Indice supprimé dans Firestore, mais nettoyage Storage à reprendre : ${storageError.message}`);
+        }
+        if (legacyImageCount) alert('Indice supprimé. L’image legacy reste signalée dans l’inventaire administratif pour nettoyage contrôlé.');
         closeClueModal();
         await loadData();
     } catch (err) {

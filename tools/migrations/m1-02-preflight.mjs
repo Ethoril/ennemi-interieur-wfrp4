@@ -5,7 +5,7 @@ import { createAdminClient, PRODUCTION_BUCKET, PRODUCTION_PROJECT } from '../mob
 
 export const COLLECTIONS = Object.freeze(['pnjs', 'relations', 'indices', 'pnjs_prives']);
 export const LEGACY_PRIVATE_KEYS = Object.freeze(['notes', 'notesMJ', 'notesPrivees', 'privateNotes']);
-const PNJ_FIELDS = new Set(['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description', 'imageUrl', 'imagePath', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre']);
+const PNJ_FIELDS = new Set(['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description', 'imageUrl', 'imagePath', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre', 'suppressionEnCours']);
 const RELATION_FIELDS = new Set(['source', 'cible', 'type', 'label', 'color', 'style', 'visibleJoueurs', 'createdAt', 'updatedAt']);
 const INDICE_FIELDS = new Set(['titre', 'description', 'decouvert', 'pnjsLies', 'imageUrl', 'imagePath', 'dateDecouverte', 'source', 'type', 'createdAt', 'updatedAt', 'ordre']);
 const PRIVATE_FIELDS = new Set(['notes', 'updatedAt']);
@@ -46,6 +46,8 @@ function scanPnj(summary, id, data) {
         optionalString(summary, 'pnjs', id, data, field, max);
     }
     if (typeof data.visibleJoueurs !== 'boolean') signal(summary, 'pnjs', id, 'visibleJoueurs-invalide');
+    if (Object.hasOwn(data, 'suppressionEnCours') && typeof data.suppressionEnCours !== 'boolean') signal(summary, 'pnjs', id, 'suppressionEnCours-invalide');
+    if (data.suppressionEnCours === true) signal(summary, 'pnjs', id, 'suppression-en-cours');
     if (!isTimestamp(data.createdAt)) signal(summary, 'pnjs', id, 'createdAt-invalide');
     if (!isTimestamp(data.updatedAt)) signal(summary, 'pnjs', id, 'updatedAt-invalide');
     if (!isNumberOrNull(data.ordre) && Object.hasOwn(data, 'ordre')) signal(summary, 'pnjs', id, 'ordre-invalide');
@@ -63,6 +65,8 @@ function scanRelation(summary, id, data, pnjs) {
     const cible = pnjs.get(data.cible);
     if (!source) signal(summary, 'relations', id, 'source-inexistant');
     if (!cible) signal(summary, 'relations', id, 'cible-inexistante');
+    if (source?.suppressionEnCours === true) signal(summary, 'relations', id, 'source-suppression-en-cours');
+    if (cible?.suppressionEnCours === true) signal(summary, 'relations', id, 'cible-suppression-en-cours');
     if (data.visibleJoueurs === true && (!source || source.visibleJoueurs !== true)) signal(summary, 'relations', id, 'source-masque');
     if (data.visibleJoueurs === true && (!cible || cible.visibleJoueurs !== true)) signal(summary, 'relations', id, 'cible-masque');
     if (Object.hasOwn(data, 'color') && data.color !== null && !isString(data.color, 32)) signal(summary, 'relations', id, 'color-invalide');
