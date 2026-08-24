@@ -28,6 +28,7 @@ const ASSETS_LOCAUX = [
   './js/doodle.js',
   './js/enquetes.js',
   './js/app-check.js',
+  './js/firebase-config.js',
   './js/fiche-cloud.js',
   './js/fiche.js',
   './js/firebase-init.js',

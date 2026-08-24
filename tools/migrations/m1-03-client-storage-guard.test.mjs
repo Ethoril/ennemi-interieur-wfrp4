@@ -39,11 +39,13 @@ test('les écrans protégés utilisent uniquement le dépôt callable et autoris
     assert.match(protectedImages, /getBlob\(ref\(storage, imagePath\)\)/u);
     assert.match(protectedUpload, /httpsCallable\(functions, 'uploadProtectedImage'\)/u);
     assert.match(imageLifecycle, /safeStorageReference\(storage, reference\)/u);
-    assert.match(firebaseInit, /getFunctions\(app, 'europe-west1'\)/u);
+    assert.match(firebaseInit, /getFunctions\(app, FIREBASE_FUNCTIONS_REGION\)/u);
+    assert.match(firebaseInit, /from '\.\/firebase-config\.js'/u);
     assert.match(sw, /['"]\.\/js\/storage-reference\.js['"]/u);
     assert.match(sw, /['"]\.\/js\/protected-upload-journal\.js['"]/u);
     assert.match(sw, /['"]\.\/js\/protected-upload-recovery\.js['"]/u);
     assert.match(sw, /['"]\.\/js\/image-lifecycle\.js['"]/u);
+    assert.match(sw, /['"]\.\/js\/firebase-config\.js['"]/u);
     assert.match(pnjsHtml, /https:\/\/europe-west1-campagne-wrpg\.cloudfunctions\.net/u);
     assert.match(enquetesHtml, /https:\/\/europe-west1-campagne-wrpg\.cloudfunctions\.net/u);
 });
