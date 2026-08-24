@@ -16,3 +16,8 @@ test('le Service Worker exclut les blobs Storage avant toute mise en cache', asy
         'l’activation doit purger les réponses Storage éventuellement héritées');
     assert.match(source, /cache\.delete\(request\)/u);
 });
+
+test('le module App Check est précaché avec la version cliente', async () => {
+    const source = await readFile(resolve('sw.js'), 'utf8');
+    assert.match(source, /['"]\.\/js\/app-check\.js['"]/u);
+});

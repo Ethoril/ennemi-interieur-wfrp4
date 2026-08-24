@@ -1,3 +1,13 @@
+## [2.16.0] - 2026-08-24
+
+### Sécurité et mobile
+- **App Check progressif** : le client initialise reCAPTCHA Enterprise sur l’origine de production, tandis que la callable d’upload protégé exige désormais App Check. Le développement local reste sans jeton de debug et ne peut pas utiliser accidentellement la callable de production.
+- **Socle M1 préparé** : les migrations de visibilité, les règles d’intégrité et le cycle de vie des images disposent de leurs contrôles et mécanismes de reprise. Cette version ne prétend pas que les migrations ou déploiements Firebase ont déjà été exécutés.
+
+### PWA & Cache
+- **Précache App Check** : le module local de configuration est inclus dans le Service Worker.
+- **Incrémentation du cache** : passage en `wfrp-cache-v2.16.0`.
+
 ## [2.15.0] - 2026-08-18
 
 ### Accueil
@@ -860,4 +870,3 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - **Anti-indexation** : `robots.txt` + meta `noindex, nofollow` sur chaque page
 - **Navigation** : navbar responsive avec burger menu mobile
 - **Animations** : scroll reveal, hover effects, transitions fluides
-

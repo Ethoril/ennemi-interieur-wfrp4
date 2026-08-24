@@ -1,6 +1,6 @@
 // sw.js, en tête. Doit rester identique à APP_VERSION de js/layout.js :
 // la CI le vérifie (.github/workflows/validate.yml).
-const APP_VERSION = 'v2.15.0';
+const APP_VERSION = 'v2.16.0';
 const CACHE_NAME  = 'wfrp-cache-' + APP_VERSION;
 
 const ASSETS_LOCAUX = [
@@ -27,6 +27,7 @@ const ASSETS_LOCAUX = [
   './js/calendar.js',
   './js/doodle.js',
   './js/enquetes.js',
+  './js/app-check.js',
   './js/fiche-cloud.js',
   './js/fiche.js',
   './js/firebase-init.js',

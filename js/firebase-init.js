@@ -3,6 +3,8 @@ import { getAuth }        from 'https://www.gstatic.com/firebasejs/10.12.0/fireb
 import { getFirestore }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getStorage }     from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import { getFunctions }   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-check.js';
+import { APP_CHECK_SITE_KEY, shouldInitializeAppCheck } from './app-check.js';
 
 const FIREBASE_CONFIG = {
     apiKey:            'AIzaSyD5W5U2fyXkiPzUzOOgAGusoiXn2iZbp5U',
@@ -16,6 +18,12 @@ const FIREBASE_CONFIG = {
 export const ADMIN_EMAIL = 'ethoril@gmail.com';
 
 export const app     = initializeApp(FIREBASE_CONFIG);
+export const appCheck = shouldInitializeAppCheck(globalThis.location?.hostname)
+    ? initializeAppCheck(app, {
+        provider: new ReCaptchaEnterpriseProvider(APP_CHECK_SITE_KEY),
+        isTokenAutoRefreshEnabled: true,
+    })
+    : null;
 export const auth    = getAuth(app);
 export const db      = getFirestore(app);
 export const storage = getStorage(app);

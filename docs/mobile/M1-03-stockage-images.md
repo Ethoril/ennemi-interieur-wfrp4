@@ -40,12 +40,26 @@ L’outil de migration signale en complément les objets non référencés. Une 
 Les nouveaux uploads passent par la callable v2 `uploadProtectedImage` (`functions/`, région
 `europe-west1`) : le navigateur ne téléverse plus directement dans Storage et ne reçoit jamais
 d’URL persistante. La function vérifie l’identité MJ vérifiée, la taille, le MIME et la signature,
-impose le chemin déterministe et utilise une création conditionnelle idempotente. App Check n’est
-pas encore imposé, faute de clé et de configuration client disponibles. Son activation contrôlée
-est une **condition bloquante du déploiement public** de la callable, au même titre que le plan
-Blaze ; aucune exécution de Functions n’est faite ici. Après installation des dépendances dans
-`functions/`, la commande préparée (mais à ne lancer qu’après ce prérequis) est
-`firebase deploy --only functions:uploadProtectedImage`.
+impose le chemin déterministe et utilise une création conditionnelle idempotente. Elle exige aussi
+désormais un jeton App Check valide (`enforceAppCheck: true`). Le client initialise
+`ReCaptchaEnterpriseProvider` très tôt sur l’origine de production `ethoril.github.io`, avec
+renouvellement automatique. La configuration opérateur attendue est un TTL de 1 heure et un
+seuil de score de 0,5 ; aucune enforcement App Check globale n’est requise, seule cette callable
+est protégée. La clé reCAPTCHA Enterprise est une clé publique ; aucun jeton de debug n’est
+enregistré dans le dépôt. La restriction de domaine de la clé doit rester limitée à
+`ethoril.github.io` : `localhost` et les adresses de développement ne doivent pas être ajoutés à
+la clé de production.
+
+Sur `localhost`, `127.0.0.1` et les autres origines de développement, App Check n’est volontairement
+pas initialisé : cela permet d’utiliser les émulateurs sans introduire de jeton de debug. Un client
+de développement qui pointe par erreur vers la callable de production est donc refusé par le
+serveur, ce qui évite de transformer le mode local en contournement de sécurité.
+
+État opérateur vérifié le 24 août 2026 : provider reCAPTCHA Enterprise enregistré, domaine unique
+`ethoril.github.io`, TTL d’une heure, seuil de score `0,5`, plan Blaze actif, IAM Storage↔Firestore
+présent et aucune enforcement App Check globale. Cela ne constitue pas une preuve de déploiement :
+la callable et les règles Firebase doivent encore être publiées et testées. La commande prévue est
+`firebase deploy --only functions:uploadProtectedImage` après validation finale du client.
 Si la callable détecte des métadonnées non conformes et que sa suppression compensatoire échoue,
 elle émet l’événement structuré `protected-image-cleanup-required` dans Cloud Logging avec le seul
 chemin et le code d’erreur. Ce signal et l’inventaire M1-03 constituent la reprise opérateur.
@@ -79,10 +93,10 @@ guardée (jamais exécutée ici) est :
 node tools/migrations/m1-03-cors-preflight.mjs apply --project=campagne-wrpg --bucket=campagne-wrpg.firebasestorage.app --execute --confirm-production=campagne-wrpg --confirm-cors=campagne-wrpg
 ```
 
-L’activation web est bloquée tant que l’inspection n’a pas confirmé la règle attendue. L’inspection
-read-only du 19 août 2026 confirme que la production diffère encore du fichier versionné (baseline :
-tableau CORS vide). Pour un rollback, restaurer l’export CORS préalable avec l’outil opérateur Google
-Cloud, puis réinspecter ; ce script n’applique volontairement que la configuration canonique du dépôt.
+L’inspection read-only confirme désormais que la CORS production est conforme à la configuration
+versionnée. Cela ne signifie pas que les règles Storage ou la callable ont été déployées. Pour un
+rollback, restaurer l’export CORS préalable avec l’outil opérateur Google Cloud, puis réinspecter ;
+ce script n’applique volontairement que la configuration canonique du dépôt.
 
 Les écrans chargent `imagePath` via le SDK Storage (`getBlob`), fabriquent une URL objet mémoire et
 la révoquent lors d’un rechargement/changement de vue. Dès qu’un `imagePath` existe, toute erreur
@@ -95,18 +109,18 @@ plus un et réintroduire une URL contournant les règles. Le client utilise excl
 et des URL objet mémoire révoquées.
 
 Le Service Worker exclut les endpoints Storage des stratégies Cache Storage et, à son activation,
-purge aussi toute réponse Storage héritée dans le cache courant. Le précache des trois modules
-locaux reste nécessaire, mais aucun commit M1 individuel ne doit être déployé avant le bump global
-prévu à la clôture M1-05 ; le `CACHE_NAME` est volontairement inchangé ici.
+purge aussi toute réponse Storage héritée dans le cache courant. Le module App Check fait partie du
+précache local. Le bump global M1-05 aligne désormais `APP_VERSION` et `CACHE_NAME` sur `v2.16.0` ;
+la version cliente doit encore être publiée et validée avec les règles Firebase.
 Les objets créés ou migrés portent également `Cache-Control: no-store`, afin que le cache HTTP du
 navigateur ne conserve pas un blob après un passage public → secret.
 
 ## Règles et rollback applicatif
 
-Avant le premier déploiement, contrôler dans Firebase/Google Cloud que l’intégration des règles
-Storage avec Firestore (accès `firestore.get/exists`, service account/IAM requis par Firebase) est
-activée pour le projet. Ce contrôle est un prérequis opérateur : aucun changement IAM n’est effectué
-par cette tâche.
+Le contrôle Firebase/Google Cloud du 24 août 2026 confirme que l’intégration des règles Storage
+avec Firestore (accès `firestore.get/exists`, service account/IAM requis par Firebase) est active
+pour le projet. Ce constat ne vaut pas déploiement des règles versionnées : celui-ci reste une étape
+distincte à exécuter et à consigner.
 
 Déployer le nouveau client (qui écrit `imagePath`) avant la restriction Firestore qui interdit la
 création ou la modification d’un `imageUrl` legacy. Sur remplacement explicite depuis l’interface,

@@ -8,7 +8,7 @@ import { createUploadHandler } from './handler.mjs';
 initializeApp();
 setGlobalOptions({ region: 'europe-west1', timeoutSeconds: 120, memory: '512MiB', maxInstances: 2 });
 
-export const uploadProtectedImage = onCall(createUploadHandler(() => ({
+export const uploadProtectedImage = onCall({ enforceAppCheck: true }, createUploadHandler(() => ({
     bucket: getStorage().bucket(),
     onCleanupFailure: ({ imagePath, error }) => logger.error('protected-image-cleanup-required', {
         imagePath,
