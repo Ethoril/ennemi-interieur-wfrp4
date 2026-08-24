@@ -160,7 +160,7 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
                 emitRelations(snapshot, onData, state, relation => relation.visibleJoueurs === true
                     && visibleIds.has(relation.source) && visibleIds.has(relation.cible));
             } catch (error) { if (typeof onError === 'function') onError(mutationError(error, 'subscribe-relations')); }
-        }, onError);
+        }, onError, client?.listen);
         return () => { activeVisibleSubscriptions.delete(subscription); unsubscribe(); };
     }
 
@@ -170,7 +170,7 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
         return subscribeSnapshot(sdk, collectionRef(sdk, db, 'relations'), snapshot => {
             try { emitRelations(snapshot, onData, state, () => true); }
             catch (error) { if (typeof onError === 'function') onError(mutationError(error, 'subscribe-relations')); }
-        }, onError);
+        }, onError, client?.listen);
     }
 
     function findForPnj(id, relations = []) {

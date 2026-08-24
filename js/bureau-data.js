@@ -76,5 +76,7 @@ export function createBureauData({ isAdmin = false } = {}) {
         imageService.close?.();
         await client.close();
     };
-    return Object.freeze({ client, db, storage, functions, pnjs, relations, indices, images: imageService, close });
+    // Les primitives Firebase restent privées à cette composition : les pages
+    // ne reçoivent que des dépôts et le cycle de vie.
+    return Object.freeze({ pnjs, relations, indices, images: imageService, close });
 }

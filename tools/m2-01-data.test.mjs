@@ -440,3 +440,22 @@ test('le client MJ utilise explicitement la mémoire et nettoie Auth, listeners 
     assert.equal(calls.terminate, 1);
     assert.equal(calls.deleteApp, 1);
 });
+
+test('la fermeture du client invalide aussi les callbacks SDK déjà en file', async () => {
+    const double = makeSdk();
+    const subscriptions = [];
+    double.sdk.onSnapshot = (target, next, error) => {
+        const subscription = { target, next, error, closed: false };
+        subscriptions.push(subscription);
+        return () => { subscription.closed = true; double.calls.unsubscribe += 1; };
+    };
+    const client = await createPublicMobileClient({ sdk: double.sdk, config, appName: 'mobile-public-listener-close' });
+    let callbacks = 0;
+    const unsubscribe = client.listen({ name: 'query' }, () => { callbacks += 1; });
+    subscriptions.at(-1).next({ value: 1 });
+    await client.close();
+    subscriptions.at(-1).next({ value: 2 });
+    unsubscribe();
+    assert.equal(callbacks, 1);
+    assert.equal(double.calls.unsubscribe, 1);
+});

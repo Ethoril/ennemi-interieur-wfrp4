@@ -88,13 +88,21 @@ function createClientHandle({ mode, sdk, app, appName = null, auth = null, db, s
     const listen = (...args) => {
         if (closed) throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'listen' });
         if (typeof sdk?.onSnapshot !== 'function') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'listen' });
-        const unsubscribe = sdk.onSnapshot(...args);
-        if (typeof unsubscribe !== 'function') return () => {};
-        listeners.add(unsubscribe);
-        return () => {
-            if (!listeners.delete(unsubscribe)) return;
-            unsubscribe();
+        const [target, onNext, onError, ...rest] = args;
+        let active = true;
+        const safeNext = value => { if (active && typeof onNext === 'function') onNext(value); };
+        const safeError = error => { if (active && typeof onError === 'function') onError(error); };
+        const rawUnsubscribe = sdk.onSnapshot(target, safeNext, safeError, ...rest);
+        let released = false;
+        const release = () => {
+            if (released) return;
+            released = true;
+            active = false;
+            listeners.delete(release);
+            if (typeof rawUnsubscribe === 'function') rawUnsubscribe();
         };
+        listeners.add(release);
+        return release;
     };
     const close = async () => {
         if (closed) return;

@@ -217,7 +217,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         return subscribeSnapshot(sdk, target, snapshot => {
             try { emitNormalized(snapshot, normalizer, comparator, onData, state, filter); }
             catch (error) { if (typeof onError === 'function') onError(makeMutationError(error, 'subscribe')); }
-        }, onError);
+        }, onError, client?.listen);
     }
 
     function subscribeVisible(onData, onError) {
@@ -256,7 +256,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                 state.lastKey = key;
                 onData(normalized, metadata);
             } catch (error) { if (typeof onError === 'function') onError(makeMutationError(error, 'subscribe-pnj')); }
-        }, onError);
+        }, onError, client?.listen);
     }
 
     function subscribePrivate(id, onData, onError) {
@@ -273,7 +273,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                 onData(normalized, metadata);
             }
             catch (error) { if (typeof onError === 'function') onError(makeMutationError(error, 'subscribe-private-pnj')); }
-        }, onError);
+        }, onError, client?.listen);
     }
 
     async function create(publicInput, privateInput = {}, options = {}) {

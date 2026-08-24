@@ -157,7 +157,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         return subscribeSnapshot(sdk, target, snapshot => {
             try { emitList(snapshot, onData, state, filter); }
             catch (error) { if (typeof onError === 'function') onError(normalizedError(error, 'subscribe-indices')); }
-        }, error => { if (typeof onError === 'function') onError(normalizedError(error, 'subscribe-indices')); });
+        }, error => { if (typeof onError === 'function') onError(normalizedError(error, 'subscribe-indices')); }, client?.listen);
     }
 
     function publicFilter(indice) { return indice.decouvert === true; }
@@ -187,7 +187,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                 state.lastKey = key;
                 onData(result, metadata);
             } catch (error) { if (typeof onError === 'function') onError(normalizedError(error, 'subscribe-indice')); }
-        }, error => { if (typeof onError === 'function') onError(normalizedError(error, 'subscribe-indice')); });
+        }, error => { if (typeof onError === 'function') onError(normalizedError(error, 'subscribe-indice')); }, client?.listen);
     }
 
     function subscribeLinked(pnjId, onData, onError) {

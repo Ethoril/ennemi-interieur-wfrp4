@@ -1,3 +1,13 @@
+## [2.17.0] - 2026-08-25
+
+### Couche de données commune
+- **Dépôts partagés PNJs, relations, indices et images** : contrats publics/MJ documentés, erreurs normalisées, métadonnées temps réel, désabonnement et cycle de vie explicités.
+- **Intégration bureau** : les pages PNJs et Enquêtes passent par la composition commune, avec protections de session, reprise des verrous et nettoyage des ressources.
+- **Précache complet** : le graphe local requis par les deux pages est inclus dans le Service Worker.
+
+### Vérification
+- Les tests unitaires, d'intégration et de règles sont exécutables localement. La recette multi-fenêtres, réseau, bfcache et deux thèmes reste à réaliser manuellement ; aucun accès Firebase de production n'a été effectué dans ce lot.
+
 ## [2.16.0] - 2026-08-24
 
 ### Sécurité et mobile

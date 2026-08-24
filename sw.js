@@ -1,6 +1,6 @@
 // sw.js, en tête. Doit rester identique à APP_VERSION de js/layout.js :
 // la CI le vérifie (.github/workflows/validate.yml).
-const APP_VERSION = 'v2.16.0';
+const APP_VERSION = 'v2.17.0';
 const CACHE_NAME  = 'wfrp-cache-' + APP_VERSION;
 
 const ASSETS_LOCAUX = [
@@ -24,15 +24,26 @@ const ASSETS_LOCAUX = [
   './css/fiche.css',
   './css/doodle.css',
   './js/auth.js',
+  './js/app-check.js',
+  './js/bureau-data.js',
+  './js/bureau-view-lifecycle.js',
   './js/calendar.js',
+  './js/data/firebase-clients.js',
+  './js/data/firebase-errors.js',
+  './js/data/firebase-normalizers.js',
+  './js/data/images-repository.js',
+  './js/data/indices-repository.js',
+  './js/data/pnjs-repository.js',
+  './js/data/relations-repository.js',
+  './js/data/repository-utils.js',
   './js/doodle.js',
   './js/enquetes.js',
-  './js/app-check.js',
   './js/firebase-config.js',
   './js/fiche-cloud.js',
   './js/fiche.js',
   './js/firebase-init.js',
   './js/layout.js',
+  './js/load-generation.js',
   './js/main.js',
   './js/maps.js',
   './js/pnjs.js',
@@ -45,9 +56,11 @@ const ASSETS_LOCAUX = [
   './js/protected-upload-recovery.js',
   './js/image-lifecycle.js',
   './js/pnj-integrity.js',
+  './js/private-notes.js',
   './js/sheets.js',
   './js/ui-confirm.js',
   './js/utils.js',
+  './js/visibility.js',
   './js/hero3d/comet.js',
   './js/hero3d/index.js',
   './js/hero3d/morrslieb.js',

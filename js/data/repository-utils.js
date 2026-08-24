@@ -99,8 +99,9 @@ export function compareOrder(left, right) {
     return a === null || b === null ? 0 : a - b;
 }
 
-export function subscribeSnapshot(sdk, target, onNext, onError) {
-    if (typeof sdk.onSnapshot !== 'function') {
+export function subscribeSnapshot(sdk, target, onNext, onError, listen = null) {
+    const subscribe = typeof listen === 'function' ? listen : sdk?.onSnapshot;
+    if (typeof subscribe !== 'function') {
         const error = new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'subscribe' });
         if (typeof onError === 'function') onError(error);
         return () => {};
@@ -114,7 +115,7 @@ export function subscribeSnapshot(sdk, target, onNext, onError) {
         if (active && typeof onError === 'function') onError(normalizeRepositoryError(error, 'subscribe'));
     };
     try {
-        unsubscribe = sdk.onSnapshot(target, safeNext, safeError);
+        unsubscribe = subscribe(target, safeNext, safeError);
     } catch (error) {
         safeError(error);
     }
