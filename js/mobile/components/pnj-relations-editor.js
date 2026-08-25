@@ -82,10 +82,10 @@ function validForm(values) {
 
 export function createPnjRelationsEditor({ container, pnjId, getSession = () => null,
     getRelationsRepository = () => null, getPnjRepository = () => null,
-    announce = () => {}, document: documentRef = container?.ownerDocument ?? globalThis.document } = {}) {
+    announce = () => {}, isOnline = () => true, document: documentRef = container?.ownerDocument ?? globalThis.document } = {}) {
     if (!container || !documentRef?.createElement || typeof pnjId !== 'string' || !pnjId) throw new TypeError('Éditeur de relations requis');
     let mounted = false; let generation = 0; let controller = null; let externalSignal = null; let unsubs = [];
-    let relations = []; let pnjs = []; let busy = false; let dirty = false; let externallyDisabled = false; let editor = null; let editorRelation = null; let editorPanel = null; let conflictActions = null;
+    let relations = []; let pnjs = []; let busy = false; let dirty = false; let externallyDisabled = false; let editor = null; let editorRelation = null; let editorFields = null; let editorPanel = null; let conflictActions = null;
     let lastFocus = null; let previousOverflow = null; let ownsScrollLock = false; let refs = null;
 
     const cleanup = () => { for (const unsubscribe of unsubs.splice(0)) { try { unsubscribe?.(); } catch { /* best-effort */ } } };
@@ -135,7 +135,7 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
     };
     const closeEditor = () => {
         if (!editor) return;
-        editor.remove(); editor = null; editorRelation = null; editorPanel = null; conflictActions = null; dirty = false;
+        editor.remove(); editor = null; editorRelation = null; editorFields = null; editorPanel = null; conflictActions = null; dirty = false;
         if (documentRef.body?.style) documentRef.body.style.overflow = previousOverflow ?? '';
         if (documentRef.body && ownsScrollLock) {
             documentRef.body.className = String(documentRef.body.className || '').split(/\s+/u)
@@ -179,6 +179,7 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
             style: createField(documentRef, form, 'Trait', 'style', 'select'),
             color: createField(documentRef, form, 'Couleur', 'color', 'select'),
         };
+        editorFields = fields;
         const visible = createField(documentRef, form, 'Visible par les joueurs', 'visible', 'checkbox'); fields.visible = visible;
         const pairLabel = relation ? 'Modifier les deux sens' : 'Créer dans les deux sens';
         const pair = createField(documentRef, form, pairLabel, 'pair', 'checkbox'); fields.pair = pair;
@@ -219,12 +220,28 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
         conflictActions = documentRef.createElement('div'); conflictActions.className = 'm-relation-conflict-actions';
         const reload = documentRef.createElement('button'); reload.type = 'button'; reload.className = 'm-button'; reload.textContent = 'Recharger la version distante';
         const keep = documentRef.createElement('button'); keep.type = 'button'; keep.className = 'm-button'; keep.textContent = 'Conserver ma saisie';
+        const force = documentRef.createElement('button'); force.type = 'button'; force.className = 'm-button m-button-danger'; force.textContent = 'Forcer après confirmation MJ';
         reload.addEventListener('click', () => { closeEditor(); openEditor(next); });
         keep.addEventListener('click', () => { conflictActions?.remove?.(); conflictActions = null; setStatus('Votre saisie est conservée ; le contrôle serveur reste requis.', 'conflict'); });
-        conflictActions.append(reload, keep); editorPanel.append(conflictActions);
+        force.addEventListener('click', () => { if (documentRef.defaultView?.confirm?.('Forcer cette relation après le conflit ? Cette action est réservée au MJ.')) void forceRelation(); });
+        conflictActions.append(reload, keep, force); editorPanel.append(conflictActions);
+    };
+    const forceRelation = async () => {
+        if (isOnline?.() === false) { setStatus('Hors ligne. La relation reste conservée en mémoire.', 'offline'); return; }
+        const relation = editorRelation; const fields = editorFields; const operation = capture(); const repo = getRelationsRepository();
+        if (!relation || !fields || !operation || typeof repo?.forceUpdate !== 'function' || busy) return;
+        const values = { target: fields.target.control.value, direction: fields.direction.control.value, type: fields.type.control.value.trim(), label: fields.label.control.value.trim(), style: fields.style.control.value, color: fields.color.control.value, visible: fields.visible.control.checked === true };
+        const validation = validForm(values); if (!validation.valid) { applyErrors(fields, validation.errors); return; }
+        const target = targetMap().get(values.target); if (!target) return;
+        if (values.visible && (target.visibleJoueurs !== true || pnjs.find(item => item?.id === pnjId)?.visibleJoueurs !== true)) return;
+        const payload = { source: values.direction === 'outgoing' ? pnjId : values.target, cible: values.direction === 'outgoing' ? values.target : pnjId, type: values.type, label: values.label || values.type, style: values.style, color: values.color || null, visibleJoueurs: values.visible };
+        busy = true; submitDisabled(fields, true);
+        try { const pair = fields.pair.control.checked === true; const options = pair ? { confirmed: true, pair: true, reciprocalId: relation.reciprocalId } : { confirmed: true, pair: false }; await repo.forceUpdate(relation.id, payload, options); if (!current(operation)) return; busy = false; closeEditor(); announce('Relation forcée après confirmation MJ.'); }
+        catch (error) { if (current(operation)) { busy = false; submitDisabled(fields, false); setStatus(safeError(error), 'error'); } }
     };
     const saveRelation = async (relation, fields, status) => {
         if (busy) return; const operation = capture(); if (!operation) { status.textContent = 'Session MJ invalide.'; return; }
+        if (isOnline?.() === false) { status.textContent = 'Hors ligne. La relation reste conservée en mémoire.'; return; }
         const values = { target: fields.target.control.value, direction: fields.direction.control.value, type: fields.type.control.value.trim(), label: fields.label.control.value.trim(), style: fields.style.control.value, color: fields.color.control.value, visible: fields.visible.control.checked === true };
         const validation = validForm(values); if (!validation.valid) { applyErrors(fields, validation.errors); return; }
         const target = targetMap().get(values.target);
@@ -255,6 +272,7 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
     };
     const removeRelation = async (relation, removePair = false) => {
         if (!mounted || busy || externallyDisabled || !strictGm(getSession)) return;
+        if (isOnline?.() === false) { setStatus('Hors ligne. La relation n’est pas supprimée.', 'offline'); return; }
         const target = targetMap().get(relationTarget(relation, pnjId)); const pair = removePair === true && Boolean(relation.reciprocalId);
         if (!documentRef.defaultView?.confirm?.(`Supprimer la relation ${relation.label || relation.type} avec ${target?.nom || 'PNJ introuvable'}${pair ? ' dans les deux sens' : ' dans ce sens'} ?`)) return;
         const operation = capture(); if (!operation) return; busy = true; setStatus('Suppression en cours…');

@@ -7,6 +7,7 @@ import { createPnjsListView } from './views/pnjs-list.js';
 import { createPnjDetailView } from './views/pnj-detail.js';
 import { createPnjEditView } from './views/pnj-edit.js';
 import { createAdminRouteController } from './admin-route-controller.js';
+import { createPublicDraftStore } from './drafts-store.js';
 
 function placeholderView({ container, title, message, actionLabel = '', onAction = null }) {
     let mounted = false;
@@ -56,7 +57,7 @@ function cacheMessage(state) {
     return 'Le mode de cache sera indiqué après le premier chargement.';
 }
 
-function createSettingsView({ container, publicSession, mjSession, documentRef }) {
+function createSettingsView({ container, publicSession, mjSession, documentRef, draftStore = null, announce = () => {} }) {
     let unsubscribePublic = null;
     let unsubscribeMj = null;
     let mounted = false;
@@ -105,6 +106,15 @@ function createSettingsView({ container, publicSession, mjSession, documentRef }
         const cache = documentRef.createElement('p');
         cache.textContent = cacheMessage(publicSession.getState());
         section.append(cache);
+        if (draftStore) {
+            const clearDrafts = documentRef.createElement('button');
+            clearDrafts.type = 'button'; clearDrafts.className = 'm-button'; clearDrafts.textContent = 'Effacer les brouillons';
+            clearDrafts.addEventListener('click', () => {
+                if (!documentRef.defaultView?.confirm?.('Effacer tous les brouillons publics locaux ?')) return;
+                const count = draftStore.clear(); render(); announce(`${count} brouillon${count === 1 ? '' : 's'} local${count === 1 ? '' : 'aux'} effacé${count === 1 ? '' : 's'}.`);
+            });
+            section.append(clearDrafts);
+        }
         const version = documentRef.createElement('p');
         const versionMeta = documentRef.querySelector?.('meta[name="app-version"]');
         version.textContent = `Version ${versionMeta?.content || 'inconnue'}`;
@@ -145,6 +155,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     if (!container || !windowRef || !title || !back || !headerAction || !dialogElement) return null;
 
     const session = createDefaultPublicSession({ navigatorRef: windowRef.navigator });
+    const draftStore = createPublicDraftStore({ storage: (() => { try { return windowRef.localStorage; } catch { return null; } })() });
     let router;
     let pendingInitialRoute = null;
     const mjSession = createDefaultMjSession({
@@ -192,6 +203,8 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
                 return placeholderView({ container, title: 'Accès MJ requis', message: 'Cette action est réservée au MJ.', actionLabel: 'Retour', onAction: () => router.back() });
             }
             return createPnjEditView({ container, getSession: () => mjSession.getState(),
+                draftStore,
+                isOnline: () => windowRef.navigator?.onLine !== false,
                 getRepository: () => mjSession.getState().private?.repositories?.pnjs,
                 getRelationsRepository: () => mjSession.getState().private?.repositories?.relations,
                 getPnjRepository: () => mjSession.getState().private?.repositories?.pnjs,
@@ -221,6 +234,8 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
                 return placeholderView({ container, title: 'Accès MJ requis', message: 'Cette action est réservée au MJ.', actionLabel: 'Retour', onAction: () => router.back() });
             }
             return createPnjEditView({ container, id: route.id, getSession: () => mjSession.getState(),
+                draftStore,
+                isOnline: () => windowRef.navigator?.onLine !== false,
                 getRepository: () => mjSession.getState().private?.repositories?.pnjs,
                 getRelationsRepository: () => mjSession.getState().private?.repositories?.relations,
                 getPnjRepository: () => mjSession.getState().private?.repositories?.pnjs,
@@ -236,7 +251,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             onAction: () => router.back(),
         }),
     };
-    views[ROUTE_NAMES.REGLAGES] = () => createSettingsView({ container, publicSession: session, mjSession, documentRef });
+    views[ROUTE_NAMES.REGLAGES] = () => createSettingsView({ container, publicSession: session, mjSession, documentRef, draftStore, announce: message => announce(routeStatus, message) });
     router = createRouter({
         windowRef,
         mountRoute: route => (views[route.name] || views[ROUTE_NAMES.UNKNOWN])(route),

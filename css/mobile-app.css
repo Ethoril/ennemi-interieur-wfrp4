@@ -482,6 +482,8 @@ body {
 .m-relation-field label { color: var(--text-primary); font-weight: 700; }
 .m-relation-field input, .m-relation-field select { min-height: var(--m-touch-target); width: 100%; padding: var(--space-xs); color: var(--text-primary); background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); }
 .m-relation-field input[type="checkbox"] { width: var(--m-touch-target); }
+.m-form-conflict { display: grid; gap: var(--space-xs); margin-block: var(--space-sm); padding: var(--space-sm); color: var(--text-primary); background: var(--gold-wash); border: 1px solid var(--border-gold); border-radius: var(--radius-sm); }
+.m-form-conflict button { min-height: var(--m-touch-target); }
 
 @media (max-width: 22rem) {
   .m-form-actions { display: flex; flex-wrap: wrap; }

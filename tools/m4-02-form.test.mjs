@@ -154,13 +154,14 @@ function fakeDocument(confirm = () => true) {
 
 function gmState(uid = 'gm') { return { status: 'gm', role: 'mj', user: { uid } }; }
 function fakeRepository({ id = 'a', skipInitial = false, publicItem = { id: 'a', nom: 'Ada', statut: '', vivant: 'inconnu', lieu: '', groupe: '', description: '', visibleJoueurs: true, updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] }, privateItem = { id: 'a', notes: 'secret', updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] }, throwPrivate = null, removalLock = null } = {}) {
-    const publicCallbacks = []; const privateCallbacks = []; const calls = { create: 0, update: 0, remove: 0, resume: 0 };
+    const publicCallbacks = []; const privateCallbacks = []; const calls = { create: 0, update: 0, forceUpdate: 0, remove: 0, resume: 0 };
     const deferred = {};
     const repository = {
         subscribeOne: (_id, next, error) => { publicCallbacks.push({ next, error }); if (!skipInitial && publicItem !== undefined) next(publicItem); return () => {}; },
         subscribePrivate: (_id, next, error) => { privateCallbacks.push({ next, error }); if (throwPrivate) throw throwPrivate; if (!skipInitial && privateItem !== undefined) next(privateItem); return () => {}; },
         create: async (...args) => { calls.create += 1; calls.createArgs = args; deferred.create?.(args); return { id }; },
         update: async (...args) => { calls.update += 1; calls.updateArgs = args; deferred.update?.(args); return { id }; },
+        forceUpdate: async (...args) => { calls.forceUpdate += 1; calls.forceUpdateArgs = args; return new Promise(resolve => { deferred.forceUpdate = () => resolve({ id }); }); },
         inspectRemovalImpact: async () => ({ id, name: 'Ada', relationsCount: 2, indicesCount: 1, hasPortrait: true, hasPrivateNotes: true }),
         inspectRemovalLock: async () => removalLock,
         inspectVisibilityImpact: async () => ({ id, visibleRelationsCount: 1, incompatibleVisibleRelationsCount: 1 }),
@@ -173,7 +174,7 @@ function fakeRepository({ id = 'a', skipInitial = false, publicItem = { id: 'a',
 async function mountedForm(options = {}) {
     const documentRef = fakeDocument(options.confirm || (() => true)); const container = new Element(documentRef, 'main');
     const fake = fakeRepository({ ...options, id: options.id === null ? 'a' : options.id, skipInitial: options.id === null || options.skipInitial === true }); const navigated = []; const announced = []; const events = [];
-    const back = []; const view = createPnjEditView({ container, id: options.id === null ? null : 'a', repository: fake.repository, getImageService: options.getImageService, portraitProcessor: options.portraitProcessor, getSession: () => gmState(), onNavigate: value => { navigated.push(value); events.push(['navigate', value]); }, onBack: () => back.push(true), announce: value => { announced.push(value); events.push(['announce', value]); } });
+    const back = []; const view = createPnjEditView({ container, id: options.id === null ? null : 'a', repository: fake.repository, getImageService: options.getImageService, portraitProcessor: options.portraitProcessor, draftStore: options.draftStore, isOnline: options.isOnline, getSession: () => gmState(), onNavigate: value => { navigated.push(value); events.push(['navigate', value]); }, onBack: () => back.push(true), announce: value => { announced.push(value); events.push(['announce', value]); } });
     view.mount(); await Promise.resolve();
     return { documentRef, container, fake, navigated, announced, events, back, view };
 }
@@ -457,6 +458,95 @@ test('une suppression avec cleanup pending expose la reprise puis navigue en rep
     assert.deepEqual(mounted.events.slice(-2), [['navigate', '#/pnjs'], ['announce', 'Nettoyage du PNJ terminé.']]);
 });
 
+test('une suppression confirmée efface le draft retrouvé par PNJ, même sans draftId courant', async () => {
+    let available = false; const removed = [];
+    const draftStore = { find: () => available ? { draftId: 'draft:abcdefgh' } : null, remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) };
+    const mounted = await mountedForm({ draftStore }); available = true;
+    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
+    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await Promise.resolve();
+    assert.deepEqual(removed, ['draft:abcdefgh']);
+});
+
+test('cleanup pending confirmé efface le draft, tandis qu’un verrou avant Firestore le conserve', async () => {
+    let available = false; const removed = [];
+    const draftStore = { find: () => available ? { draftId: 'draft:abcdefgh' } : null, remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) };
+    const mounted = await mountedForm({ draftStore }); available = true;
+    mounted.fake.repository.remove = async () => ({ firestoreDone: true, imageCleanupPending: true, lockRetained: false });
+    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
+    mounted.container.querySelectorAll('.m-button-danger').find(button => button.textContent === 'Confirmer la suppression').dispatch('click'); await Promise.resolve();
+    assert.deepEqual(removed, ['draft:abcdefgh']);
+
+    const second = await mountedForm({ draftStore: { find: () => ({ draftId: 'draft:abcdefgh' }), remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) } });
+    second.fake.repository.remove = async () => ({ firestoreDone: false, imageCleanupPending: false, lockRetained: true });
+    second.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
+    second.container.querySelectorAll('.m-button-danger').find(button => button.textContent === 'Confirmer la suppression').dispatch('click'); await Promise.resolve();
+    assert.deepEqual(removed, ['draft:abcdefgh']);
+});
+
+test('une erreur post-commit efface le draft, mais commitUnknown le conserve', async () => {
+    const removed = []; let available = false;
+    const draftStore = { find: () => available ? { draftId: 'draft:abcdefgh' } : null, remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) };
+    const committed = await mountedForm({ draftStore }); available = true;
+    committed.fake.repository.remove = async () => { throw Object.assign(new Error('cleanup'), { state: { commitDone: true, cleanupPending: true, firestoreDone: true } }); };
+    committed.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
+    committed.container.querySelectorAll('.m-button-danger').find(button => button.textContent === 'Confirmer la suppression').dispatch('click'); await Promise.resolve();
+    assert.deepEqual(removed, ['draft:abcdefgh']);
+
+    const uncertain = await mountedForm({ draftStore: { find: () => ({ draftId: 'draft:ijklmnop' }), remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) } });
+    uncertain.fake.repository.remove = async () => { throw Object.assign(new Error('unknown'), { state: { commitUnknown: true, cleanupPending: true, firestoreDone: false } }); };
+    uncertain.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
+    uncertain.container.querySelectorAll('.m-button-danger').find(button => button.textContent === 'Confirmer la suppression').dispatch('click'); await Promise.resolve();
+    assert.deepEqual(removed, ['draft:abcdefgh']);
+});
+
+test('une reprise avec erreur post-commit efface le draft et commitUnknown le conserve', async () => {
+    const removed = [];
+    const draftStore = { find: () => ({ draftId: 'draft:abcdefgh' }), remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) };
+    const committed = await mountedForm({ draftStore });
+    committed.fake.repository.remove = async () => ({ firestoreDone: true, imageCleanupPending: true, lockRetained: true });
+    committed.fake.repository.resumeRemoval = async () => { throw Object.assign(new Error('cleanup'), { state: { commitDone: true, cleanupPending: true, firestoreDone: true } }); };
+    committed.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
+    committed.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage').dispatch('click'); await Promise.resolve();
+    assert.deepEqual(removed, ['draft:abcdefgh']);
+
+    const uncertain = await mountedForm({ draftStore: { find: () => ({ draftId: 'draft:ijklmnop' }), remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) } });
+    uncertain.fake.repository.remove = async () => ({ firestoreDone: true, imageCleanupPending: true, lockRetained: true });
+    uncertain.fake.repository.resumeRemoval = async () => { throw Object.assign(new Error('unknown'), { state: { commitUnknown: true, cleanupPending: true, firestoreDone: false } }); };
+    uncertain.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
+    uncertain.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage').dispatch('click'); await Promise.resolve();
+    assert.deepEqual(removed, ['draft:abcdefgh']);
+});
+
+test('avant départ, un quota de draft n’annonce pas une conservation inexistante', async () => {
+    let confirmation = '';
+    const mounted = await mountedForm({ confirm: message => { confirmation = message; return false; }, draftStore: { find: () => null, save: () => ({ ok: false, reason: 'quota' }), remove: () => true } });
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Saisie non persistée';
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].dispatch('input');
+    assert.equal(mounted.view.beforeLeave(), false); assert.match(confirmation, /échoué|perdre/u);
+    assert.doesNotMatch(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /conservés localement/u);
+});
+
+test('un draft refusé est réutilisé puis tous les drafts du PNJ sont purgés après succès', async () => {
+    const drafts = [{ draftId: 'draft:abcdefgh', pnjId: 'a' }, { draftId: 'draft:ijklmnop', pnjId: 'a' }]; const removed = [];
+    const draftStore = {
+        find: () => drafts[0] || null,
+        list: () => drafts.slice(),
+        save: (_values, options) => ({ ok: true, draft: { draftId: options.draftId || 'draft:abcdefgh', pnjId: 'a' } }),
+        remove: id => { removed.push(id); const index = drafts.findIndex(item => item.draftId === id); if (index >= 0) drafts.splice(index, 1); return true; },
+    };
+    const mounted = await mountedForm({ confirm: () => false, draftStore });
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Après refus';
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].dispatch('input');
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
+    assert.deepEqual(removed.sort(), ['draft:abcdefgh', 'draft:ijklmnop']); assert.equal(drafts.length, 0);
+});
+
+test('le force-save reste bloqué pendant un recovery et vérifie le draftVersion après await', () => {
+    const source = fs.readFileSync(path.join(root, 'js/mobile/views/pnj-edit.js'), 'utf8');
+    assert.match(source, /forceSaveConflict[\s\S]{0,300}recoveryLocked[\s\S]{0,80}imageRecoveryLocked[\s\S]{0,80}saving[\s\S]{0,80}removing/u);
+    assert.match(source, /await getRepository\(\)\.forceUpdate[\s\S]{0,500}draftVersion !== operation\.draftVersion/u);
+});
+
 test('une suppression interrompue avant Firestore conserve le CTA de reprise sans faux succès', async () => {
     const mounted = await mountedForm();
     mounted.fake.repository.remove = async () => ({ firestoreDone: false, imageCleanupPending: false, lockRetained: true, legacyImageSkipped: true });
@@ -528,6 +618,20 @@ test('un conflit update conserve exactement le brouillon et ne navigue pas', asy
     mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
     assert.equal(nom.value, 'Brouillon conflit'); assert.deepEqual(mounted.navigated, []);
     assert.doesNotMatch(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /raw-conflict/u);
+});
+
+test('un force différé verrouille le panneau conflit et ignore Reload hostile', async () => {
+    const mounted = await mountedForm();
+    const nom = mounted.container.querySelectorAll('#m-pnj-nom')[0]; nom.value = 'Saisie locale'; nom.dispatch('input');
+    mounted.fake.publicCallbacks[0].next({ id: 'a', nom: 'Version distante', statut: '', vivant: 'inconnu', lieu: '', groupe: '', description: '', visibleJoueurs: true, updatedAt: { seconds: 2, nanoseconds: 0 }, issues: [] });
+    const panel = mounted.container.querySelectorAll('.m-form-conflict')[0]; const buttons = panel.querySelectorAll('button');
+    assert.equal(buttons.length, 3); const force = buttons.find(button => button.textContent === 'Forcer après confirmation MJ');
+    force.dispatch('click'); await Promise.resolve();
+    assert.equal(mounted.fake.calls.forceUpdate, 1); assert.equal(buttons.every(button => button.disabled), true);
+    const reload = buttons.find(button => button.textContent === 'Recharger le serveur'); reload.dispatch('click');
+    assert.equal(nom.value, 'Saisie locale', 'Reload injecté pendant la mutation ne doit pas écraser la saisie');
+    mounted.fake.deferred.forceUpdate(); await Promise.resolve(); await Promise.resolve();
+    assert.deepEqual(mounted.navigated, ['#/pnjs/a']);
 });
 
 test('une permission brute est convertie en message UI générique', async () => {

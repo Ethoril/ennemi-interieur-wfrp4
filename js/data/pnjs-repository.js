@@ -369,10 +369,10 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                         else if (snapshotData(pnjSnapshot).visibleJoueurs !== false) {
                             throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'update-pnj-revoke-republished' });
                         }
-                        if (applyPnjPatch && Object.keys(privateData).length && expectedPrivateUpdatedAt !== undefined) {
+                        if (applyPnjPatch && Object.keys(privateData).length && (expectedPrivateUpdatedAt !== undefined || options?.force === true)) {
                             const privateSnapshot = await transaction.get(privateRef);
                             if (!snapshotExists(privateSnapshot)
-                                || !timestampEqual(readUpdatedAt(privateSnapshot), expectedPrivateUpdatedAt)) {
+                                || (expectedPrivateUpdatedAt !== undefined && !timestampEqual(readUpdatedAt(privateSnapshot), expectedPrivateUpdatedAt))) {
                                 throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'update-pnj-private' });
                             }
                         }
@@ -403,6 +403,13 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
             }
             return result;
         } catch (error) { throw makeMutationError(error, 'update-pnj'); }
+    }
+
+    // Le forçage est une action distincte : l’interface doit avoir confirmé
+    // une seconde fois le conflit MJ avant de supprimer les préconditions.
+    async function forceUpdate(id, patchPublic = {}, patchPrivate = {}, options = {}) {
+        if (options?.confirmed !== true) throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'force-update-pnj-confirmation' });
+        return update(id, patchPublic, patchPrivate, undefined, undefined, { ...options, force: true });
     }
 
     async function collectImpact(id) {
@@ -681,7 +688,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
 
     const repository = { subscribeVisible, subscribeOne };
     if (isMj) Object.assign(repository, {
-        subscribeAll, subscribePrivate, create, reserveId, update, remove, resumeRemoval, inspectRemovalLock, inspectPortraitCommit, inspectRemovalImpact,
+        subscribeAll, subscribePrivate, create, reserveId, update, forceUpdate, remove, resumeRemoval, inspectRemovalLock, inspectPortraitCommit, inspectRemovalImpact,
         inspectVisibilityImpact,
     });
     return Object.freeze(repository);

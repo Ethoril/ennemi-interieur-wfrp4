@@ -1,3 +1,13 @@
+## [2.19.0] - 2026-08-25
+
+### Mobile — administration PNJs
+- **Brouillons publics et conflits** : les champs publics sont conservés localement dans un format versionné et allowlisté, sans notes, portrait, blob, URL ni jeton ; les écritures MJ restent en ligne uniquement.
+- **Résolution explicite** : les versions publiques et privées sont revalidées avant écriture ; un conflit peut être rechargé, copié ou forcé après une seconde confirmation MJ, sans recréation silencieuse d’un document supprimé.
+- **Clôture M4** : statuts d’enregistrement, hors ligne, conflit et reprise sont annoncés ; l’effacement des brouillons est disponible dans les réglages.
+
+### Vérification
+- Tests comportementaux des brouillons, quotas, expiration, conflits et cycle de vie ajoutés. La recette Android est différée ; la recette iOS reste différée.
+
 ## [2.18.0] - 2026-08-25
 
 ### Mobile — consultation joueur

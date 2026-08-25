@@ -283,6 +283,12 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
         } catch (error) { throw mutationError(error, 'update-relation'); }
     }
 
+    async function forceUpdate(id, patch, options = {}) {
+        if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'force-update-relation' });
+        if (options?.confirmed !== true) throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'force-update-relation-confirmation' });
+        return update(id, patch, undefined, { ...options, force: true });
+    }
+
     async function remove(id, pairOrOptions = false) {
         if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'delete-relation' });
         if (!validId(id)) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'delete-relation' });
@@ -321,7 +327,7 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
     }
 
     const repository = Object.freeze({ subscribeVisible, setVisiblePnjIds, findForPnj });
-    if (isMj) return Object.freeze({ ...repository, subscribeAll, create, update, remove });
+    if (isMj) return Object.freeze({ ...repository, subscribeAll, create, update, forceUpdate, remove });
     return repository;
 }
 
