@@ -1,3 +1,17 @@
+## [2.21.5] - 2026-08-25
+
+### Corrigé
+
+- **Connexion MJ mobile** : la CSP de la coque `/app/` autorise désormais l'origine exacte
+  `https://apis.google.com` chargée dynamiquement par le SDK Firebase Auth pour Google Sign-In.
+  Aucun élargissement de `connect-src` ou `frame-src` n'est ajouté.
+
+### Préparation
+
+- **Candidat local non publié** : la coque précachée, le Service Worker et les métadonnées passent
+  en `v2.21.5` / `wfrp-cache-v2.21.5`. Ce correctif n'est ni poussé ni déployé ; la version
+  actuellement publiée reste `v2.21.4` jusqu'à validation Auth réelle.
+
 ## [2.21.4] - 2026-08-25
 
 ### Synchronisation mobile

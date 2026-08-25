@@ -4,6 +4,11 @@ Date de préparation : 25 août 2026. Version cachée actuellement déployée : 
 `58fe964`. La version précédente était `v2.21.3`, commit `712417f`, et la version témoin Android
 précédente était `v2.21.2`.
 
+Le candidat local suivant est `v2.21.5`, non poussé et non déployé. Il ajoute uniquement
+`https://apis.google.com` à `script-src` dans la CSP de la coque mobile, car le SDK Firebase Auth
+charge dynamiquement `https://apis.google.com/js/api.js`. La version publiée reste `v2.21.4`
+jusqu'à validation réelle de la connexion MJ.
+
 ## Décision de livraison
 
 Le code et la coque PWA sont prêts pour une validation progressive sans annonce publique. Le

@@ -10,6 +10,9 @@ Date de préparation : 25 août 2026.
   et change le graphe précaché.
 - Version témoin antérieure : commit `387d1cf` — `v2.21.2` ; le commit documentaire `5376782` est inclus
   dans le déploiement actuel.
+- Candidat local suivant non poussé/non déployé : `v2.21.5`. Il corrige uniquement la CSP de
+  `/app/` pour autoriser `https://apis.google.com`, origine chargée dynamiquement par le SDK
+  Firebase Auth. `v2.21.4` reste la version actuellement publiée jusqu'à validation Auth.
 - `start_url` reste `./index.html` ; aucun lien public ni entrée de navigation n’annonce `/app/`.
 - La préparation locale n'avait lancé aucun déploiement. Le push de `712417f` a ensuite été autorisé
   explicitement et les workflows GitHub Pages et validation se sont terminés avec succès. La

@@ -322,6 +322,24 @@ test('runtime public et runtime MJ restent séparés et les actions privées son
     assert.match(read('js/mobile/app.js'), /ROUTE_NAMES\.PNJ_EDIT/u);
 });
 
+test('la CSP mobile autorise le chargement Google réellement requis par Firebase Auth', () => {
+    const runtime = read('js/mobile/mj-runtime.js');
+    const html = read('app/index.html');
+    const csp = html.match(/http-equiv="Content-Security-Policy"\s+content="([^"]+)"/iu)?.[1] ?? '';
+    const directives = Object.fromEntries(csp.split(';').map(part => {
+        const tokens = part.trim().split(/\s+/u);
+        return [tokens.shift() ?? '', tokens];
+    }).filter(([name]) => name));
+    assert.match(runtime, /firebase-auth\.js['"]/u, 'le contrat testé doit suivre le vrai runtime Firebase Auth');
+    assert.ok(directives['script-src']?.includes('https://apis.google.com'),
+        'Firebase Auth charge https://apis.google.com/js/api.js dynamiquement');
+    assert.ok(!directives['connect-src']?.includes('https://apis.google.com'),
+        'connect-src ne doit pas être élargi sans requête réseau démontrée');
+    assert.ok(!directives['frame-src']?.includes('https://apis.google.com'),
+        'frame-src ne doit pas être élargi sans iframe démontrée');
+    assert.doesNotMatch(directives['script-src']?.join(' ') ?? '', /\*|unsafe-inline|unsafe-eval/u);
+});
+
 test('la route de modification est explicite et reste protégée avant le rendu', () => {
     assert.deepEqual(parseRoute('#/pnjs/p1/modifier'), { name: ROUTE_NAMES.PNJ_EDIT, id: 'p1' });
     assert.equal(routeToHash({ name: ROUTE_NAMES.PNJ_EDIT, id: 'p1' }), '#/pnjs/p1/modifier');
