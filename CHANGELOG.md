@@ -1,3 +1,15 @@
+## [2.20.0] - 2026-08-25
+
+### Mobile — clôture Enquêtes
+- **Parcours joueur et MJ** : le carnet public, les fiches, les liens PNJ, la recherche, la publication, les illustrations, les brouillons, les conflits et la reprise des nettoyages sont livrés dans la coque mobile.
+- **Confidentialité et résilience** : les secrets restent MJ-only, les images protégées restent hors cache applicatif, et les états d’erreur/reprise restent fail-closed sans exposer de chemin ou d’URL.
+- **Clôture M5-03** : version, cache, graphe d’imports, CSP et contrôles d’absence d’activation publique sont documentés et testés ; `/app/` reste hors précache, manifeste et navigation publique jusqu’aux lots d’installation/annonce.
+
+### Vérification
+- Contrôles automatisés lint, smoke, syntaxe, graphe mobile, CSP, confidentialité, dépôts et régressions bureau/mobile exécutés localement.
+- Les quatre runners de règles Firestore/Storage ont été rejoués sur les émulateurs Firebase locaux avec un code de sortie nul, sans accès à la production.
+- Recette Android physique à effectuer ; recette iOS explicitement différée. Aucun test Firebase de production, déploiement ou recette physique n’est revendiqué par cette clôture.
+
 ## [2.19.0] - 2026-08-25
 
 ### Mobile — administration PNJs

@@ -80,10 +80,10 @@ test('la release M4-05 aligne meta/cache/changelog et garde /app hors annonce', 
     const layout = read('js/layout.js');
     const sw = read('sw.js');
     const changelog = read('CHANGELOG.md');
-    assert.match(html, /app-version" content="v2\.19\.0"/u);
-    assert.match(layout, /APP_VERSION = 'v2\.19\.0'/u); assert.match(sw, /APP_VERSION = 'v2\.19\.0'/u);
-    assert.match(changelog, /^## \[2\.19\.0\]/mu);
-    const currentEntry = changelog.split(/^## \[2\.18\.0\]/mu, 1)[0];
+    assert.match(html, /app-version" content="v2\.20\.0"/u);
+    assert.match(layout, /APP_VERSION = 'v2\.20\.0'/u); assert.match(sw, /APP_VERSION = 'v2\.20\.0'/u);
+    assert.match(changelog, /^## \[2\.20\.0\]/mu);
+    const currentEntry = changelog.match(/^## \[2\.19\.0\][\s\S]*?(?=^## \[2\.18\.0\])/mu)?.[0] ?? '';
     assert.doesNotMatch(currentEntry, /\/app/iu);
     assert.match(read('js/mobile/app.js'), /drafts-store\.js/u);
 });
