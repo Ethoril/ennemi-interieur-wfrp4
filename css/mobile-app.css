@@ -27,7 +27,7 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto auto 1fr auto;
   padding-top: var(--m-safe-top);
   padding-right: var(--m-safe-right);
   padding-left: var(--m-safe-left);
@@ -115,6 +115,17 @@ body {
 .m-status:empty { visibility: hidden; }
 .m-status[data-kind="error"] { color: var(--blood-bright); }
 .m-status[data-kind="offline"] { color: var(--gold-bright); }
+
+.m-pwa-banner {
+  margin: 0 var(--space-md) var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+}
+.m-pwa-banner p { margin: 0 0 var(--space-sm); }
+.m-pwa-banner-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
 
 .m-main {
   width: min(100%, var(--m-content-width));

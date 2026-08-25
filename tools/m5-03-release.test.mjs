@@ -64,8 +64,10 @@ test('le graphe M5 est fermé et tous les parcours enquêtes restent syntaxiquem
         assert.doesNotThrow(() => execFileSync(process.execPath, ['--check', absolute], { stdio: 'pipe' }),
             `syntaxe invalide : ${relative}`);
         const source = fs.readFileSync(absolute, 'utf8');
-        assert.doesNotMatch(source, /(?:navigator\.)?serviceWorker(?:\.register)?/iu,
-            `${relative} ne doit pas enregistrer le Service Worker avant M6-02`);
+        if (relative !== 'js/mobile/pwa.js') {
+            assert.doesNotMatch(source, /(?:navigator\.)?serviceWorker(?:\.register)?/iu,
+                `${relative} ne doit pas enregistrer le Service Worker directement`);
+        }
         for (const specifier of localImports(source)) pending.push(resolveModule(relative, specifier));
     }
     for (const relative of [
@@ -80,7 +82,7 @@ test('le graphe M5 est fermé et tous les parcours enquêtes restent syntaxiquem
     ]) assert.ok(visited.has(relative), `module M5 absent du graphe : ${relative}`);
 });
 
-test('la CSP mobile couvre les services utilisés sans activer le précache ou l annonce publique', () => {
+test('la CSP mobile couvre les services utilisés sans exposer de données au précache', () => {
     const html = read('app/index.html');
     const csp = html.match(/http-equiv="Content-Security-Policy"\s+content="([^"]+)"/iu)?.[1] ?? '';
     assert.match(csp, /script-src 'self'/u);
@@ -91,7 +93,8 @@ test('la CSP mobile couvre les services utilisés sans activer le précache ou l
     assert.match(csp, /connect-src[^;]*cloudfunctions\.net/u);
     assert.doesNotMatch(csp, /unsafe-inline|unsafe-eval/iu);
     const assets = read('sw.js').match(/const ASSETS_LOCAUX\s*=\s*\[([\s\S]*?)\n\];/u)?.[1] ?? '';
-    assert.doesNotMatch(assets, /(?:\.\/)?app\/|js\/mobile\//u);
+    assert.match(assets, /['"]\.\/app\/index\.html['"]/u);
+    assert.match(assets, /['"]\.\/js\/mobile\/app\.js['"]/u);
     for (const name of fs.readdirSync(root).filter(file => file.endsWith('.html'))) {
         if (name === 'app') continue;
         assert.doesNotMatch(read(name), /(?:^|["'=\s])(?:\.\.\/|\.\/)?\/?app(?:\/|["'#?\s])/iu,

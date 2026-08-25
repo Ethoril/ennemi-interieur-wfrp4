@@ -12,8 +12,8 @@ test('le Service Worker exclut les blobs Storage avant toute mise en cache', asy
     const guard = source.indexOf('isStorageBlobRequest(event.request.url)');
     const firstCacheWrite = source.indexOf('cache.put(');
     assert.ok(guard >= 0 && firstCacheWrite > guard, 'la garde Storage doit précéder toute écriture Cache Storage');
-    assert.match(source, /filter\(request => isStorageBlobRequest\(request\.url\)\)/u,
-        'l’activation doit purger les réponses Storage éventuellement héritées');
+    assert.match(source, /isProtectedNetworkRequest\(request\.url\) \|\| isStorageBlobRequest\(request\.url\)/u,
+        'l’activation doit purger les réponses protégées éventuellement héritées');
     assert.match(source, /cache\.delete\(request\)/u);
 });
 

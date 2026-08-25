@@ -13,6 +13,8 @@ import { createPnjEditView } from './views/pnj-edit.js';
 import { createAdminRouteController } from './admin-route-controller.js';
 import { createPublicDraftStore } from './drafts-store.js';
 import { createEnquetesDraftStore } from './enquetes-drafts-store.js';
+import { createPwaController } from './pwa.js';
+import { createPwaBanner } from './pwa-banner.js';
 
 function placeholderView({ container, title, message, actionLabel = '', onAction = null }) {
     let mounted = false;
@@ -62,9 +64,10 @@ function cacheMessage(state) {
     return 'Le mode de cache sera indiqué après le premier chargement.';
 }
 
-function createSettingsView({ container, publicSession, mjSession, documentRef, draftStore = null, draftStores = [], announce = () => {} }) {
+function createSettingsView({ container, publicSession, mjSession, documentRef, draftStore = null, draftStores = [], pwa = null, announce = () => {} }) {
     let unsubscribePublic = null;
     let unsubscribeMj = null;
+    let unsubscribePwa = null;
     let mounted = false;
     const allDraftStores = [...new Set([draftStore, ...draftStores].filter(store => store && typeof store.clear === 'function'))];
     const render = () => {
@@ -128,6 +131,51 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
         const versionMeta = documentRef.querySelector?.('meta[name="app-version"]');
         version.textContent = `Version ${versionMeta?.content || 'inconnue'}`;
         section.append(version);
+        if (pwa) {
+            const pwaHeading = documentRef.createElement('h3');
+            pwaHeading.textContent = 'Installation et mises à jour';
+            section.append(pwaHeading);
+            const pwaState = pwa.getState();
+            const worker = documentRef.createElement('p');
+            worker.textContent = `Worker ${pwaState.workerVersion || 'non interrogé'}`;
+            section.append(worker);
+            const check = documentRef.createElement('button');
+            check.type = 'button';
+            check.className = 'm-button';
+            check.textContent = 'Rechercher une mise à jour';
+            check.disabled = pwaState.updateRequested;
+            check.addEventListener('click', () => { void pwa.checkForUpdate(); });
+            section.append(check);
+            if (pwaState.updateAvailable) {
+                const update = documentRef.createElement('button');
+                update.type = 'button';
+                update.className = 'm-button m-button-primary';
+                update.textContent = 'Appliquer la mise à jour';
+                update.disabled = pwaState.updateRequested;
+                update.addEventListener('click', () => { pwa.applyUpdate(); });
+                section.append(update);
+            }
+            const hint = pwa.getInstallationHint();
+            if (hint) {
+                const install = documentRef.createElement('p');
+                install.textContent = hint.text;
+                section.append(install);
+                if (hint.kind === 'android') {
+                    const installButton = documentRef.createElement('button');
+                    installButton.type = 'button';
+                    installButton.className = 'm-button';
+                    installButton.textContent = 'Installer l’application';
+                    installButton.addEventListener('click', () => { void pwa.promptInstall(); });
+                    section.append(installButton);
+                    const dismiss = documentRef.createElement('button');
+                    dismiss.type = 'button';
+                    dismiss.className = 'm-button';
+                    dismiss.textContent = 'Plus tard';
+                    dismiss.addEventListener('click', () => pwa.dismissInstall());
+                    section.append(dismiss);
+                }
+            }
+        }
         container.append(section);
     };
     return Object.freeze({
@@ -136,14 +184,17 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
             mounted = true;
             unsubscribePublic = publicSession.subscribe(render);
             unsubscribeMj = mjSession.subscribe(render);
+            unsubscribePwa = pwa?.subscribe(render) || null;
             render();
         },
         unmount() {
             mounted = false;
             unsubscribePublic?.();
             unsubscribeMj?.();
+            unsubscribePwa?.();
             unsubscribePublic = null;
             unsubscribeMj = null;
+            unsubscribePwa = null;
             container.replaceChildren();
         },
     });
@@ -178,6 +229,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     });
     const store = session.store;
     const initialPreferences = session.getState().preferences;
+    let pwa = null;
     applyTheme(documentRef, initialPreferences.theme, themeToggle);
     if (!windowRef.location?.hash) {
         windowRef.history?.replaceState?.({}, '', sectionHash(initialPreferences.lastSection));
@@ -286,7 +338,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             onAction: () => router.back(),
         }),
     };
-    views[ROUTE_NAMES.REGLAGES] = () => createSettingsView({ container, publicSession: session, mjSession, documentRef, draftStore, draftStores: [enqueteDraftStore], announce: message => announce(routeStatus, message) });
+    views[ROUTE_NAMES.REGLAGES] = () => createSettingsView({ container, publicSession: session, mjSession, documentRef, draftStore, draftStores: [enqueteDraftStore], pwa, announce: message => announce(routeStatus, message) });
     router = createRouter({
         windowRef,
         mountRoute: route => (views[route.name] || views[ROUTE_NAMES.UNKNOWN])(route),
@@ -310,6 +362,14 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             }
         },
     });
+    pwa = createPwaController({
+        windowRef,
+        navigatorRef: windowRef.navigator,
+        documentRef,
+        router,
+        announce: message => announce(routeStatus, message),
+    });
+    const pwaBanner = createPwaBanner({ documentRef, pwa });
     if (pendingInitialRoute) {
         const target = pendingInitialRoute;
         pendingInitialRoute = null;
@@ -336,6 +396,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     themeToggle?.addEventListener('click', onThemeToggle);
 
     const stopRouter = router.start();
+    void pwa.start();
     const unsubscribeSession = session.subscribe(state => {
         announce(status, publicStatusMessage(state));
         if (status) status.dataset.kind = publicStatusKind(state);
@@ -361,6 +422,8 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
         if (stopPromise) return stopPromise;
         stopPromise = (async () => {
             stopRouter();
+            pwa.stop();
+            pwaBanner.stop();
             clearEnquetesMjListMemory();
             unsubscribeSession();
             unsubscribeMj();

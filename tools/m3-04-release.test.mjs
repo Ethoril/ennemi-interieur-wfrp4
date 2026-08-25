@@ -43,7 +43,7 @@ function assertModuleSyntax(relative) {
     }), `syntaxe invalide : ${relative}`);
 }
 
-test('M3-04 aligne version, cache et changelog sans précacher la coque mobile', () => {
+test('M6-02 aligne le cache et précache la coque mobile dans le worker racine', () => {
     const layout = read('js/layout.js');
     const sw = read('sw.js');
     const changelog = read('CHANGELOG.md');
@@ -54,8 +54,8 @@ test('M3-04 aligne version, cache et changelog sans précacher la coque mobile',
     assert.match(sw, /const CACHE_NAME\s*=\s*['"]wfrp-cache-['"]\s*\+\s*APP_VERSION/u);
     assert.match(changelog, /^## \[2\.20\.0\] - 2026-08-25\r?\n/u);
     const assetsBlock = sw.match(/const ASSETS_LOCAUX\s*=\s*\[([\s\S]*?)\n\];/u)?.[1] ?? '';
-    assert.doesNotMatch(assetsBlock, /(?:\.\/)?app\/|js\/mobile\//u,
-        'M3-04 ne doit pas ajouter la coque mobile au précache de M6-02');
+    assert.match(assetsBlock, /['"]\.\/app\/index\.html['"]/u);
+    assert.match(assetsBlock, /['"]\.\/js\/mobile\/app\.js['"]/u);
 });
 
 test('la coque /app existe, ses modules référencés sont syntaxiquement valides et son graphe local est fermé', () => {
@@ -75,8 +75,10 @@ test('la coque /app existe, ses modules référencés sont syntaxiquement valide
         assert.ok(fs.existsSync(absolute), `module local absent : ${relative}`);
         assertModuleSyntax(relative);
         const source = fs.readFileSync(absolute, 'utf8');
-        assert.doesNotMatch(source, /(?:navigator\.)?serviceWorker(?:\.register)?/iu,
-            `${relative} ne doit pas enregistrer le Service Worker avant M6-02`);
+        if (relative !== 'js/mobile/pwa.js') {
+            assert.doesNotMatch(source, /(?:navigator\.)?serviceWorker(?:\.register)?/iu,
+                `${relative} ne doit pas enregistrer le Service Worker directement`);
+        }
         for (const specifier of localImports(source)) {
             pending.push(resolveLocalModule(relative, specifier));
         }

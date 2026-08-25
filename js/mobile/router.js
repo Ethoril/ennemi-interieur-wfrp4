@@ -199,7 +199,7 @@ export function createRouter({ windowRef = globalThis, mountRoute, onRoute, anno
         return navigate({ name: ROUTE_NAMES.PNJS }, { replace: true, skipGuard });
     };
 
-    return Object.freeze({ start, stop, navigate, back, render, refresh: ({ skipGuard = true } = {}) => render(windowRef.location?.hash ?? '', { force: true, skipGuard }), getRoute: () => currentRoute, getScrollPositions: () => new Map(scrollPositions) });
+    return Object.freeze({ start, stop, navigate, back, render, refresh: ({ skipGuard = true } = {}) => render(windowRef.location?.hash ?? '', { force: true, skipGuard }), canLeaveCurrent: () => canLeave(false), getRoute: () => currentRoute, getScrollPositions: () => new Map(scrollPositions) });
 }
 
 export { ROUTE_NAMES };

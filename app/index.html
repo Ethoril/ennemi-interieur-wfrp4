@@ -26,6 +26,15 @@
       <button class="m-icon-button" id="m-header-action" type="button" aria-label="Actions" hidden>⋯</button>
     </header>
 
+    <section class="m-pwa-banner" id="m-pwa-banner" aria-label="Installation et mise à jour" aria-live="polite" hidden>
+      <p id="m-pwa-banner-text"></p>
+      <div class="m-pwa-banner-actions">
+        <button class="m-button m-button-primary" id="m-pwa-update" type="button" hidden>Mettre à jour</button>
+        <button class="m-button" id="m-pwa-install" type="button" hidden>Installer l’application</button>
+        <button class="m-button" id="m-pwa-dismiss" type="button" hidden>Plus tard</button>
+      </div>
+    </section>
+
     <div class="m-status" id="m-status" role="status" aria-live="polite" aria-atomic="true"></div>
     <div class="visually-hidden" id="m-route-status" role="status" aria-live="polite" aria-atomic="true"></div>
     <main class="m-main" id="m-main" tabindex="-1"></main>
