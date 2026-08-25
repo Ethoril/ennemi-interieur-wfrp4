@@ -8,9 +8,9 @@
 
 ### Préparation
 
-- **Candidat local** : le changement touche la coque `app/index.html` précachée et incrémente donc
-  le cache. `v2.21.3` est préparée localement, sans push ni déploiement ; `v2.21.2` reste la version
-  déployée de référence.
+- **Publication cachée** : le changement touche la coque `app/index.html` précachée et incrémente
+  donc le cache. Le commit `712417f` publie `v2.21.3` sans changer le démarrage historique ni
+  ajouter de lien public vers `/app/`.
 
 ## [2.21.2] - 2026-08-25
 

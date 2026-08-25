@@ -1,7 +1,7 @@
 # M6-03 — Rapport de recette PWA et clôture locale
 
-Date de préparation : 25 août 2026. Version témoin précédente : `v2.21.2`. Le candidat local
-actuel est `v2.21.3`, non poussé et non déployé.
+Date de préparation : 25 août 2026. Version cachée actuellement déployée : `v2.21.3`, commit
+`712417f`. La version témoin Android précédente était `v2.21.2`.
 
 ## Décision de livraison
 
@@ -66,10 +66,12 @@ La recette physique historique `v2.21.1` → `v2.21.2` a ensuite été confirmé
 a activé la mise à jour, un seul rechargement a eu lieu, le bandeau a disparu et les diagnostics ont
 affiché la version et le worker `v2.21.2`.
 
-Le correctif de titre de document mobile modifie `app/index.html`, qui est précachée. Le candidat
-local `v2.21.3` aligne donc `js/layout.js`, `sw.js`, la méta de coque et le CHANGELOG, mais n'a pas
-été poussé ni déployé. Les preuves Android ci-dessus restent des preuves de `v2.21.2` et ne sont pas
-attribuées à `v2.21.3`.
+Le correctif de titre de document mobile modifie `app/index.html`, qui est précachée. La version
+cachée `v2.21.3` aligne donc `js/layout.js`, `sw.js`, la méta de coque et le CHANGELOG. Après le
+push autorisé de `712417f`, GitHub Pages et la validation du dépôt ont réussi. Un profil navigateur
+a confirmé les titres par route, puis l'activation `v2.21.2` → `v2.21.3` avec disparition du bandeau
+et diagnostics interface/worker alignés. Les preuves Android ci-dessus restent des preuves de
+`v2.21.2` et ne sont pas attribuées à `v2.21.3`.
 
 ## Contrôles automatisés
 
@@ -116,7 +118,7 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
 
 ## Checklist de sortie
 
-- [x] Candidat local, cache, méta et CHANGELOG alignés en `v2.21.3` ; aucun déploiement revendiqué.
+- [x] Version cachée, cache, méta et CHANGELOG alignés en `v2.21.3`, commit `712417f` publié.
 - [x] `start_url` historique conservé et aucune annonce publique de `/app/`.
 - [x] Contrôles automatisés locaux verts.
 - [x] Preuves navigateur locales consignées sans données privées.
