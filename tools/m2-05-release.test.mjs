@@ -27,10 +27,12 @@ test('la version et le précache couvrent le graphe local des pages bureau', () 
     const layout = read('js/layout.js');
     const sw = read('sw.js');
     const changelog = read('CHANGELOG.md');
-    assert.match(layout, /APP_VERSION\s*=\s*['"]v2\.17\.0['"]/u);
-    assert.match(sw, /APP_VERSION\s*=\s*['"]v2\.17\.0['"]/u);
+    const layoutVersion = layout.match(/APP_VERSION\s*=\s*['"](v\d+\.\d+\.\d+)['"]/u)?.[1];
+    const swVersion = sw.match(/APP_VERSION\s*=\s*['"](v\d+\.\d+\.\d+)['"]/u)?.[1];
+    assert.ok(layoutVersion);
+    assert.equal(swVersion, layoutVersion);
     assert.match(sw, /CACHE_NAME\s*=\s*['"]wfrp-cache-['"]\s*\+\s*APP_VERSION/u);
-    assert.match(changelog, /^## \[2\.17\.0\] - 2026-08-25\r?\n/u);
+    assert.match(changelog, new RegExp(`^## \\[${layoutVersion.slice(1).replaceAll('.', '\\.')}\\] - \\d{4}-\\d{2}-\\d{2}\\r?\\n`, 'u'));
 
     const assets = localAssetList();
     assert.equal(new Set(assets).size, assets.length, 'ASSETS_LOCAUX ne doit pas contenir de doublon');

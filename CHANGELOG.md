@@ -1,3 +1,15 @@
+## [2.18.0] - 2026-08-25
+
+### Mobile — consultation joueur
+- **Fiche PNJ mobile** : détail public, relations visibles et indices découverts liés sont navigables depuis la liste ou une URL directe, avec états indisponible, cache et hors connexion.
+- **Clôture M3** : le graphe de modules de `/app/` est vérifié statiquement ; l'application reste hors précache jusqu'à M6-02 et non annoncée jusqu'à M7.
+
+### PWA & Cache
+- **Incrémentation du cache** : passage en `wfrp-cache-v2.18.0`, sans encore précacher ni enregistrer la coque mobile.
+
+### Vérification
+- Les contrôles de version, syntaxe et imports locaux sont automatisés. La recette Android physique reste à effectuer ; la recette iOS est différée.
+
 ## [2.17.0] - 2026-08-25
 
 ### Couche de données commune

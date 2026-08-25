@@ -89,6 +89,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             container,
             id: route.id,
             store,
+            getImageService: () => session.getImages(),
             onBack: () => router.back(),
             onRetry: retry,
         }),
