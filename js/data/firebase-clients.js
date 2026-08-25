@@ -196,16 +196,29 @@ async function cleanupUnretainedApp({ sdk, app, appName, db, owned }) {
     });
 }
 
-function createMemoryFirestore(sdk, app) {
+function createMemoryFirestore(sdk, app, settings = {}) {
     if (typeof sdk.initializeFirestore !== 'function' || typeof sdk.memoryLocalCache !== 'function') {
         throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'initialize-memory-firestore' });
     }
-    return sdk.initializeFirestore(app, { localCache: sdk.memoryLocalCache() });
+    return sdk.initializeFirestore(app, { ...settings, localCache: sdk.memoryLocalCache() });
 }
 
-async function initializePublicFirestoreOnce(sdk, app, config, appName, appOwned) {
+async function initializePublicFirestoreOnce(sdk, app, config, appName, appOwned, recoveryMode = false) {
     const known = existingFirestore(app);
     if (known) return { app, ...known, owned: appOwned };
+    if (recoveryMode) {
+        const db = createMemoryFirestore(sdk, app, {
+            experimentalForceLongPolling: true,
+            useFetchStreams: false,
+        });
+        return {
+            app,
+            ...rememberFirestore(app, db, {
+                mode: 'memory-recovery', persistent: false, fallback: true, reason: ERROR_KINDS.OFFLINE,
+            }),
+            owned: appOwned,
+        };
+    }
     let db = null;
     try {
         if (typeof sdk.initializeFirestore === 'function'
@@ -265,9 +278,9 @@ async function initializePublicFirestoreOnce(sdk, app, config, appName, appOwned
     }
 }
 
-function initializePublicFirestore(sdk, app, config, appName, appOwned) {
+function initializePublicFirestore(sdk, app, config, appName, appOwned, recoveryMode = false) {
     if (firestoreInitializationByApp.has(app)) return firestoreInitializationByApp.get(app);
-    const promise = initializePublicFirestoreOnce(sdk, app, config, appName, appOwned);
+    const promise = initializePublicFirestoreOnce(sdk, app, config, appName, appOwned, recoveryMode);
     firestoreInitializationByApp.set(app, promise);
     return promise;
 }
@@ -284,12 +297,16 @@ function initializeMjFirestore(sdk, app) {
     }
 }
 
-export async function createPublicMobileClient({ sdk, config = FIREBASE_CONFIG, appName = APP_NAMES.public } = {}) {
+export async function createPublicMobileClient({
+    sdk, config = FIREBASE_CONFIG, appName = APP_NAMES.public, recoveryMode = false,
+} = {}) {
     await waitForClosing(sdk, appName);
     const appInfo = getOrCreateNamedAppWithOwnership(sdk, config, appName);
     let initialized = null;
     try {
-        initialized = await initializePublicFirestore(sdk, appInfo.app, config, appName, appInfo.created);
+        initialized = await initializePublicFirestore(
+            sdk, appInfo.app, config, appName, appInfo.created, recoveryMode === true,
+        );
         const storage = sdk.getStorage(initialized.app);
         retainApp(initialized.app, initialized.db);
         return createClientHandle({

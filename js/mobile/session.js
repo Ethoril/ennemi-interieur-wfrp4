@@ -115,7 +115,7 @@ export function createPublicMobileSession(options = {}) {
         store,
         start: () => store.start(),
         stop: () => store.stop(),
-        restart: () => store.restart(),
+        restart: options => store.restart(options),
         subscribe: listener => store.subscribe(listener),
         getState: () => store.getState(),
         setPreferences: value => store.setPreferences(value),

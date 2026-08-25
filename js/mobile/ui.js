@@ -42,8 +42,8 @@ export function publicStatusMessage(state) {
     if (state?.connection?.sync === 'cache') return 'Données enregistrées — synchronisation en attente.';
     if (state?.connection?.sync === 'pending') return 'Synchronisation en cours…';
     if (state?.connection?.phase === 'syncing') return 'Synchronisation en cours…';
-    if (state?.cache?.fallback) return 'Cache local limité — les données restent accessibles en ligne.';
     if (state?.connection?.sync === 'server') return 'Synchronisé avec le serveur.';
+    if (state?.cache?.fallback) return 'Cache local limité — les données restent accessibles en ligne.';
     return '';
 }
 

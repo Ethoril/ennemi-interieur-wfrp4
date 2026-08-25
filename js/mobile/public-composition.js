@@ -28,9 +28,9 @@ export function createPublicSessionComposition({
         || !['client', 'pnjs', 'relations', 'indices'].every(name => typeof builders[name] === 'function')) {
         throw new TypeError('sdk, config et fabriques publiques requis');
     }
-    const clientFactory = async ({ signal } = {}) => {
+    const clientFactory = async ({ signal, recoveryMode = false } = {}) => {
         if (signal?.aborted) throw cancelled('public-client');
-        const client = await builders.client({ sdk, config });
+        const client = await builders.client({ sdk, config, recoveryMode: recoveryMode === true });
         if (!signal?.aborted) return client;
         await client?.close?.();
         throw cancelled('public-client');

@@ -1,7 +1,7 @@
 # M6-03 — Rapport de recette PWA et clôture locale
 
-Date de préparation : 25 août 2026. Activation mobile actuellement publiée : `v2.22.0`, commit
-`f1d0fdc`. Le correctif visuel `v2.22.1` reste local et non publié. La version cachée précédente
+Date de préparation : 25 août 2026. Version mobile actuellement publiée : `v2.22.1`, commit
+`4e695f2`. Le correctif de reprise réseau `v2.22.2` reste local et non publié. La version cachée précédente
 était `v2.21.8`, commit `3386741`, et la référence Auth antérieure `v2.21.5` reste `f9f4a71`.
 
 La publication `v2.21.8` maintient l’accès à l’installation depuis Réglages même lorsque Chrome ne
@@ -147,12 +147,14 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
 - **Sécurité** : l’inspection réelle de Cache Storage est conforme après `v2.21.7`. La déconnexion
   et le lien direct secret restent à rejouer sur l’environnement de recette.
 - **Activation du démarrage mobile** : M7-02 `v2.22.0` conserve l’identité historique, cible
-  `./app/index.html` et a été confirmée sur l’installation Android existante. Le correctif local
-  `v2.22.1` retire le statut de synchronisation dupliqué des vues PNJ.
+  `./app/index.html` et a été confirmée sur l’installation Android existante. `v2.22.1` retire le
+  statut de synchronisation dupliqué ; `v2.22.2` prépare une reprise réseau renforcée après l’échec
+  persistant signalé sur Android.
 
 ## Checklist de sortie
 
-- [x] Activation publiée `f1d0fdc` / `v2.22.0`, correctif local `v2.22.1`, version précédente
+- [x] Activation publiée `f1d0fdc` / `v2.22.0`, correctif publié `4e695f2` / `v2.22.1` et correctif
+  local `v2.22.2`, version précédente
   `d42e1cd` / `v2.21.7` et témoin `712417f` / `v2.21.3` documentés ; le chemin de succès Auth
   Android est validé.
 - [x] Identité historique conservée ; activation mobile préparée et testée localement par M7-02.

@@ -4,12 +4,12 @@ Date de préparation : 25 août 2026.
 
 ## État de livraison
 
-- Version d’activation publiée : `f1d0fdc` / `v2.22.0`.
+- Version mobile publiée : `4e695f2` / `v2.22.1` (activation `f1d0fdc` / `v2.22.0`).
 - Constat Android : l’installation réussit, mais l’icône lance le site bureau parce que le
   manifeste publié conserve encore `start_url: ./index.html`.
 - Contrôle Android : l’installation existante ouvre bien l’interface mobile après activation.
-- Correctif local non publié : `v2.22.1`, suppression du statut de synchronisation dupliqué dans
-  la liste et la fiche PNJ ; l’indicateur global supérieur reste la source unique.
+- Correctif local non publié : `v2.22.2`, reprise de synchronisation publique en mémoire et par
+  transport compatible après une erreur persistante ; aucune donnée Firebase n’est modifiée.
 - `id` reste exactement `./index.html` (identité Chrome déjà publiée), `scope` reste `./` et
   `start_url` devient `./app/index.html`.
 - iOS reste **non validé — aucun appareil disponible**.
@@ -46,8 +46,8 @@ La maintenance et la checklist « Faire évoluer PNJs ou Enquêtes » sont centr
 
 ## Recette après publication
 
-1. Dans l’installation existante, appliquer `v2.22.1` puis confirmer que le statut de
-   synchronisation n’apparaît qu’en haut dans la liste et la fiche PNJ.
+1. Dans l’installation existante, appliquer `v2.22.2`, utiliser « Réessayer » et confirmer le
+   retour à « Synchronisé avec le serveur » sans perdre les données déjà reçues.
 2. Confirmer l’ouverture de `/app/`, l’absence de deuxième icône et le fonctionnement du retour.
 3. Depuis Chrome sans installation, ouvrir le lien public mobile puis réaliser une nouvelle
    installation et confirmer le même démarrage.
@@ -74,6 +74,7 @@ confirmée et une autorisation séparée.
 - [x] Documentation de maintenance et rollback ajoutée.
 - [x] Publication de `v2.22.0` autorisée et workflows verts.
 - [x] Installation Android existante mise à jour et relancée sur `/app/` sans seconde application.
-- [ ] Publication et contrôle Android du correctif `v2.22.1`.
+- [x] Publication du correctif visuel `4e695f2` / `v2.22.1`.
+- [ ] Publication et contrôle Android du correctif réseau `v2.22.2`.
 - [ ] Nouvelle installation Android vérifiée.
 - [ ] iOS : différé, non validé.

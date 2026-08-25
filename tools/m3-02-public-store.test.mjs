@@ -29,8 +29,8 @@ function makeRun({ online = true, cache = { mode: 'persistent', persistent: true
     const clients = [];
     const subscriptions = [];
     const visibleIds = [];
-    const clientFactory = async () => {
-        const client = { cache, closed: false, close: async () => { client.closed = true; } };
+    const clientFactory = async context => {
+        const client = { cache, context, closed: false, close: async () => { client.closed = true; } };
         clients.push(client);
         return client;
     };
@@ -225,6 +225,35 @@ test('un échec d’initialisation revient dans un état relançable', async () 
     await store.stop();
 });
 
+test('Réessayer après une erreur recrée une seule connexion de secours et efface l’erreur', async () => {
+    const fake = makeRun({ cache: { mode: 'memory-recovery', persistent: false, fallback: true } });
+    const store = createPublicStore(fake);
+    await store.start();
+    const firstSubscriptions = fake.subscriptions.slice(-3);
+    firstSubscriptions[0].next(...snapshot([{ id: 'p1', nom: 'Copie enregistrée' }], { fromCache: true }));
+    firstSubscriptions[0].error({ kind: 'offline', technicalCode: 'unavailable' });
+    assert.equal(store.getState().resources.pnjs.status, 'error');
+
+    const firstRetry = store.restart({ recoveryMode: true });
+    const duplicateRetry = store.restart({ recoveryMode: true });
+    assert.equal(firstRetry, duplicateRetry, 'un double toucher ne doit lancer qu’une seule reprise');
+    await firstRetry;
+
+    assert.equal(fake.clients.length, 2);
+    assert.equal(fake.clients[0].closed, true);
+    assert.equal(fake.clients[1].context.recoveryMode, true);
+    assert.ok(firstSubscriptions.every(subscription => subscription.closed));
+
+    const recoveredSubscriptions = fake.subscriptions.slice(-3);
+    recoveredSubscriptions[0].next(...snapshot([{ id: 'p1', nom: 'Serveur' }]));
+    recoveredSubscriptions[1].next(...snapshot([]));
+    recoveredSubscriptions[2].next(...snapshot([]));
+    assert.equal(store.getState().connection.phase, 'ready');
+    assert.equal(store.getState().resources.pnjs.error, null);
+    assert.equal(publicStatusMessage(store.getState()), 'Synchronisé avec le serveur.');
+    await store.stop();
+});
+
 test('pagehide/pageshow bfcache arrêtent puis recréent une seule composition', async () => {
     const listeners = new Map();
     const windowRef = {
@@ -303,6 +332,8 @@ test('la composition injectable ne crée que les trois dépôts publics et ferme
     assert.equal(calls[0][1].sdk, sdk);
     assert.equal(calls[0][1].config, config);
     assert.ok(calls.slice(1).every(([, input]) => input.client === client && input.sdk === sdk));
+    await session.restart({ recoveryMode: true });
+    assert.equal(calls.filter(([name]) => name === 'client').at(-1)[1].recoveryMode, true);
     await session.stop();
     assert.equal(closed, true);
 });

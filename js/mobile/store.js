@@ -209,6 +209,7 @@ export function createPublicStore({
     });
     let generation = 0;
     let activeRun = null;
+    let restartPromise = null;
 
     const emit = () => {
         for (const listener of [...listeners]) {
@@ -315,7 +316,7 @@ export function createPublicStore({
         }
         return repository.subscribeDiscovered(next, error);
     };
-    const start = async () => {
+    const start = async ({ recoveryMode = false } = {}) => {
         if (activeRun && !activeRun.closed) return state;
         const run = {
             generation: ++generation,
@@ -327,6 +328,7 @@ export function createPublicStore({
             onlineHandler: null,
             offlineHandler: null,
             closed: false,
+            recoveryMode: recoveryMode === true,
         };
         activeRun = run;
         const browserOnline = navigatorRef?.onLine !== false;
@@ -365,7 +367,10 @@ export function createPublicStore({
         navigatorRef?.addEventListener?.('online', run.onlineHandler);
         navigatorRef?.addEventListener?.('offline', run.offlineHandler);
         try {
-            const createdClient = await clientFactory({ signal: run.controller.signal });
+            const createdClient = await clientFactory({
+                signal: run.controller.signal,
+                recoveryMode: run.recoveryMode,
+            });
             if (!current(run)) {
                 try { await createdClient?.close?.(); }
                 catch { /* Un client obsolète ne doit jamais ressusciter la session courante. */ }
@@ -434,7 +439,14 @@ export function createPublicStore({
         }));
         return state;
     };
-    const restart = async () => { await stop(); return start(); };
+    const restart = (options = {}) => {
+        if (restartPromise) return restartPromise;
+        restartPromise = (async () => {
+            await stop();
+            return start(options);
+        })().finally(() => { restartPromise = null; });
+        return restartPromise;
+    };
     const subscribe = listener => {
         if (typeof listener !== 'function') return () => {};
         let active = true;

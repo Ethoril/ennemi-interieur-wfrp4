@@ -17,11 +17,11 @@ const USER_MESSAGES = Object.freeze({
 });
 
 function normalizedCode(error) {
-    return String(error?.code ?? '').toLowerCase().replace(/^(?:firebase|firestore|storage|functions|auth)\//u, '');
+    return String(error?.code ?? '').toLowerCase().replace(/^(?:firebase|firestore|storage|functions|auth|appcheck)\//u, '');
 }
 
 export function classifyFirebaseError(error, { offline = false } = {}) {
-    if (offline || ['unavailable', 'network-request-failed', 'deadline-exceeded'].includes(normalizedCode(error))) {
+    if (offline || ['unavailable', 'network-request-failed', 'fetch-network-error', 'deadline-exceeded'].includes(normalizedCode(error))) {
         return ERROR_KINDS.OFFLINE;
     }
     const code = normalizedCode(error);

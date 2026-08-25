@@ -1,3 +1,18 @@
+## [2.22.2] - 2026-08-25
+
+### Corrigé
+
+- **Reprise de synchronisation mobile** : « Réessayer » ferme désormais proprement la connexion
+  publique en échec puis utilise une session de secours en mémoire et un transport Firestore plus
+  compatible avec certains réseaux Android. Les doubles touchers ne lancent qu’une seule reprise.
+- **Diagnostic réseau** : les échecs réseau App Check sont classés hors ligne sans exposer leur
+  détail technique ; une reprise confirmée par le serveur efface l’erreur affichée.
+
+### Préparation
+
+- **Correctif local** : `v2.22.2` répond au blocage persistant observé sur l’installation Android
+  après la publication de `4e695f2` / `v2.22.1`. Aucune donnée ni règle Firebase n’est modifiée.
+
 ## [2.22.1] - 2026-08-25
 
 ### Corrigé
@@ -6,10 +21,11 @@
   « Synchronisé avec le serveur » au milieu de l’écran. Le statut global reste visible dans la
   barre supérieure ; les avertissements et actions propres à chaque vue sont conservés.
 
-### Préparation
+### Validation
 
-- **Correctif local** : `v2.22.1` est préparée après le retour Android sur la version mobile
-  installée. Sa publication et son contrôle restent soumis à une autorisation distincte.
+- **Correctif publié** : `4e695f2` publie `v2.22.1` après validation locale et workflows GitHub
+  verts. Le retour Android suivant a révélé un blocage persistant de la synchronisation publique,
+  traité séparément dans `v2.22.2`.
 
 ## [2.22.0] - 2026-08-25
 

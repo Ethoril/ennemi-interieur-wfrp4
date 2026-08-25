@@ -4,8 +4,8 @@ Date de préparation : 25 août 2026.
 
 ## État du candidat
 
-- Activation mobile actuellement publiée : commit `f1d0fdc` — `v2.22.0`.
-- Correctif local non publié : `v2.22.1`, suppression du statut serveur dupliqué dans les vues PNJ.
+- Version mobile actuellement publiée : commit `4e695f2` — `v2.22.1`.
+- Correctif local non publié : `v2.22.2`, reprise réseau publique renforcée après erreur persistante.
 - Candidat caché précédent : commit `3386741` — `v2.21.8`.
 - Référence précédente : commit `5dc077b` — `v2.21.6` ; référence historique antérieure :
   commit `f9f4a71` — `v2.21.5`.
@@ -87,8 +87,8 @@ effectué lors de M1 ; les deux objets orphelins historiques restent inchangés.
 
 Le test `tools/m7-01-release.test.mjs` couvre localement :
 
-- le correctif `v2.22.1` dans `js/layout.js`, `sw.js`, la méta mobile et CHANGELOG, distinct de
-  l’activation publiée `f1d0fdc` / `v2.22.0` et de la référence `d42e1cd` / `v2.21.7` ;
+- le correctif `v2.22.2` dans `js/layout.js`, `sw.js`, la méta mobile et CHANGELOG, distinct de
+  `4e695f2` / `v2.22.1`, de l’activation `f1d0fdc` / `v2.22.0` et de la référence `d42e1cd` / `v2.21.7` ;
 - la distinction avec la référence `712417f` / `v2.21.3` et le témoin `387d1cf` / `v2.21.2` ;
 - le cache dérivé, le manifeste unique et le maintien du `start_url` historique ;
 - le graphe local de `/app/`, la syntaxe des modules et les ressources précachées ;
@@ -120,9 +120,9 @@ inspection ni publication des règles ou index de production.
 
 ## Procédure de déploiement silencieux à autoriser
 
-1. Le candidat `f1d0fdc` / `v2.22.0` a été publié après autorisation et a activé le démarrage
-   mobile. L’installation Android existante ouvre `/app/` ; `v2.22.1` corrige localement le seul
-   doublon visuel de statut observé ensuite et requiert une autorisation de push distincte.
+1. `f1d0fdc` / `v2.22.0` a activé le démarrage mobile puis `4e695f2` / `v2.22.1` a supprimé le
+   doublon visuel de statut. `v2.22.2` corrige localement la reprise de synchronisation Android et
+   requiert une autorisation de push distincte.
 2. Produire une sauvegarde Firestore/Storage hors dépôt, comparer son inventaire à M0-01 et tester
    sa restauration dans des émulateurs isolés.
 3. Exécuter les gates locaux puis les règles/index sur émulateurs ; ne publier aucune règle sans
@@ -164,7 +164,8 @@ Service Worker ; ne jamais supprimer les objets orphelins sans inventaire et aut
 
 ## Critères de sortie
 
-- [x] Activation publiée `f1d0fdc` / `v2.22.0`, correctif local `v2.22.1`, référence précédente
+- [x] Activation publiée `f1d0fdc` / `v2.22.0`, correctif publié `4e695f2` / `v2.22.1`, correctif
+  local `v2.22.2`, référence précédente
   `d42e1cd` / `v2.21.7` et témoin `387d1cf` / `v2.21.2` distingués honnêtement ; succès Auth
   Android confirmé.
 - [x] M7-01 a conservé l’ancien démarrage ; la bascule et la découverte sont isolées dans M7-02.

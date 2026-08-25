@@ -228,7 +228,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     }
 
     const dialog = createDialogController({ dialog: dialogElement, documentRef });
-    const retry = () => session.restart();
+    const retry = () => session.restart({ recoveryMode: true });
     const views = {
         [ROUTE_NAMES.PNJS]: () => createPnjsListView({
             container,

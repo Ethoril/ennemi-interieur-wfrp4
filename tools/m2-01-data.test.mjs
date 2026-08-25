@@ -142,6 +142,21 @@ test('le client public utilise le cache persistant moderne, Storage, mais jamais
     assert.equal(calls.deleteApp, 1);
 });
 
+test('la reprise publique contourne le cache local et force un transport Android compatible', async () => {
+    const { sdk, calls } = makeSdk();
+    const client = await createPublicMobileClient({
+        sdk, config, appName: 'mobile-public-recovery', recoveryMode: true,
+    });
+    assert.equal(client.cache.mode, 'memory-recovery');
+    assert.equal(client.cache.persistent, false);
+    assert.equal(client.cache.fallback, true);
+    assert.equal(calls.persistent, 0);
+    assert.equal(calls.memory, 1);
+    assert.equal(client.db.options.experimentalForceLongPolling, true);
+    assert.equal(client.db.options.useFetchStreams, false);
+    await client.close();
+});
+
 test('une configuration différente sous le même nom est refusée sans double initialisation', async () => {
     const { sdk, calls } = makeSdk();
     const client = await createPublicMobileClient({ sdk, config, appName: 'mobile-public-config-guard' });
@@ -163,6 +178,7 @@ test('le client public retombe en mémoire et expose son état sans fuite techni
     assert.equal(calls.memory, 1);
     assert.equal(calls.createdApps.length, 2);
     assert.equal(normalizeFirebaseError({ code: 'auth/network-request-failed' }).kind, ERROR_KINDS.OFFLINE);
+    assert.equal(normalizeFirebaseError({ code: 'appCheck/fetch-network-error' }).kind, ERROR_KINDS.OFFLINE);
     assert.equal(errorForUi({ code: 'permission-denied', message: 'secret backend detail' }).message.includes('secret'), false);
     await client.close();
 });
