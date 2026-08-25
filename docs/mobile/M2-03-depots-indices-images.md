@@ -17,7 +17,7 @@ idempotents.
 
 Les sorties ne transportent jamais `imageUrl`/`imagePath` bruts : elles exposent un descripteur
 `image` moderne, legacy ou invalide. Lorsqu’une mutation rencontre une URL legacy, elle la remonte
-dans `skippedLegacyImageUrl` et ne tente jamais de supprimer le média externe.
+par les seuls marqueurs `legacyImageSkipped`/`legacyImageInvalid` et ne tente jamais de supprimer le média externe ni de renvoyer son URL.
 
 Les mutations valident les allowlists, bornes et identifiants, normalisent `pnjsLies` (unique,
 trié, maximum 100), utilisent les timestamps serveur et vérifient `expectedUpdatedAt` dans une

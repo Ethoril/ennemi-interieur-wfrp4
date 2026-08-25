@@ -21,6 +21,19 @@ function normalizedError(error, operation) {
     return normalized;
 }
 
+function definiteNoCommit(error) {
+    const kind = error?.kind;
+    return [ERROR_KINDS.PERMISSION, ERROR_KINDS.NOT_FOUND, ERROR_KINDS.CONFLICT, ERROR_KINDS.VALIDATION].includes(kind);
+}
+
+function compensationFailure(error, path, id, noCommit) {
+    const normalized = normalizedError(error, 'indice-image-compensation');
+    normalized.state = noCommit
+        ? { commitNotStarted: true, cleanupPending: true, imageCleanupPending: true, imagePath: path, indiceId: id }
+        : { commitUnknown: true, imageCleanupPending: true, imagePath: path, indiceId: id };
+    return normalized;
+}
+
 function validId(value) { return typeof value === 'string' && /^[A-Za-z0-9_-]{1,150}$/u.test(value); }
 
 function validateKeys(input, operation) {
@@ -139,8 +152,7 @@ function ownedIndicePath(path, id) {
 
 function legacyImageState(data) {
     const present = typeof data?.imageUrl === 'string' && data.imageUrl.length > 0;
-    return { legacyImageSkipped: present, legacyImageInvalid: present && !canonicalLegacyImageUrl(data.imageUrl),
-        skippedLegacyImageUrl: present ? canonicalLegacyImageUrl(data.imageUrl) : null };
+    return { legacyImageSkipped: present, legacyImageInvalid: present && !canonicalLegacyImageUrl(data.imageUrl) };
 }
 
 function invalidImagePathReason(path, ownerId) {
@@ -227,7 +239,14 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         try {
             result = await imageService.uploadClueImage(id, options.imageFile);
         } catch (error) {
-            throw normalizedError(error, 'indice-image-upload');
+            const normalized = normalizedError(error, 'indice-image-upload');
+            const uploadedPath = error?.state?.uploadedPath;
+            if (ownedIndicePath(uploadedPath, id)) {
+                normalized.state = { ...(normalized.state ?? {}), uploadedPath, imagePath: uploadedPath, indiceId: id,
+                    journalPending: error.state?.journalPending === true,
+                    commitNotStarted: error.state?.commitNotStarted === true };
+            }
+            throw normalized;
         }
         if (!result || !ownedIndicePath(result.imagePath, id)) {
             const error = new FirebaseClientError(ERROR_KINDS.UNKNOWN, { operation: 'indice-image-response' });
@@ -288,12 +307,13 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
             return result;
         } catch (error) {
             if (error?.state?.firestoreDone === true) throw error;
+            const normalized = normalizedError(error, 'create-indice');
+            const noCommit = definiteNoCommit(normalized);
             try { await compensateImage(image?.imagePath, id); }
             catch (compensationError) {
-                compensationError.state = { ...(compensationError.state ?? {}), commitUnknown: true, imagePath: image?.imagePath, indiceId: id };
-                throw compensationError;
+                throw compensationFailure(compensationError, image?.imagePath ?? null, id, noCommit);
             }
-            const normalized = normalizedError(error, 'create-indice');
+            if (noCommit) throw normalized;
             normalized.state = { commitUnknown: true, imagePath: image?.imagePath ?? null, indiceId: id };
             throw normalized;
         }
@@ -303,12 +323,19 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         if (!isMj) fail('update-indice', ERROR_KINDS.PERMISSION);
         if (!validId(id)) fail('update-indice');
         const ref = documentRef(sdk, db, 'indices', id);
+        const removeImage = options.removeImage === true;
+        if (removeImage && options.imageFile) fail('indice-image-options');
+        if (removeImage && typeof sdk.deleteField !== 'function') fail('update-indice-delete-field');
         const image = await uploadImage(id, options);
         let data;
         try { data = sanitize({ ...(patch ?? {}), ...(image ? { imagePath: image.imagePath } : {}) }, id); }
         catch (error) {
-            if (image) await compensateImage(image.imagePath, id);
-            throw error;
+            const normalized = normalizedError(error, 'update-indice');
+            if (image) {
+                try { await compensateImage(image.imagePath, id); }
+                catch (compensationError) { throw compensationFailure(compensationError, image.imagePath, id, definiteNoCommit(normalized)); }
+            }
+            throw normalized;
         }
         // A modern image replacement must clear any legacy durable URL in the
         // same Firestore write. Refuse the operation before the transaction if
@@ -319,7 +346,6 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
             fail('update-indice-delete-field');
         }
         let result;
-        let skippedLegacyImageUrl = null;
         let legacyImageSkipped = false;
         let legacyImageInvalid = false;
         let skippedImagePathInvalid = false;
@@ -334,12 +360,10 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                 skippedImagePathReason = invalidImagePathReason(oldImagePath, id);
                 skippedImagePathInvalid = Boolean(skippedImagePathReason);
                 const legacy = legacyImageState(currentData);
-                skippedLegacyImageUrl = legacy.skippedLegacyImageUrl;
                 legacyImageSkipped = legacy.legacyImageSkipped;
                 legacyImageInvalid = legacy.legacyImageInvalid;
-                const skippedImagePath = !oldImagePath ? skippedLegacyImageUrl : null;
-                const oldImageIsProtected = image && ownedIndicePath(oldImagePath, id)
-                    && oldImagePath !== image.imagePath;
+                const oldImageIsProtected = (image || removeImage) && ownedIndicePath(oldImagePath, id)
+                    && oldImagePath !== image?.imagePath;
                 const imageLock = oldImageIsProtected ? indiceImageLockRef(sdk, db, id) : null;
                 const imageLockSnapshot = imageLock ? await transaction.get(imageLock) : null;
                 if (imageLockSnapshot && exists(imageLockSnapshot)) fail('update-indice-image-lock', ERROR_KINDS.CONFLICT);
@@ -349,28 +373,34 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                 const timestamp = serverTimestamp(sdk);
                 const write = { ...data, updatedAt: timestamp };
                 if (image && typeof sdk.deleteField === 'function') write.imageUrl = sdk.deleteField();
+                if (removeImage) {
+                    write.imagePath = sdk.deleteField();
+                    write.imageUrl = sdk.deleteField();
+                }
                 if (oldImageIsProtected) {
                     transaction.set(imageLock, { ownerCollection: 'indices', ownerId: id, path: oldImagePath,
                         createdAt: timestamp, updatedAt: timestamp });
                 }
                 transaction.update(ref, write);
-                return { id, oldImagePath, skippedImagePath, skippedLegacyImageUrl, legacyImageSkipped, legacyImageInvalid,
+                return { id, oldImagePath, legacyImageSkipped, legacyImageInvalid,
                     skippedImagePathInvalid, skippedImagePathReason };
             });
         } catch (error) {
+            const operationError = normalizedError(error, 'update-indice');
+            const noCommit = definiteNoCommit(operationError);
             if (image) {
                 try { await compensateImage(image.imagePath, id); }
                 catch (compensationError) {
-                    compensationError.state = { ...(compensationError.state ?? {}), commitUnknown: true, imagePath: image.imagePath, indiceId: id };
-                    throw compensationError;
+                    throw compensationFailure(compensationError, image.imagePath, id, noCommit);
                 }
             }
-            const normalized = normalizedError(error, 'update-indice');
-            normalized.state = { commitUnknown: true, imagePath: image?.imagePath ?? null, skippedLegacyImageUrl,
+            if (noCommit) throw operationError;
+            const normalized = operationError;
+            normalized.state = { commitUnknown: true, imagePath: image?.imagePath ?? null,
                 legacyImageSkipped, legacyImageInvalid, skippedImagePathInvalid, skippedImagePathReason, indiceId: id };
             throw normalized;
         }
-        if (image && result.oldImagePath && result.oldImagePath !== image.imagePath && ownedIndicePath(result.oldImagePath, id)) {
+        if ((image || removeImage) && result.oldImagePath && result.oldImagePath !== image?.imagePath && ownedIndicePath(result.oldImagePath, id)) {
             try {
                 if (typeof imageService?.cleanupImage !== 'function') fail('update-indice-image-service');
                 await imageService.cleanupImage(result.oldImagePath, { collection: 'indices', ownerId: id, skipJournal: true });
@@ -378,10 +408,9 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
             } catch (error) {
                 const normalized = normalizedError(error, 'update-indice-image-cleanup');
                 normalized.state = { firestoreDone: true, imageCleanupPending: true, imagePath: result.oldImagePath,
-                    skippedImagePath: result.skippedImagePath, skippedLegacyImageUrl: result.skippedLegacyImageUrl,
                     legacyImageSkipped: result.legacyImageSkipped, legacyImageInvalid: result.legacyImageInvalid,
                     skippedImagePathInvalid: result.skippedImagePathInvalid, skippedImagePathReason: result.skippedImagePathReason,
-                    newImagePath: image.imagePath, indiceId: id };
+                    newImagePath: image?.imagePath ?? null, indiceId: id };
                 throw normalized;
             }
         }
@@ -390,15 +419,60 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
             error.state = { firestoreDone: true, imageCleanupPending: false,
                 imagePath: image.imagePath, newImagePath: image.imagePath,
                 oldImagePath: ownedIndicePath(result.oldImagePath, id) ? result.oldImagePath : null,
-                skippedImagePath: result.skippedImagePath, skippedLegacyImageUrl: result.skippedLegacyImageUrl,
                 legacyImageSkipped: result.legacyImageSkipped, legacyImageInvalid: result.legacyImageInvalid,
                 skippedImagePathInvalid: result.skippedImagePathInvalid, skippedImagePathReason: result.skippedImagePathReason,
                 indiceId: id, journalPending: true };
             throw error;
         }
-        return { id: result.id, skippedImagePath: result.skippedImagePath, skippedLegacyImageUrl: result.skippedLegacyImageUrl,
+        return { id: result.id,
             legacyImageSkipped: result.legacyImageSkipped, legacyImageInvalid: result.legacyImageInvalid,
             skippedImagePathInvalid: result.skippedImagePathInvalid, skippedImagePathReason: result.skippedImagePathReason };
+    }
+
+    async function forceUpdate(id, patch = {}, options = {}) {
+        if (options?.confirmed !== true) fail('force-update-confirmation', ERROR_KINDS.PERMISSION);
+        return update(id, patch, undefined, options);
+    }
+
+    async function inspectCommit(id, { creation = false, expectedData = null, imageMode = 'unchanged', expectedImagePath = null, previousUpdatedAt } = {}) {
+        if (!isMj) fail('inspect-indice-commit', ERROR_KINDS.PERMISSION);
+        if (!validId(id)) fail('inspect-indice-commit');
+        try {
+            const snapshot = await getDocument(sdk, documentRef(sdk, db, 'indices', id));
+            if (!exists(snapshot)) return { status: creation ? 'not-committed' : 'inconsistent' };
+            const current = snapshotData(snapshot);
+            if (!expectedData || typeof expectedData !== 'object') return { status: 'inconsistent' };
+            const fields = ['titre', 'description', 'decouvert', 'ordre', 'pnjsLies'];
+            const matches = fields.every(field => JSON.stringify(current[field] ?? null)
+                === JSON.stringify(expectedData[field] ?? null));
+            const imageMatches = imageMode === 'remove'
+                ? !current.imagePath
+                : imageMode === 'replace'
+                    ? current.imagePath === expectedImagePath
+                    : true;
+            if (matches && imageMatches) return { status: 'committed' };
+            if (!creation && previousUpdatedAt !== undefined
+                && timestampEqual(current.updatedAt, previousUpdatedAt)) return { status: 'not-committed' };
+            return { status: creation ? 'not-committed' : 'inconsistent' };
+        } catch (error) {
+            throw normalizedError(error, 'inspect-indice-commit');
+        }
+    }
+
+    async function inspectRemoval(id) {
+        if (!isMj) fail('inspect-indice-removal', ERROR_KINDS.PERMISSION);
+        if (!validId(id)) fail('inspect-indice-removal');
+        const owner = await getDocument(sdk, documentRef(sdk, db, 'indices', id));
+        if (exists(owner)) return { status: 'not-committed' };
+        const lock = await getDocument(sdk, indiceImageLockRef(sdk, db, id));
+        if (exists(lock)) {
+            const data = snapshotData(lock);
+            if (data.ownerCollection !== 'indices' || data.ownerId !== id || !ownedIndicePath(data.path, id)) {
+                return { status: 'inconsistent' };
+            }
+            return { status: 'pending-cleanup' };
+        }
+        return { status: 'committed' };
     }
 
     async function mutateLinks(id, pnjId, add) {
@@ -425,8 +499,6 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         if (!validId(id)) fail('remove-indice');
         const ref = documentRef(sdk, db, 'indices', id);
         let imagePath = null;
-        let skippedImagePath = null;
-        let skippedLegacyImageUrl = null;
         let legacyImageSkipped = false;
         let legacyImageInvalid = false;
         let skippedImagePathInvalid = false;
@@ -443,10 +515,8 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                 skippedImagePathReason = invalidImagePathReason(imagePath, id);
                 skippedImagePathInvalid = Boolean(skippedImagePathReason);
                 const legacy = legacyImageState(currentData);
-                skippedLegacyImageUrl = legacy.skippedLegacyImageUrl;
                 legacyImageSkipped = legacy.legacyImageSkipped;
                 legacyImageInvalid = legacy.legacyImageInvalid;
-                skippedImagePath = !imagePath ? skippedLegacyImageUrl : null;
                 if (ownedIndicePath(imagePath, id)) {
                     const cleanupLock = indiceImageLockRef(sdk, db, id);
                     const cleanupLockSnapshot = await transaction.get(cleanupLock);
@@ -460,25 +530,27 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
             });
         } catch (error) {
             const normalized = normalizedError(error, 'remove-indice');
-            if (imagePath || skippedLegacyImageUrl) normalized.state = {
-                commitUnknown: true, imagePath: ownedIndicePath(imagePath, id) ? imagePath : null, skippedImagePath, skippedLegacyImageUrl,
+            normalized.state = {
+                ...(normalized.state ?? {}),
+                commitUnknown: true, imagePath: ownedIndicePath(imagePath, id) ? imagePath : null,
                 legacyImageSkipped, legacyImageInvalid, skippedImagePathInvalid, skippedImagePathReason, indiceId: id,
             };
             throw normalized;
         }
-        if (!imagePath) return { firestoreDone: true, imageCleanupPending: false, imagePath: null, skippedImagePath, skippedLegacyImageUrl, legacyImageSkipped, legacyImageInvalid };
+        if (!imagePath) return { firestoreDone: true, imageCleanupPending: false, imagePath: null, legacyImageSkipped, legacyImageInvalid,
+            skippedImagePathInvalid, skippedImagePathReason };
         if (!ownedIndicePath(imagePath, id)) return { firestoreDone: true, imageCleanupPending: false, imagePath: null,
-            skippedImagePath, skippedLegacyImageUrl, legacyImageSkipped, legacyImageInvalid, skippedImagePathInvalid, skippedImagePathReason };
+            legacyImageSkipped, legacyImageInvalid, skippedImagePathInvalid, skippedImagePathReason };
         try {
             if (!imageService || typeof imageService.cleanupImage !== 'function') fail('remove-indice-image-service');
             await imageService.cleanupImage(imagePath, { collection: 'indices', ownerId: id, skipJournal: true });
             await assertImageLockReleased(id, imagePath, 'remove-indice-image-lock-release');
-            return { firestoreDone: true, imageCleanupPending: false, imagePath, imageLock, skippedImagePath, skippedLegacyImageUrl,
+            return { firestoreDone: true, imageCleanupPending: false, imagePath, imageLock,
                 legacyImageSkipped, legacyImageInvalid, skippedImagePathInvalid, skippedImagePathReason };
         } catch (error) {
             const normalized = normalizedError(error, 'remove-indice-image-cleanup');
-            normalized.state = { firestoreDone: true, imageCleanupPending: true, imagePath, skippedImagePath,
-                skippedLegacyImageUrl, legacyImageSkipped, legacyImageInvalid, skippedImagePathInvalid, skippedImagePathReason, indiceId: id };
+            normalized.state = { firestoreDone: true, imageCleanupPending: true, imagePath,
+                legacyImageSkipped, legacyImageInvalid, skippedImagePathInvalid, skippedImagePathReason, indiceId: id };
             throw normalized;
         }
     }
@@ -508,7 +580,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
     }
 
     const repository = { subscribeDiscovered, subscribeOne, subscribeLinked };
-    if (isMj) Object.assign(repository, { subscribeAll, create, update, remove, resumeRemoval,
+    if (isMj) Object.assign(repository, { subscribeAll, create, update, forceUpdate, inspectCommit, inspectRemoval, remove, resumeRemoval,
         addLinkedPnj: (id, pnjId) => mutateLinks(id, pnjId, true),
         removeLinkedPnj: (id, pnjId) => mutateLinks(id, pnjId, false) });
     return Object.freeze(repository);

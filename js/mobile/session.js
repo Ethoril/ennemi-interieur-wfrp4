@@ -43,9 +43,10 @@ export function safeRouteHash(value) {
     if (typeof value !== 'string' || value.length > 500 || !value.startsWith('#/')) return null;
     if (/[?&](?:email|token|access_token|id_token|code)=/iu.test(value)) return null;
     if (/^#\/pnjs$/u.test(value) || /^#\/enquetes$/u.test(value) || /^#\/reglages$/u.test(value)) return value;
-    if (value === '#/pnjs/nouveau') return value;
+    if (value === '#/pnjs/nouveau' || value === '#/enquetes/nouveau') return value;
     if (/^#\/(?:pnjs|enquetes)\/[A-Za-z0-9_-]{1,150}$/u.test(value)) return value;
     if (/^#\/pnjs\/[A-Za-z0-9_-]{1,150}\/modifier$/u.test(value)) return value;
+    if (/^#\/enquetes\/[A-Za-z0-9_-]{1,150}\/modifier$/u.test(value)) return value;
     return null;
 }
 

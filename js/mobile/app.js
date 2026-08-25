@@ -7,9 +7,12 @@ import { createPnjsListView } from './views/pnjs-list.js';
 import { createPnjDetailView } from './views/pnj-detail.js';
 import { createEnquetesListView } from './views/enquetes-list.js';
 import { createEnqueteDetailView } from './views/enquete-detail.js';
+import { createEnquetesMjListView, clearEnquetesMjListMemory } from './views/enquetes-mj-list.js';
+import { createEnqueteEditView } from './views/enquete-edit.js';
 import { createPnjEditView } from './views/pnj-edit.js';
 import { createAdminRouteController } from './admin-route-controller.js';
 import { createPublicDraftStore } from './drafts-store.js';
+import { createEnquetesDraftStore } from './enquetes-drafts-store.js';
 
 function placeholderView({ container, title, message, actionLabel = '', onAction = null }) {
     let mounted = false;
@@ -59,10 +62,11 @@ function cacheMessage(state) {
     return 'Le mode de cache sera indiqué après le premier chargement.';
 }
 
-function createSettingsView({ container, publicSession, mjSession, documentRef, draftStore = null, announce = () => {} }) {
+function createSettingsView({ container, publicSession, mjSession, documentRef, draftStore = null, draftStores = [], announce = () => {} }) {
     let unsubscribePublic = null;
     let unsubscribeMj = null;
     let mounted = false;
+    const allDraftStores = [...new Set([draftStore, ...draftStores].filter(store => store && typeof store.clear === 'function'))];
     const render = () => {
         if (!mounted) return;
         container.replaceChildren();
@@ -108,12 +112,15 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
         const cache = documentRef.createElement('p');
         cache.textContent = cacheMessage(publicSession.getState());
         section.append(cache);
-        if (draftStore) {
+        if (allDraftStores.length) {
             const clearDrafts = documentRef.createElement('button');
             clearDrafts.type = 'button'; clearDrafts.className = 'm-button'; clearDrafts.textContent = 'Effacer les brouillons';
             clearDrafts.addEventListener('click', () => {
-                if (!documentRef.defaultView?.confirm?.('Effacer tous les brouillons publics locaux ?')) return;
-                const count = draftStore.clear(); render(); announce(`${count} brouillon${count === 1 ? '' : 's'} local${count === 1 ? '' : 'aux'} effacé${count === 1 ? '' : 's'}.`);
+                if (!documentRef.defaultView?.confirm?.('Effacer tous les brouillons publics locaux, y compris les enquêtes ?')) return;
+                const count = allDraftStores.reduce((total, store) => {
+                    try { const cleared = store.clear(); return total + (Number.isFinite(cleared) ? cleared : 0); } catch { return total; }
+                }, 0);
+                render(); announce(`${count} brouillon${count === 1 ? '' : 's'} local${count === 1 ? '' : 'aux'} effacé${count === 1 ? '' : 's'}.`);
             });
             section.append(clearDrafts);
         }
@@ -158,6 +165,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
 
     const session = createDefaultPublicSession({ navigatorRef: windowRef.navigator });
     const draftStore = createPublicDraftStore({ storage: (() => { try { return windowRef.localStorage; } catch { return null; } })() });
+    const enqueteDraftStore = createEnquetesDraftStore({ storage: (() => { try { return windowRef.localStorage; } catch { return null; } })() });
     let router;
     let pendingInitialRoute = null;
     const mjSession = createDefaultMjSession({
@@ -214,15 +222,41 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
                 onBack: () => router.back({ skipGuard: true }), onNavigate: target => router.navigate(parseRoute(target), { replace: true, skipGuard: true }),
                 announce: message => announce(routeStatus, message) });
         },
-        [ROUTE_NAMES.ENQUETES]: () => createEnquetesListView({
-            container, store, getImageService: () => session.getImages(), onRetry: retry,
-            onOpen: id => router.navigate({ name: ROUTE_NAMES.ENQUETE, id }),
-        }),
+        [ROUTE_NAMES.ENQUETES]: () => {
+            const state = mjSession.getState();
+            if (state.status === 'gm' && state.role === 'mj' && state.user?.uid) return createEnquetesMjListView({
+                container, getRepository: () => mjSession.getState().private?.repositories?.indices,
+                getImageService: () => mjSession.getState().private?.repositories?.images,
+                getSession: () => mjSession.getState(), onRetry: retry,
+                onCreate: () => router.navigate({ name: ROUTE_NAMES.ENQUETE_NEW }),
+                onEdit: id => router.navigate({ name: ROUTE_NAMES.ENQUETE_EDIT, id }),
+            });
+            return createEnquetesListView({ container, store, getImageService: () => session.getImages(), onRetry: retry,
+                onOpen: id => router.navigate({ name: ROUTE_NAMES.ENQUETE, id }) });
+        },
         [ROUTE_NAMES.ENQUETE]: route => createEnqueteDetailView({
             container, id: route.id, store, getImageService: () => session.getImages(), onRetry: retry,
             onBack: () => router.back(),
             onOpenPnj: id => router.navigate({ name: ROUTE_NAMES.PNJ, id }),
         }),
+        [ROUTE_NAMES.ENQUETE_NEW]: () => {
+            const state = mjSession.getState();
+            if (['checking', 'signing-in', 'signing-out'].includes(state.status)) return placeholderView({ container, title: 'Vérification', message: 'Vérification de la session MJ…' });
+            if (state.status !== 'gm' || state.role !== 'mj' || !state.user?.uid) return placeholderView({ container, title: 'Accès MJ requis', message: 'Cette action est réservée au MJ.', actionLabel: 'Retour', onAction: () => router.back() });
+            return createEnqueteEditView({ container, getSession: () => mjSession.getState(), getRepository: () => mjSession.getState().private?.repositories?.indices,
+                getPnjRepository: () => mjSession.getState().private?.repositories?.pnjs, getImageService: () => mjSession.getState().private?.repositories?.images,
+                draftStore: enqueteDraftStore, isOnline: () => windowRef.navigator?.onLine !== false,
+                onBack: () => router.back({ skipGuard: true }), onNavigate: target => router.navigate(parseRoute(target), { replace: true, skipGuard: true }), announce: message => announce(routeStatus, message) });
+        },
+        [ROUTE_NAMES.ENQUETE_EDIT]: route => {
+            const state = mjSession.getState();
+            if (['checking', 'signing-in', 'signing-out'].includes(state.status)) return placeholderView({ container, title: 'Vérification', message: 'Vérification de la session MJ…' });
+            if (state.status !== 'gm' || state.role !== 'mj' || !state.user?.uid) return placeholderView({ container, title: 'Accès MJ requis', message: 'Cette action est réservée au MJ.', actionLabel: 'Retour', onAction: () => router.back() });
+            return createEnqueteEditView({ container, id: route.id, getSession: () => mjSession.getState(), getRepository: () => mjSession.getState().private?.repositories?.indices,
+                getPnjRepository: () => mjSession.getState().private?.repositories?.pnjs, getImageService: () => mjSession.getState().private?.repositories?.images,
+                draftStore: enqueteDraftStore, isOnline: () => windowRef.navigator?.onLine !== false,
+                onBack: () => router.back({ skipGuard: true }), onNavigate: target => router.navigate(parseRoute(target), { replace: true, skipGuard: true }), announce: message => announce(routeStatus, message) });
+        },
         [ROUTE_NAMES.REGLAGES]: () => placeholderView({
             container, title: 'Réglages', message: 'Chargement des réglages…',
         }),
@@ -252,7 +286,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             onAction: () => router.back(),
         }),
     };
-    views[ROUTE_NAMES.REGLAGES] = () => createSettingsView({ container, publicSession: session, mjSession, documentRef, draftStore, announce: message => announce(routeStatus, message) });
+    views[ROUTE_NAMES.REGLAGES] = () => createSettingsView({ container, publicSession: session, mjSession, documentRef, draftStore, draftStores: [enqueteDraftStore], announce: message => announce(routeStatus, message) });
     router = createRouter({
         windowRef,
         mountRoute: route => (views[route.name] || views[ROUTE_NAMES.UNKNOWN])(route),
@@ -264,7 +298,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             title.textContent = section === 'pnjs' ? 'PNJs' : section === 'enquetes' ? 'Enquêtes' : 'Réglages';
             title.focus?.({ preventScroll: true });
             back.hidden = !(route.name === ROUTE_NAMES.PNJ || route.name === ROUTE_NAMES.PNJ_NEW || route.name === ROUTE_NAMES.PNJ_EDIT
-                || route.name === ROUTE_NAMES.ENQUETE || route.name === ROUTE_NAMES.UNKNOWN);
+                || route.name === ROUTE_NAMES.ENQUETE || route.name === ROUTE_NAMES.ENQUETE_NEW || route.name === ROUTE_NAMES.ENQUETE_EDIT || route.name === ROUTE_NAMES.UNKNOWN);
             headerAction.hidden = route.name !== ROUTE_NAMES.REGLAGES;
             documentRef.querySelectorAll('.m-bottom-nav a[data-route]').forEach(link => {
                 if (link.dataset.route === section) link.setAttribute('aria-current', 'page');
@@ -319,6 +353,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     const unsubscribeMj = mjSession.subscribe(() => {
         const route = router.getRoute();
         const next = mjSession.getState();
+        if (next.status !== 'gm') clearEnquetesMjListMemory();
         adminRouteController.transition({ routeName: route?.name, status: next.status, role: next.role, uid: next.user?.uid });
     });
     let stopPromise = null;
@@ -326,6 +361,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
         if (stopPromise) return stopPromise;
         stopPromise = (async () => {
             stopRouter();
+            clearEnquetesMjListMemory();
             unsubscribeSession();
             unsubscribeMj();
             dialog.close();

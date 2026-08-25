@@ -132,6 +132,22 @@ test('les mutations indices valident les liens, conflits et verrou global', asyn
     await assert.rejects(repo.update('i-1', { titre: 'bloqué' }), error => error.kind === ERROR_KINDS.CONFLICT);
 });
 
+test('les rejets certains create/update ne deviennent pas un commit incertain', async () => {
+    const fake = makeFake();
+    put(fake, 'indices', 'already-there', { titre: 'Existe', decouvert: false, pnjsLies: [] });
+    const repo = createMjIndicesRepository(fake);
+    await assert.rejects(repo.create({ id: 'already-there', titre: 'Doublon', decouvert: false, pnjsLies: [] }), error => {
+        assert.equal(error.kind, ERROR_KINDS.CONFLICT);
+        assert.equal(error.state, undefined);
+        return true;
+    });
+    await assert.rejects(repo.update('missing', { titre: 'Absent' }), error => {
+        assert.equal(error.kind, ERROR_KINDS.NOT_FOUND);
+        assert.equal(error.state, undefined);
+        return true;
+    });
+});
+
 test('les doublons de liens sont dédupliqués avant la limite', async () => {
     const fake = makeFake();
     put(fake, 'pnjs', 'p-1', { suppressionEnCours: false });
@@ -181,8 +197,7 @@ test('la suppression indice legacy conserve et signale imageUrl sans cleanup Sto
     put(fake, 'indices', 'i-legacy', { titre: 'Legacy', decouvert: true, pnjsLies: [], imageUrl: 'gs://campagne-wrpg.firebasestorage.app/legacy/a.webp?token=secret' });
     const repo = createMjIndicesRepository(fake);
     const result = await repo.remove('i-legacy');
-    assert.equal(result.skippedLegacyImageUrl, 'gs://campagne-wrpg.firebasestorage.app/legacy/a.webp');
-    assert.equal(result.skippedLegacyImageUrl.includes('token='), false);
+    assert.equal(Object.hasOwn(result, 'skippedLegacyImageUrl'), false);
     assert.equal(fake.map('indices').has('i-legacy'), false);
 });
 
@@ -192,7 +207,7 @@ test('une imageUrl legacy hostile est signalée sans relayer sa valeur', async (
     const result = await createMjIndicesRepository(fake).remove('i-hostile');
     assert.equal(result.legacyImageSkipped, true);
     assert.equal(result.legacyImageInvalid, true);
-    assert.equal(result.skippedLegacyImageUrl, null);
+    assert.equal(Object.hasOwn(result, 'skippedLegacyImageUrl'), false);
     assert.equal(JSON.stringify(result).includes('secret'), false);
 });
 
@@ -225,7 +240,7 @@ test('remove signale un imagePath externe canonisé sans token', async () => {
     const result = await createMjIndicesRepository(fake).remove('i-path-external');
     assert.equal(result.skippedImagePathInvalid, true);
     assert.equal(result.skippedImagePathReason, 'external-reference');
-    assert.equal(result.skippedImagePath, null);
+    assert.equal(Object.hasOwn(result, 'skippedImagePath'), false);
     assert.equal(JSON.stringify(result).includes('secret'), false);
 });
 
@@ -307,7 +322,7 @@ test('un remplacement vers le même chemin ne laisse pas de verrou image', async
     } });
     const result = await repo.update('i-same', {}, undefined, { imageFile: new globalThis.Blob(['x'], { type: 'image/webp' }) });
     assert.equal(cleanups, 0);
-    assert.equal(result.skippedLegacyImageUrl, 'gs://campagne-wrpg.firebasestorage.app/legacy/a.webp');
+    assert.equal(Object.hasOwn(result, 'skippedLegacyImageUrl'), false);
     assert.equal(fake.map('integrity_locks/images/indices').has('i-same'), false);
 });
 
@@ -322,7 +337,7 @@ test('un conflit update avec le même chemin passe par le cleanup non-référenc
     } });
     await assert.rejects(repo.update('i-conflict-image', { titre: 'conflit' }, { seconds: 99, nanoseconds: 0 }, {
         imageFile: new globalThis.Blob(['x'], { type: 'image/webp' }),
-    }), error => error.state?.commitUnknown === true);
+    }), error => error.kind === ERROR_KINDS.CONFLICT && error.state?.commitUnknown !== true);
     assert.equal(cleanups, 1);
 });
 

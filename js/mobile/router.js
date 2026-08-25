@@ -7,6 +7,8 @@ const ROUTE_NAMES = Object.freeze({
     PNJ_EDIT: 'pnj-edit',
     ENQUETES: 'enquetes-list',
     ENQUETE: 'enquete-detail',
+    ENQUETE_NEW: 'enquete-new',
+    ENQUETE_EDIT: 'enquete-edit',
     REGLAGES: 'reglages',
     UNKNOWN: 'unknown',
 });
@@ -42,8 +44,13 @@ export function parseRoute(hash = '') {
     }
     if (section === 'enquetes') {
         if (segments.length === 1) return Object.freeze({ name: ROUTE_NAMES.ENQUETES });
+        if (segments.length === 2 && segments[1] === 'nouveau') return Object.freeze({ name: ROUTE_NAMES.ENQUETE_NEW });
         const id = decodeSegment(segments[1]);
-        return id ? Object.freeze({ name: ROUTE_NAMES.ENQUETE, id }) : Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
+        if (!id) return Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
+        if (segments.length === 2) return Object.freeze({ name: ROUTE_NAMES.ENQUETE, id });
+        return segments.length === 3 && segments[2] === 'modifier'
+            ? Object.freeze({ name: ROUTE_NAMES.ENQUETE_EDIT, id })
+            : Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
     }
     if (section === 'reglages' && segments.length === 1) return Object.freeze({ name: ROUTE_NAMES.REGLAGES });
     return Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
@@ -62,6 +69,8 @@ export function routeToHash(route) {
         case ROUTE_NAMES.PNJ_EDIT: return ROUTE_ID.test(route.id) ? `#/pnjs/${encodeURIComponent(route.id)}/modifier` : '#/pnjs';
         case ROUTE_NAMES.ENQUETES: return '#/enquetes';
         case ROUTE_NAMES.ENQUETE: return ROUTE_ID.test(route.id) ? `#/enquetes/${encodeURIComponent(route.id)}` : '#/enquetes';
+        case ROUTE_NAMES.ENQUETE_NEW: return '#/enquetes/nouveau';
+        case ROUTE_NAMES.ENQUETE_EDIT: return ROUTE_ID.test(route.id) ? `#/enquetes/${encodeURIComponent(route.id)}/modifier` : '#/enquetes';
         case ROUTE_NAMES.REGLAGES: return '#/reglages';
         default: return '#/pnjs';
     }
@@ -177,6 +186,12 @@ export function createRouter({ windowRef = globalThis, mountRoute, onRoute, anno
         }
         if (currentRoute?.name === ROUTE_NAMES.PNJ_EDIT) {
             return navigate({ name: ROUTE_NAMES.PNJ, id: currentRoute.id }, { replace: true, skipGuard });
+        }
+        if (currentRoute?.name === ROUTE_NAMES.ENQUETE_NEW) {
+            return navigate({ name: ROUTE_NAMES.ENQUETES }, { replace: true, skipGuard });
+        }
+        if (currentRoute?.name === ROUTE_NAMES.ENQUETE_EDIT) {
+            return navigate({ name: ROUTE_NAMES.ENQUETE, id: currentRoute.id }, { replace: true, skipGuard });
         }
         if (currentRoute?.name === ROUTE_NAMES.PNJ || currentRoute?.name === ROUTE_NAMES.ENQUETE) {
             return navigate({ name: currentRoute.name === ROUTE_NAMES.PNJ ? ROUTE_NAMES.PNJS : ROUTE_NAMES.ENQUETES }, { replace: true, skipGuard });

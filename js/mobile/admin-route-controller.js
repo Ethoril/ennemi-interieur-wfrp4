@@ -5,7 +5,8 @@ export function createAdminRouteController({ routeNames, onRefresh = () => {}, o
         const identity = `${status || ''}:${role || ''}:${uid || ''}`;
         const changed = identity !== previousIdentity;
         previousIdentity = identity;
-        if (routeName === routeNames.PNJ_NEW || routeName === routeNames.PNJ_EDIT) {
+        if (routeName === routeNames.PNJ_NEW || routeName === routeNames.PNJ_EDIT
+            || routeName === routeNames.ENQUETE_NEW || routeName === routeNames.ENQUETE_EDIT) {
             if (status === 'gm' && role === 'mj' && typeof uid === 'string' && uid.length > 0) {
                 onRefresh();
                 return 'refresh-admin';
@@ -21,6 +22,10 @@ export function createAdminRouteController({ routeNames, onRefresh = () => {}, o
         if (routeName === routeNames.PNJ && changed) {
             onRefresh();
             return 'refresh-detail';
+        }
+        if (routeName === routeNames.ENQUETES && changed) {
+            onRefresh();
+            return 'refresh-enquetes';
         }
         return 'noop';
     };
