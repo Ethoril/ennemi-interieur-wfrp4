@@ -61,6 +61,10 @@ L’utilisateur a confirmé l’installation réussie de `v2.21.1` via Réglages
 bandeau résiduel. Une version témoin `v2.21.2`, sans autre changement fonctionnel, est préparée pour
 valider directement le bouton corrigé du bandeau depuis une session Android `v2.21.1`.
 
+La recette physique `v2.21.1` → `v2.21.2` a ensuite été confirmée sur Android : le bouton du bandeau
+a activé la mise à jour, un seul rechargement a eu lieu, le bandeau a disparu et les diagnostics ont
+affiché la version et le worker `v2.21.2`.
+
 ## Contrôles automatisés
 
 Le test `tools/m6-03-release.test.mjs` vérifie l’alignement version/méta/Service Worker/CHANGELOG,
@@ -81,7 +85,7 @@ mobile, sécurité et règles déjà présentes dans le dépôt.
 | Connexion MJ par redirection | À renseigner | **À faire** | À renseigner |
 | Création/modification, photo, rotation, clavier | À renseigner | **À faire** | À renseigner |
 | Publication temps réel vers un second appareil | À renseigner | **À faire** | À renseigner |
-| Bannière et activation volontaire d’une mise à jour | À renseigner | **À faire** | À renseigner |
+| Bannière et activation volontaire d’une mise à jour | Android utilisateur, détails à renseigner | **OK** | `v2.21.1` → `v2.21.2` par le bouton du bandeau ; un rechargement, bandeau masqué, diagnostics alignés |
 | Réseau coupé pendant un formulaire et reprise | À renseigner | **À faire** | À renseigner |
 | Zoom 200 %, thèmes, largeur 375 px | À renseigner | **À faire** | À renseigner |
 
@@ -115,4 +119,4 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
 - [ ] Matrice iOS : différée explicitement.
 - [x] Autorisation spécifique puis publication du candidat caché `aa9f0d2` sur `master`.
 - [x] Publication cachée de `v2.21.0` et cycle de mise à jour validé sur navigateur bureau.
-- [ ] Cycle de mise à jour confirmé sur l’appareil Android de recette.
+- [x] Cycle de mise à jour confirmé sur l’appareil Android de recette.
