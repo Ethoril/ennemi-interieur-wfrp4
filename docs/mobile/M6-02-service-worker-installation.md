@@ -37,10 +37,11 @@ recherche/application. Les échecs de diagnostic restent des états locaux sans 
 
 ## Installation facultative
 
-`beforeinstallprompt` est capturé sans imposer l’installation et propose un petit bandeau DOM
-accessible après le premier écran utilisé, avec une action non intrusive et un bouton « Plus tard ».
-Un rejet est mémorisé temporairement. Sur iOS, l’aide indique « Partager → Sur l’écran d’accueil » ;
-elle est masquée en mode standalone. L’application reste utilisable sans installation.
+`beforeinstallprompt` est capturé sans imposer l’installation. Le bandeau DOM accessible est réservé
+à l’action de mise à jour ; l’aide Android/iOS et l’action d’installation restent disponibles dans
+Réglages afin qu’une mise à jour activée masque complètement le bandeau. Un rejet est mémorisé
+temporairement. Sur iOS, l’aide indique « Partager → Sur l’écran d’accueil » ; elle est masquée en
+mode standalone. L’application reste utilisable sans installation.
 
 ## Validation et limites
 

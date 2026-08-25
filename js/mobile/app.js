@@ -152,7 +152,7 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
                 update.className = 'm-button m-button-primary';
                 update.textContent = 'Appliquer la mise à jour';
                 update.disabled = pwaState.updateRequested;
-                update.addEventListener('click', () => { pwa.applyUpdate(); });
+                update.addEventListener('click', () => { void (pwa.requestUpdate?.() ?? pwa.applyUpdate()); });
                 section.append(update);
             }
             const hint = pwa.getInstallationHint();

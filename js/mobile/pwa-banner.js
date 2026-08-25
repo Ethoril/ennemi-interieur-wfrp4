@@ -7,23 +7,37 @@ export function createPwaBanner({ documentRef, pwa }) {
     if (!banner || !text || !update || !install || !dismiss || !pwa) {
         return Object.freeze({ stop() {} });
     }
+    let active = true;
+    let lifecycle = 0;
 
     const render = state => {
-        const hint = pwa.getInstallationHint();
         const hasUpdate = state.updateAvailable === true;
-        const hasInstall = Boolean(hint);
-        banner.hidden = !hasUpdate && !hasInstall;
-        text.textContent = hasUpdate && hasInstall
-            ? 'Mise à jour disponible. Vous pouvez aussi installer l’application.'
-            : hasUpdate ? 'Mise à jour disponible.' : hint?.text || '';
+        banner.hidden = !hasUpdate;
+        text.textContent = hasUpdate ? 'Mise à jour disponible.' : '';
         update.hidden = !hasUpdate;
         update.disabled = state.updateRequested === true;
-        install.hidden = hint?.kind !== 'android';
-        dismiss.hidden = !hasInstall;
+        install.hidden = true;
+        dismiss.hidden = true;
     };
 
     const unsubscribe = pwa.subscribe(render);
-    const onUpdate = () => { pwa.applyUpdate(); };
+    const onUpdate = async () => {
+        const token = lifecycle;
+        let result;
+        try {
+            result = pwa.requestUpdate
+                ? await pwa.requestUpdate()
+                : pwa.applyUpdate();
+        } catch {
+            if (!active || token !== lifecycle) return;
+            result = false;
+        }
+        if (!active || token !== lifecycle) return;
+        if (result === false && pwa.getState?.().updateAvailable) {
+            banner.hidden = false;
+            text.textContent = 'Mise à jour impossible ou différée. Terminez votre saisie, puis réessayez.';
+        }
+    };
     const onInstall = () => { void pwa.promptInstall(); };
     const onDismiss = () => { pwa.dismissInstall(); };
     update.addEventListener('click', onUpdate);
@@ -32,6 +46,8 @@ export function createPwaBanner({ documentRef, pwa }) {
 
     return Object.freeze({
         stop() {
+            active = false;
+            lifecycle += 1;
             unsubscribe();
             update.removeEventListener('click', onUpdate);
             install.removeEventListener('click', onInstall);

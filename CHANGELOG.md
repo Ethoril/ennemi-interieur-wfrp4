@@ -1,3 +1,12 @@
+## [2.21.1] - 2026-08-25
+
+### Corrigé
+
+- **Mise à jour Android** : le bouton du bandeau réutilise désormais la même vérification fiable
+  que Réglages, respecte les brouillons en cours et ne déclenche qu’un seul rechargement.
+- **Bandeau PWA** : il disparaît dès qu’aucune mise à jour n’attend ; l’installation reste proposée
+  dans Réglages et aucun callback tardif ne peut réafficher le bandeau après fermeture de la page.
+
 ## [2.21.0] - 2026-08-25
 
 ### PWA — validation et clôture M6-03

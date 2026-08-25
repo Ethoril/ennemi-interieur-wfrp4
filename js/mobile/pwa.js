@@ -41,6 +41,7 @@ export function createPwaController({
     let stopped = false;
     let generation = 0;
     let checkGeneration = 0;
+    let updateActionPromise = null;
     let workerVersion = null;
     let error = null;
     let installError = false;
@@ -114,22 +115,36 @@ export function createPwaController({
         const onStateChange = () => {
             if (stopped || !started || token !== generation) return;
             if (worker.state === 'installed') markWaiting(worker, token);
+            if (worker.state === 'activated' && waiting === worker) completeUpdate();
         };
         worker.addEventListener('statechange', onStateChange);
         installingListeners.set(worker, onStateChange);
         if (worker.state === 'installed') onStateChange();
     };
 
-    const onUpdateFound = () => watchInstalling(registration?.installing, generation);
-    const onControllerChange = () => {
-        if (stopped) return;
+    const clearWaiting = () => {
+        const previous = waiting;
         waiting = null;
         updateAvailable = false;
+        updateRequested = false;
+        const listener = installingListeners.get(previous);
+        if (listener) {
+            previous.removeEventListener?.('statechange', listener);
+            installingListeners.delete(previous);
+        }
         emit();
-        if (!updateRequested || reloadScheduled) return;
+    };
+
+    const completeUpdate = () => {
+        if (stopped) return;
+        const shouldReload = updateRequested;
+        clearWaiting();
+        if (!shouldReload || reloadScheduled) return;
         reloadScheduled = true;
         windowRef?.location?.reload?.();
     };
+    const onUpdateFound = () => watchInstalling(registration?.installing, generation);
+    const onControllerChange = () => completeUpdate();
     const onBeforeInstallPrompt = event => {
         event.preventDefault?.();
         deferredPrompt = event;
@@ -154,6 +169,7 @@ export function createPwaController({
             error = null;
             registration.addEventListener?.('updatefound', onUpdateFound);
             if (registration.waiting) markWaiting(registration.waiting, token);
+            watchInstalling(registration.waiting, token);
             watchInstalling(registration.installing, token);
             emit();
             await askWorkerVersion(token);
@@ -207,7 +223,7 @@ export function createPwaController({
     };
 
     const applyUpdate = () => {
-        if (!waiting || updateRequested) return false;
+        if (stopped || !started || !waiting || updateRequested) return false;
         if (router?.canLeaveCurrent?.() === false) {
             safeMessage(announce, 'Mise à jour différée : terminez ou enregistrez votre saisie.');
             return false;
@@ -216,6 +232,20 @@ export function createPwaController({
         emit();
         try { waiting.postMessage({ type: 'SKIP_WAITING' }); } catch { updateRequested = false; emit(); return false; }
         return true;
+    };
+
+    const requestUpdate = () => {
+        if (updateActionPromise) return updateActionPromise;
+        updateActionPromise = (async () => {
+            const checked = await checkForUpdate();
+            if (stopped || !started) return false;
+            const activeWaiting = registration?.waiting || waiting;
+            if (activeWaiting && waiting !== activeWaiting) markWaiting(activeWaiting, generation);
+            if (!checked && !activeWaiting) { clearWaiting(); return false; }
+            if (!waiting) return false;
+            return applyUpdate();
+        })().finally(() => { updateActionPromise = null; });
+        return updateActionPromise;
     };
 
     const promptInstall = async () => {
@@ -264,6 +294,7 @@ export function createPwaController({
         stopped = true;
         generation += 1;
         checkGeneration += 1;
+        updateActionPromise = null;
         windowRef?.removeEventListener?.('beforeinstallprompt', handlers.beforeInstallPrompt);
         windowRef?.removeEventListener?.('appinstalled', handlers.appInstalled);
         navigatorRef?.serviceWorker?.removeEventListener?.('controllerchange', handlers.controllerChange);
@@ -274,7 +305,7 @@ export function createPwaController({
     };
 
     return Object.freeze({
-        start, stop, subscribe, getState, checkForUpdate, applyUpdate, promptInstall, dismissInstall,
+        start, stop, subscribe, getState, checkForUpdate, applyUpdate, requestUpdate, promptInstall, dismissInstall,
         getInstallationHint, getDiagnostics: () => ({ appVersion: documentRef?.querySelector?.('meta[name="app-version"]')?.content || null, workerVersion }),
     });
 }

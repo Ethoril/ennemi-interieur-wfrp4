@@ -1,6 +1,6 @@
 # M6-03 — Rapport de recette PWA et clôture locale
 
-Date de préparation : 25 août 2026. Version préparée : `v2.21.0`.
+Date de préparation : 25 août 2026. Version corrective préparée : `v2.21.1`.
 
 ## Décision de livraison
 
@@ -9,9 +9,10 @@ manifeste conserve volontairement son `start_url` historique `./index.html` ; `/
 des pages bureau, des liens de découverte et de la promotion publique jusqu’au lot M7.
 
 Après autorisation spécifique, le candidat caché `aa9f0d2` (`v2.20.0`) a été poussé sur `master`
-le 25 août 2026. Ce déploiement rend `/app/` directement testable sous HTTPS, sans lien public et
-sans changer le point de démarrage historique. La préparation locale `v2.21.0` de clôture n’est pas
-incluse dans ce push. Aucun déploiement ni test Firebase de production n’a été effectué.
+le 25 août 2026, puis la clôture cachée `06abb16` (`v2.21.0`) a été publiée pour tester une vraie
+mise à jour. Ces déploiements rendent `/app/` directement testable sous HTTPS, sans lien public et
+sans changer le point de démarrage historique. Aucun déploiement ni test Firebase de production
+n’a été effectué.
 
 ## Preuves locales déjà obtenues
 
@@ -23,6 +24,9 @@ observé en `v2.20.0` :
 - arrêt du serveur local sur le port `8123`, puis relance de `/app/` depuis la coque servie par le
   Service Worker, sans serveur applicatif ;
 - navigation de la coque et retour historique conservés pendant ce cycle.
+
+Le bandeau visible est réservé à la mise à jour ; les aides d’installation restent regroupées dans
+Réglages et ne réapparaissent pas après l’activation d’une version.
 
 Ces preuves ne constituent pas une inspection réelle de Cache Storage et ne remplacent pas une
 recette sur appareil physique.
@@ -36,10 +40,22 @@ Après publication du candidat caché, une vérification navigateur sur
 
 Cette vérification HTTPS sur navigateur bureau ne remplace pas la matrice Android physique.
 
+Après publication de `v2.21.0`, une session navigateur ayant chargé `v2.20.0` a confirmé le cycle
+de mise à jour réel : recherche manuelle, bandeau « Mise à jour disponible », activation volontaire,
+un seul rechargement, puis diagnostics « Version v2.21.0 » et « Worker v2.21.0 ». Le déploiement
+GitHub Pages correspondant s’est terminé avec succès.
+
 Le 25 août 2026, l’utilisateur a également confirmé que le candidat caché s’ouvre et fonctionne
 sur son appareil Android. Cette confirmation valide l’accès HTTPS et le fonctionnement général de
 la coque sur appareil réel ; elle ne suffit pas encore à valider séparément l’installation, le
 lancement hors ligne, l’Auth MJ, la photo, la mise à jour et les contrôles d’accessibilité.
+
+La recette Android de `v2.21.0` a ensuite révélé deux défauts : le bouton du bandeau n’activait pas
+la mise à jour dans la situation observée alors que l’action équivalente de Réglages fonctionnait,
+et le bandeau restait visible après activation. Le correctif `v2.21.1` réconcilie le worker avant
+l’action, réserve le bandeau aux seules mises à jour, conserve les aides d’installation dans
+Réglages et protège les continuations asynchrones après démontage. Sa revalidation Android reste à
+faire avant de clore la matrice.
 
 ## Contrôles automatisés
 
@@ -86,7 +102,7 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
 
 ## Checklist de sortie
 
-- [x] Version, cache, méta et CHANGELOG alignés en `v2.21.0`.
+- [x] Version corrective, cache, méta et CHANGELOG alignés en `v2.21.1`.
 - [x] `start_url` historique conservé et aucune annonce publique de `/app/`.
 - [x] Contrôles automatisés locaux verts.
 - [x] Preuves navigateur locales consignées sans données privées.
@@ -94,4 +110,5 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
 - [ ] Inspection réelle Cache Storage.
 - [ ] Matrice iOS : différée explicitement.
 - [x] Autorisation spécifique puis publication du candidat caché `aa9f0d2` sur `master`.
-- [ ] Publication de la clôture `v2.21.0`, après recette Android du candidat.
+- [x] Publication cachée de `v2.21.0` et cycle de mise à jour validé sur navigateur bureau.
+- [ ] Cycle de mise à jour confirmé sur l’appareil Android de recette.

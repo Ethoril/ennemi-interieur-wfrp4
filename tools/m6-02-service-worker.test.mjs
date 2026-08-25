@@ -71,7 +71,7 @@ function createWorkerHarness() {
         },
         caches: {
             async open() { return cache; },
-            async keys() { return ['wfrp-cache-v2.21.0']; },
+            async keys() { return ['wfrp-cache-v2.21.1']; },
             async match(request) { return cache.match(request); },
         },
         fetch: async request => {
@@ -268,7 +268,7 @@ test('la mise à jour attend une action, respecte beforeLeave et ne recharge qu 
     waiting.addEventListener = EventTargetFake.prototype.addEventListener;
     const registration = new EventTargetFake();
     registration.waiting = waiting;
-    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.0' }) };
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.1' }) };
     registration.update = async () => {};
     serviceWorker.controller = {};
     serviceWorker.register = async (url, options) => {
@@ -282,13 +282,14 @@ test('la mise à jour attend une action, respecte beforeLeave et ne recharge qu 
     const pwa = createPwaController({ windowRef, navigatorRef: windowRef.navigator, router: { canLeaveCurrent: () => canLeave }, announce: message => announcements.push(message) });
     await pwa.start();
     assert.equal(pwa.getState().updateAvailable, true);
-    assert.equal(pwa.getDiagnostics().workerVersion, 'v2.21.0');
+    assert.equal(pwa.getDiagnostics().workerVersion, 'v2.21.1');
     assert.equal(pwa.applyUpdate(), false);
     assert.deepEqual(messages, []);
     assert.match(announcements.at(-1), /différée/u);
     canLeave = true;
     assert.equal(pwa.applyUpdate(), true);
-    assert.deepEqual(messages, [{ type: 'SKIP_WAITING' }]);
+    assert.equal(messages.length, 1);
+    assert.equal(messages[0].type, 'SKIP_WAITING');
     serviceWorker.dispatch('controllerchange');
     serviceWorker.dispatch('controllerchange');
     assert.equal(reloads, 1);
@@ -367,7 +368,7 @@ test('un rejet register arrivé après stop ne publie ni erreur ni état tardif'
     assert.deepEqual(announcements, []);
 });
 
-test('le bandeau PWA rend update/install/iOS, verrouille update et nettoie ses listeners', () => {
+test('le bandeau PWA rend la mise à jour et nettoie ses listeners', () => {
     const documentRef = createBannerDocument();
     const calls = [];
     let state = { updateAvailable: true, updateRequested: false };
@@ -382,11 +383,10 @@ test('le bandeau PWA rend update/install/iOS, verrouille update et nettoie ses l
     const elements = documentRef.elements;
     assert.equal(elements.get('#m-pwa-banner').hidden, false);
     assert.equal(elements.get('#m-pwa-update').hidden, false);
-    assert.equal(elements.get('#m-pwa-install').hidden, false);
+    assert.equal(elements.get('#m-pwa-install').hidden, true);
+    assert.equal(elements.get('#m-pwa-dismiss').hidden, true);
     elements.get('#m-pwa-update').click();
-    elements.get('#m-pwa-install').click();
-    elements.get('#m-pwa-dismiss').click();
-    assert.deepEqual(calls.slice(0, 3), ['update', 'install', 'dismiss']);
+    assert.deepEqual(calls.slice(0, 1), ['update']);
     state = { updateAvailable: true, updateRequested: true };
     assert.equal(elements.get('#m-pwa-update').disabled, false, 'le rendu est piloté par les émissions');
     // Recréer le composant avec l état verrouillé vérifie le disabled visuel.
@@ -401,11 +401,133 @@ test('le bandeau PWA rend update/install/iOS, verrouille update et nettoie ses l
     state = { updateAvailable: false, updateRequested: false };
     lockedPwa.getInstallationHint = () => ({ kind: 'ios', text: 'Safari : Ajouter à l’écran d’accueil.' });
     const iosBanner = createPwaBanner({ documentRef, pwa: lockedPwa });
-    // L’aide iOS reste dans le texte mais ne propose pas le bouton Android.
+    // Une aide iOS seule reste dans Réglages et ne maintient pas le bandeau de mise à jour.
     assert.equal(elements.get('#m-pwa-install').hidden, true);
     iosBanner.stop();
+    state = { updateAvailable: false, updateRequested: false };
+    lockedPwa.getInstallationHint = () => ({ kind: 'android', text: 'Installer.' });
+    const androidOnly = createPwaBanner({ documentRef, pwa: lockedPwa });
+    assert.equal(elements.get('#m-pwa-banner').hidden, true);
+    androidOnly.stop();
     assert.equal(elements.get('#m-pwa-banner').hidden, true);
     assert.ok(calls.includes('unsubscribe'));
+});
+
+test('le bouton du bandeau passe par la même action que Réglages et disparaît après activation', async () => {
+    const windowRef = new EventTargetFake();
+    windowRef.navigator = { userAgent: 'Android' };
+    windowRef.matchMedia = () => ({ matches: false });
+    let reloads = 0;
+    windowRef.location = { reload() { reloads += 1; } };
+    const serviceWorker = new EventTargetFake();
+    serviceWorker.controller = {};
+    const messages = [];
+    const waiting = new EventTargetFake();
+    waiting.state = 'installed';
+    waiting.postMessage = message => messages.push(message);
+    const registration = new EventTargetFake();
+    registration.waiting = waiting;
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.1' }) };
+    registration.update = async () => {};
+    serviceWorker.register = async () => registration;
+    windowRef.navigator.serviceWorker = serviceWorker;
+    const pwa = createPwaController({ windowRef, navigatorRef: windowRef.navigator });
+    await pwa.start();
+    const documentRef = createBannerDocument();
+    const banner = createPwaBanner({ documentRef, pwa });
+    assert.equal(documentRef.elements.get('#m-pwa-banner').hidden, false);
+    documentRef.elements.get('#m-pwa-update').click();
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(messages.length, 1);
+    assert.equal(messages[0].type, 'SKIP_WAITING');
+    assert.equal(pwa.getState().updateRequested, true);
+    waiting.state = 'activated';
+    waiting.dispatch('statechange');
+    assert.equal(reloads, 1);
+    assert.equal(pwa.getState().updateRequested, false);
+    assert.equal(documentRef.elements.get('#m-pwa-banner').hidden, true);
+    serviceWorker.dispatch('controllerchange');
+    assert.equal(pwa.getState().updateAvailable, false);
+    assert.equal(reloads, 1, 'controllerchange ne doit pas recharger une seconde fois');
+    assert.equal(documentRef.elements.get('#m-pwa-banner').hidden, true);
+    banner.stop();
+    pwa.stop();
+});
+
+test('le bandeau explique une mise à jour différée par une saisie sale', async () => {
+    const documentRef = createBannerDocument();
+    const state = { updateAvailable: true, updateRequested: false };
+    const pwa = {
+        subscribe(listener) { listener(state); return () => {}; },
+        requestUpdate: async () => false,
+        getState: () => state,
+    };
+    const banner = createPwaBanner({ documentRef, pwa });
+    documentRef.elements.get('#m-pwa-update').click();
+    await Promise.resolve();
+    assert.equal(documentRef.elements.get('#m-pwa-banner-text').textContent,
+        'Mise à jour impossible ou différée. Terminez votre saisie, puis réessayez.');
+    assert.equal(documentRef.elements.get('#m-pwa-banner').hidden, false);
+    banner.stop();
+});
+
+test('un résultat async obsolète du bandeau ne repeint pas après stop et un rejet reste absorbé', async () => {
+    const documentRef = createBannerDocument();
+    const state = { updateAvailable: true, updateRequested: false };
+    let resolveRequest;
+    const pwa = {
+        subscribe(listener) { listener(state); return () => {}; },
+        requestUpdate: () => new Promise(resolve => { resolveRequest = resolve; }),
+        getState: () => state,
+    };
+    const banner = createPwaBanner({ documentRef, pwa });
+    documentRef.elements.get('#m-pwa-update').click();
+    banner.stop();
+    resolveRequest(false);
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(documentRef.elements.get('#m-pwa-banner').hidden, true);
+    assert.equal(documentRef.elements.get('#m-pwa-banner-text').textContent, 'Mise à jour disponible.');
+
+    const rejectedDocument = createBannerDocument();
+    const rejectedPwa = {
+        subscribe(listener) { listener(state); return () => {}; },
+        requestUpdate: async () => { throw new Error('offline'); },
+        getState: () => state,
+    };
+    const rejectedBanner = createPwaBanner({ documentRef: rejectedDocument, pwa: rejectedPwa });
+    rejectedDocument.elements.get('#m-pwa-update').click();
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.match(rejectedDocument.elements.get('#m-pwa-banner-text').textContent, /impossible|différée/u);
+    rejectedBanner.stop();
+});
+
+test('stop pendant requestUpdate empêche tout SKIP_WAITING tardif', async () => {
+    const windowRef = new EventTargetFake();
+    windowRef.navigator = { userAgent: 'Android' };
+    windowRef.matchMedia = () => ({ matches: false });
+    let reloads = 0;
+    windowRef.location = { reload() { reloads += 1; } };
+    const serviceWorker = new EventTargetFake();
+    serviceWorker.controller = {};
+    const waiting = new EventTargetFake();
+    waiting.state = 'installed';
+    const messages = [];
+    waiting.postMessage = message => messages.push(message);
+    const registration = new EventTargetFake();
+    registration.waiting = waiting;
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.1' }) };
+    let resolveUpdate;
+    registration.update = () => new Promise(resolve => { resolveUpdate = resolve; });
+    serviceWorker.register = async () => registration;
+    windowRef.navigator.serviceWorker = serviceWorker;
+    const pwa = createPwaController({ windowRef, navigatorRef: windowRef.navigator });
+    await pwa.start();
+    const request = pwa.requestUpdate();
+    pwa.stop();
+    resolveUpdate();
+    assert.equal(await request, false);
+    assert.deepEqual(messages, []);
+    assert.equal(reloads, 0);
 });
 
 test('un stop avant la résolution register ne laisse aucun listener ni diagnostic tardif', async () => {
