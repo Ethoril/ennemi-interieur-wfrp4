@@ -1,14 +1,12 @@
 # M6-03 — Rapport de recette PWA et clôture locale
 
-Date de préparation : 25 août 2026. Version cachée actuellement publiée : `v2.21.5`, commit
-`f9f4a71`. La version précédente était `v2.21.4`, commit `58fe964`, et la version témoin Android
-précédente était `v2.21.2`. La validation Auth réelle de `v2.21.5` reste explicitement à faire.
+Date de préparation : 25 août 2026. Version cachée actuellement publiée : `v2.21.6`, commit
+`5dc077b`. La version précédente était `v2.21.5`, commit `f9f4a71`, et la version témoin Android
+précédente était `v2.21.2`.
 
-Le candidat local suivant est `v2.21.6`, non poussé et non déployé. Il rend la popup Google
-prioritaire sur mobile et consomme les marqueurs de redirection historiques de `v2.21.5`. La
-version publiée actuelle est `v2.21.5` (`f9f4a71`) ; sa validation Auth réelle reste à faire. Sa CSP autorise
-`https://apis.google.com` dans `script-src` car le SDK Firebase Auth charge dynamiquement
-`https://apis.google.com/js/api.js`.
+La version publiée rend la popup Google prioritaire sur mobile et consomme les marqueurs de
+redirection historiques de `v2.21.5`. Sa CSP autorise `https://apis.google.com` dans `script-src`
+car le SDK Firebase Auth charge dynamiquement `https://apis.google.com/js/api.js`.
 
 ## Décision de livraison
 
@@ -87,6 +85,12 @@ est resté disponible et le statut a quitté « Données enregistrées — synch
 pour afficher « Synchronisé avec le serveur ». Cette preuve valide le correctif de métadonnées,
 mais pas la matrice Android complète.
 
+Le push autorisé de `5dc077b` a ensuite publié `v2.21.6`. GitHub Pages et la validation du dépôt ont
+réussi ; l’interface et le worker `v2.21.6` ont été contrôlés sous HTTPS. Sur l’appareil Android du
+propriétaire, le premier geste « Connexion Google » a ouvert la popup et le retour a établi une
+session MJ active. Cette preuve valide le chemin de succès Auth, pas encore l’annulation, le retry,
+la restauration de route ni la matrice Android complète.
+
 ## Contrôles automatisés
 
 Le test `tools/m6-03-release.test.mjs` vérifie l’alignement version/méta/Service Worker/CHANGELOG,
@@ -104,7 +108,7 @@ mobile, sécurité et règles déjà présentes dans le dépôt.
 | Installation Chrome, nom, icône, standalone | À renseigner | **À faire** | À renseigner |
 | Lancement à froid en ligne puis hors ligne | À renseigner | **À faire** | À renseigner |
 | PNJs, Enquêtes, route directe, retour | À renseigner | **À faire** | À renseigner |
-| Connexion MJ par popup primaire | À renseigner | **À faire** | Succès, annulation, retry, retour à la route initiale ; absorber séparément un ancien retour redirect |
+| Connexion MJ par popup primaire | Android utilisateur, `v2.21.6` | **Partiel** | Succès et session MJ active confirmés ; annulation, retry, retour route et ancien redirect restent à tester |
 | Création/modification, photo, rotation, clavier | À renseigner | **À faire** | À renseigner |
 | Publication temps réel vers un second appareil | À renseigner | **À faire** | À renseigner |
 | Bannière et activation volontaire d’une mise à jour | Android utilisateur, détails à renseigner | **OK** | `v2.21.1` → `v2.21.2` par le bouton du bandeau ; un rechargement, bandeau masqué, diagnostics alignés |
@@ -133,8 +137,8 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
 
 ## Checklist de sortie
 
-- [x] Version publiée `f9f4a71` / `v2.21.5`, version précédente `58fe964` / `v2.21.4` et
-  témoin `712417f` / `v2.21.3` documentés ; la validation Auth reste ouverte.
+- [x] Version publiée `5dc077b` / `v2.21.6`, version précédente `f9f4a71` / `v2.21.5` et
+  témoin `712417f` / `v2.21.3` documentés ; le chemin de succès Auth Android est validé.
 - [x] `start_url` historique conservé et aucune annonce publique de `/app/`.
 - [x] Contrôles automatisés locaux verts.
 - [x] Preuves navigateur locales consignées sans données privées.

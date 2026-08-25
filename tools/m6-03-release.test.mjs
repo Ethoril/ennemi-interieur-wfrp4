@@ -24,10 +24,12 @@ test('M6-03 aligne version, cache, méta et rapport honnête', () => {
     assert.match(changelog, /^## \[2\.21\.6\] - 2026-08-25\r?\n/u);
     assert.match(report, /Android physique n’est donc pas déclaré validé/u);
     assert.match(report, /v2\.21\.6/u);
+    assert.match(report, /5dc077b/u);
     assert.match(report, /f9f4a71/u);
     assert.match(report, /58fe964/u);
     assert.match(report, /actuellement publiée/u);
     assert.match(report, /Synchronisé avec le serveur/u);
+    assert.match(report, /session MJ active/u);
     assert.match(report, /v2\.21\.3/u);
     assert.match(report, /iOS.*différée|différée.*iOS/isu);
     assert.match(report, /inspection réelle de Cache Storage/iu);

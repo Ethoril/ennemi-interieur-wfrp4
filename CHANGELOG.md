@@ -9,11 +9,12 @@
 - **Messages Auth** : le parcours conserve une action « Connexion Google » claire après une
   erreur, sans demander une seconde fenêtre au premier essai.
 
-### Préparation
+### Validation
 
-- **Candidat local non publié** : version interface, Service Worker et métadonnées alignés sur
-  `v2.21.6` / `wfrp-cache-v2.21.6`. `v2.21.5` (`f9f4a71`) reste la version publiée non validée
-  par une recette Auth complète ; aucun push ni déploiement n'est effectué dans ce lot.
+- **Publication cachée et recette Android** : le commit `5dc077b` publie l’interface et le worker
+  `v2.21.6` sans annoncer `/app/` ni modifier le démarrage historique. Sur Android, le premier
+  geste ouvre bien la fenêtre Google et le retour établit une session MJ active. Les scénarios
+  d’annulation, de reprise et la matrice Android complète restent à exécuter séparément.
 
 ## [2.21.5] - 2026-08-25
 
