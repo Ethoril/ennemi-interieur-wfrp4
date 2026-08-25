@@ -142,7 +142,6 @@ export function createMjSession({
     onNavigate = () => {},
     cleanup = null,
     dispose = null,
-    allowPopupFallback = true,
 } = {}) {
     if (!auth || typeof authSdk !== 'object') throw new TypeError('auth et SDK Auth requis');
     const routeStore = route || createSafeInitialRoute({ windowRef, storage, key: initialRouteKey });
@@ -217,7 +216,7 @@ export function createMjSession({
         await closeOne(cleanup && (() => cleanup({ context, generation })));
     };
 
-    const finishUser = async user => {
+    const finishUserInternal = async user => {
         if (!active || !redirectChecked) return;
         const token = generation;
         observerUser = user;
@@ -266,6 +265,27 @@ export function createMjSession({
         }
     };
 
+    // Firebase may publish the popup result through onAuthStateChanged just
+    // before signInWithPopup resolves (or just after redirectChecked flips).
+    // Both paths must share one finalization promise, otherwise two private
+    // Firestore clients can be created and one can escape cleanup.
+    let finishInFlight = null;
+    let finishInFlightUid = null;
+    const finishUser = user => {
+        const uid = typeof user?.uid === 'string' ? user.uid : null;
+        if (uid && finishInFlight && finishInFlightUid === uid) return finishInFlight;
+        const promise = finishUserInternal(user);
+        if (!uid) return promise;
+        finishInFlightUid = uid;
+        finishInFlight = promise.finally(() => {
+            if (finishInFlightUid === uid) {
+                finishInFlight = null;
+                finishInFlightUid = null;
+            }
+        });
+        return finishInFlight;
+    };
+
     const inspectRedirect = async token => {
         let result = null;
         let redirectError = null;
@@ -284,8 +304,13 @@ export function createMjSession({
                 return;
             }
         }
+        // A pending marker can be left by v2.21.5 when the browser never
+        // completed the cross-origin redirect.  It is consumed above and is
+        // deliberately treated as a normal visitor state: the next explicit
+        // gesture must be able to open the popup without a second, confusing
+        // recovery action or a redirect loop.
         if (redirectPending && !result?.user && !(observerUser || auth.currentUser)) {
-            setState({ status: 'error', user: null, error: { kind: 'redirect-unavailable', code: 'redirect-unavailable' } });
+            setState({ status: 'visitor', user: null, error: null });
             return;
         }
         routeStore.clearRedirectPending?.();
@@ -333,16 +358,18 @@ export function createMjSession({
     const signIn = async ({ route: targetRoute = windowRef?.location?.hash } = {}) => {
         if (authOperation) return state;
         authOperation = true;
-        const forcePopup = state.error?.kind === 'redirect-unavailable';
         routeStore.capture(targetRoute || windowRef?.location?.hash || state.initialRoute);
         redirectFailure = false;
-        routeStore.markRedirectPending?.();
         setState({ status: 'signing-in', error: null });
         let provider = {};
         try {
             provider = typeof authSdk.GoogleAuthProvider === 'function'
                 ? new authSdk.GoogleAuthProvider() : (typeof authSdk.googleProvider === 'function' ? authSdk.googleProvider() : {});
-            if (forcePopup && typeof authSdk.signInWithPopup === 'function') {
+            // Popup is the primary flow.  It stays within the page origin and
+            // avoids the third-party-storage failure of Firebase redirects on
+            // modern mobile browsers.  A redirect is retained only for SDKs
+            // that do not expose the popup API at all.
+            if (typeof authSdk.signInWithPopup === 'function') {
                 const result = await authSdk.signInWithPopup(auth, provider);
                 routeStore.clearRedirectPending?.();
                 redirectChecked = true;
@@ -351,24 +378,10 @@ export function createMjSession({
                 return state;
             }
             if (typeof authSdk.signInWithRedirect !== 'function') throw Object.assign(new Error('redirect unavailable'), { code: 'auth/operation-not-supported' });
+            routeStore.markRedirectPending?.();
             await authSdk.signInWithRedirect(auth, provider);
             return state;
         } catch (error) {
-            const redirectCode = String(error?.code || '').toLowerCase();
-            const canFallback = allowPopupFallback && typeof authSdk.signInWithPopup === 'function'
-                && ['auth/operation-not-supported', 'auth/web-storage-unsupported', 'auth/unauthorized-domain', 'auth/redirect-operation-pending'].includes(redirectCode);
-            if (canFallback) {
-                try {
-                    const result = await authSdk.signInWithPopup(auth, provider);
-                    routeStore.clearRedirectPending?.();
-                    redirectChecked = true;
-                    await finishUser(result?.user || auth.currentUser || null);
-                    if (state.status === 'gm') onNavigate(routeStore.consume(state.initialRoute));
-                    return state;
-                } catch (popupError) {
-                    error = popupError;
-                }
-            }
             const normalized = authError(error);
             routeStore.clearRedirectPending?.();
             setState({ status: normalized.kind === 'cancelled' ? 'visitor' : 'error', error: normalized });

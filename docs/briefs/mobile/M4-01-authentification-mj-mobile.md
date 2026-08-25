@@ -22,10 +22,12 @@ pas seulement disparition des boutons.
 
 ### 1. Choisir le flux adapté au mobile
 
-Utiliser Google Auth via redirection comme flux principal, plus fiable dans une application installée.
-Traiter `getRedirectResult()` au démarrage avant de rendre l'état définitif. Le popup peut rester un
-repli sur navigateur bureau si testé, sans être le seul chemin. Préserver la route initiale dans un
-paramètre local non sensible et y revenir après succès.
+Utiliser Google Auth via popup dès le premier geste utilisateur : les navigateurs mobiles modernes
+bloquent ou isolent le stockage tiers utilisé par les redirections Firebase. Traiter
+`getRedirectResult()` au démarrage avant de rendre l'état définitif afin d'absorber les anciennes
+tentatives ; consommer et nettoyer un marqueur sans résultat comme un visiteur normal. La
+redirection reste un fallback uniquement lorsque le SDK ne fournit pas l'API popup. Préserver la
+route initiale dans un paramètre local non sensible et y revenir après succès.
 
 Vérifier les domaines autorisés Firebase et les CSP nécessaires sur l'URL GitHub Pages réelle. Ne pas
 ajouter de secret OAuth dans le dépôt.

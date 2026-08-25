@@ -1,3 +1,20 @@
+## [2.21.6] - 2026-08-25
+
+### Corrigé
+
+- **Connexion MJ mobile** : la popup Google est désormais proposée dès le premier geste,
+  ce qui évite les retours Firebase par redirection non récupérés sur les navigateurs mobiles.
+  Les marqueurs de redirection laissés par `v2.21.5` sont consommés et nettoyés sans boucle ;
+  la redirection reste uniquement disponible avec un SDK qui ne fournit pas l’API popup.
+- **Messages Auth** : le parcours conserve une action « Connexion Google » claire après une
+  erreur, sans demander une seconde fenêtre au premier essai.
+
+### Préparation
+
+- **Candidat local non publié** : version interface, Service Worker et métadonnées alignés sur
+  `v2.21.6` / `wfrp-cache-v2.21.6`. `v2.21.5` (`f9f4a71`) reste la version publiée non validée
+  par une recette Auth complète ; aucun push ni déploiement n'est effectué dans ce lot.
+
 ## [2.21.5] - 2026-08-25
 
 ### Corrigé

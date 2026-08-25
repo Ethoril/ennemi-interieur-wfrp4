@@ -41,11 +41,11 @@ test('M5-03 aligne version, cache, méta et documentation de clôture', () => {
     const changelog = read('CHANGELOG.md');
     const layoutVersion = layout.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
     const swVersion = sw.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
-    assert.equal(layoutVersion, 'v2.21.5');
+    assert.equal(layoutVersion, 'v2.21.6');
     assert.equal(swVersion, layoutVersion);
     assert.match(sw, /CACHE_NAME\s*=\s*['"]wfrp-cache-['"]\s*\+\s*APP_VERSION/u);
-    assert.match(html, /app-version"\s+content="v2\.21.5"/u);
-    assert.match(changelog, /^## \[2\.21\.5\] - 2026-08-25\r?\n/u);
+    assert.match(html, /app-version"\s+content="v2\.21.6"/u);
+    assert.match(changelog, /^## \[2\.21\.6\] - 2026-08-25\r?\n/u);
     assert.ok(fs.existsSync(path.join(root, 'docs/mobile/M5-03-cloture-enquetes.md')));
 });
 

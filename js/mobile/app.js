@@ -82,9 +82,7 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
         authStatus.setAttribute('role', 'status');
         const state = mjSession.getState();
         const account = state.user?.displayName || 'compte Google';
-        authStatus.textContent = state.error?.kind === 'redirect-unavailable'
-            ? 'Le retour Google n’a pas été récupéré. Réessayez avec une fenêtre au premier plan.'
-            : state.status === 'gm' ? `Mode MJ actif — ${account}`
+        authStatus.textContent = state.status === 'gm' ? `Mode MJ actif — ${account}`
             : state.status === 'authenticated-non-gm' ? 'Compte connecté, sans accès MJ.'
                 : state.status === 'checking' || state.status === 'signing-in' ? 'Vérification de la session…'
                     : state.status === 'signing-out' ? 'Déconnexion en cours…' : 'Mode joueur — aucune session MJ.';
@@ -104,8 +102,7 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
         action.disabled = busy;
         action.setAttribute('aria-disabled', String(busy));
         action.textContent = state.status === 'gm' || state.status === 'authenticated-non-gm'
-            ? 'Déconnexion' : state.error?.kind === 'redirect-unavailable'
-                ? 'Réessayer avec une fenêtre' : 'Connexion Google';
+            ? 'Déconnexion' : 'Connexion Google';
         action.addEventListener('click', () => {
             if (busy) return;
             return state.status === 'gm' || state.status === 'authenticated-non-gm'

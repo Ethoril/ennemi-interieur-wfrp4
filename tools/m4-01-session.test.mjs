@@ -59,7 +59,7 @@ test('annulation et erreur de redirection ne donnent jamais un accès MJ', async
     assert.equal(errorSession.getState().error.kind, 'offline');
 });
 
-test('un retour nul avec redirection en attente signale un retour indisponible sans ouvrir le popup', async () => {
+test('un ancien retour nul est migré sans boucle et ouvre la popup au geste suivant', async () => {
     const values = new Map();
     const storage = {
         getItem: key => values.get(key) || null,
@@ -73,18 +73,17 @@ test('un retour nul avec redirection en attente signale un retour indisponible s
     fake.sdk.signInWithPopup = async () => { popupCalls += 1; return { user: gm }; };
     const session = createMjSession({ auth: fake.auth, authSdk: fake.sdk, route, privateFactory });
     await session.start();
-    assert.equal(session.getState().status, 'error');
-    assert.equal(session.getState().error.kind, 'redirect-unavailable');
+    assert.equal(session.getState().status, 'visitor');
+    assert.equal(session.getState().error, null);
     assert.equal(values.size, 0);
     await session.signIn();
     assert.equal(popupCalls, 1);
     assert.equal(session.getState().status, 'gm');
 });
 
-test('le popup ne sert que de repli contrôlé lorsque la redirection est indisponible', async () => {
+test('la popup est le premier geste et reste relançable après déconnexion', async () => {
     const fake = fakeAuth();
     let popupCalls = 0;
-    fake.sdk.signInWithRedirect = async () => { throw Object.assign(new Error('storage'), { code: 'auth/web-storage-unsupported' }); };
     fake.sdk.signInWithPopup = async () => { popupCalls += 1; return { user: gm }; };
     const session = createMjSession({ auth: fake.auth, authSdk: fake.sdk, privateFactory });
     await session.start();
@@ -99,12 +98,68 @@ test('le popup ne sert que de repli contrôlé lorsque la redirection est indisp
     assert.equal(session.getState().status, 'gm');
 });
 
-test('une première erreur de connexion laisse le bouton Réessayer fonctionnel', async () => {
+test('popup qui émet l’observer avant sa résolution ne crée qu’un contexte privé nettoyé', async () => {
+    const fake = fakeAuth();
+    fake.sdk.signInWithPopup = async () => {
+        fake.emit(gm);
+        return { user: gm };
+    };
+    let factories = 0;
+    let closes = 0;
+    const session = createMjSession({
+        auth: fake.auth,
+        authSdk: fake.sdk,
+        privateFactory: async () => {
+            factories += 1;
+            return { client: { cache: { mode: 'memory', persistent: false }, close: () => { closes += 1; } }, repositories: {} };
+        },
+    });
+    await session.start();
+    await session.signIn();
+    assert.equal(factories, 1);
+    await session.stop();
+    assert.equal(closes, 1);
+});
+
+test('une erreur popup est humaine, sans basculer silencieusement en redirection, puis peut être réessayée', async () => {
+    const fake = fakeAuth();
+    let popupCalls = 0;
+    let redirects = 0;
+    fake.sdk.signInWithPopup = async () => {
+        popupCalls += 1;
+        if (popupCalls === 1) throw Object.assign(new Error('popup blocked'), { code: 'auth/popup-blocked' });
+        return { user: gm };
+    };
+    fake.sdk.signInWithRedirect = async () => { redirects += 1; };
+    const session = createMjSession({ auth: fake.auth, authSdk: fake.sdk, privateFactory });
+    await session.start();
+    await session.signIn();
+    assert.equal(session.getState().status, 'error');
+    assert.equal(session.getState().error.kind, 'unknown');
+    await session.signIn();
+    assert.equal(popupCalls, 2);
+    assert.equal(redirects, 0);
+    assert.equal(session.getState().status, 'gm');
+});
+
+test('la redirection reste le seul fallback quand le SDK ne fournit pas de popup', async () => {
+    const fake = fakeAuth();
+    let redirects = 0;
+    fake.sdk.signInWithRedirect = async () => { redirects += 1; };
+    const session = createMjSession({ auth: fake.auth, authSdk: fake.sdk, privateFactory });
+    await session.start();
+    await session.signIn();
+    assert.equal(redirects, 1);
+    assert.equal(session.getState().status, 'signing-in');
+});
+
+test('une première erreur de connexion popup laisse le bouton Réessayer fonctionnel', async () => {
     const fake = fakeAuth();
     let attempts = 0;
-    fake.sdk.signInWithRedirect = async () => {
+    fake.sdk.signInWithPopup = async () => {
         attempts += 1;
         if (attempts === 1) throw Object.assign(new Error('network'), { code: 'auth/network-request-failed' });
+        return { user: gm };
     };
     const session = createMjSession({ auth: fake.auth, authSdk: fake.sdk, privateFactory });
     await session.start();
@@ -112,17 +167,17 @@ test('une première erreur de connexion laisse le bouton Réessayer fonctionnel'
     assert.equal(session.getState().status, 'error');
     await session.signIn();
     assert.equal(attempts, 2);
-    assert.equal(session.getState().status, 'signing-in');
+    assert.equal(session.getState().status, 'gm');
 });
 
-test('une double action de connexion est sérialisée par la session', async () => {
+test('une double action de connexion popup est sérialisée par la session', async () => {
     const fake = fakeAuth();
-    let redirects = 0;
-    fake.sdk.signInWithRedirect = async () => { redirects += 1; };
+    let popups = 0;
+    fake.sdk.signInWithPopup = async () => { popups += 1; return { user: gm }; };
     const session = createMjSession({ auth: fake.auth, authSdk: fake.sdk, privateFactory });
     await session.start();
     await Promise.all([session.signIn(), session.signIn()]);
-    assert.equal(redirects, 1);
+    assert.equal(popups, 1);
 });
 
 test('un compte non MJ reste joueur et ne monte aucun dépôt privé', async () => {

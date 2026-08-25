@@ -1,13 +1,14 @@
 # M6-03 — Rapport de recette PWA et clôture locale
 
-Date de préparation : 25 août 2026. Version cachée actuellement déployée : `v2.21.4`, commit
-`58fe964`. La version précédente était `v2.21.3`, commit `712417f`, et la version témoin Android
-précédente était `v2.21.2`.
+Date de préparation : 25 août 2026. Version cachée actuellement publiée : `v2.21.5`, commit
+`f9f4a71`. La version précédente était `v2.21.4`, commit `58fe964`, et la version témoin Android
+précédente était `v2.21.2`. La validation Auth réelle de `v2.21.5` reste explicitement à faire.
 
-Le candidat local suivant est `v2.21.5`, non poussé et non déployé. Il ajoute uniquement
-`https://apis.google.com` à `script-src` dans la CSP de la coque mobile, car le SDK Firebase Auth
-charge dynamiquement `https://apis.google.com/js/api.js`. La version publiée reste `v2.21.4`
-jusqu'à validation réelle de la connexion MJ.
+Le candidat local suivant est `v2.21.6`, non poussé et non déployé. Il rend la popup Google
+prioritaire sur mobile et consomme les marqueurs de redirection historiques de `v2.21.5`. La
+version publiée actuelle est `v2.21.5` (`f9f4a71`) ; sa validation Auth réelle reste à faire. Sa CSP autorise
+`https://apis.google.com` dans `script-src` car le SDK Firebase Auth charge dynamiquement
+`https://apis.google.com/js/api.js`.
 
 ## Décision de livraison
 
@@ -80,7 +81,7 @@ et diagnostics interface/worker alignés. Les preuves Android ci-dessus restent 
 `v2.21.2` et ne sont pas attribuées à `v2.21.3`.
 
 Le hotfix de synchronisation Firestore demande explicitement les métadonnées dans le contrat
-d'écoute public/MJ. Le push autorisé de `58fe964` a publié `v2.21.4` ; GitHub Pages et la validation
+d'écoute public/MJ. Le push historique autorisé de `58fe964` a publié `v2.21.4` ; GitHub Pages et la validation
 du dépôt ont réussi. Après mise à jour sur l'appareil Android du propriétaire, l'affichage attendu
 est resté disponible et le statut a quitté « Données enregistrées — synchronisation en attente »
 pour afficher « Synchronisé avec le serveur ». Cette preuve valide le correctif de métadonnées,
@@ -103,11 +104,11 @@ mobile, sécurité et règles déjà présentes dans le dépôt.
 | Installation Chrome, nom, icône, standalone | À renseigner | **À faire** | À renseigner |
 | Lancement à froid en ligne puis hors ligne | À renseigner | **À faire** | À renseigner |
 | PNJs, Enquêtes, route directe, retour | À renseigner | **À faire** | À renseigner |
-| Connexion MJ par redirection | À renseigner | **À faire** | À renseigner |
+| Connexion MJ par popup primaire | À renseigner | **À faire** | Succès, annulation, retry, retour à la route initiale ; absorber séparément un ancien retour redirect |
 | Création/modification, photo, rotation, clavier | À renseigner | **À faire** | À renseigner |
 | Publication temps réel vers un second appareil | À renseigner | **À faire** | À renseigner |
 | Bannière et activation volontaire d’une mise à jour | Android utilisateur, détails à renseigner | **OK** | `v2.21.1` → `v2.21.2` par le bouton du bandeau ; un rechargement, bandeau masqué, diagnostics alignés |
-| Confirmation de synchronisation Firestore | Android utilisateur, `v2.21.4` | **OK** | Le statut passe de la copie enregistrée à « Synchronisé avec le serveur » |
+| Confirmation de synchronisation Firestore | Android utilisateur, `v2.21.4` historique | **OK** | Le statut passe de la copie enregistrée à « Synchronisé avec le serveur » |
 | Réseau coupé pendant un formulaire et reprise | À renseigner | **À faire** | À renseigner |
 | Zoom 200 %, thèmes, largeur 375 px | À renseigner | **À faire** | À renseigner |
 
@@ -132,8 +133,8 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
 
 ## Checklist de sortie
 
-- [x] Version déployée `58fe964` / `v2.21.4` et référence précédente `712417f` / `v2.21.3`
-  documentées.
+- [x] Version publiée `f9f4a71` / `v2.21.5`, version précédente `58fe964` / `v2.21.4` et
+  témoin `712417f` / `v2.21.3` documentés ; la validation Auth reste ouverte.
 - [x] `start_url` historique conservé et aucune annonce publique de `/app/`.
 - [x] Contrôles automatisés locaux verts.
 - [x] Preuves navigateur locales consignées sans données privées.

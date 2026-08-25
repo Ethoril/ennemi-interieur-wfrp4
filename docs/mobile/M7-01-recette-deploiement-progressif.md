@@ -4,15 +4,16 @@ Date de préparation : 25 août 2026.
 
 ## État du candidat
 
-- Candidat caché actuellement déployé : commit `58fe964` — `v2.21.4`.
-- Référence précédente : commit `712417f` — `v2.21.3`.
-- Le hotfix déployé corrige la propagation des métadonnées Firestore dans les abonnements public/MJ
-  et change le graphe précaché.
+- Candidat caché actuellement publié : commit `f9f4a71` — `v2.21.5`.
+- Référence précédente : commit `58fe964` — `v2.21.4`.
+- Le candidat publié ajoute la CSP exacte requise par Firebase Auth (`https://apis.google.com` dans
+  `script-src`). La validation Auth réelle reste explicitement non exécutée.
 - Version témoin antérieure : commit `387d1cf` — `v2.21.2` ; le commit documentaire `5376782` est inclus
   dans le déploiement actuel.
-- Candidat local suivant non poussé/non déployé : `v2.21.5`. Il corrige uniquement la CSP de
-  `/app/` pour autoriser `https://apis.google.com`, origine chargée dynamiquement par le SDK
-  Firebase Auth. `v2.21.4` reste la version actuellement publiée jusqu'à validation Auth.
+- Candidat local suivant non poussé/non déployé : `v2.21.6`. Il rend la popup Google prioritaire
+  sur mobile et absorbe les marqueurs de redirection laissés par `v2.21.5`, dont la CSP avait
+  autorisé `https://apis.google.com`. `v2.21.5` (`f9f4a71`) est publiée ; sa validation Auth réelle
+  reste à faire.
 - `start_url` reste `./index.html` ; aucun lien public ni entrée de navigation n’annonce `/app/`.
 - La préparation locale n'avait lancé aucun déploiement. Le push de `712417f` a ensuite été autorisé
   explicitement et les workflows GitHub Pages et validation se sont terminés avec succès. La
@@ -22,8 +23,8 @@ Date de préparation : 25 août 2026.
 Le rapport ne confond pas l’existence du candidat avec sa validation fonctionnelle complète. Les
 preuves Android complètes, Auth installée et cache réel restent à produire séparément.
 
-Le contrôle HTTPS du 25 août 2026 confirme que `/app/` sert la coque déployée `v2.21.4` sous le sous-chemin
-GitHub Pages attendu. La page historique publique affiche également `v2.21.4`, ne contient aucun
+Le contrôle HTTPS historique du 25 août 2026 confirme que `/app/` servait la coque `v2.21.4` sous le
+sous-chemin GitHub Pages attendu. La page historique publique affichait également `v2.21.4`, ne contenait aucun
 lien vers `/app/`, et le manifeste publié conserve `id` et `start_url` à `./index.html` avec le scope
 `./`. Le profil navigateur de contrôle avait initialement le worker `v2.21.2` en attente ; le bouton
 du bandeau a activé `v2.21.3` en un cycle, le bandeau a disparu et les diagnostics interface/worker
@@ -33,7 +34,7 @@ Sur l'appareil Android du propriétaire, le passage `v2.21.1` vers le témoin `v
 du bandeau a été confirmé : une seule activation/recharge, disparition du bandeau et diagnostics de
 version alignés. Cette preuve ne vaut pas validation de la matrice Android complète.
 
-Après la publication de `v2.21.4`, le propriétaire a confirmé sur Android l'affichage attendu puis
+Après la publication historique de `v2.21.4`, le propriétaire a confirmé sur Android l'affichage attendu puis
 le statut « Synchronisé avec le serveur ». Le message « Données enregistrées — synchronisation en
 attente » ne reste donc plus bloqué après la confirmation serveur. Cette preuve est limitée au
 hotfix de métadonnées et ne vaut pas validation de la matrice Android complète.
@@ -55,7 +56,7 @@ effectuée sur Firebase production.
 - restauration et comparaison réussies dans des émulateurs Firestore et Storage vides, cible
   `demo-mobile` / `demo-mobile.appspot.com`.
 
-Le passage vers `v2.21.4` ne modifie aucune donnée Firestore ou Storage : cette sauvegarde reste
+Le passage historique vers `v2.21.4` ne modifie aucune donnée Firestore ou Storage : cette sauvegarde reste
 la sauvegarde de référence valide pour le candidat, sans nouvelle lecture ni écriture de production.
 
 La comparaison avec M0-01 et M1-05 confirme les mêmes volumes et contenus binaires. La différence
@@ -66,7 +67,7 @@ effectué lors de M1 ; les deux objets orphelins historiques restent inchangés.
 
 Le test `tools/m7-01-release.test.mjs` couvre localement :
 
-- la version déployée `58fe964` / `v2.21.4` dans `js/layout.js`, `sw.js`, la méta mobile et CHANGELOG ;
+- la version publiée `f9f4a71` / `v2.21.5` dans `js/layout.js`, `sw.js`, la méta mobile et CHANGELOG ;
 - la distinction avec la référence `712417f` / `v2.21.3` et le témoin `387d1cf` / `v2.21.2` ;
 - le cache dérivé, le manifeste unique et le maintien du `start_url` historique ;
 - le graphe local de `/app/`, la syntaxe des modules et les ressources précachées ;
@@ -87,10 +88,10 @@ inspection ni publication des règles ou index de production.
 |---|---|---|
 | Sauvegarde Firestore/Storage datée hors dépôt | **OK** | Manifeste complet, inventaire et restauration émulateur réussie |
 | Pages bureau visiteur/MJ | **Non exécuté dans ce lot** | Parcours PNJs/Enquêtes et console sans erreur |
-| `/app/` réel sous le sous-chemin HTTPS | **OK** | Coque déployée v2.21.4, version interface/worker, racine historique et manifeste contrôlés |
-| Android physique | **Partiel** | Mise à jour v2.21.1 → v2.21.2 et confirmation serveur v2.21.4 validées ; autres scénarios à faire |
+| `/app/` réel sous le sous-chemin HTTPS | **OK historique** | Contrôle de la coque v2.21.4, version interface/worker, racine historique et manifeste |
+| Android physique | **Partiel** | Mise à jour v2.21.1 → v2.21.2 et confirmation serveur v2.21.4 historique ; autres scénarios à faire |
 | iOS physique | **Différé** | Appareil disponible et matrice M6-03 |
-| Auth Google en mode installé | **Non exécuté** | Redirection, retour route et session |
+| Auth Google en mode installé | **Non exécuté** | Popup primaire : succès, annulation, retry et retour route ; absorption séparée d’un ancien retour redirect |
 | Inspection réelle Cache Storage | **Non exécutée** | Absence de données protégées/opaques |
 | Règles et index production | **Partiel** | Quatre runners émulateur verts ; état déployé à contrôler |
 | Bêta MJ/joueur | **Non exécutée** | Retour expurgé, sans donnée de campagne |
@@ -98,8 +99,8 @@ inspection ni publication des règles ou index de production.
 
 ## Procédure de déploiement silencieux à autoriser
 
-1. Le candidat `58fe964` / `v2.21.4` a été gelé, autorisé et publié sans changement non lié ; la
-   référence précédente reste `712417f` / `v2.21.3`.
+1. Le candidat `f9f4a71` / `v2.21.5` a été publié sans changement non lié ; la référence précédente
+   reste `58fe964` / `v2.21.4`. La validation Auth réelle de v2.21.5 reste à exécuter.
 2. Produire une sauvegarde Firestore/Storage hors dépôt, comparer son inventaire à M0-01 et tester
    sa restauration dans des émulateurs isolés.
 3. Exécuter les gates locaux puis les règles/index sur émulateurs ; ne publier aucune règle sans
@@ -141,8 +142,8 @@ Service Worker ; ne jamais supprimer les objets orphelins sans inventaire et aut
 
 ## Critères de sortie
 
-- [x] Version déployée `58fe964` / `v2.21.4`, référence précédente `712417f` / `v2.21.3` et témoin
-  `387d1cf` / `v2.21.2` distingués honnêtement.
+- [x] Version publiée `f9f4a71` / `v2.21.5`, référence précédente `58fe964` / `v2.21.4` et témoin
+  `387d1cf` / `v2.21.2` distingués honnêtement ; Auth réelle non validée.
 - [x] `start_url` et absence d’annonce publique conservés.
 - [x] Procédure de rollback interface/SW, règles/index et données séparée.
 - [x] Contrôles locaux automatisables ajoutés.
