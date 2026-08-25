@@ -165,9 +165,10 @@ service cloud.firestore {
     }
 
     function validDeletionLock(data) {
-      return hasOnly(data, ['pnjId', 'imagePaths', 'createdAt', 'updatedAt'])
+      return hasOnly(data, ['pnjId', 'imagePaths', 'legacyImageSkipped', 'createdAt', 'updatedAt'])
           && data.pnjId is string && data.pnjId.size() > 0 && data.pnjId.size() <= 150
           && data.imagePaths is list && data.imagePaths.size() <= 2
+          && data.legacyImageSkipped is bool
           && (data.imagePaths.size() == 0
               || validOwnedImagePath(data.imagePaths[0], data.pnjId, 'portraits'))
           && (data.imagePaths.size() < 2

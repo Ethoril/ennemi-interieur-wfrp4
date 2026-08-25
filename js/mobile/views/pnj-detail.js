@@ -117,7 +117,7 @@ function renderMetadata(documentRef, metadata, state, model) {
     }
 }
 
-function renderReady({ documentRef, target, state, model, portrait, portraitSignature, imageService }) {
+function renderReady({ documentRef, target, state, model, portrait, portraitSignature, imageService, getSession, onEdit }) {
     let refs = target._detail;
     if (!refs) {
         target.replaceChildren();
@@ -138,9 +138,21 @@ function renderReady({ documentRef, target, state, model, portrait, portraitSign
         metadata.className = 'm-detail-metadata';
         metadata.dataset.detailMetadata = 'true';
         target.append(identity.section, description.section, relations.section, indices.section, metadata);
-        refs = { portraitTarget, title, identity: identity.body, description: description.body,
+        refs = { hero, portraitTarget, title, edit: null, identity: identity.body, description: description.body,
             relations: relations.body, indices: indices.body, metadata, signatures: {} };
         target._detail = refs;
+    }
+    const sessionState = typeof getSession === 'function' ? getSession() : getSession;
+    const canEdit = typeof onEdit === 'function' && sessionState?.status === 'gm' && sessionState?.role === 'mj'
+        && typeof sessionState.user?.uid === 'string' && sessionState.user.uid.length > 0;
+    if (canEdit && !refs.edit) {
+        refs.edit = documentRef.createElement('button');
+        refs.edit.type = 'button'; refs.edit.className = 'm-button'; refs.edit.textContent = 'Modifier';
+        refs.edit.addEventListener('click', onEdit);
+        refs.hero.append(refs.edit);
+    } else if (!canEdit && refs.edit) {
+        refs.hero.removeChild(refs.edit);
+        refs.edit = null;
     }
     refs.title.textContent = model.name;
     refs.portraitTarget.setAttribute('aria-label', `Portrait de ${model.name}`);
@@ -181,7 +193,7 @@ function renderReady({ documentRef, target, state, model, portrait, portraitSign
 export { selectPnjDetailModel };
 
 export function createPnjDetailView({ container, id, store, onBack = () => {},
-    onRetry = () => store?.restart?.(), getImageService = () => null } = {}) {
+    onRetry = () => store?.restart?.(), getImageService = () => null, getSession = () => null, onEdit = null } = {}) {
     let mounted = false;
     let content = null;
     let backButton = null;
@@ -214,7 +226,7 @@ export function createPnjDetailView({ container, id, store, onBack = () => {},
             return;
         }
         const next = renderReady({ documentRef: container.ownerDocument, target: content, state,
-            model, portrait, portraitSignature, imageService: getImageService() });
+            model, portrait, portraitSignature, imageService: getImageService(), getSession, onEdit });
         portrait = next.portrait;
         portraitSignature = next.portraitSignature;
     };

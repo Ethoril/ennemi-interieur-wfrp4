@@ -13,6 +13,11 @@ const PUBLIC_FIELDS = Object.freeze([
     'nom', 'statut', 'vivant', 'lieu', 'groupe', 'description', 'visibleJoueurs', 'imagePath', 'ordre',
 ]);
 const PRIVATE_FIELDS = Object.freeze(['notes']);
+// Le formulaire mobile et le bureau partagent ces valeurs contractuelles ;
+// les anciens documents peuvent omettre les champs, mais toute valeur fournie
+// à une mutation doit rester dans l’allowlist.
+const PNJ_STATUSES = new Set(['', 'allié', 'neutre', 'ennemi']);
+const PNJ_LIVING = new Set(['oui', 'non', 'inconnu']);
 const MAX_ID_LENGTH = 150;
 const MAX_REVOCATION_RELATIONS = 498;
 const RELATIONS_PER_REVOCATION_TRANSACTION = 8;
@@ -59,6 +64,12 @@ function sanitizePublic(input, id, { create = false } = {}) {
     if (create || Object.hasOwn(input, 'nom')) output.nom = boundedString(input.nom, 'nom', 200, { required: true });
     for (const [field, maximum] of [['statut', 64], ['vivant', 32], ['lieu', 200], ['groupe', 200], ['description', 20000]]) {
         if (Object.hasOwn(input, field)) output[field] = boundedString(input[field], field, maximum);
+    }
+    if (Object.hasOwn(output, 'statut') && !PNJ_STATUSES.has(output.statut)) {
+        throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'pnj-statut' });
+    }
+    if (Object.hasOwn(output, 'vivant') && !PNJ_LIVING.has(output.vivant)) {
+        throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'pnj-vivant' });
     }
     if (create || Object.hasOwn(input, 'visibleJoueurs')) {
         if (typeof input.visibleJoueurs !== 'boolean') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'pnj-visibility' });
@@ -175,13 +186,13 @@ function indiceDocsWithId(snapshot, id) {
     return docsFromSnapshot(snapshot).filter(item => snapshotData(item).pnjsLies?.includes(id));
 }
 
-function deletionState({ firestoreDone, imageCleanupPending, lockRetained, imagePaths = [], skippedImagePaths = [] }) {
+function deletionState({ firestoreDone, imageCleanupPending, lockRetained, imagePaths = [], legacyImageSkipped = false }) {
     return Object.freeze({
         firestoreDone,
         imageCleanupPending,
         lockRetained,
         imagePaths: [...imagePaths],
-        skippedImagePaths: [...skippedImagePaths],
+        legacyImageSkipped: legacyImageSkipped === true,
     });
 }
 
@@ -293,7 +304,9 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         catch (error) { throw makeMutationError(error, 'create-pnj'); }
     }
 
-    async function update(id, patchPublic = {}, patchPrivate = {}, expectedUpdatedAt) {
+    // expectedPrivateUpdatedAt est optionnel pour conserver la compatibilité des appels bureau
+    // historiques à quatre arguments ; mobile le fournit pour les éditions privées concurrentes.
+    async function update(id, patchPublic = {}, patchPrivate = {}, expectedUpdatedAt, expectedPrivateUpdatedAt) {
         if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'update-pnj' });
         if (!validId(id)) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'update-pnj' });
         const pnjRef = documentRef(sdk, db, 'pnjs', id);
@@ -332,6 +345,13 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                         if (applyPnjPatch) ensureExpected(pnjSnapshot, expectedUpdatedAt);
                         else if (snapshotData(pnjSnapshot).visibleJoueurs !== false) {
                             throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'update-pnj-revoke-republished' });
+                        }
+                        if (applyPnjPatch && Object.keys(privateData).length && expectedPrivateUpdatedAt !== undefined) {
+                            const privateSnapshot = await transaction.get(privateRef);
+                            if (!snapshotExists(privateSnapshot)
+                                || !timestampEqual(readUpdatedAt(privateSnapshot), expectedPrivateUpdatedAt)) {
+                                throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'update-pnj-private' });
+                            }
                         }
                         const timestamp = serverTimestamp(sdk);
                         const relationSnapshots = [];
@@ -373,6 +393,70 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         };
     }
 
+    // L’aperçu ne pose aucun verrou : il informe l’écran avant confirmation,
+    // tandis que remove() recalcule toujours l’impact sous verrou de cascade.
+    async function inspectRemovalImpact(id) {
+        if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'inspect-pnj-removal-impact' });
+        if (!validId(id)) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'inspect-pnj-removal-impact' });
+        try {
+            const [pnjSnapshot, privateSnapshot, impact] = await Promise.all([
+                getDocument(sdk, documentRef(sdk, db, 'pnjs', id)),
+                getDocument(sdk, documentRef(sdk, db, 'pnjs_prives', id)),
+                collectImpact(id),
+            ]);
+            if (!snapshotExists(pnjSnapshot)) throw new FirebaseClientError(ERROR_KINDS.NOT_FOUND, { operation: 'inspect-pnj-removal-impact' });
+            const data = snapshotData(pnjSnapshot);
+            const normalizedPublic = normalizePnjPublic(pnjSnapshot);
+            const normalizedPrivate = snapshotExists(privateSnapshot) ? normalizePnjPrivate(privateSnapshot) : null;
+            if (normalizedPublic.issues.length || normalizedPrivate?.issues?.length) {
+                throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'inspect-pnj-removal-impact' });
+            }
+            const imagePath = protectedImagePathOrNull(data.imagePath, id);
+            return Object.freeze({
+                id,
+                name: normalizedPublic.nom,
+                relationsCount: impact.relationDocs.length,
+                indicesCount: impact.indiceDocs.length,
+                hasPortrait: Boolean(imagePath
+                    || (typeof data.imagePath === 'string' && data.imagePath.length)
+                    || (typeof data.imageUrl === 'string' && data.imageUrl.length)),
+                hasPrivateNotes: Boolean(normalizedPrivate?.notes?.trim()),
+            });
+        } catch (error) {
+            throw makeMutationError(error, 'inspect-pnj-removal-impact');
+        }
+    }
+
+    async function inspectVisibilityImpact(id) {
+        if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'inspect-pnj-visibility-impact' });
+        if (!validId(id)) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'inspect-pnj-visibility-impact' });
+        try {
+            const [pnjSnapshot, relations, pnjs] = await Promise.all([
+                getDocument(sdk, documentRef(sdk, db, 'pnjs', id)),
+                getDocuments(sdk, collectionRef(sdk, db, 'relations')),
+                getDocuments(sdk, collectionRef(sdk, db, 'pnjs')),
+            ]);
+            if (!snapshotExists(pnjSnapshot)) throw new FirebaseClientError(ERROR_KINDS.NOT_FOUND, { operation: 'inspect-pnj-visibility-impact' });
+            const normalized = normalizePnjPublic(pnjSnapshot);
+            if (normalized.issues.length) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'inspect-pnj-visibility-impact' });
+            const visibleRelations = relationDocsWithoutId(relations, id)
+                .filter(snapshot => snapshotData(snapshot).visibleJoueurs === true).length;
+            const endpoints = new Map(docsFromSnapshot(pnjs).map(snapshot => {
+                const normalizedEndpoint = normalizePnjPublic(snapshot);
+                return [snapshotId(snapshot), normalizedEndpoint];
+            }));
+            const incompatibleVisibleRelationsCount = relationDocsWithoutId(relations, id)
+                .filter(snapshot => snapshotData(snapshot).visibleJoueurs === true)
+                .filter(snapshot => {
+                    const data = snapshotData(snapshot);
+                    const otherId = data.source === id ? data.cible : data.source;
+                    const endpoint = endpoints.get(otherId);
+                    return !endpoint || endpoint.visibleJoueurs !== true || endpoint.suppressionEnCours === true;
+                }).length;
+            return Object.freeze({ id, visibleRelationsCount: visibleRelations, incompatibleVisibleRelationsCount });
+        } catch (error) { throw makeMutationError(error, 'inspect-pnj-visibility-impact'); }
+    }
+
     async function commitImpact(id, impact) {
         const operations = [
             ...impact.relationDocs.map(snapshot => ({ kind: 'delete', ref: documentRef(sdk, db, 'relations', snapshotId(snapshot)) })),
@@ -400,7 +484,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
             throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'remove-pnj-image-paths' });
         }
         const imagePaths = rawImagePaths.map(path => validateImagePath(path, id));
-        const skippedImagePaths = Array.isArray(lockData?.skippedImagePaths) ? lockData.skippedImagePaths : [];
+        const legacyImageSkipped = lockData?.legacyImageSkipped === true;
         for (let pass = 0; pass < 5; pass += 1) {
             const impact = await collectImpact(id);
             if (!impact.relationDocs.length && !impact.indiceDocs.length) break;
@@ -419,32 +503,32 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         finalBatch.delete(pnjRef);
         try { await finalBatch.commit(); }
         catch (error) {
-            throwWithState(error, deletionState({ firestoreDone: false, imageCleanupPending: false, lockRetained: true, imagePaths, skippedImagePaths }), 'remove-pnj-final');
+            throwWithState(error, deletionState({ firestoreDone: false, imageCleanupPending: false, lockRetained: true, imagePaths, legacyImageSkipped }), 'remove-pnj-final');
         }
         if (imagePaths.length) {
             if (!imageService || typeof imageService.cleanupPnjImages !== 'function') {
                 throwWithState(new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'remove-pnj-image-service' }),
-                    deletionState({ firestoreDone: true, imageCleanupPending: true, lockRetained: true, imagePaths, skippedImagePaths }), 'remove-pnj-image-service');
+                    deletionState({ firestoreDone: true, imageCleanupPending: true, lockRetained: true, imagePaths, legacyImageSkipped }), 'remove-pnj-image-service');
             }
             try {
                 const result = await imageService.cleanupPnjImages({ pnjId: id, imagePaths, lock: lockData });
                 if (!imageCleanupSucceeded(result)) throw new FirebaseClientError(ERROR_KINDS.UNKNOWN, { operation: 'remove-pnj-image-cleanup' });
             } catch (error) {
-                throwWithState(error, deletionState({ firestoreDone: true, imageCleanupPending: true, lockRetained: true, imagePaths, skippedImagePaths }), 'remove-pnj-image-cleanup');
+                throwWithState(error, deletionState({ firestoreDone: true, imageCleanupPending: true, lockRetained: true, imagePaths, legacyImageSkipped }), 'remove-pnj-image-cleanup');
             }
         }
         const unlockBatch = batchApi(sdk, db, 'remove-pnj-unlock');
         unlockBatch.delete(lockRef);
         try { await unlockBatch.commit(); }
         catch (error) {
-            throwWithState(error, deletionState({ firestoreDone: true, imageCleanupPending: false, lockRetained: true, imagePaths, skippedImagePaths }), 'remove-pnj-unlock');
+            throwWithState(error, deletionState({ firestoreDone: true, imageCleanupPending: false, lockRetained: true, imagePaths, legacyImageSkipped }), 'remove-pnj-unlock');
         }
-        return deletionState({ firestoreDone: true, imageCleanupPending: false, lockRetained: false, imagePaths, skippedImagePaths });
+        return deletionState({ firestoreDone: true, imageCleanupPending: false, lockRetained: false, imagePaths, legacyImageSkipped });
     }
 
     async function completeRemoval(id, lockData) {
         const imagePaths = Array.isArray(lockData?.imagePaths) ? lockData.imagePaths : [];
-        const skippedImagePaths = Array.isArray(lockData?.skippedImagePaths) ? lockData.skippedImagePaths : [];
+        const legacyImageSkipped = lockData?.legacyImageSkipped === true;
         try {
             return await completeRemovalUnsafe(id, lockData);
         } catch (error) {
@@ -454,7 +538,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                 imageCleanupPending: false,
                 lockRetained: true,
                 imagePaths,
-                skippedImagePaths,
+                legacyImageSkipped,
             }), 'remove-pnj-recovery');
         }
     }
@@ -481,11 +565,12 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
             const data = snapshotData(pnjSnapshot);
             const protectedPath = protectedImagePathOrNull(data.imagePath, id);
             const imagePaths = protectedPath ? [protectedPath] : [];
-            const skippedImagePaths = data.imagePath && !protectedPath ? [String(data.imagePath)] : [];
+            const legacyImageSkipped = Boolean((typeof data.imagePath === 'string' && data.imagePath.length && !protectedPath)
+                || (typeof data.imageUrl === 'string' && data.imageUrl.length));
             const timestamp = serverTimestamp(sdk);
-            transaction.set(lockRef, { pnjId: id, imagePaths, createdAt: timestamp, updatedAt: timestamp });
+            transaction.set(lockRef, { pnjId: id, imagePaths, legacyImageSkipped, createdAt: timestamp, updatedAt: timestamp });
             transaction.update(pnjRef, { suppressionEnCours: true, updatedAt: timestamp });
-            return { pnjId: id, imagePaths, skippedImagePaths };
+            return { pnjId: id, imagePaths, legacyImageSkipped };
         });
     }
 
@@ -498,15 +583,17 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
             if (error?.state) throw error;
             let lockRetained = false;
             let imagePaths = [];
+            let legacyImageSkipped = false;
             if (validId(id)) {
                 try {
                     const lockSnapshot = await getDocument(sdk, documentRef(sdk, db, 'integrity_locks', 'pnj-deletion'));
                     const lockData = snapshotExists(lockSnapshot) ? snapshotData(lockSnapshot) : null;
                     lockRetained = lockData?.pnjId === id;
                     imagePaths = Array.isArray(lockData?.imagePaths) ? lockData.imagePaths : [];
+                    legacyImageSkipped = lockData?.legacyImageSkipped === true;
                 } catch { /* L'état reste conservateur sans inventer un verrou. */ }
             }
-            throwWithState(error, deletionState({ firestoreDone: false, imageCleanupPending: false, lockRetained, imagePaths }), 'remove-pnj');
+            throwWithState(error, deletionState({ firestoreDone: false, imageCleanupPending: false, lockRetained, imagePaths, legacyImageSkipped }), 'remove-pnj');
         }
     }
 
@@ -527,6 +614,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                 imageCleanupPending: false,
                 lockRetained: Boolean(lockData),
                 imagePaths: Array.isArray(lockData?.imagePaths) ? lockData.imagePaths : [],
+                legacyImageSkipped: lockData?.legacyImageSkipped === true,
             }), 'resume-pnj-removal');
         }
     }
@@ -539,7 +627,8 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
 
     const repository = { subscribeVisible, subscribeOne };
     if (isMj) Object.assign(repository, {
-        subscribeAll, subscribePrivate, create, update, remove, resumeRemoval, inspectRemovalLock,
+        subscribeAll, subscribePrivate, create, update, remove, resumeRemoval, inspectRemovalLock, inspectRemovalImpact,
+        inspectVisibilityImpact,
     });
     return Object.freeze(repository);
 }

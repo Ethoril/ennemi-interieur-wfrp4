@@ -69,7 +69,7 @@ secured('le verrou PNJ persiste après le batch final et bloque la recréation',
         assert.equal(pnj.exists(), true);
         transaction.update(doc(db, 'pnjs', 'locked'), { suppressionEnCours: true, updatedAt: serverTimestamp() });
         transaction.set(lockRef, {
-            pnjId: 'locked', imagePaths: ['portraits/locked/portrait.webp'],
+            pnjId: 'locked', imagePaths: ['portraits/locked/portrait.webp'], legacyImageSkipped: false,
             createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
         });
     });

@@ -224,6 +224,20 @@ test('les mutations MJ PNJ/relations sont transactionnelles, bornées et conflic
     assert.equal(fake.collectionMap('relations').size, 0);
 });
 
+test('la précondition privée protège les notes seules et le patch public simultané sans écriture partielle', async () => {
+    const fake = makeFirestore(); const repo = createMjPnjRepository(fake);
+    await repo.create({ id: 'a', nom: 'Ada', visibleJoueurs: true }, { notes: 'avant' });
+    const publicVersion = { seconds: 1, nanoseconds: 0 }; const privateVersion = { seconds: 1, nanoseconds: 0 };
+    await assert.rejects(repo.update('a', {}, { notes: 'perdue' }, undefined, { seconds: 99, nanoseconds: 0 }), error => error.kind === ERROR_KINDS.CONFLICT);
+    assert.equal(fake.collectionMap('pnjs_prives').get('a').notes, 'avant');
+    await assert.rejects(repo.update('a', { description: 'perdue aussi' }, { notes: 'perdue' }, publicVersion, { seconds: 99, nanoseconds: 0 }), error => error.kind === ERROR_KINDS.CONFLICT);
+    assert.equal(fake.collectionMap('pnjs').get('a').description, undefined);
+    assert.equal(fake.collectionMap('pnjs_prives').get('a').notes, 'avant');
+    await repo.update('a', { description: 'ok' }, { notes: 'nouveau' }, publicVersion, privateVersion);
+    assert.equal(fake.collectionMap('pnjs').get('a').description, 'ok');
+    assert.equal(fake.collectionMap('pnjs_prives').get('a').notes, 'nouveau');
+});
+
 test('une mise à jour de relation re-clé sûrement et refuse un miroir non prouvé', async () => {
     const fake = makeFirestore();
     const pnjRepo = createMjPnjRepository(fake);
@@ -322,8 +336,21 @@ test('un portrait legacy/externe est protégé, signalé et ne bloque pas la sup
     put(fake, 'pnjs', 'legacy', { nom: 'Legacy', visibleJoueurs: true, imagePath: 'https://autre.example/p.jpg' });
     put(fake, 'pnjs_prives', 'legacy', { notes: '' });
     const state = await createMjPnjRepository(fake).remove('legacy');
-    assert.deepEqual(state.skippedImagePaths, ['https://autre.example/p.jpg']);
+    assert.equal(state.legacyImageSkipped, true);
+    assert.equal(Object.hasOwn(state, 'skippedImagePaths'), false);
+    const lock = fake.collectionMap('integrity_locks').get('pnj-deletion');
+    assert.equal(lock, undefined);
     assert.equal(fake.collectionMap('pnjs').has('legacy'), false);
+});
+
+test('une imageUrl legacy est signalée par booléen sans URL dans état ou verrou', async () => {
+    const fake = makeFirestore();
+    put(fake, 'pnjs', 'legacy-url', { nom: 'Legacy URL', visibleJoueurs: true, imageUrl: 'https://storage.googleapis.com/campagne-wrpg.firebasestorage.app/portraits/legacy-url/a.webp?token=secret' });
+    put(fake, 'pnjs_prives', 'legacy-url', { notes: '' });
+    const state = await createMjPnjRepository(fake).remove('legacy-url');
+    assert.equal(state.legacyImageSkipped, true);
+    assert.doesNotMatch(JSON.stringify(state), /storage|token|https/iu);
+    assert.equal(fake.collectionMap('integrity_locks').has('pnj-deletion'), false);
 });
 
 test('un identifiant PNJ trop long pour Storage ne crée pas un lock image incompatible', async () => {
@@ -333,7 +360,9 @@ test('un identifiant PNJ trop long pour Storage ne crée pas un lock image incom
     put(fake, 'pnjs', longId, { nom: 'Long', visibleJoueurs: true, imagePath: path });
     put(fake, 'pnjs_prives', longId, { notes: '' });
     const state = await createMjPnjRepository(fake).remove(longId);
-    assert.deepEqual(state.skippedImagePaths, [path]);
+    assert.equal(state.legacyImageSkipped, true);
+    assert.equal(Object.hasOwn(state, 'skippedImagePaths'), false);
+    assert.equal(fake.collectionMap('integrity_locks').has('pnj-deletion'), false);
     assert.equal(fake.collectionMap('pnjs').has(longId), false);
 });
 

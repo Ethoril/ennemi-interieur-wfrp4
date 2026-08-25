@@ -117,6 +117,8 @@ export function createPnjsListView({
     store,
     getImageService = () => null,
     onRetry = () => store?.restart?.(),
+    getSession = () => null,
+    onCreate = null,
 } = {}) {
     let mounted = false;
     let search = null;
@@ -133,6 +135,16 @@ export function createPnjsListView({
     let currentModel = null;
     const portraits = new Set();
     let sheet = null;
+    let unsubscribeSession = () => {};
+    let createButton = null;
+
+    const renderCreateAction = state => {
+        if (!createButton) return;
+        const allowed = state?.status === 'gm' && state?.role === 'mj'
+            && typeof state.user?.uid === 'string' && state.user.uid.length > 0;
+        createButton.hidden = !allowed;
+        createButton.disabled = !allowed;
+    };
 
     const releasePortraits = () => {
         for (const portrait of portraits) portrait.dispose();
@@ -260,6 +272,14 @@ export function createPnjsListView({
         resultCount.className = 'm-result-count';
         resultCount.setAttribute('aria-live', 'polite');
         toolbar.append(filterButton, resultCount);
+        if (typeof onCreate === 'function') {
+            createButton = documentRef.createElement('button');
+            createButton.type = 'button';
+            createButton.className = 'm-button m-button-primary';
+            createButton.textContent = 'Nouveau PNJ';
+            createButton.addEventListener('click', onCreate);
+            toolbar.append(createButton);
+        }
         badge = documentRef.createElement('p');
         badge.className = 'm-sync-badge';
         badge.hidden = true;
@@ -291,6 +311,14 @@ export function createPnjsListView({
         unsubscribeStore = store.subscribe(state => {
             if (!signal?.aborted && mounted) render(state);
         });
+        const sessionSource = typeof getSession === 'function' ? getSession() : getSession;
+        if (sessionSource?.subscribe) {
+            renderCreateAction(sessionSource.getState?.() || {});
+            unsubscribeSession = sessionSource.subscribe(renderCreateAction);
+        } else {
+            unsubscribeSession = () => {};
+            renderCreateAction(sessionSource);
+        }
     };
     const unmount = () => {
         if (!mounted) return;
@@ -300,9 +328,12 @@ export function createPnjsListView({
         searchTimer = null;
         unsubscribeStore();
         unsubscribeStore = () => {};
+        unsubscribeSession();
+        unsubscribeSession = () => {};
         search?.removeEventListener('input', onSearch);
         filterButton?.removeEventListener('click', onOpenFilters);
         retryButton?.removeEventListener('click', onRetry);
+        createButton?.removeEventListener('click', onCreate);
         sheet?.destroy();
         sheet = null;
         releasePortraits();
@@ -315,6 +346,7 @@ export function createPnjsListView({
         warningText = null;
         retryButton = null;
         listTarget = null;
+        createButton = null;
         currentModel = null;
         lastSignature = null;
     };

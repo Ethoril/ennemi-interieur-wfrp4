@@ -201,7 +201,7 @@ secured('seul le MJ vérifié écrit et peut supprimer', async () => {
         assert.equal((await transaction.get(pnjRef)).exists(), true);
         transaction.update(pnjRef, { suppressionEnCours: true, updatedAt: serverTimestamp() });
         transaction.set(lockRef, {
-            pnjId: 'write-gm', imagePaths: [], createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+            pnjId: 'write-gm', imagePaths: [], legacyImageSkipped: false, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
         });
     });
     const finalDeletion = writeBatch(gm);

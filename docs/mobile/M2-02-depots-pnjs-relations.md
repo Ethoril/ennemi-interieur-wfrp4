@@ -60,16 +60,16 @@ verrou n'est supprimé qu'après le nettoyage Storage. En cas de panne, les mét
   imageCleanupPending: boolean,
   lockRetained: boolean,
   imagePaths: string[],
-  skippedImagePaths: string[]
+  legacyImageSkipped: boolean
 }
 ```
 
 La reprise relit le verrou Firestore ; elle ne dépend donc pas d'un journal local ou d'un PNJ
 encore cliquable. Un service image doit être injecté lorsqu'un portrait protégé existe : son
-absence ou son échec n'est jamais présenté comme un succès. Un ancien chemin externe ou corrompu
-est conservé dans `skippedImagePaths` et n'est jamais supprimé automatiquement.
-Cette information est renvoyée dans tous les états d'erreur de la suppression, mais n'est pas
-persistée dans le verrou M1-04 : le schéma et les règles du verrou restent inchangés dans M2-02.
+absence ou son échec n'est jamais présenté comme un succès. Un ancien chemin externe, corrompu ou
+`imageUrl` legacy est conservé sans jamais être renvoyé : `legacyImageSkipped` vaut `true` dans
+les états concernés et dans le verrou M1-04. Le booléen durable permet à l'écran de signaler le
+portrait legacy sans exposer son URL ou son chemin.
 Le remplacement d'un portrait (nettoyage de l'ancien fichier après le commit du nouveau) reste
 délibérément dans le service images de M2-03 ; ce dépôt ne prétend pas l'avoir réalisé.
 

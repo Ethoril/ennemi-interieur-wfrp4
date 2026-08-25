@@ -1,10 +1,12 @@
 import { createAppLifecycle } from './lifecycle.js';
-import { createRouter, ROUTE_NAMES } from './router.js';
+import { createRouter, parseRoute, ROUTE_NAMES } from './router.js';
 import { createDefaultPublicSession } from './public-runtime.js';
 import { createDefaultMjSession } from './mj-runtime.js';
 import { announce, createDialogController, publicStatusKind, publicStatusMessage, renderState } from './ui.js';
 import { createPnjsListView } from './views/pnjs-list.js';
 import { createPnjDetailView } from './views/pnj-detail.js';
+import { createPnjEditView } from './views/pnj-edit.js';
+import { createAdminRouteController } from './admin-route-controller.js';
 
 function placeholderView({ container, title, message, actionLabel = '', onAction = null }) {
     let mounted = false;
@@ -150,7 +152,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
         onNavigate: target => {
             if (!router) { pendingInitialRoute = target; return; }
             windowRef.history?.replaceState?.({}, '', target);
-            router.render(target);
+            router.render(target, { skipGuard: true });
         },
     });
     const store = session.store;
@@ -168,6 +170,8 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             store,
             getImageService: () => session.getImages(),
             onRetry: retry,
+            getSession: () => mjSession,
+            onCreate: () => router.navigate({ name: ROUTE_NAMES.PNJ_NEW }),
         }),
         [ROUTE_NAMES.PNJ]: route => createPnjDetailView({
             container,
@@ -176,7 +180,22 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             getImageService: () => session.getImages(),
             onBack: () => router.back(),
             onRetry: retry,
+            getSession: () => mjSession.getState(),
+            onEdit: () => router.navigate({ name: ROUTE_NAMES.PNJ_EDIT, id: route.id }),
         }),
+        [ROUTE_NAMES.PNJ_NEW]: () => {
+            const state = mjSession.getState();
+            if (['checking', 'signing-in', 'signing-out'].includes(state.status)) {
+                return placeholderView({ container, title: 'Vérification', message: 'Vérification de la session MJ…' });
+            }
+            if (state.status !== 'gm' || state.role !== 'mj' || typeof state.user?.uid !== 'string' || !state.user.uid) {
+                return placeholderView({ container, title: 'Accès MJ requis', message: 'Cette action est réservée au MJ.', actionLabel: 'Retour', onAction: () => router.back() });
+            }
+            return createPnjEditView({ container, getSession: () => mjSession.getState(),
+                getRepository: () => mjSession.getState().private?.repositories?.pnjs,
+                onBack: () => router.back({ skipGuard: true }), onNavigate: target => router.navigate(parseRoute(target), { replace: true, skipGuard: true }),
+                announce: message => announce(routeStatus, message) });
+        },
         [ROUTE_NAMES.ENQUETES]: () => placeholderView({
             container,
             title: 'Enquêtes',
@@ -195,10 +214,13 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             if (status.status === 'checking' || status.status === 'signing-in' || status.status === 'signing-out') {
                 return placeholderView({ container, title: 'Vérification', message: 'Vérification de la session MJ…' });
             }
-            if (status.status !== 'gm') {
+            if (status.status !== 'gm' || status.role !== 'mj' || typeof status.user?.uid !== 'string' || !status.user.uid) {
                 return placeholderView({ container, title: 'Accès MJ requis', message: 'Cette action est réservée au MJ.', actionLabel: 'Retour', onAction: () => router.back() });
             }
-            return placeholderView({ container, title: 'Modification du PNJ', message: `Le formulaire du PNJ ${route.id} arrivera dans le prochain lot.` });
+            return createPnjEditView({ container, id: route.id, getSession: () => mjSession.getState(),
+                getRepository: () => mjSession.getState().private?.repositories?.pnjs,
+                onBack: () => router.back({ skipGuard: true }), onNavigate: target => router.navigate(parseRoute(target), { replace: true, skipGuard: true }),
+                announce: message => announce(routeStatus, message) });
         },
         [ROUTE_NAMES.UNKNOWN]: () => placeholderView({
             container,
@@ -219,7 +241,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             const section = sectionForRoute(route);
             title.textContent = section === 'pnjs' ? 'PNJs' : section === 'enquetes' ? 'Enquêtes' : 'Réglages';
             title.focus?.({ preventScroll: true });
-            back.hidden = !(route.name === ROUTE_NAMES.PNJ || route.name === ROUTE_NAMES.PNJ_EDIT
+            back.hidden = !(route.name === ROUTE_NAMES.PNJ || route.name === ROUTE_NAMES.PNJ_NEW || route.name === ROUTE_NAMES.PNJ_EDIT
                 || route.name === ROUTE_NAMES.ENQUETE || route.name === ROUTE_NAMES.UNKNOWN);
             headerAction.hidden = route.name !== ROUTE_NAMES.REGLAGES;
             documentRef.querySelectorAll('.m-bottom-nav a[data-route]').forEach(link => {
@@ -236,7 +258,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
         const target = pendingInitialRoute;
         pendingInitialRoute = null;
         windowRef.history?.replaceState?.({}, '', target);
-        router.render(target);
+        router.render(target, { skipGuard: true });
     }
 
     const onBack = () => router.back();
@@ -266,16 +288,16 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     });
     session.start();
     mjSession.start();
+    const adminRouteController = createAdminRouteController({
+        routeNames: ROUTE_NAMES,
+        onRefresh: () => router.refresh(),
+        onNavigatePublic: () => router.navigate({ name: ROUTE_NAMES.PNJS }, { replace: true, skipGuard: true }),
+        onAnnounce: message => announce(routeStatus, message),
+    });
     const unsubscribeMj = mjSession.subscribe(() => {
         const route = router.getRoute();
-        if (route?.name !== ROUTE_NAMES.PNJ_EDIT) return;
         const next = mjSession.getState();
-        if (['checking', 'signing-in', 'signing-out'].includes(next.status) || next.status === 'gm') {
-            router.refresh();
-        } else {
-            router.navigate({ name: ROUTE_NAMES.PNJ, id: route.id }, { replace: true });
-            announce(routeStatus, 'Accès MJ indisponible : la fiche publique est affichée.');
-        }
+        adminRouteController.transition({ routeName: route?.name, status: next.status, role: next.role, uid: next.user?.uid });
     });
     let stopPromise = null;
     const stop = () => {

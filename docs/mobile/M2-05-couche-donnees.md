@@ -46,13 +46,17 @@ reste `null` et est signalée par `legacyImageInvalid`.
 | MJ | `subscribeAll(onData,onError)` | liste complète normalisée |
 | MJ | `subscribePrivate(id,onData,onError)` | notes privées séparées, `null` si absent |
 | MJ | `create(public, private, {id})` | batch PNJ + `pnjs_prives`, timestamps serveur |
-| MJ | `update(id, patchPublic, patchPrivate, expectedUpdatedAt)` | patch partiel transactionnel, conflit strict ; le masquage révoque les relations par sous-lots sûrs |
+| MJ | `update(id, patchPublic, patchPrivate, expectedUpdatedAt, expectedPrivateUpdatedAt?)` | patch partiel transactionnel, conflits public+privé stricts ; le masquage révoque les relations par sous-lots sûrs |
 | MJ | `remove(id)` | verrou global, marqueur, cascade bornée, suppression privé+public, nettoyage image reprenable |
 | MJ | `resumeRemoval(id)` | reprise depuis le verrou Firestore, sans journal local obligatoire |
 | MJ | `inspectRemovalLock()` | inspection administrative read-only du verrou global |
 
+Le cinquième argument de `update` est optionnel pour préserver les appels bureau à quatre
+arguments ; lorsqu'il est fourni avec un patch privé, le dépôt relit le document privé dans la
+même transaction et refuse toute divergence de `updatedAt` avant d'écrire le public ou le privé.
+
 La suppression retourne un état structuré (`firestoreDone`,
-`imageCleanupPending`, `lockRetained`, `imagePaths`, `skippedImagePaths`). Un
+`imageCleanupPending`, `lockRetained`, `imagePaths`, `legacyImageSkipped`). Un
 échec ne doit jamais être présenté comme un succès complet.
 
 ## Relations — `createPublicRelationsRepository` / `createMjRelationsRepository`

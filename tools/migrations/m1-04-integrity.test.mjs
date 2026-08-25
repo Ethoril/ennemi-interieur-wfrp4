@@ -50,6 +50,8 @@ test('la suppression PNJ retire indices, relations et privé avant le portrait',
     assert.match(pnjRepository, /integrity_locks', 'pnj-deletion'/u);
     assert.match(pnjRepository, /unlockBatch\.delete\(lockRef\)/u);
     assert.match(pnjRepository, /imagePaths/u);
+    assert.match(pnjRepository, /legacyImageSkipped/u);
+    assert.match(rules, /legacyImageSkipped is bool/u);
     assert.match(rules, /publicRelationEndpointsExist\(request\.resource\.data\)/u);
     assert.match(rules, /relationEndpointsExist\(request\.resource\.data\)/u);
     assert.match(pnjRepository, /relationSnapshots/u);

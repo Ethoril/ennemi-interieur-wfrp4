@@ -147,7 +147,7 @@ test('Firestore M1-04: le verrou PNJ bloque les écritures concurrentes et les d
     const lockRef = doc(gmDb, 'integrity_locks', 'pnj-deletion');
     const startDeletion = writeBatch(gmDb);
     startDeletion.set(lockRef, {
-        pnjId: 'lock-source', imagePaths: [], createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+        pnjId: 'lock-source', imagePaths: [], legacyImageSkipped: false, createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
     });
     startDeletion.update(pnj('lock-source'), {
         suppressionEnCours: true, updatedAt: serverTimestamp(),
