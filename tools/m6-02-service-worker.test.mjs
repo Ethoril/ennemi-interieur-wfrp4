@@ -71,7 +71,7 @@ function createWorkerHarness() {
         },
         caches: {
             async open() { return cache; },
-            async keys() { return ['wfrp-cache-v2.20.0']; },
+            async keys() { return ['wfrp-cache-v2.21.0']; },
             async match(request) { return cache.match(request); },
         },
         fetch: async request => {
@@ -268,7 +268,7 @@ test('la mise à jour attend une action, respecte beforeLeave et ne recharge qu 
     waiting.addEventListener = EventTargetFake.prototype.addEventListener;
     const registration = new EventTargetFake();
     registration.waiting = waiting;
-    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.20.0' }) };
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.0' }) };
     registration.update = async () => {};
     serviceWorker.controller = {};
     serviceWorker.register = async (url, options) => {
@@ -282,7 +282,7 @@ test('la mise à jour attend une action, respecte beforeLeave et ne recharge qu 
     const pwa = createPwaController({ windowRef, navigatorRef: windowRef.navigator, router: { canLeaveCurrent: () => canLeave }, announce: message => announcements.push(message) });
     await pwa.start();
     assert.equal(pwa.getState().updateAvailable, true);
-    assert.equal(pwa.getDiagnostics().workerVersion, 'v2.20.0');
+    assert.equal(pwa.getDiagnostics().workerVersion, 'v2.21.0');
     assert.equal(pwa.applyUpdate(), false);
     assert.deepEqual(messages, []);
     assert.match(announcements.at(-1), /différée/u);

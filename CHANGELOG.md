@@ -1,3 +1,21 @@
+## [2.21.0] - 2026-08-25
+
+### PWA — validation et clôture M6-03
+- **Recette locale documentée** : le cycle d’installation volontaire, la bannière de mise à jour,
+  le rechargement unique et le relancement hors ligne de `/app/` depuis le Service Worker sont
+  consignés avec leurs limites de preuve.
+- **Version/cache alignés** : `APP_VERSION` et `wfrp-cache-v2.21.0` remplacent la version M6-02
+  afin de diffuser la coque et les contrôles PWA stabilisés.
+- **Activation publique différée** : le manifeste conserve son `start_url` historique et aucune
+  page bureau ne promeut `/app/` ; le déploiement `master` reste bloqué en attente d’une
+  autorisation spécifique.
+
+### Vérification
+- Contrôles automatiques lint, graphe, accessibilité statique, sécurité de cache, syntaxe et
+  régressions bureau/mobile exécutés localement.
+- Android physique et inspection réelle de Cache Storage restent à exécuter ; iOS est explicitement
+  différé. Aucun test de production, déploiement ou installation physique n’est revendiqué.
+
 ## [2.20.0] - 2026-08-25
 
 ### Mobile — clôture Enquêtes
