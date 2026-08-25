@@ -1,5 +1,6 @@
 import { createPublicMobileClient } from '../data/firebase-clients.js';
 import { createPublicIndicesRepository } from '../data/indices-repository.js';
+import { createPublicImagesRepository } from '../data/images-repository.js';
 import { createPublicPnjRepository } from '../data/pnjs-repository.js';
 import { createPublicRelationsRepository } from '../data/relations-repository.js';
 import { createPublicMobileSession } from './session.js';
@@ -9,6 +10,7 @@ const DEFAULT_BUILDERS = Object.freeze({
     pnjs: createPublicPnjRepository,
     relations: createPublicRelationsRepository,
     indices: createPublicIndicesRepository,
+    images: createPublicImagesRepository,
 });
 
 function cancelled(operation) {
@@ -17,6 +19,7 @@ function cancelled(operation) {
 
 export function createPublicSessionComposition({
     sdk,
+    storageSdk = null,
     config,
     options = {},
     builders = DEFAULT_BUILDERS,
@@ -34,11 +37,16 @@ export function createPublicSessionComposition({
     };
     const repositoryFactories = ({ client, signal } = {}) => {
         if (signal?.aborted) throw cancelled('public-repositories');
-        return {
+        const repositories = {
             pnjs: builders.pnjs({ sdk, client }),
             relations: builders.relations({ sdk, client }),
             indices: builders.indices({ sdk, client }),
         };
+        if (typeof builders.images === 'function') {
+            if (!storageSdk) throw new TypeError('storageSdk public requis');
+            repositories.images = builders.images({ storageSdk, storage: client.storage });
+        }
+        return repositories;
     };
     return createPublicMobileSession({ ...options, clientFactory, repositoryFactories });
 }

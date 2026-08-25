@@ -35,5 +35,6 @@ export function createPublicMobileSession(options = {}) {
         getState: () => store.getState(),
         setPreferences: value => store.setPreferences(value),
         inspect: () => store.inspect(),
+        getImages: () => store.getService('images'),
     });
 }

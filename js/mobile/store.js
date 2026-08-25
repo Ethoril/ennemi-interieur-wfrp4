@@ -225,8 +225,10 @@ export function createPublicStore({
         run.navigator?.removeEventListener?.('online', run.onlineHandler);
         run.navigator?.removeEventListener?.('offline', run.offlineHandler);
         let closeError = null;
-        try { await run.client?.close?.(); }
+        try { await run.repositories?.images?.close?.(); }
         catch (error) { closeError = error; }
+        try { await run.client?.close?.(); }
+        catch (error) { closeError ??= error; }
         run.client = null;
         run.repositories = null;
         return closeError;
@@ -471,6 +473,7 @@ export function createPublicStore({
         setPreferences,
         inspect,
         preferenceStore,
+        getService: name => activeRun?.repositories?.[name] ?? null,
     });
 }
 

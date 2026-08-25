@@ -79,7 +79,12 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     let router;
     const retry = () => session.restart();
     const views = {
-        [ROUTE_NAMES.PNJS]: () => createPnjsListView({ container, store, onRetry: retry }),
+        [ROUTE_NAMES.PNJS]: () => createPnjsListView({
+            container,
+            store,
+            getImageService: () => session.getImages(),
+            onRetry: retry,
+        }),
         [ROUTE_NAMES.PNJ]: route => createPnjDetailView({
             container,
             id: route.id,

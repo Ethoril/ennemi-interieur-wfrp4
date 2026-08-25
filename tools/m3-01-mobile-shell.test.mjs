@@ -128,7 +128,7 @@ test('la session de coque est neutre et se ferme sans Firebase', () => {
     assert.equal(states.length, 1);
 });
 
-test('la coque mobile est autonome, accessible et sans branchement de données', () => {
+test('la coque mobile reste autonome, accessible et sans accès Firebase direct', () => {
     const html = read('app/index.html');
     const css = read('css/mobile-app.css');
     assert.ok(fs.existsSync(path.join(root, 'js/mobile/app.js')));
@@ -140,7 +140,7 @@ test('la coque mobile est autonome, accessible et sans branchement de données',
     assert.match(html, /style-src 'self'/u);
     assert.match(html, /aria-live="polite"/u);
     assert.match(html, /m-bottom-nav/u);
-    assert.doesNotMatch(html, /manifest\.json|firebase|cdn/iu);
+    assert.doesNotMatch(html, /manifest\.json|cdn/iu);
     assert.match(css, /--m-touch-target:\s*2\.75rem/u);
     assert.match(css, /safe-area-inset-(?:top|bottom)/u);
     assert.match(css, /prefers-reduced-motion/u);

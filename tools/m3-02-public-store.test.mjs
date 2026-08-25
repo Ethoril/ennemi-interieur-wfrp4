@@ -325,5 +325,6 @@ test('la composition publique ne charge ni Auth ni écritures et la CSP reste mi
     const html = read('app/index.html');
     assert.match(html, /script-src[^\n]*'self'[^\n]*https:\/\/www\.gstatic\.com/iu);
     assert.match(html, /connect-src[^\n]*https:\/\/firestore\.googleapis\.com/iu);
-    assert.doesNotMatch(html, /connect-src[^\n]*\*\.googleapis\.com|firebasestorage|storage\.googleapis/iu);
+    assert.match(html, /connect-src[^\n]*https:\/\/firebasestorage\.googleapis\.com/iu);
+    assert.doesNotMatch(html, /connect-src[^\n]*\*\.googleapis\.com|https:\/\/storage\.googleapis\.com/iu);
 });
