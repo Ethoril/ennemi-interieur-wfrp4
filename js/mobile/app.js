@@ -1,6 +1,7 @@
 import { createAppLifecycle } from './lifecycle.js';
 import { createRouter, ROUTE_NAMES } from './router.js';
 import { createDefaultPublicSession } from './public-runtime.js';
+import { createDefaultMjSession } from './mj-runtime.js';
 import { announce, createDialogController, publicStatusKind, publicStatusMessage, renderState } from './ui.js';
 import { createPnjsListView } from './views/pnjs-list.js';
 import { createPnjDetailView } from './views/pnj-detail.js';
@@ -53,6 +54,80 @@ function cacheMessage(state) {
     return 'Le mode de cache sera indiqué après le premier chargement.';
 }
 
+function createSettingsView({ container, publicSession, mjSession, documentRef }) {
+    let unsubscribePublic = null;
+    let unsubscribeMj = null;
+    let mounted = false;
+    const render = () => {
+        if (!mounted) return;
+        container.replaceChildren();
+        const section = documentRef.createElement('section');
+        section.className = 'm-screen m-settings';
+        const heading = documentRef.createElement('h2');
+        heading.textContent = 'Réglages';
+        section.append(heading);
+        const authStatus = documentRef.createElement('p');
+        authStatus.setAttribute('role', 'status');
+        const state = mjSession.getState();
+        const account = state.user?.displayName || 'compte Google';
+        authStatus.textContent = state.error?.kind === 'redirect-unavailable'
+            ? 'Le retour Google n’a pas été récupéré. Réessayez avec une fenêtre au premier plan.'
+            : state.status === 'gm' ? `Mode MJ actif — ${account}`
+            : state.status === 'authenticated-non-gm' ? 'Compte connecté, sans accès MJ.'
+                : state.status === 'checking' || state.status === 'signing-in' ? 'Vérification de la session…'
+                    : state.status === 'signing-out' ? 'Déconnexion en cours…' : 'Mode joueur — aucune session MJ.';
+        section.append(authStatus);
+        if (state.error) {
+            const error = documentRef.createElement('p');
+            error.className = 'm-settings-error';
+            error.textContent = state.error.kind === 'offline'
+                ? 'Connexion indisponible. Réessayez lorsque le réseau sera revenu.'
+                : 'La connexion MJ n’a pas abouti. Vous pouvez réessayer.';
+            section.append(error);
+        }
+        const action = documentRef.createElement('button');
+        action.type = 'button';
+        action.className = 'm-button m-button-primary';
+        const busy = ['checking', 'signing-in', 'signing-out'].includes(state.status);
+        action.disabled = busy;
+        action.setAttribute('aria-disabled', String(busy));
+        action.textContent = state.status === 'gm' || state.status === 'authenticated-non-gm'
+            ? 'Déconnexion' : state.error?.kind === 'redirect-unavailable'
+                ? 'Réessayer avec une fenêtre' : 'Connexion Google';
+        action.addEventListener('click', () => {
+            if (busy) return;
+            return state.status === 'gm' || state.status === 'authenticated-non-gm'
+                ? mjSession.signOut() : mjSession.signIn();
+        });
+        section.append(action);
+        const cache = documentRef.createElement('p');
+        cache.textContent = cacheMessage(publicSession.getState());
+        section.append(cache);
+        const version = documentRef.createElement('p');
+        const versionMeta = documentRef.querySelector?.('meta[name="app-version"]');
+        version.textContent = `Version ${versionMeta?.content || 'inconnue'}`;
+        section.append(version);
+        container.append(section);
+    };
+    return Object.freeze({
+        mount() {
+            if (mounted) return;
+            mounted = true;
+            unsubscribePublic = publicSession.subscribe(render);
+            unsubscribeMj = mjSession.subscribe(render);
+            render();
+        },
+        unmount() {
+            mounted = false;
+            unsubscribePublic?.();
+            unsubscribeMj?.();
+            unsubscribePublic = null;
+            unsubscribeMj = null;
+            container.replaceChildren();
+        },
+    });
+}
+
 function boot(documentRef = globalThis.document, windowRef = globalThis.window) {
     const container = documentRef?.querySelector?.('#m-main');
     const status = documentRef?.querySelector?.('#m-status');
@@ -68,6 +143,16 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     if (!container || !windowRef || !title || !back || !headerAction || !dialogElement) return null;
 
     const session = createDefaultPublicSession({ navigatorRef: windowRef.navigator });
+    let router;
+    let pendingInitialRoute = null;
+    const mjSession = createDefaultMjSession({
+        windowRef,
+        onNavigate: target => {
+            if (!router) { pendingInitialRoute = target; return; }
+            windowRef.history?.replaceState?.({}, '', target);
+            router.render(target);
+        },
+    });
     const store = session.store;
     const initialPreferences = session.getState().preferences;
     applyTheme(documentRef, initialPreferences.theme, themeToggle);
@@ -76,7 +161,6 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     }
 
     const dialog = createDialogController({ dialog: dialogElement, documentRef });
-    let router;
     const retry = () => session.restart();
     const views = {
         [ROUTE_NAMES.PNJS]: () => createPnjsListView({
@@ -104,12 +188,18 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             message: 'La fiche d’enquête arrivera dans un prochain lot.',
         }),
         [ROUTE_NAMES.REGLAGES]: () => placeholderView({
-            container,
-            title: 'Réglages',
-            message: 'Le thème et l’état du cache public sont disponibles ici.',
-            actionLabel: 'Ouvrir les réglages',
-            onAction: () => dialog.show(headerAction),
+            container, title: 'Réglages', message: 'Chargement des réglages…',
         }),
+        [ROUTE_NAMES.PNJ_EDIT]: route => {
+            const status = mjSession.getState();
+            if (status.status === 'checking' || status.status === 'signing-in' || status.status === 'signing-out') {
+                return placeholderView({ container, title: 'Vérification', message: 'Vérification de la session MJ…' });
+            }
+            if (status.status !== 'gm') {
+                return placeholderView({ container, title: 'Accès MJ requis', message: 'Cette action est réservée au MJ.', actionLabel: 'Retour', onAction: () => router.back() });
+            }
+            return placeholderView({ container, title: 'Modification du PNJ', message: `Le formulaire du PNJ ${route.id} arrivera dans le prochain lot.` });
+        },
         [ROUTE_NAMES.UNKNOWN]: () => placeholderView({
             container,
             title: 'Écran introuvable',
@@ -118,6 +208,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             onAction: () => router.back(),
         }),
     };
+    views[ROUTE_NAMES.REGLAGES] = () => createSettingsView({ container, publicSession: session, mjSession, documentRef });
     router = createRouter({
         windowRef,
         mountRoute: route => (views[route.name] || views[ROUTE_NAMES.UNKNOWN])(route),
@@ -128,7 +219,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             const section = sectionForRoute(route);
             title.textContent = section === 'pnjs' ? 'PNJs' : section === 'enquetes' ? 'Enquêtes' : 'Réglages';
             title.focus?.({ preventScroll: true });
-            back.hidden = !(route.name === ROUTE_NAMES.PNJ
+            back.hidden = !(route.name === ROUTE_NAMES.PNJ || route.name === ROUTE_NAMES.PNJ_EDIT
                 || route.name === ROUTE_NAMES.ENQUETE || route.name === ROUTE_NAMES.UNKNOWN);
             headerAction.hidden = route.name !== ROUTE_NAMES.REGLAGES;
             documentRef.querySelectorAll('.m-bottom-nav a[data-route]').forEach(link => {
@@ -141,6 +232,12 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             }
         },
     });
+    if (pendingInitialRoute) {
+        const target = pendingInitialRoute;
+        pendingInitialRoute = null;
+        windowRef.history?.replaceState?.({}, '', target);
+        router.render(target);
+    }
 
     const onBack = () => router.back();
     const onHeaderAction = event => dialog.show(event.currentTarget);
@@ -168,12 +265,25 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
         if (cacheNote) cacheNote.textContent = cacheMessage(state);
     });
     session.start();
+    mjSession.start();
+    const unsubscribeMj = mjSession.subscribe(() => {
+        const route = router.getRoute();
+        if (route?.name !== ROUTE_NAMES.PNJ_EDIT) return;
+        const next = mjSession.getState();
+        if (['checking', 'signing-in', 'signing-out'].includes(next.status) || next.status === 'gm') {
+            router.refresh();
+        } else {
+            router.navigate({ name: ROUTE_NAMES.PNJ, id: route.id }, { replace: true });
+            announce(routeStatus, 'Accès MJ indisponible : la fiche publique est affichée.');
+        }
+    });
     let stopPromise = null;
     const stop = () => {
         if (stopPromise) return stopPromise;
         stopPromise = (async () => {
             stopRouter();
             unsubscribeSession();
+            unsubscribeMj();
             dialog.close();
             back.removeEventListener('click', onBack);
             dialogClose?.removeEventListener('click', onDialogClose);
@@ -182,10 +292,11 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             headerAction.removeEventListener('click', onHeaderAction);
             themeToggle?.removeEventListener('click', onThemeToggle);
             await session.stop();
+            await mjSession.stop();
         })();
         return stopPromise;
     };
-    return Object.freeze({ router, session, stop });
+    return Object.freeze({ router, session, mjSession, stop });
 }
 
 if (typeof document !== 'undefined' && typeof window !== 'undefined') {

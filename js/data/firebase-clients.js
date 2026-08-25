@@ -59,7 +59,7 @@ export function getOrCreateNamedApp(sdk, config, name) {
     return getOrCreateNamedAppWithOwnership(sdk, config, name).app;
 }
 
-async function finalizeLifecycleClose({ sdk, app, auth, db, signOutOnClose }) {
+async function finalizeLifecycleClose({ sdk, app, auth, db, signOutOnClose, deleteApplication = true }) {
     let firstError = null;
     let deleted = false;
     try {
@@ -72,17 +72,23 @@ async function finalizeLifecycleClose({ sdk, app, auth, db, signOutOnClose }) {
     } catch (error) {
         firstError ??= error;
     }
-    try {
-        if (typeof sdk?.deleteApp !== 'function') throw new Error('deleteApp unavailable');
-        await sdk.deleteApp(app);
+    if (deleteApplication) {
+        try {
+            if (typeof sdk?.deleteApp !== 'function') throw new Error('deleteApp unavailable');
+            await sdk.deleteApp(app);
+            deleted = true;
+        } catch (error) {
+            firstError ??= error;
+        }
+    } else {
+        // Firestore est terminé mais l'application Auth reste vivante pour
+        // permettre une nouvelle connexion après une déconnexion MJ.
         deleted = true;
-    } catch (error) {
-        firstError ??= error;
     }
     return { error: firstError, deleted };
 }
 
-function createClientHandle({ mode, sdk, app, appName = null, auth = null, db, storage = null, functions = null, cache = null, signOutOnClose = false }) {
+function createClientHandle({ mode, sdk, app, appName = null, auth = null, db, storage = null, functions = null, cache = null, signOutOnClose = false, deleteApplication = true }) {
     const listeners = new Set();
     let closed = false;
     const listen = (...args) => {
@@ -124,7 +130,7 @@ function createClientHandle({ mode, sdk, app, appName = null, auth = null, db, s
         firestoreByApp.delete(app);
         firestoreInitializationByApp.delete(app);
         const closing = scheduleClosing(sdk, appName, () => finalizeLifecycleClose({
-            sdk, app, auth, db, signOutOnClose,
+            sdk, app, auth, db, signOutOnClose, deleteApplication,
         }));
         const result = await closing;
         if (result.error) throw normalizeFirebaseError(result.error, { operation: 'close' });
@@ -295,7 +301,7 @@ export async function createPublicMobileClient({ sdk, config = FIREBASE_CONFIG, 
     }
 }
 
-export async function createMjMobileClient({ sdk, config = FIREBASE_CONFIG, appName = APP_NAMES.mj } = {}) {
+export async function createMjMobileClient({ sdk, config = FIREBASE_CONFIG, appName = APP_NAMES.mj, deleteApplicationOnClose = true, signOutOnClose = true } = {}) {
     await waitForClosing(sdk, appName);
     const appInfo = getOrCreateNamedAppWithOwnership(sdk, config, appName);
     let db = null;
@@ -308,8 +314,8 @@ export async function createMjMobileClient({ sdk, config = FIREBASE_CONFIG, appN
         retained = true;
         return createClientHandle({
             mode: 'mobile-mj', sdk, app: appInfo.app, appName, auth, db, storage,
-            cache: { mode: 'memory', persistent: false, fallback: false },
-            signOutOnClose: true,
+            cache: { mode: 'memory', persistent: false, fallback: false }, deleteApplication: deleteApplicationOnClose,
+            signOutOnClose,
         });
     } catch (cause) {
         if (!retained) {

@@ -83,3 +83,14 @@ parcours joueur reste disponible si Auth échoue ou si le compte n'est pas autor
 ## Commit
 
 `feat(mobile): ajouter l'authentification mj par redirection (M4-01)`
+
+## Notes d'implémentation
+
+Sur GitHub Pages, le retour Google peut revenir sans utilisateur lorsque le navigateur bloque le
+stockage tiers utilisé par le resolver Firebase. La session le détecte avec un marqueur local non
+sensible et affiche une reprise explicite. Le popup n'est jamais ouvert automatiquement : il est
+proposé au second geste de l'utilisateur, depuis Réglages.
+
+La CSP autorise uniquement l'iframe Auth de `campagne-wrpg.firebaseapp.com` et les endpoints Firebase
+nécessaires. La liste des domaines Firebase autorisés et la recette d'une PWA Android restent à
+valider sur l'environnement réel ; ce brief n'ajoute aucune configuration de production.

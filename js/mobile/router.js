@@ -3,6 +3,7 @@ const ROUTE_ID = /^[A-Za-z0-9_-]{1,150}$/u;
 const ROUTE_NAMES = Object.freeze({
     PNJS: 'pnjs-list',
     PNJ: 'pnj-detail',
+    PNJ_EDIT: 'pnj-edit',
     ENQUETES: 'enquetes-list',
     ENQUETE: 'enquete-detail',
     REGLAGES: 'reglages',
@@ -24,14 +25,18 @@ export function parseRoute(hash = '') {
     if (source === '' || source === '/') return Object.freeze({ name: ROUTE_NAMES.PNJS });
     if (!source.startsWith('/') || source.includes('?')) return Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
     const segments = source.slice(1).split('/');
-    if (segments.length > 2 || segments.some(segment => segment === '')) {
+    if (segments.length > 3 || segments.some(segment => segment === '')) {
         return Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
     }
     const section = segments[0];
     if (section === 'pnjs') {
         if (segments.length === 1) return Object.freeze({ name: ROUTE_NAMES.PNJS });
         const id = decodeSegment(segments[1]);
-        return id ? Object.freeze({ name: ROUTE_NAMES.PNJ, id }) : Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
+        if (!id) return Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
+        if (segments.length === 2) return Object.freeze({ name: ROUTE_NAMES.PNJ, id });
+        return segments[2] === 'modifier'
+            ? Object.freeze({ name: ROUTE_NAMES.PNJ_EDIT, id })
+            : Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
     }
     if (section === 'enquetes') {
         if (segments.length === 1) return Object.freeze({ name: ROUTE_NAMES.ENQUETES });
@@ -51,6 +56,7 @@ export function routeToHash(route) {
     switch (route?.name) {
         case ROUTE_NAMES.PNJS: return '#/pnjs';
         case ROUTE_NAMES.PNJ: return ROUTE_ID.test(route.id) ? `#/pnjs/${encodeURIComponent(route.id)}` : '#/pnjs';
+        case ROUTE_NAMES.PNJ_EDIT: return ROUTE_ID.test(route.id) ? `#/pnjs/${encodeURIComponent(route.id)}/modifier` : '#/pnjs';
         case ROUTE_NAMES.ENQUETES: return '#/enquetes';
         case ROUTE_NAMES.ENQUETE: return ROUTE_ID.test(route.id) ? `#/enquetes/${encodeURIComponent(route.id)}` : '#/enquetes';
         case ROUTE_NAMES.REGLAGES: return '#/reglages';
@@ -97,10 +103,10 @@ export function createRouter({ windowRef = globalThis, mountRoute, onRoute, anno
         else if (typeof windowRef.scrollTo === 'function') windowRef.scrollTo(0, value);
     };
 
-    const render = (hash = windowRef.location?.hash ?? '') => {
+    const render = (hash = windowRef.location?.hash ?? '', { force = false } = {}) => {
         const nextRoute = parseRoute(hash);
         const nextKey = routeKey(nextRoute);
-        if (currentRoute && routeKey(currentRoute) === nextKey) return currentRoute;
+        if (!force && currentRoute && routeKey(currentRoute) === nextKey) return currentRoute;
         const token = ++renderToken;
         if (currentRoute) scrollPositions.set(routeKey(currentRoute), safeScrollValue(readScroll()));
         currentController?.abort?.();
@@ -155,13 +161,16 @@ export function createRouter({ windowRef = globalThis, mountRoute, onRoute, anno
         return render(hash);
     };
     const back = () => {
+        if (currentRoute?.name === ROUTE_NAMES.PNJ_EDIT) {
+            return navigate({ name: ROUTE_NAMES.PNJ, id: currentRoute.id }, { replace: true });
+        }
         if (currentRoute?.name === ROUTE_NAMES.PNJ || currentRoute?.name === ROUTE_NAMES.ENQUETE) {
             return navigate({ name: currentRoute.name === ROUTE_NAMES.PNJ ? ROUTE_NAMES.PNJS : ROUTE_NAMES.ENQUETES }, { replace: true });
         }
         return navigate({ name: ROUTE_NAMES.PNJS }, { replace: true });
     };
 
-    return Object.freeze({ start, stop, navigate, back, render, getRoute: () => currentRoute, getScrollPositions: () => new Map(scrollPositions) });
+    return Object.freeze({ start, stop, navigate, back, render, refresh: () => render(windowRef.location?.hash ?? '', { force: true }), getRoute: () => currentRoute, getScrollPositions: () => new Map(scrollPositions) });
 }
 
 export { ROUTE_NAMES };
