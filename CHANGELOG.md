@@ -1,3 +1,16 @@
+## [2.21.4] - 2026-08-25
+
+### Synchronisation mobile
+
+- **Confirmation serveur observable** : les abonnements Firestore demandent désormais les
+  métadonnées afin de distinguer une lecture cache d'une confirmation serveur lorsque les données
+  sont identiques. Le statut « synchronisation en attente » peut ainsi disparaître correctement.
+
+### Préparation
+
+- **Candidat local** : la correction concerne le graphe précaché de la coque. `v2.21.4` est alignée
+  localement, sans push ni déploiement ; `v2.21.3` reste la version déployée de référence.
+
 ## [2.21.3] - 2026-08-25
 
 ### Accessibilité mobile

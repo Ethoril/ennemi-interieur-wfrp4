@@ -13,7 +13,7 @@ function makeSdk({ persistent = true, probeFails = false } = {}) {
     const apps = [];
     const dbs = new Map();
     const calls = {
-        initialize: 0, persistent: 0, memory: 0, terminate: 0, deleteApp: 0, signOut: 0, unsubscribe: 0, createdApps: [],
+        initialize: 0, persistent: 0, memory: 0, terminate: 0, deleteApp: 0, signOut: 0, unsubscribe: 0, snapshotOptions: [], createdApps: [],
     };
     const sdk = {
         getApps: () => apps,
@@ -45,7 +45,11 @@ function makeSdk({ persistent = true, probeFails = false } = {}) {
         getFirestore: app => dbs.get(app) ?? sdk.initializeFirestore(app, { localCache: sdk.memoryLocalCache() }),
         getStorage: app => ({ app, kind: 'storage' }),
         getAuth: app => ({ app, kind: 'auth' }),
-        onSnapshot: () => () => { calls.unsubscribe += 1; },
+        onSnapshot: (target, optionsOrNext, nextOrError, maybeError) => {
+            const hasOptions = optionsOrNext && typeof optionsOrNext === 'object';
+            calls.snapshotOptions.push(hasOptions ? optionsOrNext : null);
+            return () => { calls.unsubscribe += 1; };
+        },
         signOut: async () => { calls.signOut += 1; },
         terminate: async () => { calls.terminate += 1; },
         deleteApp: async app => {
@@ -439,6 +443,16 @@ test('le client MJ utilise explicitement la mémoire et nettoie Auth, listeners 
     assert.equal(calls.unsubscribe, 1);
     assert.equal(calls.terminate, 1);
     assert.equal(calls.deleteApp, 1);
+});
+
+test('le client relaie l overload metadata de Firestore et ferme cet abonnement', async () => {
+    const { sdk, calls } = makeSdk();
+    const client = await createPublicMobileClient({ sdk, config, appName: 'mobile-public-metadata-listener' });
+    const unsubscribe = client.listen({}, { includeMetadataChanges: true }, () => {});
+    assert.deepEqual(calls.snapshotOptions.at(-1), { includeMetadataChanges: true });
+    unsubscribe();
+    await client.close();
+    assert.equal(calls.unsubscribe, 1);
 });
 
 test('la fermeture du client invalide aussi les callbacks SDK déjà en file', async () => {

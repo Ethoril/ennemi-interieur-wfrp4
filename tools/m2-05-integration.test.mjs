@@ -32,8 +32,12 @@ function makeDouble() {
         deleteField: () => ({ __deleteField: true }),
         getDoc: async ref => snap(ref, map(ref.collection).get(ref.id)),
         getDocs: async target => ({ docs: [...map(target.name).entries()].map(([id, data]) => snap({ id }, data)), metadata: {} }),
-        onSnapshot: (target, next, error) => {
-            const subscription = { target, next, error, closed: false };
+        onSnapshot: (target, optionsOrNext, nextOrError, maybeError) => {
+            const hasOptions = optionsOrNext && typeof optionsOrNext === 'object';
+            const options = hasOptions ? optionsOrNext : null;
+            const next = hasOptions ? nextOrError : optionsOrNext;
+            const error = hasOptions ? maybeError : nextOrError;
+            const subscription = { target, options, next, error, closed: false };
             state.subscriptions.push(subscription);
             return () => { subscription.closed = true; };
         },
@@ -77,10 +81,14 @@ function makeDouble() {
             listen: (...args) => {
                 let released = false;
                 let activeCallback = true;
-                const [target, onNext, onError, ...rest] = args;
-                const raw = sdk.onSnapshot(target,
+                const [target, optionsOrNext, nextOrError, maybeError] = args;
+                const hasOptions = optionsOrNext && typeof optionsOrNext === 'object';
+                const options = hasOptions ? optionsOrNext : null;
+                const onNext = hasOptions ? nextOrError : optionsOrNext;
+                const onError = hasOptions ? maybeError : nextOrError;
+                const raw = sdk.onSnapshot(target, ...(options ? [options] : []),
                     value => { if (activeCallback) onNext?.(value); },
-                    error => { if (activeCallback) onError?.(error); }, ...rest);
+                    error => { if (activeCallback) onError?.(error); });
                 const release = () => {
                     if (released) return;
                     released = true;
@@ -129,6 +137,7 @@ test('les quatre dépôts partagent le même double public/MJ et libèrent leurs
     const publicValues = [];
     const unsubscribePnj = publicPnj.subscribeVisible((items, metadata) => publicValues.push({ items, metadata }));
     const pnjSubscription = fake.state.subscriptions.at(-1);
+    assert.deepEqual(pnjSubscription.options, { includeMetadataChanges: true });
     const pnjSnapshot = { docs: [{ id: 'a', data: () => fake.map('pnjs').get('a') }], metadata: {} };
     pnjSubscription.next(pnjSnapshot);
     pnjSubscription.next(pnjSnapshot);

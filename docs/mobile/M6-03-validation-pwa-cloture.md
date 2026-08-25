@@ -1,7 +1,8 @@
 # M6-03 — Rapport de recette PWA et clôture locale
 
 Date de préparation : 25 août 2026. Version cachée actuellement déployée : `v2.21.3`, commit
-`712417f`. La version témoin Android précédente était `v2.21.2`.
+`712417f`. La version témoin Android précédente était `v2.21.2`. Le candidat local actuel est
+`v2.21.4`, non poussé et non déployé.
 
 ## Décision de livraison
 
@@ -73,6 +74,11 @@ a confirmé les titres par route, puis l'activation `v2.21.2` → `v2.21.3` avec
 et diagnostics interface/worker alignés. Les preuves Android ci-dessus restent des preuves de
 `v2.21.2` et ne sont pas attribuées à `v2.21.3`.
 
+Le hotfix de synchronisation Firestore demande explicitement les métadonnées dans le contrat
+d'écoute public/MJ. Le candidat local `v2.21.4` aligne donc à nouveau la version, le cache, la méta
+et le CHANGELOG, mais n'a pas été poussé ni déployé. Les preuves HTTPS et Android ci-dessus restent
+des preuves de `v2.21.3` ou de versions antérieures.
+
 ## Contrôles automatisés
 
 Le test `tools/m6-03-release.test.mjs` vérifie l’alignement version/méta/Service Worker/CHANGELOG,
@@ -118,7 +124,8 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
 
 ## Checklist de sortie
 
-- [x] Version cachée, cache, méta et CHANGELOG alignés en `v2.21.3`, commit `712417f` publié.
+- [x] Version déployée `v2.21.3` et candidat local `v2.21.4` documentés ; le candidat local n'est
+  pas déclaré publié.
 - [x] `start_url` historique conservé et aucune annonce publique de `/app/`.
 - [x] Contrôles automatisés locaux verts.
 - [x] Preuves navigateur locales consignées sans données privées.

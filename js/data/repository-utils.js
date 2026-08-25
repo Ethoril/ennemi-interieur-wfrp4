@@ -115,7 +115,10 @@ export function subscribeSnapshot(sdk, target, onNext, onError, listen = null) {
         if (active && typeof onError === 'function') onError(normalizeRepositoryError(error, 'subscribe'));
     };
     try {
-        unsubscribe = subscribe(target, safeNext, safeError);
+        // Firestore n'émet pas forcément le second snapshot lorsque les données
+        // sont identiques. Demander les métadonnées permet de distinguer cache,
+        // confirmation serveur et écritures en attente sans changer le payload.
+        unsubscribe = subscribe(target, { includeMetadataChanges: true }, safeNext, safeError);
     } catch (error) {
         safeError(error);
     }

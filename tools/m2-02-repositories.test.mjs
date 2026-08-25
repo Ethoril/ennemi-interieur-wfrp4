@@ -54,8 +54,12 @@ function makeFirestore() {
             if (typeof state.afterSnapshotGetDocs === 'function') state.afterSnapshotGetDocs(target, state.getDocsCalls);
             return result;
         },
-        onSnapshot: (target, next, error) => {
-            const subscription = { target, next, error, active: true };
+        onSnapshot: (target, optionsOrNext, nextOrError, maybeError) => {
+            const hasOptions = optionsOrNext && typeof optionsOrNext === 'object';
+            const options = hasOptions ? optionsOrNext : null;
+            const next = hasOptions ? nextOrError : optionsOrNext;
+            const error = hasOptions ? maybeError : nextOrError;
+            const subscription = { target, options, next, error, active: true };
             state.subscriptions.push(subscription);
             return () => { subscription.active = false; };
         },
@@ -116,6 +120,7 @@ test('les fabriques séparent public/MJ et les abonnements sont filtrés, ordonn
     const received = [];
     const unsubscribe = publicRepo.subscribeVisible((items, metadata) => received.push({ items, metadata }), error => { throw error; });
     const subscription = fake.state.subscriptions[0];
+    assert.deepEqual(subscription.options, { includeMetadataChanges: true });
     assert.ok(subscription.target.constraints.some(item => item.field === 'visibleJoueurs' && item.value === true));
     subscription.next({ docs: [publicPnj('z', true, { nom: 'Émile' }), publicPnj('a', true, { nom: 'Ada' }), publicPnj('x', false)], metadata: {} });
     subscription.next({ docs: [publicPnj('z', true, { nom: 'Émile' }), publicPnj('a', true, { nom: 'Ada' }), publicPnj('x', false)], metadata: {} });
@@ -123,10 +128,12 @@ test('les fabriques séparent public/MJ et les abonnements sont filtrés, ordonn
     assert.deepEqual(received[0].items.map(item => item.id), ['a', 'z']);
     subscription.next({ docs: [publicPnj('z', true, { nom: 'Émile' }), publicPnj('a', true, { nom: 'Ada' }), publicPnj('x', false)], metadata: { fromCache: true } });
     assert.equal(received.length, 2);
+    subscription.next({ docs: [publicPnj('z', true, { nom: 'Émile' }), publicPnj('a', true, { nom: 'Ada' }), publicPnj('x', false)], metadata: { fromCache: false, hasPendingWrites: false } });
+    assert.equal(received.length, 3, 'la confirmation serveur identique doit rester observable');
     unsubscribe();
     unsubscribe();
     subscription.next({ docs: [], metadata: {} });
-    assert.equal(received.length, 2);
+    assert.equal(received.length, 3);
 
     publicRepo.subscribeOne('a', () => {}, error => { throw error; });
     const oneQuery = fake.state.subscriptions[1].target;

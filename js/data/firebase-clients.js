@@ -94,11 +94,17 @@ function createClientHandle({ mode, sdk, app, appName = null, auth = null, db, s
     const listen = (...args) => {
         if (closed) throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'listen' });
         if (typeof sdk?.onSnapshot !== 'function') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'listen' });
-        const [target, onNext, onError, ...rest] = args;
+        const [target, optionsOrNext, nextOrError, maybeError] = args;
+        const hasOptions = optionsOrNext && typeof optionsOrNext === 'object';
+        const options = hasOptions ? optionsOrNext : null;
+        const onNext = hasOptions ? nextOrError : optionsOrNext;
+        const onError = hasOptions ? maybeError : nextOrError;
         let active = true;
         const safeNext = value => { if (active && typeof onNext === 'function') onNext(value); };
         const safeError = error => { if (active && typeof onError === 'function') onError(error); };
-        const rawUnsubscribe = sdk.onSnapshot(target, safeNext, safeError, ...rest);
+        const rawUnsubscribe = options
+            ? sdk.onSnapshot(target, options, safeNext, safeError)
+            : sdk.onSnapshot(target, safeNext, safeError);
         let released = false;
         const release = () => {
             if (released) return;

@@ -31,7 +31,17 @@ function makeFake() {
         arrayRemove: (...values) => ({ __arrayRemove: values }),
         getDoc: async ref => snap(ref, map(ref.collection).get(ref.id)),
         getDocs: async target => ({ docs: [...map(target.name).entries()].map(([id, data]) => snap({ id }, data)), metadata: {} }),
-        onSnapshot: (target, next, error) => { const item = { target, next, error }; state.subscriptions.push(item); return () => { item.closed = true; }; },
+        onSnapshot: (target, optionsOrNext, nextOrError, maybeError) => {
+            const hasOptions = optionsOrNext && typeof optionsOrNext === 'object';
+            const item = {
+                target,
+                options: hasOptions ? optionsOrNext : null,
+                next: hasOptions ? nextOrError : optionsOrNext,
+                error: hasOptions ? maybeError : nextOrError,
+            };
+            state.subscriptions.push(item);
+            return () => { item.closed = true; };
+        },
         runTransaction: async (_db, callback) => {
             const operations = [];
             const transaction = {
@@ -73,6 +83,7 @@ test('les dépôts indices séparent public/MJ et portent les requêtes publique
     assert.equal(typeof mjRepo.create, 'function');
     const received = [];
     const unsubscribe = publicRepo.subscribeDiscovered((items, metadata) => received.push({ items, metadata }), error => { throw error; });
+    assert.deepEqual(fake.state.subscriptions[0].options, { includeMetadataChanges: true });
     const subscription = fake.state.subscriptions[0];
     assert.ok(subscription.target.constraints.some(item => item.field === 'decouvert' && item.value === true));
     subscription.next({ docs: [{ id: 'seen', data: () => ({ titre: 'Visible', decouvert: true, pnjsLies: [] }) }], metadata: {} });
