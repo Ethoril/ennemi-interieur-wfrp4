@@ -1,5 +1,6 @@
 import { errorForUi, ERROR_KINDS } from '../../data/firebase-errors.js';
 import { createPortraitEditor } from '../components/portrait-editor.js';
+import { createPnjRelationsEditor } from '../components/pnj-relations-editor.js';
 
 const STATUSES = Object.freeze(['', 'allié', 'neutre', 'ennemi']);
 const LIVING = Object.freeze(['oui', 'non', 'inconnu']);
@@ -144,7 +145,8 @@ function impactMessage(impact) {
 }
 
 export function createPnjEditView({ container, id = null, repository = null, getRepository = () => repository,
-    getImageService = () => null, portraitProcessor = null, getSession = () => ({ status: 'visitor' }), onNavigate = () => {}, onBack = () => {}, announce = () => {} } = {}) {
+    getImageService = () => null, getRelationsRepository = () => null, getPnjRepository = getRepository,
+    portraitProcessor = null, getSession = () => ({ status: 'visitor' }), onNavigate = () => {}, onBack = () => {}, announce = () => {} } = {}) {
     let mounted = false;
     let generation = 0;
     let signalRef = null;
@@ -169,6 +171,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
     let portraitDirty = false;
     let imageRecoveryLocked = false;
     let imageRecoveryState = null;
+    let relationsEditor = null;
 
     const cleanup = () => { for (const unsubscribe of unsubs.splice(0)) { try { unsubscribe?.(); } catch { /* best-effort */ } } };
     const setBusy = busy => {
@@ -180,6 +183,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
         refs.save.textContent = busy ? 'Enregistrement…' : 'Enregistrer';
         for (const { control } of Object.values(refs.fields)) control.disabled = busy || removing || recoveryLocked;
         portraitEditor?.setDisabled?.(busy || removing || recoveryLocked || imageRecoveryLocked);
+        relationsEditor?.setDisabled?.(busy || removing || recoveryLocked || imageRecoveryLocked);
     };
     const renderErrors = errors => {
         if (!refs) return;
@@ -221,6 +225,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
     const hasChanges = () => JSON.stringify(normalizePnjFormValues(valuesFromForm())) !== JSON.stringify(normalizePnjFormValues(initialValues)) || portraitDirty;
     const beforeLeave = () => {
         if (!mounted || !refs) return true;
+        if (relationsEditor?.beforeLeave && !relationsEditor.beforeLeave()) return false;
         const confirm = container.ownerDocument.defaultView?.confirm;
         if (recoveryLocked || imageRecoveryLocked) return typeof confirm !== 'function' || confirm('Un nettoyage de portrait doit être repris avant de quitter cette fiche. Continuer ?');
         if (!hasChanges()) return true;
@@ -654,6 +659,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
         const saveButton = documentRef.createElement('button'); saveButton.type = 'submit'; saveButton.className = 'm-button m-button-primary'; saveButton.textContent = 'Enregistrer';
         actions.append(cancel, saveButton);
         form.append(summary, publicSet, privateSet, publicationSet, actions, portrait);
+        const relations = documentRef.createElement('div'); relations.className = 'm-pnj-relations';
         const danger = documentRef.createElement('section'); danger.className = 'm-danger-zone';
         const remove = documentRef.createElement('button'); remove.type = 'button'; remove.className = 'm-button m-button-danger'; remove.textContent = 'Supprimer ce PNJ'; remove.hidden = !id;
         const confirmation = documentRef.createElement('div'); confirmation.className = 'm-removal-confirmation'; confirmation.hidden = true; confirmation.setAttribute('role', 'alert');
@@ -661,10 +667,18 @@ export function createPnjEditView({ container, id = null, repository = null, get
         const resumeButton = documentRef.createElement('button'); resumeButton.type = 'button'; resumeButton.className = 'm-button'; resumeButton.textContent = 'Reprendre le nettoyage'; resumeButton.hidden = true;
         const recoverImageButton = documentRef.createElement('button'); recoverImageButton.type = 'button'; recoverImageButton.className = 'm-button'; recoverImageButton.textContent = 'Reprendre le nettoyage du portrait'; recoverImageButton.hidden = true;
         confirmation.append(confirmationText, confirmationButton, recoverImageButton, resumeButton); danger.append(remove, confirmation);
-        screen.append(heading, status, form, danger); container.append(screen);
+        screen.append(heading, status, form, relations, danger); container.append(screen);
         refs = { form, fields, summary, status, save: saveButton, cancel, remove, confirmation, confirmationText, confirmationButton, resumeButton, recoverImageButton };
         portraitEditor = createPortraitEditor({ container: portrait, document: documentRef,
             onChange: () => { portraitDirty = true; draftVersion += 1; }, ...(portraitProcessor ? { processFile: portraitProcessor } : {}) });
+        if (id) {
+            try {
+                relationsEditor = createPnjRelationsEditor({ container: relations, pnjId: id, getSession,
+                    getRelationsRepository, getPnjRepository, announce, document: documentRef });
+                relationsEditor.mount({ signal });
+                relationsEditor.setDisabled(true);
+            } catch { relations.textContent = 'Les relations MJ sont indisponibles.'; }
+        }
         if (id) { saveButton.disabled = true; remove.disabled = true; }
         fill(defaultPnjFormValues());
         for (const [fieldName, { control }] of Object.entries(fields)) {
@@ -681,7 +695,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
         const repo = getRepository();
         if (!repo || !isGm(getSession)) { showStatus('Vérification de la session MJ…', 'loading'); return; }
         let publicReady = false; let privateReady = false; let publicItem = null; let privateItem = null; let loadError = null;
-        const disableEditing = () => { refs.save.disabled = true; refs.remove.disabled = true; portraitEditor?.setDisabled?.(true); };
+        const disableEditing = () => { refs.save.disabled = true; refs.remove.disabled = true; portraitEditor?.setDisabled?.(true); relationsEditor?.setDisabled?.(true); };
         const finish = () => {
             if (!mounted || localGeneration !== generation || !publicReady || !privateReady) return;
             if (initialized) return;
@@ -706,6 +720,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
             initialized = true;
             refs.save.disabled = false;
             refs.remove.disabled = false;
+            relationsEditor?.setDisabled?.(false);
             showStatus('PNJ chargé.');
         };
         const subscribe = () => {
@@ -774,6 +789,6 @@ export function createPnjEditView({ container, id = null, repository = null, get
         };
         inspectLockAndSubscribe();
     };
-    const unmount = () => { if (!mounted) return; mounted = false; generation += 1; cleanup(); portraitEditor?.destroy?.(); portraitEditor = null; signalRef?.removeEventListener?.('abort', unmount); refs = null; signalRef = null; container.replaceChildren(); };
+    const unmount = () => { if (!mounted) return; mounted = false; generation += 1; cleanup(); relationsEditor?.unmount?.(); relationsEditor = null; portraitEditor?.destroy?.(); portraitEditor = null; signalRef?.removeEventListener?.('abort', unmount); refs = null; signalRef = null; container.replaceChildren(); };
     return Object.freeze({ mount, unmount, beforeLeave });
 }

@@ -466,6 +466,23 @@ body {
 .m-scroll-locked { overflow: hidden; }
 .m-scroll-locked .m-main { overflow: hidden; touch-action: none; }
 
+.m-relations-editor { display: grid; gap: var(--space-sm); margin-block: var(--space-lg); padding: var(--space-md); background: var(--bg-surface); border: 1px dashed var(--border-gold); border-radius: var(--radius-sm); }
+.m-relations-editor h3 { margin: 0; color: var(--text-heading); }
+.m-relations-list { display: grid; gap: var(--space-sm); margin: 0; padding: 0; list-style: none; }
+.m-relation-row { display: grid; gap: var(--space-xs); padding: var(--space-sm); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); }
+.m-relation-row strong { color: var(--text-primary); }
+.m-relation-row span { color: var(--text-secondary); }
+.m-relation-actions, .m-relation-sheet-actions, .m-relation-conflict-actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.m-relation-anomaly, .m-relation-error { color: var(--blood-bright) !important; }
+.m-relation-sheet { position: fixed; z-index: 20; inset: 0; display: flex; align-items: flex-end; background: var(--bg-overlay); }
+.m-relation-sheet-panel { width: 100%; max-height: min(90dvh, 48rem); overflow: auto; padding: var(--space-lg) var(--space-md) calc(var(--space-lg) + env(safe-area-inset-bottom)); color: var(--text-primary); background: var(--bg-card); border-top: 1px solid var(--border-gold); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.m-relation-sheet-panel h3 { margin-top: 0; color: var(--text-heading); }
+.m-relation-sheet-panel form { display: grid; gap: var(--space-sm); }
+.m-relation-field { display: grid; gap: var(--space-xs); }
+.m-relation-field label { color: var(--text-primary); font-weight: 700; }
+.m-relation-field input, .m-relation-field select { min-height: var(--m-touch-target); width: 100%; padding: var(--space-xs); color: var(--text-primary); background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); }
+.m-relation-field input[type="checkbox"] { width: var(--m-touch-target); }
+
 @media (max-width: 22rem) {
   .m-form-actions { display: flex; flex-wrap: wrap; }
   .m-form-actions .m-button { flex: 1 1 8rem; }
