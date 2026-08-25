@@ -16,11 +16,11 @@ test('M6-03 aligne version, cache, méta et rapport honnête', () => {
     const report = read('docs/mobile/M6-03-validation-pwa-cloture.md');
     const layoutVersion = layout.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
     const swVersion = sw.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
-    assert.equal(layoutVersion, 'v2.21.1');
+    assert.equal(layoutVersion, 'v2.21.2');
     assert.equal(swVersion, layoutVersion);
     assert.match(sw, /CACHE_NAME\s*=\s*['"]wfrp-cache-['"]\s*\+\s*APP_VERSION/u);
-    assert.match(app, /app-version"\s+content="v2\.21\.1"/u);
-    assert.match(changelog, /^## \[2\.21\.1\] - 2026-08-25\r?\n/u);
+    assert.match(app, /app-version"\s+content="v2\.21\.2"/u);
+    assert.match(changelog, /^## \[2\.21\.2\] - 2026-08-25\r?\n/u);
     assert.match(report, /Android physique n’est donc pas déclaré validé/u);
     assert.match(report, /iOS.*différée|différée.*iOS/isu);
     assert.match(report, /inspection réelle de Cache Storage/iu);

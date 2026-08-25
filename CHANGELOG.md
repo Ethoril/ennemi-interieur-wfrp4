@@ -1,3 +1,10 @@
+## [2.21.2] - 2026-08-25
+
+### Validation
+
+- **Recette Android** : version témoin sans changement fonctionnel, destinée à valider de bout en
+  bout le bouton corrigé du bandeau de mise à jour livré en `v2.21.1`.
+
 ## [2.21.1] - 2026-08-25
 
 ### Corrigé

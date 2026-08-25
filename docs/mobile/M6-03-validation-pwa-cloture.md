@@ -1,6 +1,6 @@
 # M6-03 — Rapport de recette PWA et clôture locale
 
-Date de préparation : 25 août 2026. Version corrective préparée : `v2.21.1`.
+Date de préparation : 25 août 2026. Version témoin préparée : `v2.21.2`.
 
 ## Décision de livraison
 
@@ -57,6 +57,10 @@ l’action, réserve le bandeau aux seules mises à jour, conserve les aides d�
 Réglages et protège les continuations asynchrones après démontage. Sa revalidation Android reste à
 faire avant de clore la matrice.
 
+L’utilisateur a confirmé l’installation réussie de `v2.21.1` via Réglages et la disparition du
+bandeau résiduel. Une version témoin `v2.21.2`, sans autre changement fonctionnel, est préparée pour
+valider directement le bouton corrigé du bandeau depuis une session Android `v2.21.1`.
+
 ## Contrôles automatisés
 
 Le test `tools/m6-03-release.test.mjs` vérifie l’alignement version/méta/Service Worker/CHANGELOG,
@@ -102,7 +106,7 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
 
 ## Checklist de sortie
 
-- [x] Version corrective, cache, méta et CHANGELOG alignés en `v2.21.1`.
+- [x] Version témoin, cache, méta et CHANGELOG alignés en `v2.21.2`.
 - [x] `start_url` historique conservé et aucune annonce publique de `/app/`.
 - [x] Contrôles automatisés locaux verts.
 - [x] Preuves navigateur locales consignées sans données privées.
