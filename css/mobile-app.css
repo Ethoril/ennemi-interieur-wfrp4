@@ -319,6 +319,38 @@ body {
 
 .m-public-list .m-pnj-chevron { color: var(--gold-bright); font-size: 1.6rem; }
 
+.m-enquete-card {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-md);
+  min-height: 5.5rem;
+  padding: var(--space-md);
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.m-enquete-card-copy { min-width: 0; display: grid; gap: var(--space-xs); }
+.m-enquete-card-copy > a { display: grid; gap: var(--space-xs); color: var(--text-primary); text-decoration: none; }
+.m-enquete-card-copy > a:hover,
+.m-enquete-card-copy > a:focus-visible { outline: 2px solid var(--border-gold); outline-offset: 2px; }
+.m-enquete-card-copy strong { overflow-wrap: anywhere; color: var(--text-heading); font-family: var(--font-heading); }
+.m-enquete-card-copy a span { color: var(--text-secondary); font-size: 0.9rem; overflow-wrap: anywhere; }
+.m-enquete-pnjs { color: var(--text-muted); font-size: 0.82rem; overflow-wrap: anywhere; }
+.m-enquete-pnjs a { color: var(--gold-bright); }
+.m-enquete-image-frame,
+.m-enquete-thumbnail,
+.m-enquete-illustration { display: grid; place-items: center; overflow: hidden; }
+.m-enquete-thumbnail { width: 4.5rem; height: 4.5rem; border-radius: var(--radius-sm); background: var(--bg-surface); border: 1px solid var(--border-gold); }
+.m-enquete-illustration { width: min(100%, 18rem); min-height: 9rem; aspect-ratio: 4 / 3; background: var(--bg-surface); border: 1px solid var(--border-gold); border-radius: var(--radius-sm); }
+.m-indice-image-frame { position: relative; display: grid; width: 100%; height: 100%; place-items: center; }
+.m-indice-image-placeholder { color: var(--gold-bright); font-size: 1.8rem; }
+.m-indice-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.m-enquete-hero { justify-items: center; }
+
 .m-filter-sheet { max-height: min(80dvh, 40rem); }
 .m-filter-form { min-height: 0; display: grid; gap: var(--space-md); overflow-y: auto; }
 .m-filter-group { display: grid; gap: var(--space-xs); padding: 0; border: 0; }

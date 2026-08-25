@@ -135,7 +135,7 @@ export function createRouter({ windowRef = globalThis, mountRoute, onRoute, anno
             });
         }
         const saved = scrollPositions.get(nextKey);
-        if (saved !== undefined && nextRoute.name === ROUTE_NAMES.PNJS) writeScroll(saved);
+        if (saved !== undefined && [ROUTE_NAMES.PNJS, ROUTE_NAMES.ENQUETES].includes(nextRoute.name)) writeScroll(saved);
         onRoute?.(nextRoute);
         announce(nextRoute.name === ROUTE_NAMES.UNKNOWN ? 'Écran introuvable.' : 'Écran chargé.');
         return nextRoute;

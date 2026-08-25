@@ -5,6 +5,8 @@ import { createDefaultMjSession } from './mj-runtime.js';
 import { announce, createDialogController, publicStatusKind, publicStatusMessage, renderState } from './ui.js';
 import { createPnjsListView } from './views/pnjs-list.js';
 import { createPnjDetailView } from './views/pnj-detail.js';
+import { createEnquetesListView } from './views/enquetes-list.js';
+import { createEnqueteDetailView } from './views/enquete-detail.js';
 import { createPnjEditView } from './views/pnj-edit.js';
 import { createAdminRouteController } from './admin-route-controller.js';
 import { createPublicDraftStore } from './drafts-store.js';
@@ -212,15 +214,14 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
                 onBack: () => router.back({ skipGuard: true }), onNavigate: target => router.navigate(parseRoute(target), { replace: true, skipGuard: true }),
                 announce: message => announce(routeStatus, message) });
         },
-        [ROUTE_NAMES.ENQUETES]: () => placeholderView({
-            container,
-            title: 'Enquêtes',
-            message: 'La liste des enquêtes arrivera dans un prochain lot.',
+        [ROUTE_NAMES.ENQUETES]: () => createEnquetesListView({
+            container, store, getImageService: () => session.getImages(), onRetry: retry,
+            onOpen: id => router.navigate({ name: ROUTE_NAMES.ENQUETE, id }),
         }),
-        [ROUTE_NAMES.ENQUETE]: () => placeholderView({
-            container,
-            title: 'Enquête',
-            message: 'La fiche d’enquête arrivera dans un prochain lot.',
+        [ROUTE_NAMES.ENQUETE]: route => createEnqueteDetailView({
+            container, id: route.id, store, getImageService: () => session.getImages(), onRetry: retry,
+            onBack: () => router.back(),
+            onOpenPnj: id => router.navigate({ name: ROUTE_NAMES.PNJ, id }),
         }),
         [ROUTE_NAMES.REGLAGES]: () => placeholderView({
             container, title: 'Réglages', message: 'Chargement des réglages…',

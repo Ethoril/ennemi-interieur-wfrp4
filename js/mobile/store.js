@@ -81,13 +81,17 @@ export function sanitizePreferences(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value) || value.version !== 1) {
         return DEFAULT_PREFERENCES;
     }
-    return Object.freeze({
+    const preferences = {
         version: 1,
         theme: value.theme === 'parchment' ? 'parchment' : 'dark',
         lastSection: ['pnjs', 'enquetes', 'reglages'].includes(value.lastSection)
             ? value.lastSection : 'pnjs',
         filters: safeFilters(value.filters),
-    });
+    };
+    // Cette clé est ajoutée à la première saisie Enquêtes afin de conserver la
+    // forme historique des préférences PNJ lors d'une migration silencieuse.
+    if (Object.hasOwn(value, 'enqueteSearch')) preferences.enqueteSearch = safeString(value.enqueteSearch, 120);
+    return Object.freeze(preferences);
 }
 
 export function createPreferenceStore({ storage = undefined, key = 'wfrp-mobile-preferences-v1' } = {}) {
