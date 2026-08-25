@@ -1,9 +1,12 @@
 # M6-03 — Rapport de recette PWA et clôture locale
 
-Date de préparation : 25 août 2026. Version cachée actuellement publiée : `v2.21.6`, commit
-`5dc077b`. Le candidat local `v2.21.7` corrige l’exclusion reCAPTCHA du Cache Storage ; il n’est
-pas encore poussé ni déployé. La version précédente était `v2.21.5`, commit `f9f4a71`, et la
-version témoin Android précédente était `v2.21.2`.
+Date de préparation : 25 août 2026. Version cachée actuellement publiée : `v2.21.7`, commit
+`d42e1cd`. La version précédente était `v2.21.6`, commit `5dc077b`, et la version témoin Android
+précédente était `v2.21.2`. La référence Auth antérieure `v2.21.5` reste le commit `f9f4a71`.
+
+Le candidat local `v2.21.8`, non poussé et non déployé, maintient l’accès à l’installation depuis
+Réglages même lorsque Chrome ne redéclenche pas son dialogue natif après une mise à jour. Dans ce
+cas, l’interface donne le chemin manuel du menu navigateur ; le mode déjà installé reste détecté.
 
 La version publiée rend la popup Google prioritaire sur mobile et consomme les marqueurs de
 redirection historiques de `v2.21.5`. Sa CSP autorise `https://apis.google.com` dans `script-src`
@@ -33,7 +36,7 @@ observé en `v2.20.0` :
 - navigation de la coque et retour historique conservés pendant ce cycle.
 
 Le bandeau visible est réservé à la mise à jour ; les aides d’installation restent regroupées dans
-Réglages et ne réapparaissent pas après l’activation d’une version.
+Réglages et demeurent accessibles en mode navigateur après l’activation d’une version.
 
 Ces preuves ne constituent pas une inspection réelle de Cache Storage et ne remplacent pas une
 recette sur appareil physique.
@@ -92,12 +95,13 @@ propriétaire, le premier geste « Connexion Google » a ouvert la popup et le r
 session MJ active. Cette preuve valide le chemin de succès Auth, pas encore l’annulation, le retry,
 la restauration de route ni la matrice Android complète.
 
-L’inspection réelle du Cache Storage dans Chrome a ensuite trouvé 123 entrées dans
+L’inspection réelle du Cache Storage dans Chrome avait trouvé 123 entrées dans
 `wfrp-cache-v2.21.6`. Les fichiers locaux et les CDN publics prévus étaient présents, ainsi qu’un
 script reCAPTCHA `www.gstatic.com/recaptcha/...` qui aurait dû rester hors cache. Aucun document
-Firestore, token, URL Storage, portrait ou donnée privée n’a été trouvé. Le candidat local
-`v2.21.7` ajoute cet hôte/chemin à la garde protégée et un test de purge/mise hors cache ; le
-contrôle Chrome devra être rejoué après publication et activation volontaire.
+Firestore, token, URL Storage, portrait ou donnée privée n’a été trouvé. `v2.21.7` a ajouté cet
+hôte/chemin à la garde protégée et un test de purge/mise hors cache. Après publication et activation
+volontaire, Chrome affiche uniquement `wfrp-cache-v2.21.7`, 122 entrées, zéro ressource
+Firebase/Auth/App Check protégée et zéro réponse opaque.
 
 ## Contrôles automatisés
 
@@ -138,23 +142,22 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
   appareil réel ; les contrôles statiques et tests DOM restent verts localement.
 - **Performance** : démarrage réseau mobile bridé, poids initial, images et longues tâches sur
   appareil réel ; aucune mesure physique n’est revendiquée ici.
-- **Sécurité** : l’inspection réelle de Cache Storage a révélé une ressource reCAPTCHA externe,
-  sans donnée de campagne ; le correctif local `v2.21.7` doit être publié puis recontrôlé. La
-  déconnexion et le lien direct secret restent à rejouer sur l’environnement de recette.
+- **Sécurité** : l’inspection réelle de Cache Storage est conforme après `v2.21.7`. La déconnexion
+  et le lien direct secret restent à rejouer sur l’environnement de recette.
 - **Prévisualisation du futur démarrage mobile** : conserver `./index.html` jusqu’à M7, puis valider
   le changement de `start_url` hors production avant activation.
 
 ## Checklist de sortie
 
-- [x] Version publiée `5dc077b` / `v2.21.6`, candidat local `v2.21.7`, version précédente
-  `f9f4a71` / `v2.21.5` et témoin `712417f` / `v2.21.3` documentés ; le chemin de succès Auth
+- [x] Version publiée `d42e1cd` / `v2.21.7`, candidat local `v2.21.8`, version précédente
+  `5dc077b` / `v2.21.6` et témoin `712417f` / `v2.21.3` documentés ; le chemin de succès Auth
   Android est validé.
 - [x] `start_url` historique conservé et aucune annonce publique de `/app/`.
 - [x] Contrôles automatisés locaux verts.
 - [x] Preuves navigateur locales consignées sans données privées.
 - [ ] Matrice Android physique complète.
-- [ ] Inspection réelle Cache Storage : anomalie reCAPTCHA identifiée et corrigée localement ;
-  recontrôle requis après activation de `v2.21.7`.
+- [x] Inspection réelle Cache Storage : 122 entrées, aucune ressource protégée ou opaque après
+  activation de `v2.21.7`.
 - [ ] Matrice iOS : différée explicitement.
 - [x] Autorisation spécifique puis publication du candidat caché `aa9f0d2` sur `master`.
 - [x] Publication cachée de `v2.21.0` et cycle de mise à jour validé sur navigateur bureau.

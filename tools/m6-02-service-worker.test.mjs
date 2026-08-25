@@ -71,7 +71,7 @@ function createWorkerHarness() {
         },
         caches: {
             async open() { return cache; },
-            async keys() { return ['wfrp-cache-v2.21.7']; },
+            async keys() { return ['wfrp-cache-v2.21.8']; },
             async match(request) { return cache.match(request); },
         },
         fetch: async request => {
@@ -277,7 +277,7 @@ test('la mise à jour attend une action, respecte beforeLeave et ne recharge qu 
     waiting.addEventListener = EventTargetFake.prototype.addEventListener;
     const registration = new EventTargetFake();
     registration.waiting = waiting;
-    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.7' }) };
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.8' }) };
     registration.update = async () => {};
     serviceWorker.controller = {};
     serviceWorker.register = async (url, options) => {
@@ -291,7 +291,7 @@ test('la mise à jour attend une action, respecte beforeLeave et ne recharge qu 
     const pwa = createPwaController({ windowRef, navigatorRef: windowRef.navigator, router: { canLeaveCurrent: () => canLeave }, announce: message => announcements.push(message) });
     await pwa.start();
     assert.equal(pwa.getState().updateAvailable, true);
-    assert.equal(pwa.getDiagnostics().workerVersion, 'v2.21.7');
+    assert.equal(pwa.getDiagnostics().workerVersion, 'v2.21.8');
     assert.equal(pwa.applyUpdate(), false);
     assert.deepEqual(messages, []);
     assert.match(announcements.at(-1), /différée/u);
@@ -326,6 +326,30 @@ test('l aide d installation Android est non obligatoire et le prompt est contrô
     assert.equal(pwa.getInstallationHint()?.kind, 'android');
     assert.equal(await pwa.promptInstall(), true);
     assert.equal(prompted, 1);
+    pwa.stop();
+});
+
+test('Réglages conserve une aide d installation quand Chrome ne fournit pas son prompt', async () => {
+    const windowRef = new EventTargetFake();
+    windowRef.navigator = { userAgent: 'Mozilla/5.0 (Linux; Android 15) Chrome/140.0' };
+    windowRef.matchMedia = () => ({ matches: false });
+    const serviceWorker = new EventTargetFake();
+    serviceWorker.register = async () => ({ addEventListener() {}, update: async () => {} });
+    windowRef.navigator.serviceWorker = serviceWorker;
+    const announcements = [];
+    const pwa = createPwaController({
+        windowRef,
+        navigatorRef: windowRef.navigator,
+        announce: message => announcements.push(message),
+    });
+    await pwa.start();
+    assert.equal(pwa.getState().installAvailable, false);
+    assert.equal(pwa.getInstallationHint()?.kind, 'manual');
+    assert.match(pwa.getInstallationHint()?.text || '', /menu ⋮/u);
+    assert.equal(await pwa.promptInstall(), false);
+    assert.match(announcements.at(-1), /Installer l’application/u);
+    assert.match(read('js/mobile/app.js'), /hint\.kind === 'android' \|\| hint\.kind === 'manual'/u);
+    assert.match(read('js/mobile/app.js'), /Voir comment installer/u);
     pwa.stop();
 });
 
@@ -436,7 +460,7 @@ test('le bouton du bandeau passe par la même action que Réglages et disparaît
     waiting.postMessage = message => messages.push(message);
     const registration = new EventTargetFake();
     registration.waiting = waiting;
-    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.7' }) };
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.8' }) };
     registration.update = async () => {};
     serviceWorker.register = async () => registration;
     windowRef.navigator.serviceWorker = serviceWorker;
@@ -524,7 +548,7 @@ test('stop pendant requestUpdate empêche tout SKIP_WAITING tardif', async () =>
     waiting.postMessage = message => messages.push(message);
     const registration = new EventTargetFake();
     registration.waiting = waiting;
-    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.7' }) };
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.8' }) };
     let resolveUpdate;
     registration.update = () => new Promise(resolve => { resolveUpdate = resolve; });
     serviceWorker.register = async () => registration;
@@ -603,7 +627,7 @@ test('un rejet d installation futur hostile n écarte pas durablement l aide', a
     windowRef.dispatch('beforeinstallprompt', { preventDefault() {}, prompt: async () => {}, userChoice: Promise.resolve({ outcome: 'accepted' }) });
     assert.equal(pwa.getInstallationHint()?.kind, 'android');
     pwa.dismissInstall();
-    assert.equal(pwa.getInstallationHint(), null);
+    assert.equal(pwa.getInstallationHint()?.kind, 'manual');
     pwa.stop();
 });
 
@@ -620,7 +644,7 @@ test('la rétention de l aide ignore les timestamps nuls, NaN, futurs et expiré
         const pwa = createPwaController({ windowRef, navigatorRef: windowRef.navigator, storage, now: () => 1_000 });
         await pwa.start();
         windowRef.dispatch('beforeinstallprompt', { preventDefault() {} });
-        assert.equal(pwa.getInstallationHint() === null, value === 999);
+        assert.equal(pwa.getInstallationHint()?.kind, value === 999 ? 'manual' : 'android');
         pwa.stop();
     }
 });

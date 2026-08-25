@@ -22,6 +22,13 @@ function safeMessage(announce, text) {
     if (typeof announce === 'function') announce(text);
 }
 
+function manualInstallMessage(navigatorRef) {
+    if (/android/iu.test(navigatorRef?.userAgent || '')) {
+        return 'Dans Chrome : ouvrez le menu ⋮, puis choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ».';
+    }
+    return 'Ouvrez le menu du navigateur, puis choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ».';
+}
+
 export function createPwaController({
     windowRef = globalThis.window,
     navigatorRef = windowRef?.navigator,
@@ -249,7 +256,11 @@ export function createPwaController({
     };
 
     const promptInstall = async () => {
-        if (!deferredPrompt || !canOfferInstall()) return false;
+        if (standalone()) return false;
+        if (!deferredPrompt || !canOfferInstall()) {
+            safeMessage(announce, manualInstallMessage(navigatorRef));
+            return false;
+        }
         const prompt = deferredPrompt;
         deferredPrompt = null;
         try {
@@ -278,15 +289,15 @@ export function createPwaController({
     };
 
     const getInstallationHint = () => {
-        if (!canOfferInstall()) return null;
-        if (deferredPrompt) return {
+        if (standalone()) return null;
+        if (deferredPrompt && canOfferInstall()) return {
             kind: 'android',
             text: installError
                 ? 'Installation impossible pour le moment. Réessayez.'
                 : 'Installez cette application sur votre appareil.',
         };
         if (ios()) return { kind: 'ios', text: 'Dans Safari : Partager, puis Sur l’écran d’accueil.' };
-        return null;
+        return { kind: 'manual', text: manualInstallMessage(navigatorRef) };
     };
 
     const stop = () => {

@@ -1,3 +1,18 @@
+## [2.21.8] - 2026-08-25
+
+### Corrigé
+
+- **Installation toujours accessible** : Réglages conserve désormais une action d’installation
+  quand Chrome ne fournit pas ou ne redéclenche pas sa fenêtre native après une mise à jour. Le
+  bouton natif reste prioritaire ; sinon l’interface indique le chemin manuel par le menu du
+  navigateur. L’aide reste masquée lorsque l’application est déjà ouverte en mode installé.
+
+### Préparation
+
+- **Candidat local non publié** : `v2.21.8` ne modifie ni Firebase, ni le manifeste, ni le point de
+  démarrage historique, ni l’absence de lien public `/app/`. La version cachée publiée reste
+  `d42e1cd` / `v2.21.7` jusqu’à une autorisation de push distincte.
+
 ## [2.21.7] - 2026-08-25
 
 ### Corrigé
@@ -9,11 +24,12 @@
   `v2.21.6` observé sur Chrome ; l’activation supprime l’ancien cache et le test de migration
   couvre explicitement une entrée reCAPTCHA héritée.
 
-### Préparation
+### Validation
 
-- **Candidat local non publié** : l’inspection réelle du candidat caché `v2.21.6` a trouvé une
-  ressource reCAPTCHA externe dans Cache Storage. Le correctif `v2.21.7` est préparé sans modifier
-  les données Firebase, le manifeste, le démarrage historique ni l’absence de lien public `/app/`.
+- **Publication cachée contrôlée** : le commit `d42e1cd` publie `v2.21.7`. GitHub Validate et Pages
+  sont verts ; après activation volontaire, Chrome affiche interface et worker `v2.21.7`, avec
+  122 entrées de cache, aucune ressource protégée et aucune réponse opaque. Les données Firebase,
+  le manifeste, le démarrage historique et l’absence de lien public `/app/` restent inchangés.
 
 ## [2.21.6] - 2026-08-25
 

@@ -157,19 +157,14 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
                 const install = documentRef.createElement('p');
                 install.textContent = hint.text;
                 section.append(install);
-                if (hint.kind === 'android') {
+                if (hint.kind === 'android' || hint.kind === 'manual') {
                     const installButton = documentRef.createElement('button');
                     installButton.type = 'button';
                     installButton.className = 'm-button';
-                    installButton.textContent = 'Installer l’application';
+                    installButton.textContent = hint.kind === 'android'
+                        ? 'Installer l’application' : 'Voir comment installer';
                     installButton.addEventListener('click', () => { void pwa.promptInstall(); });
                     section.append(installButton);
-                    const dismiss = documentRef.createElement('button');
-                    dismiss.type = 'button';
-                    dismiss.className = 'm-button';
-                    dismiss.textContent = 'Plus tard';
-                    dismiss.addEventListener('click', () => pwa.dismissInstall());
-                    section.append(dismiss);
                 }
             }
         }

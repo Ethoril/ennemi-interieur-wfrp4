@@ -4,10 +4,12 @@ Date de préparation : 25 août 2026.
 
 ## État du candidat
 
-- Candidat caché actuellement publié : commit `5dc077b` — `v2.21.6`.
-- Candidat local non publié : `v2.21.7`, correction de l’exclusion reCAPTCHA dans Cache Storage.
-- Référence précédente : commit `f9f4a71` — `v2.21.5` ; référence historique antérieure :
-  commit `58fe964` — `v2.21.4`.
+- Candidat caché actuellement publié : commit `d42e1cd` — `v2.21.7`.
+- Candidat local non publié : `v2.21.8`, maintien de l’accès à l’installation depuis Réglages
+  lorsque Chrome ne redéclenche pas sa fenêtre native.
+- Référence précédente : commit `5dc077b` — `v2.21.6` ; référence historique antérieure :
+  commit `f9f4a71` — `v2.21.5`.
+- Référence de synchronisation antérieure : commit `58fe964` — `v2.21.4`.
 - Le candidat publié utilise la popup Google au premier geste et conserve la CSP exacte requise par
   Firebase Auth (`https://apis.google.com` dans `script-src`).
 - Version témoin antérieure : commit `387d1cf` — `v2.21.2` ; le commit documentaire `5376782` est inclus
@@ -21,8 +23,7 @@ Date de préparation : 25 août 2026.
 
 Le rapport ne confond pas la publication avec sa validation fonctionnelle complète. Le chemin de
 succès Auth Android est confirmé ; les preuves Android complètes restent à produire séparément.
-L’inspection du cache réel a été exécutée et a déclenché le candidat correctif `v2.21.7`, qui doit
-encore être publié et recontrôlé.
+L’inspection du cache réel a été exécutée, le correctif `v2.21.7` publié, puis le cache recontrôlé.
 
 Le contrôle HTTPS historique du 25 août 2026 confirme que `/app/` servait la coque `v2.21.4` sous le
 sous-chemin GitHub Pages attendu. La page historique publique affichait également `v2.21.4`, ne contenait aucun
@@ -49,8 +50,13 @@ L’inspection réelle de Chrome a compté 123 entrées dans `wfrp-cache-v2.21.6
 Firestore, token, URL Storage, portrait ou donnée privée n’y figurait. Un script reCAPTCHA servi
 par `www.gstatic.com/recaptcha/...` était toutefois présent alors que l’Auth et App Check doivent
 rester hors Cache Storage. `v2.21.7` étend la garde protégée à ce chemin, migre vers un cache neuf
-et ajoute un scénario de purge. La correction n’est pas encore publiée : le cache réel devra être
-inspecté à nouveau après activation volontaire.
+et ajoute un scénario de purge. Après publication de `d42e1cd` et activation volontaire, Chrome
+affiche interface et worker `v2.21.7`, un seul cache de 122 entrées, aucune ressource protégée et
+aucune réponse opaque.
+
+Le retour arrière d’interface a été éprouvé hors production dans une copie de travail détachée sur
+`5dc077b` / `v2.21.6` : les 26 tests PWA/M7 de cette référence passent. La copie temporaire a été
+supprimée après contrôle ; aucun push, déploiement ou accès Firebase n’a eu lieu pendant ce test.
 
 ## Sauvegarde M7-01 vérifiée
 
@@ -69,7 +75,7 @@ effectuée sur Firebase production.
 - restauration et comparaison réussies dans des émulateurs Firestore et Storage vides, cible
   `demo-mobile` / `demo-mobile.appspot.com`.
 
-Le passage vers `v2.21.6` ne modifie aucune donnée Firestore ou Storage : cette sauvegarde reste
+Le passage vers `v2.21.7` ne modifie aucune donnée Firestore ou Storage : cette sauvegarde reste
 la sauvegarde de référence valide pour le candidat, sans nouvelle lecture ni écriture de production.
 
 La comparaison avec M0-01 et M1-05 confirme les mêmes volumes et contenus binaires. La différence
@@ -80,8 +86,8 @@ effectué lors de M1 ; les deux objets orphelins historiques restent inchangés.
 
 Le test `tools/m7-01-release.test.mjs` couvre localement :
 
-- le candidat local `v2.21.7` dans `js/layout.js`, `sw.js`, la méta mobile et CHANGELOG, distinct de
-  la version publiée `5dc077b` / `v2.21.6` ;
+- le candidat local `v2.21.8` dans `js/layout.js`, `sw.js`, la méta mobile et CHANGELOG, distinct de
+  la version publiée `d42e1cd` / `v2.21.7` et de la référence `5dc077b` / `v2.21.6` ;
 - la distinction avec la référence `712417f` / `v2.21.3` et le témoin `387d1cf` / `v2.21.2` ;
 - le cache dérivé, le manifeste unique et le maintien du `start_url` historique ;
 - le graphe local de `/app/`, la syntaxe des modules et les ressources précachées ;
@@ -102,20 +108,20 @@ inspection ni publication des règles ou index de production.
 |---|---|---|
 | Sauvegarde Firestore/Storage datée hors dépôt | **OK** | Manifeste complet, inventaire et restauration émulateur réussie |
 | Pages bureau visiteur/MJ | **Non exécuté dans ce lot** | Parcours PNJs/Enquêtes et console sans erreur |
-| `/app/` réel sous le sous-chemin HTTPS | **OK** | Coque, interface et worker `v2.21.6` contrôlés ; racine historique et manifeste inchangés |
+| `/app/` réel sous le sous-chemin HTTPS | **OK** | Coque, interface et worker `v2.21.7` contrôlés ; racine historique et manifeste inchangés |
 | Android physique | **Partiel** | Mise à jour, confirmation serveur et succès Auth popup vérifiés ; autres scénarios à faire |
 | iOS physique | **Différé** | Appareil disponible et matrice M6-03 |
 | Auth Google en mode installé | **Partiel** | Popup primaire et session MJ active confirmées en `v2.21.6` ; annulation, retry, retour route et ancien redirect restent à tester |
-| Inspection réelle Cache Storage | **Correctif local à revalider** | Aucune donnée de campagne trouvée ; une entrée reCAPTCHA détectée en `v2.21.6`, exclue par `v2.21.7`, recontrôle après publication requis |
+| Inspection réelle Cache Storage | **OK** | `wfrp-cache-v2.21.7`, 122 entrées, aucune ressource protégée, réponse opaque ou donnée de campagne |
 | Règles et index production | **Partiel** | Quatre runners émulateur verts ; état déployé à contrôler |
 | Bêta MJ/joueur | **Non exécutée** | Retour expurgé, sans donnée de campagne |
-| Rollback hors production | **Procédure préparée, test non exécuté** | Prévisualisation et ancien worker actif |
+| Rollback hors production | **OK local** | Copie détachée `5dc077b` / `v2.21.6`, 26/26 tests PWA/M7, copie supprimée sans déploiement |
 
 ## Procédure de déploiement silencieux à autoriser
 
-1. Le candidat `5dc077b` / `v2.21.6` a été publié sans changement non lié ; la référence précédente
-   reste `f9f4a71` / `v2.21.5`. Le chemin de succès Auth Android est confirmé. Le correctif local
-   `v2.21.7` doit recevoir une autorisation de push séparée après ses gates.
+1. Le candidat `d42e1cd` / `v2.21.7` a été publié sans changement non lié ; la référence précédente
+   reste `5dc077b` / `v2.21.6`. Le chemin de succès Auth Android et le cache réel sont confirmés.
+   Le candidat local `v2.21.8` doit recevoir une autorisation de push distincte après ses gates.
 2. Produire une sauvegarde Firestore/Storage hors dépôt, comparer son inventaire à M0-01 et tester
    sa restauration dans des émulateurs isolés.
 3. Exécuter les gates locaux puis les règles/index sur émulateurs ; ne publier aucune règle sans
@@ -157,8 +163,8 @@ Service Worker ; ne jamais supprimer les objets orphelins sans inventaire et aut
 
 ## Critères de sortie
 
-- [x] Version publiée `5dc077b` / `v2.21.6`, candidat local `v2.21.7`, référence précédente
-  `f9f4a71` / `v2.21.5` et témoin `387d1cf` / `v2.21.2` distingués honnêtement ; succès Auth
+- [x] Version publiée `d42e1cd` / `v2.21.7`, candidat local `v2.21.8`, référence précédente
+  `5dc077b` / `v2.21.6` et témoin `387d1cf` / `v2.21.2` distingués honnêtement ; succès Auth
   Android confirmé.
 - [x] `start_url` et absence d’annonce publique conservés.
 - [x] Procédure de rollback interface/SW, règles/index et données séparée.
@@ -166,9 +172,9 @@ Service Worker ; ne jamais supprimer les objets orphelins sans inventaire et aut
 - [x] Backup daté, comparaison aux références et restauration émulateur.
 - [ ] Matrice bureau/mobile/sécurité réelle.
 - [ ] Matrice Android physique complète ; succès Auth installé déjà confirmé.
-- [ ] Inspection Cache Storage réelle : anomalie reCAPTCHA corrigée localement ; recontrôle requis
-  après activation de `v2.21.7`.
-- [ ] Bêta contrôlée et rollback hors production.
+- [x] Inspection Cache Storage réelle : 122 entrées, aucune ressource protégée ou opaque après
+  activation de `v2.21.7`.
+- [ ] Bêta contrôlée ; rollback hors production validé localement.
 - [ ] Validation iOS : différée.
 
 M7-02 ne doit commencer qu’après levée explicite des blocages et validation du candidat sans anomalie
