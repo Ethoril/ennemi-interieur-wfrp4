@@ -74,12 +74,23 @@ et médias antérieurs sont disponibles dans la sauvegarde ci-dessus ; toute res
 validée dans un émulateur vide avant une intervention production. La restauration M1-05 fournie par
 l’outillage reste volontairement interdite vers un projet de production.
 
-## Actions de clôture restantes
+## Statut de clôture
+
+M1 est déclaré **clos le 25 août 2026**. La réserve SMTP venait uniquement du risque qu’une valeur
+technique présente dans un journal opérateur soit ensuite diffusée. Aucune valeur SMTP n’est présente
+dans le dépôt ni livrée au navigateur. Le propriétaire confirme que le journal concerné reste local,
+n’est ni publié ni transmis et accepte de ne pas effectuer de rotation pour ce motif. Cette réserve
+n’est donc plus un blocage de sécurité M1.
+
+La recette Android physique reste un suivi de recette mobile non bloquant pour M1. La recette iPhone
+demeure différée comme décidé par le projet.
+
+## Décisions et suivis
 
 - [x] Connexion MJ sur le site public, upload protégé avec une image de test contrôlée, puis contrôle
   qu’une requête valide atteint la validation métier sans objet orphelin.
 - [x] Déconnexion MJ et vérification que notes, états administratifs et blobs privés disparaissent.
-- [ ] Rotation du mot de passe d’application SMTP qui a pu apparaître dans un journal opérateur, puis
-  vérification de l’extension d’envoi sans exposer la nouvelle valeur.
+- [x] Réserve SMTP levée par décision du propriétaire : aucune valeur versionnée ou exposée au client,
+  journal local non diffusé, rotation non requise pour clôturer M1.
 - [ ] Recette Android physique ; recette iPhone explicitement différée.
 - [x] Deux portraits orphelins conservés sans suppression.
