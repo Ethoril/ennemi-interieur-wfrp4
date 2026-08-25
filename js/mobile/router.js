@@ -61,6 +61,21 @@ export function routeKey(route) {
     return route.id ? `${route.name}:${route.id}` : route.name;
 }
 
+export function documentTitleForRoute(route) {
+    switch (route?.name) {
+        case ROUTE_NAMES.PNJS: return 'PNJs — L\'Ennemi Intérieur';
+        case ROUTE_NAMES.PNJ: return 'PNJ — L\'Ennemi Intérieur';
+        case ROUTE_NAMES.PNJ_NEW: return 'Nouveau PNJ — L\'Ennemi Intérieur';
+        case ROUTE_NAMES.PNJ_EDIT: return 'Modifier un PNJ — L\'Ennemi Intérieur';
+        case ROUTE_NAMES.ENQUETES: return 'Enquêtes — L\'Ennemi Intérieur';
+        case ROUTE_NAMES.ENQUETE: return 'Enquête — L\'Ennemi Intérieur';
+        case ROUTE_NAMES.ENQUETE_NEW: return 'Nouvelle enquête — L\'Ennemi Intérieur';
+        case ROUTE_NAMES.ENQUETE_EDIT: return 'Modifier une enquête — L\'Ennemi Intérieur';
+        case ROUTE_NAMES.REGLAGES: return 'Réglages — L\'Ennemi Intérieur';
+        default: return 'Écran introuvable — L\'Ennemi Intérieur';
+    }
+}
+
 export function routeToHash(route) {
     switch (route?.name) {
         case ROUTE_NAMES.PNJS: return '#/pnjs';

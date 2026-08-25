@@ -1,5 +1,5 @@
 import { createAppLifecycle } from './lifecycle.js';
-import { createRouter, parseRoute, ROUTE_NAMES } from './router.js';
+import { createRouter, documentTitleForRoute, parseRoute, ROUTE_NAMES } from './router.js';
 import { createDefaultPublicSession } from './public-runtime.js';
 import { createDefaultMjSession } from './mj-runtime.js';
 import { announce, createDialogController, publicStatusKind, publicStatusMessage, renderState } from './ui.js';
@@ -347,6 +347,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
         getScrollY: () => container.scrollTop,
         onRoute: route => {
             const section = sectionForRoute(route);
+            documentRef.title = documentTitleForRoute(route);
             title.textContent = section === 'pnjs' ? 'PNJs' : section === 'enquetes' ? 'Enquêtes' : 'Réglages';
             title.focus?.({ preventScroll: true });
             back.hidden = !(route.name === ROUTE_NAMES.PNJ || route.name === ROUTE_NAMES.PNJ_NEW || route.name === ROUTE_NAMES.PNJ_EDIT

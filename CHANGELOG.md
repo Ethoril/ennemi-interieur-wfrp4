@@ -1,3 +1,17 @@
+## [2.21.3] - 2026-08-25
+
+### Accessibilité mobile
+
+- **Titre de document contextualisé** : les écrans mobiles mettent à jour le titre du document
+  selon la route (liste, détail, création, édition, réglages ou adresse inconnue), sans exposer
+  d'identifiant ni de donnée Firestore.
+
+### Préparation
+
+- **Candidat local** : le changement touche la coque `app/index.html` précachée et incrémente donc
+  le cache. `v2.21.3` est préparée localement, sans push ni déploiement ; `v2.21.2` reste la version
+  déployée de référence.
+
 ## [2.21.2] - 2026-08-25
 
 ### Validation
