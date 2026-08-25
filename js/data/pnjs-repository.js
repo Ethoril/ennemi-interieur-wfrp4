@@ -75,7 +75,11 @@ function sanitizePublic(input, id, { create = false } = {}) {
         if (typeof input.visibleJoueurs !== 'boolean') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'pnj-visibility' });
         output.visibleJoueurs = input.visibleJoueurs;
     }
-    if (Object.hasOwn(input, 'imagePath')) output.imagePath = validateImagePath(input.imagePath, id);
+    if (Object.hasOwn(input, 'imagePath')) {
+        // null is the explicit, transactional request to detach a portrait;
+        // creation still requires a valid path when one is supplied.
+        output.imagePath = input.imagePath === null && !create ? null : validateImagePath(input.imagePath, id);
+    }
     if (Object.hasOwn(input, 'ordre')) {
         if (input.ordre !== null && (typeof input.ordre !== 'number' || !Number.isFinite(input.ordre))) {
             throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'pnj-order' });
@@ -115,7 +119,8 @@ function emitNormalized(snapshot, normalizer, compare, onData, state, filter = (
     onData(items, metadata);
 }
 
-function normalizePnjForRepository(snapshot) {
+function normalizePnjForRepository(snapshot, includeLegacyImagePresent = false) {
+    const raw = snapshotData(snapshot);
     const normalized = normalizePnjPublic(snapshot);
     const image = describeImage(normalized, normalized.id, 'portrait');
     return {
@@ -124,6 +129,7 @@ function normalizePnjForRepository(snapshot) {
         imagePath: image.invalid || image.legacy ? null : image.path,
         imageUrl: image.legacy && !image.invalid ? image.path : null,
         legacyImageInvalid: image.legacy && image.invalid,
+        ...(includeLegacyImagePresent ? { legacyImagePresent: typeof raw.imageUrl === 'string' && raw.imageUrl.length > 0 } : {}),
     };
 }
 
@@ -239,7 +245,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
 
     function subscribeAll(onData, onError) {
         if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'subscribe-all-pnjs' });
-        return subscribeCollection(queryAll(sdk, db, 'pnjs'), normalizePnjForRepository, comparePnj, onData, onError);
+        return subscribeCollection(queryAll(sdk, db, 'pnjs'), snapshot => normalizePnjForRepository(snapshot, true), comparePnj, onData, onError);
     }
 
     function subscribeOne(id, onData, onError) {
@@ -256,9 +262,9 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                 let normalized = null;
                 if (Array.isArray(snapshot?.docs)) {
                     const found = docsFromSnapshot(snapshot).find(item => snapshotId(item) === id);
-                    normalized = found ? normalizePnjForRepository(found) : null;
+                    normalized = found ? normalizePnjForRepository(found, isMj) : null;
                 } else if (snapshotExists(snapshot)) {
-                    normalized = normalizePnjForRepository(snapshot);
+                    normalized = normalizePnjForRepository(snapshot, isMj);
                 }
                 if (!isMj && !(normalized?.visibleJoueurs === true && normalized.suppressionEnCours !== true)) normalized = null;
                 const metadata = snapshotMetadata(snapshot);
@@ -304,9 +310,14 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         catch (error) { throw makeMutationError(error, 'create-pnj'); }
     }
 
+    function reserveId() {
+        if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'reserve-pnj-id' });
+        return newDocumentRef(sdk, db, 'pnjs').id;
+    }
+
     // expectedPrivateUpdatedAt est optionnel pour conserver la compatibilité des appels bureau
     // historiques à quatre arguments ; mobile le fournit pour les éditions privées concurrentes.
-    async function update(id, patchPublic = {}, patchPrivate = {}, expectedUpdatedAt, expectedPrivateUpdatedAt) {
+    async function update(id, patchPublic = {}, patchPrivate = {}, expectedUpdatedAt, expectedPrivateUpdatedAt, options = {}) {
         if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'update-pnj' });
         if (!validId(id)) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'update-pnj' });
         const pnjRef = documentRef(sdk, db, 'pnjs', id);
@@ -314,6 +325,18 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         try {
             const publicData = sanitizePublic(patchPublic, id);
             const privateData = sanitizePrivate(patchPrivate);
+            if (publicData.imagePath === null) {
+                if (typeof sdk.deleteField !== 'function') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'pnj-image-delete' });
+                publicData.imagePath = sdk.deleteField();
+            }
+            // Toute intention explicite sur le portrait moderne rend une
+            // éventuelle référence legacy contradictoire : elle est purgée
+            // dans la même transaction, sans dépendre d’un indicateur UI.
+            const clearLegacyImageUrl = Object.hasOwn(publicData, 'imagePath') || options?.clearLegacyImageUrl === true;
+            if (clearLegacyImageUrl) {
+                if (typeof sdk.deleteField !== 'function') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'pnj-legacy-image-delete' });
+                publicData.imageUrl = sdk.deleteField();
+            }
             if (!Object.keys(publicData).length && !Object.keys(privateData).length) {
                 throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'update-pnj-empty' });
             }
@@ -625,9 +648,40 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         return snapshotExists(snapshot) ? snapshotData(snapshot) : null;
     }
 
+    async function inspectPortraitCommit(id, expectedNewPath, {
+        creation = false, previousUpdatedAt, previousPrivateUpdatedAt,
+    } = {}) {
+        if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'inspect-pnj-portrait-commit' });
+        if (!validId(id) || typeof expectedNewPath !== 'string') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'inspect-pnj-portrait-commit' });
+        validateImagePath(expectedNewPath, id);
+        const [publicSnapshot, privateSnapshot] = await Promise.all([
+            getDocument(sdk, documentRef(sdk, db, 'pnjs', id)),
+            getDocument(sdk, documentRef(sdk, db, 'pnjs_prives', id)),
+        ]);
+        const publicExists = snapshotExists(publicSnapshot);
+        const privateExists = snapshotExists(privateSnapshot);
+        const publicMatches = publicExists && snapshotData(publicSnapshot).imagePath === expectedNewPath;
+        if (creation) {
+            if (publicMatches && privateExists) return Object.freeze({ status: 'committed' });
+            if (!publicExists && !privateExists) return Object.freeze({ status: 'not-committed' });
+            return Object.freeze({ status: 'inconsistent' });
+        }
+        if (publicMatches) return Object.freeze({ status: 'committed' });
+        if (!publicExists) return Object.freeze({ status: 'inconsistent' });
+        const publicData = snapshotData(publicSnapshot);
+        const privateData = privateExists ? snapshotData(privateSnapshot) : null;
+        const versionMatches = (current, expected) => expected === undefined
+            || (expected === null ? current === null || current === undefined : timestampEqual(current, expected));
+        const hasBaseline = previousUpdatedAt !== undefined || previousPrivateUpdatedAt !== undefined;
+        const unchanged = hasBaseline
+            && versionMatches(publicData.updatedAt, previousUpdatedAt)
+            && versionMatches(privateData?.updatedAt, previousPrivateUpdatedAt);
+        return Object.freeze({ status: unchanged ? 'not-committed' : 'inconsistent' });
+    }
+
     const repository = { subscribeVisible, subscribeOne };
     if (isMj) Object.assign(repository, {
-        subscribeAll, subscribePrivate, create, update, remove, resumeRemoval, inspectRemovalLock, inspectRemovalImpact,
+        subscribeAll, subscribePrivate, create, reserveId, update, remove, resumeRemoval, inspectRemovalLock, inspectPortraitCommit, inspectRemovalImpact,
         inspectVisibilityImpact,
     });
     return Object.freeze(repository);

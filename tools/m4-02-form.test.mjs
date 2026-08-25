@@ -61,6 +61,32 @@ test('inspectRemovalImpact refuse PNJ absent et snapshots privés malformés', a
     await assert.rejects(() => repoMalformed.inspectRemovalImpact('a'), error => error.kind === 'validation');
 });
 
+test('inspectPortraitCommit ne renvoie qu’un état sûr pour création appliquée, absente ou incohérente', async () => {
+    const committed = makeFirestore();
+    committed.map('pnjs').set('a', { imagePath: 'portraits/a/new.webp' });
+    committed.map('pnjs_prives').set('a', { notes: 'privé' });
+    const committedRepo = createMjPnjRepository(committed);
+    assert.deepEqual(await committedRepo.inspectPortraitCommit('a', 'portraits/a/new.webp', { creation: true }), { status: 'committed' });
+    const absent = makeFirestore(); const absentRepo = createMjPnjRepository(absent);
+    assert.deepEqual(await absentRepo.inspectPortraitCommit('a', 'portraits/a/new.webp', { creation: true }), { status: 'not-committed' });
+    const partial = makeFirestore(); partial.map('pnjs').set('a', { imagePath: 'portraits/a/new.webp' });
+    const partialRepo = createMjPnjRepository(partial);
+    assert.deepEqual(await partialRepo.inspectPortraitCommit('a', 'portraits/a/new.webp', { creation: true }), { status: 'inconsistent' });
+    assert.deepEqual(Object.keys(await partialRepo.inspectPortraitCommit('a', 'portraits/a/new.webp', { creation: true })), ['status']);
+    const baseline = { seconds: 3, nanoseconds: 0 };
+    const rejected = makeFirestore(); rejected.map('pnjs').set('a', { imagePath: 'portraits/a/old.webp', updatedAt: baseline });
+    rejected.map('pnjs_prives').set('a', { notes: 'old', updatedAt: baseline });
+    const rejectedRepo = createMjPnjRepository(rejected);
+    assert.deepEqual(await rejectedRepo.inspectPortraitCommit('a', 'portraits/a/new.webp', { previousUpdatedAt: baseline, previousPrivateUpdatedAt: baseline }), { status: 'not-committed' });
+    rejected.map('pnjs').set('a', { imagePath: 'portraits/a/old.webp', updatedAt: { seconds: 4, nanoseconds: 0 } });
+    assert.deepEqual(await rejectedRepo.inspectPortraitCommit('a', 'portraits/a/new.webp', { previousUpdatedAt: baseline, previousPrivateUpdatedAt: baseline }), { status: 'inconsistent' });
+    rejected.map('pnjs').set('a', { imagePath: 'portraits/a/old.webp', updatedAt: baseline });
+    rejected.map('pnjs_prives').set('a', { notes: 'changed', updatedAt: { seconds: 5, nanoseconds: 0 } });
+    assert.deepEqual(await rejectedRepo.inspectPortraitCommit('a', 'portraits/a/new.webp', { previousUpdatedAt: baseline, previousPrivateUpdatedAt: baseline }), { status: 'inconsistent' });
+    assert.deepEqual(await rejectedRepo.inspectPortraitCommit('a', 'portraits/a/new.webp', { previousUpdatedAt: baseline }), { status: 'not-committed' });
+    await assert.rejects(() => rejectedRepo.inspectPortraitCommit('a', 'portraits/other/new.webp'), error => error.kind === 'validation');
+});
+
 test('le dépôt revalide les enums statut et vivant avant toute écriture', async () => {
     const fake = makeFirestore(); const repo = createMjPnjRepository(fake);
     await assert.rejects(() => repo.create({ id: 'a', nom: 'A', statut: 'hostile', visibleJoueurs: true }), error => error.kind === 'validation');
@@ -75,6 +101,22 @@ test('inspectVisibilityImpact reste read-only et compte les relations visibles i
     fake.map('relations').set('r2', { source: 'a', cible: 'c', visibleJoueurs: false });
     const repo = createMjPnjRepository(fake);
     assert.deepEqual(await repo.inspectVisibilityImpact('a'), { id: 'a', visibleRelationsCount: 1, incompatibleVisibleRelationsCount: 0 });
+});
+
+test('retrait portrait supprime aussi les références legacy sans accepter de nouvelle URL', async () => {
+    const fake = makeFirestore(); let updateData = null;
+    fake.sdk.deleteField = () => ({ __delete: true }); fake.sdk.serverTimestamp = () => 'timestamp';
+    fake.sdk.runTransaction = async (_db, callback) => callback({
+        get: ref => fake.sdk.getDoc(ref),
+        update: (_ref, data) => { updateData = data; },
+        set: () => {},
+    });
+    fake.map('pnjs').set('a', { nom: 'Ada', visibleJoueurs: true, imageUrl: 'https://example.invalid/raw?token=secret' });
+    const repo = createMjPnjRepository(fake);
+    await repo.update('a', { imagePath: null }, { notes: 'ok' });
+    assert.deepEqual(updateData.imagePath, { __delete: true }); assert.deepEqual(updateData.imageUrl, { __delete: true });
+    await repo.update('a', { imagePath: 'portraits/a/new.webp' }, { notes: 'ok' });
+    assert.deepEqual(updateData.imageUrl, { __delete: true });
 });
 
 class Element {
@@ -131,7 +173,7 @@ function fakeRepository({ id = 'a', skipInitial = false, publicItem = { id: 'a',
 async function mountedForm(options = {}) {
     const documentRef = fakeDocument(options.confirm || (() => true)); const container = new Element(documentRef, 'main');
     const fake = fakeRepository({ ...options, id: options.id === null ? 'a' : options.id, skipInitial: options.id === null || options.skipInitial === true }); const navigated = []; const announced = []; const events = [];
-    const back = []; const view = createPnjEditView({ container, id: options.id === null ? null : 'a', repository: fake.repository, getSession: () => gmState(), onNavigate: value => { navigated.push(value); events.push(['navigate', value]); }, onBack: () => back.push(true), announce: value => { announced.push(value); events.push(['announce', value]); } });
+    const back = []; const view = createPnjEditView({ container, id: options.id === null ? null : 'a', repository: fake.repository, getImageService: options.getImageService, portraitProcessor: options.portraitProcessor, getSession: () => gmState(), onNavigate: value => { navigated.push(value); events.push(['navigate', value]); }, onBack: () => back.push(true), announce: value => { announced.push(value); events.push(['announce', value]); } });
     view.mount(); await Promise.resolve();
     return { documentRef, container, fake, navigated, announced, events, back, view };
 }
@@ -160,6 +202,121 @@ test('une sauvegarde navigue avant son annonce durable', async () => {
     mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Ordre';
     mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
     assert.deepEqual(mounted.events.slice(-2), [['navigate', '#/pnjs/a'], ['announce', 'PNJ enregistré.']]);
+});
+
+test('création avec portrait utilise le même ID réservé pour upload et create', async () => {
+    const imageCalls = []; const imageService = {
+        replace: async (_oldPath, ownerId, file, options) => { imageCalls.push(['upload', ownerId, file]); return { ...(await options.commit(`portraits/${ownerId}/portrait.webp`)), imagePath: `portraits/${ownerId}/portrait.webp` }; },
+    };
+    const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined, getImageService: () => imageService,
+        portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+    mounted.fake.repository.reserveId = () => 'reserved-portrait';
+    const fileInput = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
+    assert.ok(fileInput, 'file input');
+    fileInput.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; fileInput.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Portrait'; mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(imageCalls[0][1], 'reserved-portrait'); assert.equal(mounted.fake.calls.createArgs[0].imagePath, 'portraits/reserved-portrait/portrait.webp');
+    assert.deepEqual(mounted.fake.calls.createArgs[2], { id: 'reserved-portrait' }); assert.deepEqual(mounted.navigated, ['#/pnjs/reserved-portrait']);
+});
+
+test('un remplacement modern+legacy transmet le signal booléen sans URL brute', async () => {
+    const imageService = {
+        replace: async (_old, ownerId, file, options) => ({ ...(await options.commit(`portraits/${ownerId}/new.webp`)), imagePath: `portraits/${ownerId}/new.webp`, skippedOldPath: 'https://legacy.example/raw?token=secret' }),
+    };
+    const mounted = await mountedForm({ publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'oui', lieu: '', groupe: '', description: '', visibleJoueurs: true, imagePath: 'portraits/a/old.webp', legacyImagePresent: true, updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] }, getImageService: () => imageService,
+        portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+    const input = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
+    input.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; input.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(mounted.fake.calls.updateArgs[5].clearLegacyImageUrl, true); assert.match(mounted.announced.at(-1), /ancien portrait/u); assert.doesNotMatch(mounted.container.textContent + mounted.announced.join(''), /legacy\.example|token=secret/u);
+});
+
+test('journal image en panne avant commit bloque la création et reprend sans écriture', async () => {
+    const cleaned = []; const imageService = {
+        replace: async () => { throw Object.assign(new Error('journal-pending'), { state: { uploadedPath: 'portraits/reserved-journal/new.webp', journalPending: true, commitNotStarted: true } }); },
+        cleanupImage: async path => { cleaned.push(path); }, ackUpload: () => true,
+    };
+    const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined, getImageService: () => imageService,
+        portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+    mounted.fake.repository.reserveId = () => 'reserved-journal'; const input = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
+    input.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; input.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Journal'; mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(mounted.fake.calls.create, 0); assert.equal(mounted.fake.calls.update, 0);
+    const recover = mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage du portrait');
+    assert.equal(recover.hidden, false); assert.doesNotMatch(mounted.container.textContent, /reserved-journal|new\.webp/u);
+    recover.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.deepEqual(cleaned, ['portraits/reserved-journal/new.webp']); assert.deepEqual(mounted.navigated, []);
+});
+
+test('journal image en panne avant commit bloque aussi update et conserve la fiche', async () => {
+    const cleaned = []; const imageService = {
+        replace: async () => { throw Object.assign(new Error('journal-pending'), { state: { uploadedPath: 'portraits/a/new.webp', journalPending: true, commitNotStarted: true } }); },
+        cleanupImage: async path => { cleaned.push(path); }, ackUpload: () => true,
+    };
+    const mounted = await mountedForm({ getImageService: () => imageService, portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+    const input = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
+    input.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; input.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(mounted.fake.calls.update, 0); const recover = mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage du portrait');
+    assert.equal(recover.hidden, false); recover.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.deepEqual(cleaned, ['portraits/a/new.webp']); assert.deepEqual(mounted.navigated, []);
+});
+
+test('un upload portrait devenu obsolète avant commit ne lance aucune écriture', async () => {
+    let commit; let resolveUpload; const imageService = { replace: async (_old, _owner, _file, options) => { commit = options.commit; await new Promise(resolve => { resolveUpload = resolve; }); return { imagePath: 'portraits/a/p.webp' }; } };
+    const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined, getImageService: () => imageService,
+        portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+    mounted.fake.repository.reserveId = () => 'pending-portrait'; const input = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
+    input.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; input.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Pending'; mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.view.unmount(); assert.throws(() => commit('portraits/pending-portrait/p.webp'), /save-cancelled/u); resolveUpload?.(); await Promise.resolve();
+    assert.equal(mounted.fake.calls.create, 0); assert.equal(mounted.fake.calls.update, 0);
+});
+
+test('reprise d un remplacement confirmé nettoie l ancien chemin avant reload', async () => {
+    const cleaned = []; const acked = []; const imageService = {
+        replace: async () => { throw Object.assign(new Error('cleanup-pending'), { state: { commitDone: true, cleanupPending: true, oldPath: 'portraits/a/old.webp', newPath: 'portraits/a/new.webp' } }); },
+        cleanupImage: async path => { cleaned.push(path); },
+        ackUpload: path => { acked.push(path); },
+    };
+    const mounted = await mountedForm({ publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'oui', lieu: '', groupe: '', description: '', visibleJoueurs: true, imagePath: 'portraits/a/old.webp', updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] }, getImageService: () => imageService,
+        portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+    mounted.fake.repository.inspectPortraitCommit = async () => ({ status: 'committed' });
+    const input = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
+    input.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; input.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    const recover = mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage du portrait');
+    assert.equal(recover.hidden, false); recover.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.deepEqual(cleaned, ['portraits/a/old.webp']); assert.deepEqual(acked, ['portraits/a/old.webp', 'portraits/a/new.webp']); assert.deepEqual(mounted.navigated, ['#/pnjs/a']);
+});
+
+test('reprise rejetée nettoie le nouveau chemin et conserve le brouillon', async () => {
+    const cleaned = []; const acked = []; const imageService = {
+        replace: async () => { throw Object.assign(new Error('commit-unknown'), { state: { commitUnknown: true, cleanupPending: false, oldPath: 'portraits/a/old.webp', newPath: 'portraits/a/new.webp' } }); },
+        cleanupImage: async path => { cleaned.push(path); },
+        ackUpload: path => { acked.push(path); },
+    };
+    const mounted = await mountedForm({ getImageService: () => imageService, portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+    mounted.fake.repository.inspectPortraitCommit = async () => ({ status: 'not-committed' });
+    const input = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
+    input.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; input.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage du portrait').dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.deepEqual(cleaned, ['portraits/a/new.webp']); assert.deepEqual(acked, ['portraits/a/old.webp', 'portraits/a/new.webp']); assert.deepEqual(mounted.navigated, []); assert.equal(mounted.container.querySelectorAll('#m-pnj-nom')[0].value, 'Ada');
+});
+
+test('retrait commitDone avec cleanup en panne expose une reprise immédiate de l ancien portrait', async () => {
+    const cleaned = []; const imageService = {
+        remove: async () => { throw new Error('cleanup-failed'); },
+        cleanupImage: async path => { cleaned.push(path); },
+        ackUpload: () => true,
+    };
+    const mounted = await mountedForm({ publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'oui', lieu: '', groupe: '', description: '', visibleJoueurs: true, imagePath: 'portraits/a/old.webp', updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] }, getImageService: () => imageService });
+    mounted.container.querySelectorAll('button').find(button => button.textContent === 'Retirer le portrait').dispatch('click');
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve(); await Promise.resolve();
+    const recover = mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage du portrait');
+    assert.equal(recover.hidden, false); recover.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.deepEqual(cleaned, ['portraits/a/old.webp']); assert.deepEqual(mounted.navigated, ['#/pnjs']);
 });
 
 test('un double toucher ne lance qu’une création', async () => {

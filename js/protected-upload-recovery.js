@@ -26,10 +26,11 @@ async function durableImageLocks(db) {
 }
 
 export async function recoverPendingProtectedUploads(db, storage) {
-    if (recoveryRunning) return;
+    if (recoveryRunning) return { status: 'busy', retryNeeded: true, processed: 0 };
     recoveryRunning = true;
     let nextDelay = null;
     let retryNeeded = false;
+    let processed = 0;
     try {
         const durable = await durableImageLocks(db);
         const byKey = new Map(durable.map(item => [`${item.collection}/${item.ownerId}/${item.path}`, item]));
@@ -41,6 +42,7 @@ export async function recoverPendingProtectedUploads(db, storage) {
         for (const item of byKey.values()) {
             const remaining = item.durable ? 0 : SETTLE_DELAY_MS - (now - item.createdAt);
             if (remaining > 0) {
+                retryNeeded = true;
                 nextDelay = nextDelay === null ? remaining : Math.min(nextDelay, remaining);
                 continue;
             }
@@ -49,6 +51,7 @@ export async function recoverPendingProtectedUploads(db, storage) {
                     db, storage, reference: item.path,
                     ownerCollection: item.collection, ownerId: item.ownerId, skipJournal: item.durable === true,
                 });
+                processed += 1;
             } catch (error) {
                 retryNeeded = true;
                 console.warn('Nettoyage d’image protégé à reprendre.', {
@@ -69,6 +72,7 @@ export async function recoverPendingProtectedUploads(db, storage) {
                 void recoverPendingProtectedUploads(db, storage);
             }, Math.max(0, nextDelay));
         }
+        return { status: retryNeeded ? 'retry-pending' : 'completed', retryNeeded, processed };
     }
 }
 

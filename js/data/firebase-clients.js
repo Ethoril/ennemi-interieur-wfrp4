@@ -1,4 +1,4 @@
-import { FIREBASE_CONFIG } from '../firebase-config.js';
+import { FIREBASE_CONFIG, FIREBASE_FUNCTIONS_REGION } from '../firebase-config.js';
 import { FirebaseClientError, ERROR_KINDS, classifyFirebaseError, normalizeFirebaseError } from './firebase-errors.js';
 
 const APP_NAMES = Object.freeze({ public: 'mobile-public', mj: 'mobile-mj' });
@@ -310,10 +310,11 @@ export async function createMjMobileClient({ sdk, config = FIREBASE_CONFIG, appN
         db = initializeMjFirestore(sdk, appInfo.app).db;
         const auth = sdk.getAuth(appInfo.app);
         const storage = sdk.getStorage(appInfo.app);
+        const functions = typeof sdk.getFunctions === 'function' ? sdk.getFunctions(appInfo.app, FIREBASE_FUNCTIONS_REGION) : null;
         retainApp(appInfo.app, db);
         retained = true;
         return createClientHandle({
-            mode: 'mobile-mj', sdk, app: appInfo.app, appName, auth, db, storage,
+            mode: 'mobile-mj', sdk, app: appInfo.app, appName, auth, db, storage, functions,
             cache: { mode: 'memory', persistent: false, fallback: false }, deleteApplication: deleteApplicationOnClose,
             signOutOnClose,
         });

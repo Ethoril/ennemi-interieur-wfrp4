@@ -175,6 +175,16 @@ test('subscribeOne et subscribePrivate émettent l’absence, dédupliquent et c
     assert.equal(privateValues[0].value, null);
 });
 
+test('le dépôt MJ signale seulement par booléen une coexistence modern/legacy', () => {
+    const fake = makeFirestore(); const mj = createMjPnjRepository(fake); const publicRepo = createPublicPnjRepository(fake);
+    const mjValues = []; mj.subscribeOne('a', value => mjValues.push(value), error => { throw error; });
+    fake.state.subscriptions[0].next({ exists: () => true, id: 'a', data: () => ({ nom: 'A', visibleJoueurs: true, imagePath: 'portraits/a/new.webp', imageUrl: 'https://legacy.example/p.webp' }), metadata: {} });
+    assert.equal(mjValues.at(-1).legacyImagePresent, true); assert.doesNotMatch(JSON.stringify(mjValues.at(-1)), /legacy\.example|p\.webp/u);
+    const publicValues = []; publicRepo.subscribeOne('a', value => publicValues.push(value), error => { throw error; });
+    fake.state.subscriptions[1].next({ exists: () => true, id: 'a', data: () => ({ nom: 'A', visibleJoueurs: true, imagePath: 'portraits/a/new.webp', imageUrl: 'https://legacy.example/p.webp' }), metadata: {} });
+    assert.equal(Object.hasOwn(publicValues.at(-1), 'legacyImagePresent'), false);
+});
+
 test('les relations publiques filtrent les endpoints visibles et réémettent après changement de jeu PNJ', () => {
     const fake = makeFirestore();
     const repo = createPublicRelationsRepository({ ...fake, visiblePnjIds: ['a', 'b'] });

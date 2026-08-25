@@ -206,7 +206,7 @@ function createRepository({ storageSdk, storage, uploader, journal = {}, cleanup
                     await cleanup.unreferenced(uploadedPath, { collection: kind === 'portrait' ? 'pnjs' : 'indices', ownerId, skipJournal: true });
                 } catch (compensationError) {
                     const normalized = normalizeError(compensationError, 'image-compensation');
-                    normalized.state = { uploadedPath, journalPending: true };
+                    normalized.state = { uploadedPath, journalPending: true, commitNotStarted: true };
                     throw normalized;
                 }
             }

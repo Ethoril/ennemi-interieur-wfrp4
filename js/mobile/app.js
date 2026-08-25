@@ -193,6 +193,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             }
             return createPnjEditView({ container, getSession: () => mjSession.getState(),
                 getRepository: () => mjSession.getState().private?.repositories?.pnjs,
+                getImageService: () => mjSession.getState().private?.repositories?.images,
                 onBack: () => router.back({ skipGuard: true }), onNavigate: target => router.navigate(parseRoute(target), { replace: true, skipGuard: true }),
                 announce: message => announce(routeStatus, message) });
         },
@@ -219,6 +220,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             }
             return createPnjEditView({ container, id: route.id, getSession: () => mjSession.getState(),
                 getRepository: () => mjSession.getState().private?.repositories?.pnjs,
+                getImageService: () => mjSession.getState().private?.repositories?.images,
                 onBack: () => router.back({ skipGuard: true }), onNavigate: target => router.navigate(parseRoute(target), { replace: true, skipGuard: true }),
                 announce: message => announce(routeStatus, message) });
         },
