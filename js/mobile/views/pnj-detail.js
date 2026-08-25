@@ -1,6 +1,6 @@
 import { mountPnjPortrait } from '../components/portrait.js';
 import { selectPnjDetailModel } from '../pnj-detail-model.js';
-import { publicStatusMessage, renderState } from '../ui.js';
+import { renderState } from '../ui.js';
 
 function appendText(documentRef, parent, tagName, className, value) {
     const element = documentRef.createElement(tagName);
@@ -107,17 +107,15 @@ function renderIndices(documentRef, body, model) {
     body.append(list);
 }
 
-function renderMetadata(documentRef, metadata, state, model) {
+function renderMetadata(documentRef, metadata, model) {
     metadata.replaceChildren();
-    const message = publicStatusMessage(state);
-    if (message) appendText(documentRef, metadata, 'p', 'm-sync-badge', message);
     if (model.warning) {
         const warning = appendText(documentRef, metadata, 'p', 'm-inline-warning', model.warning);
         warning.setAttribute('role', 'alert');
     }
 }
 
-function renderReady({ documentRef, target, state, model, portrait, portraitSignature, imageService, getSession, onEdit }) {
+function renderReady({ documentRef, target, model, portrait, portraitSignature, imageService, getSession, onEdit }) {
     let refs = target._detail;
     if (!refs) {
         target.replaceChildren();
@@ -175,9 +173,9 @@ function renderReady({ documentRef, target, state, model, portrait, portraitSign
         renderIndices(documentRef, refs.indices, model);
         refs.signatures.indices = indicesSignature;
     }
-    const metadataSignature = JSON.stringify([publicStatusMessage(state), model.warning]);
+    const metadataSignature = JSON.stringify([model.warning]);
     if (refs.signatures.metadata !== metadataSignature) {
-        renderMetadata(documentRef, refs.metadata, state, model);
+        renderMetadata(documentRef, refs.metadata, model);
         refs.signatures.metadata = metadataSignature;
     }
     const nextSignature = `${model.item.id}\u001f${model.name}\u001f${model.item.image?.path ?? ''}\u001f${model.item.image?.legacy ?? ''}\u001f${model.item.image?.invalid ?? ''}`;
@@ -225,7 +223,7 @@ export function createPnjDetailView({ container, id, store, onBack = () => {},
             });
             return;
         }
-        const next = renderReady({ documentRef: container.ownerDocument, target: content, state,
+        const next = renderReady({ documentRef: container.ownerDocument, target: content,
             model, portrait, portraitSignature, imageService: getImageService(), getSession, onEdit });
         portrait = next.portrait;
         portraitSignature = next.portraitSignature;

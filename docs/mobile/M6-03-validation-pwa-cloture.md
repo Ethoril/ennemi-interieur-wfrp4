@@ -1,13 +1,14 @@
 # M6-03 — Rapport de recette PWA et clôture locale
 
-Date de préparation : 25 août 2026. Version cachée actuellement publiée : `v2.21.8`, commit
-`3386741`. La version précédente était `v2.21.7`, commit `d42e1cd`, et la version témoin Android
-précédente était `v2.21.2`. La référence Auth antérieure `v2.21.5` reste le commit `f9f4a71`.
+Date de préparation : 25 août 2026. Activation mobile actuellement publiée : `v2.22.0`, commit
+`f1d0fdc`. Le correctif visuel `v2.22.1` reste local et non publié. La version cachée précédente
+était `v2.21.8`, commit `3386741`, et la référence Auth antérieure `v2.21.5` reste `f9f4a71`.
 
 La publication `v2.21.8` maintient l’accès à l’installation depuis Réglages même lorsque Chrome ne
 redéclenche pas son dialogue natif après une mise à jour. L’installation Android a réussi, puis son
-lancement sur le site bureau a confirmé le besoin du candidat M7-02 local `v2.22.0` : identité
-historique inchangée, démarrage `./app/index.html` et compatibilité de l’ancienne entrée standalone.
+lancement sur le site bureau a confirmé le besoin de M7-02. `v2.22.0` a depuis conservé l’identité
+historique, activé le démarrage `./app/index.html` et assuré la compatibilité de l’ancienne entrée
+standalone. Le contrôle Android confirme l’ouverture de l’interface mobile.
 
 La version publiée rend la popup Google prioritaire sur mobile et consomme les marqueurs de
 redirection historiques de `v2.21.5`. Sa CSP autorise `https://apis.google.com` dans `script-src`
@@ -145,12 +146,13 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
   appareil réel ; aucune mesure physique n’est revendiquée ici.
 - **Sécurité** : l’inspection réelle de Cache Storage est conforme après `v2.21.7`. La déconnexion
   et le lien direct secret restent à rejouer sur l’environnement de recette.
-- **Activation du démarrage mobile** : le candidat M7-02 `v2.22.0` conserve l’identité historique,
-  cible `./app/index.html` et doit encore recevoir sa validation post-déploiement Android.
+- **Activation du démarrage mobile** : M7-02 `v2.22.0` conserve l’identité historique, cible
+  `./app/index.html` et a été confirmée sur l’installation Android existante. Le correctif local
+  `v2.22.1` retire le statut de synchronisation dupliqué des vues PNJ.
 
 ## Checklist de sortie
 
-- [x] Version publiée `3386741` / `v2.21.8`, candidat final `v2.22.0`, version précédente
+- [x] Activation publiée `f1d0fdc` / `v2.22.0`, correctif local `v2.22.1`, version précédente
   `d42e1cd` / `v2.21.7` et témoin `712417f` / `v2.21.3` documentés ; le chemin de succès Auth
   Android est validé.
 - [x] Identité historique conservée ; activation mobile préparée et testée localement par M7-02.

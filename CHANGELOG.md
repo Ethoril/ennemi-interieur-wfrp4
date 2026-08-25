@@ -1,3 +1,16 @@
+## [2.22.1] - 2026-08-25
+
+### Corrigé
+
+- **Statut PNJ non dupliqué** : la liste et la fiche PNJ n’affichent plus une seconde copie de
+  « Synchronisé avec le serveur » au milieu de l’écran. Le statut global reste visible dans la
+  barre supérieure ; les avertissements et actions propres à chaque vue sont conservés.
+
+### Préparation
+
+- **Correctif local** : `v2.22.1` est préparée après le retour Android sur la version mobile
+  installée. Sa publication et son contrôle restent soumis à une autorisation distincte.
+
 ## [2.22.0] - 2026-08-25
 
 ### Ajouté
@@ -10,10 +23,12 @@
 - **Maintenance finale** : le README documente l’architecture commune, le précache, les règles de
   sécurité et la checklist d’évolution des deux interfaces.
 
-### Préparation
+### Validation
 
-- **Candidat M7-02 local** : la publication de `v2.22.0` et la recette Android post-déploiement
-  restent soumises à une autorisation distincte. iOS demeure explicitement non validé.
+- **Activation publiée** : le commit `f1d0fdc` publie `v2.22.0` après 462/462 tests et deux
+  workflows GitHub verts. L’installation existante ouvre désormais l’interface mobile ; le retour
+  Android a ensuite révélé uniquement le doublon visuel du statut de synchronisation corrigé en
+  `v2.22.1`. iOS demeure explicitement non validé.
 
 ## [2.21.8] - 2026-08-25
 

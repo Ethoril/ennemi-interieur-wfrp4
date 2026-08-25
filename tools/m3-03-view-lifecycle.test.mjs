@@ -164,6 +164,8 @@ test('la vue branche le store, préserve le scroll et ne recharge pas les portra
     assert.equal(container.querySelectorAll('ul').length, 1);
     assert.equal(container.querySelectorAll('li').length, 1);
     assert.equal(container.querySelectorAll('output')[0].textContent, '1 résultat');
+    assert.equal(container.querySelectorAll('.m-sync-badge').length, 0,
+        'la liste PNJ ne duplique pas le statut global de synchronisation');
     assert.equal(images.calls.length, 1);
 
     container.scrollTop = 73;

@@ -22,18 +22,18 @@ function resolveModule(from, specifier) {
     return relative.replaceAll(path.sep, '/');
 }
 
-test('M7-01 garde ses preuves historiques distinctes du candidat final v2.22.0', () => {
+test('M7-01 garde ses preuves historiques distinctes du correctif final v2.22.1', () => {
     const layout = read('js/layout.js');
     const sw = read('sw.js');
     const app = read('app/index.html');
     const manifest = JSON.parse(read('manifest.json'));
     const changelog = read('CHANGELOG.md');
     const report = read('docs/mobile/M7-01-recette-deploiement-progressif.md');
-    assert.equal(layout.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1], 'v2.22.0');
-    assert.equal(sw.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1], 'v2.22.0');
-    assert.match(app, /app-version"\s+content="v2\.22\.0"/u);
+    assert.equal(layout.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1], 'v2.22.1');
+    assert.equal(sw.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1], 'v2.22.1');
+    assert.match(app, /app-version"\s+content="v2\.22\.1"/u);
     assert.match(sw, /CACHE_NAME\s*=\s*['"]wfrp-cache-['"]\s*\+\s*APP_VERSION/u);
-    assert.match(changelog, /^## \[2\.22\.0\]/mu);
+    assert.match(changelog, /^## \[2\.22\.1\]/mu);
     assert.equal(manifest.start_url, './app/index.html');
     assert.match(report, /5dc077b/u);
     assert.match(report, /d42e1cd/u);
@@ -45,6 +45,7 @@ test('M7-01 garde ses preuves historiques distinctes du candidat final v2.22.0',
     assert.match(report, /v2\.21\.7/u);
     assert.match(report, /v2\.21\.8/u);
     assert.match(report, /v2\.22\.0/u);
+    assert.match(report, /v2\.22\.1/u);
     assert.match(report, /reCAPTCHA/u);
     assert.match(report, /122 entrées/u);
     assert.match(report, /26\/26 tests PWA\/M7/u);

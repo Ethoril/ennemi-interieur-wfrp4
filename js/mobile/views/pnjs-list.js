@@ -1,7 +1,7 @@
 import { createFilterSheet } from '../components/filter-sheet.js';
 import { mountPnjPortrait } from '../components/portrait.js';
 import { createPnjListModel, FILTER_DIMENSIONS } from '../pnj-list-model.js';
-import { publicStatusMessage, renderState } from '../ui.js';
+import { renderState } from '../ui.js';
 
 const FILTER_LABELS = Object.freeze({ groupe: 'Groupe', statut: 'Statut', lieu: 'Lieu' });
 
@@ -59,7 +59,6 @@ export function selectPnjsListModel(state) {
         retry: resource.status === 'error',
         warning: resource.status === 'error'
             ? 'Mise à jour impossible : les données déjà reçues restent consultables.' : '',
-        badge: publicStatusMessage(state),
     });
 }
 
@@ -124,7 +123,6 @@ export function createPnjsListView({
     let search = null;
     let filterButton = null;
     let resultCount = null;
-    let badge = null;
     let warning = null;
     let warningText = null;
     let retryButton = null;
@@ -195,8 +193,6 @@ export function createPnjsListView({
     const render = state => {
         if (!mounted || !listTarget) return;
         const selected = selectPnjsListModel(state);
-        badge.textContent = selected.badge ?? '';
-        badge.hidden = !selected.badge;
         warningText.textContent = selected.warning ?? '';
         warning.hidden = !selected.warning;
         retryButton.hidden = !selected.retry;
@@ -280,9 +276,6 @@ export function createPnjsListView({
             createButton.addEventListener('click', onCreate);
             toolbar.append(createButton);
         }
-        badge = documentRef.createElement('p');
-        badge.className = 'm-sync-badge';
-        badge.hidden = true;
         warning = documentRef.createElement('p');
         warning.className = 'm-inline-warning';
         warning.setAttribute('role', 'alert');
@@ -296,7 +289,7 @@ export function createPnjsListView({
         warning.append(warningText, retryButton);
         listTarget = documentRef.createElement('div');
         listTarget.className = 'm-list-state';
-        screen.append(heading, label, toolbar, badge, warning, listTarget);
+        screen.append(heading, label, toolbar, warning, listTarget);
         if (signal?.aborted) { mounted = false; return; }
         container.append(screen);
         sheet = createFilterSheet({
@@ -341,7 +334,6 @@ export function createPnjsListView({
         search = null;
         filterButton = null;
         resultCount = null;
-        badge = null;
         warning = null;
         warningText = null;
         retryButton = null;

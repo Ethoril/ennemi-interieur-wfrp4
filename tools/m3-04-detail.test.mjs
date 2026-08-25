@@ -214,7 +214,8 @@ test('la fiche en cache reste lisible pendant le chargement des données liées'
     const store = makeStore(state);
     const view = createPnjDetailView({ container, id: 'a', store });
     view.mount();
-    assert.match(container.querySelectorAll('.m-sync-badge')[0].textContent, /Hors connexion/iu);
+    assert.equal(container.querySelectorAll('.m-sync-badge').length, 0,
+        'la fiche PNJ ne duplique pas le statut global de synchronisation');
     assert.equal(sectionBody(container, 'relations').children[0].textContent, 'Chargement des relations visibles…');
     assert.equal(sectionBody(container, 'indices').children[0].textContent, 'Chargement des indices découverts…');
     view.unmount();

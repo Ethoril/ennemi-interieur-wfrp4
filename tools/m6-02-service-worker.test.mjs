@@ -71,7 +71,7 @@ function createWorkerHarness() {
         },
         caches: {
             async open() { return cache; },
-            async keys() { return ['wfrp-cache-v2.22.0']; },
+            async keys() { return ['wfrp-cache-v2.22.1']; },
             async match(request) { return cache.match(request); },
         },
         fetch: async request => {
@@ -277,7 +277,7 @@ test('la mise à jour attend une action, respecte beforeLeave et ne recharge qu 
     waiting.addEventListener = EventTargetFake.prototype.addEventListener;
     const registration = new EventTargetFake();
     registration.waiting = waiting;
-    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.22.0' }) };
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.22.1' }) };
     registration.update = async () => {};
     serviceWorker.controller = {};
     serviceWorker.register = async (url, options) => {
@@ -291,7 +291,7 @@ test('la mise à jour attend une action, respecte beforeLeave et ne recharge qu 
     const pwa = createPwaController({ windowRef, navigatorRef: windowRef.navigator, router: { canLeaveCurrent: () => canLeave }, announce: message => announcements.push(message) });
     await pwa.start();
     assert.equal(pwa.getState().updateAvailable, true);
-    assert.equal(pwa.getDiagnostics().workerVersion, 'v2.22.0');
+    assert.equal(pwa.getDiagnostics().workerVersion, 'v2.22.1');
     assert.equal(pwa.applyUpdate(), false);
     assert.deepEqual(messages, []);
     assert.match(announcements.at(-1), /différée/u);
@@ -460,7 +460,7 @@ test('le bouton du bandeau passe par la même action que Réglages et disparaît
     waiting.postMessage = message => messages.push(message);
     const registration = new EventTargetFake();
     registration.waiting = waiting;
-    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.22.0' }) };
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.22.1' }) };
     registration.update = async () => {};
     serviceWorker.register = async () => registration;
     windowRef.navigator.serviceWorker = serviceWorker;
@@ -548,7 +548,7 @@ test('stop pendant requestUpdate empêche tout SKIP_WAITING tardif', async () =>
     waiting.postMessage = message => messages.push(message);
     const registration = new EventTargetFake();
     registration.waiting = waiting;
-    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.22.0' }) };
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.22.1' }) };
     let resolveUpdate;
     registration.update = () => new Promise(resolve => { resolveUpdate = resolve; });
     serviceWorker.register = async () => registration;

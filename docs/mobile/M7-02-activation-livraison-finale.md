@@ -4,10 +4,12 @@ Date de préparation : 25 août 2026.
 
 ## État de livraison
 
-- Version cachée publiée au début du lot : `3386741` / `v2.21.8`.
+- Version d’activation publiée : `f1d0fdc` / `v2.22.0`.
 - Constat Android : l’installation réussit, mais l’icône lance le site bureau parce que le
   manifeste publié conserve encore `start_url: ./index.html`.
-- Candidat local non publié : `v2.22.0`, activation du démarrage mobile sans changement d’identité.
+- Contrôle Android : l’installation existante ouvre bien l’interface mobile après activation.
+- Correctif local non publié : `v2.22.1`, suppression du statut de synchronisation dupliqué dans
+  la liste et la fiche PNJ ; l’indicateur global supérieur reste la source unique.
 - `id` reste exactement `./index.html` (identité Chrome déjà publiée), `scope` reste `./` et
   `start_url` devient `./app/index.html`.
 - iOS reste **non validé — aucun appareil disponible**.
@@ -19,9 +21,8 @@ Android déjà créée avec l’ancien point de démarrage, `js/pwa-entry.js` re
 racine lancée en mode `standalone`. Un onglet navigateur ordinaire, une page bureau explicite ou
 une URL PNJs/Enquêtes bureau ne sont jamais redirigés selon la largeur d’écran.
 
-La stabilité du champ `id` évite de déclarer une deuxième application. Après publication, le test
-physique doit confirmer que l’icône existante reçoit la mise à jour, ouvre `/app/` et ne crée pas de
-doublon. Cette preuve n’est pas revendiquée avant son exécution réelle.
+La stabilité du champ `id` évite de déclarer une deuxième application. Le contrôle physique a
+confirmé que l’icône existante reçoit la mise à jour, ouvre `/app/` et ne crée pas de doublon.
 
 ## Découverte et données communes
 
@@ -45,7 +46,8 @@ La maintenance et la checklist « Faire évoluer PNJs ou Enquêtes » sont centr
 
 ## Recette après publication
 
-1. Dans l’installation existante, appliquer `v2.22.0` puis fermer et relancer depuis l’icône.
+1. Dans l’installation existante, appliquer `v2.22.1` puis confirmer que le statut de
+   synchronisation n’apparaît qu’en haut dans la liste et la fiche PNJ.
 2. Confirmer l’ouverture de `/app/`, l’absence de deuxième icône et le fonctionnement du retour.
 3. Depuis Chrome sans installation, ouvrir le lien public mobile puis réaliser une nouvelle
    installation et confirmer le même démarrage.
@@ -70,7 +72,8 @@ confirmée et une autorisation séparée.
 - [x] Compatibilité de l’ancienne entrée standalone couverte localement.
 - [x] Liens de découverte ajoutés sans redirection d’un onglet bureau.
 - [x] Documentation de maintenance et rollback ajoutée.
-- [ ] Publication de `v2.22.0` autorisée et workflows verts.
-- [ ] Installation Android existante mise à jour sans doublon et relancée sur `/app/`.
+- [x] Publication de `v2.22.0` autorisée et workflows verts.
+- [x] Installation Android existante mise à jour et relancée sur `/app/` sans seconde application.
+- [ ] Publication et contrôle Android du correctif `v2.22.1`.
 - [ ] Nouvelle installation Android vérifiée.
 - [ ] iOS : différé, non validé.
