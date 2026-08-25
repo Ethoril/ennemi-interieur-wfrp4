@@ -3,6 +3,50 @@ export function announce(element, message) {
     element.textContent = String(message ?? '');
 }
 
+function resourceErrorKinds(state) {
+    return Object.values(state?.resources || {})
+        .map(resource => resource?.error?.kind)
+        .filter(kind => typeof kind === 'string');
+}
+
+function serverDate(value) {
+    if (!Number.isFinite(value)) return '';
+    try {
+        return new Intl.DateTimeFormat('fr-FR', {
+            dateStyle: 'short',
+            timeStyle: 'short',
+        }).format(new Date(value));
+    } catch {
+        return '';
+    }
+}
+
+export function publicStatusKind(state) {
+    const errors = resourceErrorKinds(state);
+    if (state?.error || errors.length || state?.connection?.phase === 'error') return 'error';
+    if (state?.connection?.phase === 'offline-empty' || state?.connection?.phase === 'offline-cache') return 'offline';
+    if (state?.connection?.phase === 'syncing' || state?.connection?.phase === 'loading') return 'syncing';
+    return state?.connection?.sync === 'server' ? 'server' : 'idle';
+}
+
+export function publicStatusMessage(state) {
+    const resourceErrors = resourceErrorKinds(state);
+    if (state?.error?.kind === 'permission' || resourceErrors.includes('permission')) return 'Accès public refusé. Réessayez plus tard.';
+    if (state?.connection?.phase === 'offline-empty') return 'Hors connexion : une première connexion est nécessaire pour charger les données.';
+    if (state?.connection?.phase === 'offline-cache') {
+        const date = serverDate(state?.connection?.lastServerAt);
+        return date ? `Hors connexion — données enregistrées du ${date}.` : 'Hors connexion — données enregistrées.';
+    }
+    if (state?.error || state?.connection?.phase === 'error' || resourceErrors.length) return 'Une ressource ne répond pas. Réessayez.';
+    if (state?.connection?.phase === 'loading') return 'Chargement des données publiques…';
+    if (state?.connection?.sync === 'cache') return 'Données enregistrées — synchronisation en attente.';
+    if (state?.connection?.sync === 'pending') return 'Synchronisation en cours…';
+    if (state?.connection?.phase === 'syncing') return 'Synchronisation en cours…';
+    if (state?.cache?.fallback) return 'Cache local limité — les données restent accessibles en ligne.';
+    if (state?.connection?.sync === 'server') return 'Synchronisé avec le serveur.';
+    return '';
+}
+
 export function renderState(container, { state = 'loading', title = '', message = '', actionLabel = '', onAction = null } = {}) {
     if (!container) return null;
     container.replaceChildren();
