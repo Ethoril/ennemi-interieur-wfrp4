@@ -41,11 +41,11 @@ test('M5-03 aligne version, cache, méta et documentation de clôture', () => {
     const changelog = read('CHANGELOG.md');
     const layoutVersion = layout.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
     const swVersion = sw.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
-    assert.equal(layoutVersion, 'v2.21.8');
+    assert.equal(layoutVersion, 'v2.22.0');
     assert.equal(swVersion, layoutVersion);
     assert.match(sw, /CACHE_NAME\s*=\s*['"]wfrp-cache-['"]\s*\+\s*APP_VERSION/u);
-    assert.match(html, /app-version"\s+content="v2\.21.8"/u);
-    assert.match(changelog, /^## \[2\.21\.8\] - 2026-08-25\r?\n/u);
+    assert.match(html, /app-version"\s+content="v2\.22.0"/u);
+    assert.match(changelog, /^## \[2\.22\.0\] - 2026-08-25\r?\n/u);
     assert.ok(fs.existsSync(path.join(root, 'docs/mobile/M5-03-cloture-enquetes.md')));
 });
 
@@ -95,10 +95,8 @@ test('la CSP mobile couvre les services utilisés sans exposer de données au pr
     const assets = read('sw.js').match(/const ASSETS_LOCAUX\s*=\s*\[([\s\S]*?)\n\];/u)?.[1] ?? '';
     assert.match(assets, /['"]\.\/app\/index\.html['"]/u);
     assert.match(assets, /['"]\.\/js\/mobile\/app\.js['"]/u);
-    for (const name of fs.readdirSync(root).filter(file => file.endsWith('.html'))) {
-        if (name === 'app') continue;
-        assert.doesNotMatch(read(name), /(?:^|["'=\s])(?:\.\.\/|\.\/)?\/?app(?:\/|["'#?\s])/iu,
-            `${name} ne doit pas annoncer /app/`);
-    }
-    assert.doesNotMatch(read('manifest.json'), /\/?app\//iu);
+    const manifest = JSON.parse(read('manifest.json'));
+    assert.equal(manifest.id, './index.html');
+    assert.equal(manifest.start_url, './app/index.html');
+    assert.equal(manifest.scope, './');
 });

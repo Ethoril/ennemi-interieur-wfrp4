@@ -3,7 +3,7 @@
   "short_name": "WFRP4",
   "description": "Site compagnon pour la campagne Warhammer Fantasy RPG 4e édition — L'Ennemi Intérieur",
   "id": "./index.html",
-  "start_url": "./index.html",
+  "start_url": "./app/index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#07070d",

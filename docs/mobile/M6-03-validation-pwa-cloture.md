@@ -1,12 +1,13 @@
 # M6-03 — Rapport de recette PWA et clôture locale
 
-Date de préparation : 25 août 2026. Version cachée actuellement publiée : `v2.21.7`, commit
-`d42e1cd`. La version précédente était `v2.21.6`, commit `5dc077b`, et la version témoin Android
+Date de préparation : 25 août 2026. Version cachée actuellement publiée : `v2.21.8`, commit
+`3386741`. La version précédente était `v2.21.7`, commit `d42e1cd`, et la version témoin Android
 précédente était `v2.21.2`. La référence Auth antérieure `v2.21.5` reste le commit `f9f4a71`.
 
-Le candidat local `v2.21.8`, non poussé et non déployé, maintient l’accès à l’installation depuis
-Réglages même lorsque Chrome ne redéclenche pas son dialogue natif après une mise à jour. Dans ce
-cas, l’interface donne le chemin manuel du menu navigateur ; le mode déjà installé reste détecté.
+La publication `v2.21.8` maintient l’accès à l’installation depuis Réglages même lorsque Chrome ne
+redéclenche pas son dialogue natif après une mise à jour. L’installation Android a réussi, puis son
+lancement sur le site bureau a confirmé le besoin du candidat M7-02 local `v2.22.0` : identité
+historique inchangée, démarrage `./app/index.html` et compatibilité de l’ancienne entrée standalone.
 
 La version publiée rend la popup Google prioritaire sur mobile et consomme les marqueurs de
 redirection historiques de `v2.21.5`. Sa CSP autorise `https://apis.google.com` dans `script-src`
@@ -144,15 +145,15 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
   appareil réel ; aucune mesure physique n’est revendiquée ici.
 - **Sécurité** : l’inspection réelle de Cache Storage est conforme après `v2.21.7`. La déconnexion
   et le lien direct secret restent à rejouer sur l’environnement de recette.
-- **Prévisualisation du futur démarrage mobile** : conserver `./index.html` jusqu’à M7, puis valider
-  le changement de `start_url` hors production avant activation.
+- **Activation du démarrage mobile** : le candidat M7-02 `v2.22.0` conserve l’identité historique,
+  cible `./app/index.html` et doit encore recevoir sa validation post-déploiement Android.
 
 ## Checklist de sortie
 
-- [x] Version publiée `d42e1cd` / `v2.21.7`, candidat local `v2.21.8`, version précédente
-  `5dc077b` / `v2.21.6` et témoin `712417f` / `v2.21.3` documentés ; le chemin de succès Auth
+- [x] Version publiée `3386741` / `v2.21.8`, candidat final `v2.22.0`, version précédente
+  `d42e1cd` / `v2.21.7` et témoin `712417f` / `v2.21.3` documentés ; le chemin de succès Auth
   Android est validé.
-- [x] `start_url` historique conservé et aucune annonce publique de `/app/`.
+- [x] Identité historique conservée ; activation mobile préparée et testée localement par M7-02.
 - [x] Contrôles automatisés locaux verts.
 - [x] Preuves navigateur locales consignées sans données privées.
 - [ ] Matrice Android physique complète.

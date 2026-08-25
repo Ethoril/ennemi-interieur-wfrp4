@@ -4,9 +4,8 @@ Date de préparation : 25 août 2026.
 
 ## État du candidat
 
-- Candidat caché actuellement publié : commit `d42e1cd` — `v2.21.7`.
-- Candidat local non publié : `v2.21.8`, maintien de l’accès à l’installation depuis Réglages
-  lorsque Chrome ne redéclenche pas sa fenêtre native.
+- Candidat caché actuellement publié : commit `3386741` — `v2.21.8`.
+- Candidat M7-02 local non publié : `v2.22.0`, activation du démarrage mobile avec identité stable.
 - Référence précédente : commit `5dc077b` — `v2.21.6` ; référence historique antérieure :
   commit `f9f4a71` — `v2.21.5`.
 - Référence de synchronisation antérieure : commit `58fe964` — `v2.21.4`.
@@ -15,7 +14,8 @@ Date de préparation : 25 août 2026.
 - Version témoin antérieure : commit `387d1cf` — `v2.21.2` ; le commit documentaire `5376782` est inclus
   dans le déploiement actuel.
 - La publication `v2.21.6` absorbe les marqueurs de redirection laissés par `v2.21.5` sans boucle.
-- `start_url` reste `./index.html` ; aucun lien public ni entrée de navigation n’annonce `/app/`.
+- Le déploiement M7-01 conserve `start_url: ./index.html`. Le candidat M7-02 fait désormais évoluer
+  ce démarrage vers `./app/index.html` et ajoute les liens publics après le constat Android.
 - La préparation locale n'avait lancé aucun déploiement. Le push de `712417f` a ensuite été autorisé
   explicitement et les workflows GitHub Pages et validation se sont terminés avec succès. La
   sauvegarde de production en lecture seule décrite ci-dessous a également reçu une autorisation
@@ -86,8 +86,8 @@ effectué lors de M1 ; les deux objets orphelins historiques restent inchangés.
 
 Le test `tools/m7-01-release.test.mjs` couvre localement :
 
-- le candidat local `v2.21.8` dans `js/layout.js`, `sw.js`, la méta mobile et CHANGELOG, distinct de
-  la version publiée `d42e1cd` / `v2.21.7` et de la référence `5dc077b` / `v2.21.6` ;
+- le candidat final `v2.22.0` dans `js/layout.js`, `sw.js`, la méta mobile et CHANGELOG, distinct de
+  la version publiée `3386741` / `v2.21.8` et de la référence `d42e1cd` / `v2.21.7` ;
 - la distinction avec la référence `712417f` / `v2.21.3` et le témoin `387d1cf` / `v2.21.2` ;
 - le cache dérivé, le manifeste unique et le maintien du `start_url` historique ;
 - le graphe local de `/app/`, la syntaxe des modules et les ressources précachées ;
@@ -119,9 +119,9 @@ inspection ni publication des règles ou index de production.
 
 ## Procédure de déploiement silencieux à autoriser
 
-1. Le candidat `d42e1cd` / `v2.21.7` a été publié sans changement non lié ; la référence précédente
-   reste `5dc077b` / `v2.21.6`. Le chemin de succès Auth Android et le cache réel sont confirmés.
-   Le candidat local `v2.21.8` doit recevoir une autorisation de push distincte après ses gates.
+1. Le candidat `3386741` / `v2.21.8` a été publié sans changement non lié ; la référence précédente
+   reste `d42e1cd` / `v2.21.7`. L’installation Android a réussi mais son lancement bureau a ouvert
+   M7-02 ; `v2.22.0` doit recevoir une autorisation de push distincte après ses gates.
 2. Produire une sauvegarde Firestore/Storage hors dépôt, comparer son inventaire à M0-01 et tester
    sa restauration dans des émulateurs isolés.
 3. Exécuter les gates locaux puis les règles/index sur émulateurs ; ne publier aucune règle sans
@@ -163,10 +163,10 @@ Service Worker ; ne jamais supprimer les objets orphelins sans inventaire et aut
 
 ## Critères de sortie
 
-- [x] Version publiée `d42e1cd` / `v2.21.7`, candidat local `v2.21.8`, référence précédente
-  `5dc077b` / `v2.21.6` et témoin `387d1cf` / `v2.21.2` distingués honnêtement ; succès Auth
+- [x] Version publiée `3386741` / `v2.21.8`, candidat final `v2.22.0`, référence précédente
+  `d42e1cd` / `v2.21.7` et témoin `387d1cf` / `v2.21.2` distingués honnêtement ; succès Auth
   Android confirmé.
-- [x] `start_url` et absence d’annonce publique conservés.
+- [x] M7-01 a conservé l’ancien démarrage ; la bascule et la découverte sont isolées dans M7-02.
 - [x] Procédure de rollback interface/SW, règles/index et données séparée.
 - [x] Contrôles locaux automatisables ajoutés.
 - [x] Backup daté, comparaison aux références et restauration émulateur.

@@ -17,12 +17,13 @@ consignée ici :
   `https://ethoril.github.io/ennemi-interieur-wfrp4/index.html` ;
 - scope dérivé : `https://ethoril.github.io/ennemi-interieur-wfrp4/`.
 
-En l’absence de `id`, Chrome utilise `start_url` comme identité de repli. Le champ
-`id: ./index.html` ajouté par M6-01 se résout donc exactement vers cette même identité historique,
-conformément à la [procédure Chrome](https://developer.chrome.com/docs/capabilities/pwa-manifest-id).
-La présence de l’ancienne installation dans `about://web-app-internals/` et la mise à jour
-avant/après sur Android restent à contrôler physiquement ; elles ne sont pas déduites de cette seule
-lecture du manifeste.
+En l’absence de `id`, Chrome utilise `start_url` comme identité de repli. Correction normative
+consignée pendant M7-02 : un `id` relatif est résolu contre **l’origine** du `start_url`, et non
+contre le dossier du manifeste. La valeur explicite `id: ./index.html` se résout donc en
+`https://ethoril.github.io/index.html`, contrairement à l’affirmation initiale de M6-01. Cette
+valeur a néanmoins été publiée avant la première installation Android confirmée et constitue
+désormais l’identité installée ; M7-02 la conserve strictement pour éviter une seconde application.
+Il ne faut pas la « corriger » pendant la bascule de `start_url`.
 
 ## Icônes et balises
 

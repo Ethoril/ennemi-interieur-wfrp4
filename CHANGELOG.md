@@ -1,3 +1,20 @@
+## [2.22.0] - 2026-08-25
+
+### Ajouté
+
+- **Démarrage mobile de la PWA** : le manifeste conserve l’identité historique de l’application
+  mais lance désormais `./app/index.html`. Une installation créée avec l’ancien démarrage racine
+  rejoint également `/app/` au prochain lancement autonome, sans rediriger les onglets bureau.
+- **Découverte publique** : l’accueil et la navigation bureau proposent une version mobile
+  facultative de PNJs et Enquêtes, fondée sur les mêmes données Firestore.
+- **Maintenance finale** : le README documente l’architecture commune, le précache, les règles de
+  sécurité et la checklist d’évolution des deux interfaces.
+
+### Préparation
+
+- **Candidat M7-02 local** : la publication de `v2.22.0` et la recette Android post-déploiement
+  restent soumises à une autorisation distincte. iOS demeure explicitement non validé.
+
 ## [2.21.8] - 2026-08-25
 
 ### Corrigé
@@ -7,11 +24,12 @@
   bouton natif reste prioritaire ; sinon l’interface indique le chemin manuel par le menu du
   navigateur. L’aide reste masquée lorsque l’application est déjà ouverte en mode installé.
 
-### Préparation
+### Validation
 
-- **Candidat local non publié** : `v2.21.8` ne modifie ni Firebase, ni le manifeste, ni le point de
-  démarrage historique, ni l’absence de lien public `/app/`. La version cachée publiée reste
-  `d42e1cd` / `v2.21.7` jusqu’à une autorisation de push distincte.
+- **Publication cachée contrôlée** : `3386741` publie `v2.21.8` sans modifier Firebase, le manifeste
+  ou le démarrage historique. L’action d’installation reste accessible et l’installation Android
+  réussit ; son lancement sur le site bureau confirme que la bascule `start_url` doit être livrée
+  séparément par M7-02.
 
 ## [2.21.7] - 2026-08-25
 

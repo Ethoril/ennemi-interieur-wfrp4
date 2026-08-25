@@ -49,10 +49,10 @@ test('M6-02 aligne le cache et précache la coque mobile dans le worker racine',
     const changelog = read('CHANGELOG.md');
     const layoutVersion = layout.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
     const swVersion = sw.match(/const APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
-    assert.equal(layoutVersion, 'v2.21.8');
+    assert.equal(layoutVersion, 'v2.22.0');
     assert.equal(swVersion, layoutVersion);
     assert.match(sw, /const CACHE_NAME\s*=\s*['"]wfrp-cache-['"]\s*\+\s*APP_VERSION/u);
-    assert.match(changelog, /^## \[2\.21\.8\] - 2026-08-25\r?\n/u);
+    assert.match(changelog, /^## \[2\.22\.0\] - 2026-08-25\r?\n/u);
     const assetsBlock = sw.match(/const ASSETS_LOCAUX\s*=\s*\[([\s\S]*?)\n\];/u)?.[1] ?? '';
     assert.match(assetsBlock, /['"]\.\/app\/index\.html['"]/u);
     assert.match(assetsBlock, /['"]\.\/js\/mobile\/app\.js['"]/u);
@@ -87,18 +87,11 @@ test('la coque /app existe, ses modules référencés sont syntaxiquement valide
     assert.ok(visited.has('js/mobile/views/pnj-detail.js'));
 });
 
-test('la consultation mobile partage le manifeste sans annoncer /app ni service worker', () => {
-    const publicHtml = fs.readdirSync(root)
-        .filter(name => name.endsWith('.html'))
-        .map(name => [name, read(name)]);
-    for (const [name, source] of publicHtml) {
-        assert.doesNotMatch(source, /(?:^|["'=\s])(?:\.\.\/|\.\/)?\/?app(?:\/|["'#?\s])/iu,
-            `${name} ne doit pas annoncer /app/`);
-    }
-    const manifest = read('manifest.json');
-    assert.doesNotMatch(manifest, /(?:start_url|src)\s*['"]?\s*:\s*['"][^'"]*\/?app(?:\/|['"])/iu,
-        'le manifeste bureau ne doit pas cibler /app/');
-    assert.doesNotMatch(manifest, /\/?app\//iu);
+test('la consultation mobile partage le manifeste unique et le worker racine', () => {
+    const manifest = JSON.parse(read('manifest.json'));
+    assert.equal(manifest.id, './index.html');
+    assert.equal(manifest.start_url, './app/index.html');
+    assert.equal(manifest.scope, './');
     assert.match(read('app/index.html'), /rel="manifest" href="\.\.\/manifest\.json"/u);
     assert.doesNotMatch(read('app/index.html'), /serviceWorker|navigator\.serviceWorker/iu);
 });

@@ -63,12 +63,15 @@ function parsePng(relative) {
     return { width, height, pixels };
 }
 
-test('le manifeste conserve l’identité mesurée sous le sous-chemin GitHub Pages', () => {
+test('le manifeste conserve l’identité historique et lance l interface mobile sous le même scope', () => {
     const manifest = JSON.parse(read('manifest.json'));
     const deploymentBase = 'https://ethoril.github.io/ennemi-interieur-wfrp4/';
-    assert.equal(new URL(manifest.id, deploymentBase).href, new URL(manifest.start_url, deploymentBase).href);
+    const deploymentOrigin = new URL('/', deploymentBase);
+    assert.equal(new URL(manifest.id, deploymentOrigin).href, 'https://ethoril.github.io/index.html');
+    assert.equal(new URL(manifest.start_url, deploymentBase).href, `${deploymentBase}app/index.html`);
     assert.equal(new URL(manifest.scope, deploymentBase).href, deploymentBase);
-    assert.equal(manifest.start_url, './index.html');
+    assert.equal(manifest.id, './index.html');
+    assert.equal(manifest.start_url, './app/index.html');
     assert.equal(manifest.display, 'standalone');
     assert.equal(manifest.orientation, undefined, 'aucune orientation forcée sans preuve d’usage');
     assert.equal(manifest.icons.length, 3);
