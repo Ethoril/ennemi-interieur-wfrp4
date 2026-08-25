@@ -5,6 +5,7 @@ Date de préparation : 25 août 2026.
 ## État du candidat
 
 - Candidat caché actuellement publié : commit `5dc077b` — `v2.21.6`.
+- Candidat local non publié : `v2.21.7`, correction de l’exclusion reCAPTCHA dans Cache Storage.
 - Référence précédente : commit `f9f4a71` — `v2.21.5` ; référence historique antérieure :
   commit `58fe964` — `v2.21.4`.
 - Le candidat publié utilise la popup Google au premier geste et conserve la CSP exacte requise par
@@ -19,8 +20,9 @@ Date de préparation : 25 août 2026.
   distincte.
 
 Le rapport ne confond pas la publication avec sa validation fonctionnelle complète. Le chemin de
-succès Auth Android est confirmé ; les preuves Android complètes et l’inspection du cache réel
-restent à produire séparément.
+succès Auth Android est confirmé ; les preuves Android complètes restent à produire séparément.
+L’inspection du cache réel a été exécutée et a déclenché le candidat correctif `v2.21.7`, qui doit
+encore être publié et recontrôlé.
 
 Le contrôle HTTPS historique du 25 août 2026 confirme que `/app/` servait la coque `v2.21.4` sous le
 sous-chemin GitHub Pages attendu. La page historique publique affichait également `v2.21.4`, ne contenait aucun
@@ -42,6 +44,13 @@ Le commit autorisé `5dc077b` a publié `v2.21.6` avec succès. Un contrôle HTT
 l’interface et le worker `v2.21.6`. Sur Android, le premier geste « Connexion Google » a ouvert la
 popup et le retour a établi une session MJ active. L’annulation, le retry, la restauration de route
 et les autres scénarios Android restent ouverts.
+
+L’inspection réelle de Chrome a compté 123 entrées dans `wfrp-cache-v2.21.6`. Aucun document
+Firestore, token, URL Storage, portrait ou donnée privée n’y figurait. Un script reCAPTCHA servi
+par `www.gstatic.com/recaptcha/...` était toutefois présent alors que l’Auth et App Check doivent
+rester hors Cache Storage. `v2.21.7` étend la garde protégée à ce chemin, migre vers un cache neuf
+et ajoute un scénario de purge. La correction n’est pas encore publiée : le cache réel devra être
+inspecté à nouveau après activation volontaire.
 
 ## Sauvegarde M7-01 vérifiée
 
@@ -71,7 +80,8 @@ effectué lors de M1 ; les deux objets orphelins historiques restent inchangés.
 
 Le test `tools/m7-01-release.test.mjs` couvre localement :
 
-- la version publiée `5dc077b` / `v2.21.6` dans `js/layout.js`, `sw.js`, la méta mobile et CHANGELOG ;
+- le candidat local `v2.21.7` dans `js/layout.js`, `sw.js`, la méta mobile et CHANGELOG, distinct de
+  la version publiée `5dc077b` / `v2.21.6` ;
 - la distinction avec la référence `712417f` / `v2.21.3` et le témoin `387d1cf` / `v2.21.2` ;
 - le cache dérivé, le manifeste unique et le maintien du `start_url` historique ;
 - le graphe local de `/app/`, la syntaxe des modules et les ressources précachées ;
@@ -96,7 +106,7 @@ inspection ni publication des règles ou index de production.
 | Android physique | **Partiel** | Mise à jour, confirmation serveur et succès Auth popup vérifiés ; autres scénarios à faire |
 | iOS physique | **Différé** | Appareil disponible et matrice M6-03 |
 | Auth Google en mode installé | **Partiel** | Popup primaire et session MJ active confirmées en `v2.21.6` ; annulation, retry, retour route et ancien redirect restent à tester |
-| Inspection réelle Cache Storage | **Non exécutée** | Absence de données protégées/opaques |
+| Inspection réelle Cache Storage | **Correctif local à revalider** | Aucune donnée de campagne trouvée ; une entrée reCAPTCHA détectée en `v2.21.6`, exclue par `v2.21.7`, recontrôle après publication requis |
 | Règles et index production | **Partiel** | Quatre runners émulateur verts ; état déployé à contrôler |
 | Bêta MJ/joueur | **Non exécutée** | Retour expurgé, sans donnée de campagne |
 | Rollback hors production | **Procédure préparée, test non exécuté** | Prévisualisation et ancien worker actif |
@@ -104,7 +114,8 @@ inspection ni publication des règles ou index de production.
 ## Procédure de déploiement silencieux à autoriser
 
 1. Le candidat `5dc077b` / `v2.21.6` a été publié sans changement non lié ; la référence précédente
-   reste `f9f4a71` / `v2.21.5`. Le chemin de succès Auth Android est confirmé.
+   reste `f9f4a71` / `v2.21.5`. Le chemin de succès Auth Android est confirmé. Le correctif local
+   `v2.21.7` doit recevoir une autorisation de push séparée après ses gates.
 2. Produire une sauvegarde Firestore/Storage hors dépôt, comparer son inventaire à M0-01 et tester
    sa restauration dans des émulateurs isolés.
 3. Exécuter les gates locaux puis les règles/index sur émulateurs ; ne publier aucune règle sans
@@ -146,15 +157,17 @@ Service Worker ; ne jamais supprimer les objets orphelins sans inventaire et aut
 
 ## Critères de sortie
 
-- [x] Version publiée `5dc077b` / `v2.21.6`, référence précédente `f9f4a71` / `v2.21.5` et témoin
-  `387d1cf` / `v2.21.2` distingués honnêtement ; succès Auth Android confirmé.
+- [x] Version publiée `5dc077b` / `v2.21.6`, candidat local `v2.21.7`, référence précédente
+  `f9f4a71` / `v2.21.5` et témoin `387d1cf` / `v2.21.2` distingués honnêtement ; succès Auth
+  Android confirmé.
 - [x] `start_url` et absence d’annonce publique conservés.
 - [x] Procédure de rollback interface/SW, règles/index et données séparée.
 - [x] Contrôles locaux automatisables ajoutés.
 - [x] Backup daté, comparaison aux références et restauration émulateur.
 - [ ] Matrice bureau/mobile/sécurité réelle.
 - [ ] Matrice Android physique complète ; succès Auth installé déjà confirmé.
-- [ ] Inspection Cache Storage réelle.
+- [ ] Inspection Cache Storage réelle : anomalie reCAPTCHA corrigée localement ; recontrôle requis
+  après activation de `v2.21.7`.
 - [ ] Bêta contrôlée et rollback hors production.
 - [ ] Validation iOS : différée.
 

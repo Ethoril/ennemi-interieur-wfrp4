@@ -1,3 +1,20 @@
+## [2.21.7] - 2026-08-25
+
+### Corrigé
+
+- **Confidentialité du cache PWA** : les scripts reCAPTCHA servis par `www.gstatic.com` sont
+  désormais traités comme des ressources Auth/App Check protégées. Ils restent servis par le
+  réseau et ne peuvent plus entrer dans Cache Storage.
+- **Migration du cache réel** : le nouveau cache `wfrp-cache-v2.21.7` remplace le cache
+  `v2.21.6` observé sur Chrome ; l’activation supprime l’ancien cache et le test de migration
+  couvre explicitement une entrée reCAPTCHA héritée.
+
+### Préparation
+
+- **Candidat local non publié** : l’inspection réelle du candidat caché `v2.21.6` a trouvé une
+  ressource reCAPTCHA externe dans Cache Storage. Le correctif `v2.21.7` est préparé sans modifier
+  les données Firebase, le manifeste, le démarrage historique ni l’absence de lien public `/app/`.
+
 ## [2.21.6] - 2026-08-25
 
 ### Corrigé

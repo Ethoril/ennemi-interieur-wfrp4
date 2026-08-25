@@ -1,6 +1,6 @@
 // sw.js, en tête. Doit rester identique à APP_VERSION de js/layout.js :
 // la CI le vérifie (.github/workflows/validate.yml).
-const APP_VERSION = 'v2.21.6';
+const APP_VERSION = 'v2.21.7';
 const CACHE_NAME  = 'wfrp-cache-' + APP_VERSION;
 
 const ASSETS_LOCAUX = [
@@ -189,6 +189,7 @@ function isProtectedNetworkRequest(value) {
       || hostname.endsWith('.firebasedatabase.app')
       || hostname.endsWith('.cloudfunctions.net')
       || (hostname === 'www.gstatic.com' && url.pathname.startsWith('/firebasejs/'))
+      || (hostname === 'www.gstatic.com' && url.pathname.startsWith('/recaptcha/'))
       || (hostname === 'www.google.com' && url.pathname.startsWith('/recaptcha/'))
       || hostname === 'recaptcha.google.com'
       || hostname === 'docs.google.com';

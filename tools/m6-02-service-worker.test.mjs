@@ -71,7 +71,7 @@ function createWorkerHarness() {
         },
         caches: {
             async open() { return cache; },
-            async keys() { return ['wfrp-cache-v2.21.6']; },
+            async keys() { return ['wfrp-cache-v2.21.7']; },
             async match(request) { return cache.match(request); },
         },
         fetch: async request => {
@@ -165,6 +165,7 @@ test('le worker racine protège les données et garde l activation volontaire', 
     assert.match(source, /hostname === 'firebaseappcheck\.googleapis\.com'/u);
     assert.match(source, /hostname\.endsWith\('\.cloudfunctions\.net'\)/u);
     assert.match(source, /hostname === 'www\.gstatic\.com' && url\.pathname\.startsWith\('\/firebasejs\/'\)/u);
+    assert.match(source, /hostname === 'www\.gstatic\.com' && url\.pathname\.startsWith\('\/recaptcha\/'\)/u);
     assert.match(source, /response\.type !== 'opaque'/u);
     assert.match(source, /pathname\.endsWith\('\/app\/'\)/u);
     assert.equal((source.match(/navigator\.serviceWorker\.register/gu) || []).length, 0);
@@ -177,17 +178,25 @@ test('le worker racine protège les données et garde l activation volontaire', 
 test('harness SW : purge migration, réseau protégé, opaque, offline app et CDN en panne', async () => {
     const harness = createWorkerHarness();
     const protectedUrl = 'https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel';
+    const recaptchaUrl = 'https://www.gstatic.com/recaptcha/releases/test/recaptcha__fr.js';
     const opaqueUrl = `${harness.origin}/cdn/private-image.webp`;
     harness.entries.set(protectedUrl, { response: { type: 'basic' } });
+    harness.entries.set(recaptchaUrl, { response: { type: 'cors' } });
     harness.entries.set(opaqueUrl, { response: { type: 'opaque' } });
     await harness.dispatch('activate', {});
     assert.ok(harness.deleted.includes(protectedUrl));
+    assert.ok(harness.deleted.includes(recaptchaUrl));
     assert.ok(harness.deleted.includes(opaqueUrl));
 
     const protectedEvent = {
         request: { method: 'GET', url: 'https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel', mode: 'cors', headers: { get: () => '' } },
     };
     assert.equal(await harness.dispatch('fetch', protectedEvent), null);
+    const recaptchaEvent = {
+        request: { method: 'GET', url: recaptchaUrl, mode: 'cors', headers: { get: () => '' } },
+    };
+    assert.equal(await harness.dispatch('fetch', recaptchaEvent), null,
+        'reCAPTCHA gstatic doit rester entièrement hors Cache Storage');
     const opaqueEvent = {
         request: { method: 'GET', url: opaqueUrl, mode: 'no-cors', headers: { get: () => '' } },
     };
@@ -268,7 +277,7 @@ test('la mise à jour attend une action, respecte beforeLeave et ne recharge qu 
     waiting.addEventListener = EventTargetFake.prototype.addEventListener;
     const registration = new EventTargetFake();
     registration.waiting = waiting;
-    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.6' }) };
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.7' }) };
     registration.update = async () => {};
     serviceWorker.controller = {};
     serviceWorker.register = async (url, options) => {
@@ -282,7 +291,7 @@ test('la mise à jour attend une action, respecte beforeLeave et ne recharge qu 
     const pwa = createPwaController({ windowRef, navigatorRef: windowRef.navigator, router: { canLeaveCurrent: () => canLeave }, announce: message => announcements.push(message) });
     await pwa.start();
     assert.equal(pwa.getState().updateAvailable, true);
-    assert.equal(pwa.getDiagnostics().workerVersion, 'v2.21.6');
+    assert.equal(pwa.getDiagnostics().workerVersion, 'v2.21.7');
     assert.equal(pwa.applyUpdate(), false);
     assert.deepEqual(messages, []);
     assert.match(announcements.at(-1), /différée/u);
@@ -427,7 +436,7 @@ test('le bouton du bandeau passe par la même action que Réglages et disparaît
     waiting.postMessage = message => messages.push(message);
     const registration = new EventTargetFake();
     registration.waiting = waiting;
-    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.6' }) };
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.7' }) };
     registration.update = async () => {};
     serviceWorker.register = async () => registration;
     windowRef.navigator.serviceWorker = serviceWorker;
@@ -515,7 +524,7 @@ test('stop pendant requestUpdate empêche tout SKIP_WAITING tardif', async () =>
     waiting.postMessage = message => messages.push(message);
     const registration = new EventTargetFake();
     registration.waiting = waiting;
-    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.6' }) };
+    registration.active = { postMessage: (_message, ports) => ports?.[0]?.postMessage({ version: 'v2.21.7' }) };
     let resolveUpdate;
     registration.update = () => new Promise(resolve => { resolveUpdate = resolve; });
     serviceWorker.register = async () => registration;
