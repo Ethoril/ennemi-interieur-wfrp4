@@ -22,7 +22,7 @@ function resolveModule(from, specifier) {
     return relative.replaceAll(path.sep, '/');
 }
 
-test('M7-01 garde le candidat local v2.21.4 cohérent avec la référence déployée v2.21.3', () => {
+test('M7-01 garde le candidat déployé v2.21.4 cohérent avec ses références', () => {
     const layout = read('js/layout.js');
     const sw = read('sw.js');
     const app = read('app/index.html');
@@ -35,10 +35,12 @@ test('M7-01 garde le candidat local v2.21.4 cohérent avec la référence déplo
     assert.match(sw, /CACHE_NAME\s*=\s*['"]wfrp-cache-['"]\s*\+\s*APP_VERSION/u);
     assert.match(changelog, /^## \[2\.21\.4\]/mu);
     assert.equal(manifest.start_url, './index.html');
+    assert.match(report, /58fe964/u);
     assert.match(report, /712417f/u);
     assert.match(report, /387d1cf/u);
     assert.match(report, /v2\.21\.3/u);
     assert.match(report, /v2\.21\.4/u);
+    assert.match(report, /Synchronisé avec le serveur/u);
     assert.match(report, /5376782/u);
     assert.match(report, /Non exécuté|Non exécutée|Non revendiqué/iu);
 });

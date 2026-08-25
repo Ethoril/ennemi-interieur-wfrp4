@@ -1,8 +1,8 @@
 # M6-03 — Rapport de recette PWA et clôture locale
 
-Date de préparation : 25 août 2026. Version cachée actuellement déployée : `v2.21.3`, commit
-`712417f`. La version témoin Android précédente était `v2.21.2`. Le candidat local actuel est
-`v2.21.4`, non poussé et non déployé.
+Date de préparation : 25 août 2026. Version cachée actuellement déployée : `v2.21.4`, commit
+`58fe964`. La version précédente était `v2.21.3`, commit `712417f`, et la version témoin Android
+précédente était `v2.21.2`.
 
 ## Décision de livraison
 
@@ -75,9 +75,11 @@ et diagnostics interface/worker alignés. Les preuves Android ci-dessus restent 
 `v2.21.2` et ne sont pas attribuées à `v2.21.3`.
 
 Le hotfix de synchronisation Firestore demande explicitement les métadonnées dans le contrat
-d'écoute public/MJ. Le candidat local `v2.21.4` aligne donc à nouveau la version, le cache, la méta
-et le CHANGELOG, mais n'a pas été poussé ni déployé. Les preuves HTTPS et Android ci-dessus restent
-des preuves de `v2.21.3` ou de versions antérieures.
+d'écoute public/MJ. Le push autorisé de `58fe964` a publié `v2.21.4` ; GitHub Pages et la validation
+du dépôt ont réussi. Après mise à jour sur l'appareil Android du propriétaire, l'affichage attendu
+est resté disponible et le statut a quitté « Données enregistrées — synchronisation en attente »
+pour afficher « Synchronisé avec le serveur ». Cette preuve valide le correctif de métadonnées,
+mais pas la matrice Android complète.
 
 ## Contrôles automatisés
 
@@ -100,6 +102,7 @@ mobile, sécurité et règles déjà présentes dans le dépôt.
 | Création/modification, photo, rotation, clavier | À renseigner | **À faire** | À renseigner |
 | Publication temps réel vers un second appareil | À renseigner | **À faire** | À renseigner |
 | Bannière et activation volontaire d’une mise à jour | Android utilisateur, détails à renseigner | **OK** | `v2.21.1` → `v2.21.2` par le bouton du bandeau ; un rechargement, bandeau masqué, diagnostics alignés |
+| Confirmation de synchronisation Firestore | Android utilisateur, `v2.21.4` | **OK** | Le statut passe de la copie enregistrée à « Synchronisé avec le serveur » |
 | Réseau coupé pendant un formulaire et reprise | À renseigner | **À faire** | À renseigner |
 | Zoom 200 %, thèmes, largeur 375 px | À renseigner | **À faire** | À renseigner |
 
@@ -124,8 +127,8 @@ mise à jour devront être rejoués sur appareil réel dans un lot ultérieur.
 
 ## Checklist de sortie
 
-- [x] Version déployée `v2.21.3` et candidat local `v2.21.4` documentés ; le candidat local n'est
-  pas déclaré publié.
+- [x] Version déployée `58fe964` / `v2.21.4` et référence précédente `712417f` / `v2.21.3`
+  documentées.
 - [x] `start_url` historique conservé et aucune annonce publique de `/app/`.
 - [x] Contrôles automatisés locaux verts.
 - [x] Preuves navigateur locales consignées sans données privées.

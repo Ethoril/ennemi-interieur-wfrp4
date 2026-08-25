@@ -8,8 +8,9 @@
 
 ### Préparation
 
-- **Candidat local** : la correction concerne le graphe précaché de la coque. `v2.21.4` est alignée
-  localement, sans push ni déploiement ; `v2.21.3` reste la version déployée de référence.
+- **Publication cachée** : le commit `58fe964` publie `v2.21.4` sans modifier le démarrage
+  historique ni ajouter de lien public vers `/app/`. La confirmation Android indique désormais
+  « Synchronisé avec le serveur » après la confirmation Firestore.
 
 ## [2.21.3] - 2026-08-25
 
