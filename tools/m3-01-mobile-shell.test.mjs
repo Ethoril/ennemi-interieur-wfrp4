@@ -140,7 +140,8 @@ test('la coque mobile reste autonome, accessible et sans accès Firebase direct'
     assert.match(html, /style-src 'self'/u);
     assert.match(html, /aria-live="polite"/u);
     assert.match(html, /m-bottom-nav/u);
-    assert.doesNotMatch(html, /manifest\.json|cdn/iu);
+    assert.match(html, /rel="manifest" href="\.\.\/manifest\.json"/u);
+    assert.doesNotMatch(html, /cdn/iu);
     assert.match(css, /--m-touch-target:\s*2\.75rem/u);
     assert.match(css, /safe-area-inset-(?:top|bottom)/u);
     assert.match(css, /prefers-reduced-motion/u);

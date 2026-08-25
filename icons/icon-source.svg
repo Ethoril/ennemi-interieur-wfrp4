@@ -1,0 +1,8 @@
+<!--
+  M6-01 source artwork: the same dark/gold fleur-de-lis identity as favicon.svg.
+  PNGs are generated mechanically from this simple, dependency-free artwork.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="L'Ennemi Intérieur">
+  <rect width="32" height="32" rx="5" fill="#0e0e18"/>
+  <text x="16" y="25" font-size="22" text-anchor="middle" fill="#c9a84c">⚜</text>
+</svg>

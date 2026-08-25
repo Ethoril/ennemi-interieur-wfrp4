@@ -85,7 +85,7 @@ test('la coque /app existe, ses modules référencés sont syntaxiquement valide
     assert.ok(visited.has('js/mobile/views/pnj-detail.js'));
 });
 
-test('la consultation mobile reste non annoncée avant M6/M7', () => {
+test('la consultation mobile partage le manifeste sans annoncer /app ni service worker', () => {
     const publicHtml = fs.readdirSync(root)
         .filter(name => name.endsWith('.html'))
         .map(name => [name, read(name)]);
@@ -97,5 +97,6 @@ test('la consultation mobile reste non annoncée avant M6/M7', () => {
     assert.doesNotMatch(manifest, /(?:start_url|src)\s*['"]?\s*:\s*['"][^'"]*\/?app(?:\/|['"])/iu,
         'le manifeste bureau ne doit pas cibler /app/');
     assert.doesNotMatch(manifest, /\/?app\//iu);
-    assert.doesNotMatch(read('app/index.html'), /manifest\.json|serviceWorker|navigator\.serviceWorker/iu);
+    assert.match(read('app/index.html'), /rel="manifest" href="\.\.\/manifest\.json"/u);
+    assert.doesNotMatch(read('app/index.html'), /serviceWorker|navigator\.serviceWorker/iu);
 });
