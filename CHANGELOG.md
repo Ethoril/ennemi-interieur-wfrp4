@@ -1,3 +1,10 @@
+## [2.22.3] - 2026-09-23
+
+### Amélioré
+
+- **Règle des cartes** : le clic droit termine le trajet et fige les distances sans effacer le tracé. Le chemin rouge, plus épais, reste visible jusqu'à l'action Effacer.
+- **Partage du trajet** : un aperçu PNG réunit la carte, le chemin et un cartouche des distances et durées de voyage, avec téléchargement et partage natif sur les appareils tactiles compatibles.
+
 ## [2.22.2] - 2026-08-25
 
 ### Corrigé

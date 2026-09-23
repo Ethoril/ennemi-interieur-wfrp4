@@ -212,8 +212,66 @@
         .measure-panel-actions {
             display: flex;
             justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
             margin-bottom: 12px;
         }
+        .btn-share {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(201, 168, 76, 0.18);
+            border: 1px solid var(--border-gold);
+            color: var(--gold-bright);
+            font-family: var(--font-heading);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            padding: 6px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+        }
+        .btn-share:hover:not(:disabled) { background: rgba(201, 168, 76, 0.3); }
+        .btn-share:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn-share[hidden] { display: none; }
+        .measure-preview {
+            width: min(960px, calc(100vw - 32px));
+            max-height: calc(100vh - 32px);
+            padding: 0;
+            border: 1px solid var(--border-gold);
+            border-radius: var(--radius-lg);
+            background: #101018;
+            color: var(--text-primary);
+            box-shadow: var(--shadow-lg);
+        }
+        .measure-preview::backdrop { background: rgba(7, 7, 13, 0.85); }
+        .measure-preview-header,
+        .measure-preview-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 16px;
+        }
+        .measure-preview-header h3 {
+            margin: 0;
+            color: var(--gold-bright);
+            font-family: var(--font-heading);
+            font-size: 0.95rem;
+        }
+        .measure-preview img {
+            display: block;
+            width: 100%;
+            max-height: calc(100vh - 170px);
+            object-fit: contain;
+            background: #07070d;
+        }
+        .measure-preview-actions {
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .measure-preview-actions a { text-decoration: none; }
         .btn-clear {
             display: flex;
             align-items: center;
@@ -245,6 +303,13 @@
             border-top: 1px solid var(--border-subtle);
             padding-top: 10px;
             margin-top: 10px;
+        }
+        .measure-status {
+            min-height: 1em;
+            margin: 0;
+            color: var(--gold-bright);
+            text-align: center;
+            font-size: 0.72rem;
         }
         /* Curseur spécial pour l'outil */
         .measure-mode-active,
@@ -309,13 +374,28 @@
                 <button id="measure-clear-btn" class="btn-clear">
                     🗑️ Effacer
                 </button>
+                <button id="measure-share-btn" class="btn-share" disabled>
+                    📷 Partager
+                </button>
             </div>
-            
+            <p id="measure-status" class="measure-status" role="status" aria-live="polite"></p>
             <div class="measure-help">
-                Clic gauche pour ajouter un point. Clic droit, double-clic ou bouton Effacer pour réinitialiser.
+                Clic gauche pour ajouter un point. Clic droit pour terminer le trajet et figer les distances. Double-clic ou Effacer pour recommencer.
             </div>
         </div>
     </div>
+
+    <dialog id="measure-preview" class="measure-preview" aria-labelledby="measure-preview-title">
+        <div class="measure-preview-header">
+            <h3 id="measure-preview-title">Image du trajet</h3>
+            <button id="measure-preview-close" type="button" class="measure-close-btn" aria-label="Fermer l’aperçu">&times;</button>
+        </div>
+        <img id="measure-preview-image" alt="Carte avec le trajet tracé et le cartouche des distances">
+        <div class="measure-preview-actions">
+            <button id="measure-native-share-btn" type="button" class="btn-share" hidden>Partager l’image</button>
+            <a id="measure-download-link" class="btn-share" href="#" download>Télécharger le PNG</a>
+        </div>
+    </dialog>
 
     <main class="page-container" id="contenu">
         <div id="map-container"></div>

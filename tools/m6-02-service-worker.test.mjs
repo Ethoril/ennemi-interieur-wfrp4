@@ -26,6 +26,7 @@ function createWorkerHarness() {
     const entries = new Map();
     const puts = [];
     const deleted = [];
+    const deletedCacheNames = [];
     const fetchResponses = new Map();
     let putError = null;
     let putDelay = null;
@@ -71,7 +72,8 @@ function createWorkerHarness() {
         },
         caches: {
             async open() { return cache; },
-            async keys() { return ['wfrp-cache-v2.22.2']; },
+            async keys() { return ['wfrp-cache-v2.22.3', 'wfrp-cache-v2.22.2']; },
+            async delete(name) { deletedCacheNames.push(name); return true; },
             async match(request) { return cache.match(request); },
         },
         fetch: async request => {
@@ -93,7 +95,7 @@ function createWorkerHarness() {
         await Promise.all(waits);
         return responsePromise ? responsePromise : null;
     };
-    return { cache, entries, puts, deleted, dispatch, origin, fetchResponses,
+    return { cache, entries, puts, deleted, deletedCacheNames, dispatch, origin, fetchResponses,
         setPutError: error => { putError = error; },
         setPutDelay: promise => { putDelay = promise; },
         get waitUntilCalls() { return waitUntilCalls; } };
@@ -184,6 +186,7 @@ test('harness SW : purge migration, réseau protégé, opaque, offline app et CD
     harness.entries.set(recaptchaUrl, { response: { type: 'cors' } });
     harness.entries.set(opaqueUrl, { response: { type: 'opaque' } });
     await harness.dispatch('activate', {});
+    assert.deepEqual(harness.deletedCacheNames, ['wfrp-cache-v2.22.2']);
     assert.ok(harness.deleted.includes(protectedUrl));
     assert.ok(harness.deleted.includes(recaptchaUrl));
     assert.ok(harness.deleted.includes(opaqueUrl));
