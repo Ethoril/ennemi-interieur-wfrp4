@@ -3204,6 +3204,33 @@ strong {
   border-color: var(--gold);
 }
 
+/* ── Transitions entre pages (L3-03) ───────────── */
+/* Chrome, Edge, Safari 18.2+ ; les autres naviguent sans animation. */
+@view-transition {
+  navigation: auto;
+}
+
+/* La barre est identique d'une page à l'autre : elle reste immobile. */
+.navbar {
+  view-transition-name: site-nav;
+}
+
+::view-transition-old(root) {
+  animation: page-out 0.18s var(--ease-in-out) both;
+}
+
+::view-transition-new(root) {
+  animation: page-in 0.25s var(--ease-out) both;
+}
+
+@keyframes page-out {
+  to { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
 /* ── Mouvement réduit ──────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -3213,5 +3240,9 @@ strong {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  @view-transition {
+    navigation: none;
   }
 }

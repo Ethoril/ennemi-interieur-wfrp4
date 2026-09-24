@@ -31,7 +31,10 @@ Tout se passe en fin de `css/base.css`, feuille chargée par toutes les pages.
    navigations de même origine, ce qui exclut d'office les liens externes.
 2. **Figer la barre** : donner `view-transition-name: site-nav` à `.navbar`. Elle ne fait
    plus partie du fondu et reste immobile pendant que le contenu change.
-3. **Faire glisser le titre** : `view-transition-name: page-title` sur le titre principal
+3. ~~**Faire glisser le titre**~~ — **écarté à la réalisation** : les titres ont des largeurs
+   trop différentes (« LE GROUPE », « CARNET D'ENQUÊTES »), le passage de l'un à l'autre
+   produisait un zoom du texte plutôt qu'un glissement. Le titre suit le fondu de la page.
+   Consigne d'origine, pour mémoire : `view-transition-name: page-title` sur le titre principal
    de page. Vérifier d'abord son sélecteur réel (le `<h1>` du bandeau de chaque page, dans le
    HTML) : **un nom ne doit exister qu'une fois par page**, sinon la transition est annulée.
 4. **Régler le fondu** du reste de la page via `::view-transition-old(root)` et
