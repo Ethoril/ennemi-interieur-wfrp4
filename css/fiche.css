@@ -43,7 +43,8 @@
   align-items: center;
   justify-content: center;
   font-size: 3.5rem;
-  transition: all var(--transition-base);
+  transition: var(--transition-base);
+  transition-property: border-color, box-shadow;
 }
 
 .fiche-portrait-wrapper .character-portrait picture,
@@ -392,7 +393,8 @@
   font-size: 0.9rem;
   line-height: 1;
   padding: 2px 6px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, border-color;
 }
 
 .btn-rm-adv-skill:hover {
@@ -415,7 +417,8 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 6px 12px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, border-color;
 }
 
 .btn-add:hover {
@@ -648,7 +651,8 @@
   font-size: 0.72rem;
   letter-spacing: 0.06em;
   padding: 5px 14px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, background-color, border-color;
 }
 
 .btn-toggle-opt:hover {

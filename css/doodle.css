@@ -442,7 +442,8 @@
   align-items: center;
   gap: 6px;
   font-family: var(--font-heading);
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, background-color, border-color;
 }
 
 .doodle-submit-bottom {

@@ -25,24 +25,29 @@ function initNavbar() {
 
   // Mobile burger
   if (burger && links) {
-    burger.addEventListener('click', () => {
-      burger.classList.toggle('active');
-      links.classList.toggle('open');
-    });
+    const setOpen = (open) => {
+      burger.classList.toggle('active', open);
+      links.classList.toggle('open', open);
+      burger.setAttribute('aria-expanded', String(open));
+    };
+
+    burger.addEventListener('click', () => setOpen(!links.classList.contains('open')));
 
     // Close on link click
     links.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        burger.classList.remove('active');
-        links.classList.remove('open');
-      });
+      link.addEventListener('click', () => setOpen(false));
     });
 
     // Close on outside click
     document.addEventListener('click', (e) => {
-      if (!burger.contains(e.target) && !links.contains(e.target)) {
-        burger.classList.remove('active');
-        links.classList.remove('open');
+      if (!burger.contains(e.target) && !links.contains(e.target)) setOpen(false);
+    });
+
+    // Close on Escape, focus back on the burger
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && links.classList.contains('open')) {
+        setOpen(false);
+        burger.focus();
       }
     });
   }

@@ -89,18 +89,41 @@
 .ui-confirm {
   max-width: 28rem;
   width: calc(100% - 2 * var(--space-md));
+  margin: auto; /* la remise à zéro * { margin: 0 } annule le centrage natif */
   padding: var(--space-lg);
   background: var(--bg-card);
   color: var(--text-primary);
   border: 1px solid var(--border-gold);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out),
+    overlay 0.2s allow-discrete, display 0.2s allow-discrete;
 }
 .ui-confirm[open] {
-  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  opacity: 1;
+  transform: none;
+}
+@starting-style {
+  .ui-confirm[open] {
+    opacity: 0;
+    transform: scale(0.96);
+  }
 }
 .ui-confirm::backdrop {
   background: rgba(7, 7, 13, 0.72);
+  opacity: 0;
+  transition: opacity 0.2s var(--ease-out),
+    overlay 0.2s allow-discrete, display 0.2s allow-discrete;
+}
+.ui-confirm[open]::backdrop {
+  opacity: 1;
+}
+@starting-style {
+  .ui-confirm[open]::backdrop {
+    opacity: 0;
+  }
 }
 .ui-confirm-titre {
   margin: 0 0 var(--space-sm);
@@ -151,9 +174,5 @@
 .ui-confirm-valider.ui-confirm-danger:hover {
   background: var(--blood);
   border-color: var(--blood);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-confirm[open] { animation: none; }
 }
 

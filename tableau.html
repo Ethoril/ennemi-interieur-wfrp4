@@ -63,9 +63,14 @@
                 </div>
 
                 <!-- Loading -->
-                <div class="sheet-loading" id="sheet-loading">
-                    <div class="sheet-spinner"></div>
-                    Chargement des données...
+                <div class="sheet-loading" id="sheet-loading" role="status">
+                    <div class="skeleton-list" aria-hidden="true">
+                        <div class="skeleton skeleton-card"></div>
+                        <div class="skeleton skeleton-card"></div>
+                        <div class="skeleton skeleton-card"></div>
+                        <div class="skeleton skeleton-card"></div>
+                    </div>
+                    <span class="visually-hidden">Chargement des données...</span>
                 </div>
 
                 <!-- Data Container -->
