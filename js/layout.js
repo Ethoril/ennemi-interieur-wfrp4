@@ -69,7 +69,7 @@ function injectNav() {
             <a href="index.html" class="nav-brand">
                 <span>⚔️</span> L'Ennemi Intérieur <span class="nav-version">${APP_VERSION}</span>
             </a>
-            <button class="nav-burger" id="nav-burger" aria-label="Menu">
+            <button class="nav-burger" id="nav-burger" aria-label="Menu" aria-controls="nav-links" aria-expanded="false">
                 <span></span><span></span><span></span>
             </button>
             <ul class="nav-links" id="nav-links">${linksHtml}</ul>
