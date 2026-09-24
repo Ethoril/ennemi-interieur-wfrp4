@@ -83,8 +83,12 @@
                 </div>
 
                 <!-- Loader -->
-                <div id="doodle-loader" class="doodle-loader">
-                    <span class="doodle-muted">Chargement du sondage...</span>
+                <div id="doodle-loader" class="doodle-loader" role="status">
+                    <div class="skeleton skeleton-line" aria-hidden="true"></div>
+                    <div class="skeleton skeleton-line" aria-hidden="true"></div>
+                    <div class="skeleton skeleton-line" aria-hidden="true"></div>
+                    <div class="skeleton skeleton-line" aria-hidden="true"></div>
+                    <span class="visually-hidden">Chargement du sondage...</span>
                 </div>
 
                 <!-- Message si aucun sondage en cours -->

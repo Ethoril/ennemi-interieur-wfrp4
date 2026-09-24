@@ -981,15 +981,6 @@ strong {
   font-size: 0.9rem;
 }
 
-.sheet-spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--border-subtle);
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -1614,6 +1605,7 @@ strong {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: var(--text-primary);
+  font-family: inherit;
   font-size: 0.85rem;
   padding: 6px 12px 6px 30px;
   width: 210px;
@@ -3202,6 +3194,48 @@ strong {
 [data-theme="parchment"] .btn-ctrl:hover {
   color: var(--gold-dim);
   border-color: var(--gold);
+}
+
+/* ── Squelettes de chargement (L3-04) ──────────── */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--gold-wash), transparent);
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1.4s var(--ease-in-out) infinite;
+}
+
+.skeleton-line {
+  height: 1.1rem;
+  margin-bottom: var(--space-md);
+}
+
+.skeleton-line:nth-child(even) {
+  width: 70%;
+}
+
+.skeleton-card {
+  height: 160px;
+  border: 1px solid var(--border-subtle);
+}
+
+.skeleton-list {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-md);
+}
+
+@keyframes skeleton-shimmer {
+  to { transform: translateX(100%); }
 }
 
 /* ── Transitions entre pages (L3-03) ───────────── */

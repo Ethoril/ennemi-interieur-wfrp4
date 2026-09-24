@@ -139,10 +139,10 @@ async function loadData({ generation = bureauGeneration, init = false } = {}) {
         const container = document.getElementById('clues-container');
         if (container) {
             container.innerHTML = `
-                <div id="clues-loading" class="pnj-loading">
-                    <div class="pnj-spinner"></div>
-                    <span class="loading-text">Chargement du grimoire d'enquêtes...</span>
-                </div>`;
+                <div class="skeleton skeleton-card" aria-hidden="true"></div>
+                <div class="skeleton skeleton-card" aria-hidden="true"></div>
+                <div class="skeleton skeleton-card" aria-hidden="true"></div>
+                <span class="visually-hidden" role="status">Chargement du grimoire d'enquêtes...</span>`;
         }
 
         const renderGate = createRenderGate();
