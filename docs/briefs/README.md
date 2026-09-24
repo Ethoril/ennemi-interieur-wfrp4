@@ -128,12 +128,22 @@ publiques). CSS natif uniquement, aucune dépendance. `L3-02` avant `L3-03`, `L3
 
 | Brief | Objet | Constat | Estim. |
 |---|---|---|---|
-| [L3-01](L3-01-navigation-debordement.md) | Barre de navigation qui déborde sur ordinateur | D1 | 45 min |
-| [L3-02](L3-02-jetons-mouvement.md) | Jetons de mouvement et mouvement réduit | D2 | 1 h |
-| [L3-03](L3-03-transitions-entre-pages.md) | Transitions animées entre les pages | D3 | 1 h 30 |
-| [L3-04](L3-04-etats-de-chargement.md) | États de chargement et champs de recherche | D4 | 2 h |
-| [L3-05](L3-05-apparitions-et-modales.md) | Apparitions au défilement, modale et menu animés | D5 | 2 h |
-| [L3-06](L3-06-cloture-lot3.md) | CHANGELOG, version, livraison | N1 | 30 min |
+| ~~[L3-01](L3-01-navigation-debordement.md)~~ | ~~Barre de navigation qui déborde sur ordinateur~~ — **livré en v2.23.0** | D1 | — |
+| ~~[L3-02](L3-02-jetons-mouvement.md)~~ | ~~Jetons de mouvement et mouvement réduit~~ — **livré en v2.23.0** | D2 | — |
+| ~~[L3-03](L3-03-transitions-entre-pages.md)~~ | ~~Transitions animées entre les pages~~ — **livré en v2.23.0** | D3 | — |
+| ~~[L3-04](L3-04-etats-de-chargement.md)~~ | ~~États de chargement et champs de recherche~~ — **livré en v2.23.0** | D4 | — |
+| ~~[L3-05](L3-05-apparitions-et-modales.md)~~ | ~~Apparitions au défilement, modale et menu animés~~ — **livré en v2.23.0** | D5 | — |
+| ~~[L3-06](L3-06-cloture-lot3.md)~~ | ~~CHANGELOG, version, livraison~~ — **livré en v2.23.0** | N1 | — |
+
+Écarts à la réalisation, consignés dans les commits : `L3-03` n'anime pas le titre (largeurs
+trop différentes d'une page à l'autre) ; `L3-04` laisse son spinner à PNJs (le graphe n'a pas
+de squelette sensé) ; `L3-05` garde l'apparition au défilement existante (`js/main.js`,
+IntersectionObserver) au lieu de la doubler en CSS, et corrige en plus le centrage de la
+modale, cassé depuis `L2-11` par la remise à zéro globale des marges.
+
+**Validation navigateur par le MJ à faire** : transitions depuis et vers l'accueil (scène 3D),
+thème parchemin, 375 px, burger entre 769 et 1439 px. Les captures de conception n'ont couvert
+que le thème sombre en 1440 px.
 
 ## Hors périmètre
 

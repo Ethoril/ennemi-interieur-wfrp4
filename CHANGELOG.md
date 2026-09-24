@@ -1,3 +1,22 @@
+## [2.23.0] - 2026-09-24
+
+### Amélioré
+
+- **Navigation entre les pages** : la barre du haut reste immobile et le contenu change en fondu, au lieu du clignotement habituel (Chrome, Edge, Safari ; les autres navigateurs naviguent comme avant).
+- **Chargements** : Enquêtes, Calendrier et Aides de Jeux affichent des blocs à la forme du contenu attendu pendant la récupération des données.
+- **Animations** : mouvements plus nets sur tout le site ; la fenêtre de confirmation s'ouvre et se ferme en fondu, et le menu glisse sans à-coup.
+- **Réduire les animations** : le réglage du système est désormais respecté sur l'ensemble du site.
+
+### Corrigé
+
+- **Barre de navigation** : plus aucun lien coupé sur un écran d'ordinateur ; le menu déroulant prend le relais sous 1440 px de large.
+- **Fenêtre de confirmation** : elle s'affiche de nouveau au centre de l'écran, et non plus en haut à gauche.
+- **Champs de recherche** : PNJs et Enquêtes utilisent la police du site.
+
+### Accessibilité
+
+- **Menu** : il annonce son état ouvert ou fermé, se ferme avec Échap, et ses liens ne sont plus atteignables au clavier quand il est fermé.
+
 ## [2.22.3] - 2026-09-23
 
 ### Amélioré
