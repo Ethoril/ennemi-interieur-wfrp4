@@ -121,6 +121,20 @@ Livrés dans la même version, hors briefs :
   gros plan sur Morrslieb au lieu de la ville.
 - **Service worker** — `js/ui-confirm.js` ajouté au pré-cache (dépendance de la modale).
 
+## Lot 3 — apparence et fluidité
+
+Issu d'une passe visuelle du 24 septembre 2026 sur la v2.22.3 (captures 1440 px des pages
+publiques). CSS natif uniquement, aucune dépendance. `L3-02` avant `L3-03`, `L3-04` et `L3-05`.
+
+| Brief | Objet | Constat | Estim. |
+|---|---|---|---|
+| [L3-01](L3-01-navigation-debordement.md) | Barre de navigation qui déborde sur ordinateur | D1 | 45 min |
+| [L3-02](L3-02-jetons-mouvement.md) | Jetons de mouvement et mouvement réduit | D2 | 1 h |
+| [L3-03](L3-03-transitions-entre-pages.md) | Transitions animées entre les pages | D3 | 1 h 30 |
+| [L3-04](L3-04-etats-de-chargement.md) | États de chargement et champs de recherche | D4 | 2 h |
+| [L3-05](L3-05-apparitions-et-modales.md) | Apparitions au défilement, modale et menu animés | D5 | 2 h |
+| [L3-06](L3-06-cloture-lot3.md) | CHANGELOG, version, livraison | N1 | 30 min |
+
 ## Hors périmètre
 
 Écartés sur décision, à ne pas traiter :
