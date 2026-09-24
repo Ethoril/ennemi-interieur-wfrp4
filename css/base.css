@@ -73,9 +73,11 @@
   --radius-lg: 12px;
 
   /* Transitions */
-  --transition-fast: 0.2s ease;
-  --transition-base: 0.3s ease;
-  --transition-slow: 0.5s ease;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --transition-fast: 0.2s var(--ease-out);
+  --transition-base: 0.3s var(--ease-out);
+  --transition-slow: 0.5s var(--ease-out);
 
   /* Layout */
   --max-width: 1600px;
@@ -331,7 +333,8 @@ strong {
   letter-spacing: 0.05em;
   text-decoration: none;
   border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color;
   position: relative;
 }
 
@@ -374,7 +377,8 @@ strong {
   width: 24px;
   height: 2px;
   background: var(--gold);
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: transform, opacity;
   transform-origin: center;
 }
 
@@ -502,7 +506,8 @@ strong {
   padding: var(--space-2xl);
   text-decoration: none;
   color: inherit;
-  transition: all var(--transition-base);
+  transition: var(--transition-base);
+  transition-property: background-color, border-color, box-shadow, transform;
   position: relative;
   overflow: hidden;
 }
@@ -556,7 +561,8 @@ strong {
   color: var(--gold-dim);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, transform;
 }
 
 .card:hover .card-arrow {
@@ -577,7 +583,8 @@ strong {
   border-radius: var(--radius-lg);
   overflow: hidden;
   cursor: pointer;
-  transition: all var(--transition-base);
+  transition: var(--transition-base);
+  transition-property: background-color, border-color, box-shadow, transform;
 }
 
 .video-card:hover {
@@ -615,7 +622,8 @@ strong {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-base);
+  transition: var(--transition-base);
+  transition-property: background-color, box-shadow, transform;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
@@ -667,7 +675,8 @@ strong {
   justify-content: center;
   opacity: 0;
   visibility: hidden;
-  transition: all var(--transition-base);
+  transition: var(--transition-base);
+  transition-property: opacity, visibility;
 }
 
 .modal-overlay.active {
@@ -746,7 +755,8 @@ strong {
   font-weight: 600;
   letter-spacing: 0.03em;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, background-color, border-color;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -812,7 +822,8 @@ strong {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: var(--space-lg);
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: border-color, box-shadow, transform;
   animation: fadeInUp 0.3s ease both;
 }
 
@@ -1019,7 +1030,8 @@ strong {
   font-size: 0.8rem;
   text-decoration: none;
   letter-spacing: 0.05em;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, background-color;
 }
 
 .sheet-open-btn:hover {
@@ -1061,7 +1073,8 @@ strong {
   font-weight: 600;
   text-align: left;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, background-color;
 }
 
 .accordion-header:hover {
@@ -1179,7 +1192,8 @@ strong {
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, background-color, border-color;
 }
 
 .crit-table-toggle:hover {
@@ -1237,7 +1251,8 @@ strong {
   overflow: hidden;
   text-decoration: none;
   color: inherit;
-  transition: all var(--transition-base);
+  transition: var(--transition-base);
+  transition-property: border-color, box-shadow, transform;
 }
 
 .map-card:hover {
@@ -1319,7 +1334,8 @@ strong {
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   text-align: center;
-  transition: all var(--transition-base);
+  transition: var(--transition-base);
+  transition-property: background-color, border-color, box-shadow, transform;
   position: relative;
   overflow: hidden;
 }
@@ -1355,7 +1371,8 @@ strong {
   overflow: hidden;
   border: 3px solid var(--border-gold);
   box-shadow: 0 0 20px rgba(201, 168, 76, 0.1);
-  transition: all var(--transition-base);
+  transition: var(--transition-base);
+  transition-property: border-color, box-shadow;
 }
 
 .character-card:hover .character-portrait {
@@ -1656,7 +1673,8 @@ strong {
   cursor: pointer;
   font-size: 0.75rem;
   padding: 3px 10px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, background-color, border-color;
   white-space: nowrap;
 }
 
@@ -1833,7 +1851,8 @@ strong {
   cursor: pointer;
   font-size: 0.78rem;
   padding: 5px 12px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, border-color;
 }
 
 .pnj-detail-close:hover {
@@ -1992,7 +2011,8 @@ strong {
   font-family: var(--font-heading);
   letter-spacing: 0.04em;
   padding: 5px 14px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, background-color;
   white-space: nowrap;
 }
 
@@ -2025,7 +2045,8 @@ strong {
   cursor: pointer;
   font-size: 0.75rem;
   padding: 3px 10px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, background-color, border-color;
 }
 
 .colorby-btn:hover {
@@ -2108,7 +2129,8 @@ strong {
   font-size: 0.75rem;
   letter-spacing: 0.04em;
   padding: 5px 12px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, border-color;
   white-space: nowrap;
 }
 
@@ -2127,7 +2149,8 @@ strong {
   font-size: 0.75rem;
   letter-spacing: 0.04em;
   padding: 5px 12px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: background-color;
   white-space: nowrap;
 }
 
@@ -2148,7 +2171,8 @@ strong {
   cursor: pointer;
   font-size: 0.75rem;
   padding: 4px 10px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, border-color;
 }
 
 .btn-edit:hover {
@@ -2164,7 +2188,8 @@ strong {
   cursor: pointer;
   font-size: 0.75rem;
   padding: 2px 8px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, border-color;
 }
 
 .btn-edit-sm:hover {
@@ -2193,7 +2218,8 @@ strong {
   line-height: 1;
   padding: 0 5px;
   flex-shrink: 0;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, border-color;
 }
 
 .rel-delete-btn:hover {
@@ -2211,7 +2237,8 @@ strong {
   line-height: 1;
   padding: 0 5px;
   flex-shrink: 0;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, border-color;
 }
 
 .rel-edit-btn:hover {
@@ -2251,7 +2278,8 @@ strong {
   font-size: 0.75rem;
   margin-top: var(--space-sm);
   padding: 4px 12px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, border-color;
   width: 100%;
 }
 
@@ -2371,7 +2399,8 @@ strong {
   cursor: pointer;
   font-size: 0.78rem;
   padding: 4px 12px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: background-color;
 }
 
 .btn-primary-sm:hover {
@@ -2386,7 +2415,8 @@ strong {
   cursor: pointer;
   font-size: 0.78rem;
   padding: 4px 12px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, border-color;
 }
 
 .btn-ghost-sm:hover {
@@ -2563,7 +2593,8 @@ strong {
   font-size: 0.85rem;
   letter-spacing: 0.04em;
   padding: 8px 20px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: background-color, opacity;
   margin-left: auto;
 }
 
@@ -2585,7 +2616,8 @@ strong {
   font-family: var(--font-heading);
   font-size: 0.85rem;
   padding: 8px 16px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, border-color;
 }
 
 .btn-ghost:hover {
@@ -2602,7 +2634,8 @@ strong {
   font-family: var(--font-heading);
   font-size: 0.85rem;
   padding: 8px 14px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: background-color;
   margin-right: auto;
 }
 
@@ -2715,7 +2748,8 @@ strong {
   border: 1px solid var(--border-gold);
   background: rgba(201, 168, 76, 0.08);
   color: var(--gold);
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, background-color, border-color, box-shadow, transform;
   text-decoration: none;
   font-family: var(--font-heading);
   font-weight: 600;
@@ -2755,7 +2789,8 @@ strong {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
-  transition: all var(--transition-base);
+  transition: var(--transition-base);
+  transition-property: background-color, border-color, box-shadow, transform;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -2888,7 +2923,8 @@ strong {
   border: 1px solid var(--border-subtle);
   background: rgba(255, 255, 255, 0.02);
   color: var(--text-secondary);
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, background-color, border-color;
   text-decoration: none;
 }
 
@@ -2961,7 +2997,8 @@ strong {
   box-shadow: var(--shadow-lg), var(--shadow-glow);
   position: relative;
   overflow: hidden;
-  transition: all var(--transition-base);
+  transition: var(--transition-base);
+  transition-property: border-color, box-shadow;
 }
 
 .calendar-widget::before {
@@ -3050,7 +3087,8 @@ strong {
   flex-direction: column;
   align-items: center;
   gap: var(--space-xs);
-  transition: all var(--transition-base);
+  transition: var(--transition-base);
+  transition-property: border-color, transform;
 }
 
 [data-theme="parchment"] .moon-card {
@@ -3148,7 +3186,8 @@ strong {
   padding: 6px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, background-color, border-color, box-shadow;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -3163,4 +3202,16 @@ strong {
 [data-theme="parchment"] .btn-ctrl:hover {
   color: var(--gold-dim);
   border-color: var(--gold);
+}
+
+/* ── Mouvement réduit ──────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

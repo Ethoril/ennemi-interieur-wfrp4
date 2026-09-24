@@ -383,7 +383,8 @@
   font-size: 0.95rem;
   line-height: 1;
   padding: 5px 8px;
-  transition: all var(--transition-fast);
+  transition: var(--transition-fast);
+  transition-property: color, border-color;
   margin-left: var(--space-sm);
   flex-shrink: 0;
 }
