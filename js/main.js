@@ -131,18 +131,26 @@ function initAccordion() {
     const subBody = section.querySelector('.crit-table-body');
     _ensureAriaPair(btn, subBody, 'crit-body');
 
+    const accordionBody = section.closest('.accordion-body');
+
     btn.addEventListener('click', () => {
       const willOpen = !section.classList.contains('open');
+      // Le sous-tableau anime sa propre hauteur : mesurer le parent à l'image
+      // suivante le verrouillerait à sa taille d'avant. On calcule la cible.
+      const currentSubHeight = subBody ? Math.floor(subBody.getBoundingClientRect().height) : 0;
+      const targetSubHeight = willOpen && subBody ? subBody.scrollHeight : 0;
+      const parentHeight = accordionBody ? accordionBody.scrollHeight : 0;
       section.classList.toggle('open', willOpen);
       btn.setAttribute('aria-expanded', String(willOpen));
-
-      // Wait for CSS to apply before measuring, so scrollHeight is accurate
-      const accordionBody = section.closest('.accordion-body');
       if (accordionBody) {
-        requestAnimationFrame(() => {
-          accordionBody.style.maxHeight = accordionBody.scrollHeight + 'px';
-        });
+        accordionBody.style.maxHeight = (parentHeight - currentSubHeight + targetSubHeight) + 'px';
       }
+    });
+
+    // Recalage final une fois l'animation du sous-tableau terminée.
+    subBody?.addEventListener('transitionend', (event) => {
+      if (event.target !== subBody || !accordionBody?.closest('.accordion-item.active')) return;
+      accordionBody.style.maxHeight = accordionBody.scrollHeight + 'px';
     });
   });
 }

@@ -1,3 +1,9 @@
+## [2.23.1] - 2026-09-27
+
+### Corrigé
+
+- **Aides de Jeu & Règles** : ouvrir une table de critiques, d'incantations imparfaites ou de mutations ne coupe plus la suite de la section ; tout le contenu se lit de nouveau en faisant défiler la page.
+
 ## [2.23.0] - 2026-09-24
 
 ### Amélioré
