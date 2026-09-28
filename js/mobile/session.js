@@ -77,8 +77,11 @@ export function createSafeInitialRoute({ windowRef = globalThis.window, storage 
     const clearRedirectPending = () => {
         try { target?.removeItem?.(pendingKey); } catch { /* Nettoyage best-effort. */ }
     };
+    // Aucun repli vers la liste : sans route capturée, l'appelant doit laisser
+    // l'écran courant en place, sinon un lien profond ouvert par un MJ déjà
+    // connecté serait écrasé par #/pnjs dès l'ouverture de la session.
     const consume = fallback => {
-        const route = read() || safeRouteHash(fallback) || '#/pnjs';
+        const route = read() || safeRouteHash(fallback);
         try { target?.removeItem?.(key); } catch { /* Le stockage peut être indisponible en mode privé. */ }
         return route;
     };
@@ -358,7 +361,9 @@ export function createMjSession({
     const signIn = async ({ route: targetRoute = windowRef?.location?.hash } = {}) => {
         if (authOperation) return state;
         authOperation = true;
-        routeStore.capture(targetRoute || windowRef?.location?.hash || state.initialRoute);
+        // La valeur capturée sert aussi de repli au retour de popup : sans
+        // sessionStorage, read() ne la restituerait pas.
+        const capturedRoute = routeStore.capture(targetRoute || windowRef?.location?.hash || state.initialRoute);
         redirectFailure = false;
         setState({ status: 'signing-in', error: null });
         let provider = {};
@@ -374,7 +379,10 @@ export function createMjSession({
                 routeStore.clearRedirectPending?.();
                 redirectChecked = true;
                 await finishUser(result?.user || auth.currentUser || null);
-                if (state.status === 'gm') onNavigate(routeStore.consume(state.initialRoute));
+                if (state.status === 'gm') {
+                    const target = routeStore.consume(capturedRoute);
+                    if (target) onNavigate(target);
+                }
                 return state;
             }
             if (typeof authSdk.signInWithRedirect !== 'function') throw Object.assign(new Error('redirect unavailable'), { code: 'auth/operation-not-supported' });

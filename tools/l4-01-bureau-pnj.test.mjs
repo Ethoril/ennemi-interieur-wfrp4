@@ -222,3 +222,57 @@ test('le parchemin laisse l’anneau à la couleur de dimension', () => {
     assert.match(legend, /border-color: var\(--border-gold\);/u);
     assert.doesNotMatch(parchment, /\.pnj-badge\.vivant-inconnu \{ color: #8b6508/u);
 });
+
+test('les modales d’édition et de cadrage sont de vraies boîtes de dialogue', async () => {
+    const confirm = await readFile('js/ui-confirm.js', 'utf8');
+    assert.match(html, /<dialog id="crop-modal" class="crop-modal-dialog" aria-labelledby="crop-modal-title">/u);
+    assert.match(html, /<h3 id="crop-modal-title">/u);
+    assert.match(html, /<dialog id="pnj-modal" class="pnj-modal-dialog" aria-labelledby="pnj-modal-title">/u);
+    assert.doesNotMatch(html, /id="(?:crop|pnj)-modal"[^>]*style=/u);
+    // Ouverture et fermeture natives, plus aucun basculement par style.display.
+    assert.doesNotMatch(pnjs, /getElementById\('(?:pnj|crop)-modal'\)\??\.style/u);
+    assert.match(pnjs, /if \(!dialog\.open\) dialog\.showModal\(\);/u);
+    assert.match(pnjs, /if \(wasOpen\) dialog\.close\(\);/u);
+    assert.match(pnjs, /document\.getElementById\(id\)\?\.open\)\) return;/u);
+    assert.match(pnjs, /getElementById\('pnj-modal'\)\?\.open\n/u);
+    // Échap passe par le même nettoyage que les boutons.
+    assert.match(pnjs, /'crop-modal'\)\.addEventListener\('cancel', e => \{ e\.preventDefault\(\); cancelCropModal\(\); \}\)/u);
+    assert.match(pnjs, /'pnj-modal'\)\.addEventListener\('cancel', e => \{ e\.preventDefault\(\); closePnjModal\(\); \}\)/u);
+    // Échap dès keydown : un cadrage groupé avec l'édition ne doit pas fermer les deux.
+    assert.ok(pnjs.includes("['crop-modal', 'pnj-modal'].forEach(id => document.getElementById(id).addEventListener('keydown'"));
+    // Cropper s'initialise après l'ouverture du dialogue.
+    assert.ok(pnjs.indexOf('dialog.showModal();\n    img.src = cropSourceUrl;') > 0);
+    // Retour du focus au déclencheur, avec le repli de la vue.
+    assert.match(pnjs, /_pnjModalReturn = opener && opener !== document\.body/u);
+    assert.match(pnjs, /if \(wasOpen\) restorePnjModalFocus\(\);/u);
+    assert.match(pnjs, /focusPnjOrigin\(null\);/u);
+    assert.match(pnjs, /getElementById\('f-image'\)\.focus\(\)/u);
+    // Le dialogue ne dessine rien : le cadre reste celui du contenu.
+    const reset = rule(base, '.pnj-modal-dialog,\n.crop-modal-dialog');
+    for (const decl of ['margin: auto;', 'padding: 0;', 'border: none;', 'background: transparent;', 'max-width: none;', 'max-height: none;']) {
+        assert.ok(reset.includes(decl), decl);
+    }
+    assert.match(rule(base, '.pnj-modal-dialog::backdrop'), /background: var\(--bg-overlay\);/u);
+    assert.match(rule(base, '.crop-modal-dialog::backdrop'), /background: var\(--bg-overlay\);/u);
+    assert.doesNotMatch(base, /\.crop-modal-overlay/u);
+    // La confirmation annonce son titre et son message à l'arrivée du focus.
+    assert.match(confirm, /setAttribute\('aria-labelledby', 'ui-confirm-titre'\)/u);
+    assert.match(confirm, /setAttribute\('aria-describedby', 'ui-confirm-message'\)/u);
+    assert.match(confirm, /class="ui-confirm-titre" id="ui-confirm-titre"/u);
+    assert.match(confirm, /class="ui-confirm-message" id="ui-confirm-message"/u);
+});
+
+test('les pastilles de filtre ne sont recréées que si les facettes changent', () => {
+    const render = pnjs.slice(pnjs.indexOf('async function loadData'), pnjs.indexOf('async function savePnj'));
+    assert.doesNotMatch(render, /clearFilters\(\);/u);
+    assert.match(render, /buildFilters\(\);/u);
+    assert.match(pnjs, /if \(signature === _filterSignature\) \{/u);
+    assert.match(pnjs, /vals\.map\(v => \[v, filterPillLabel\(key, v\)\]\)/u);
+    assert.match(pnjs, /reconcileFilterSets\(state\.active, available\);\n    const signature/u);
+    assert.match(pnjs, /btn\.dataset\.dim = key;\n\s*btn\.dataset\.value = v;/u);
+    // Focus rendu à la pastille équivalente, au groupe, puis à la recherche.
+    assert.match(pnjs, /pills\.find\(btn => btn\.dataset\.value === focusedValue\) \|\| pills\[0\]\n\s*\|\| document\.getElementById\('pnj-search'\)\)\?\.focus\(\)/u);
+    // Région live : pas de réécriture à l'identique.
+    assert.match(pnjs, /if \(badge && badge\.textContent !== text\) badge\.textContent = text;/u);
+    assert.doesNotMatch(pnjs, /badge\.textContent = activeCount/u);
+});

@@ -29,11 +29,11 @@ test('M7-01 garde ses preuves historiques distinctes des versions ultérieures',
     const manifest = JSON.parse(read('manifest.json'));
     const changelog = read('CHANGELOG.md');
     const report = read('docs/mobile/M7-01-recette-deploiement-progressif.md');
-    assert.equal(layout.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1], 'v2.24.0');
-    assert.equal(sw.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1], 'v2.24.0');
-    assert.match(app, /app-version"\s+content="v2\.24\.0"/u);
+    assert.equal(layout.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1], 'v2.24.1');
+    assert.equal(sw.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1], 'v2.24.1');
+    assert.match(app, /app-version"\s+content="v2\.24\.1"/u);
     assert.match(sw, /CACHE_NAME\s*=\s*['"]wfrp-cache-['"]\s*\+\s*APP_VERSION/u);
-    assert.match(changelog, /^## \[2\.24\.0\]/mu);
+    assert.match(changelog, /^## \[2\.24\.1\]/mu);
     assert.equal(manifest.start_url, './app/index.html');
     assert.match(report, /5dc077b/u);
     assert.match(report, /d42e1cd/u);
