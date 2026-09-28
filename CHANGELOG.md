@@ -1,3 +1,15 @@
+## [2.24.1] - 2026-09-28
+
+### Corrigé
+
+- **Application mobile (MJ)** : un lien vers une fiche ou une enquête, ouvert par un MJ déjà connecté, reste sur l'écran demandé au lieu de revenir à la liste des PNJs.
+- **PNJs (bureau)** : les filtres ne sont plus recréés à chaque mise à jour des données ; la pastille en cours de sélection garde le focus.
+
+### Accessibilité
+
+- **PNJs (bureau, MJ)** : les fenêtres d'édition d'un personnage et de cadrage du portrait deviennent de vraies boîtes de dialogue : elles retiennent le focus, se ferment avec Échap et le rendent au bouton qui les a ouvertes.
+- **Confirmations** : la fenêtre de confirmation annonce son titre et son message, sur toutes les pages qui l'utilisent.
+
 ## [2.24.0] - 2026-09-28
 
 ### Amélioré
