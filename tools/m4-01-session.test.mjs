@@ -47,6 +47,61 @@ test('getRedirectResult est consommé avant le premier état définitif et resta
     assert.equal(route.read(), null);
 });
 
+function mapStorage(entries = []) {
+    const values = new Map(entries);
+    return { values, getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) };
+}
+
+test('une session MJ existante ouverte sur un lien profond, sans route capturée, ne navigue pas', async () => {
+    const route = createSafeInitialRoute({ storage: mapStorage(), key: 'route' });
+    const fake = fakeAuth({ currentUser: gm });
+    const navigated = [];
+    const windowRef = { location: { hash: '#/pnjs/cassandre' } };
+    const session = createMjSession({ auth: fake.auth, authSdk: fake.sdk, route, windowRef, privateFactory, onNavigate: value => navigated.push(value) });
+    await session.start();
+    assert.equal(session.getState().status, 'gm');
+    assert.deepEqual(navigated, [], 'le repli #/pnjs ne doit plus écraser l’écran courant');
+    assert.equal(route.consume(), null);
+});
+
+test('une route capturée avant la session MJ est restaurée puis consommée', async () => {
+    const route = createSafeInitialRoute({ storage: mapStorage(), key: 'route' });
+    route.capture('#/enquetes/i1');
+    const fake = fakeAuth({ currentUser: gm });
+    const navigated = [];
+    const session = createMjSession({ auth: fake.auth, authSdk: fake.sdk, route, privateFactory, onNavigate: value => navigated.push(value) });
+    await session.start();
+    assert.deepEqual(navigated, ['#/enquetes/i1']);
+    assert.equal(route.read(), null);
+});
+
+test('une connexion popup depuis un écran y revient après l’ouverture de la session MJ', async () => {
+    const storage = mapStorage();
+    const route = createSafeInitialRoute({ storage, key: 'route' });
+    const fake = fakeAuth();
+    fake.sdk.signInWithPopup = async () => ({ user: gm });
+    const navigated = [];
+    const windowRef = { location: { hash: '#/enquetes/i1' } };
+    const session = createMjSession({ auth: fake.auth, authSdk: fake.sdk, route, windowRef, privateFactory, onNavigate: value => navigated.push(value) });
+    await session.start();
+    assert.deepEqual(navigated, []);
+    await session.signIn();
+    assert.equal(session.getState().status, 'gm');
+    assert.deepEqual(navigated, ['#/enquetes/i1']);
+    assert.equal(storage.values.has('route'), false);
+});
+
+test('une route capturée hostile est ignorée et ne provoque aucune navigation', async () => {
+    const route = createSafeInitialRoute({ storage: mapStorage([['route', '#/pnjs/p1?token=secret']]), key: 'route' });
+    const fake = fakeAuth({ redirect: gm });
+    const navigated = [];
+    const session = createMjSession({ auth: fake.auth, authSdk: fake.sdk, route, privateFactory, onNavigate: value => navigated.push(value) });
+    await session.start();
+    assert.equal(session.getState().status, 'gm');
+    assert.deepEqual(navigated, []);
+    assert.equal(route.consume('#/inconnu'), null);
+});
+
 test('annulation et erreur de redirection ne donnent jamais un accès MJ', async () => {
     const cancelFake = fakeAuth({ redirectError: Object.assign(new Error('cancel'), { code: 'auth/redirect-cancelled-by-user' }) });
     const cancelSession = createMjSession({ auth: cancelFake.auth, authSdk: cancelFake.sdk });
