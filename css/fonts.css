@@ -1,0 +1,44 @@
+/* Polices auto-hébergées, chargées par l'application mobile : sa CSP
+   (style-src 'self', font-src hérité de default-src 'self') interdit Google
+   Fonts, et l'app retombait sur Georgia. Fichiers : sous-ensemble latin
+   (français, allemand) servi par Google Fonts, licence SIL OFL 1.1
+   (fonts/OFL-Cinzel.txt, fonts/OFL-CrimsonText.txt). Cinzel est variable :
+   un seul fichier couvre les graisses 400 à 900. */
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url('../fonts/cinzel-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Crimson Text';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/crimson-text-latin-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Sert aussi les textes en 700 (boutons, strong) : sans face 700, le
+   navigateur choisit la plus proche au-dessus de 500, donc celle-ci, sans
+   gras synthétique. */
+@font-face {
+  font-family: 'Crimson Text';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../fonts/crimson-text-latin-600.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Crimson Text';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/crimson-text-latin-400-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}

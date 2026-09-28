@@ -1,3 +1,6 @@
+import { createMorr, createSeal } from '../../seal.js';
+import { vivantKey } from '../pnj-list-model.js';
+
 const OWNER_ID = /^[A-Za-z0-9_-]{1,100}$/u;
 const FILE_NAME = /^[A-Za-z0-9._-]{1,128}$/u;
 
@@ -25,7 +28,28 @@ function once(callback) {
     };
 }
 
-export function mountPnjPortrait({ container, item, imageService, size = 56 } = {}) {
+// Sceau et porte de Morr sont posés à côté du cadre, pas dedans : le cadre rogne
+// l'image en cercle, les marques doivent pouvoir déborder sur son pourtour.
+// Sans createElementNS (faux documents des tests), seal.js rend null : rien n'est inséré.
+function mountMarks(documentRef, frame, marks) {
+    if (!marks || typeof marks !== 'object') return [];
+    const vivant = vivantKey(marks.vivant);
+    if (vivant === 'decede') frame.className += ' m-portrait-frame--decede';
+    else if (vivant === 'inconnu') frame.className += ' m-portrait-frame--inconnu';
+    const slots = [];
+    const place = (className, mark) => {
+        if (!mark) return;
+        const slot = documentRef.createElement('span');
+        slot.className = className;
+        slot.append(mark);
+        slots.push(slot);
+    };
+    if (Object.hasOwn(marks, 'statut')) place('m-portrait-seal', createSeal(documentRef, marks.statut, { size: marks.sealSize ?? 20 }));
+    if (vivant === 'decede') place('m-portrait-morr', createMorr(documentRef, { size: marks.morrSize ?? 18 }));
+    return slots;
+}
+
+export function mountPnjPortrait({ container, item, imageService, size = 56, marks = null } = {}) {
     if (!container?.ownerDocument) return Object.freeze({ dispose() {} });
     const documentRef = container.ownerDocument;
     const frame = documentRef.createElement('span');
@@ -35,10 +59,15 @@ export function mountPnjPortrait({ container, item, imageService, size = 56 } = 
     placeholder.setAttribute('aria-hidden', 'true');
     placeholder.textContent = initials(item?.nom);
     frame.append(placeholder);
-    container.replaceChildren(frame);
+    const markSlots = mountMarks(documentRef, frame, marks);
+    container.replaceChildren(frame, ...markSlots);
+    const removeOwnNodes = () => {
+        frame.remove();
+        for (const slot of markSlots) slot.remove();
+    };
     const path = ownedPortraitPath(item);
     if (!path || typeof imageService?.loadObjectUrl !== 'function') {
-        return Object.freeze({ dispose() { frame.remove(); } });
+        return Object.freeze({ dispose: once(removeOwnNodes) });
     }
 
     let active = true;
@@ -77,7 +106,7 @@ export function mountPnjPortrait({ container, item, imageService, size = 56 } = 
         image?.remove();
         image = null;
         release();
-        frame.remove();
+        removeOwnNodes();
     });
     return Object.freeze({ dispose });
 }

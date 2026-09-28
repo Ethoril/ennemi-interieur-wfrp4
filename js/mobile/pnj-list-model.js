@@ -1,4 +1,10 @@
+import { statutKey } from '../seal.js';
+
 const FILTER_DIMENSIONS = Object.freeze(['groupe', 'statut', 'lieu']);
+// Puces rapides : un critère distinct de la feuille de filtres, combiné avec elle en ET.
+const QUICK_FILTERS = Object.freeze(['tous', 'allie', 'neutre', 'ennemi', 'decede']);
+const DEFAULT_QUICK = 'tous';
+const UNKNOWN_LIEU_LABEL = 'Lieu inconnu';
 const SEARCH_FIELDS = Object.freeze([
     'nom', 'surnom', 'role', 'rôle', 'profession', 'statut', 'vivant', 'lieu', 'groupe', 'groupes',
 ]);
@@ -122,25 +128,69 @@ export function filterPnjs(items, { search = '', filters = {} } = {}) {
     return Object.freeze(source.filter(item => matchesSearch(item, search) && matchesFilters(item, filters)));
 }
 
-function viewState(items, search, requestedFilters) {
+/** Clé d'état vital (vivant, decede, inconnu) ; chaîne vide hors du vocabulaire du dépôt. */
+export function vivantKey(vivant) {
+    const value = typeof vivant === 'string' ? vivant.trim().toLowerCase() : '';
+    return value === 'oui' ? 'vivant' : value === 'non' ? 'decede' : value === 'inconnu' ? 'inconnu' : '';
+}
+
+export function normalizeQuickFilter(value) {
+    return QUICK_FILTERS.includes(value) ? value : DEFAULT_QUICK;
+}
+
+export function matchesQuickFilter(item, quick) {
+    const key = normalizeQuickFilter(quick);
+    if (key === 'tous') return true;
+    if (key === 'decede') return vivantKey(item?.vivant) === 'decede';
+    return statutKey(item?.statut) === key;
+}
+
+/** Regroupe par lieu (tri plié, « Lieu inconnu » en dernier) sans changer l'ordre des PNJs d'un lieu. */
+export function groupPnjsByLieu(items) {
+    const groups = new Map();
+    const unknown = [];
+    for (const item of Array.isArray(items) ? items : []) {
+        const lieu = valuesFor(item, 'lieu')[0] || '';
+        if (!lieu) { unknown.push(item); continue; }
+        if (!groups.has(lieu)) groups.set(lieu, []);
+        groups.get(lieu).push(item);
+    }
+    const output = [...groups.keys()].sort(sortText)
+        .map(lieu => ({ key: lieu, label: lieu, items: groups.get(lieu) }));
+    if (unknown.length) output.push({ key: '', label: UNKNOWN_LIEU_LABEL, items: unknown });
+    return freezeValue(output.map(group => ({ ...group, count: group.items.length })));
+}
+
+function viewState(items, search, requestedFilters, requestedQuick) {
     const facets = buildPnjFacets(items);
     const filters = reconcilePnjFilters(requestedFilters, facets);
-    const results = filterPnjs(items, { search, filters });
+    const quick = normalizeQuickFilter(requestedQuick);
+    const safeSearch = safeText(search, 120);
+    // L'effectif d'une puce est celui qu'elle donnerait avec la recherche et la feuille actuelles.
+    const filtered = filterPnjs(items, { search, filters });
+    const quickCounts = Object.fromEntries(QUICK_FILTERS.map(key => [key,
+        filtered.filter(item => matchesQuickFilter(item, key)).length]));
+    const results = filtered.filter(item => matchesQuickFilter(item, quick));
+    const activeFilterCount = FILTER_DIMENSIONS.reduce((count, dimension) => count + filters[dimension].length, 0);
     return freezeValue({
         items,
         results,
-        search: safeText(search, 120),
+        groups: groupPnjsByLieu(results),
+        search: safeSearch,
         facets,
         filters,
-        activeFilterCount: FILTER_DIMENSIONS.reduce((count, dimension) => count + filters[dimension].length, 0),
+        quick,
+        quickCounts,
+        activeFilterCount,
+        criteriaActive: Boolean(foldSearchText(safeSearch)) || activeFilterCount > 0 || quick !== DEFAULT_QUICK,
         emptyState: items.length === 0 ? 'no-published' : results.length === 0 ? 'no-results' : null,
     });
 }
 
-export function createPnjListModel({ items = [], search = '', filters = {} } = {}) {
-    let current = viewState(normalizedItems(items), search, filters);
-    const update = (nextItems = current.items, nextSearch = current.search, nextFilters = current.filters) => {
-        current = viewState(normalizedItems(nextItems), nextSearch, nextFilters);
+export function createPnjListModel({ items = [], search = '', filters = {}, quick = DEFAULT_QUICK } = {}) {
+    let current = viewState(normalizedItems(items), search, filters, quick);
+    const update = (nextItems = current.items, nextSearch = current.search, nextFilters = current.filters, nextQuick = current.quick) => {
+        current = viewState(normalizedItems(nextItems), nextSearch, nextFilters, nextQuick);
         return current;
     };
     return Object.freeze({
@@ -148,8 +198,9 @@ export function createPnjListModel({ items = [], search = '', filters = {} } = {
         setItems: nextItems => update(nextItems),
         setSearch: nextSearch => update(current.items, nextSearch),
         setFilters: nextFilters => update(current.items, current.search, nextFilters),
+        setQuick: nextQuick => update(current.items, current.search, current.filters, nextQuick),
         clearFilters: () => update(current.items, current.search, {}),
     });
 }
 
-export { FILTER_DIMENSIONS, SEARCH_FIELDS };
+export { DEFAULT_QUICK, FILTER_DIMENSIONS, QUICK_FILTERS, SEARCH_FIELDS, UNKNOWN_LIEU_LABEL };

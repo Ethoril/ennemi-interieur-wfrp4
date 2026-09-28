@@ -3,7 +3,7 @@ import { createRouter, documentTitleForRoute, parseRoute, ROUTE_NAMES } from './
 import { createDefaultPublicSession } from './public-runtime.js';
 import { createDefaultMjSession } from './mj-runtime.js';
 import { announce, createDialogController, publicStatusKind, publicStatusMessage, renderState } from './ui.js';
-import { createPnjsListView } from './views/pnjs-list.js';
+import { createPnjsListView, forgetOpenedPnjCard } from './views/pnjs-list.js';
 import { createPnjDetailView } from './views/pnj-detail.js';
 import { createEnquetesListView } from './views/enquetes-list.js';
 import { createEnqueteDetailView } from './views/enquete-detail.js';
@@ -247,6 +247,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             onRetry: retry,
             getSession: () => mjSession.getState(),
             onEdit: () => router.navigate({ name: ROUTE_NAMES.PNJ_EDIT, id: route.id }),
+            announce: message => announce(routeStatus, message),
         }),
         [ROUTE_NAMES.PNJ_NEW]: () => {
             const state = mjSession.getState();
@@ -337,11 +338,14 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
         announce: message => announce(routeStatus, message),
         setScrollY: value => { container.scrollTop = value; },
         getScrollY: () => container.scrollTop,
-        onRoute: route => {
+        onRoute: (route, view) => {
             const section = sectionForRoute(route);
+            // Quitter la section PNJs périme la carte ouverte : au retour, le focus va au h1.
+            if (section !== 'pnjs') forgetOpenedPnjCard();
             documentRef.title = documentTitleForRoute(route);
             title.textContent = section === 'pnjs' ? 'PNJs' : section === 'enquetes' ? 'Enquêtes' : 'Réglages';
-            title.focus?.({ preventScroll: true });
+            // La vue désigne son point d'entrée (nom de la fiche, carte d'où l'on revient) ; sinon le h1.
+            (view?.focusTarget?.() || title).focus?.({ preventScroll: true });
             back.hidden = !(route.name === ROUTE_NAMES.PNJ || route.name === ROUTE_NAMES.PNJ_NEW || route.name === ROUTE_NAMES.PNJ_EDIT
                 || route.name === ROUTE_NAMES.ENQUETE || route.name === ROUTE_NAMES.ENQUETE_NEW || route.name === ROUTE_NAMES.ENQUETE_EDIT || route.name === ROUTE_NAMES.UNKNOWN);
             headerAction.hidden = route.name !== ROUTE_NAMES.REGLAGES;

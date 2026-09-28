@@ -1,6 +1,10 @@
-import { foldSearchText } from './pnj-list-model.js';
+import { safeRelationColorValue } from '../pnj-integrity.js';
+import { statutKey, statutLabel, vivantLabel } from '../seal.js';
+import { foldSearchText, vivantKey } from './pnj-list-model.js';
 
 const PUBLIC_ID = /^[A-Za-z0-9_-]{1,150}$/u;
+// Couleur libre refusée ou absente : la relation garde un filet, au jeton de l'or.
+const RELATION_COLOR_FALLBACK = 'var(--gold)';
 
 function text(value, maximum = 20000) {
     return typeof value === 'string' ? value.trim().slice(0, maximum) : '';
@@ -40,7 +44,8 @@ function publicImage(id, image) {
 }
 
 function publicItem(item) {
-    return { id: item.id, nom: text(item.nom, 200), image: publicImage(item.id, item.image) };
+    return { id: item.id, nom: text(item.nom, 200), statut: text(item.statut, 64), vivant: text(item.vivant, 32),
+        image: publicImage(item.id, item.image) };
 }
 
 function compareText(left, right) {
@@ -64,11 +69,18 @@ function exactReciprocal(relation, candidate) {
             .every(field => candidate[field] === relation[field]);
 }
 
+// Phrase qui garde le sens de la relation : le libellé se lit de la source vers la cible.
+function relationSentence(direction, selfName, otherName, label) {
+    if (direction === 'paire') return `${selfName} et ${otherName} : ${label}, réciproquement`;
+    return direction === 'sortante' ? `${selfName} ${label} ${otherName}` : `${otherName} ${label} ${selfName}`;
+}
+
 function selectRelations(id, items, pnjs) {
     const source = Array.isArray(items) ? items : [];
     const byId = new Map(source.filter(relation => validId(relation?.id))
         .map(relation => [relation.id, relation]));
     const seen = new Set();
+    const selfName = itemName(pnjs.get(id));
     return source
         .filter(relation => relation?.visibleJoueurs === true
             && validId(relation.id) && (relation.source === id || relation.cible === id))
@@ -78,15 +90,21 @@ function selectRelations(id, items, pnjs) {
             const label = text(relation.label, 300) || text(relation.type, 100);
             if (!other || !validId(otherId) || !label) return null;
             const reciprocal = byId.get(relation.reciprocalId);
-            const key = exactReciprocal(relation, reciprocal)
+            const paired = exactReciprocal(relation, reciprocal);
+            const key = paired
                 ? `pair:${[relation.id, reciprocal.id].sort().join(':')}` : `single:${relation.id}`;
             if (seen.has(key)) return null;
             seen.add(key);
+            const direction = paired ? 'paire' : relation.source === id ? 'sortante' : 'entrante';
+            const otherName = itemName(other);
             return {
                 id: relation.id,
                 otherId,
-                otherName: itemName(other),
+                otherName,
                 label,
+                direction,
+                color: safeRelationColorValue(relation.color, RELATION_COLOR_FALLBACK),
+                sentence: relationSentence(direction, selfName, otherName, label),
             };
         })
         .filter(Boolean)
@@ -148,20 +166,22 @@ export function selectPnjDetailModel(state, id) {
     }
 
     const visiblePnjs = visiblePnjMap(pnjs.items);
-    const identity = [
-        ['Statut', text(item.statut, 64)],
-        ['Vie', text(item.vivant, 32)],
-        ['Lieu', text(item.lieu, 200)],
-        ['Groupe', text(item.groupe, 200)],
-        ['Surnom', text(item.surnom, 200)],
-        ['Rôle', text(item.role, 200) || text(item.rôle, 200) || text(item.profession, 200)],
-    ].filter(([, value]) => value).map(([label, value]) => ({ label, value }));
+    const lieu = text(item.lieu, 200);
+    const groupe = text(item.groupe, 200);
     return freeze({
         kind: 'ready',
         item: publicItem(item),
         name: itemName(item),
         description: text(item.description),
-        identity,
+        statut: statutKey(item.statut),
+        statutLabel: statutLabel(item.statut),
+        vivant: vivantKey(item.vivant),
+        vivantLabel: vivantLabel(text(item.vivant, 32)),
+        lieu,
+        groupe,
+        context: [groupe, lieu].filter(Boolean).join(' · '),
+        surnom: text(item.surnom, 200),
+        role: text(item.role, 200) || text(item.rôle, 200) || text(item.profession, 200),
         relations: selectRelations(id, relations.items, visiblePnjs),
         indices: selectIndices(id, indices.items),
         relationsStatus: relations.status,

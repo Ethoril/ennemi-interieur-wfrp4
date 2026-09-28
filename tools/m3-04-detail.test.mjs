@@ -155,7 +155,8 @@ test('la vue rend des liens publics sûrs et ne remplace que la section liée qu
     assert.equal(container.querySelectorAll('.m-detail-name')[0].textContent, '<Agnès>');
     assert.equal(sectionBody(container, 'description').children[0].textContent, '<script>privé</script>');
     assert.deepEqual(container.querySelectorAll('a').map(link => link.href), ['#/pnjs/b', '#/enquetes/indice_1']);
-    const identityContent = sectionBody(container, 'identity').children[0];
+    assert.equal(sectionBody(container, 'identity'), undefined, 'l’identification vit désormais dans le bandeau');
+    const descriptionContent = sectionBody(container, 'description').children[0];
     const relationContent = sectionBody(container, 'relations').children[0];
     const indiceContent = sectionBody(container, 'indices').children[0];
     const firstPortrait = container.querySelectorAll('.m-portrait-frame')[0];
@@ -164,7 +165,7 @@ test('la vue rend des liens publics sûrs et ne remplace que la section liée qu
         { id: 'ab', source: 'a', cible: 'b', label: '<Alliée>', visibleJoueurs: true },
         { id: 'ac', source: 'a', cible: 'c', label: 'Contact', visibleJoueurs: true },
     ], [{ id: 'indice_1', titre: '<Lettre>', decouvert: true, pnjsLies: ['a'] }]));
-    assert.equal(sectionBody(container, 'identity').children[0], identityContent);
+    assert.equal(sectionBody(container, 'description').children[0], descriptionContent);
     assert.notEqual(sectionBody(container, 'relations').children[0], relationContent);
     assert.equal(sectionBody(container, 'indices').children[0], indiceContent);
     assert.notEqual(container.querySelectorAll('.m-portrait-frame')[0], firstPortrait);

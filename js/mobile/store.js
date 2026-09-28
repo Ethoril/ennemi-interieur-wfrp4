@@ -1,3 +1,5 @@
+import { normalizeQuickFilter } from './pnj-list-model.js';
+
 const RESOURCE_NAMES = Object.freeze(['pnjs', 'relations', 'indices']);
 const FILTER_NAMES = Object.freeze(['statut', 'groupe', 'lieu']);
 const DEFAULT_FILTERS = Object.freeze({
@@ -71,10 +73,14 @@ function safeFilterList(value) {
 
 function safeFilters(value) {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return DEFAULT_FILTERS;
-    return Object.freeze({
+    const filters = {
         search: safeString(value.search, 120),
         ...Object.fromEntries(FILTER_NAMES.map(name => [name, safeFilterList(value[name])])),
-    });
+    };
+    // La puce rapide n'apparaît qu'une fois choisie, comme enqueteSearch : les
+    // préférences déjà enregistrées gardent leur forme historique.
+    if (Object.hasOwn(value, 'quick')) filters.quick = normalizeQuickFilter(value.quick);
+    return Object.freeze(filters);
 }
 
 export function sanitizePreferences(value) {
