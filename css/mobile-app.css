@@ -10,6 +10,10 @@
   --m-safe-left: env(safe-area-inset-left, 0px);
 }
 
+/* Les display des boutons (inline-flex, inline-grid) l'emportaient sur l'attribut :
+   un bouton masqué restait affiché. */
+[hidden] { display: none !important; }
+
 html {
   min-height: 100%;
   background: var(--bg-darkest);
@@ -60,7 +64,10 @@ body {
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.m-header-copy { min-width: 0; }
+/* Colonnes fixées : le titre garde la sienne quand le bouton retour disparaît. */
+#m-back { grid-column: 1; }
+.m-header-copy { grid-column: 2; min-width: 0; }
+#m-header-action { grid-column: 3; }
 .m-eyebrow {
   margin: 0;
   color: var(--text-muted);
@@ -136,6 +143,11 @@ body {
   overflow-y: auto;
   overscroll-behavior-y: contain;
   scrollbar-gutter: stable;
+  /* L'en-tête de lieu collant se pose sous le padding haut : réserver ce padding, sa
+     hauteur (padding + une ligne de 0,78rem à 1,4) et la marge du contour de focus
+     (2px + 2px de décalage), pour qu'une carte atteinte au clavier, Maj+Tab compris,
+     ne passe pas dessous. */
+  scroll-padding-top: calc(var(--space-md) + 2 * var(--space-xs) + 0.78rem * 1.4 + var(--space-sm));
 }
 
 .m-main:focus { outline: none; }
@@ -172,21 +184,79 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
 }
-.m-detail-portrait {
-  width: min(9rem, 48vw);
-  height: min(9rem, 48vw);
+.m-detail-name { margin: 0; color: var(--text-heading); text-align: center; }
+
+/* Ces titres reçoivent le focus à chaque écran pour guider le lecteur d'écran ;
+   ce ne sont pas des commandes, un contour y ressemblerait à un bogue. */
+#m-title:focus,
+.m-detail-name:focus { outline: none; }
+
+/* Fiche PNJ : bandeau pleine largeur. Le nom chevauche le bas du portrait, sceau,
+   état vital et « groupe · lieu » suivent sur le fond, dans le prolongement du dégradé. */
+.m-pnj-banner {
+  position: relative;
   display: grid;
+  justify-items: stretch;
+  gap: 0;
+  padding: 0;
   overflow: hidden;
-  place-items: center;
+  background: var(--bg-darkest);
+}
+
+.m-pnj-banner .m-detail-portrait {
+  position: relative;
+  display: grid;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 60dvh;
   color: var(--gold-bright);
   background: var(--bg-surface);
-  border: 1px solid var(--border-gold);
-  border-radius: 50%;
   font-family: var(--font-heading);
-  font-size: 1.5rem;
 }
-.m-detail-portrait .m-portrait-frame { width: 100%; height: 100%; }
-.m-detail-name { margin: 0; color: var(--text-heading); text-align: center; }
+
+.m-pnj-banner .m-portrait-frame { width: 100%; height: 100%; border-radius: 0; }
+.m-pnj-banner .m-portrait-placeholder { font-size: 3rem; letter-spacing: 0.05em; }
+.m-pnj-banner .m-portrait-frame--inconnu { outline: 2px dashed var(--text-muted); outline-offset: -0.6rem; }
+.m-pnj-banner .m-portrait-morr { top: var(--space-sm); right: var(--space-sm); }
+.m-pnj-banner:has(.m-detail-edit) .m-portrait-morr { top: calc(2 * var(--space-sm) + var(--m-touch-target)); }
+
+.m-detail-overlay {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-xs);
+  min-width: 0;
+  margin-top: -5rem;
+  padding: 2.75rem var(--space-md) var(--space-md);
+  /* Voile plein dès le haut de la ligne du nom (fin du padding) : sur un portrait clair,
+     un fond encore translucide sous les lettres ferait tomber le contraste sous 3:1. */
+  background: linear-gradient(to bottom, transparent 0, var(--bg-darkest) 2.75rem);
+}
+
+.m-screen .m-pnj-banner .m-detail-name {
+  color: var(--text-heading);
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  line-height: 1.2;
+  text-align: left;
+  text-shadow: 0 1px 2px var(--bg-darkest), 0 0 12px var(--bg-darkest);
+  overflow-wrap: anywhere;
+}
+
+.m-screen .m-detail-extra { margin: 0; color: var(--text-secondary); font-size: 0.9rem; font-style: italic; overflow-wrap: anywhere; }
+.m-detail-marks { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+.m-screen .m-detail-context { margin: 0; color: var(--text-secondary); font-size: 0.9rem; overflow-wrap: anywhere; }
+
+.m-detail-vital {
+  padding: 0.12rem var(--space-xs);
+  color: var(--text-secondary);
+  background: var(--gold-wash);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+}
+
+.m-pnj-banner .m-detail-edit { position: absolute; z-index: 2; top: var(--space-sm); right: var(--space-sm); }
 .m-detail-section {
   display: grid;
   gap: var(--space-sm);
@@ -197,9 +267,6 @@ body {
 }
 .m-detail-section h3 { margin: 0; color: var(--text-heading); font-size: 1.05rem; }
 .m-detail-section-body { min-width: 0; }
-.m-detail-fields { display: grid; grid-template-columns: minmax(6rem, 0.7fr) minmax(0, 1.3fr); gap: var(--space-xs) var(--space-md); margin: 0; }
-.m-detail-fields dt { color: var(--text-muted); }
-.m-detail-fields dd { min-width: 0; margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
 .m-detail-description { margin: 0; color: var(--text-primary); white-space: pre-wrap; overflow-wrap: anywhere; }
 .m-detail-empty { margin: 0; color: var(--text-muted); font-style: italic; }
 .m-detail-links { display: grid; gap: var(--space-sm); margin: 0; padding: 0; list-style: none; }
@@ -207,6 +274,11 @@ body {
 .m-detail-links a:hover,
 .m-detail-links a:focus-visible { border-color: var(--border-gold); }
 .m-detail-links strong { color: var(--text-heading); }
+/* --rc : couleur de la relation, validée par le modèle et posée sur le lien. */
+.m-detail-links .m-detail-relation,
+.m-detail-links .m-detail-relation:hover,
+.m-detail-links .m-detail-relation:focus-visible { border-left: 3px solid var(--rc, var(--gold)); }
+.m-detail-links .m-detail-relation-arrow { margin-right: var(--space-xs); color: var(--text-heading); font-weight: 700; }
 .m-detail-links span { color: var(--text-secondary); font-size: 0.86rem; overflow-wrap: anywhere; }
 .m-detail-metadata { display: grid; gap: var(--space-sm); }
 .m-detail-metadata .m-sync-badge,
@@ -278,14 +350,135 @@ body {
 .m-result-count { color: var(--text-muted); font-size: 0.86rem; text-align: right; }
 .m-filter-button { flex: 0 0 auto; }
 
+/* Liste PNJ : recherche et filtres sur une ligne, compteur et création dessous. */
+.m-search-row { display: flex; align-items: center; gap: var(--space-sm); }
+.m-search-row .m-search { flex: 1 1 auto; min-width: 0; }
+
+.m-search-row .m-filter-button {
+  position: relative;
+  width: var(--m-touch-target);
+  height: var(--m-touch-target);
+  color: var(--gold-bright);
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
+}
+
+.m-search-row .m-filter-button:hover,
+.m-search-row .m-filter-button:focus-visible { border-color: var(--border-gold); }
+.m-filter-icon { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+
+.m-filter-count {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.25rem;
+  color: var(--bg-darkest);
+  background: var(--gold);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.15rem;
+  text-align: center;
+}
+
+.m-list-meta {
+  min-height: var(--m-touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-top: calc(-1 * var(--space-sm));
+}
+
+.m-list-meta .m-result-count { text-align: left; }
+.m-create-button { padding-block: var(--space-xs); font-size: 0.86rem; }
+
+/* Puces rapides : une rangée qui défile plutôt qu'un retour à la ligne. */
+.m-quick-filters {
+  display: flex;
+  gap: var(--space-xs);
+  margin: 0 calc(-1 * var(--space-md));
+  padding: 0 var(--space-md) var(--space-xs);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.m-quick-filters::-webkit-scrollbar { display: none; }
+
+.m-chip {
+  flex: 0 0 auto;
+  min-height: var(--m-touch-target);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0 var(--space-md);
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
+.m-chip:focus-visible { border-color: var(--gold-bright); }
+.m-chip-count { color: var(--text-muted); font-size: 0.78rem; }
+.m-chip[aria-pressed="true"] { color: var(--bg-darkest); background: var(--gold); border-color: var(--gold); font-weight: 700; }
+.m-chip[aria-pressed="true"] .m-chip-count { color: inherit; }
+
+@media (hover: hover) {
+  .m-chip:hover { border-color: var(--border-gold); }
+}
+
+/* Lieux : en-têtes collants dans .m-main, le conteneur qui défile. */
+.m-lieu-group { display: grid; gap: var(--space-sm); }
+
+.m-screen .m-lieu-heading {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  /* Si le navigateur colle l'en-tête sous le padding de .m-main, l'ombre pleine
+     masque la bande de contenu qui défilerait au-dessus. */
+  box-shadow: 0 calc(-1 * var(--space-md)) 0 var(--bg-darkest);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: var(--space-xs) 0;
+  color: var(--gold);
+  background: var(--bg-darkest);
+  font-family: var(--font-heading);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.m-lieu-count { flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+
 .m-public-list .m-pnj-card {
   grid-template-columns: 3.5rem minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-md);
 }
 
-.m-pnj-portrait,
+/* Le conteneur ne rogne pas : seul le cadre découpe l'image en cercle, les marques
+   (sceau, porte de Morr) débordent sur son pourtour. */
+.m-pnj-portrait {
+  position: relative;
+  width: 3.5rem;
+  height: 3.5rem;
+  display: grid;
+  place-items: center;
+  color: var(--gold-bright);
+}
+
 .m-portrait-frame {
+  position: relative;
   width: 3.5rem;
   height: 3.5rem;
   display: grid;
@@ -294,14 +487,26 @@ body {
   border-radius: 50%;
 }
 
-.m-pnj-portrait {
-  position: relative;
-  color: var(--gold-bright);
+.m-pnj-portrait .m-portrait-frame {
   background: var(--bg-surface);
   border: 1px solid var(--border-gold);
 }
 
-.m-portrait-frame { position: relative; }
+/* Défunt : grisaille ; sort inconnu : anneau pointillé. */
+.m-portrait-frame--decede { filter: grayscale(1) contrast(0.92); }
+.m-pnj-portrait .m-portrait-frame--inconnu { border: 2px dashed var(--text-muted); }
+
+.m-portrait-seal,
+.m-portrait-morr {
+  position: absolute;
+  z-index: 1;
+  display: grid;
+  line-height: 0;
+  pointer-events: none;
+}
+
+.m-pnj-portrait .m-portrait-seal { right: -0.3rem; bottom: -0.3rem; }
+.m-pnj-portrait .m-portrait-morr { top: -0.3rem; right: -0.3rem; }
 .m-public-list .m-portrait-placeholder { color: var(--gold-bright); font-family: var(--font-heading); font-size: 0.82rem; }
 
 .m-portrait-image {
@@ -433,11 +638,26 @@ body {
 }
 
 .m-button-primary { color: var(--bg-darkest); background: var(--gold); }
-.m-button:hover,
-.m-button:focus-visible { background: var(--gold-bright); }
+/* Un fond or clair sous --text-heading tombait à 1,3:1 : seuls la bordure et le lavis
+   changent. Le survol ne s'applique qu'aux pointeurs qui survolent vraiment, sinon il
+   reste collé après un toucher. */
+.m-button:focus-visible { border-color: var(--gold-bright); background: var(--gold-wash); }
+.m-button-primary:focus-visible { background: var(--gold-bright); }
 .m-button-danger { color: var(--text-heading); background: var(--blood); border-color: var(--blood-bright); }
-.m-button-danger:hover,
 .m-button-danger:focus-visible { background: var(--blood-bright); }
+
+@media (hover: hover) {
+  .m-button:hover { border-color: var(--gold-bright); background: var(--gold-wash); }
+  .m-button-primary:hover { background: var(--gold-bright); }
+  .m-button-danger:hover { border-color: var(--blood-bright); background: var(--blood-bright); }
+}
+
+/* Parchemin : l'or et le sang y sont foncés, le texte brun y tombait sous 2:1
+   (danger) et 2,5:1 (primaire survolé). Texte blanc, et l'or ne s'éclaircit pas. */
+[data-theme="parchment"] .m-button-primary,
+[data-theme="parchment"] .m-button-danger { color: var(--text-on-status); }
+[data-theme="parchment"] .m-button-primary:hover,
+[data-theme="parchment"] .m-button-primary:focus-visible { border-color: var(--gold-dim); background: var(--gold); }
 
 .m-pnj-form { display: grid; gap: var(--space-md); padding-bottom: var(--space-lg); }
 .m-form-section { display: grid; gap: var(--space-md); margin: 0; padding: var(--space-md); background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
@@ -450,7 +670,7 @@ body {
 .m-form-field textarea { min-height: 7rem; resize: vertical; }
 .m-form-field input:focus-visible,
 .m-form-field select:focus-visible,
-.m-form-field textarea:focus-visible { border-color: var(--border-gold); outline: 2px solid var(--gold-wash); }
+.m-form-field textarea:focus-visible { border-color: var(--border-gold); }
 .m-form-field [aria-invalid="true"] { border-color: var(--blood-bright); }
 .m-form-help { color: var(--text-muted); font-size: 0.82rem; }
 .m-form-error { color: var(--blood-bright); font-size: 0.84rem; }
@@ -545,6 +765,15 @@ body {
 .m-relation-field input[type="checkbox"] { width: var(--m-touch-target); }
 .m-form-conflict { display: grid; gap: var(--space-xs); margin-block: var(--space-sm); padding: var(--space-sm); color: var(--text-primary); background: var(--gold-wash); border: 1px solid var(--border-gold); border-radius: var(--radius-sm); }
 .m-form-conflict button { min-height: var(--m-touch-target); }
+
+/* Parchemin propre au mobile. --gold sur --bg-darkest n'y fait que 3,8:1 pour un
+   texte de 0,78rem : les en-têtes de lieu passent au brun secondaire. Sur l'or foncé
+   des puces actives et de la pastille, le texte clair reste lisible, le fond ne l'est pas. */
+[data-theme="parchment"] .m-screen .m-lieu-heading { color: var(--text-secondary); }
+[data-theme="parchment"] .m-chip[aria-pressed="true"],
+[data-theme="parchment"] .m-filter-count { color: var(--text-on-status); }
+/* Halo clair plutôt qu'ombre portée : le nom est brun foncé sur le dégradé beige. */
+[data-theme="parchment"] .m-screen .m-pnj-banner .m-detail-name { text-shadow: 0 0 2px var(--bg-card), 0 0 10px var(--bg-card); }
 
 @media (max-width: 22rem) {
   .m-form-actions { display: flex; flex-wrap: wrap; }

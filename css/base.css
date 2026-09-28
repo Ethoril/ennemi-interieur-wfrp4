@@ -36,8 +36,25 @@
      donc rien ne change à l'écran — le jeton existe enfin des deux côtés,
      comme la convention le suppose. */
   --statut-allie:  #4caf7d;
-  --statut-ennemi: #c94c4c;
+  /* Relevé de #c94c4c (4,1:1 sur --bg-card) : un texte « Ennemi » doit tenir 4,5:1. */
+  --statut-ennemi: #e06a6a;
   --statut-neutre: #8a8a9a;
+
+  /* Palette des dimensions du graphe PNJ (Lieu, Groupe). Elle n'existait qu'en
+     parchemin : ces valeurs sont les replis que js/pnjs.js portait en dur. */
+  --dim-0: #c9a84c;
+  --dim-1: #4c8fc9;
+  --dim-2: #c94c8e;
+  --dim-3: #5bc994;
+  --dim-4: #8e4cc9;
+  --dim-5: #c97a4c;
+  --dim-6: #4cc9c9;
+  --dim-7: #9ac94c;
+  --dim-8: #c9a87a;
+  --dim-9: #7a9ac9;
+
+  /* Fond translucide de la légende du graphe PNJ. */
+  --legend-bg: rgba(7, 7, 13, 0.82);
 
   /* Lavis doré, pour les fonds à peine teintés (ligne de totaux du
      Calendrier, bannière de clôture, boutons secondaires). */
@@ -46,6 +63,45 @@
   /* Texte posé sur une pastille de statut saturée. Volontairement
      identique dans les deux thèmes : le fond porte déjà la couleur. */
   --text-on-status: #fff;
+
+  /* Fond d'une pastille « ennemi » sous un texte blanc (--text-on-status) :
+     --statut-ennemi, relevé pour se lire en texte sur fond sombre, n'y
+     tiendrait plus que 3,3:1. Ici 5,9:1. */
+  --statut-ennemi-fond: #b33a3a;
+
+  /* Même rôle pour « allié » : --statut-allie, clair, ne porte le blanc qu'à
+     2,7:1. */
+  --statut-allie-fond: #2e7a55;
+
+  /* Disque des médaillons du graphe PNJ et halo de leur nom. */
+  --node-paper: var(--bg-card);
+
+  /* Anneau de focus des nœuds du graphe : trait clair sur trait sombre, l'un
+     des deux contraste toujours, sur un fond clair comme sur un portrait. */
+  --focus-ring-light: #f3e3b0;
+  --focus-ring-dark: #07070d;
+
+  /* Sceau de statut (js/seal.js) : une cire plus sourde que --statut-*,
+     bordée d'un bourrelet foncé. Le glyphe clair y garde au moins 3,8:1. */
+  --seal-allie: #2e7a55;
+  --seal-allie-rim: #17432e;
+  --seal-ennemi: #962b2b;
+  --seal-ennemi-rim: #4d1010;
+  --seal-neutre: #5b5b68;
+  --seal-neutre-rim: #2c2c34;
+  --seal-inconnu: #8c6d24;
+  --seal-inconnu-rim: #46360e;
+  --seal-gloss: rgba(255, 255, 255, 0.26);
+  --seal-press: rgba(0, 0, 0, 0.32);
+  --seal-ring: rgba(255, 255, 255, 0.2);
+  --seal-glyph: rgba(255, 255, 255, 0.9);
+  --seal-glyph-shadow: rgba(0, 0, 0, 0.45);
+  --seal-shadow: rgba(0, 0, 0, 0.55);
+
+  /* Porte de Morr, posée sur le portrait d'un défunt. */
+  --morr-bg: #15131a;
+  --morr-ink: #ece2cf;
+  --morr-ring: rgba(232, 220, 200, 0.6);
 
   /* Shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -1577,6 +1633,47 @@ strong {
   }
 }
 
+/* ── Sceau de statut et porte de Morr (js/seal.js) ─────────────
+   Partagés par le bureau et l'application mobile : la couleur ne vient
+   que des jetons, le module ne pose que des classes. */
+.seal,
+.morr {
+  display: inline-block;
+  flex: none;
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.seal { filter: drop-shadow(0 1px 1.2px var(--seal-shadow)); }
+.seal-wax { stroke-width: 0.9; }
+.seal--allie .seal-wax   { fill: var(--seal-allie);   stroke: var(--seal-allie-rim); }
+.seal--ennemi .seal-wax  { fill: var(--seal-ennemi);  stroke: var(--seal-ennemi-rim); }
+.seal--neutre .seal-wax  { fill: var(--seal-neutre);  stroke: var(--seal-neutre-rim); }
+.seal--inconnu .seal-wax { fill: var(--seal-inconnu); stroke: var(--seal-inconnu-rim); }
+.seal-gloss { fill: var(--seal-gloss); }
+.seal-press { fill: none; stroke: var(--seal-press); stroke-width: 1.3; }
+.seal-ring { fill: none; stroke: var(--seal-ring); stroke-width: 0.7; }
+
+.seal-relief,
+.seal-relief-shadow {
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.seal-relief { stroke: var(--seal-glyph); }
+.seal-relief-shadow { stroke: var(--seal-glyph-shadow); }
+.seal-dot { fill: var(--seal-glyph); }
+.morr-disc { fill: var(--morr-bg); stroke: var(--morr-ring); stroke-width: 1; }
+
+.morr-gate {
+  fill: none;
+  stroke: var(--morr-ink);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
 /* ── PNJs - Réseau interactif ──────────────────────────────── */
 .pnj-toolbar {
   display: flex;
@@ -1586,6 +1683,36 @@ strong {
   padding: var(--space-sm) 0 var(--space-md);
   border-bottom: 1px solid var(--border-subtle);
   margin-bottom: var(--space-sm);
+}
+
+/* Page PNJ : les groupes s'espacent par le gap, sans séparateur. Un « | »
+   restait orphelin quand un groupe était vide, ou tombait en début de ligne
+   au repli. enquetes.html garde ses séparateurs et l'espacement de base. */
+.pnj-section .pnj-toolbar {
+  column-gap: var(--space-lg);
+}
+
+/* Les filtres forment un bloc qui se replie sur lui-même : en pleine ligne
+   sous les commandes, ils ne repoussent plus Admin seul sur une ligne de plus. */
+.pnj-section .pnj-filters {
+  flex-basis: 100%;
+}
+
+/* Titre compact : ni le dégradé ni la taille du h1 de base, pour laisser
+   la hauteur au graphe. Le sélecteur à deux classes passe devant la
+   surcharge h1 du parchemin. */
+.pnj-toolbar .pnj-title {
+  font-family: var(--font-heading);
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--gold);
+  -webkit-text-fill-color: currentColor;
+  background: none;
+  filter: none;
+  margin: 0;
 }
 
 .pnj-search-wrapper {
@@ -1622,7 +1749,7 @@ strong {
 .pnj-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 6px var(--space-md);
   align-items: center;
 }
 
@@ -1645,6 +1772,11 @@ strong {
   flex-wrap: wrap;
 }
 
+/* display:flex ci-dessus l'emporterait sur l'attribut hidden. */
+.filter-group[hidden] {
+  display: none;
+}
+
 .filter-group-label {
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -1654,6 +1786,7 @@ strong {
   margin-right: 2px;
 }
 
+/* Plus utilisé par pnjs.html, encore par enquetes.html. */
 .filter-sep {
   color: var(--border-subtle);
   padding: 0 4px;
@@ -1666,6 +1799,7 @@ strong {
   border-radius: 20px;
   color: var(--text-secondary);
   cursor: pointer;
+  font-family: inherit;
   font-size: 0.75rem;
   padding: 3px 10px;
   transition: var(--transition-fast);
@@ -1684,8 +1818,12 @@ strong {
   color: var(--gold);
 }
 
+/* Toute la hauteur sous la barre d'outils, mesurée par js/pnjs.js
+   (--pnj-toolbar-h) puisqu'elle se replie. La ligne en vh sert de repli
+   aux navigateurs sans dvh. */
 #pnj-graph {
-  height: calc(100vh - 340px);
+  height: calc(100vh - var(--nav-height) - var(--pnj-toolbar-h, 6rem) - 1.5rem);
+  height: calc(100dvh - var(--nav-height) - var(--pnj-toolbar-h, 6rem) - 1.5rem);
   min-height: 420px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -1728,7 +1866,7 @@ strong {
   position: absolute;
   bottom: 12px;
   left: 12px;
-  background: rgba(7, 7, 13, 0.82);
+  background: var(--legend-bg);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 8px 12px;
@@ -1748,6 +1886,17 @@ strong {
   color: var(--text-secondary);
 }
 
+/* Emplacement commun aux marques de légende (sceau, porte, pastille,
+   anneau) : les libellés restent alignés quelle que soit la marque. */
+.legend-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .legend-dot {
   width: 10px;
   height: 10px;
@@ -1756,20 +1905,34 @@ strong {
 }
 
 .legend-ring {
-  width: 10px;
-  height: 10px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  border: 2px dashed #777;
+  border: 1.5px dashed var(--text-muted);
   flex-shrink: 0;
 }
 
+/* Médaillon : disque de fond et anneau, dont js/pnjs.js pose la couleur de
+   dimension en attribut stroke ; le survol et le focus le passent en or. */
 .node-card {
-  fill: var(--bg-card);
+  fill: var(--node-paper);
   transition: stroke-width 0.15s;
 }
 
 .node-portrait-bg {
   fill: var(--bg-surface);
+}
+
+.node-fate-ring {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+
+/* Défunt : grisaille plutôt que transparence, qui rendait le nom illisible. */
+.pnj-deceased {
+  filter: grayscale(1) contrast(0.92);
 }
 
 .pnj-link {
@@ -1782,30 +1945,84 @@ strong {
 
 .pnj-node:hover .node-card {
   stroke: var(--gold);
+  stroke-width: 4px;
+}
+
+/* Le contour natif d'un <g> SVG est mal rendu : l'anneau de focus en tient
+   lieu, distinct de l'anneau doré du survol. */
+.pnj-node:focus-visible {
+  outline: none;
+}
+
+/* Pleine opacité au survol et au focus, même atténué autour d'un autre PNJ :
+   !important, D3 pose l'opacité en style. */
+.pnj-node:hover,
+.pnj-node:focus-visible {
+  opacity: 1 !important;
+}
+
+.node-focus-ring {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.pnj-node:focus-visible .node-focus-ring {
+  visibility: visible;
+}
+
+.node-focus-ring circle {
+  fill: none;
+}
+
+.node-focus-ring-dark {
+  stroke: var(--focus-ring-dark);
+  stroke-width: 5px;
+}
+
+.node-focus-ring-light {
+  stroke: var(--focus-ring-light);
+  stroke-width: 2px;
+}
+
+/* Un drop-shadow par sceau, recalculé à chaque tick et à chaque zoom, pèse
+   sur un grand réseau ; le sceau garde son ombre partout ailleurs. */
+#pnj-graph .pnj-node .seal {
+  filter: none;
+}
+
+/* Halo couleur du fond (paint-order) : le nom reste lisible au-dessus des liens. */
+.node-name,
+.node-sub {
+  paint-order: stroke;
+  stroke: var(--node-paper);
   stroke-width: 3.5px;
+  stroke-linejoin: round;
+  pointer-events: none;
+  user-select: none;
 }
 
 .node-name {
   font-size: 13px;
   font-weight: 600;
   fill: var(--text-primary, #e0e0f0);
-  pointer-events: none;
-  user-select: none;
 }
 
 .node-sub {
   font-size: 10.5px;
   fill: var(--text-secondary, #9a9aaa);
-  pointer-events: none;
-  user-select: none;
 }
 
 .node-initial {
-  font-size: 18px;
+  font-family: var(--font-heading);
+  font-size: 19px;
   font-weight: 700;
   fill: var(--text-secondary, #9a9aaa);
   pointer-events: none;
   user-select: none;
+}
+
+.node-marks {
+  pointer-events: none;
 }
 
 .pnj-link-label {
@@ -1815,20 +2032,24 @@ strong {
   user-select: none;
 }
 
-/* Detail panel */
+/* Detail panel : « dossier » ancré à droite. Ouvert, il ne recouvre plus le
+   bureau : .pnj-panel-open (posée sur body par js/pnjs.js) resserre la
+   section de sa largeur. */
 .pnj-detail-panel {
+  --dossier-bg: var(--bg-dark);
+  --dossier-w: 420px;
   position: fixed;
   top: var(--nav-height);
   right: 0;
   bottom: 0;
-  width: 340px;
-  background: var(--bg-dark);
+  width: var(--dossier-w);
+  background: var(--dossier-bg);
   border-left: 1px solid var(--border-subtle);
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
   z-index: 600;
-  padding: var(--space-xl) var(--space-lg);
+  padding: 0;
 }
 
 .pnj-detail-panel.open {
@@ -1836,62 +2057,138 @@ strong {
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.45);
 }
 
+.pnj-section {
+  transition: padding-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 769px) {
+  .pnj-panel-open .pnj-section {
+    padding-right: 420px;
+  }
+}
+
+/* Collant en haut du dossier ; la marge négative le pose sur le bandeau. */
 .pnj-detail-close {
-  display: block;
-  margin-bottom: var(--space-md);
-  background: transparent;
+  position: sticky;
+  top: var(--space-sm);
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: var(--space-sm) var(--space-sm) -44px auto;
+  background: var(--bg-overlay);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
+  border-radius: 50%;
+  color: var(--text-primary);
   cursor: pointer;
-  font-size: 0.78rem;
-  padding: 5px 12px;
+  font-family: inherit;
+  font-size: 1.4rem;
+  line-height: 1;
+  padding: 0;
   transition: var(--transition-fast);
   transition-property: color, border-color;
 }
 
 .pnj-detail-close:hover {
-  color: var(--text-primary);
+  color: var(--gold);
   border-color: var(--border-gold);
 }
 
-.pnj-detail-portrait {
-  width: 100%;
-  max-height: 220px;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-md);
-  border: 1px solid var(--border-subtle);
+/* Bandeau : portrait pleine largeur fondu vers le fond du dossier, nom,
+   sceau et état vital en surimpression. */
+.pnj-dossier-banner {
+  position: relative;
+  height: 230px;
+  overflow: hidden;
+  background: var(--bg-surface);
 }
 
-.pnj-portrait-placeholder {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: rgba(201, 168, 76, 0.12);
-  border: 2px solid var(--border-gold);
-  color: var(--gold);
-  font-family: var(--font-heading);
-  font-size: 1.8rem;
+.pnj-dossier-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 30%, var(--dossier-bg) 100%);
+  pointer-events: none;
+}
+
+.pnj-dossier-portrait {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pnj-dossier-initials {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--space-md);
+  height: 100%;
+  padding-bottom: 3rem;
+  color: var(--gold-dim);
+  font-family: var(--font-heading);
+  font-size: 4rem;
+  letter-spacing: 0.08em;
 }
 
-.pnj-detail-header h2 {
+.pnj-dossier-banner .protected-image-placeholder {
+  height: 100%;
+}
+
+/* Fond plein sous tout le bloc titre, précédé d'un court fondu : sur un
+   portrait clair, le nom et les badges ne tenaient que 2,3 à 2,8:1 sur le
+   seul dégradé. */
+.pnj-dossier-title {
+  --dossier-fade: 40px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: 0 var(--space-lg) var(--space-md);
+  background: var(--dossier-bg);
+}
+
+.pnj-dossier-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: var(--dossier-fade);
+  background: linear-gradient(to bottom, transparent, var(--dossier-bg));
+  pointer-events: none;
+}
+
+/* Fond plein : le lavis de statut est mêlé au fond du dossier, pas posé en transparence. */
+.pnj-dossier-title .pnj-badge[class*="vivant-"] {
+  background: color-mix(in srgb, var(--badge-color, transparent) 10%, var(--dossier-bg));
+}
+
+.pnj-detail-panel .pnj-dossier-title h2 {
   font-family: var(--font-heading);
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   color: var(--text-heading);
-  margin-bottom: var(--space-xs);
   line-height: 1.2;
+  margin: 0 0 var(--space-xs);
+  text-shadow: 0 1px 6px var(--dossier-bg);
+}
+
+/* Le titre reçoit le focus à l'ouverture pour que le lecteur d'écran lise la
+   fiche ; ce n'est pas une commande, un contour y ressemblerait à un bogue. */
+.pnj-detail-panel .pnj-dossier-title h2:focus {
+  outline: none;
+}
+
+.pnj-dossier-body {
+  padding: var(--space-md) var(--space-lg) var(--space-xl);
 }
 
 .pnj-badges {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin-bottom: var(--space-md);
+  align-items: center;
 }
 
 .pnj-badge {
@@ -1904,22 +2201,43 @@ strong {
   border: 1px solid;
 }
 
-.pnj-badge.statut-allié   { color: #4caf7d; border-color: #4caf7d; background: rgba(76, 175, 125, 0.1); }
-.pnj-badge.statut-ennemi  { color: #c94c4c; border-color: #c94c4c; background: rgba(201, 76, 76, 0.1); }
-.pnj-badge.statut-neutre  { color: #8a8a9a; border-color: #8a8a9a; background: rgba(138, 138, 154, 0.1); }
-.pnj-badge.vivant-oui     { color: #4caf7d; border-color: #4caf7d; background: rgba(76, 175, 125, 0.1); }
-.pnj-badge.vivant-non     { color: #888;    border-color: #666;    background: rgba(100, 100, 100, 0.1); }
-.pnj-badge.vivant-inconnu { color: #c9a84c; border-color: #c9a84c; background: rgba(201, 168, 76, 0.1); }
+/* Couleurs par jetons, redéclarés par le parchemin : le badge suit le thème
+   sans surcharge. Le lavis est tiré de la même couleur. */
+.pnj-badge.statut-allié,
+.pnj-badge.vivant-oui     { --badge-color: var(--statut-allie); }
+.pnj-badge.statut-ennemi  { --badge-color: var(--statut-ennemi); }
+.pnj-badge.statut-neutre  { --badge-color: var(--statut-neutre); }
+.pnj-badge.vivant-non     { --badge-color: var(--text-muted); }
+.pnj-badge.vivant-inconnu { --badge-color: var(--gold); }
 
+.pnj-badge[class*="statut-"],
+.pnj-badge[class*="vivant-"] {
+  color: var(--badge-color, var(--text-secondary));
+  border-color: var(--badge-color, var(--border-subtle));
+  background: color-mix(in srgb, var(--badge-color, transparent) 10%, transparent);
+}
+
+/* Pas de filet ici : la section qui suit (description ou relations, toujours
+   présente) porte déjà le sien, deux traits s'empilaient. */
 .pnj-detail-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-md);
-  color: var(--text-secondary);
-  font-size: 0.82rem;
-  margin-bottom: var(--space-md);
-  padding-bottom: var(--space-md);
-  border-bottom: 1px solid var(--border-subtle);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm) var(--space-md);
+  margin: 0;
+}
+
+.pnj-detail-meta dt {
+  font-family: var(--font-heading);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pnj-detail-meta dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.92rem;
 }
 
 .pnj-detail-section {
@@ -1928,7 +2246,7 @@ strong {
   border-top: 1px solid var(--border-subtle);
 }
 
-.pnj-detail-section h4 {
+.pnj-detail-section h3 {
   font-family: var(--font-heading);
   font-size: 0.72rem;
   color: var(--text-muted);
@@ -1950,42 +2268,45 @@ strong {
   gap: 6px;
 }
 
+/* Relation en ligne : la couleur du lien ne tient que le filet gauche. Écrite
+   dans cette couleur, le nom tombait jusqu'à 1,9:1 en parchemin. */
 .pnj-relation-chip {
   background: transparent;
-  border: 1px solid var(--chip-color, var(--border-subtle));
-  border-radius: var(--radius-md);
-  color: var(--chip-color, var(--text-secondary));
+  border: none;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text-primary);
   cursor: pointer;
-  font-size: 0.82rem;
-  padding: 7px 12px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  padding: 6px 10px;
   text-align: left;
   transition: background var(--transition-fast);
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   gap: var(--space-sm);
   width: 100%;
 }
 
 .pnj-relation-chip:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--gold-wash);
 }
 
 .chip-name {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .chip-type {
-  font-size: 0.72rem;
-  opacity: 0.65;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
   font-style: italic;
-  white-space: nowrap;
+  text-align: right;
 }
 
 .chip-dir {
   font-style: normal;
   font-weight: 700;
-  opacity: 0.9;
+  margin-right: 2px;
 }
 
 /* View toggle */
@@ -2038,6 +2359,7 @@ strong {
   border-radius: 20px;
   color: var(--text-secondary);
   cursor: pointer;
+  font-family: inherit;
   font-size: 0.75rem;
   padding: 3px 10px;
   transition: var(--transition-fast);
@@ -2066,13 +2388,44 @@ strong {
   overflow-x: auto;
 }
 
-.pnj-table-el th.sortable {
+/* Boutons d'en-tête et de nom : l'apparence de la cellule, le comportement
+   d'un bouton (clavier, focus). */
+.pnj-sort-btn,
+.pnj-table-name {
+  background: none;
+  border: none;
+  color: inherit;
   cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  text-transform: inherit;
+  padding: 0;
+}
+
+.pnj-sort-btn {
   user-select: none;
 }
 
-.pnj-table-el th.sortable:hover {
+.pnj-sort-btn:hover,
+.pnj-table-name:hover {
   color: var(--gold-bright);
+}
+
+.pnj-table-name {
+  font-weight: 600;
+}
+
+.table-portrait-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.table-portrait-seal {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  line-height: 0;
 }
 
 .pnj-td-desc {
@@ -2094,6 +2447,16 @@ strong {
 
   .pnj-detail-panel.open {
     transform: translateY(0);
+  }
+
+  /* La feuille ne fait que 65vh : bandeau plus bas, fondu plus court pour
+     laisser voir le portrait au-dessus du bloc titre. */
+  .pnj-dossier-banner {
+    height: 160px;
+  }
+
+  .pnj-dossier-title {
+    --dossier-fade: 24px;
   }
 
   #pnj-graph {
@@ -2154,6 +2517,14 @@ strong {
 }
 
 /* ── PNJs – Edit buttons ───────────────────────── */
+/* Tous les boutons du dossier et du tableau (✏, ×, ＋ Relation, styles,
+   Ajouter, Annuler…) prennent la police du texte. Portée limitée à ces deux
+   conteneurs : les Enquêtes partagent certaines de ces classes. */
+.pnj-detail-panel button,
+#pnj-table-container button {
+  font-family: inherit;
+}
+
 .pnj-edit-actions {
   margin-bottom: var(--space-sm);
 }
@@ -2164,6 +2535,7 @@ strong {
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   cursor: pointer;
+  font-family: inherit;
   font-size: 0.75rem;
   padding: 4px 10px;
   transition: var(--transition-fast);
@@ -2197,6 +2569,7 @@ strong {
   display: flex;
   align-items: center;
   gap: 4px;
+  border-left: 3px solid var(--chip-color, var(--border-subtle));
 }
 
 .rel-chip-row .pnj-relation-chip {

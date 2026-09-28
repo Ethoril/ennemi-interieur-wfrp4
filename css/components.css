@@ -21,7 +21,8 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  #pnj-graph svg {
+  /* Enfant direct : les sceaux de la légende et des nœuds sont aussi des SVG. */
+  #pnj-graph > svg {
     min-height: 70vh;
   }
   #map-container {

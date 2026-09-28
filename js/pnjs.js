@@ -9,30 +9,31 @@ import { createRenderGate, createPendingRecovery } from './bureau-view-lifecycle
 import { legacyPrivateNoteInfo, privateLoadCanApply } from './private-notes.js';
 import { isCurrentLoad, isCurrentPanel, isCurrentGeneration } from './load-generation.js';
 import { reconcileFilterSets, panelIsStillCurrent, safeRelationColorValue } from './pnj-integrity.js';
+import { statutLabel, vivantLabel, sealMarkup, morrMarkup } from './seal.js';
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
-const VIVANT_OPACITY = { 'oui': 1, 'non': 0.35, 'inconnu': 0.65 };
 const LINK_COLORS    = { 'allié': 'var(--link-allie, #4caf7d)', 'ennemi': 'var(--link-ennemi, #c94c4c)', 'famille': 'var(--link-famille, #c9a84c)', 'mentor': 'var(--link-mentor, #7a9ac9)', 'rival': 'var(--link-rival, #c97a4c)' };
-const DIM_PALETTE    = [
-    'var(--dim-0, #c9a84c)',
-    'var(--dim-1, #4c8fc9)',
-    'var(--dim-2, #c94c8e)',
-    'var(--dim-3, #5bc994)',
-    'var(--dim-4, #8e4cc9)',
-    'var(--dim-5, #c97a4c)',
-    'var(--dim-6, #4cc9c9)',
-    'var(--dim-7, #9ac94c)',
-    'var(--dim-8, #c9a87a)',
-    'var(--dim-9, #7a9ac9)'
-];
-const CARD_W = 200, CARD_H = 72, PORT_R = 23, CARD_RX = 8;
+// Jetons déclarés dans les deux thèmes : la légende les pose en style=, où
+// aucune couleur littérale n'est admise.
+const DIM_PALETTE    = Array.from({ length: 10 }, (_, i) => `var(--dim-${i})`);
+// Médaillon : portrait rond dans un anneau à la couleur de la dimension, nom
+// et lieu dessous. Sceau et porte de Morr se posent sur le bord du portrait,
+// à 45° (en bas à droite, en haut à droite).
+const PORTRAIT_R = 27.5, RING_W = 2.5, NODE_R = PORTRAIT_R + RING_W;
+const MARK_OFFSET = PORTRAIT_R * Math.SQRT1_2;
+// Échelle d'ouverture du graphe : un recadrage ne zoome jamais au-delà, ni sous
+// GRAPH_MIN_FIT_SCALE où les noms deviennent illisibles.
+const GRAPH_INITIAL_SCALE = 0.8, GRAPH_MIN_FIT_SCALE = 0.3;
+const GRAPH_FIT_DELAY = 120;
 const REL_PALETTE = [
     '#c9a84c','#e8a87c','#d4756b','#c4726e',
     '#c94c8e','#8e4cc9','#5a7ac9','#4c9ac9',
     '#4cc9c9','#4caf7d','#7ac94c','#a8965a',
     '#8a7a6a','#9a9aaa','#7a7a8a','#c9b89a',
 ];
+// Le sens d'une relation est une flèche : on le dit aussi en toutes lettres.
+const REL_DIR_LABELS = { '→': 'relation sortante', '←': 'relation entrante', '↔': 'relation réciproque' };
 const TABLE_COLS     = [
     { key: 'nom',         label: 'Nom' },
     { key: 'statut',      label: 'Statut' },
@@ -51,8 +52,13 @@ const state = {
     nodeSel: null, linkSel: null, linkLabelSel: null, simulation: null,
     colorBy: 'statut', dimColorMap: null,
     graphW: 800, graphH: 550,
+    // Taille du cadre au moment du build : forceCenter et les centres de
+    // « Couleur : Lieu/Groupe » s'y rapportent, un redimensionnement ne la change pas.
+    layoutW: 800, layoutH: 550,
+    // Recadrage demandé pendant que la simulation tournait : refait à sa fin.
+    pendingFit: false, graphTicked: false,
     view: 'graph',
-    zoomTransform: null,
+    zoomTransform: null, zoom: null, svgSel: null,
     sortCol: 'nom', sortDir: 1,
     editingId: null, panelId: null,
     croppedBlob: null,
@@ -70,6 +76,19 @@ let cropperInstance = null;
 let cropGeneration = 0;
 let cropSourceUrl = null;
 let localPreviewUrl = null;
+// Fiche affichée : le rendu temps réel rappelle openPanel() à chaque émission,
+// on ne réécrit le panneau que si son HTML a changé.
+let _panelHtml = '';
+let _panelShownId = null;
+// PNJ dont le nœud ou la ligne a ouvert la fiche : le focus y revient à la fermeture.
+let _panelReturnId = null;
+// Réécriture forcée du dossier après un enregistrement de relation : le HTML
+// comparé ne porte ni le style ni toujours le type, et le formulaire ouvert doit
+// se refermer. `focus` : sélecteur qui reçoit le focus après la réécriture.
+let _panelRewrite = null;
+// Le lien ?id= n'ouvre la fiche qu'une fois : les émissions suivantes ne
+// doivent pas ramener le joueur sur ce PNJ s'il est passé à un autre.
+let _deepLinkHonored = false;
 window.addEventListener('pagehide', () => {
     bureauGeneration += 1;
     currentLoadId += 1;
@@ -82,7 +101,7 @@ window.addEventListener('pagehide', () => {
     if (document.getElementById('pnj-private-status')) document.getElementById('pnj-private-status').textContent = '';
     state.nodes = [];
     state.links = [];
-    d3.select('#pnj-graph svg').remove();
+    d3.select('#pnj-graph > svg').remove();
     renderTable();
     unsubscribeAuth?.();
     unsubscribeAuth = null;
@@ -107,10 +126,44 @@ let bureauGeneration = 0;
 const renderedImageHandles = new Map();
 
 // ── Utils ──────────────────────────────────────────────────────
-const getStatutColor = s => STATUT_COLOR[(s || '').toLowerCase()] || '#7a7a8a';
-const getLinkColor   = s => LINK_COLORS[(s || '').toLowerCase()]  || stringToColor(s || '');
+// Object.hasOwn : une valeur « constructor » remonterait sinon au prototype
+// et renverrait une fonction en guise de couleur.
+const ownValue = (table, key) => Object.hasOwn(table, key) ? table[key] : undefined;
+const getStatutColor = s => ownValue(STATUT_COLOR, String(s || '').toLowerCase()) || '#7a7a8a';
+const getLinkColor   = s => ownValue(LINK_COLORS, String(s || '').toLowerCase())  || stringToColor(String(s || ''));
 const safeRelationColor = (color, type) => safeRelationColorValue(color, getLinkColor(type));
-const getNodeOpacity = d => VIVANT_OPACITY[(d.vivant || '').toLowerCase()] ?? 1;
+// Un état vital vide vaut « oui » : c'est la valeur par défaut du formulaire.
+const vivantKey = d => String(d.vivant || 'oui').trim().toLowerCase();
+const initials = nom => String(nom || '').trim().split(/\s+/u).filter(Boolean).slice(0, 2)
+    .map(word => word.charAt(0)).join('').toUpperCase() || '?';
+// Valeurs qualifiées (« statut inconnu », « sort inconnu ») : seules, « Inconnu,
+// Inconnu » ne disaient pas de quoi il s'agissait.
+const vitalPhrase = d => vivantKey(d) === 'inconnu' ? 'sort inconnu' : vivantLabel(d.vivant || 'oui').toLowerCase();
+const nodeAriaLabel = d => `${d.nom || '?'}, statut ${statutLabel(d.statut).toLowerCase()}, ${vitalPhrase(d)}, ${d.lieu || 'lieu inconnu'}`;
+// d3.forceLink remplace source/target par les nœuds eux-mêmes : on compare
+// toujours des identifiants.
+const linkEnds = l => [l.source?.id ?? l.source, l.target?.id ?? l.target];
+
+// Miroir exact d'une relation (même paire inversée), tel que le dépôt l'a prouvé.
+function exactReciprocal(link) {
+    const reciprocal = link?.reciprocalId ? state.links.find(relation => relation.id === link.reciprocalId) : null;
+    if (!reciprocal) return null;
+    const [source, target] = linkEnds(link);
+    const [reverseSource, reverseTarget] = linkEnds(reciprocal);
+    return reverseSource === target && reverseTarget === source ? reciprocal : null;
+}
+
+// Clé d'un élément focalisé qui survit à une réécriture d'innerHTML : son id,
+// sinon sa première classe et l'attribut data-* qui le distingue.
+function focusKey(root) {
+    const el = document.activeElement;
+    if (!el || el === root || !root.contains(el)) return null;
+    if (el.id) return `#${CSS.escape(el.id)}`;
+    const cls = el.classList[0];
+    if (!cls) return null;
+    const attr = ['rel', 'id', 'col'].find(name => el.dataset[name] !== undefined);
+    return attr ? `.${CSS.escape(cls)}[data-${attr}="${CSS.escape(el.dataset[attr])}"]` : `.${CSS.escape(cls)}`;
+}
 
 function protectedImagePlaceholder(item, label) {
     if (!item.imagePath) return '';
@@ -144,7 +197,9 @@ function renderPalette(selectedColor, inputId) {
     }</div><input type="hidden" id="${esc(inputId)}" value="${esc(selectedColor)}">`;
 }
 
-function bezierPath(x1, y1, x2, y2, curveScale = 1) {
+// `reversed` parcourt la même courbe depuis la cible : le libellé d'un lien
+// qui va de droite à gauche s'y écrit à l'endroit.
+function bezierPath(x1, y1, x2, y2, curveScale = 1, reversed = false) {
     const dx = x2 - x1, dy = y2 - y1;
     const len = Math.sqrt(dx * dx + dy * dy) || 1;
     const curve = Math.min(len * 0.3, 80) * curveScale;
@@ -152,22 +207,18 @@ function bezierPath(x1, y1, x2, y2, curveScale = 1) {
     const mx = (x1 + x2) / 2 - dy / len * curve;
     const my = (y1 + y2) / 2 + dx / len * curve;
 
-    const halfW = CARD_W / 2, halfH = CARD_H / 2;
-    const edgeDist = (ux, uy) =>
-        (Math.abs(ux) < 1e-6 ? halfH : Math.abs(uy) < 1e-6 ? halfW
-            : Math.min(halfW / Math.abs(ux), halfH / Math.abs(uy))) + 3;
+    // Le médaillon est un cercle : le recul ne dépend plus de la direction.
+    const edge = NODE_R + 3;
 
-    // Recule le point source jusqu'à la bordure de sa carte (tangente en t=0)
+    // Recule le point source jusqu'au bord de son médaillon (tangente en t=0)
     const sdx = mx - x1, sdy = my - y1, sl = Math.sqrt(sdx*sdx + sdy*sdy) || 1;
-    const sux = sdx/sl, suy = sdy/sl;
-    const sx = x1 + sux * edgeDist(sux, suy), sy = y1 + suy * edgeDist(sux, suy);
+    const sx = x1 + sdx / sl * edge, sy = y1 + sdy / sl * edge;
 
-    // Recule le point cible jusqu'à la bordure de sa carte (tangente en t=1)
+    // Recule le point cible jusqu'au bord de son médaillon (tangente en t=1)
     const tdx = x2 - mx, tdy = y2 - my, tl = Math.sqrt(tdx*tdx + tdy*tdy) || 1;
-    const tux = tdx/tl, tuy = tdy/tl;
-    const ex = x2 - tux * edgeDist(tux, tuy), ey = y2 - tuy * edgeDist(tux, tuy);
+    const ex = x2 - tdx / tl * edge, ey = y2 - tdy / tl * edge;
 
-    return `M${sx},${sy} Q${mx},${my} ${ex},${ey}`;
+    return reversed ? `M${ex},${ey} Q${mx},${my} ${sx},${sy}` : `M${sx},${sy} Q${mx},${my} ${ex},${ey}`;
 }
 
 function repositoryPnjToPage(node) {
@@ -184,7 +235,11 @@ function showPnjDeletionStatus(message, action) {
     const status = document.getElementById('pnj-deletion-status') || document.createElement('p');
     status.id = 'pnj-deletion-status';
     status.className = 'pnj-cleanup-status';
+    // Annoncé : le PNJ ouvert peut disparaître sans action de l'utilisateur.
+    status.setAttribute('role', 'status');
     status.hidden = false;
+    // Inséré avant d'être rempli : une région live n'annonce que ce qui y change après son insertion.
+    loading?.after(status);
     status.textContent = message;
     status.querySelector('button')?.remove();
     if (action) {
@@ -195,7 +250,6 @@ function showPnjDeletionStatus(message, action) {
         button.addEventListener('click', action.run, { once: true });
         status.append(' ', button);
     }
-    loading?.after(status);
 }
 
 function clearPnjAdminStatuses() {
@@ -415,7 +469,12 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
             }));
             if (generation !== bureauGeneration || !isCurrentLoad(loadId, currentLoadId) || !renderGate.isCurrent(token)) return;
 
-        d3.select('#pnj-graph svg').remove();
+        // Le graphe est reconstruit à chaque émission : un nœud focalisé au
+        // clavier doit le rester après la reconstruction.
+        const focusedNodeId = document.activeElement?.closest?.('.pnj-node')
+            ? d3.select(document.activeElement.closest('.pnj-node')).datum()?.id : null;
+        // Enfant direct : la légende, dans #pnj-graph, contient aussi des SVG (sceaux).
+        d3.select('#pnj-graph > svg').remove();
         state.nodeSel = null;
         state.linkSel = null;
         state.linkLabelSel = null;
@@ -424,6 +483,8 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
         clearFilters();
         buildFilters();
         if (state.nodes.length) buildGraph();
+        // Nœud retiré ou filtré : le focus se replie sur le graphe plutôt que sur body.
+        if (focusedNodeId && !focusGraphNode(focusedNodeId)) document.getElementById('pnj-graph')?.focus();
 
             if (init) document.getElementById('pnj-loading').style.display = 'none';
         document.getElementById('pnj-empty').style.display    = state.nodes.length ? 'none' : 'flex';
@@ -431,7 +492,10 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
         if (state.view === 'table') renderTable();
 
             const urlParams = new URLSearchParams(window.location.search);
-        const pnjId = urlParams.get('id') || urlParams.get('pnj');
+        // Consommé à la première émission qui porte des PNJ : une émission vide
+        // (relations arrivées d'abord) ne doit pas l'épuiser.
+        const pnjId = _deepLinkHonored ? null : (urlParams.get('id') || urlParams.get('pnj'));
+        if (state.nodes.length) _deepLinkHonored = true;
             if (pnjId) {
                 const node = state.nodes.find(n => n.id === pnjId);
                 if (node) openPanel(node);
@@ -625,6 +689,7 @@ async function saveRelation(sourceId, cibleId, type, label, color, style, bidir)
         if (!stillCurrent()) return;
         void result;
         const node = state.nodes.find(item => item.id === sourceId);
+        _panelRewrite = { id: sourceId, focus: '#add-rel-btn' };
         if (node) openPanel(node);
     } catch (error) { if (stillCurrent()) alert('Création de la relation impossible : ' + (error?.message || 'réessayez.')); }
 }
@@ -639,8 +704,10 @@ async function updateRelation(relId, type, label, color, style) {
     const panelId = state.panelId;
     const capturedRepository = repository;
     const current = state.links.find(relation => relation.id === relId);
-    const reciprocal = current?.reciprocalId ? state.links.find(relation => relation.id === current.reciprocalId) : null;
-    const pair = Boolean(reciprocal && reciprocal.source === current?.cible && reciprocal.cible === current?.source);
+    // La fiche fusionne une paire réciproque en une ligne : la comparaison se
+    // fait sur les identifiants, la simulation ayant remplacé source par le nœud.
+    const reciprocal = exactReciprocal(current);
+    const pair = Boolean(reciprocal);
     const stillCurrent = () => capturedRole && state.isAdmin && capturedSession === editorSession
         && capturedGeneration === currentPanelGeneration && panelId === state.panelId
         && capturedRepository === bureauData?.relations;
@@ -652,6 +719,7 @@ async function updateRelation(relId, type, label, color, style) {
         }, current?.updatedAt, pair ? { pair: true, reciprocalId: reciprocal.id } : {});
         if (!stillCurrent()) return;
         const node = state.nodes.find(item => item.id === panelId);
+        _panelRewrite = { id: panelId, focus: `.rel-edit-btn[data-rel="${CSS.escape(relId)}"]` };
         if (node) openPanel(node);
     } catch (error) { if (stillCurrent()) alert('Modification de la relation impossible : ' + (error?.message || 'réessayez.')); }
 }
@@ -664,8 +732,8 @@ async function deleteRelation(relId) {
     const repository = bureauData?.relations;
     if (!repository?.remove) { alert('Dépôt relations indisponible.'); return; }
     const current = state.links.find(relation => relation.id === relId);
-    const reciprocal = current?.reciprocalId ? state.links.find(relation => relation.id === current.reciprocalId) : null;
-    const pair = Boolean(reciprocal && reciprocal.source === current?.cible && reciprocal.cible === current?.source);
+    const reciprocal = exactReciprocal(current);
+    const pair = Boolean(reciprocal);
     const stillCurrent = () => capturedRole && state.isAdmin && capturedSession === editorSession
         && capturedGeneration === currentPanelGeneration && capturedPanelId === state.panelId
         && repository === bureauData?.relations;
@@ -908,18 +976,23 @@ function buildDimColorMap() {
 
 const getDimColor = d => state.dimColorMap ? (state.dimColorMap.get(d[state.colorBy]) || '#7a7a8a') : getStatutColor(d.statut);
 
+// Les marques sont décoratives dans la légende : le libellé qui les suit
+// suffit, leur aria-label le répéterait.
+const legendMark = markup => `<span class="legend-mark" aria-hidden="true">${markup}</span>`;
+
 function updateLegend() {
     const legend = document.getElementById('graph-legend');
+    const fates = `
+            <div class="legend-item">${legendMark(morrMarkup({ size: 16 }))}Décédé</div>
+            <div class="legend-item"><span class="legend-mark"><span class="legend-ring"></span></span>Sort inconnu</div>`;
     if (state.colorBy === 'statut') {
-        legend.innerHTML = `
-            <div class="legend-item"><span class="legend-dot" style="background:#4caf7d"></span>Allié</div>
-            <div class="legend-item"><span class="legend-dot" style="background:#c94c4c"></span>Ennemi</div>
-            <div class="legend-item"><span class="legend-dot" style="background:#8a8a9a"></span>Neutre</div>
-            <div class="legend-item"><span class="legend-ring"></span>Décédé</div>`;
+        legend.innerHTML = ['allié', 'ennemi', 'neutre', ''].map(statut =>
+            `<div class="legend-item">${legendMark(sealMarkup(statut, { size: 16 }))}${esc(statutLabel(statut))}</div>`).join('') + fates;
     } else {
         const items = state.dimColorMap ? [...state.dimColorMap.entries()].map(([v, c]) =>
-            `<div class="legend-item"><span class="legend-dot" style="background:${c}"></span>${esc(v)}</div>`).join('') : '';
-        legend.innerHTML = items + `<div class="legend-item"><span class="legend-ring"></span>Décédé</div>`;
+            `<div class="legend-item"><span class="legend-mark"><span class="legend-dot" style="background:${c}"></span></span>${esc(v)}</div>`).join('') : '';
+        legend.innerHTML = items
+            + `<div class="legend-item">${legendMark(sealMarkup('allié', { size: 16 }))}Sceau : statut</div>` + fates;
     }
 }
 
@@ -927,7 +1000,12 @@ function updateLegend() {
 function clearFilters() {
     ['filter-statut', 'filter-vivant', 'filter-lieu', 'filter-groupe'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.innerHTML = '';
+        if (el) {
+            el.innerHTML = '';
+            // Un groupe vide laisserait un trou dans la barre : il n'est
+            // réaffiché que par buildFilters(), s'il a des valeurs.
+            el.hidden = true;
+        }
     });
     const badge = document.getElementById('pnj-filter-count');
     if (badge) badge.textContent = 'Aucun filtre';
@@ -946,8 +1024,9 @@ function buildFilters() {
     // doit être retirée avant de rendre les boutons, sinon le graphe reste masqué.
     reconcileFilterSets(state.active, available);
     definitions.forEach(([id, label, key, vals]) => {
-        if (!vals.length) return;
         const el  = document.getElementById(id);
+        el.hidden = !vals.length;
+        if (!vals.length) return;
         const lbl = document.createElement('span');
         lbl.className = 'filter-group-label';
         lbl.textContent = label;
@@ -955,10 +1034,13 @@ function buildFilters() {
         vals.forEach(v => {
             const btn = document.createElement('button');
             btn.className = 'filter-pill' + (state.active[key].has(v) ? ' active' : '');
-            btn.textContent = v;
+            btn.setAttribute('aria-pressed', String(state.active[key].has(v)));
+            // La valeur stockée reste « oui/non/inconnu » ; seul le libellé est traduit.
+            btn.textContent = key === 'vivant' ? vivantLabel(v) : v;
             btn.addEventListener('click', () => {
                 state.active[key].has(v) ? state.active[key].delete(v) : state.active[key].add(v);
                 btn.classList.toggle('active', state.active[key].has(v));
+                btn.setAttribute('aria-pressed', String(state.active[key].has(v)));
                 updateFilterBadge();
                 updateVisibility();
                 if (state.view === 'table') renderTable();
@@ -980,18 +1062,24 @@ function buildGraph() {
     const container = document.getElementById('pnj-graph');
     state.graphW = container.clientWidth  || window.innerWidth * 0.85;
     state.graphH = container.clientHeight || 550;
+    state.layoutW = state.graphW;
+    state.layoutH = state.graphH;
+    state.pendingFit = false;
+    state.graphTicked = false;
 
     buildDimColorMap();
 
     const svg = d3.select('#pnj-graph').append('svg').attr('width', '100%').attr('height', '100%');
     const g   = svg.append('g');
 
-    const initialScale = 0.8;
+    const initialScale = GRAPH_INITIAL_SCALE;
     const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', e => {
         state.zoomTransform = e.transform;
         g.attr('transform', e.transform);
     });
     svg.call(zoom);
+    state.zoom = zoom;
+    state.svgSel = svg;
     svg.call(zoom.transform, state.zoomTransform || d3.zoomIdentity
         .translate(state.graphW / 2 * (1 - initialScale), state.graphH / 2 * (1 - initialScale))
         .scale(initialScale));
@@ -1033,131 +1121,195 @@ function buildGraph() {
         .attr('marker-end', d => `url(#arrow-${safeRelationColor(d.color, d.type).replace(/[^a-zA-Z0-9]/g, '')})`)
         .attr('opacity', 0.8).attr('fill', 'none');
 
-    const linkTextSel = linkG.selectAll('text.pnj-link-label').data(state.links).join('text')
-        .attr('class', 'pnj-link-label');
-    linkTextSel.append('textPath')
+    // Chaque lien a son double inversé, jamais dessiné : le libellé s'y
+    // accroche quand la cible est à gauche de la source.
+    const reversedSel = defs.selectAll('path.pnj-link-reversed').data(state.links).join('path')
+        .attr('class', 'pnj-link-reversed')
+        .attr('id', (d, i) => `pnj-lpr-${i}`);
+
+    // Libellés : répètent la fiche, masqués aux lecteurs d'écran.
+    const labelG = g.append('g').attr('class', 'pnj-link-labels').attr('aria-hidden', 'true');
+    const linkTextSel = labelG.selectAll('text.pnj-link-label').data(state.links).join('text')
+        .attr('class', 'pnj-link-label')
+        .attr('text-anchor', 'middle');
+    const textPathSel = linkTextSel.append('textPath')
         .attr('href', (d, i) => `#pnj-lp-${i}`)
         .attr('startOffset', '50%')
         .text(d => d._showLabel !== false ? (d.label || d.type || '') : '');
     state.linkLabelSel = linkTextSel;
 
-    // Nœuds : cartouches SVG déplaçables
-    // Géométrie : accent(5) + padding(10) + portrait(PORT_R*2) + gap(8) + texte
-    // Centre portrait cx = -CARD_W/2 + 5 + 10 + PORT_R = -100 + 38 = -62
-    // Texte x = -CARD_W/2 + 5 + 10 + PORT_R*2 + 8 = -100 + 69 = -31
-    const portCx = -CARD_W / 2 + 5 + 10 + PORT_R;
-    const textX  = -CARD_W / 2 + 5 + 10 + PORT_R * 2 + 8;
-
+    // Nœuds : médaillons déplaçables, atteignables au clavier.
     const nodeG = g.append('g').selectAll('g').data(state.nodes).join('g')
         .attr('class', 'pnj-node')
+        .attr('tabindex', 0)
+        .attr('role', 'button')
+        .attr('aria-label', nodeAriaLabel)
         .call(d3.drag()
             .on('start', (e, d) => { if (!e.active) state.simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
             .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
             .on('end',   (e, d) => { if (!e.active) state.simulation.alphaTarget(0); d.fx = d.x; d.fy = d.y; }))
-        .on('click', (e, d) => { e.stopPropagation(); openPanel(d); });
+        .on('click', (e, d) => { e.stopPropagation(); openPanel(d, { origin: true }); })
+        .on('focus', (e, d) => revealGraphNode(d))
+        .on('keydown', (e, d) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            openPanel(d, { origin: true });
+        });
 
-    // Fond de la carte
-    nodeG.append('rect')
+    // Anneau de focus, hors du médaillon et de l'anneau « sort inconnu » : trait
+    // sombre large sous un trait clair, lisible sur tout fond. Masqué au repos (CSS).
+    const focusRing = nodeG.append('g').attr('class', 'node-focus-ring').attr('aria-hidden', 'true');
+    focusRing.append('circle').attr('class', 'node-focus-ring-dark').attr('r', NODE_R + 9);
+    focusRing.append('circle').attr('class', 'node-focus-ring-light').attr('r', NODE_R + 9);
+
+    // Disque de fond et anneau à la couleur de la dimension choisie
+    nodeG.append('circle')
         .attr('class', 'node-card')
-        .attr('x', -CARD_W / 2).attr('y', -CARD_H / 2)
-        .attr('width', CARD_W).attr('height', CARD_H)
-        .attr('rx', CARD_RX)
+        .attr('r', PORTRAIT_R + RING_W / 2)
         .attr('fill', 'var(--bg-card)')
         .attr('stroke', getDimColor)
-        .attr('stroke-width', 2.5);
+        .attr('stroke-width', RING_W);
 
-    // Barre accent gauche
-    nodeG.append('rect')
-        .attr('class', 'node-accent')
-        .attr('x', -CARD_W / 2).attr('y', -CARD_H / 2)
-        .attr('width', 5).attr('height', CARD_H)
-        .attr('rx', CARD_RX)
-        .attr('fill', getDimColor);
+    // Sort inconnu : anneau pointillé autour du médaillon
+    nodeG.filter(d => vivantKey(d) === 'inconnu').append('circle')
+        .attr('class', 'node-fate-ring')
+        .attr('r', NODE_R + 4);
 
     // Clip path circulaire pour le portrait
     nodeG.append('clipPath')
         .attr('id', d => `clip-${d.id.replace(/[^a-zA-Z0-9]/g, '_')}`)
         .append('circle')
-        .attr('cx', portCx).attr('cy', 0).attr('r', PORT_R);
+        .attr('r', PORTRAIT_R);
 
     // Fond du portrait (placeholder)
     nodeG.append('circle')
         .attr('class', 'node-portrait-bg')
-        .attr('cx', portCx).attr('cy', 0).attr('r', PORT_R)
+        .attr('r', PORTRAIT_R)
         .attr('fill', 'var(--bg-surface)')
         .style('display', d => d.imageUrl ? 'none' : '');
 
-    // Initiale (si pas de portrait)
+    // Initiales (si pas de portrait)
     nodeG.append('text')
         .attr('class', 'node-initial')
-        .attr('x', portCx).attr('y', 0).attr('dy', '0.35em')
+        .attr('dy', '0.35em')
         .attr('text-anchor', 'middle')
         .style('display', d => d.imageUrl ? 'none' : '')
-        .text(d => (d.nom || '?')[0].toUpperCase());
+        .text(d => initials(d.nom));
 
-    // Portrait
+    // Portrait, en grisaille pour un défunt
     nodeG.append('image')
+        .attr('class', d => vivantKey(d) === 'non' ? 'node-portrait pnj-deceased' : 'node-portrait')
         .attr('href', d => d.imageUrl || null)
-        .attr('x', -CARD_W / 2 + 5 + 10).attr('y', -PORT_R)
-        .attr('width', PORT_R * 2).attr('height', PORT_R * 2)
+        .attr('x', -PORTRAIT_R).attr('y', -PORTRAIT_R)
+        .attr('width', PORTRAIT_R * 2).attr('height', PORTRAIT_R * 2)
         .attr('clip-path', d => `url(#clip-${d.id.replace(/[^a-zA-Z0-9]/g, '_')})`)
         .attr('preserveAspectRatio', 'xMidYMid slice')
         .style('display', d => d.imageUrl ? '' : 'none')
         .on('error', function() { d3.select(this).style('display', 'none'); });
 
-    // Nom
+    // Nom et lieu, centrés sous le médaillon
     nodeG.append('text')
         .attr('class', 'node-name')
-        .attr('x', textX).attr('y', -8)
+        .attr('text-anchor', 'middle')
+        .attr('y', NODE_R + 16)
         .text(d => d.nom || '');
 
-    // Sous-ligne : statut · lieu
     nodeG.append('text')
         .attr('class', 'node-sub')
-        .attr('x', textX).attr('y', 10)
-        .text(d => [cap(d.statut), d.lieu].filter(Boolean).join(' · ') || '');
+        .attr('text-anchor', 'middle')
+        .attr('y', NODE_R + 30)
+        .text(d => d.lieu || '');
+
+    // Marques (fragments de balisage de seal.js, aucune donnée) : le sceau
+    // porte toujours le statut, quelle que soit la couleur de l'anneau.
+    nodeG.append('g')
+        .attr('class', 'node-marks')
+        .attr('aria-hidden', 'true')
+        .html(d => sealMarkup(d.statut, { size: 22, x: MARK_OFFSET, y: MARK_OFFSET })
+            + (vivantKey(d) === 'non' ? morrMarkup({ size: 20, x: MARK_OFFSET, y: -MARK_OFFSET }) : ''));
 
     state.nodeSel = nodeG;
 
     state.simulation = d3.forceSimulation(state.nodes)
         .force('link',    d3.forceLink(state.links).id(d => d.id).distance(240))
         .force('charge',  d3.forceManyBody().strength(-700))
-        .force('center',  d3.forceCenter(state.graphW / 2, state.graphH / 2))
-        .force('collide', d3.forceCollide(Math.sqrt(CARD_W * CARD_W + CARD_H * CARD_H) / 2 + 20))
+        .force('center',  d3.forceCenter(state.layoutW / 2, state.layoutH / 2))
+        // Médaillon et nom : environ 140 px de large
+        .force('collide', d3.forceCollide(70))
         .on('tick', () => {
+            state.graphTicked = true;
             state.linkSel.attr('d', d => bezierPath(d.source.x, d.source.y, d.target.x, d.target.y, d._curveScale ?? 1));
+            // La direction d'un lien change pendant la simulation : le chemin
+            // inversé et le choix du chemin porteur suivent à chaque tick.
+            reversedSel.attr('d', d => bezierPath(d.source.x, d.source.y, d.target.x, d.target.y, d._curveScale ?? 1, true));
+            textPathSel.attr('href', (d, i) => d.target.x < d.source.x ? `#pnj-lpr-${i}` : `#pnj-lp-${i}`);
             state.nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
         })
         .on('end', () => {
             state.nodes.forEach(d => { if (d.fx == null) { d.fx = d.x; d.fy = d.y; } });
+            // Seulement si un redimensionnement l'a demandé : la fin d'un
+            // glisser ne doit pas recadrer la vue sous la main du joueur.
+            if (state.pendingFit) {
+                state.pendingFit = false;
+                fitGraphView();
+            }
         });
 
     updateVisibility();
     updateLegend();
 }
 
+// Cadre la boîte englobante des nœuds. Marges : le médaillon et son anneau de
+// focus en haut, le nom qui déborde (~70 px) sur les côtés, les deux lignes de
+// texte en dessous.
+function fitGraphView() {
+    if (!state.svgSel || !state.zoom) return;
+    const placed = state.nodes.filter(d => Number.isFinite(d.x) && Number.isFinite(d.y));
+    if (!placed.length) return;
+    const side = 70, top = NODE_R + 12, bottom = NODE_R + 36, pad = 16;
+    const x0 = d3.min(placed, d => d.x) - side, x1 = d3.max(placed, d => d.x) + side;
+    const y0 = d3.min(placed, d => d.y) - top,  y1 = d3.max(placed, d => d.y) + bottom;
+    const w = state.graphW, h = state.graphH;
+    const k = Math.max(GRAPH_MIN_FIT_SCALE, Math.min(GRAPH_INITIAL_SCALE,
+        (w - pad * 2) / (x1 - x0), (h - pad * 2) / (y1 - y0)));
+    state.svgSel.call(state.zoom.transform, d3.zoomIdentity
+        .translate(w / 2 - k * (x0 + x1) / 2, h / 2 - k * (y0 + y1) / 2).scale(k));
+}
+
+// Un nœud atteint au clavier hors du cadre visible est ramené au centre.
+function revealGraphNode(d) {
+    // Avant le premier tick, les nœuds sont encore groupés autour de l'origine.
+    if (!state.svgSel || !state.zoom || !state.graphTicked) return;
+    const t = d3.zoomTransform(state.svgSel.node());
+    const x = t.applyX(d.x), y = t.applyY(d.y), r = NODE_R * t.k;
+    if (x - r >= 0 && x + r <= state.graphW && y - r >= 0 && y + r <= state.graphH) return;
+    state.svgSel.call(state.zoom.translateTo, d.x, d.y);
+}
+
 function applyColorBy(dim) {
     state.colorBy = dim;
     buildDimColorMap();
     state.nodeSel?.select('.node-card').attr('stroke', getDimColor);
-    state.nodeSel?.select('.node-accent').attr('fill', getDimColor);
     if (dim === 'statut') {
         state.simulation?.force('cluster-x', null).force('cluster-y', null);
     } else {
         state.nodes.forEach(d => { d.fx = null; d.fy = null; });
         const vals = state.dimColorMap ? [...state.dimColorMap.keys()] : [];
-        const n = vals.length || 1, r = Math.min(state.graphW, state.graphH) * 0.28;
+        const n = vals.length || 1, r = Math.min(state.layoutW, state.layoutH) * 0.28;
         const centers = Object.fromEntries(vals.map((v, i) => [v, {
-            x: state.graphW / 2 + r * Math.cos((2 * Math.PI * i / n) - Math.PI / 2),
-            y: state.graphH / 2 + r * Math.sin((2 * Math.PI * i / n) - Math.PI / 2),
+            x: state.layoutW / 2 + r * Math.cos((2 * Math.PI * i / n) - Math.PI / 2),
+            y: state.layoutH / 2 + r * Math.sin((2 * Math.PI * i / n) - Math.PI / 2),
         }]));
         state.simulation
-            ?.force('cluster-x', d3.forceX(d => centers[d[dim]]?.x ?? state.graphW / 2).strength(0.07))
-            .force('cluster-y', d3.forceY(d => centers[d[dim]]?.y ?? state.graphH / 2).strength(0.07))
+            ?.force('cluster-x', d3.forceX(d => ownValue(centers, d[dim])?.x ?? state.layoutW / 2).strength(0.07))
+            .force('cluster-y', d3.forceY(d => ownValue(centers, d[dim])?.y ?? state.layoutH / 2).strength(0.07))
             .alpha(0.4).restart();
     }
     updateLegend();
-    document.querySelectorAll('.colorby-btn').forEach(b => b.classList.toggle('active', b.dataset.dim === dim));
+    document.querySelectorAll('.colorby-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.dim === dim);
+        b.setAttribute('aria-pressed', String(b.dataset.dim === dim));
+    });
 }
 
 // ── Visibility ─────────────────────────────────────────────────
@@ -1176,9 +1328,11 @@ function updateVisibility() {
     if (!state.nodeSel) return;
     const visIds = new Set(state.nodes.filter(isVisible).map(d => d.id));
     state.nodeSel
-        .style('opacity', d => isVisible(d) ? getNodeOpacity(d) : 0.06)
-        .style('pointer-events', d => isVisible(d) ? 'all' : 'none');
-    state.nodeSel.select('.node-card').attr('stroke-dasharray', d => (d.vivant || '').toLowerCase() === 'non' ? '5 3' : null);
+        .style('opacity', d => isVisible(d) ? 1 : 0.06)
+        .style('pointer-events', d => isVisible(d) ? 'all' : 'none')
+        // Un nœud filtré n'est plus cliquable : il ne doit plus être atteignable au clavier non plus.
+        .attr('tabindex', d => isVisible(d) ? 0 : -1)
+        .attr('aria-hidden', d => isVisible(d) ? null : 'true');
     state.linkSel?.style('opacity', d => {
         // d.source/.target peuvent être soit un id (string) soit l'objet node après simulation
         const s = d.source.id ?? d.source, t = d.target.id ?? d.target;
@@ -1226,10 +1380,15 @@ function cancelLinkedIndices() {
     unsubscribe?.();
 }
 
-async function openPanel(d) {
+// `origin` : ouverture depuis le nœud ou la ligne du PNJ, où le focus reviendra.
+// Une navigation par les relations garde l'origine de la première ouverture ;
+// une ouverture sans origine (lien profond) rend le focus au nœud du PNJ.
+async function openPanel(d, { origin = false } = {}) {
     const panelGeneration = ++currentPanelGeneration;
     cancelLinkedIndices();
     const panelRole = state.isAdmin;
+    if (origin) _panelReturnId = d.id;
+    else if (!document.getElementById('pnj-detail').classList.contains('open')) _panelReturnId = d.id;
     state.panelId = d.id;
     const panelIsCurrent = () => {
         const currentNode = state.nodes.find(node => node.id === d.id);
@@ -1245,27 +1404,36 @@ async function openPanel(d) {
     };
     const nodeById = new Map(state.nodes.map(n => [n.id, n]));
 
+    // Une paire réciproque prouvée par le dépôt tient en une ligne « ↔ » : on
+    // garde la relation sortante, updateRelation/deleteRelation traitant sa
+    // réciproque avec elle.
     const related = state.links.filter(l => {
         const s = l.source.id ?? l.source, t = l.target.id ?? l.target;
         return s === d.id || t === d.id;
     }).map(l => {
         const s = l.source.id ?? l.source, t = l.target.id ?? l.target;
         const isSource = s === d.id;
-        return { relId: l.id, node: nodeById.get(isSource ? t : s), type: l.type, label: l.label || l.type || 'Lié', dir: isSource ? '→' : '←', color: safeRelationColor(l.color, l.type), style: l.style };
-    }).filter(r => r.node);
+        const paired = Boolean(exactReciprocal(l));
+        if (paired && !isSource) return null;
+        return { relId: l.id, node: nodeById.get(isSource ? t : s), type: l.type, label: l.label || l.type || 'Lié', dir: paired ? '↔' : isSource ? '→' : '←', color: safeRelationColor(l.color, l.type), style: l.style };
+    }).filter(r => r?.node);
 
-    const vKey   = (d.vivant || '').toLowerCase();
-    const vLabel = { oui: 'Vivant', non: 'Décédé', inconnu: 'Inconnu' }[vKey] || cap(d.vivant);
+    const vKey = vivantKey(d);
+    const deceased = vKey === 'non';
+    // Les vivants n'ont plus de badge : seuls un défunt ou un sort inconnu se signalent.
+    const vitalBadge = vKey === 'oui' ? '' : `<span class="pnj-badge vivant-${esc(vKey)}"><span class="visually-hidden">État vital : </span>${esc(vivantLabel(d.vivant))}</span>`;
 
+    // Le src est posé après l'insertion : l'URL objet du portrait change à
+    // chaque émission et empêcherait de reconnaître une fiche inchangée.
     const portraitHtml = d.imageUrl
-        ? `<img src="${esc(d.imageUrl)}" class="pnj-detail-portrait" alt="${esc(d.nom)}">`
-        : (protectedImagePlaceholder(d, d.nom) || `<div class="pnj-portrait-placeholder">${esc((d.nom || '?').charAt(0).toUpperCase())}</div>`);
+        ? `<img class="pnj-dossier-portrait${deceased ? ' pnj-deceased' : ''}" alt="Portrait de ${esc(d.nom)}">`
+        : (protectedImagePlaceholder(d, d.nom) || `<div class="pnj-dossier-initials" aria-hidden="true">${esc(initials(d.nom))}</div>`);
 
     const metaHtml = (d.lieu || d.groupe) ? `
-        <div class="pnj-detail-meta">
-            ${d.lieu   ? `<span>📍 ${esc(d.lieu)}</span>`   : ''}
-            ${d.groupe ? `<span>⚔ ${esc(d.groupe)}</span>` : ''}
-        </div>` : '';
+        <dl class="pnj-detail-meta">
+            ${d.lieu   ? `<div><dt>Lieu</dt><dd>${esc(d.lieu)}</dd></div>`     : ''}
+            ${d.groupe ? `<div><dt>Groupe</dt><dd>${esc(d.groupe)}</dd></div>` : ''}
+        </dl>` : '';
 
     const descHtml = d.description ? `
         <div class="pnj-detail-section">
@@ -1277,22 +1445,23 @@ async function openPanel(d) {
             <button class="btn-edit" id="panel-edit-btn">✏ Modifier</button>
         </div>` : '';
 
-    const relDeleteBtn = relId => panelRole
-        ? `<button class="rel-delete-btn" data-rel="${esc(relId)}" title="Supprimer">×</button>` : '';
-    const relEditBtn = relId => panelRole
-        ? `<button class="rel-edit-btn" data-rel="${esc(relId)}" title="Modifier">✏</button>` : '';
+    // Un « × » ou un « ✏ » seul ne dit pas quelle relation il vise.
+    const relDeleteBtn = (relId, nom) => panelRole
+        ? `<button class="rel-delete-btn" data-rel="${esc(relId)}" title="Supprimer" aria-label="Supprimer la relation avec ${esc(nom)}">×</button>` : '';
+    const relEditBtn = (relId, nom) => panelRole
+        ? `<button class="rel-edit-btn" data-rel="${esc(relId)}" title="Modifier" aria-label="Modifier la relation avec ${esc(nom)}">✏</button>` : '';
 
     const relHtml = `
         <div class="pnj-detail-section">
-            <h4>Relations${related.length ? ` (${related.length})` : ''}</h4>
+            <h3>Relations${related.length ? ` (${related.length})` : ''}</h3>
             <div class="pnj-relation-list">
                 ${related.map(r => `
-                    <div class="rel-chip-row" id="rel-row-${esc(r.relId)}">
-                        <button class="pnj-relation-chip" data-id="${esc(r.node.id)}" style="--chip-color:${r.color || getLinkColor(r.type)}">
+                    <div class="rel-chip-row" id="rel-row-${esc(r.relId)}" style="--chip-color:${esc(r.color || getLinkColor(r.type))}">
+                        <button type="button" class="pnj-relation-chip" data-id="${esc(r.node.id)}">
                             <span class="chip-name">${esc(r.node.nom)}</span>
-                            <span class="chip-type"><span class="chip-dir">${r.dir}</span> ${esc(r.label)}</span>
+                            <span class="chip-type"><span class="chip-dir" aria-hidden="true">${r.dir}</span><span class="visually-hidden">${REL_DIR_LABELS[r.dir]}</span> ${esc(r.label)}</span>
                         </button>
-                        ${relEditBtn(r.relId)}${relDeleteBtn(r.relId)}
+                        ${relEditBtn(r.relId, r.node.nom)}${relDeleteBtn(r.relId, r.node.nom)}
                     </div>`).join('')}
             </div>
             ${panelRole ? `
@@ -1333,7 +1502,7 @@ async function openPanel(d) {
 
     const cluesHtml = linkedClues.length ? `
         <div class="pnj-detail-section">
-            <h4>Indices liés</h4>
+            <h3>Indices liés</h3>
             <div class="pnj-clues-list">
                 ${linkedClues.map(c => `
                     <a href="enquetes.html?id=${esc(c.id)}" class="pnj-clue-badge${!c.decouvert ? ' clue-hidden' : ''}">
@@ -1343,34 +1512,93 @@ async function openPanel(d) {
             </div>
         </div>` : '';
 
-    document.getElementById('pnj-detail-content').innerHTML = `
-        ${portraitHtml}
-        <div class="pnj-detail-header">
-            <h2>${esc(d.nom || '?')}</h2>
-            <div class="pnj-badges">
-                <span class="pnj-badge statut-${esc((d.statut || '').toLowerCase())}">${esc(cap(d.statut) || '?')}</span>
-                <span class="pnj-badge vivant-${esc(vKey)}">${esc(vLabel)}</span>
+    // Le sceau (balisage de seal.js) remplace le badge de statut.
+    const html = `
+        <div class="pnj-dossier-banner">
+            ${portraitHtml}
+            <div class="pnj-dossier-title">
+                <h2 id="pnj-detail-title" tabindex="-1">${esc(d.nom || '?')}</h2>
+                <div class="pnj-badges">${sealMarkup(d.statut, { size: 34 })}${vitalBadge}</div>
             </div>
         </div>
-        ${editActions}${metaHtml}${descHtml}${relHtml}${cluesHtml}`;
+        <div class="pnj-dossier-body">
+            ${editActions}${metaHtml}${descHtml}${relHtml}${cluesHtml}
+        </div>`;
 
-    document.getElementById('pnj-detail').classList.add('open');
+    const panel = document.getElementById('pnj-detail');
+    const content = document.getElementById('pnj-detail-content');
+    const opening = !panel.classList.contains('open') || _panelShownId !== d.id;
+    // Réécrire une fiche inchangée ferait perdre le focus et les formulaires
+    // ouverts à chaque émission temps réel.
+    const rewrite = _panelRewrite?.id === d.id ? _panelRewrite : null;
+    if (rewrite || html !== _panelHtml) {
+        // body : l'élément focalisé (bouton du formulaire) a pu être retiré par
+        // une réécriture précédente.
+        const focusWasInside = panel.contains(document.activeElement) || document.activeElement === document.body;
+        const restoreKey = opening ? null : focusKey(panel);
+        content.innerHTML = html;
+        _panelHtml = html;
+        _panelRewrite = null;
+        if (rewrite && !opening && focusWasInside) (panel.querySelector(rewrite.focus) || document.getElementById('pnj-detail-title'))?.focus();
+        else if (restoreKey) (panel.querySelector(restoreKey) || document.getElementById('pnj-detail-title'))?.focus();
+    }
+    const portrait = content.querySelector('.pnj-dossier-portrait');
+    if (portrait && portrait.getAttribute('src') !== d.imageUrl) portrait.src = d.imageUrl;
+    _panelShownId = d.id;
+
+    panel.inert = false;
+    panel.classList.add('open');
+    // Le bureau se resserre à côté du dossier au lieu d'être recouvert.
+    document.body.classList.add('pnj-panel-open');
+    if (opening) document.getElementById('pnj-detail-title')?.focus();
     highlightConnected(d.id);
 }
 
-function closePanel() {
+// `restoreFocus` : fermeture demandée par l'utilisateur (bouton, Échap). Le
+// focus revient aussi au PNJ d'origine s'il était dans le panneau, qui devient inerte.
+function closePanel({ restoreFocus = false } = {}) {
     currentPanelGeneration += 1;
     cancelLinkedIndices();
-    document.getElementById('pnj-detail').classList.remove('open');
+    const panel = document.getElementById('pnj-detail');
+    const focusWasInside = panel.contains(document.activeElement);
+    panel.classList.remove('open');
+    panel.inert = true;
+    document.body.classList.remove('pnj-panel-open');
+    _panelHtml = '';
+    _panelShownId = null;
+    _panelRewrite = null;
     state.panelId = null;
     updateVisibility();
+    if (restoreFocus || focusWasInside) focusPnjOrigin(_panelReturnId);
+    _panelReturnId = null;
+}
+
+// Renvoie false si le nœud n'existe plus ou est filtré : un nœud aria-hidden
+// ne doit jamais recevoir le focus.
+function focusGraphNode(id) {
+    const node = state.nodeSel?.filter(d => d.id === id).node();
+    if (!node || node.getAttribute('aria-hidden') === 'true' || node.getAttribute('tabindex') === '-1') return false;
+    node.focus();
+    return true;
+}
+
+// Repli si l'origine a disparu (PNJ retiré, filtré, ligne absente) : le focus
+// reste dans la vue au lieu de tomber sur body.
+function focusPnjOrigin(id) {
+    if (state.view === 'table') {
+        const container = document.getElementById('pnj-table-container');
+        const row = id ? container.querySelector(`.pnj-table-name[data-id="${CSS.escape(id)}"]`) : null;
+        (row || container.querySelector('.pnj-table-count') || container.querySelector('table'))?.focus();
+    } else if (!id || !focusGraphNode(id)) {
+        document.getElementById('pnj-graph')?.focus();
+    }
 }
 
 function resetPnjView() {
     currentPanelGeneration += 1;
     clearPnjAdminStatuses();
     if (state.simulation) { state.simulation.stop(); state.simulation = null; }
-    d3.select('#pnj-graph svg').remove();
+    d3.select('#pnj-graph > svg').remove();
     state.nodeSel = null;
     state.linkSel = null;
     state.linkLabelSel = null;
@@ -1382,6 +1610,12 @@ function resetPnjView() {
     document.getElementById('pnj-table-container').innerHTML = '';
     document.getElementById('pnj-detail-content').innerHTML = '';
     document.getElementById('pnj-detail').classList.remove('open');
+    document.getElementById('pnj-detail').inert = true;
+    document.body.classList.remove('pnj-panel-open');
+    _panelHtml = '';
+    _panelShownId = null;
+    _panelReturnId = null;
+    _panelRewrite = null;
     document.getElementById('pnj-empty').style.display = 'flex';
     document.getElementById('graph-legend').style.display = 'none';
     document.getElementById('pnj-loading').style.display = 'flex';
@@ -1396,10 +1630,11 @@ function highlightConnected(id) {
         if (s === id) connected.add(t);
         if (t === id) connected.add(s);
     });
-    state.nodeSel?.style('opacity', d => isVisible(d) ? (connected.has(d.id) ? getNodeOpacity(d) : 0.05) : 0.02);
+    // Atténuation douce : les autres PNJ restent lisibles pour garder le contexte.
+    state.nodeSel?.style('opacity', d => isVisible(d) ? (connected.has(d.id) ? 1 : 0.25) : 0.02);
     state.linkSel?.style('opacity', d => {
         const s = d.source.id ?? d.source, t = d.target.id ?? d.target;
-        return (s === id || t === id) ? 0.9 : 0.04;
+        return (s === id || t === id) ? 0.9 : 0.15;
     });
     state.linkLabelSel?.style('opacity', d => {
         const s = d.source.id ?? d.source, t = d.target.id ?? d.target;
@@ -1488,9 +1723,7 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
     }
 
     if (e.target.closest('.rel-edit-cancel-btn')) {
-        const form = e.target.closest('.rel-edit-form-inline');
-        document.getElementById(form.dataset.chipRowId)?.style.removeProperty('display');
-        form.remove();
+        closeRelEditForm(e.target.closest('.rel-edit-form-inline'));
         return;
     }
 
@@ -1501,8 +1734,7 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
     }
 
     if (e.target.closest('#rel-cancel-btn')) {
-        document.getElementById('rel-add-form').style.display = 'none';
-        document.getElementById('add-rel-btn').style.display  = '';
+        closeRelAddForm();
         return;
     }
 
@@ -1520,27 +1752,52 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
     }
 });
 
+// Fermeture par Annuler ou Échap : le focus revient au bouton qui a ouvert le
+// formulaire, sinon il tomberait sur body avec l'élément retiré.
+function closeRelEditForm(form) {
+    const relId = form.dataset.rel;
+    document.getElementById(form.dataset.chipRowId)?.style.removeProperty('display');
+    form.remove();
+    document.querySelector(`#pnj-detail .rel-edit-btn[data-rel="${CSS.escape(relId)}"]`)?.focus();
+}
+
+function closeRelAddForm() {
+    document.getElementById('rel-add-form').style.display = 'none';
+    const addBtn = document.getElementById('add-rel-btn');
+    addBtn.style.display = '';
+    addBtn.focus();
+}
+
 // ── Table ──────────────────────────────────────────────────────
 function renderTable() {
     const container = document.getElementById('pnj-table-container');
     const sorted = [...state.nodes.filter(isVisible)].sort((a, b) =>
         state.sortDir * (a[state.sortCol] || '').localeCompare(b[state.sortCol] || '', 'fr', { sensitivity: 'base' }));
 
+    // L'en-tête triable est un bouton : atteignable au clavier, son état
+    // de tri annoncé par aria-sort sur la cellule.
     const thead = '<th class="col-portrait"></th>' + TABLE_COLS.map(c => {
-        const arrow = c.key === state.sortCol ? (state.sortDir > 0 ? ' ▲' : ' ▼') : '';
-        return `<th data-col="${esc(c.key)}" class="sortable">${esc(c.label)}${arrow}</th>`;
+        const isSorted = c.key === state.sortCol;
+        const arrow = isSorted ? (state.sortDir > 0 ? ' ▲' : ' ▼') : '';
+        const ariaSort = isSorted ?(state.sortDir > 0 ? 'ascending' : 'descending') : 'none';
+        return `<th scope="col" class="sortable" aria-sort="${ariaSort}"><button type="button" class="pnj-sort-btn" data-col="${esc(c.key)}">${esc(c.label)}<span aria-hidden="true">${arrow}</span></button></th>`;
     }).join('') + (state.isAdmin ? '<th></th>' : '');
 
     const tbody = sorted.map(d => {
-        const portraitCell = d.imageUrl
-            ? `<td class="col-portrait"><img src="${esc(d.imageUrl)}" class="table-portrait" alt="${esc(d.nom)}"></td>`
-            : `<td class="col-portrait">${protectedImagePlaceholder(d, d.nom) || `<div class="table-portrait-placeholder">${esc((d.nom || '?').charAt(0).toUpperCase())}</div>`}</td>`;
+        // Le texte de la colonne Statut reste : le petit sceau n'y est qu'un rappel visuel.
+        const deceased = vivantKey(d) === 'non';
+        const portrait = d.imageUrl
+            ? `<img src="${esc(d.imageUrl)}" class="table-portrait${deceased ? ' pnj-deceased' : ''}" alt="${esc(d.nom)}">`
+            : (protectedImagePlaceholder(d, d.nom) || `<div class="table-portrait-placeholder">${esc(initials(d.nom))}</div>`);
+        const portraitCell = `<td class="col-portrait"><span class="table-portrait-wrap">${portrait}<span class="table-portrait-seal" aria-hidden="true">${sealMarkup(d.statut, { size: 16 })}</span></span></td>`;
 
         const cells = TABLE_COLS.map(c => {
+            if (c.key === 'nom') return `<td><button type="button" class="pnj-table-name" data-id="${esc(d.id)}">${esc(d.nom || '—')}</button></td>`;
             if (c.key === 'statut') return `<td><span class="pnj-badge statut-${esc((d.statut || '').toLowerCase())}">${esc(cap(d.statut) || '—')}</span></td>`;
             if (c.key === 'vivant') {
-                const vk = (d.vivant || '').toLowerCase();
-                return `<td><span class="pnj-badge vivant-${esc(vk)}">${esc({ oui: 'Vivant', non: 'Décédé', inconnu: 'Inconnu' }[vk] || d.vivant || '—')}</span></td>`;
+                // Même clé et même libellé que le graphe et la fiche : vide vaut « Vivant ».
+                const vk = vivantKey(d);
+                return `<td><span class="pnj-badge vivant-${esc(vk)}">${esc(vivantLabel(d.vivant || 'oui'))}</span></td>`;
             }
             if (c.key === 'description') {
                 const full = d.description || '', short = full.length > 90 ? full.slice(0, 90) + '…' : full;
@@ -1552,8 +1809,10 @@ function renderTable() {
         return `<tr>${portraitCell}${cells}${editCell}</tr>`;
     }).join('');
 
+    // Le tableau est réécrit à chaque tri ou filtre : le focus revient sur l'élément équivalent.
+    const restoreKey = focusKey(container);
     container.innerHTML = `
-        <p class="pnj-table-count">${sorted.length} personnage${sorted.length !== 1 ? 's' : ''}</p>
+        <p class="pnj-table-count" tabindex="-1">${sorted.length} personnage${sorted.length !== 1 ? 's' : ''}</p>
         <div class="pnj-table-scroll">
             <table class="rules-table pnj-table-el">
                 <thead><tr>${thead}</tr></thead>
@@ -1561,14 +1820,21 @@ function renderTable() {
             </table>
         </div>`;
 
-    container.querySelectorAll('th.sortable').forEach(th =>
-        th.addEventListener('click', () => {
-            state.sortDir = state.sortCol === th.dataset.col ? state.sortDir * -1 : 1;
-            state.sortCol = th.dataset.col;
+    container.querySelectorAll('.pnj-sort-btn').forEach(btn =>
+        btn.addEventListener('click', () => {
+            state.sortDir = state.sortCol === btn.dataset.col ? state.sortDir * -1 : 1;
+            state.sortCol = btn.dataset.col;
             renderTable();
+        }));
+    container.querySelectorAll('.pnj-table-name').forEach(btn =>
+        btn.addEventListener('click', () => {
+            const node = state.nodes.find(n => n.id === btn.dataset.id);
+            if (node) openPanel(node, { origin: true });
         }));
     container.querySelectorAll('.btn-edit-sm').forEach(btn =>
         btn.addEventListener('click', () => openPnjModal(btn.dataset.id)));
+    // Ligne disparue (PNJ retiré ou filtré) : repli sur le compteur.
+    if (restoreKey) (container.querySelector(restoreKey) || container.querySelector('.pnj-table-count'))?.focus();
 }
 
 // ── View toggle ────────────────────────────────────────────────
@@ -1577,7 +1843,10 @@ function setView(view) {
     document.getElementById('pnj-graph').style.display           = view === 'graph' ? '' : 'none';
     document.getElementById('pnj-table-container').style.display = view === 'table' ? '' : 'none';
     document.getElementById('colorby-group').style.display       = view === 'graph' ? '' : 'none';
-    document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+    document.querySelectorAll('.view-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.view === view);
+        b.setAttribute('aria-pressed', String(b.dataset.view === view));
+    });
     if (view === 'table') renderTable();
 }
 
@@ -1587,7 +1856,55 @@ document.getElementById('pnj-search').addEventListener('input', e => {
     updateVisibility();
     if (state.view === 'table') renderTable();
 });
-document.getElementById('pnj-detail-close').addEventListener('click', closePanel);
+document.getElementById('pnj-detail-close').addEventListener('click', () => closePanel({ restoreFocus: true }));
+document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || e.defaultPrevented || !state.panelId) return;
+    // Les modales (édition, cadrage, confirmation) passent avant la fiche.
+    if (e.target.closest?.('dialog, [role="dialog"]')) return;
+    if (['pnj-modal', 'crop-modal'].some(id => document.getElementById(id)?.style.display !== 'none')) return;
+    const panel = document.getElementById('pnj-detail');
+    // Dans un formulaire de relation, Échap n'annule que lui, comme son bouton Annuler.
+    const editForm = e.target.closest?.('.rel-edit-form-inline');
+    if (editForm && panel.contains(editForm)) { closeRelEditForm(editForm); return; }
+    if (e.target.closest?.('.rel-add-form') && panel.contains(e.target)) { closeRelAddForm(); return; }
+    // Échap dans la recherche appartient au champ, pas à la fiche.
+    if (!panel.contains(e.target) && e.target.matches?.('input, textarea, select, [contenteditable]')) return;
+    closePanel({ restoreFocus: true });
+});
+
+// La barre se replie selon la largeur disponible (panneau ouvert compris) :
+// sa hauteur mesurée, et non supposée, fixe celle du graphe.
+const pnjToolbar = document.querySelector('.pnj-toolbar');
+const pnjSection = pnjToolbar?.closest('.section');
+if (pnjToolbar && pnjSection && typeof ResizeObserver === 'function') {
+    new ResizeObserver(() => {
+        pnjSection.style.setProperty('--pnj-toolbar-h', `${pnjToolbar.offsetHeight}px`);
+    }).observe(pnjToolbar);
+}
+
+// Le graphe change de taille quand le dossier s'ouvre ou se ferme (et avec la
+// fenêtre). La simulation n'est pas touchée : déplacer forceCenter pendant
+// qu'elle tourne décalait le réseau une seconde fois, et chaque image de la
+// transition du dossier la relançait. Seule la vue est recadrée, une fois la
+// taille stabilisée (anti-rebond), puis de nouveau à la fin de la simulation
+// si elle tournait encore.
+const pnjGraph = document.getElementById('pnj-graph');
+let _graphFitTimer = null;
+if (pnjGraph && typeof ResizeObserver === 'function') {
+    new ResizeObserver(() => {
+        const width = pnjGraph.clientWidth, height = pnjGraph.clientHeight;
+        if (!width || !height) return; // vue Tableau : graphe masqué
+        if (width === state.graphW && height === state.graphH) return;
+        state.graphW = width;
+        state.graphH = height;
+        clearTimeout(_graphFitTimer);
+        _graphFitTimer = setTimeout(() => {
+            if (!state.simulation) return;
+            fitGraphView();
+            if (state.simulation.alpha() >= state.simulation.alphaMin()) state.pendingFit = true;
+        }, GRAPH_FIT_DELAY);
+    }).observe(pnjGraph);
+}
 document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', () => setView(btn.dataset.view)));
 document.querySelectorAll('.colorby-btn').forEach(btn => btn.addEventListener('click', () => applyColorBy(btn.dataset.dim)));
 

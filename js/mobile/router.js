@@ -159,9 +159,14 @@ export function createRouter({ windowRef = globalThis, mountRoute, onRoute, anno
             });
         }
         const saved = scrollPositions.get(nextKey);
-        if (saved !== undefined && [ROUTE_NAMES.PNJS, ROUTE_NAMES.ENQUETES].includes(nextRoute.name)) writeScroll(saved);
-        onRoute?.(nextRoute);
-        announce(nextRoute.name === ROUTE_NAMES.UNKNOWN ? 'Écran introuvable.' : 'Écran chargé.');
+        // Seules les listes retrouvent leur position ; les autres écrans repartent du haut, sans
+        // quoi une fiche hériterait du défilement de la liste et son nom focalisé serait hors écran.
+        if (![ROUTE_NAMES.PNJS, ROUTE_NAMES.ENQUETES].includes(nextRoute.name)) writeScroll(0);
+        else if (saved !== undefined) writeScroll(saved);
+        onRoute?.(nextRoute, view);
+        // Une vue prête peut nommer ce qu'elle affiche (« Fiche de … ») au lieu du message générique.
+        announce(nextRoute.name === ROUTE_NAMES.UNKNOWN ? 'Écran introuvable.'
+            : view?.routeAnnouncement?.() || 'Écran chargé.');
         return nextRoute;
     };
 

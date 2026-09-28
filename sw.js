@@ -1,6 +1,6 @@
 // sw.js, en tête. Doit rester identique à APP_VERSION de js/layout.js :
 // la CI le vérifie (.github/workflows/validate.yml).
-const APP_VERSION = 'v2.23.1';
+const APP_VERSION = 'v2.24.0';
 const CACHE_NAME  = 'wfrp-cache-' + APP_VERSION;
 
 const ASSETS_LOCAUX = [
@@ -57,6 +57,7 @@ const ASSETS_LOCAUX = [
   './js/protected-upload-recovery.js',
   './js/image-lifecycle.js',
   './js/pnj-integrity.js',
+  './js/seal.js',
   './js/private-notes.js',
   './js/sheets.js',
   './js/ui-confirm.js',
@@ -86,6 +87,11 @@ const ASSETS_LOCAUX = [
   './icons/icon-maskable-512.png',
   './icons/apple-touch-icon.png',
   './app/index.html',
+  './css/fonts.css',
+  './fonts/cinzel-latin.woff2',
+  './fonts/crimson-text-latin-400.woff2',
+  './fonts/crimson-text-latin-600.woff2',
+  './fonts/crimson-text-latin-400-italic.woff2',
   './css/mobile-app.css',
   './js/mobile/admin-route-controller.js',
   './js/mobile/app.js',
