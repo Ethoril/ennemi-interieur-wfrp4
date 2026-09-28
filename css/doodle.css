@@ -582,12 +582,13 @@
   font-weight: bold;
 }
 
+/* --statut-allie, clair en thème sombre, ne portait le blanc qu'à 2,7:1. */
 .doodle-voter-badge-yes {
-  background: var(--statut-allie);
+  background: var(--statut-allie-fond);
 }
 
 .doodle-voter-badge-no {
-  background: var(--statut-ennemi);
+  background: var(--statut-ennemi-fond);
 }
 
 .doodle-modal-empty {

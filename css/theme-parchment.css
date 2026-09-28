@@ -52,6 +52,21 @@
      le blanc y est toujours le bon contraste. */
   --text-on-status: #fff;
 
+  /* Le bordeaux du parchemin porte déjà le blanc à 7,7:1. */
+  --statut-ennemi-fond: #9a2a2a;
+  --statut-allie-fond: #2d6f47;
+
+  /* Papier clair des médaillons, un ton au-dessus de --bg-card. */
+  --node-paper: #faf4e8;
+
+  --focus-ring-light: #fffaf0;
+  --focus-ring-dark: #2a1008;
+
+  /* La cire des sceaux se lit déjà sur fond clair ; seules l'ombre portée
+     et la bordure de la porte de Morr passent au brun chaud. */
+  --seal-shadow: rgba(80, 40, 10, 0.35);
+  --morr-ring: rgba(45, 10, 10, 0.55);
+
   /* Couleurs de relations adaptées au parchemin */
   --link-allie:     #2d6f47;
   --link-ennemi:    #9a2a2a;
@@ -244,7 +259,9 @@
 [data-theme="parchment"] .sheet-def-term { color: var(--text-heading); }
 
 /* ── PNJs ────────────────────────────────────────── */
+/* --dossier-bg : le dégradé du bandeau doit finir sur le fond réel du panneau. */
 [data-theme="parchment"] .pnj-detail-panel {
+  --dossier-bg: var(--bg-card);
   background-color: var(--bg-card);
   border-color: var(--border-gold);
 }
@@ -257,7 +274,7 @@
   color: var(--text-primary);
 }
 
-[data-theme="parchment"] .pnj-detail-section h4 {
+[data-theme="parchment"] .pnj-detail-section h3 {
   color: var(--gold);
   border-color: var(--border-subtle);
 }
@@ -291,18 +308,22 @@
   background-color: #faf4e8;
 }
 
-/* Surcharges des Badges de statut en mode parchemin */
-[data-theme="parchment"] .pnj-badge.statut-allié   { color: var(--statut-allie); border-color: var(--statut-allie); background: rgba(45, 111, 71, 0.08); }
-[data-theme="parchment"] .pnj-badge.statut-ennemi  { color: var(--statut-ennemi); border-color: var(--statut-ennemi); background: rgba(154, 42, 42, 0.08); }
-[data-theme="parchment"] .pnj-badge.statut-neutre  { color: var(--statut-neutre); border-color: var(--statut-neutre); background: rgba(92, 92, 102, 0.08); }
-[data-theme="parchment"] .pnj-badge.vivant-oui     { color: var(--statut-allie); border-color: var(--statut-allie); background: rgba(45, 111, 71, 0.08); }
-[data-theme="parchment"] .pnj-badge.vivant-non     { color: var(--statut-neutre); border-color: var(--statut-neutre); background: rgba(92, 92, 102, 0.08); }
-[data-theme="parchment"] .pnj-badge.vivant-inconnu { color: #8b6508; border-color: #8b6508; background: rgba(139, 101, 8, 0.08); }
+/* Les badges de statut suivent les jetons --statut-* de ce thème pour la
+   bordure et le lavis ; le texte reste brun foncé : sur une ligne rayée ou
+   survolée du tableau, la couleur de statut tombait à 3,3-4,6:1. */
+[data-theme="parchment"] .pnj-badge[class*="statut-"],
+[data-theme="parchment"] .pnj-badge[class*="vivant-"] {
+  color: var(--text-primary);
+}
 
-/* Cartes de nœud dans le graphe */
-[data-theme="parchment"] .node-card {
-  fill: #faf4e8;
-  stroke: var(--border-gold);
+/* Médaillons du graphe : disque et halo du nom suivent --node-paper (voir
+   css/base.css). Pas de stroke ici, il masquerait la couleur de dimension
+   que D3 pose en attribut. */
+
+/* Le fond sombre translucide restait sous un texte brun. */
+[data-theme="parchment"] .graph-legend {
+  background: var(--bg-card);
+  border-color: var(--border-gold);
 }
 
 /* Bouton de vue active */
