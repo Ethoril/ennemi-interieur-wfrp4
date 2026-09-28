@@ -76,6 +76,12 @@ let cropperInstance = null;
 let cropGeneration = 0;
 let cropSourceUrl = null;
 let localPreviewUrl = null;
+// Déclencheur de la modale d'édition (« ＋ PNJ », « Modifier », « ✏ ») et sa
+// clé focusKey : la fiche ou le tableau peuvent l'avoir réécrit entre-temps.
+let _pnjModalReturn = null;
+// Signature des pastilles de filtre rendues : une émission qui ne change ni
+// les valeurs ni les libellés ne doit pas les recréer (focus, région live).
+let _filterSignature = null;
 // Fiche affichée : le rendu temps réel rappelle openPanel() à chaque émission,
 // on ne réécrit le panneau que si son HTML a changé.
 let _panelHtml = '';
@@ -480,7 +486,8 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
         state.linkLabelSel = null;
         if (state.simulation) { state.simulation.stop(); state.simulation = null; }
 
-        clearFilters();
+        // Pas de clearFilters() ici : buildFilters() ne recrée les pastilles que
+        // si les facettes ont changé, pour ne pas voler le focus d'un joueur.
         buildFilters();
         if (state.nodes.length) buildGraph();
         // Nœud retiré ou filtré : le focus se replie sur le graphe plutôt que sur body.
@@ -554,7 +561,7 @@ async function savePnj(data, imageFile) {
     const pnjRepository = capturedData?.pnjs;
     const editorStillCurrent = () => capturedSession === editorSession
         && capturedEditingId === state.editingId && capturedRole === state.isAdmin
-        && document.getElementById('pnj-modal')?.style.display !== 'none'
+        && document.getElementById('pnj-modal')?.open
         && capturedData === bureauData;
     const requireCurrentEditor = () => { if (!editorStillCurrent()) throw new Error('Édition annulée : la session ou le rôle a changé.'); };
     btn.disabled = true;
@@ -749,6 +756,12 @@ async function deleteRelation(relId) {
 
 // ── PNJ Modal ──────────────────────────────────────────────────
 function openPnjModal(pnjId = null) {
+    const dialog = document.getElementById('pnj-modal');
+    if (!dialog.open) {
+        const opener = document.activeElement;
+        _pnjModalReturn = opener && opener !== document.body
+            ? { el: opener, key: focusKey(document.body) } : null;
+    }
     editorSession += 1;
     // Invalide toute lecture privée encore en vol avant de réinitialiser le formulaire.
     state.privateLoadId += 1;
@@ -788,7 +801,17 @@ function openPnjModal(pnjId = null) {
             preview.dataset.existingLegacyUrl = p.legacyImageUrl || (!p.imagePath ? (p.imageUrl || '') : '');
         }
     }
-    document.getElementById('pnj-modal').style.display = 'flex';
+    if (!dialog.open) dialog.showModal();
+}
+
+// Rend le focus au déclencheur de l'édition. S'il a disparu (PNJ supprimé,
+// fiche fermée, ligne filtrée), repli sur la vue plutôt que sur body.
+function restorePnjModalFocus() {
+    const origin = _pnjModalReturn;
+    _pnjModalReturn = null;
+    const target = origin && (origin.el.isConnected ? origin.el : origin.key && document.querySelector(origin.key));
+    if (target && !target.closest('[inert]')) target.focus();
+    if (!target || document.activeElement !== target) focusPnjOrigin(null);
 }
 
 function legacyNote(pnj) {
@@ -860,12 +883,17 @@ function closePnjModal() {
     closeCropModal();
     clearPnjPreview();
     document.getElementById('f-image').value = '';
-    document.getElementById('pnj-modal').style.display = 'none';
+    const dialog = document.getElementById('pnj-modal');
+    // Appelée aussi par précaution (déconnexion, pagehide) : le focus ne bouge
+    // que si la modale était réellement ouverte.
+    const wasOpen = dialog.open;
+    if (wasOpen) dialog.close();
     state.editingId   = null;
     state.editingUpdatedAt = null;
     state.croppedBlob = null;
     state.privateDocExists = false;
     state.privateLoadError = false;
+    if (wasOpen) restorePnjModalFocus();
 }
 
 document.getElementById('pnj-form').addEventListener('submit', async e => {
@@ -927,19 +955,32 @@ function openCropModal(file) {
             guides: true,
         });
     };
+    // Cropper mesure son conteneur : le dialogue doit être ouvert avant que
+    // l'image se charge, sinon il s'initialise sur une boîte de taille nulle.
+    const dialog = document.getElementById('crop-modal');
+    if (!dialog.open) dialog.showModal();
     img.src = cropSourceUrl;
-    document.getElementById('crop-modal').style.display = 'flex';
 }
 
 function closeCropModal() {
     cropGeneration += 1;
-    document.getElementById('crop-modal').style.display = 'none';
+    const dialog = document.getElementById('crop-modal');
+    const wasOpen = dialog.open;
+    if (wasOpen) dialog.close();
     if (cropperInstance) { cropperInstance.destroy(); cropperInstance = null; }
     const img = document.getElementById('crop-img');
     img.onload = null;
     if (cropSourceUrl) URL.revokeObjectURL(cropSourceUrl);
     cropSourceUrl = null;
     img.src = '';
+    // Le cadrage s'ouvre depuis le champ Portrait de l'édition : le focus y revient.
+    if (wasOpen && document.getElementById('pnj-modal').open) document.getElementById('f-image').focus();
+}
+
+// Annuler le cadrage (bouton ou Échap) abandonne aussi le fichier choisi.
+function cancelCropModal() {
+    document.getElementById('f-image').value = '';
+    closeCropModal();
 }
 
 document.getElementById('crop-confirm-btn').addEventListener('click', () => {
@@ -957,12 +998,24 @@ document.getElementById('crop-confirm-btn').addEventListener('click', () => {
     }, 'image/webp', 0.85);
 });
 
-document.getElementById('crop-cancel-btn').addEventListener('click', () => {
-    document.getElementById('f-image').value = '';
-    closeCropModal();
-});
+document.getElementById('crop-cancel-btn').addEventListener('click', cancelCropModal);
+// Fermeture native (Échap, retour Android) : on reprend la main pour passer
+// par le même nettoyage que les boutons (Cropper, URL d'objet, retour du focus).
+document.getElementById('crop-modal').addEventListener('cancel', e => { e.preventDefault(); cancelCropModal(); });
 
 document.getElementById('pnj-modal-close').addEventListener('click', closePnjModal);
+document.getElementById('pnj-modal').addEventListener('cancel', e => { e.preventDefault(); closePnjModal(); });
+// Échap est traité dès keydown, sur le dialogue qui a le focus : un cadrage
+// ouvert sans activation utilisateur récente (sélection de fichier lente) est
+// groupé par le navigateur avec l'édition, et une seule demande de fermeture
+// native les fermerait toutes les deux. Annuler keydown évite cette demande.
+['crop-modal', 'pnj-modal'].forEach(id => document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || e.defaultPrevented) return;
+    e.preventDefault();
+    if (id === 'crop-modal') cancelCropModal();
+    else closePnjModal();
+}));
+// Un clic sur le voile (::backdrop) est reçu par le <dialog> lui-même.
 document.getElementById('pnj-modal').addEventListener('click', e => { if (e.target === document.getElementById('pnj-modal')) closePnjModal(); });
 document.getElementById('pnj-delete-btn').addEventListener('click', () => { if (state.editingId) deletePnj(state.editingId); });
 document.getElementById('add-pnj-btn').addEventListener('click', () => openPnjModal());
@@ -997,7 +1050,8 @@ function updateLegend() {
 }
 
 // ── Filters ────────────────────────────────────────────────────
-function clearFilters() {
+function clearFilterGroups() {
+    _filterSignature = null;
     ['filter-statut', 'filter-vivant', 'filter-lieu', 'filter-groupe'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -1007,9 +1061,23 @@ function clearFilters() {
             el.hidden = true;
         }
     });
-    const badge = document.getElementById('pnj-filter-count');
-    if (badge) badge.textContent = 'Aucun filtre';
 }
+
+function clearFilters() {
+    clearFilterGroups();
+    setFilterCount('Aucun filtre');
+}
+
+// #pnj-filter-count est une région live : la réécrire à l'identique la ferait
+// réannoncer à chaque émission temps réel.
+function setFilterCount(text) {
+    const badge = document.getElementById('pnj-filter-count');
+    if (badge && badge.textContent !== text) badge.textContent = text;
+}
+
+// Libellé affiché d'une pastille : la valeur stockée reste « oui/non/inconnu »,
+// seul le libellé est traduit.
+const filterPillLabel = (key, v) => key === 'vivant' ? vivantLabel(v) : v;
 
 function buildFilters() {
     const uniq = arr => [...new Set(arr.filter(Boolean))].sort();
@@ -1023,6 +1091,28 @@ function buildFilters() {
     // Les ensembles de filtres survivent à un rechargement ; une valeur disparue
     // doit être retirée avant de rendre les boutons, sinon le graphe reste masqué.
     reconcileFilterSets(state.active, available);
+    const signature = JSON.stringify(definitions.map(([, label, key, vals]) =>
+        [key, label, vals.map(v => [v, filterPillLabel(key, v)])]));
+    // Facettes inchangées (souvent une simple émission de métadonnées) : les
+    // pastilles restent en place, seul leur état suit state.active.
+    if (signature === _filterSignature) {
+        definitions.forEach(([id, , key, vals]) => {
+            document.getElementById(id).querySelectorAll('.filter-pill').forEach((btn, i) => {
+                const on = state.active[key].has(vals[i]);
+                btn.classList.toggle('active', on);
+                btn.setAttribute('aria-pressed', String(on));
+            });
+        });
+        updateFilterBadge();
+        return;
+    }
+    // Reconstruction : une pastille focalisée serait détruite, le focus
+    // tomberait sur body. On retient sa dimension et sa valeur pour la retrouver.
+    const focusedPill = document.activeElement?.closest?.('.pnj-filters .filter-pill');
+    const focusedDim = focusedPill?.dataset.dim;
+    const focusedValue = focusedPill?.dataset.value;
+    clearFilterGroups();
+    _filterSignature = signature;
     definitions.forEach(([id, label, key, vals]) => {
         const el  = document.getElementById(id);
         el.hidden = !vals.length;
@@ -1035,8 +1125,9 @@ function buildFilters() {
             const btn = document.createElement('button');
             btn.className = 'filter-pill' + (state.active[key].has(v) ? ' active' : '');
             btn.setAttribute('aria-pressed', String(state.active[key].has(v)));
-            // La valeur stockée reste « oui/non/inconnu » ; seul le libellé est traduit.
-            btn.textContent = key === 'vivant' ? vivantLabel(v) : v;
+            btn.dataset.dim = key;
+            btn.dataset.value = v;
+            btn.textContent = filterPillLabel(key, v);
             btn.addEventListener('click', () => {
                 state.active[key].has(v) ? state.active[key].delete(v) : state.active[key].add(v);
                 btn.classList.toggle('active', state.active[key].has(v));
@@ -1049,12 +1140,17 @@ function buildFilters() {
         });
     });
     updateFilterBadge();
+    if (focusedDim === undefined) return;
+    // Pastille équivalente, sinon premier bouton du même groupe, sinon la recherche.
+    const group = document.getElementById(`filter-${focusedDim}`);
+    const pills = [...(group?.querySelectorAll('.filter-pill') || [])];
+    (pills.find(btn => btn.dataset.value === focusedValue) || pills[0]
+        || document.getElementById('pnj-search'))?.focus();
 }
 
 function updateFilterBadge() {
     const activeCount = Object.values(state.active).reduce((count, values) => count + values.size, 0);
-    const badge = document.getElementById('pnj-filter-count');
-    if (badge) badge.textContent = activeCount ? `${activeCount} filtre${activeCount > 1 ? 's' : ''}` : 'Aucun filtre';
+    setFilterCount(activeCount ? `${activeCount} filtre${activeCount > 1 ? 's' : ''}` : 'Aucun filtre');
 }
 
 // ── Graph ──────────────────────────────────────────────────────
@@ -1861,7 +1957,7 @@ document.addEventListener('keydown', e => {
     if (e.key !== 'Escape' || e.defaultPrevented || !state.panelId) return;
     // Les modales (édition, cadrage, confirmation) passent avant la fiche.
     if (e.target.closest?.('dialog, [role="dialog"]')) return;
-    if (['pnj-modal', 'crop-modal'].some(id => document.getElementById(id)?.style.display !== 'none')) return;
+    if (['pnj-modal', 'crop-modal'].some(id => document.getElementById(id)?.open)) return;
     const panel = document.getElementById('pnj-detail');
     // Dans un formulaire de relation, Échap n'annule que lui, comme son bouton Annuler.
     const editForm = e.target.closest?.('.rel-edit-form-inline');

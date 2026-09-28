@@ -2827,6 +2827,32 @@ strong {
   padding: var(--space-md);
 }
 
+/* Les modales du bureau sont des <dialog> : le cadre visible reste porté par
+   .pnj-modal-content / .crop-modal-content, le dialogue lui-même ne doit rien
+   dessiner. On neutralise donc les styles d'agent (bordure, fond, padding,
+   plafonds de taille) pour garder l'apparence des anciens voiles. */
+.pnj-modal-dialog,
+.crop-modal-dialog {
+  margin: auto; /* la remise à zéro globale des marges annule le centrage natif */
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+}
+
+/* Même marge latérale que l'ancien voile (padding var(--space-md)). */
+.pnj-modal-dialog {
+  width: min(580px, calc(100% - 2 * var(--space-md)));
+}
+
+.pnj-modal-dialog::backdrop {
+  background: var(--bg-overlay);
+  backdrop-filter: blur(4px);
+}
+
 .pnj-modal-content {
   background: var(--bg-dark);
   border: 1px solid var(--border-gold);
@@ -3022,15 +3048,10 @@ strong {
 }
 
 /* ── Crop Modal ─────────────────────────────────── */
-.crop-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.88);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  padding: var(--space-md);
+/* Ouvert par-dessus l'édition : la couche supérieure empile les deux voiles,
+   ce qui assombrit davantage, comme l'ancien voile plus opaque. */
+.crop-modal-dialog::backdrop {
+  background: var(--bg-overlay);
 }
 
 .crop-modal-content {

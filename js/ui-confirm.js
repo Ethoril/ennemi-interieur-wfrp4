@@ -10,9 +10,13 @@ function ensureDialog() {
     if (_dialog) return _dialog;
     _dialog = document.createElement('dialog');
     _dialog.className = 'ui-confirm';
+    // Le focus arrive sur « Annuler » : sans ces liens, ni le titre ni le
+    // message (qui nomme souvent l'élément visé) ne seraient annoncés.
+    _dialog.setAttribute('aria-labelledby', 'ui-confirm-titre');
+    _dialog.setAttribute('aria-describedby', 'ui-confirm-message');
     _dialog.innerHTML = `
-        <h3 class="ui-confirm-titre"></h3>
-        <p  class="ui-confirm-message"></p>
+        <h3 class="ui-confirm-titre" id="ui-confirm-titre"></h3>
+        <p  class="ui-confirm-message" id="ui-confirm-message"></p>
         <div class="ui-confirm-actions">
             <button class="ui-confirm-annuler" type="button">Annuler</button>
             <button class="ui-confirm-valider" type="button"></button>
