@@ -1,3 +1,32 @@
+## [2.24.0] - 2026-09-28
+
+### Amélioré
+
+- **PNJs, statut** : chaque portrait porte un sceau de cire dont la couleur et le glyphe (coche, croix, double trait, point d'interrogation) donnent le statut, sur le bureau comme sur mobile ; il se lit sans distinguer les couleurs.
+- **PNJs, défunts** : le portrait passe en grisaille, marqué de la porte de Morr, au lieu d'une carte à demi effacée ; le nom reste lisible. Un sort inconnu se signale par un anneau pointillé.
+- **PNJs, graphe (bureau)** : les personnages deviennent des médaillons, le titre compact rend au graphe la hauteur de l'écran, le réseau se recadre en entier quand la fiche s'ouvre ou se ferme, et reste lisible autour d'elle.
+- **PNJs, fiche (bureau)** : la fiche s'ouvre en dossier de 420 px à droite, portrait en bandeau et relations orientées (→, ←, ↔) ; la barre d'outils et le graphe se resserrent au lieu d'être recouverts.
+- **PNJs, liste mobile** : les personnages se rangent par lieu sous des en-têtes qui restent visibles au défilement ; recherche et filtres tiennent sur une ligne, et des puces rapides (Tous, Alliés, Neutres, Ennemis, Décédés) filtrent d'un geste.
+- **PNJs, fiche mobile** : portrait en bandeau, statut et état vital sous le nom, relations orientées et colorées comme au bureau.
+
+### Corrigé
+
+- **Application mobile** : les boutons censés être masqués le sont enfin (retour sur la liste, « ⋯ » hors de l'écran Réglages, « Nouveau PNJ » chez les joueurs, boutons de la bannière d'installation).
+- **Application mobile** : Cinzel et Crimson Text, désormais hébergées avec le site, remplacent Georgia.
+- **Application mobile** : le titre « PNJs » n'est plus répété, l'état vital s'écrit Vivant, Décédé ou Inconnu, et les boutons restent lisibles au survol comme au focus.
+- **PNJs (bureau)** : plus de séparateurs « | » orphelins ; filtres, relations et boutons prennent la police du site ; le filtre Vivant affiche Vivant, Décédé, Inconnu.
+- **PNJs (bureau)** : les libellés de relation ne s'écrivent plus à l'envers ; en thème parchemin, le contour des personnages retrouve sa couleur et la légende redevient lisible.
+- **PNJs (bureau)** : une fiche ouverte depuis un lien (une enquête, par exemple) ne se rouvre plus à chaque mise à jour des données.
+- **PNJs (bureau, MJ)** : modifier ou supprimer une relation réciproque traite de nouveau les deux sens.
+- **PNJs (mobile)** : une fiche s'ouvre toujours en haut, nom visible, même depuis une liste défilée.
+
+### Accessibilité
+
+- **PNJs (bureau)** : graphe et tableau se parcourent au clavier ; un double anneau montre le personnage qui a le focus, et la vue le ramène dans le cadre ; la fiche reçoit le focus, se ferme avec Échap et le rend au personnage d'origine ; Échap ne ferme que le formulaire de relation en cours.
+- **PNJs (bureau)** : les boutons de vue, de couleur et de filtre annoncent leur état, la recherche est nommée et les titres de la fiche suivent la hiérarchie.
+- **PNJs (mobile)** : groupe, lieu, statut et état vital des cartes sont lus ; ouvrir une fiche annonce le nom du personnage, et le retour ramène à sa carte ; le formulaire PNJ retrouve l'indicateur de focus du site.
+- **Contrastes** : « Ennemi », le texte des relations et les pastilles du tableau dépassent 4,5:1 dans les deux thèmes ; les pastilles « oui » et « non » du Calendrier retrouvent un contraste suffisant.
+
 ## [2.23.1] - 2026-09-27
 
 ### Corrigé
