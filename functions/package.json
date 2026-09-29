@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "main": "src/index.js",
-  "engines": { "node": "20" },
+  "engines": { "node": "24" },
   "scripts": { "test": "node --test test/core.test.mjs test/app-check-config.test.mjs" },
   "dependencies": {
     "firebase-admin": "14.2.0",
