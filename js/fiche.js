@@ -326,6 +326,8 @@ function _buildCareerTalentSets(career, rang) {
 }
 
 function _buildCareerCaracs(career, rang) {
+    // Rétrocompat (anciennes données sans rd.caracs) : liste agrégée de la carrière.
+    if (!(career.rangs || []).some(rd => Array.isArray(rd.caracs))) return new Set(career.carac || []);
     const set = new Set();
     for (let r = 1; r <= rang; r++) {
         for (const rd of getVariantsToConsider(career, r)) {
@@ -333,6 +335,12 @@ function _buildCareerCaracs(career, rang) {
         }
     }
     return set;
+}
+
+// Caracs de carrière cumulées du rang 1 au rang donné.
+function getCareerCaracs(career, rang) {
+    return _memo(_careerCache.caracs, _careerKey(career.id, rang),
+                 () => _buildCareerCaracs(career, rang));
 }
 
 function _memo(map, key, build) {
@@ -356,11 +364,7 @@ function isSkillInCareer(nom) {
 function isCaracInCareer(carac) {
     const career = getActiveCareerData();
     if (!career) return false;
-    const set = _memo(_careerCache.caracs, _careerKey(career.id, getActiveRang()),
-                      () => _buildCareerCaracs(career, getActiveRang()));
-    if (set.has(carac)) return true;
-    // Rétrocompat (anciennes données sans rd.caracs) : utiliser la liste agrégée.
-    return career.carac.includes(carac);
+    return getCareerCaracs(career, getActiveRang()).has(carac);
 }
 
 function isTalentInCareer(talentNom) {
@@ -1320,7 +1324,7 @@ function applyCareerHighlights() {
     if (!career) return;
     const rang = getActiveRang();
 
-    career.carac.forEach(c => {
+    getCareerCaracs(career, rang).forEach(c => {
         ['base', 'adv'].forEach(type =>
             document.getElementById(`${type}-${c}`)?.closest('td')?.classList.add('carac-in-career')
         );
@@ -1490,7 +1494,7 @@ function renderCareerDetail() {
     ensureSkillsDatalist();
     ensureTalentsDatalist();
 
-    const caracLabels = (career.carac || []).map(c => CARAC_LABELS[c] || c).join(', ') || '—';
+    const caracLabels = [...getCareerCaracs(career, rang)].map(c => CARAC_LABELS[c] || c).join(', ') || '—';
 
     // Bandeau prérequis pour les sous-carrières (ex: Prêtre-Forgeron de Vaul exige Mage (HE) rang 2)
     let prereqHtml = '';
