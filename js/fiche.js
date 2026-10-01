@@ -880,6 +880,20 @@ function getBonus(c)      { return Math.floor(getCaracTotal(c) / 10); }
 
 // ── Recalcul ──────────────────────────────────────────
 
+// Chaque acquisition de « Dur à cuire » ajoute le Bonus d'Endurance.
+function countTalent(nom) {
+    const cible = stripAccents(nom).toLowerCase();
+    return state.talentsAcq.filter(t => stripAccents(t.nom || '').trim().toLowerCase() === cible).length;
+}
+
+// Les Halfelins n'ajoutent pas leur Bonus de Force.
+function updateBlessuresMax() {
+    const race = document.getElementById('race')?.value || 'humain';
+    const bf   = ['halfelin', 'halfling'].includes(race) ? 0 : getBonus('f');
+    const be   = getBonus('e');
+    setText('blessures-max', bf + 2 * be + getBonus('fm') + countTalent('Dur à cuire') * be);
+}
+
 function recalc() {
     // Totaux carac
     CARACS.forEach(c => setText(`total-${c}`, getCaracTotal(c)));
@@ -887,7 +901,7 @@ function recalc() {
     // Dérivées
     const race = document.getElementById('race')?.value || 'humain';
     setText('mouvement', MOUVEMENT[race] ?? 4);
-    setText('blessures-max', getBonus('f') + 2 * getBonus('e') + getBonus('fm'));
+    updateBlessuresMax();
 
     // XP — total gagné = somme des entrées gain, dépensé = somme des achats
     const xpGained = state.xpLog.filter(e => e.kind === 'gain').reduce((s, e) => s + (+e.montant || 0), 0);
@@ -1583,6 +1597,8 @@ function renderTalents() {
 
     // Auto-focus de l'input d'ajout (effet visuel, pas un listener)
     wrap.querySelector('.talent-name-new')?.focus();
+
+    updateBlessuresMax(); // « Dur à cuire » modifie les Blessures max
 }
 
 // ── Sorts ─────────────────────────────────────────────
