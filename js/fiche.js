@@ -91,9 +91,10 @@ const BASIC_SKILLS = [
 
 // ── Moteur XP ─────────────────────────────────────────
 
-const CARAC_XP_BANDS    = [25, 30, 40, 50, 70, 90];
-const SKILL_XP_BANDS    = [5,  10, 15, 20, 25, 30];   // compétences de base
-const SKILL_XP_BANDS_ADV = [10, 15, 20, 25, 30, 35];  // compétences avancées
+// Barème officiel par tranche de 5 avances (0–5, 6–10, … 66–70) ; même table
+// pour les compétences de base et avancées. Hors carrière : coût ×2.
+const CARAC_XP_BANDS = [25, 30, 40, 50, 70, 90, 120, 150, 190, 230, 280, 330, 390, 450];
+const SKILL_XP_BANDS = [10, 15, 20, 30, 40, 60,  80, 110, 140, 180, 220, 270, 320, 380];
 
 function xpBandCost(bands, currentAdv, count, inCareer) {
     let total = 0;
@@ -690,9 +691,8 @@ function computeXfCost() {
     } else if (type === 'skill-basic' || type === 'skill-adv') {
         const fullNom = getXfSkillFullNom();
         if (fullNom) {
-            const bands   = type === 'skill-basic' ? SKILL_XP_BANDS : SKILL_XP_BANDS_ADV;
             const currAdv = getXfSkillCurrentAdv(fullNom);
-            cost = xpBandCost(bands, currAdv, avances, inCareer);
+            cost = xpBandCost(SKILL_XP_BANDS, currAdv, avances, inCareer);
         }
 
     } else if (type === 'talent') {

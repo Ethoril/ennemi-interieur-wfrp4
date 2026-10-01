@@ -149,8 +149,6 @@ que le thème sombre en 1440 px.
 
 Écartés sur décision, à ne pas traiter :
 
-- **M6** — barème XP tronqué au-delà de 30 avances (`CARAC_XP_BANDS` et `SKILL_XP_BANDS`
-  plafonnent à 90 et 30 XP). Sans effet sur une campagne rang 1 à 4.
 - **M8** — absence de tableau d'armes et de suivi des points d'armure sur la fiche.
 - **M7 partiel** — le Mouvement du Halfelin reste à 4 et la formule de Blessures reste
   générique pour toutes les espèces. Seuls l'ajout de l'espèce Nain et le passage du rang
