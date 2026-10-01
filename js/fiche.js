@@ -102,7 +102,7 @@ function expandChoiceSkill(s) {
 
 const XP_TYPES = ['Caractéristique','Compétence','Talent','Carrière','Sort','Prière','Miracle','Autre'];
 
-const VENTS = ['Aqshy','Azyr','Chamon','Ghur','Ghyran','Hysh','Shyish','Ulgu','Magie Commune','Autre'];
+const VENTS = ['Aqshy','Azyr','Chamon','Ghur','Ghyran','Hysh','Shyish','Ulgu','Qhaysh','Magie Commune','Autre'];
 
 // Compétences de base affichées sur la fiche (une ligne par groupe, Corps à corps avec "(Base)").
 // Les spécialisations de ces groupes se créent dans la section Compétences avancées.
@@ -210,7 +210,8 @@ function getVariantsToConsider(career, rang) {
 // ── Overrides par-fiche ────────────────────────────────
 // Le MJ peut retirer ou ajouter manuellement une compétence/talent sur un rang
 // donné de la carrière, sans modifier la DB globale. Stocké dans
-// state.careerOverrides[careerId][rang] = { skillsRemoved, skillsAdded, talentsRemoved, talentsAdded }.
+// state.careerOverrides[careerId][rang] = { skillsRemoved, skillsAdded, talentsRemoved, talentsAdded,
+// caracs? } — `caracs`, s'il est présent, remplace la liste des caractéristiques du rang.
 
 function getOverrides(careerId, rang) {
     return state.careerOverrides?.[careerId]?.[rang] || null;
@@ -232,7 +233,7 @@ function cleanupOverrides(careerId, rang) {
     const o = state.careerOverrides?.[careerId]?.[rang];
     if (!o) return;
     if (!o.skillsRemoved.length && !o.skillsAdded.length
-        && !o.talentsRemoved.length && !o.talentsAdded.length) {
+        && !o.talentsRemoved.length && !o.talentsAdded.length && !o.caracs) {
         delete state.careerOverrides[careerId][rang];
     }
     if (state.careerOverrides[careerId]
@@ -244,7 +245,12 @@ function cleanupOverrides(careerId, rang) {
 function hasOverrides(careerId, rang) {
     const o = getOverrides(careerId, rang);
     return !!(o && (o.skillsRemoved.length || o.skillsAdded.length
-                 || o.talentsRemoved.length || o.talentsAdded.length));
+                 || o.talentsRemoved.length || o.talentsAdded.length || o.caracs));
+}
+
+// Caractéristiques du rang : celles de la variante, sauf si la fiche les a remplacées.
+function getEffectiveCaracs(career, rang, variant) {
+    return getOverrides(career.id, rang)?.caracs || variant?.caracs || [];
 }
 
 // Listes effectives : (skills/talents de la variante) − retirées + ajoutées.
@@ -327,11 +333,14 @@ function _buildCareerTalentSets(career, rang) {
 
 function _buildCareerCaracs(career, rang) {
     // Rétrocompat (anciennes données sans rd.caracs) : liste agrégée de la carrière.
-    if (!(career.rangs || []).some(rd => Array.isArray(rd.caracs))) return new Set(career.carac || []);
+    if (!(career.rangs || []).some(rd => Array.isArray(rd.caracs))
+        && !Object.values(state.careerOverrides?.[career.id] || {}).some(o => o.caracs)) {
+        return new Set(career.carac || []);
+    }
     const set = new Set();
     for (let r = 1; r <= rang; r++) {
         for (const rd of getVariantsToConsider(career, r)) {
-            (rd.caracs || []).forEach(c => set.add(c));
+            getEffectiveCaracs(career, r, rd).forEach(c => set.add(c));
         }
     }
     return set;
@@ -392,6 +401,8 @@ function showXpForm(options = {}) {
                     <option value="skill-basic">Compétence de base</option>
                     <option value="skill-adv">Compétence avancée</option>
                     <option value="talent">Talent</option>
+                    <option value="sort">Sort</option>
+                    <option value="miracle">Miracle</option>
                     <option value="rang">Rang de carrière</option>
                     <option value="libre">Dépense libre</option>
                 </select>
@@ -671,10 +682,26 @@ function updateXfTarget() {
     const wrap = document.getElementById('xf-target-wrap');
     wrap.innerHTML = '';
     const avLabel = document.querySelector('.xf-avances-label');
-    if (avLabel) avLabel.style.display = type === 'rang' || type === 'libre' ? 'none' : '';
+    if (avLabel) avLabel.style.display = ['rang', 'libre', 'sort', 'miracle'].includes(type) ? 'none' : '';
 
     if (type === 'rang') {
         buildXfRangPicker(wrap);
+
+    } else if (type === 'sort') {
+        wrap.innerHTML = `
+            <input type="text" id="xf-sort" class="xf-talent-input" placeholder="Nom du sort…"
+                   list="spell-names-list" autocomplete="off" aria-label="Sort à apprendre">
+            <span id="xf-sort-info" class="xf-sort-info" aria-live="polite"></span>`;
+        document.getElementById('xf-sort').addEventListener('input', computeXfCost);
+        ensureSpellDatalist().then(computeXfCost);
+
+    } else if (type === 'miracle') {
+        wrap.innerHTML = `
+            <input type="text" id="xf-miracle" class="xf-talent-input" placeholder="Nom du miracle…"
+                   list="miracle-names-list" autocomplete="off" aria-label="Miracle à apprendre">
+            <span id="xf-miracle-info" class="xf-sort-info" aria-live="polite"></span>`;
+        document.getElementById('xf-miracle').addEventListener('input', computeXfCost);
+        ensureMiracleDatalist().then(computeXfCost);
 
     } else if (type === 'libre') {
         // Saisie directe d'un libellé et d'un coût, sans effet sur la fiche.
@@ -811,6 +838,33 @@ function computeXfCost() {
 
     } else if (type === 'libre') {
         cost = Math.max(0, +document.getElementById('xf-libre-cout')?.value || 0);
+
+    } else if (type === 'sort') {
+        const nom  = document.getElementById('xf-sort')?.value || '';
+        const sp   = findSpell(nom);
+        const info = document.getElementById('xf-sort-info');
+        const known = sp && state.sorts.some(s => sameSpellNom(s.nom, sp.nom));
+        if (sp && !known) cost = spellXpCost(sp);
+        if (info) {
+            info.textContent = !nom.trim() ? ''
+                : !_spellCache ? 'Chargement de la liste des sorts…'
+                : !sp ? 'Sort introuvable dans l\'aide de jeu'
+                : known ? 'Sort déjà connu'
+                : `${sp.type} — NI ${sp.cn}`;
+        }
+
+    } else if (type === 'miracle') {
+        // Nom libre : l'aide de jeu ne liste qu'une partie des miracles.
+        const nom   = document.getElementById('xf-miracle')?.value?.trim() || '';
+        const info  = document.getElementById('xf-miracle-info');
+        const known = nom && state.prieres.some(p => sameSpellNom(p.nom, nom));
+        if (nom && !known) cost = miracleXpCost();
+        if (info) {
+            info.textContent = !nom ? ''
+                : known ? 'Déjà connu'
+                : findMiracle(nom) ? 'Repris de l\'aide de jeu'
+                : 'Hors aide de jeu : effets à saisir';
+        }
     }
 
     costEl.textContent = cost > 0 ? cost : '—';
@@ -819,7 +873,7 @@ function computeXfCost() {
     const badge = document.getElementById('xf-career-badge');
     if (badge && type) {
         const career = getActiveCareerData();
-        if (!career || type === 'rang' || type === 'libre') {
+        if (!career || ['rang', 'libre', 'sort', 'miracle'].includes(type)) {
             badge.textContent = '';
         } else {
             badge.textContent    = inCareer ? '✓ dans la carrière' : '✗ hors carrière';
@@ -919,6 +973,26 @@ function validateXpPurchase() {
         renderTalents();
         achatLabel = nom; targetNom = nom; targetType = 'talent'; targetStorage = 'talent';
 
+    } else if (type === 'sort') {
+        const sp = findSpell(document.getElementById('xf-sort')?.value || '');
+        if (!sp) return;
+        state.sorts.push(spellEntry(sp));
+        state.optVisible['section-sorts'] = true;
+        applyOptVisible();
+        renderSorts();
+        achatLabel = sp.nom; targetNom = sp.nom; targetType = 'sort'; targetStorage = 'sort';
+
+    } else if (type === 'miracle') {
+        const nom = document.getElementById('xf-miracle')?.value?.trim() || '';
+        if (!nom) return;
+        const m = findMiracle(nom);
+        state.prieres.push(m ? miracleEntry(m) : { nom, type: 'Miracle', resume: '' });
+        state.optVisible['section-prieres'] = true;
+        applyOptVisible();
+        renderPrieres();
+        const stored = state.prieres[state.prieres.length - 1].nom;
+        achatLabel = stored; targetNom = stored; targetType = 'miracle'; targetStorage = 'miracle';
+
     } else if (type === 'rang') {
         const mode = document.getElementById('xf-rang-mode')?.value;
         prevCareer = { carriere: getVal('carriere'), rang: getVal('rang') };
@@ -947,13 +1021,13 @@ function validateXpPurchase() {
     }
 
     state.xpLog.push({
-        type:      { carac: 'Caractéristique', talent: 'Talent', rang: 'Carrière' }[type] || 'Compétence',
+        type:      { carac: 'Caractéristique', talent: 'Talent', rang: 'Carrière', sort: 'Sort', miracle: 'Miracle' }[type] || 'Compétence',
         achat:     achatLabel,
         cout:      cost,
         note:      '',
         applied:   true,
         targetNom, targetType, targetStorage,
-        avances:   type === 'talent' || type === 'rang' ? 1 : avances,
+        avances:   ['talent', 'rang', 'sort', 'miracle'].includes(type) ? 1 : avances,
         ...(prevCareer && { prevCareer }),
     });
 
@@ -978,6 +1052,12 @@ function revertXpEntry(entry) {
     } else if (targetStorage === 'talent') {
         const idx = state.talentsAcq.map(t => t.nom).lastIndexOf(targetNom);
         if (idx >= 0) { state.talentsAcq.splice(idx, 1); renderTalents(); }
+    } else if (targetStorage === 'sort') {
+        const idx = state.sorts.map(s => sameSpellNom(s.nom, targetNom)).lastIndexOf(true);
+        if (idx >= 0) { state.sorts.splice(idx, 1); renderSorts(); }
+    } else if (targetStorage === 'miracle') {
+        const idx = state.prieres.map(p => sameSpellNom(p.nom, targetNom)).lastIndexOf(true);
+        if (idx >= 0) { state.prieres.splice(idx, 1); renderPrieres(); }
     } else if (targetStorage === 'career') {
         const prev = entry.prevCareer;
         if (!prev) return;
@@ -1469,6 +1549,22 @@ function renderCareerChips(career, rang, variant, kind, editing) {
     return chips.length ? chips.join('') : '<em>—</em>';
 }
 
+// Caractéristiques d'un rang. En édition : une case par carac, cochée si elle
+// fait partie du rang ; revenir à la liste officielle efface la personnalisation.
+function renderCareerCaracs(career, rang, variant, editing) {
+    const current  = getEffectiveCaracs(career, rang, variant);
+    const modified = !!getOverrides(career.id, rang)?.caracs;
+    if (!editing) {
+        const labels = current.map(c => esc(CARAC_LABELS[c] || c)).join(', ') || '—';
+        return `<span class="career-detail-carac-vals">${modified ? '<span class="career-tag-added-mark" title="Modifié sur cette fiche">★</span> ' : ''}${labels}</span>`;
+    }
+    return CARACS.map(c => `
+        <label class="career-carac-toggle">
+            <input type="checkbox" class="career-carac-cb" data-rang="${rang}" data-carac="${c}" ${current.includes(c) ? 'checked' : ''}>
+            ${CARAC_LABELS[c]}
+        </label>`).join('');
+}
+
 function renderCareerDetail() {
     const panel = document.getElementById('career-detail-panel');
     if (!panel) return;
@@ -1533,6 +1629,7 @@ function renderCareerDetail() {
             </select>`;
         }
 
+        const caracsH  = renderCareerCaracs(career, r, displayed, editing);
         const skillsH  = renderCareerChips(career, r, displayed, 'skills',  editing);
         const talentsH = renderCareerChips(career, r, displayed, 'talents', editing);
 
@@ -1554,6 +1651,10 @@ function renderCareerDetail() {
                 ${modifiedBadge}
                 ${variantPicker}
                 ${editBtn}
+            </div>
+            <div class="career-rang-caracs">
+                <span class="career-detail-label">Caractéristiques :</span>
+                ${caracsH}
             </div>
             <div class="career-detail-grid career-detail-grid-2col">
                 <div class="career-detail-col">
@@ -1635,6 +1736,24 @@ function renderCareerDetail() {
             save();
             renderCareerDetail();
             renderAdvancedSkills();
+        });
+    });
+
+    // Cases des caractéristiques d'un rang en édition
+    panel.querySelectorAll('.career-carac-cb').forEach(cb => {
+        cb.addEventListener('change', () => {
+            const r       = +cb.dataset.rang;
+            const variant = getActiveVariantForRang(career, r) || getRangVariants(career, r)[0];
+            const picked  = [...panel.querySelectorAll(`.career-carac-cb[data-rang="${r}"]:checked`)]
+                .map(x => x.dataset.carac);
+            const base    = variant?.caracs || [];
+            const o       = ensureOverrides(career.id, r);
+            const same    = picked.length === base.length && picked.every(c => base.includes(c));
+            if (same) delete o.caracs; else o.caracs = picked;
+            cleanupOverrides(career.id, r);
+            invalidateCareerCache();
+            save();
+            renderCareerDetail();
         });
     });
 
@@ -1770,6 +1889,102 @@ function renderTalents() {
 
 // ── Sorts ─────────────────────────────────────────────
 
+// Onglets de l'aide de jeu, lus une fois par page. Chaque ligne devient un objet
+// indexé par l'en-tête sans accents ni casse (« Durée » → duree).
+const AIDE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs'
+    + '/gviz/tq?tqx=out:csv&sheet=';
+const _aideFetches = {};
+
+function fetchAideSheet(sheet) {
+    _aideFetches[sheet] ??= (async () => {
+        try {
+            const res = await fetch(AIDE_SHEET_URL + sheet);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const [headers, ...data] = parseCSV(await res.text());
+            const keys = headers.map(h => stripAccents(h.toLowerCase()).trim());
+            return data
+                .map(r => Object.fromEntries(keys.map((k, i) => [k, (r[i] || '').trim()]).filter(([k]) => k)))
+                .filter(o => o.nom);
+        } catch {
+            delete _aideFetches[sheet];   // nouvel essai au prochain appel
+            return null;
+        }
+    })();
+    return _aideFetches[sheet];
+}
+
+// Premier paragraphe d'un texte, ramené à une ligne et coupé à `max` caractères.
+function firstParagraph(text, max = 200) {
+    const first = text.split(/\n\s*\n/)[0].replace(/\s+/g, ' ').trim();
+    return first.length > max ? `${first.slice(0, max - 1).trimEnd()}…` : first;
+}
+
+// Barème par tranches de 5 déjà connus : jusqu'à 5 → 1 cran, 6 à 10 → 2 crans…
+// plafonné à 5 crans.
+function tieredXpCost(step, known) {
+    return step * Math.min(5, Math.max(1, Math.ceil(known / 5)));
+}
+
+// Onglet Magie : Nom, Type, NI, Portée, Cible, Durée, Description.
+let _spellCache = null;
+
+function spellKey(nom) { return stripAccents(String(nom || '').toLowerCase()).replace(/[’']/g, "'").trim(); }
+function sameSpellNom(a, b) { return !!a && spellKey(a) === spellKey(b); }
+
+async function fetchSpellData() {
+    if (_spellCache) return _spellCache;
+    const rows = await fetchAideSheet('Magie');
+    if (!rows) return null;
+    _spellCache = rows.map(r => ({ nom: r.nom, type: r.type || '', cn: +r.ni || 0,
+                                   portee: r.portee || '', duree: r.duree || '', desc: r.description || '' }));
+    return _spellCache;
+}
+
+function findSpell(nom) {
+    if (!_spellCache || !nom?.trim()) return null;
+    return _spellCache.find(s => sameSpellNom(s.nom, nom)) || null;
+}
+
+// Sorts mineurs (y compris la petite magie elfique) : barème à part.
+function isPettySpell(sp) { return /mineur|petite magie/i.test(sp.type); }
+
+function spellVent(type) {
+    const first = type.split(/\s[-–]\s/)[0].trim();
+    const vent  = first === 'Uglu' ? 'Ulgu' : first;
+    if (VENTS.includes(vent)) return vent;
+    if (/haute magie|elfique/i.test(type)) return 'Qhaysh';
+    return 'Magie Commune';
+}
+
+function spellEntry(sp) {
+    return { nom: sp.nom, vent: spellVent(sp.type), cn: sp.cn, portee: sp.portee, duree: sp.duree,
+             resume: firstParagraph(sp.desc) };
+}
+
+// Catégorie de décompte : tous les sorts mineurs ensemble, sinon le domaine
+// (colonne Type de l'aide de jeu ; les sorts d'arcane forment leur propre groupe).
+function spellCategory(sp) { return isPettySpell(sp) ? 'mineur' : sp.type; }
+
+// Coût selon le nombre de sorts déjà connus dans la même catégorie.
+// Un cran vaut 50 XP pour un sort mineur, 100 XP sinon.
+function spellXpCost(sp) {
+    const cat   = spellCategory(sp);
+    const known = state.sorts.filter(s => {
+        const k = findSpell(s.nom);
+        return k && spellCategory(k) === cat;
+    }).length;
+    return tieredXpCost(isPettySpell(sp) ? 50 : 100, known);
+}
+
+async function ensureSpellDatalist() {
+    const spells = await fetchSpellData();
+    if (!spells || document.getElementById('spell-names-list')) return;
+    const dl = document.createElement('datalist');
+    dl.id = 'spell-names-list';
+    dl.innerHTML = spells.map(s => `<option value="${esc(s.nom)}">${esc(s.type)}</option>`).join('');
+    document.body.appendChild(dl);
+}
+
 let _sortsBound = false;
 function renderSorts() {
     const tbody = document.getElementById('tbody-sorts');
@@ -1777,7 +1992,7 @@ function renderSorts() {
     tbody.innerHTML = state.sorts.length === 0
         ? `<tr class="empty-row"><td colspan="7">Aucun sort</td></tr>`
         : state.sorts.map((s, i) => `<tr>
-            <td><input class="sort-input" type="text" data-idx="${i}" data-field="nom" value="${esc(s.nom)}" placeholder="Nom du sort" aria-label="Nom du sort, ligne ${i + 1}"></td>
+            <td><input class="sort-input" type="text" data-idx="${i}" data-field="nom" value="${esc(s.nom)}" placeholder="Nom du sort" list="spell-names-list" autocomplete="off" aria-label="Nom du sort, ligne ${i + 1}"></td>
             <td><select class="sort-vent" data-idx="${i}" aria-label="Vent de magie, ligne ${i + 1}">
                 ${VENTS.map(v => `<option value="${v}" ${s.vent===v?'selected':''}>${v}</option>`).join('')}
             </select></td>
@@ -1788,6 +2003,7 @@ function renderSorts() {
             <td><button class="btn-rm" data-type="sort" data-idx="${i}" title="Supprimer" aria-label="Supprimer le sort, ligne ${i + 1}">×</button></td>
         </tr>`).join('');
     if (!_sortsBound) {
+        ensureSpellDatalist();
         tbody.addEventListener('input', e => {
             const t = e.target;
             if (!t.matches('.sort-input, .sort-cn')) return;
@@ -1798,6 +2014,16 @@ function renderSorts() {
         });
         tbody.addEventListener('change', e => {
             const t = e.target;
+            // Nom reconnu dans l'aide de jeu : on remplit le reste de la ligne.
+            if (t.matches('.sort-input[data-field="nom"]')) {
+                const entry = state.sorts[+t.dataset.idx];
+                const sp    = findSpell(t.value);
+                if (!entry || !sp) return;
+                Object.assign(entry, spellEntry(sp));
+                renderSorts();
+                save();
+                return;
+            }
             if (!t.classList.contains('sort-vent')) return;
             const entry = state.sorts[+t.dataset.idx];
             if (!entry) return;
@@ -1817,6 +2043,45 @@ function renderSorts() {
 
 // ── Prières & Miracles ────────────────────────────────
 
+// Onglet Miracles : Nom, Portée, Cible, Durée, Effet (sans le dieu associé).
+let _miracleCache = null;
+
+async function fetchMiracleData() {
+    if (_miracleCache) return _miracleCache;
+    const rows = await fetchAideSheet('Miracles');
+    if (!rows) return null;
+    _miracleCache = rows.map(r => ({ nom: r.nom, portee: r.portee || '', cible: r.cible || '',
+                                     duree: r.duree || '', effet: r.effet || '' }));
+    return _miracleCache;
+}
+
+function findMiracle(nom) {
+    if (!_miracleCache || !nom?.trim()) return null;
+    return _miracleCache.find(m => sameSpellNom(m.nom, nom)) || null;
+}
+
+// Le tableau des prières n'a qu'une colonne de texte : portée, cible et durée y passent.
+function miracleEntry(m) {
+    const meta = [['Portée', m.portee], ['Cible', m.cible], ['Durée', m.duree]]
+        .filter(([, v]) => v).map(([k, v]) => `${k} : ${v}`).join(' · ');
+    const effet = firstParagraph(m.effet);
+    return { nom: m.nom, type: 'Miracle', resume: [meta, effet].filter(Boolean).join(' — ') };
+}
+
+// 100 XP par cran, selon le nombre de miracles déjà connus (bénédictions exclues).
+function miracleXpCost() {
+    return tieredXpCost(100, state.prieres.filter(p => p.type === 'Miracle' && p.nom?.trim()).length);
+}
+
+async function ensureMiracleDatalist() {
+    const miracles = await fetchMiracleData();
+    if (!miracles || document.getElementById('miracle-names-list')) return;
+    const dl = document.createElement('datalist');
+    dl.id = 'miracle-names-list';
+    dl.innerHTML = miracles.map(m => `<option value="${esc(m.nom)}">`).join('');
+    document.body.appendChild(dl);
+}
+
 let _prieresBound = false;
 function renderPrieres() {
     const tbody = document.getElementById('tbody-prieres');
@@ -1824,7 +2089,7 @@ function renderPrieres() {
     tbody.innerHTML = state.prieres.length === 0
         ? `<tr class="empty-row"><td colspan="4">Aucune prière / miracle</td></tr>`
         : state.prieres.map((p, i) => `<tr>
-            <td><input class="priere-input" type="text" data-idx="${i}" data-field="nom" value="${esc(p.nom)}" placeholder="Nom" aria-label="Nom de la prière, ligne ${i + 1}"></td>
+            <td><input class="priere-input" type="text" data-idx="${i}" data-field="nom" value="${esc(p.nom)}" placeholder="Nom" list="miracle-names-list" autocomplete="off" aria-label="Nom de la prière, ligne ${i + 1}"></td>
             <td><select class="priere-type" data-idx="${i}" aria-label="Type, ligne ${i + 1}">
                 <option value="Bénédiction" ${p.type==='Bénédiction'?'selected':''}>Bénédiction</option>
                 <option value="Miracle"     ${p.type==='Miracle'?'selected':''}>Miracle</option>
@@ -1833,6 +2098,7 @@ function renderPrieres() {
             <td><button class="btn-rm" data-type="priere" data-idx="${i}" title="Supprimer" aria-label="Supprimer la prière, ligne ${i + 1}">×</button></td>
         </tr>`).join('');
     if (!_prieresBound) {
+        ensureMiracleDatalist();
         tbody.addEventListener('input', e => {
             const t = e.target;
             if (!t.classList.contains('priere-input')) return;
@@ -1843,6 +2109,16 @@ function renderPrieres() {
         });
         tbody.addEventListener('change', e => {
             const t = e.target;
+            // Miracle reconnu dans l'aide de jeu : on remplit le reste de la ligne.
+            if (t.matches('.priere-input[data-field="nom"]')) {
+                const entry = state.prieres[+t.dataset.idx];
+                const m     = findMiracle(t.value);
+                if (!entry || !m) return;
+                Object.assign(entry, miracleEntry(m));
+                renderPrieres();
+                save();
+                return;
+            }
             if (!t.classList.contains('priere-type')) return;
             const entry = state.prieres[+t.dataset.idx];
             if (!entry) return;

@@ -882,6 +882,11 @@
 .xf-career-badge[data-career="yes"] { color: #4caf7d; }
 .xf-career-badge[data-career="no"]  { color: var(--text-muted); }
 
+.xf-sort-info {
+  font-size: .78rem;
+  color: var(--text-muted);
+}
+
 .xf-cost-row {
   margin-top: var(--space-sm);
   font-family: var(--font-heading);
@@ -1192,6 +1197,22 @@ tr.sk-ghost-open td.sk-nom::after {
 
 .career-detail-carac-vals {
   font-weight: 600;
+}
+
+.career-rang-caracs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.6rem;
+  margin: 0.3rem 0 0.4rem;
+  font-size: 0.85rem;
+}
+
+.career-carac-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  cursor: pointer;
 }
 
 .career-rang-section {
