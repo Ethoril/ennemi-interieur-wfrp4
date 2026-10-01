@@ -500,7 +500,8 @@ function getXfSkillFullNom() {
 // Avances actuelles du skill sélectionné dans le formulaire
 function getXfSkillCurrentAdv(fullNom) {
     if (!fullNom) return 0;
-    if (BASIC_SKILLS.some(s => s.nom === fullNom)) return state.skillsBasic[fullNom] || 0;
+    const row = basicRowFor(fullNom);
+    if (row) return state.skillsBasic[row] || 0;
     return state.skillsAdvanced.find(s => sameSkill(s.nom, fullNom))?.adv || 0;
 }
 
@@ -612,6 +613,14 @@ function buildXfSpecPicker(group, wrap) {
     // La spé qui retombe sur la compétence de base (Chevaucher → Cheval) passe en tête.
     allSpecs.sort((a, b) => (canonicalSkillNom(`${group} (${b})`) === group)
                           - (canonicalSkillNom(`${group} (${a})`) === group));
+    // La spécialité associée sur la fiche à la compétence de base passe devant.
+    const basicSpec = state.basicSpecs[group];
+    if (basicSpec) {
+        const exact = allSpecs.findIndex(s => s.toLowerCase() === basicSpec.toLowerCase());
+        const i = exact >= 0 ? exact
+            : allSpecs.findIndex(s => sameSkill(`${group} (${s})`, `${group} (${basicSpec})`));
+        allSpecs.unshift(i >= 0 ? allSpecs.splice(i, 1)[0] : basicSpec);
+    }
 
     const specSel = document.createElement('select');
     specSel.id = 'xf-spec-sel';
@@ -800,7 +809,9 @@ function getXfInCareer() {
         return carac ? isCaracInCareer(carac) : false;
     } else if (type === 'skill-basic' || type === 'skill-adv') {
         const nom = getXfSkillFullNom();
-        return nom ? isSkillInCareer(nom) : false;
+        if (!nom) return false;
+        const row = basicRowFor(nom);
+        return isSkillInCareer(nom) || (!!row && isSkillInCareer(basicSkillNom(row)));
     } else if (type === 'talent') {
         const nom = getXfTalentFullNom();
         return nom ? isTalentInCareer(nom) : false;
@@ -929,12 +940,13 @@ function validateXpPurchase() {
 
         const carac = getCaracForGroup(group);
 
-        // Corps à corps (Base) et compétences sans spec → skillsBasic si elles y sont
-        const inBasicTable = BASIC_SKILLS.some(s => s.nom === fullNom);
-        if (inBasicTable) {
-            state.skillsBasic[fullNom] = (state.skillsBasic[fullNom] || 0) + avances;
-            const inp = document.querySelector(`.sk-adv[data-skill="${CSS.escape(fullNom)}"]`);
-            if (inp) inp.value = state.skillsBasic[fullNom];
+        // Corps à corps (Base), compétences sans spec et compétence de base portant
+        // déjà cette spécialité sur la fiche → skillsBasic
+        const basicRow = basicRowFor(fullNom);
+        if (basicRow) {
+            state.skillsBasic[basicRow] = (state.skillsBasic[basicRow] || 0) + avances;
+            const inp = document.querySelector(`.sk-adv[data-skill="${CSS.escape(basicRow)}"]`);
+            if (inp) inp.value = state.skillsBasic[basicRow];
             targetStorage = 'skillsBasic';
         } else {
             // Spécialisation ou compétence avancée → skillsAdvanced
@@ -950,8 +962,9 @@ function validateXpPurchase() {
         // Nom réellement stocké (peut être un libellé équivalent, ex. « Conn. Théologie »),
         // pour que l'annulation retrouve la ligne.
         const storedNom = targetStorage === 'skillsAdvanced'
-            ? state.skillsAdvanced.find(s => sameSkill(s.nom, fullNom)).nom : fullNom;
-        achatLabel = `${storedNom} +${avances}`;
+            ? state.skillsAdvanced.find(s => sameSkill(s.nom, fullNom)).nom : basicRow;
+        const basicSpec = targetStorage === 'skillsBasic' && state.basicSpecs[basicRow];
+        achatLabel = `${basicSpec ? `${basicRow} (${basicSpec})` : storedNom} +${avances}`;
         targetNom = storedNom; targetType = type;
 
     } else if (type === 'talent') {
@@ -1100,6 +1113,7 @@ const state = {
     prieres:        [],
     xpLog:          [],
     customSpecs:    {},   // { 'Métier': ['Boulangerie', 'Tonnelier'], ... }
+    basicSpecs:     {},   // { 'Divertissement': 'Chant' } — spécialité d'une compétence de base
     customTalents:  {},   // { 'Maître artisan': ['Apothicaire', 'Forgeron'], ... }
     chosenVariants: {},   // { careerId: { rang: variantTitre, ... }, ... }
     careerOverrides:{},   // { careerId: { rang: { skillsRemoved, skillsAdded, talentsRemoved, talentsAdded } } }
@@ -1178,15 +1192,40 @@ function recalc() {
 
 // ── Compétences de base ───────────────────────────────
 
+// Spécialité associée sur la fiche à une compétence de base (state.basicSpecs) :
+// « Divertissement » + « Chant » se compare comme « Divertissement (Chant) ».
+function basicSkillNom(nom) {
+    const spec = state.basicSpecs[nom];
+    return spec ? canonicalSkillNom(`${nom} (${spec})`) : nom;
+}
+
+// Ligne de compétence de base correspondant à un nom complet, ou null.
+function basicRowFor(fullNom) {
+    if (!fullNom) return null;
+    return BASIC_SKILLS.find(s => s.nom === fullNom || (state.basicSpecs[s.nom] && sameSkill(basicSkillNom(s.nom), fullNom)))?.nom || null;
+}
+
+// Spécialités connues d'une compétence de base (vide si elle n'en a pas).
+function basicSpecOptions(nom) {
+    if (nom.includes('(') || !window.WFRP_SKILLS) return [];
+    return WFRP_SKILLS.filter(s => s.basic && s.group === nom && s.spec).map(s => s.spec);
+}
+
 let _basicSkillsBound = false;
 function buildBasicSkills() {
     const tbody = document.getElementById('tbody-skills-basic');
     if (!tbody) return;
     tbody.innerHTML = BASIC_SKILLS.map(sk => {
-        const s   = sid(sk.nom);
-        const adv = state.skillsBasic[sk.nom] ?? 0;
+        const s     = sid(sk.nom);
+        const adv   = state.skillsBasic[sk.nom] ?? 0;
+        const specs = basicSpecOptions(sk.nom);
+        const specH = specs.length ? `
+                <input class="sk-basic-spec" type="text" data-skill="${sk.nom}" list="basic-spec-${s}"
+                       value="${esc(state.basicSpecs[sk.nom] || '')}" placeholder="Spécialité…" autocomplete="off"
+                       aria-label="Spécialité de ${esc(sk.nom)}">
+                <datalist id="basic-spec-${s}">${specs.map(v => `<option value="${esc(v)}">`).join('')}</datalist>` : '';
         return `<tr data-skill="${sk.nom}">
-            <td class="sk-nom">${sk.nom}</td>
+            <td class="sk-nom">${sk.nom}${specH}</td>
             <td class="sk-carac-lbl">${CARAC_LABELS[sk.carac]}</td>
             <td class="sk-carac-val" id="sk-carac-${s}">0</td>
             <td><input class="sk-adv" type="number" data-skill="${sk.nom}" min="0" max="30" value="${esc(adv)}" aria-label="Avances en ${esc(sk.nom)}"></td>
@@ -1201,6 +1240,15 @@ function buildBasicSkills() {
             if (!t.classList.contains('sk-adv')) return;
             state.skillsBasic[t.dataset.skill] = +t.value || 0;
             recalc();
+        });
+        tbody.addEventListener('change', e => {
+            const t = e.target;
+            if (!t.classList.contains('sk-basic-spec')) return;
+            const spec = t.value.trim();
+            if (spec) state.basicSpecs[t.dataset.skill] = spec;
+            else delete state.basicSpecs[t.dataset.skill];
+            applyCareerHighlights();
+            save();
         });
         _basicSkillsBound = true;
     }
@@ -1423,7 +1471,9 @@ function applyCareerHighlights() {
                 return isOpenCareerSlot(opt) && skillBaseNom(opt) === base;
             });
         });
-        if (match) tr.classList.add('skill-in-career');
+        if (match || (state.basicSpecs[nom] && isSkillInCareer(basicSkillNom(nom)))) {
+            tr.classList.add('skill-in-career');
+        }
     });
 
     // Compétences avancées achetées
@@ -2275,6 +2325,7 @@ export function exportData() {
         prieres:        state.prieres,
         xpLog:          state.xpLog,
         customSpecs:    state.customSpecs,
+        basicSpecs:     state.basicSpecs,
         customTalents:  state.customTalents,
         chosenVariants: state.chosenVariants,
         careerOverrides:state.careerOverrides,
@@ -2455,6 +2506,7 @@ function resetState() {
     state.prieres.length        = 0;
     state.xpLog.length          = 0;
     state.customSpecs           = {};
+    state.basicSpecs            = {};
     state.customTalents         = {};
     state.chosenVariants        = {};
     state.careerOverrides       = {};
@@ -2496,6 +2548,7 @@ function applyData(d) {
         state.xpLog.unshift({ kind: 'gain', raison: 'XP initial (migré)', montant: +d.xpTotal });
     }
     if (d.customSpecs)     Object.assign(state.customSpecs, d.customSpecs);
+    if (d.basicSpecs)      Object.assign(state.basicSpecs, d.basicSpecs);
     if (d.customTalents)   Object.assign(state.customTalents, d.customTalents);
     if (d.chosenVariants)  Object.assign(state.chosenVariants, d.chosenVariants);
     if (d.careerOverrides) Object.assign(state.careerOverrides, d.careerOverrides);

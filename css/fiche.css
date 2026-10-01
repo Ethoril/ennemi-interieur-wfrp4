@@ -375,6 +375,18 @@
   padding: 3px 6px;
 }
 
+.sk-basic-spec {
+  width: 8.5em;
+  margin-left: 0.4rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  padding: 1px 5px;
+}
+
 .sk-carac-sel {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -924,6 +936,7 @@
 [data-theme="parchment"] .carac-input,
 [data-theme="parchment"] .sk-adv,
 [data-theme="parchment"] .sk-nom-input,
+[data-theme="parchment"] .sk-basic-spec,
 [data-theme="parchment"] .sk-carac-sel,
 [data-theme="parchment"] .derived-stat input,
 [data-theme="parchment"] #possessions,
