@@ -36,6 +36,51 @@ function isOpenCareerSlot(s) {
     return m ? GENERIC_SPEC_WORDS.has(m[1].trim()) : false;
 }
 
+// Noms équivalents d'une même compétence, ramenés à une seule forme pour
+// comparer fiche et carrières (validé avec le MJ). « Conn. X » est « Savoir (X) ».
+// Clés en minuscules.
+const SKILL_NAME_ALIASES = {
+    'chevaucher (cheval)':     'Chevaucher',
+    'langage de bataille':     'Langue (Bataille)',
+    'lecture sur les lèvres':  'Lire sur les lèvres',
+    'signe secrets ranger':    'Signes secrets (Ranger)',
+    'représentation (acteur)': 'Divertissement (Acteur)',
+    'métier (calligraphe)':    'Art (Calligraphie)',
+    'métier (cartographe)':    'Art (Cartographie)',
+    'métier (graveur)':        'Art (Gravure)',
+};
+// Spécialisations équivalentes, par compétence : { compétence: { spé: spé canonique } }.
+const SKILL_SPEC_ALIASES = {
+    'savoir': {
+        'art de la guerre': 'Guerre', 'prophéties': 'Prophétie', 'locale': 'Local',
+        "l'empire": 'Empire', 'droit': 'Loi', 'démons': 'Démonologie',
+        'plantes': 'Herbes', 'généalogie': 'Noble',
+    },
+    'corps à corps':   { "arme d'hast": "Armes d'hast", 'fléaux': 'Fléau', 'lourde': 'Deux mains' },
+    'projectiles':     { 'lancer': 'Jet', 'armes de jet': 'Jet', 'armes à poudre': 'Poudre noire',
+                         'arbalète de poing': 'Arbalète' },
+    'discrétion':      { 'souterraine': 'Souterrains' },
+    'dressage':        { 'chiens': 'Chien', 'chevaux': 'Cheval', 'pigeons': 'Pigeon', 'blaireaux': 'Blaireau' },
+    'signes secrets':  { 'chasseurs': 'Chasseur', 'capes grises': 'Ordre Gris' },
+    'langue':          { 'elthàrin': 'Eltharin' },
+    'focalisation':    { 'qhaysh / haute magie': 'Qhaysh' },
+    'divertissement':  { 'narration': 'Contes', 'humour': 'Comédie', 'clownerie': 'Comédie',
+                         'rhétorique': 'Discours', 'conférence': 'Discours', 'provocation': 'Raillerie' },
+    'métier':          { 'imprimeur': 'Imprimerie', 'joaillier': 'Orfèvre', 'poisons': 'Empoisonneur',
+                         'matériel artistique': 'Artiste' },
+};
+function canonicalSkillNom(s) {
+    let n = s.trim().replace(/\s+/g, ' ');
+    const conn = n.match(/^(?:conn\.|connaissances?\b)\s*\(?\s*(.+?)\s*\)?$/i);
+    if (conn) n = `Savoir (${conn[1].charAt(0).toUpperCase()}${conn[1].slice(1)})`;
+    const whole = SKILL_NAME_ALIASES[n.toLowerCase()];
+    if (whole) return whole;
+    const m = n.match(/^(.+?) \((.+)\)$/);
+    const spec = m && SKILL_SPEC_ALIASES[m[1].toLowerCase()]?.[m[2].toLowerCase()];
+    return spec ? `${m[1]} (${spec})` : n;
+}
+const sameSkill = (a, b) => canonicalSkillNom(a).toLowerCase() === canonicalSkillNom(b).toLowerCase();
+
 function expandChoiceSkill(s) {
     const orMatch = s.match(/\(([^)]+)\)$/);
     if (orMatch) {
@@ -44,15 +89,15 @@ function expandChoiceSkill(s) {
         if (content.startsWith('ou ')) {
             const base = s.split('(')[0].trim();
             const alt = content.substring(3).trim();
-            return [base, alt];
+            return [base, alt].map(canonicalSkillNom);
         }
         const parts = content.split(/,?\s+ou\s+|\s*,\s*/);
         if (parts.length > 1) {
             const base = s.split('(')[0].trim();
-            return parts.map(p => `${base} (${p.trim()})`);
+            return parts.map(p => canonicalSkillNom(`${base} (${p.trim()})`));
         }
     }
-    return [s];
+    return [canonicalSkillNom(s)];
 }
 
 const XP_TYPES = ['Caractéristique','Compétence','Talent','Carrière','Sort','Prière','Miracle','Autre'];
@@ -303,9 +348,9 @@ function isSkillInCareer(nom) {
     if (!career) return false;
     const sets = _memo(_careerCache.skills, _careerKey(career.id, getActiveRang()),
                        () => _buildCareerSkillSets(career, getActiveRang()));
-    const nomLower = nom.toLowerCase();
-    if (sets.exact.has(nomLower)) return true;
-    return sets.openBases.has(skillBaseNom(nom));
+    const canon = canonicalSkillNom(nom);
+    if (sets.exact.has(canon.toLowerCase())) return true;
+    return sets.openBases.has(skillBaseNom(canon));
 }
 
 function isCaracInCareer(carac) {
@@ -432,16 +477,16 @@ function getXfSkillFullNom() {
     const specVal = specSel.value;
     if (specVal === '_custom') {
         const custom = document.getElementById('xf-spec-custom')?.value?.trim() || '';
-        return custom ? `${group} (${custom})` : group;
+        return canonicalSkillNom(custom ? `${group} (${custom})` : group);
     }
-    return specVal ? `${group} (${specVal})` : group;
+    return canonicalSkillNom(specVal ? `${group} (${specVal})` : group);
 }
 
 // Avances actuelles du skill sélectionné dans le formulaire
 function getXfSkillCurrentAdv(fullNom) {
     if (!fullNom) return 0;
     if (BASIC_SKILLS.some(s => s.nom === fullNom)) return state.skillsBasic[fullNom] || 0;
-    return state.skillsAdvanced.find(s => s.nom === fullNom)?.adv || 0;
+    return state.skillsAdvanced.find(s => sameSkill(s.nom, fullNom))?.adv || 0;
 }
 
 // ── Cache des talents issus des carrières (immuable) ───────
@@ -549,6 +594,9 @@ function buildXfSpecPicker(group, wrap) {
     const customSpecs = state.customSpecs[group] || [];
     const allSpecs    = [...new Set([...knownSpecs, ...customSpecs])];
     if (allSpecs.length === 0) { wrap.innerHTML = ''; return; }
+    // La spé qui retombe sur la compétence de base (Chevaucher → Cheval) passe en tête.
+    allSpecs.sort((a, b) => (canonicalSkillNom(`${group} (${b})`) === group)
+                          - (canonicalSkillNom(`${group} (${a})`) === group));
 
     const specSel = document.createElement('select');
     specSel.id = 'xf-spec-sel';
@@ -832,7 +880,7 @@ function validateXpPurchase() {
             targetStorage = 'skillsBasic';
         } else {
             // Spécialisation ou compétence avancée → skillsAdvanced
-            let existing = state.skillsAdvanced.find(s => s.nom === fullNom);
+            let existing = state.skillsAdvanced.find(s => sameSkill(s.nom, fullNom));
             if (!existing) {
                 state.skillsAdvanced.push({ nom: fullNom, carac, adv: 0 });
                 existing = state.skillsAdvanced[state.skillsAdvanced.length - 1];
@@ -841,8 +889,12 @@ function validateXpPurchase() {
             renderAdvancedSkills();
             targetStorage = 'skillsAdvanced';
         }
-        achatLabel = `${fullNom} +${avances}`;
-        targetNom = fullNom; targetType = type;
+        // Nom réellement stocké (peut être un libellé équivalent, ex. « Conn. Théologie »),
+        // pour que l'annulation retrouve la ligne.
+        const storedNom = targetStorage === 'skillsAdvanced'
+            ? state.skillsAdvanced.find(s => sameSkill(s.nom, fullNom)).nom : fullNom;
+        achatLabel = `${storedNom} +${avances}`;
+        targetNom = storedNom; targetType = type;
 
     } else if (type === 'talent') {
         const nom = getXfTalentFullNom();
@@ -1307,8 +1359,8 @@ function renderCareerAdvGhosts() {
     const rang = getActiveRang();
     const allSkills         = getCareerAllSkills(career, rang);
     const basicBaseNoms     = new Set(BASIC_SKILLS.map(s => skillBaseNom(s.nom)));
-    const purchasedNoms     = new Set(state.skillsAdvanced.map(s => s.nom.toLowerCase()));
-    const purchasedBaseNoms = new Set(state.skillsAdvanced.map(s => skillBaseNom(s.nom)));
+    const purchasedNoms     = new Set(state.skillsAdvanced.map(s => canonicalSkillNom(s.nom).toLowerCase()));
+    const purchasedBaseNoms = new Set(state.skillsAdvanced.map(s => skillBaseNom(canonicalSkillNom(s.nom))));
 
     const ghosts = allSkills.filter(s => {
         const base = skillBaseNom(s);
