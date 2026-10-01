@@ -55,7 +55,7 @@ function expandChoiceSkill(s) {
     return [s];
 }
 
-const XP_TYPES = ['Caractéristique','Compétence','Talent','Sort','Prière','Miracle','Autre'];
+const XP_TYPES = ['Caractéristique','Compétence','Talent','Carrière','Sort','Prière','Miracle','Autre'];
 
 const VENTS = ['Aqshy','Azyr','Chamon','Ghur','Ghyran','Hysh','Shyish','Ulgu','Magie Commune','Autre'];
 
@@ -343,6 +343,8 @@ function showXpForm(options = {}) {
                     <option value="skill-basic">Compétence de base</option>
                     <option value="skill-adv">Compétence avancée</option>
                     <option value="talent">Talent</option>
+                    <option value="rang">Rang de carrière</option>
+                    <option value="libre">Dépense libre</option>
                 </select>
                 <span id="xf-target-wrap" class="xf-target-wrap"></span>
                 <label class="xf-avances-label">
@@ -572,12 +574,64 @@ function buildXfSpecPicker(group, wrap) {
     customInput.addEventListener('input', onChange);
 }
 
+// Titre du rang `rang` de la carrière active (variante choisie, sinon la première).
+function getRangTitre(career, rang) {
+    if (!career) return '';
+    return (getActiveVariantForRang(career, rang) || getRangVariants(career, rang)[0])?.titre || '';
+}
+
+function buildXfRangPicker(wrap) {
+    const career  = getActiveCareerData();
+    const rang    = getActiveRang();
+    const maxRang = career ? Math.max(...career.rangs.map(r => r.rang)) : 4;
+    const canNext = rang < maxRang;
+    const nextTitre = getRangTitre(career, rang + 1);
+
+    const modeSel = document.createElement('select');
+    modeSel.id = 'xf-rang-mode';
+    modeSel.innerHTML =
+        (canNext ? `<option value="next">Rang ${rang + 1}${nextTitre ? ` — ${esc(nextTitre)}` : ''}</option>` : '') +
+        '<option value="new">Nouvelle carrière…</option>';
+    wrap.appendChild(modeSel);
+
+    const newWrap = document.createElement('span');
+    newWrap.className = 'xf-target-wrap';
+    newWrap.innerHTML = `
+        <input type="text" id="xf-new-career" class="xf-talent-input" placeholder="Carrière…"
+               list="career-names-list" autocomplete="off" aria-label="Nouvelle carrière">
+        <label>Rang&nbsp;<input type="number" id="xf-new-rang" min="1" max="5" value="1" style="width:50px"></label>`;
+    newWrap.style.display = canNext ? 'none' : '';
+    wrap.appendChild(newWrap);
+
+    const doneLabel = document.createElement('label');
+    doneLabel.innerHTML = '<input type="checkbox" id="xf-rang-done" checked> Rang actuel terminé';
+    wrap.appendChild(doneLabel);
+
+    modeSel.addEventListener('change', () => {
+        newWrap.style.display = modeSel.value === 'new' ? '' : 'none';
+        computeXfCost();
+    });
+    doneLabel.querySelector('input').addEventListener('change', computeXfCost);
+}
+
 function updateXfTarget() {
     const type = document.getElementById('xf-type').value;
     const wrap = document.getElementById('xf-target-wrap');
     wrap.innerHTML = '';
+    const avLabel = document.querySelector('.xf-avances-label');
+    if (avLabel) avLabel.style.display = type === 'rang' || type === 'libre' ? 'none' : '';
 
-    if (type === 'carac') {
+    if (type === 'rang') {
+        buildXfRangPicker(wrap);
+
+    } else if (type === 'libre') {
+        // Saisie directe d'un libellé et d'un coût, sans effet sur la fiche.
+        wrap.innerHTML = `
+            <input type="text" id="xf-libre-achat" class="xf-talent-input" placeholder="Libellé (ex : dépenses séances 0 à 15)…" aria-label="Libellé de la dépense">
+            <input type="number" id="xf-libre-cout" min="1" placeholder="XP" style="width:80px" aria-label="Coût en XP">`;
+        document.getElementById('xf-libre-cout').addEventListener('input', computeXfCost);
+
+    } else if (type === 'carac') {
         const sel = document.createElement('select');
         sel.id = 'xf-target';
         sel.innerHTML = '<option value="">— Caractéristique —</option>' +
@@ -697,6 +751,14 @@ function computeXfCost() {
 
     } else if (type === 'talent') {
         cost = inCareer ? 100 : 200;
+
+    } else if (type === 'rang') {
+        // Passer au rang suivant ou changer de carrière : 100 XP si le rang
+        // actuel est terminé, 200 XP sinon.
+        cost = document.getElementById('xf-rang-done')?.checked ? 100 : 200;
+
+    } else if (type === 'libre') {
+        cost = Math.max(0, +document.getElementById('xf-libre-cout')?.value || 0);
     }
 
     costEl.textContent = cost > 0 ? cost : '—';
@@ -705,7 +767,7 @@ function computeXfCost() {
     const badge = document.getElementById('xf-career-badge');
     if (badge && type) {
         const career = getActiveCareerData();
-        if (!career) {
+        if (!career || type === 'rang' || type === 'libre') {
             badge.textContent = '';
         } else {
             badge.textContent    = inCareer ? '✓ dans la carrière' : '✗ hors carrière';
@@ -723,7 +785,18 @@ function validateXpPurchase() {
     const cost     = computeXfCost();
     if (!type || cost <= 0) return;
 
-    let achatLabel = '', targetNom = '', targetType = '', targetStorage = '';
+    if (type === 'libre') {
+        const achat = document.getElementById('xf-libre-achat')?.value?.trim() || '';
+        if (!achat) return;
+        // Ligne non appliquée : reste modifiable dans le journal.
+        state.xpLog.push({ type: 'Autre', achat, cout: cost, note: '' });
+        renderXpLog();
+        recalc();
+        document.getElementById('xp-add-form').style.display = 'none';
+        return;
+    }
+
+    let achatLabel = '', targetNom = '', targetType = '', targetStorage = '', prevCareer = null;
 
     if (type === 'carac') {
         const carac = document.getElementById('xf-target')?.value;
@@ -789,16 +862,43 @@ function validateXpPurchase() {
         state.talentsAcq.push({ nom, note: inCareer ? '' : 'hors carrière' });
         renderTalents();
         achatLabel = nom; targetNom = nom; targetType = 'talent'; targetStorage = 'talent';
+
+    } else if (type === 'rang') {
+        const mode = document.getElementById('xf-rang-mode')?.value;
+        prevCareer = { carriere: getVal('carriere'), rang: getVal('rang') };
+        let nom, rang;
+        if (mode === 'next') {
+            nom  = prevCareer.carriere;
+            rang = getActiveRang() + 1;
+            const titre = getRangTitre(getActiveCareerData(), rang);
+            achatLabel = `Rang ${rang}${titre ? ` — ${titre}` : ''}`;
+        } else {
+            nom  = document.getElementById('xf-new-career')?.value?.trim() || '';
+            rang = Math.max(1, +document.getElementById('xf-new-rang')?.value || 1);
+            if (!nom) return;
+            if (prevCareer.carriere) {
+                state.careers.push({ nom: prevCareer.carriere, rang: +prevCareer.rang || 1, note: '' });
+                prevCareer.historyPushed = true;
+                renderCareers();
+            }
+            achatLabel = `${nom} (rang ${rang})`;
+        }
+        setVal('carriere', nom);
+        setVal('rang', rang);
+        invalidateCareerCache();
+        renderCareerDetail();
+        targetNom = nom; targetType = 'rang'; targetStorage = 'career';
     }
 
     state.xpLog.push({
-        type:      type === 'carac' ? 'Caractéristique' : type === 'talent' ? 'Talent' : 'Compétence',
+        type:      { carac: 'Caractéristique', talent: 'Talent', rang: 'Carrière' }[type] || 'Compétence',
         achat:     achatLabel,
         cout:      cost,
         note:      '',
         applied:   true,
         targetNom, targetType, targetStorage,
-        avances:   type !== 'talent' ? avances : 1,
+        avances:   type === 'talent' || type === 'rang' ? 1 : avances,
+        ...(prevCareer && { prevCareer }),
     });
 
     renderXpLog();
@@ -822,6 +922,17 @@ function revertXpEntry(entry) {
     } else if (targetStorage === 'talent') {
         const idx = state.talentsAcq.map(t => t.nom).lastIndexOf(targetNom);
         if (idx >= 0) { state.talentsAcq.splice(idx, 1); renderTalents(); }
+    } else if (targetStorage === 'career') {
+        const prev = entry.prevCareer;
+        if (!prev) return;
+        setVal('carriere', prev.carriere);
+        setVal('rang', prev.rang);
+        if (prev.historyPushed) {
+            const idx = state.careers.map(c => c.nom).lastIndexOf(prev.carriere);
+            if (idx >= 0) { state.careers.splice(idx, 1); renderCareers(); }
+        }
+        invalidateCareerCache();
+        renderCareerDetail();
     } else {
         // Rétrocompat : anciennes entrées sans targetStorage
         const { targetType } = entry;
