@@ -1,3 +1,7 @@
+## [2.25.1] - 2026-10-03
+
+- Le panneau PNJ du Carnaval reste ouvert sans bloquer le calendrier, la carte ou la navigation. La touche Tab permet de quitter la fiche ; Échap la ferme en conservant le fonctionnement des dialogues d'édition et d'association.
+
 ## [2.25.0] - 2026-10-03
 
 ### Ajouté

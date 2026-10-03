@@ -6,7 +6,7 @@ Le module bureau `carnaval.html` utilise l'authentification MJ existante. La car
 
 Après connexion MJ, choisir le jour et l'heure, puis la vue **Jour**, **Lieu** ou **PNJ**. Le filtre horaire montre les présences à leurs heures individuelles, distinctes de celles du spectacle. Les heures de la nuit suivante portent une mention explicite. La prochaine rencontre suit les présences annoncées ; une absence d'information ne produit aucune localisation supposée.
 
-Le temps de campagne peut être enregistré pour retrouver la même heure sur un autre appareil. Les filtres et le zoom restent propres à la vue. Un clic sur un lieu sélectionne son repère ; un clic sur un PNJ ouvre sa fiche actuelle ou propose une association manuelle avec une fiche existante. Le lien utilise son identifiant stable.
+Le temps de campagne peut être enregistré pour retrouver la même heure sur un autre appareil. Les filtres et le zoom restent propres à la vue. Un clic sur un lieu sélectionne son repère ; un clic sur un PNJ ouvre sa fiche actuelle ou propose une association manuelle avec une fiche existante. Le lien utilise son identifiant stable. Le panneau PNJ reste ouvert pendant l'utilisation du calendrier, de la carte et de la navigation ; un clic sur un autre personnage remplace sa fiche. Il se ferme avec sa croix ou la touche Échap.
 
 **Modifier** adapte une scène et ses présences, permet d'écrire des notes et conserve le programme source. **Réinitialiser vers la source** restaure le programme sans effacer les notes. Une scène annulée reste réactivable. **＋ Scène** ajoute un événement à la campagne. Les chevauchements dans deux lieux différents sont signalés sans correction automatique.
 
