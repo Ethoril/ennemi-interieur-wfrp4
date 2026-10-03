@@ -1,3 +1,7 @@
+## [2.25.3] - 2026-10-03
+
+- **PNJs (MJ)** : la vue Tableau propose un bouton « ＋ Relation » pour chaque personnage, qui ouvre directement le formulaire de relation de sa fiche.
+
 ## [2.25.2] - 2026-10-03
 
 - Le Carnaval utilise toute la largeur disponible, avec deux colonnes sur grand écran et une disposition adaptée aux tablettes et mobiles. Les commandes et les noms longs se répartissent sans déborder.

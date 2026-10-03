@@ -1493,7 +1493,7 @@ function cancelLinkedIndices() {
 // `origin` : ouverture depuis le nœud ou la ligne du PNJ, où le focus reviendra.
 // Une navigation par les relations garde l'origine de la première ouverture ;
 // une ouverture sans origine (lien profond) rend le focus au nœud du PNJ.
-async function openPanel(d, { origin = false } = {}) {
+async function openPanel(d, { origin = false, addRelation = false } = {}) {
     const panelGeneration = ++currentPanelGeneration;
     cancelLinkedIndices();
     const panelRole = state.isAdmin;
@@ -1661,6 +1661,9 @@ async function openPanel(d, { origin = false } = {}) {
     // Le bureau se resserre à côté du dossier au lieu d'être recouvert.
     document.body.classList.add('pnj-panel-open');
     if (opening) document.getElementById('pnj-detail-title')?.focus();
+    // L'action directe depuis le tableau n'est appliquée qu'une fois la lecture
+    // asynchrone des indices terminée et cette ouverture toujours courante.
+    if (addRelation && panelIsCurrent()) openRelAddForm();
     highlightConnected(d.id);
 }
 
@@ -1838,8 +1841,7 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
     }
 
     if (e.target.closest('#add-rel-btn')) {
-        document.getElementById('rel-add-form').style.display = 'block';
-        document.getElementById('add-rel-btn').style.display  = 'none';
+        openRelAddForm();
         return;
     }
 
@@ -1872,10 +1874,22 @@ function closeRelEditForm(form) {
 }
 
 function closeRelAddForm() {
-    document.getElementById('rel-add-form').style.display = 'none';
+    const form = document.getElementById('rel-add-form');
+    if (!form) return;
+    form.style.display = 'none';
     const addBtn = document.getElementById('add-rel-btn');
+    if (!addBtn) return;
     addBtn.style.display = '';
     addBtn.focus();
+}
+
+function openRelAddForm() {
+    const form = document.getElementById('rel-add-form');
+    const addBtn = document.getElementById('add-rel-btn');
+    if (!form || !addBtn || state.panelId == null || !state.isAdmin) return;
+    form.style.display = 'block';
+    addBtn.style.display = 'none';
+    document.getElementById('rel-target')?.focus();
 }
 
 // ── Table ──────────────────────────────────────────────────────
@@ -1891,7 +1905,7 @@ function renderTable() {
         const arrow = isSorted ? (state.sortDir > 0 ? ' ▲' : ' ▼') : '';
         const ariaSort = isSorted ?(state.sortDir > 0 ? 'ascending' : 'descending') : 'none';
         return `<th scope="col" class="sortable" aria-sort="${ariaSort}"><button type="button" class="pnj-sort-btn" data-col="${esc(c.key)}">${esc(c.label)}<span aria-hidden="true">${arrow}</span></button></th>`;
-    }).join('') + (state.isAdmin ? '<th></th>' : '');
+    }).join('') + (state.isAdmin ? '<th scope="col">Actions</th>' : '');
 
     const tbody = sorted.map(d => {
         // Le texte de la colonne Statut reste : le petit sceau n'y est qu'un rappel visuel.
@@ -1915,7 +1929,7 @@ function renderTable() {
             }
             return `<td>${esc(d[c.key] || '—')}</td>`;
         }).join('');
-        const editCell = state.isAdmin ? `<td><button class="btn-edit-sm" data-id="${esc(d.id)}">✏</button></td>` : '';
+        const editCell = state.isAdmin ? `<td class="pnj-table-actions"><div class="pnj-table-action-buttons"><button type="button" class="pnj-table-add-rel" data-id="${esc(d.id)}" aria-label="Ajouter une relation pour ${esc(d.nom || 'ce personnage')}">＋ Relation</button><button type="button" class="btn-edit-sm" data-id="${esc(d.id)}" aria-label="Modifier ${esc(d.nom || 'ce personnage')}">✏</button></div></td>` : '';
         return `<tr>${portraitCell}${cells}${editCell}</tr>`;
     }).join('');
 
@@ -1943,6 +1957,11 @@ function renderTable() {
         }));
     container.querySelectorAll('.btn-edit-sm').forEach(btn =>
         btn.addEventListener('click', () => openPnjModal(btn.dataset.id)));
+    container.querySelectorAll('.pnj-table-add-rel').forEach(btn =>
+        btn.addEventListener('click', () => {
+            const node = state.nodes.find(n => n.id === btn.dataset.id);
+            if (node) void openPanel(node, { origin: true, addRelation: true });
+        }));
     // Ligne disparue (PNJ retiré ou filtré) : repli sur le compteur.
     if (restoreKey) (container.querySelector(restoreKey) || container.querySelector('.pnj-table-count'))?.focus();
 }

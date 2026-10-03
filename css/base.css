@@ -2546,7 +2546,19 @@ strong {
   color: var(--gold);
 }
 
-.btn-edit-sm {
+.pnj-table-action-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pnj-table-add-rel {
+  white-space: nowrap;
+}
+
+.btn-edit-sm,
+.pnj-table-add-rel {
   background: transparent;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
@@ -2558,7 +2570,8 @@ strong {
   transition-property: color, border-color;
 }
 
-.btn-edit-sm:hover {
+.btn-edit-sm:hover,
+.pnj-table-add-rel:hover {
   border-color: var(--border-gold);
   color: var(--gold);
 }
