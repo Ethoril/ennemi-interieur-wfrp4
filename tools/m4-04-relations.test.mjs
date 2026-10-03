@@ -82,20 +82,22 @@ test('création simple transmet le sens et la paire reste un seul appel atomique
     assert.equal(f.calls.create, 1); assert.equal(f.calls.createArgs[0].source, 'a'); assert.equal(f.calls.createArgs[0].cible, 'b'); assert.equal(f.calls.createArgs[1], true);
 });
 
-test('double soumission ne double pas la création et un endpoint masqué bloque le public', async () => {
+test('double soumission ne double pas la création et un endpoint masqué ne la bloque pas', async () => {
     const f = fixture(); f.container.querySelectorAll('button')[0].dispatch('click');
     const selects = f.container.querySelectorAll('select'); selects[0].value = 'c';
-    const inputs = f.container.querySelectorAll('input'); inputs.find(input => input.name === 'type').value = 'rival'; inputs.find(input => input.name === 'label').value = 'Chasse'; inputs.find(input => input.name === 'visible').checked = true;
-    const form = f.container.children.at(-1).children[0].children.find(node => node.tagName === 'form'); form.dispatch('submit'); form.dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0)); assert.equal(f.calls.create, 0); assert.match(f.container.textContent, /masqué/u);
+    const inputs = f.container.querySelectorAll('input'); inputs.find(input => input.name === 'type').value = 'rival'; inputs.find(input => input.name === 'label').value = 'Chasse';
+    const form = f.container.children.at(-1).children[0].children.find(node => node.tagName === 'form'); form.dispatch('submit'); form.dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(f.calls.create, 1); assert.equal(Object.hasOwn(f.calls.createArgs[0], 'visibleJoueurs'), false);
 });
 
-test('la visibilité publique est bloquée si le PNJ courant est masqué', async () => {
+test('aucune case de visibilité : le dépôt la dérive même si le PNJ courant est masqué', async () => {
     const f = fixture(); f.pnjs[0].visibleJoueurs = false; f.pnjCallbacks[0].next(f.pnjs);
     f.container.querySelectorAll('button')[0].dispatch('click');
     const select = f.container.querySelectorAll('select')[0]; select.value = 'b';
-    const inputs = f.container.querySelectorAll('input'); inputs.find(input => input.name === 'type').value = 'allié'; inputs.find(input => input.name === 'label').value = 'Aide'; inputs.find(input => input.name === 'visible').checked = true;
+    const inputs = f.container.querySelectorAll('input'); assert.equal(inputs.some(input => input.name === 'visible'), false);
+    inputs.find(input => input.name === 'type').value = 'allié'; inputs.find(input => input.name === 'label').value = 'Aide';
     const form = f.container.children.at(-1).children[0].children.find(node => node.tagName === 'form'); form.dispatch('submit'); await Promise.resolve();
-    assert.equal(f.calls.create, 0); assert.match(f.container.textContent, /endpoint est masqué/u);
+    assert.equal(f.calls.create, 1); assert.match(f.container.textContent, /MJ seulement/u);
 });
 
 test('édition transmet updatedAt et portée de paire explicite', async () => {

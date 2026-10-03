@@ -54,10 +54,12 @@ function relationInput(input, { create = false } = {}) {
         if (input.style !== 'solid' && input.style !== 'dashed') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'relation-style' });
         output.style = input.style;
     } else if (create) output.style = 'solid';
-    if (create || Object.hasOwn(input, 'visibleJoueurs')) {
+    // La valeur fournie n'est que provisoire : create et update la recalculent
+    // depuis les deux PNJ lus dans la transaction.
+    if (Object.hasOwn(input, 'visibleJoueurs')) {
         if (typeof input.visibleJoueurs !== 'boolean') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'relation-visibility' });
         output.visibleJoueurs = input.visibleJoueurs;
-    }
+    } else if (create) output.visibleJoueurs = false;
     if (output.source && output.cible && output.source === output.cible) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'relation-self' });
     return output;
 }
@@ -98,6 +100,20 @@ function withExactReciprocalIds(items) {
 
 function snapshotExists(snapshot) {
     return typeof snapshot?.exists === 'function' ? snapshot.exists() : snapshot?.exists === true;
+}
+
+// Une relation n'est visible des joueurs que si ses deux PNJ le sont : ce
+// n'est pas un choix du MJ, et donc jamais un motif de refus.
+function derivedVisibility(...endpoints) {
+    return endpoints.every(endpoint => snapshotExists(endpoint)
+        && snapshotData(endpoint).visibleJoueurs === true
+        && snapshotData(endpoint).suppressionEnCours !== true);
+}
+
+// L'identifiant intègre la visibilité, mais révélation et révocation la
+// basculent sur place : une même relation peut exister sous l'autre clé.
+function oppositeVisibilityId(relation) {
+    return relationId({ ...relation, visibleJoueurs: relation.visibleJoueurs !== true });
 }
 
 function compareRelation(left, right) {
@@ -180,16 +196,21 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
 
     async function create(data, bidirectional = false) {
         if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'create-relation' });
-        const primary = fullRelation(data);
-        const reverse = bidirectional ? reverseRelation(primary) : null;
-        const primaryRef = documentRef(sdk, db, 'relations', relationId(primary));
-        const reverseRef = reverse ? documentRef(sdk, db, 'relations', relationId(reverse)) : null;
+        const requested = fullRelation(data);
         try {
             return await transactionApi(sdk, db, 'create-relation', async transaction => {
-                const sourceSnapshot = await transaction.get(documentRef(sdk, db, 'pnjs', primary.source));
-                const cibleSnapshot = await transaction.get(documentRef(sdk, db, 'pnjs', primary.cible));
+                const sourceSnapshot = await transaction.get(documentRef(sdk, db, 'pnjs', requested.source));
+                const cibleSnapshot = await transaction.get(documentRef(sdk, db, 'pnjs', requested.cible));
+                // L'identifiant dépend de la visibilité : il n'est connu qu'après lecture des PNJ.
+                const primary = { ...requested, visibleJoueurs: derivedVisibility(sourceSnapshot, cibleSnapshot) };
+                const reverse = bidirectional ? reverseRelation(primary) : null;
+                const primaryRef = documentRef(sdk, db, 'relations', relationId(primary));
+                const reverseRef = reverse ? documentRef(sdk, db, 'relations', relationId(reverse)) : null;
                 const relationSnapshot = await transaction.get(primaryRef);
                 const reverseSnapshot = reverseRef ? await transaction.get(reverseRef) : null;
+                const oppositeSnapshot = await transaction.get(documentRef(sdk, db, 'relations', oppositeVisibilityId(primary)));
+                const reverseOppositeSnapshot = reverse
+                    ? await transaction.get(documentRef(sdk, db, 'relations', oppositeVisibilityId(reverse))) : null;
                 const lockSnapshot = await transaction.get(documentRef(sdk, db, 'integrity_locks', 'pnj-deletion'));
                 if (snapshotExists(lockSnapshot)) {
                     throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'create-relation-lock' });
@@ -198,11 +219,7 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
                     if (!snapshotExists(endpoint)) throw new FirebaseClientError(ERROR_KINDS.NOT_FOUND, { operation: 'create-relation-endpoint' });
                     if (snapshotData(endpoint).suppressionEnCours === true) throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'create-relation-endpoint' });
                 }
-                if (primary.visibleJoueurs === true
-                    && (snapshotData(sourceSnapshot).visibleJoueurs !== true || snapshotData(cibleSnapshot).visibleJoueurs !== true)) {
-                    throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'create-relation-visibility' });
-                }
-                if (relationSnapshot?.exists?.() || reverseSnapshot?.exists?.()) throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'create-relation-duplicate' });
+                if ([relationSnapshot, reverseSnapshot, oppositeSnapshot, reverseOppositeSnapshot].some(snapshotExists)) throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'create-relation-duplicate' });
                 const timestamp = serverTimestamp(sdk);
                 transaction.set(primaryRef, { ...primary, createdAt: timestamp, updatedAt: timestamp });
                 if (reverseRef) transaction.set(reverseRef, { ...reverse, createdAt: timestamp, updatedAt: timestamp });
@@ -235,10 +252,7 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
                     if (!snapshotExists(endpoint)) throw new FirebaseClientError(ERROR_KINDS.NOT_FOUND, { operation: 'update-relation-endpoint' });
                     if (snapshotData(endpoint).suppressionEnCours === true) throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'update-relation-endpoint' });
                 }
-                if (next.visibleJoueurs === true
-                    && (snapshotData(source).visibleJoueurs !== true || snapshotData(cible).visibleJoueurs !== true)) {
-                    throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'update-relation-visibility' });
-                }
+                next.visibleJoueurs = derivedVisibility(source, cible);
                 const nextId = relationId(next);
                 const pair = options?.pair === true || options?.reciprocalId !== undefined;
                 const reciprocalId = pair ? options?.reciprocalId : null;
@@ -259,7 +273,17 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
                 const nextSnapshot = nextId === id ? current : await transaction.get(nextRef);
                 const nextReverseSnapshot = nextReverseRef && nextReverseId !== reciprocalId
                     ? await transaction.get(nextReverseRef) : null;
-                if (nextId !== id && snapshotExists(nextSnapshot)) {
+                // Les documents de la relation elle-même (ou de sa réciproque) ne comptent pas comme doublons.
+                const ownIds = new Set([id, reciprocalId]);
+                const oppositeId = nextId !== id ? oppositeVisibilityId(next) : null;
+                const reverseOppositeId = pair && nextReverseId !== reciprocalId ? oppositeVisibilityId(nextReverse) : null;
+                const oppositeSnapshots = [];
+                for (const candidate of [oppositeId, reverseOppositeId]) {
+                    if (candidate && !ownIds.has(candidate)) {
+                        oppositeSnapshots.push(await transaction.get(documentRef(sdk, db, 'relations', candidate)));
+                    }
+                }
+                if ((nextId !== id && snapshotExists(nextSnapshot)) || oppositeSnapshots.some(snapshotExists)) {
                     throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'update-relation-rekey' });
                 }
                 if (pair && nextReverseId !== reciprocalId && snapshotExists(nextReverseSnapshot)) {

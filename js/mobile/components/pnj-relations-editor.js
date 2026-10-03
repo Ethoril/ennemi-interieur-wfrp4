@@ -76,7 +76,6 @@ function validForm(values) {
     if (!values.label || values.label.trim().length === 0 || values.label.length > 300) errors.label = 'Le libellé est obligatoire et limité à 300 caractères.';
     if (!STYLES.includes(values.style)) errors.style = 'Choisissez un style valide.';
     if (values.color !== '' && !PALETTE.some(item => item.value === values.color)) errors.color = 'Choisissez une couleur de palette.';
-    if (typeof values.visible !== 'boolean') errors.visible = 'La visibilité doit être explicite.';
     return { valid: Object.keys(errors).length === 0, errors };
 }
 
@@ -180,7 +179,6 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
             color: createField(documentRef, form, 'Couleur', 'color', 'select'),
         };
         editorFields = fields;
-        const visible = createField(documentRef, form, 'Visible par les joueurs', 'visible', 'checkbox'); fields.visible = visible;
         const pairLabel = relation ? 'Modifier les deux sens' : 'Créer dans les deux sens';
         const pair = createField(documentRef, form, pairLabel, 'pair', 'checkbox'); fields.pair = pair;
         const directionOptions = [['outgoing', 'Vers'], ['incoming', 'Depuis']];
@@ -190,7 +188,6 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
         const currentDirection = relation ? relation.source === pnjId ? 'outgoing' : 'incoming' : 'outgoing';
         fields.direction.control.value = currentDirection; fields.type.control.value = relation?.type || ''; fields.label.control.value = relation?.label || relation?.type || '';
         fields.style.control.value = relation?.style || 'solid'; fields.color.control.value = relation?.color || '';
-        fields.visible.control.type = 'checkbox'; fields.visible.control.checked = relation ? relation.visibleJoueurs === true : true;
         fields.pair.control.type = 'checkbox'; fields.pair.control.checked = Boolean(relation?.reciprocalId);
         fields.pair.locked = Boolean(relation && !relation.reciprocalId); fields.pair.wrapper.hidden = fields.pair.locked; fields.pair.control.disabled = fields.pair.locked;
         const target = relationTarget(relation || { source: pnjId, cible: '' }, pnjId); fields.search.control.addEventListener('input', () => renderTargets(fields.target.control, fields.search.control));
@@ -230,11 +227,10 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
         if (isOnline?.() === false) { setStatus('Hors ligne. La relation reste conservée en mémoire.', 'offline'); return; }
         const relation = editorRelation; const fields = editorFields; const operation = capture(); const repo = getRelationsRepository();
         if (!relation || !fields || !operation || typeof repo?.forceUpdate !== 'function' || busy) return;
-        const values = { target: fields.target.control.value, direction: fields.direction.control.value, type: fields.type.control.value.trim(), label: fields.label.control.value.trim(), style: fields.style.control.value, color: fields.color.control.value, visible: fields.visible.control.checked === true };
+        const values = { target: fields.target.control.value, direction: fields.direction.control.value, type: fields.type.control.value.trim(), label: fields.label.control.value.trim(), style: fields.style.control.value, color: fields.color.control.value };
         const validation = validForm(values); if (!validation.valid) { applyErrors(fields, validation.errors); return; }
         const target = targetMap().get(values.target); if (!target) return;
-        if (values.visible && (target.visibleJoueurs !== true || pnjs.find(item => item?.id === pnjId)?.visibleJoueurs !== true)) return;
-        const payload = { source: values.direction === 'outgoing' ? pnjId : values.target, cible: values.direction === 'outgoing' ? values.target : pnjId, type: values.type, label: values.label || values.type, style: values.style, color: values.color || null, visibleJoueurs: values.visible };
+        const payload = { source: values.direction === 'outgoing' ? pnjId : values.target, cible: values.direction === 'outgoing' ? values.target : pnjId, type: values.type, label: values.label || values.type, style: values.style, color: values.color || null };
         busy = true; submitDisabled(fields, true);
         try { const pair = fields.pair.control.checked === true; const options = pair ? { confirmed: true, pair: true, reciprocalId: relation.reciprocalId } : { confirmed: true, pair: false }; await repo.forceUpdate(relation.id, payload, options); if (!current(operation)) return; busy = false; closeEditor(); announce('Relation forcée après confirmation MJ.'); }
         catch (error) { if (current(operation)) { busy = false; submitDisabled(fields, false); setStatus(safeError(error), 'error'); } }
@@ -242,17 +238,12 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
     const saveRelation = async (relation, fields, status) => {
         if (busy) return; const operation = capture(); if (!operation) { status.textContent = 'Session MJ invalide.'; return; }
         if (isOnline?.() === false) { status.textContent = 'Hors ligne. La relation reste conservée en mémoire.'; return; }
-        const values = { target: fields.target.control.value, direction: fields.direction.control.value, type: fields.type.control.value.trim(), label: fields.label.control.value.trim(), style: fields.style.control.value, color: fields.color.control.value, visible: fields.visible.control.checked === true };
+        const values = { target: fields.target.control.value, direction: fields.direction.control.value, type: fields.type.control.value.trim(), label: fields.label.control.value.trim(), style: fields.style.control.value, color: fields.color.control.value };
         const validation = validForm(values); if (!validation.valid) { applyErrors(fields, validation.errors); return; }
         const target = targetMap().get(values.target);
         if (!target) { applyErrors(fields, { target: 'Cette cible n’est plus disponible.' }); return; }
-        const sourcePnj = pnjs.find(item => item?.id === pnjId);
-        if (values.visible && (target.visibleJoueurs !== true || sourcePnj?.visibleJoueurs !== true)) {
-            status.textContent = 'Un endpoint est masqué aux joueurs : rendez la relation MJ seulement ou rendez les deux PNJ visibles.';
-            fields.visible.control.focus?.(); return;
-        }
         const source = values.direction === 'outgoing' ? pnjId : values.target; const cible = values.direction === 'outgoing' ? values.target : pnjId;
-        const payload = { source, cible, type: values.type, label: values.label || values.type, style: values.style, color: values.color || null, visibleJoueurs: values.visible };
+        const payload = { source, cible, type: values.type, label: values.label || values.type, style: values.style, color: values.color || null };
         busy = true; submitDisabled(fields, true); status.textContent = 'Enregistrement…';
         try {
             const repo = getRelationsRepository(); if (!repo) throw Object.assign(new Error('relations-unavailable'), { code: 'failed-precondition' });

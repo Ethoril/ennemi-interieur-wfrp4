@@ -78,6 +78,8 @@ const ASSETS_LOCAUX = [
   './img/Elysia.webp',
   './img/Hellaya.webp',
   './img/Wren.webp',
+  './img/pnj-default.webp',
+  './img/pnj-default-medaillon.webp',
   './img/thumb-empire.webp',
   './img/thumb-vieux-monde.webp',
   './favicon.svg',

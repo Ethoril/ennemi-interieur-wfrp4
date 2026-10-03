@@ -198,6 +198,16 @@ test('le formulaire initialisé sépare le payload public et privé', async () =
     assert.equal(mounted.fake.calls.createArgs[1].notes, 'secret');
 });
 
+test('une révélation de relations en échec est signalée sans faire échouer la sauvegarde', async () => {
+    const mounted = await mountedForm();
+    mounted.fake.repository.update = async () => ({ id: 'a', relationsRevealPending: true });
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Ada bis';
+    mounted.container.querySelectorAll('form')[0].dispatch('submit');
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(mounted.navigated.at(-1), '#/pnjs/a');
+    assert.match(mounted.announced.at(-1), /^PNJ enregistré\. Certaines relations n’ont pas pu être rendues visibles/u);
+});
+
 test('une sauvegarde navigue avant son annonce durable', async () => {
     const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined });
     mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Ordre';

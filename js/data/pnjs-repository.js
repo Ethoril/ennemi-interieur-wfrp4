@@ -188,6 +188,23 @@ function visibleRelationRefs(sdk, db, snapshot, id) {
         .map(item => documentRef(sdk, db, 'relations', snapshotId(item)));
 }
 
+function publicEndpoint(snapshot) {
+    return snapshotExists(snapshot) && snapshotData(snapshot).visibleJoueurs === true
+        && snapshotData(snapshot).suppressionEnCours !== true;
+}
+
+// Candidates à la révélation : masquées alors que l'autre PNJ paraît public.
+// La transaction relit tout ; ce tri évite seulement des transactions inutiles.
+function revealableRelationRefs(sdk, db, relationsSnapshot, pnjsSnapshot, id) {
+    const publicIds = new Set(docsFromSnapshot(pnjsSnapshot).filter(publicEndpoint).map(snapshotId));
+    return relationDocsWithoutId(relationsSnapshot, id)
+        .filter(item => {
+            const data = snapshotData(item);
+            return data.visibleJoueurs !== true && publicIds.has(data.source === id ? data.cible : data.source);
+        })
+        .map(item => documentRef(sdk, db, 'relations', snapshotId(item)));
+}
+
 function indiceDocsWithId(snapshot, id) {
     return docsFromSnapshot(snapshot).filter(item => snapshotData(item).pnjsLies?.includes(id));
 }
@@ -401,8 +418,54 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                     await getDocuments(sdk, collectionRef(sdk, db, 'relations')), id);
                 if (!remaining.length) break;
             }
+            if (publicData.visibleJoueurs !== true) return result;
+            // Le PNJ est déjà commis : un échec de révélation ne doit pas passer pour
+            // un échec d'enregistrement. Le résultat le signale, et le prochain
+            // enregistrement du PNJ visible reprendra la réconciliation.
+            try { await revealRelations(id); }
+            catch { return { ...result, relationsRevealPending: true }; }
             return result;
         } catch (error) { throw makeMutationError(error, 'update-pnj'); }
+    }
+
+    // Transactions distinctes et postérieures à la publication du PNJ : les règles
+    // n'acceptent une relation visible que si ses deux PNJ sont déjà publics.
+    async function revealRelations(id) {
+        const [relationsSnapshot, pnjsSnapshot] = await Promise.all([
+            getDocuments(sdk, collectionRef(sdk, db, 'relations')),
+            getDocuments(sdk, collectionRef(sdk, db, 'pnjs')),
+        ]);
+        const relationsToReveal = revealableRelationRefs(sdk, db, relationsSnapshot, pnjsSnapshot, id);
+        if (relationsToReveal.length > MAX_REVOCATION_RELATIONS) {
+            throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'update-pnj-reveal-relations' });
+        }
+        for (let start = 0; start < relationsToReveal.length; start += RELATIONS_PER_REVOCATION_TRANSACTION) {
+            const relationsBatch = relationsToReveal.slice(start, start + RELATIONS_PER_REVOCATION_TRANSACTION);
+            await transactionApi(sdk, db, 'update-pnj-reveal-relations')(db, async transaction => {
+                const relationSnapshots = [];
+                for (const relationRef of relationsBatch) relationSnapshots.push(await transaction.get(relationRef));
+                const endpoints = new Map();
+                for (const relationSnapshot of relationSnapshots) {
+                    if (!snapshotExists(relationSnapshot)) continue;
+                    const { source, cible } = snapshotData(relationSnapshot);
+                    for (const pnjId of [source, cible]) {
+                        if (validId(pnjId) && !endpoints.has(pnjId)) {
+                            endpoints.set(pnjId, await transaction.get(documentRef(sdk, db, 'pnjs', pnjId)));
+                        }
+                    }
+                }
+                const timestamp = serverTimestamp(sdk);
+                for (const [index, relationRef] of relationsBatch.entries()) {
+                    const relationSnapshot = relationSnapshots[index];
+                    if (!snapshotExists(relationSnapshot)) continue;
+                    const data = snapshotData(relationSnapshot);
+                    if (data.visibleJoueurs !== true && publicEndpoint(endpoints.get(data.source))
+                        && publicEndpoint(endpoints.get(data.cible))) {
+                        transaction.update(relationRef, { visibleJoueurs: true, updatedAt: timestamp });
+                    }
+                }
+            });
+        }
     }
 
     // Le forçage est une action distincte : l’interface doit avoir confirmé

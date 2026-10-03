@@ -291,8 +291,120 @@ test('les validations de relation sont fail-closed et aucune écriture partielle
     assert.equal(fake.collectionMap('relations').size, 0);
 
     await pnjRepo.create({ id: 'hidden', nom: 'Hidden', visibleJoueurs: false });
-    await assert.rejects(relationRepo.create({ source: 'a', cible: 'hidden', type: 'visible', visibleJoueurs: true }),
+    await assert.rejects(relationRepo.create({ source: 'a', cible: 'hidden', type: 'visible', visibleJoueurs: 'oui' }),
+        error => error.kind === ERROR_KINDS.VALIDATION);
+});
+
+test('la visibilité d’une relation est dérivée de ses deux PNJ et ne bloque jamais le MJ', async () => {
+    const fake = makeFirestore();
+    const pnjRepo = createMjPnjRepository(fake);
+    const relationRepo = createMjRelationsRepository(fake);
+    await pnjRepo.create({ id: 'a', nom: 'Ada', visibleJoueurs: true });
+    await pnjRepo.create({ id: 'b', nom: 'Bob', visibleJoueurs: true });
+    await pnjRepo.create({ id: 'h', nom: 'Hugo', visibleJoueurs: false });
+    await pnjRepo.create({ id: 'k', nom: 'Karl', visibleJoueurs: false });
+
+    const hidden = await relationRepo.create({ source: 'h', cible: 'k', type: 'secret', visibleJoueurs: true }, true);
+    assert.equal(fake.collectionMap('relations').get(hidden.id).visibleJoueurs, false);
+    assert.equal(fake.collectionMap('relations').get(hidden.reciprocalId).visibleJoueurs, false);
+    const mixed = await relationRepo.create({ source: 'a', cible: 'h', type: 'mixte' });
+    assert.equal(fake.collectionMap('relations').get(mixed.id).visibleJoueurs, false);
+    const open = await relationRepo.create({ source: 'a', cible: 'b', type: 'public', visibleJoueurs: false });
+    assert.equal(fake.collectionMap('relations').get(open.id).visibleJoueurs, true);
+
+    const updated = await relationRepo.update(mixed.id, { label: 'Mixte', visibleJoueurs: true });
+    assert.equal(fake.collectionMap('relations').get(updated.nextId).visibleJoueurs, false);
+    const forced = await relationRepo.forceUpdate(open.id, { visibleJoueurs: false }, { confirmed: true });
+    assert.equal(fake.collectionMap('relations').get(forced.nextId).visibleJoueurs, true);
+});
+
+test('rendre un PNJ visible révèle ses relations si l’autre PNJ l’est, et le masquer révoque', async () => {
+    const fake = makeFirestore();
+    const pnjRepo = createMjPnjRepository(fake);
+    const relationRepo = createMjRelationsRepository(fake);
+    await pnjRepo.create({ id: 'a', nom: 'Ada', visibleJoueurs: false });
+    await pnjRepo.create({ id: 'b', nom: 'Bob', visibleJoueurs: true });
+    await pnjRepo.create({ id: 'h', nom: 'Hugo', visibleJoueurs: false });
+    const withVisible = await relationRepo.create({ source: 'a', cible: 'b', type: 'allié' }, true);
+    const withHidden = await relationRepo.create({ source: 'h', cible: 'a', type: 'rival' });
+    put(fake, 'pnjs', 'gone', { nom: 'Gone', visibleJoueurs: true, suppressionEnCours: true });
+    put(fake, 'relations', 'to-gone', { source: 'a', cible: 'gone', type: 't', visibleJoueurs: false });
+    const relations = () => fake.collectionMap('relations');
+
+    const result = await pnjRepo.update('a', { visibleJoueurs: true });
+    assert.equal(result.relationsRevealPending, undefined);
+    assert.equal(relations().get(withVisible.id).visibleJoueurs, true);
+    assert.equal(relations().get(withVisible.reciprocalId).visibleJoueurs, true);
+    assert.equal(relations().get(withHidden.id).visibleJoueurs, false);
+    assert.equal(relations().get('to-gone').visibleJoueurs, false);
+    const reveal = fake.state.lastTransactionOperations.find(([, ref]) => ref.id === withVisible.id);
+    assert.equal(reveal[2].updatedAt.__serverTimestamp, true);
+
+    await pnjRepo.update('h', { visibleJoueurs: true });
+    assert.equal(relations().get(withHidden.id).visibleJoueurs, true);
+
+    await pnjRepo.update('a', { visibleJoueurs: false });
+    assert.equal(relations().get(withVisible.id).visibleJoueurs, false);
+    assert.equal(relations().get(withHidden.id).visibleJoueurs, false);
+});
+
+test('une relation révélée sur place reste un doublon pour la création et le rekey', async () => {
+    const fake = makeFirestore();
+    const pnjRepo = createMjPnjRepository(fake);
+    const relationRepo = createMjRelationsRepository(fake);
+    await pnjRepo.create({ id: 'a', nom: 'Ada', visibleJoueurs: false });
+    await pnjRepo.create({ id: 'b', nom: 'Bob', visibleJoueurs: true });
+    await relationRepo.create({ source: 'a', cible: 'b', type: 'allié' }, true);
+    const other = await relationRepo.create({ source: 'a', cible: 'b', type: 'autre' });
+    await pnjRepo.update('a', { visibleJoueurs: true });
+    assert.ok([...fake.collectionMap('relations').values()].every(relation => relation.visibleJoueurs === true));
+
+    await assert.rejects(relationRepo.create({ source: 'a', cible: 'b', type: 'allié' }, true),
+        error => error.kind === ERROR_KINDS.CONFLICT && error.operation === 'create-relation-duplicate');
+    await assert.rejects(relationRepo.create({ source: 'b', cible: 'a', type: 'allié' }),
         error => error.kind === ERROR_KINDS.CONFLICT);
+    await assert.rejects(relationRepo.update(other.id, { type: 'allié', label: 'allié' }),
+        error => error.kind === ERROR_KINDS.CONFLICT && error.operation === 'update-relation-rekey');
+    assert.equal(fake.collectionMap('relations').size, 3);
+});
+
+test('une relation révoquée sur place reste un doublon pour la création', async () => {
+    const fake = makeFirestore();
+    const pnjRepo = createMjPnjRepository(fake);
+    const relationRepo = createMjRelationsRepository(fake);
+    await pnjRepo.create({ id: 'a', nom: 'Ada', visibleJoueurs: true });
+    await pnjRepo.create({ id: 'b', nom: 'Bob', visibleJoueurs: true });
+    await relationRepo.create({ source: 'a', cible: 'b', type: 'allié' }, true);
+    await pnjRepo.update('a', { visibleJoueurs: false });
+    assert.ok([...fake.collectionMap('relations').values()].every(relation => relation.visibleJoueurs === false));
+
+    await assert.rejects(relationRepo.create({ source: 'a', cible: 'b', type: 'allié' }, true),
+        error => error.kind === ERROR_KINDS.CONFLICT && error.operation === 'create-relation-duplicate');
+    assert.equal(fake.collectionMap('relations').size, 2);
+});
+
+test('un échec de révélation ne fait pas échouer l’enregistrement déjà commis du PNJ', async () => {
+    const fake = makeFirestore();
+    const pnjRepo = createMjPnjRepository(fake);
+    await pnjRepo.create({ id: 'a', nom: 'Ada', visibleJoueurs: false });
+    await pnjRepo.create({ id: 'b', nom: 'Bob', visibleJoueurs: true });
+    await createMjRelationsRepository(fake).create({ source: 'a', cible: 'b', type: 'allié' });
+    const runTransaction = fake.sdk.runTransaction;
+    let calls = 0;
+    fake.sdk.runTransaction = async (...args) => {
+        calls += 1;
+        if (calls === 2) throw new Error('reveal-failure-secret');
+        return runTransaction(...args);
+    };
+    const result = await pnjRepo.update('a', { visibleJoueurs: true, description: 'publié' });
+    assert.equal(result.id, 'a');
+    assert.equal(result.relationsRevealPending, true);
+    assert.equal(fake.collectionMap('pnjs').get('a').visibleJoueurs, true);
+    assert.ok([...fake.collectionMap('relations').values()].every(relation => relation.visibleJoueurs === false));
+
+    fake.sdk.runTransaction = runTransaction;
+    await pnjRepo.update('a', { visibleJoueurs: true });
+    assert.ok([...fake.collectionMap('relations').values()].every(relation => relation.visibleJoueurs === true));
 });
 
 test('un label vide est refusé, tandis qu’une relation legacy sans label reste éditable', async () => {

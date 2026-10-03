@@ -142,6 +142,12 @@ const safeRelationColor = (color, type) => safeRelationColorValue(color, getLink
 const vivantKey = d => String(d.vivant || 'oui').trim().toLowerCase();
 const initials = nom => String(nom || '').trim().split(/\s+/u).filter(Boolean).slice(0, 2)
     .map(word => word.charAt(0)).join('').toUpperCase() || '?';
+// Illustration d'un PNJ sans portrait. Un portrait protégé illisible garde son
+// message d'indisponibilité : l'illustration ne doit pas le masquer.
+const DEFAULT_PORTRAIT = 'img/pnj-default.webp';
+const DEFAULT_MEDALLION = 'img/pnj-default-medaillon.webp';
+const withoutPortrait = d => !d.imageUrl && !d.imagePath;
+const medallionHref = d => d.imageUrl || (withoutPortrait(d) ? DEFAULT_MEDALLION : null);
 // Valeurs qualifiées (« statut inconnu », « sort inconnu ») : seules, « Inconnu,
 // Inconnu » ne disaient pas de quoi il s'agissait.
 const vitalPhrase = d => vivantKey(d) === 'inconnu' ? 'sort inconnu' : vivantLabel(d.vivant || 'oui').toLowerCase();
@@ -583,21 +589,26 @@ async function savePnj(data, imageFile) {
         const privateData = { notes: data.notesPrivees || '' };
         let result;
         const expectedUpdatedAt = state.editingUpdatedAt;
+        // images.replace ne renvoie pas le résultat du commit : on le capture ici.
+        let relationsRevealPending = false;
         const commitPnj = async imagePath => {
             requireCurrentEditor();
             const nextPublicData = imagePath ? { ...publicData, imagePath } : publicData;
-            return capturedEditingId
-                ? pnjRepository.update(capturedEditingId, nextPublicData, privateData, expectedUpdatedAt)
-                : pnjRepository.create(nextPublicData, privateData, { id });
+            const committed = capturedEditingId
+                ? await pnjRepository.update(capturedEditingId, nextPublicData, privateData, expectedUpdatedAt)
+                : await pnjRepository.create(nextPublicData, privateData, { id });
+            if (committed?.relationsRevealPending === true) relationsRevealPending = true;
+            return committed;
         };
         if (imageFile) {
             btn.textContent = 'Upload…';
             result = await capturedData.images.replace(previousImagePath || null,
                 { kind: 'portrait', ownerId: id }, imageFile, { commit: commitPnj });
         } else {
-            result = capturedEditingId
-                ? await pnjRepository.update(capturedEditingId, publicData, privateData, expectedUpdatedAt)
-                : await pnjRepository.create(publicData, privateData, { id });
+            result = await commitPnj(null);
+        }
+        if (relationsRevealPending) {
+            showPnjImageRecoveryStatus('PNJ enregistré, mais certaines relations n’ont pas pu être rendues visibles ; réenregistrez le PNJ pour réessayer.', null);
         }
         requireCurrentEditor();
         void result;
@@ -689,10 +700,11 @@ async function saveRelation(sourceId, cibleId, type, label, color, style, bidir)
     const stillCurrent = () => capturedRole && state.isAdmin && capturedSession === editorSession
         && capturedGeneration === currentPanelGeneration && panelId === state.panelId
         && repository === bureauData?.relations;
+    // La visibilité joueurs est dérivée des deux PNJ par le dépôt.
     try {
         const result = await repository.create({ source: sourceId, cible: cibleId, type,
             label: label || type, color: safeRelationColor(color, type),
-            style: style === 'dashed' ? 'dashed' : 'solid', visibleJoueurs: true }, bidir);
+            style: style === 'dashed' ? 'dashed' : 'solid' }, bidir);
         if (!stillCurrent()) return;
         void result;
         const node = state.nodes.find(item => item.id === sourceId);
@@ -1284,25 +1296,25 @@ function buildGraph() {
         .attr('class', 'node-portrait-bg')
         .attr('r', PORTRAIT_R)
         .attr('fill', 'var(--bg-surface)')
-        .style('display', d => d.imageUrl ? 'none' : '');
+        .style('display', d => medallionHref(d) ? 'none' : '');
 
     // Initiales (si pas de portrait)
     nodeG.append('text')
         .attr('class', 'node-initial')
         .attr('dy', '0.35em')
         .attr('text-anchor', 'middle')
-        .style('display', d => d.imageUrl ? 'none' : '')
+        .style('display', d => medallionHref(d) ? 'none' : '')
         .text(d => initials(d.nom));
 
     // Portrait, en grisaille pour un défunt
     nodeG.append('image')
         .attr('class', d => vivantKey(d) === 'non' ? 'node-portrait pnj-deceased' : 'node-portrait')
-        .attr('href', d => d.imageUrl || null)
+        .attr('href', medallionHref)
         .attr('x', -PORTRAIT_R).attr('y', -PORTRAIT_R)
         .attr('width', PORTRAIT_R * 2).attr('height', PORTRAIT_R * 2)
         .attr('clip-path', d => `url(#clip-${d.id.replace(/[^a-zA-Z0-9]/g, '_')})`)
         .attr('preserveAspectRatio', 'xMidYMid slice')
-        .style('display', d => d.imageUrl ? '' : 'none')
+        .style('display', d => medallionHref(d) ? '' : 'none')
         .on('error', function() { d3.select(this).style('display', 'none'); });
 
     // Nom et lieu, centrés sous le médaillon
@@ -1525,7 +1537,7 @@ async function openPanel(d, { origin = false } = {}) {
     // chaque émission et empêcherait de reconnaître une fiche inchangée.
     const portraitHtml = d.imageUrl
         ? `<img class="pnj-dossier-portrait${deceased ? ' pnj-deceased' : ''}" alt="Portrait de ${esc(d.nom)}">`
-        : (protectedImagePlaceholder(d, d.nom) || `<div class="pnj-dossier-initials" aria-hidden="true">${esc(initials(d.nom))}</div>`);
+        : (protectedImagePlaceholder(d, d.nom) || `<img class="pnj-dossier-default${deceased ? ' pnj-deceased' : ''}" src="${DEFAULT_PORTRAIT}" alt="">`);
 
     const metaHtml = (d.lieu || d.groupe) ? `
         <dl class="pnj-detail-meta">
@@ -1886,7 +1898,7 @@ function renderTable() {
         const deceased = vivantKey(d) === 'non';
         const portrait = d.imageUrl
             ? `<img src="${esc(d.imageUrl)}" class="table-portrait${deceased ? ' pnj-deceased' : ''}" alt="${esc(d.nom)}">`
-            : (protectedImagePlaceholder(d, d.nom) || `<div class="table-portrait-placeholder">${esc(initials(d.nom))}</div>`);
+            : (protectedImagePlaceholder(d, d.nom) || `<img src="${DEFAULT_MEDALLION}" class="table-portrait${deceased ? ' pnj-deceased' : ''}" alt="">`);
         const portraitCell = `<td class="col-portrait"><span class="table-portrait-wrap">${portrait}<span class="table-portrait-seal" aria-hidden="true">${sealMarkup(d.statut, { size: 16 })}</span></span></td>`;
 
         const cells = TABLE_COLS.map(c => {

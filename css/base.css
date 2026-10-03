@@ -2125,16 +2125,13 @@ strong {
   object-fit: cover;
 }
 
-.pnj-dossier-initials {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Illustration par défaut : carte entière, sur le noir de son propre fond. */
+.pnj-dossier-default {
+  display: block;
+  width: 100%;
   height: 100%;
-  padding-bottom: 3rem;
-  color: var(--gold-dim);
-  font-family: var(--font-heading);
-  font-size: 4rem;
-  letter-spacing: 0.08em;
+  object-fit: contain;
+  background: #050505;
 }
 
 .pnj-dossier-banner .protected-image-placeholder {
@@ -3109,20 +3106,6 @@ strong {
   object-fit: cover;
   display: block;
   border: 2px solid var(--border);
-}
-
-.table-portrait-placeholder {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--surface-elevated, #1e1e30);
-  border: 2px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-heading);
-  font-size: 1rem;
-  color: var(--gold);
 }
 
 /* ── Indices & Enquêtes ─────────────────────────── */

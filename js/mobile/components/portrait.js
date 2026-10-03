@@ -3,6 +3,11 @@ import { vivantKey } from '../pnj-list-model.js';
 
 const OWNER_ID = /^[A-Za-z0-9_-]{1,100}$/u;
 const FILE_NAME = /^[A-Za-z0-9._-]{1,128}$/u;
+// Illustration d'un PNJ sans portrait : carte entière pour le bandeau, médaillon
+// recadré pour les vignettes. Un portrait invalide ou legacy garde les initiales.
+const DEFAULT_PORTRAIT = new URL('../../../img/pnj-default.webp', import.meta.url).href;
+const DEFAULT_MEDALLION = new URL('../../../img/pnj-default-medaillon.webp', import.meta.url).href;
+const BANNER_SIZE = 160;
 
 function ownedPortraitPath(item) {
     const path = item?.image?.path;
@@ -66,6 +71,17 @@ export function mountPnjPortrait({ container, item, imageService, size = 56, mar
         for (const slot of markSlots) slot.remove();
     };
     const path = ownedPortraitPath(item);
+    const declared = item?.image;
+    if (!declared?.path && declared?.legacy !== true && declared?.invalid !== true) {
+        const illustration = documentRef.createElement('img');
+        illustration.className = size >= BANNER_SIZE ? 'm-portrait-image m-portrait-image--defaut' : 'm-portrait-image';
+        illustration.alt = '';
+        illustration.width = size;
+        illustration.height = size;
+        illustration.decoding = 'async';
+        illustration.src = size >= BANNER_SIZE ? DEFAULT_PORTRAIT : DEFAULT_MEDALLION;
+        frame.append(illustration);
+    }
     if (!path || typeof imageService?.loadObjectUrl !== 'function') {
         return Object.freeze({ dispose: once(removeOwnNodes) });
     }

@@ -5,6 +5,7 @@ import { createPnjRelationsEditor } from '../components/pnj-relations-editor.js'
 const STATUSES = Object.freeze(['', 'allié', 'neutre', 'ennemi']);
 const LIVING = Object.freeze(['oui', 'non', 'inconnu']);
 const MAX = Object.freeze({ nom: 200, statut: 64, vivant: 32, lieu: 200, groupe: 200, description: 20000, notes: 30000 });
+const REVEAL_PENDING_NOTICE = ' Certaines relations n’ont pas pu être rendues visibles ; réenregistrez le PNJ pour réessayer.';
 
 export function defaultPnjFormValues() {
     // Le bureau crée un PNJ comme vivant ; l’état « inconnu » reste disponible explicitement.
@@ -349,13 +350,13 @@ export function createPnjEditView({ container, id = null, repository = null, get
         setBusy(true); showStatus('Enregistrement…', 'saving');
         try {
             const values = validatePnjForm(valuesFromForm()); if (!values.valid) { renderErrors(values.errors); setBusy(false); return; }
-            await getRepository().forceUpdate(id, {
+            const forced = await getRepository().forceUpdate(id, {
                 nom: values.values.nom, statut: values.values.statut, vivant: values.values.vivant, lieu: values.values.lieu,
                 groupe: values.values.groupe, description: values.values.description, visibleJoueurs: values.values.visibleJoueurs,
             }, { notes: values.values.notes }, { confirmed: true });
             if (!currentOperation(operation)) return;
             if (draftVersion !== operation.draftVersion) { setBusy(false); showStatus('La saisie a changé pendant le forçage. Vérifiez puis relancez.', ERROR_KINDS.CONFLICT); return; }
-            removeCurrentDraft(); clearConflict(); onNavigate(`#/pnjs/${encodeURIComponent(id)}`); announce('PNJ enregistré après confirmation MJ.');
+            removeCurrentDraft(); clearConflict(); onNavigate(`#/pnjs/${encodeURIComponent(id)}`); announce(`PNJ enregistré après confirmation MJ.${forced?.relationsRevealPending === true ? REVEAL_PENDING_NOTICE : ''}`);
         } catch (error) {
             if (currentOperation(operation)) {
                 setBusy(false);
@@ -423,6 +424,12 @@ export function createPnjEditView({ container, id = null, repository = null, get
                     { clearLegacyImageUrl: initialHasLegacyImage && imagePath !== undefined });
                 return repo.create(patch, privateInput, reservedId ? { id: reservedId } : {});
             };
+            // imageService.replace ne renvoie pas le résultat du commit : on le capture au passage.
+            let relationsRevealPending = false;
+            const trackReveal = committed => {
+                if (committed?.relationsRevealPending === true) relationsRevealPending = true;
+                return committed;
+            };
             if (id && result.values.visibleJoueurs !== initialValues.visibleJoueurs) {
                 if (result.values.visibleJoueurs === false) showStatus('Dépublication : les relations visibles compatibles seront retirées du mode joueur.');
                 else showStatus('Publication : les relations vers un PNJ masqué resteront incompatibles avec le mode joueur.');
@@ -447,13 +454,13 @@ export function createPnjEditView({ container, id = null, repository = null, get
                 if (id) {
                     if (!imageService?.replace) throw Object.assign(new Error('image-service-unavailable'), { code: 'permission-denied' });
                     output = await imageService.replace(initialPortraitReference, id, portraitState.file, {
-                        kind: 'portrait', ownerId: id, commit: imagePath => commitPublic(imagePath),
+                        kind: 'portrait', ownerId: id, commit: imagePath => commitPublic(imagePath).then(trackReveal),
                     });
                 } else {
                     if (!imageService?.replace) throw Object.assign(new Error('image-service-unavailable'), { code: 'permission-denied' });
                     if (!reservedId) throw Object.assign(new Error('reserve-pnj-id-unavailable'), { code: 'failed-precondition' });
                     output = await imageService.replace(null, reservedId, portraitState.file, {
-                        kind: 'portrait', ownerId: reservedId, commit: imagePath => commitPublic(imagePath),
+                        kind: 'portrait', ownerId: reservedId, commit: imagePath => commitPublic(imagePath).then(trackReveal),
                     });
                 }
             } else if (id && portraitState.removalRequested && initialPortraitReference) {
@@ -481,8 +488,10 @@ export function createPnjEditView({ container, id = null, repository = null, get
             onNavigate(savedId ? `#/pnjs/${encodeURIComponent(savedId)}` : '#/pnjs');
             const legacyNotice = (output?.legacyImageSkipped === true || output?.skippedOldPath || (initialHasLegacyImage && (portraitState.file || portraitState.removalRequested)))
                 ? ' Un ancien portrait reste à traiter.' : '';
-            announce(`PNJ enregistré.${legacyNotice}`);
-            showStatus('✓ Enregistré.', 'saved');
+            trackReveal(output);
+            const revealNotice = relationsRevealPending ? REVEAL_PENDING_NOTICE : '';
+            announce(`PNJ enregistré.${legacyNotice}${revealNotice}`);
+            showStatus(`✓ Enregistré.${revealNotice}`, 'saved');
         } catch (error) {
             if (!currentOperation(operation)) return;
             if (error?.state?.cleanupPending === true || error?.state?.commitUnknown === true || error?.state?.commitDone === true

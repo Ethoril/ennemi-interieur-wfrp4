@@ -788,3 +788,6 @@ body {
   .m-main { padding-right: var(--space-xl); padding-left: var(--space-xl); }
   .m-bottom-nav { right: 50%; left: 50%; width: min(100%, var(--m-content-width)); transform: translateX(-50%); }
 }
+
+/* Illustration par défaut du bandeau : carte entière sur son propre noir. */
+.m-portrait-image--defaut { object-fit: contain; background: #050505; }
