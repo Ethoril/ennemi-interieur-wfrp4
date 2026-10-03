@@ -1,3 +1,7 @@
+## [2.25.2] - 2026-10-03
+
+- Le Carnaval utilise toute la largeur disponible, avec deux colonnes sur grand écran et une disposition adaptée aux tablettes et mobiles. Les commandes et les noms longs se répartissent sans déborder.
+
 ## [2.25.1] - 2026-10-03
 
 - Le panneau PNJ du Carnaval reste ouvert sans bloquer le calendrier, la carte ou la navigation. La touche Tab permet de quitter la fiche ; Échap la ferme en conservant le fonctionnement des dialogues d'édition et d'association.
