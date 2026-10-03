@@ -8,6 +8,7 @@ import {
 } from './repository-utils.js';
 
 const RELATION_FIELDS = Object.freeze(['source', 'cible', 'type', 'label', 'color', 'style', 'visibleJoueurs']);
+const RELATION_INPUT_FIELDS = Object.freeze([...RELATION_FIELDS, 'curvature']);
 const SAFE_COLOR = /^(?:#[0-9a-f]{3}|#[0-9a-f]{4}|#[0-9a-f]{6}|#[0-9a-f]{8})$/iu;
 
 function validId(value) {
@@ -17,7 +18,7 @@ function validId(value) {
 
 function validateKeys(value, operation) {
     if (!value || typeof value !== 'object' || Array.isArray(value)
-        || Object.keys(value).some(key => !RELATION_FIELDS.includes(key))) {
+        || Object.keys(value).some(key => !RELATION_INPUT_FIELDS.includes(key))) {
         throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation });
     }
 }
@@ -54,6 +55,13 @@ function relationInput(input, { create = false } = {}) {
         if (input.style !== 'solid' && input.style !== 'dashed') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'relation-style' });
         output.style = input.style;
     } else if (create) output.style = 'solid';
+    if (Object.hasOwn(input, 'curvature')) {
+        if (input.curvature !== null && (typeof input.curvature !== 'number' || !Number.isFinite(input.curvature)
+            || input.curvature < -6 || input.curvature > 6)) {
+            throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'relation-curvature' });
+        }
+        output.curvature = input.curvature;
+    }
     // La valeur fournie n'est que provisoire : create et update la recalculent
     // depuis les deux PNJ lus dans la transaction.
     if (Object.hasOwn(input, 'visibleJoueurs')) {
@@ -241,6 +249,7 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
                 const base = Object.fromEntries(RELATION_FIELDS
                     .filter(field => field !== 'label' || currentData.label !== '')
                     .map(field => [field, currentData[field]]));
+                if (Object.hasOwn(currentData, 'curvature')) base.curvature = currentData.curvature;
                 const next = fullRelation({ ...base, ...(patch ?? {}) });
                 const source = await transaction.get(documentRef(sdk, db, 'pnjs', next.source));
                 const cible = await transaction.get(documentRef(sdk, db, 'pnjs', next.cible));
@@ -266,7 +275,11 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
                 if (pair && (!reciprocalData || !sameRelationFields(reciprocalData, reverseRelation(currentData)))) {
                     throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'update-relation-reciprocal' });
                 }
-                const nextReverse = pair ? reverseRelation(next) : null;
+                let nextReverse = pair ? reverseRelation(next) : null;
+                if (pair && !Object.hasOwn(patch ?? {}, 'curvature')) {
+                    if (Object.hasOwn(reciprocalData, 'curvature')) nextReverse.curvature = reciprocalData.curvature;
+                    else delete nextReverse.curvature;
+                }
                 const nextReverseId = nextReverse ? relationId(nextReverse) : null;
                 const nextRef = documentRef(sdk, db, 'relations', nextId);
                 const nextReverseRef = nextReverseId ? documentRef(sdk, db, 'relations', nextReverseId) : null;
@@ -313,6 +326,18 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
         return update(id, patch, undefined, { ...options, force: true });
     }
 
+    async function saveCurvature(id, curvature) {
+        if (!validId(id)) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'save-relation-curvature' });
+        if (curvature !== null && (typeof curvature !== 'number' || !Number.isFinite(curvature)
+            || curvature < -6 || curvature > 6)) {
+            throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'save-relation-curvature' });
+        }
+        try {
+            if (typeof sdk.updateDoc !== 'function') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'save-relation-curvature' });
+            await sdk.updateDoc(documentRef(sdk, db, 'relations', id), { curvature, updatedAt: serverTimestamp(sdk) });
+        } catch (error) { throw mutationError(error, 'save-relation-curvature'); }
+    }
+
     async function remove(id, pairOrOptions = false) {
         if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'delete-relation' });
         if (!validId(id)) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'delete-relation' });
@@ -350,7 +375,7 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
         } catch (error) { throw mutationError(error, 'delete-relation'); }
     }
 
-    const repository = Object.freeze({ subscribeVisible, setVisiblePnjIds, findForPnj });
+    const repository = Object.freeze({ subscribeVisible, setVisiblePnjIds, findForPnj, saveCurvature });
     if (isMj) return Object.freeze({ ...repository, subscribeAll, create, update, forceUpdate, remove });
     return repository;
 }

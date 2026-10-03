@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [html, pnjs, base, parchment, components, doodle] = await Promise.all(
-    ['pnjs.html', 'js/pnjs.js', 'css/base.css', 'css/theme-parchment.css', 'css/components.css', 'css/doodle.css']
+const [html, pnjs, base, parchment, components, doodle, curves] = await Promise.all(
+    ['pnjs.html', 'js/pnjs.js', 'css/base.css', 'css/theme-parchment.css', 'css/components.css', 'css/doodle.css', 'js/pnj-link-curves.js']
         .map(path => readFile(path, 'utf8')),
 );
 
@@ -146,13 +146,14 @@ test('les libellés de lien s’écrivent à l’endroit et au centre', () => {
     assert.match(pnjs, /pnj-lpr-\$\{i\}/u);
     assert.match(pnjs, /d\.target\.x < d\.source\.x \? `#pnj-lpr-\$\{i\}` : `#pnj-lp-\$\{i\}`/u);
     assert.match(pnjs, /\.attr\('text-anchor', 'middle'\)/u);
-    assert.match(pnjs, /function bezierPath\([^)]*reversed = false\)/u);
+    assert.match(curves, /function bezierPath\([^)]*reversed = false, nodeRadius = 30\)/u);
+    assert.match(pnjs, /bezierPath\(d.source.x, d.source.y, d.target.x, d.target.y, d._curveScale \?\? 1, true, NODE_R\)/u);
 });
 
 test('les médaillons remplacent les cartouches', () => {
     assert.doesNotMatch(pnjs, /CARD_W|CARD_H|node-accent/u);
     assert.match(pnjs, /PORTRAIT_R = 27\.5, RING_W = 2\.5/u);
-    assert.match(pnjs, /const edge = NODE_R \+ 3;/u);
+    assert.match(curves, /nodeRadius : 30\) \+ 3/u);
     assert.match(pnjs, /d3\.forceCollide\(70\)/u);
     assert.match(pnjCss, /paint-order: stroke;/u);
 });

@@ -80,6 +80,11 @@ test('les normaliseurs imposent l’id du snapshot et échouent fermement sur le
     assert.equal(relation.visibleJoueurs, true);
     assert.ok(relation.issues.some(item => item.code === 'self-reference'));
     assert.ok(relation.issues.some(item => item.code === 'invalid-css-color'));
+    assert.equal(Object.hasOwn(relation, 'curvature'), false);
+    assert.equal(normalizeRelation({ id: 'r-auto', data: { source: 'p-1', cible: 'p-2', type: 'allié', curvature: null } }).curvature, null);
+    assert.equal(normalizeRelation({ id: 'r-curve', data: { source: 'p-1', cible: 'p-2', type: 'allié', curvature: -4 } }).curvature, -4);
+    assert.ok(normalizeRelation({ id: 'r-bad-curve', data: { source: 'p-1', cible: 'p-2', type: 'allié', curvature: 7 } })
+        .issues.some(item => item.field === 'curvature'));
 
     const indice = normalizeIndice({ id: 'i-1', data: {
         titre: 'Indice', pnjsLies: Array.from({ length: 101 }, (_, index) => `p-${index}`), decouvert: 'true',

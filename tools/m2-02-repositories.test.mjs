@@ -47,6 +47,7 @@ function makeFirestore() {
         serverTimestamp: () => ({ __serverTimestamp: true }),
         arrayRemove: value => ({ __arrayRemove: value }),
         getDoc: async ref => snap(ref, collectionMap(ref.collection).get(ref.id)),
+        updateDoc: async (ref, data) => applyUpdate(ref, data),
         getDocs: async target => {
             const collection = target.collection ?? target;
             state.getDocsCalls += 1;
@@ -277,6 +278,51 @@ test('une mise à jour de relation re-clé sûrement et refuse un miroir non pro
         { pair: true, reciprocalId: pair.reciprocalId });
     assert.equal(fake.collectionMap('relations').get(pairUpdated.nextId).label, 'Nouveau miroir');
     assert.equal(fake.collectionMap('relations').get(pairUpdated.reciprocalId).label, 'Nouveau miroir');
+});
+
+test('la courbure survit aux mises à jour et re-clés, et chaque direction garde sa valeur', async () => {
+    const fake = makeFirestore();
+    const pnjRepo = createMjPnjRepository(fake);
+    const repo = createMjRelationsRepository(fake);
+    await pnjRepo.create({ id: 'a', nom: 'Ada', visibleJoueurs: true });
+    await pnjRepo.create({ id: 'b', nom: 'Bob', visibleJoueurs: true });
+    const pair = await repo.create({ source: 'a', cible: 'b', type: 'lien' }, true);
+    await repo.saveCurvature(pair.id, -2.5);
+    await repo.saveCurvature(pair.reciprocalId, 3.25);
+    const changed = await repo.update(pair.id, { label: 'renommé' }, undefined,
+        { pair: true, reciprocalId: pair.reciprocalId });
+    assert.equal(fake.collectionMap('relations').get(changed.nextId).curvature, -2.5);
+    assert.equal(fake.collectionMap('relations').get(changed.reciprocalId).curvature, 3.25);
+    const rekeyed = await repo.update(changed.nextId, { type: 'nouveau' }, undefined,
+        { pair: true, reciprocalId: changed.reciprocalId });
+    assert.equal(fake.collectionMap('relations').get(rekeyed.nextId).curvature, -2.5);
+    assert.equal(fake.collectionMap('relations').get(rekeyed.reciprocalId).curvature, 3.25);
+    await assert.rejects(repo.saveCurvature(rekeyed.nextId, Number.NaN), error => error.kind === ERROR_KINDS.VALIDATION);
+    await assert.rejects(repo.saveCurvature(rekeyed.nextId, 6.01), error => error.kind === ERROR_KINDS.VALIDATION);
+});
+
+test('une réciproque sans courbure reste sans champ lors du rekey de sa paire', async () => {
+    const fake = makeFirestore();
+    const pnjs = createMjPnjRepository(fake);
+    const repo = createMjRelationsRepository(fake);
+    await pnjs.create({ id: 'a', nom: 'Ada', visibleJoueurs: true });
+    await pnjs.create({ id: 'b', nom: 'Bob', visibleJoueurs: true });
+    const pair = await repo.create({ source: 'a', cible: 'b', type: 'lien' }, true);
+    await repo.saveCurvature(pair.id, 2);
+    const reverse = fake.collectionMap('relations').get(pair.reciprocalId);
+    delete reverse.curvature;
+    const updated = await repo.update(pair.id, { label: 'renommé' }, undefined,
+        { pair: true, reciprocalId: pair.reciprocalId });
+    assert.equal(fake.collectionMap('relations').get(updated.nextId).curvature, 2);
+    assert.equal(Object.hasOwn(fake.collectionMap('relations').get(updated.reciprocalId), 'curvature'), false);
+});
+
+test('saveCurvature est exposé au dépôt public et n’accepte que null ou une valeur bornée', async () => {
+    const fake = makeFirestore();
+    const repo = createPublicRelationsRepository({ ...fake, visiblePnjIds: ['a', 'b'] });
+    assert.equal(typeof repo.saveCurvature, 'function');
+    await assert.rejects(repo.saveCurvature('r', Infinity), error => error.kind === ERROR_KINDS.VALIDATION);
+    await assert.rejects(repo.saveCurvature('r', -6.1), error => error.kind === ERROR_KINDS.VALIDATION);
 });
 
 test('les validations de relation sont fail-closed et aucune écriture partielle ne survient', async () => {

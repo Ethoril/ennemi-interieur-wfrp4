@@ -3852,3 +3852,28 @@ strong {
     navigation: none;
   }
 }
+
+/* Shared curve editing stays within the graph in regular and fullscreen views. */
+.pnj-link-hit { cursor: pointer; pointer-events: stroke; outline: none; }
+.pnj-link-selected { stroke-width: 5; }
+.pnj-link-hit:focus-visible { stroke: var(--gold); stroke-opacity: .35; }
+.pnj-link-labels { pointer-events: none; }
+.pnj-curve-handle { cursor: move; outline: none; }
+.pnj-curve-handle circle { fill: var(--bg-dark); stroke: var(--gold); stroke-width: 3; }
+.pnj-curve-handle:focus-visible circle, .pnj-curve-handle:hover circle { fill: var(--gold); stroke: var(--text-primary); }
+.pnj-curve-controls {
+  position: absolute; z-index: 10; top: 50px; right: 8px;
+  width: min(360px, calc(100% - 16px)); padding: 10px;
+  border: 1px solid var(--border-gold); border-radius: var(--radius-md);
+  background: var(--bg-card); box-shadow: var(--shadow-lg); cursor: default;
+  font-size: .8rem;
+}
+.pnj-curve-controls[hidden] { display: none; }
+.pnj-curve-heading { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+.pnj-curve-heading strong { flex: 1; overflow-wrap: anywhere; }
+.pnj-curve-controls button { font: inherit; color: var(--gold); background: var(--bg-dark); border: 1px solid var(--border-gold); border-radius: var(--radius-sm); padding: 3px 8px; cursor: pointer; }
+.pnj-curve-controls button:disabled { opacity: .55; cursor: default; }
+.pnj-curve-controls label { display: flex; justify-content: space-between; gap: 8px; }
+.pnj-curve-controls input[type="range"] { width: 100%; accent-color: var(--gold); }
+#pnj-curve-status { margin: 4px 0 0; min-height: 1em; }
+#pnj-curve-status[data-kind="error"] { color: var(--danger, var(--text-primary)); }

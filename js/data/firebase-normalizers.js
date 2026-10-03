@@ -218,7 +218,7 @@ export function normalizeRelation(snapshot) {
     const safeColor = /^(?:#[0-9a-f]{3}|#[0-9a-f]{4}|#[0-9a-f]{6}|#[0-9a-f]{8})$/iu.test(color) ? color : null;
     if (color && !safeColor) issues.push(issue('color', 'invalid-css-color'));
     if (data.style !== undefined && style === '') issues.push(issue('style', 'invalid-value'));
-    return finish({
+    const result = {
         source: validId(source) ? source : '',
         cible: validId(cible) ? cible : '',
         type: text(data, 'type', issues, { max: 100 }),
@@ -228,7 +228,20 @@ export function normalizeRelation(snapshot) {
         visibleJoueurs: boolean(data, 'visibleJoueurs', issues),
         createdAt: timestamp(data, 'createdAt', issues),
         updatedAt: timestamp(data, 'updatedAt', issues),
-    }, id, issues);
+    };
+    // Preserve legacy object shape when curvature is absent. Explicit null
+    // remains the automatic-routing value and finite values are clamped by
+    // validation at the repository/rules boundary.
+    if (Object.hasOwn(data, 'curvature')) {
+        if (data.curvature === null || (typeof data.curvature === 'number' && Number.isFinite(data.curvature)
+            && data.curvature >= -6 && data.curvature <= 6)) {
+            result.curvature = data.curvature;
+        } else {
+            issues.push(issue('curvature', 'invalid-type'));
+            result.curvature = null;
+        }
+    }
+    return finish(result, id, issues);
 }
 
 export function normalizeIndice(snapshot) {

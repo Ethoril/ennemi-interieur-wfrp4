@@ -12,6 +12,7 @@ import { reconcileFilterSets, panelIsStillCurrent, safeRelationColorValue } from
 import { statutLabel, vivantLabel, sealMarkup, morrMarkup } from './seal.js';
 import { pnjGroups, groupCatalog, groupLabel, groupKey, matchesGroupFilter } from './pnj-groups.js';
 import { createGroupPicker } from './pnj-group-picker.js';
+import { assignCurveLanes, bezierPath, curveHandlePoint, curveFromPoint } from './pnj-link-curves.js';
 import { createGraphDisplay } from './pnj-graph-display.js';
 import { rememberGraphNodes, restoreGraphNodes, applySharedGraphPositions } from './pnj-graph-layout.js';
 
@@ -89,6 +90,11 @@ let unsubscribePositions = null;
 let positionsSubscriptionKey = null;
 let positionsGeneration = 0;
 let positionSaveSequence = 0;
+let selectedCurveId = null;
+let curveGeneration = 0;
+let curveSequence = 0;
+const curvePreviews = new Map();
+const remoteCurvatures = new Map();
 // Déclencheur de la modale d'édition (« ＋ PNJ », « Modifier », « ✏ ») et sa
 // clé focusKey : la fiche ou le tableau peuvent l'avoir réécrit entre-temps.
 let _pnjModalReturn = null;
@@ -222,30 +228,6 @@ function renderPalette(selectedColor, inputId) {
     return `<div class="rel-color-palette" data-input="${esc(inputId)}">${
         REL_PALETTE.map(c => `<button type="button" class="color-swatch${c === selectedColor ? ' active' : ''}" data-color="${c}" style="background:${c}" title="${c}"></button>`).join('')
     }</div><input type="hidden" id="${esc(inputId)}" value="${esc(selectedColor)}">`;
-}
-
-// `reversed` parcourt la même courbe depuis la cible : le libellé d'un lien
-// qui va de droite à gauche s'y écrit à l'endroit.
-function bezierPath(x1, y1, x2, y2, curveScale = 1, reversed = false) {
-    const dx = x2 - x1, dy = y2 - y1;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const curve = Math.min(len * 0.3, 80) * curveScale;
-    // Point de contrôle basé sur les centres (pour une courbure cohérente)
-    const mx = (x1 + x2) / 2 - dy / len * curve;
-    const my = (y1 + y2) / 2 + dx / len * curve;
-
-    // Le médaillon est un cercle : le recul ne dépend plus de la direction.
-    const edge = NODE_R + 3;
-
-    // Recule le point source jusqu'au bord de son médaillon (tangente en t=0)
-    const sdx = mx - x1, sdy = my - y1, sl = Math.sqrt(sdx*sdx + sdy*sdy) || 1;
-    const sx = x1 + sdx / sl * edge, sy = y1 + sdy / sl * edge;
-
-    // Recule le point cible jusqu'au bord de son médaillon (tangente en t=1)
-    const tdx = x2 - mx, tdy = y2 - my, tl = Math.sqrt(tdx*tdx + tdy*tdy) || 1;
-    const ex = x2 - tdx / tl * edge, ey = y2 - tdy / tl * edge;
-
-    return reversed ? `M${ex},${ey} Q${mx},${my} ${sx},${sy}` : `M${sx},${sy} Q${mx},${my} ${ex},${ey}`;
 }
 
 function repositoryPnjToPage(node) {
@@ -477,6 +459,15 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
             }
             state.links = relations.filter(link => nodeIds.has(link.source) && nodeIds.has(link.cible))
                 .map(link => ({ ...link, target: link.cible }));
+            remoteCurvatures.clear();
+            state.links.forEach(link => {
+                remoteCurvatures.set(link.id, link.curvature ?? null);
+                const preview = curvePreviews.get(link.id);
+                if (preview) link.curvature = preview.value;
+            });
+            for (const id of curvePreviews.keys()) {
+                if (!remoteCurvatures.has(id)) curvePreviews.delete(id);
+            }
             bureauData.relations.setVisiblePnjIds?.([...nodeIds]);
             await Promise.all(state.nodes.map(async node => {
             node.legacyImageUrl = node.imageUrl || '';
@@ -504,6 +495,9 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
 
         // Le graphe est reconstruit à chaque émission : un nœud focalisé au
         // clavier doit le rester après la reconstruction.
+        const focusedCurve = document.activeElement?.closest?.('.pnj-link-hit, .pnj-curve-handle');
+        const focusedCurveId = focusedCurve ? d3.select(focusedCurve).datum()?.id : null;
+        const focusedWasHandle = focusedCurve?.classList.contains('pnj-curve-handle');
         const focusedNodeId = document.activeElement?.closest?.('.pnj-node')
             ? d3.select(document.activeElement.closest('.pnj-node')).datum()?.id : null;
         // Enfant direct : la légende, dans #pnj-graph, contient aussi des SVG (sceaux).
@@ -517,6 +511,13 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
         // si les facettes ont changé, pour ne pas voler le focus d'un joueur.
         buildFilters();
         if (state.nodes.length) buildGraph();
+        else updateCurveControls();
+        if (focusedCurveId) {
+            const selector = focusedWasHandle ? state.curveHandleSel : state.linkHitSel;
+            const restored = selector?.filter(link => link.id === focusedCurveId).node();
+            if (restored && restored.getAttribute('tabindex') !== '-1') restored.focus();
+            else document.getElementById('pnj-graph')?.focus();
+        }
         // Nœud retiré ou filtré : le focus se replie sur le graphe plutôt que sur body.
         if (focusedNodeId && !focusGraphNode(focusedNodeId)) document.getElementById('pnj-graph')?.focus();
 
@@ -1215,6 +1216,7 @@ function graphPositionStatus(message, kind = '') {
 function resetPositionSubscriptions() {
     positionsGeneration += 1;
     positionSaveSequence += 1;
+    resetCurveControls();
     unsubscribePositions?.();
     unsubscribePositions = null;
     positionsSubscriptionKey = null;
@@ -1280,6 +1282,110 @@ async function saveGraphPosition(node) {
     }
 }
 
+function curveRelationName(link) {
+    const sourceId = link.source?.id ?? link.source;
+    const targetId = link.target?.id ?? link.cible ?? link.target;
+    const source = state.nodes.find(node => node.id === sourceId)?.nom || 'Personnage';
+    const target = state.nodes.find(node => node.id === targetId)?.nom || 'Personnage';
+    return `${source} → ${target} · ${link.label || link.type || 'Relation'}`;
+}
+
+function curveIsVisible(link) {
+    const source = state.nodes.find(node => node.id === (link.source?.id ?? link.source));
+    const target = state.nodes.find(node => node.id === (link.target?.id ?? link.cible ?? link.target));
+    return Boolean(source && target && isVisible(source) && isVisible(target));
+}
+
+function curveStatus(message, kind = '') {
+    const status = document.getElementById('pnj-curve-status');
+    status.textContent = message;
+    status.dataset.kind = kind;
+}
+
+function resetCurveControls() {
+    const focused = document.activeElement;
+    if (focused?.closest?.('.pnj-curve-handle, .pnj-link-hit, #pnj-curve-controls')) document.getElementById('pnj-graph')?.focus();
+    curveGeneration++;
+    selectedCurveId = null;
+    curvePreviews.clear();
+    remoteCurvatures.clear();
+    curveStatus('');
+    document.getElementById('pnj-curve-controls').hidden = true;
+    document.getElementById('pnj-curve-name').textContent = '';
+    document.getElementById('pnj-curve-range').value = 0;
+    document.getElementById('pnj-curve-value').textContent = 'Automatique';
+}
+
+function updateCurveControls() {
+    const current = state.links.find(link => link.id === selectedCurveId && curveIsVisible(link));
+    const controls = document.getElementById('pnj-curve-controls');
+    controls.hidden = !current;
+    if (!current) {
+        if (document.activeElement?.closest?.('#pnj-curve-controls, .pnj-curve-handle')) document.getElementById('pnj-graph')?.focus();
+        selectedCurveId = null;
+        document.getElementById('pnj-curve-name').textContent = '';
+        document.getElementById('pnj-curve-range').value = 0;
+        document.getElementById('pnj-curve-value').textContent = 'Automatique';
+        curveStatus('');
+    }
+    state.curveHandleSel?.style('display', d => d.id === selectedCurveId ? null : 'none')
+        .attr('aria-hidden', d => d.id === selectedCurveId ? null : 'true')
+        .attr('tabindex', d => d.id === selectedCurveId ? 0 : -1);
+    state.linkHitSel?.attr('aria-pressed', d => String(d.id === selectedCurveId));
+    state.linkSel?.classed('pnj-link-selected', d => d.id === selectedCurveId);
+    if (!current) return;
+    document.getElementById('pnj-curve-name').textContent = curveRelationName(current);
+    const value = current.curvature ?? curveFromPoint(current, curveHandlePoint(current, NODE_R), NODE_R);
+    document.getElementById('pnj-curve-range').value = value;
+    document.getElementById('pnj-curve-value').textContent = current.curvature == null ? 'Automatique' : `${value}`;
+    document.getElementById('pnj-curve-auto').setAttribute('aria-pressed', String(current.curvature == null));
+}
+
+function selectCurve(id, focusHandle = false) {
+    if (selectedCurveId !== id) curveStatus('');
+    selectedCurveId = id;
+    updateCurveControls();
+    if (focusHandle) state.curveHandleSel?.filter(d => d.id === id).node()?.focus();
+}
+
+function previewCurve(id, value) {
+    const current = state.links.find(link => link.id === id);
+    if (!current) return;
+    curvePreviews.set(id, { value });
+    current.curvature = value;
+    assignCurveLanes(state.links);
+    state.redrawCurves?.();
+    updateCurveControls();
+}
+
+async function saveCurve(id, value) {
+    const repository = bureauData?.relations;
+    const generation = curveGeneration;
+    if (!state.links.some(link => link.id === id && curveIsVisible(link))) return;
+    const sequence = ++curveSequence;
+    previewCurve(id, value);
+    curvePreviews.set(id, { value, sequence });
+    curveStatus('Enregistrement…', 'pending');
+    try {
+        if (!repository?.saveCurvature) throw new Error('Tracé indisponible');
+        await repository.saveCurvature(id, value);
+        if (generation !== curveGeneration || curvePreviews.get(id)?.sequence !== sequence) return;
+        curvePreviews.delete(id);
+        if (selectedCurveId === id) curveStatus('Courbure enregistrée et partagée.');
+    } catch {
+        if (generation !== curveGeneration || curvePreviews.get(id)?.sequence !== sequence) return;
+        curvePreviews.delete(id);
+        const current = state.links.find(link => link.id === id);
+        if (current) {
+            current.curvature = remoteCurvatures.get(id) ?? null;
+            assignCurveLanes(state.links);
+            state.redrawCurves?.();
+            updateCurveControls();
+        }
+        if (selectedCurveId === id) curveStatus('Courbure non enregistrée. Réessayez.', 'error');
+    }
+}
+
 // ── Graph ──────────────────────────────────────────────────────
 function buildGraph() {
     const fitShared = !state.zoomTransform && sharedGraphPositions.size > 0;
@@ -1307,21 +1413,9 @@ function buildGraph() {
     svg.call(zoom.transform, state.zoomTransform || d3.zoomIdentity
         .translate(state.graphW / 2 * (1 - initialScale), state.graphH / 2 * (1 - initialScale))
         .scale(initialScale));
-    svg.on('click', () => closePanel());
+    svg.on('click', () => { selectCurve(null); closePanel(); });
 
-    // Offsets pour liens parallèles entre les mêmes nœuds
-    const pairCount = new Map(), pairIdx = new Map();
-    state.links.forEach(l => {
-        const key = [l.source, l.target].sort().join('|');
-        pairCount.set(key, (pairCount.get(key) || 0) + 1);
-    });
-    state.links.forEach(l => {
-        const key = [l.source, l.target].sort().join('|');
-        const idx = pairIdx.get(key) || 0;
-        l._curveScale = Math.ceil((idx + 1) / 2) * (idx % 2 === 0 ? 1 : -1);
-        l._showLabel = idx % 2 === 0;
-        pairIdx.set(key, idx + 1);
-    });
+    assignCurveLanes(state.links);
 
     // Marqueurs de flèches (un par couleur unique)
     const defs = svg.append('defs');
@@ -1344,6 +1438,17 @@ function buildGraph() {
         .attr('stroke-dasharray', d => d.style === 'dashed' ? '8 5' : null)
         .attr('marker-end', d => `url(#arrow-${safeRelationColor(d.color, d.type).replace(/[^a-zA-Z0-9]/g, '')})`)
         .attr('opacity', 0.8).attr('fill', 'none');
+
+    // Larger invisible strokes make link selection usable by mouse, touch and keyboard.
+    state.linkHitSel = linkG.selectAll('path.pnj-link-hit').data(state.links).join('path')
+        .attr('class', 'pnj-link-hit').attr('fill', 'none').attr('stroke', 'transparent')
+        .attr('stroke-width', 16).attr('tabindex', 0).attr('role', 'button')
+        .attr('aria-label', d => `Régler la courbure : ${curveRelationName(d)}`)
+        .on('click', (e, d) => { e.stopPropagation(); selectCurve(d.id); })
+        .on('keydown', (e, d) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault(); e.stopPropagation(); selectCurve(d.id, true);
+        });
 
     // Chaque lien a son double inversé, jamais dessiné : le libellé s'y
     // accroche quand la cible est à gauche de la source.
@@ -1460,6 +1565,55 @@ function buildGraph() {
             + (vivantKey(d) === 'non' ? morrMarkup({ size: 20, x: MARK_OFFSET, y: -MARK_OFFSET }) : ''));
 
     state.nodeSel = nodeG;
+    state.curveHandleSel = g.append('g').selectAll('g').data(state.links).join('g')
+        .attr('class', 'pnj-curve-handle').attr('role', 'button')
+        .attr('aria-label', d => `Déplacer la courbure : ${curveRelationName(d)}. Utilisez les flèches pour ajuster.`)
+        .call(d3.drag()
+            .on('start', (e, d) => {
+                e.sourceEvent?.stopPropagation();
+                d._curveGeneration = curveGeneration;
+                state.simulation?.stop();
+            })
+            .on('drag', (e, d) => {
+                if (d._curveGeneration !== curveGeneration) return;
+                const current = state.links.find(link => link.id === d.id);
+                if (current) previewCurve(d.id, curveFromPoint(current, { x: e.x, y: e.y }, NODE_R));
+            })
+            .on('end', (e, d) => {
+                if (d._curveGeneration !== curveGeneration) return;
+                const current = state.links.find(link => link.id === d.id);
+                if (current) void saveCurve(d.id, curveFromPoint(current, { x: e.x, y: e.y }, NODE_R));
+            }))
+        .on('click', e => e.stopPropagation())
+        .on('keydown', (e, d) => {
+            if (e.key === 'Escape') {
+                e.preventDefault(); e.stopPropagation(); selectCurve(null);
+                state.linkHitSel?.filter(link => link.id === d.id).node()?.focus();
+                return;
+            }
+            if (!['ArrowLeft', 'ArrowDown', 'ArrowRight', 'ArrowUp', 'Home'].includes(e.key)) return;
+            e.preventDefault(); e.stopPropagation();
+            const current = state.links.find(link => link.id === d.id);
+            if (!current) return;
+            const value = e.key === 'Home' ? 0 : Math.max(-6, Math.min(6,
+                curveFromPoint(current, curveHandlePoint(current, NODE_R), NODE_R)
+                + (['ArrowLeft', 'ArrowDown'].includes(e.key) ? -0.25 : 0.25)));
+            previewCurve(d.id, value);
+            void saveCurve(d.id, value);
+        });
+    state.curveHandleSel.append('circle').attr('r', 10);
+    state.curveHandleSel.append('title').text('Déplacez cette poignée pour courber la liaison');
+    state.redrawCurves = () => {
+        const path = d => bezierPath(d.source.x, d.source.y, d.target.x, d.target.y, d._curveScale ?? 1, false, NODE_R);
+        state.linkSel.attr('d', path);
+        state.linkHitSel.attr('d', path);
+        reversedSel.attr('d', d => bezierPath(d.source.x, d.source.y, d.target.x, d.target.y, d._curveScale ?? 1, true, NODE_R));
+        textPathSel.attr('href', (d, i) => d.target.x < d.source.x ? `#pnj-lpr-${i}` : `#pnj-lp-${i}`);
+        state.curveHandleSel.attr('transform', d => {
+            const point = curveHandlePoint(d, NODE_R);
+            return `translate(${point.x},${point.y})`;
+        });
+    };
 
     state.simulation = d3.forceSimulation(state.nodes)
         .force('link',    d3.forceLink(state.links).id(d => d.id).distance(240))
@@ -1469,11 +1623,7 @@ function buildGraph() {
         .force('collide', d3.forceCollide(70))
         .on('tick', () => {
             state.graphTicked = true;
-            state.linkSel.attr('d', d => bezierPath(d.source.x, d.source.y, d.target.x, d.target.y, d._curveScale ?? 1));
-            // La direction d'un lien change pendant la simulation : le chemin
-            // inversé et le choix du chemin porteur suivent à chaque tick.
-            reversedSel.attr('d', d => bezierPath(d.source.x, d.source.y, d.target.x, d.target.y, d._curveScale ?? 1, true));
-            textPathSel.attr('href', (d, i) => d.target.x < d.source.x ? `#pnj-lpr-${i}` : `#pnj-lp-${i}`);
+            state.redrawCurves();
             state.nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
         })
         .on('end', () => {
@@ -1488,6 +1638,7 @@ function buildGraph() {
 
     updateVisibility();
     updateLegend();
+    updateCurveControls();
     if (fitShared) { fitGraphView(); state.pendingFit = true; }
 }
 
@@ -1577,6 +1728,10 @@ function updateVisibility() {
         const s = d.source.id ?? d.source, t = d.target.id ?? d.target;
         return visIds.has(s) && visIds.has(t) ? 0.7 : 0;
     });
+    state.linkHitSel?.attr('tabindex', d => curveIsVisible(d) ? 0 : -1)
+        .attr('aria-hidden', d => curveIsVisible(d) ? null : 'true')
+        .style('pointer-events', d => curveIsVisible(d) ? 'stroke' : 'none');
+    updateCurveControls();
 }
 
 // ── Detail panel ───────────────────────────────────────────────
@@ -1841,6 +1996,9 @@ function resetPnjView() {
     state.nodeSel = null;
     state.linkSel = null;
     state.linkLabelSel = null;
+    state.linkHitSel = null;
+    state.curveHandleSel = null;
+    state.redrawCurves = null;
     state.dimColorMap = null;
     state.panelId = null;
     state.searchQ = '';
@@ -2097,7 +2255,7 @@ function renderTable() {
 
 // ── View toggle ────────────────────────────────────────────────
 function setView(view) {
-    if (view !== 'graph') void graphDisplay?.exit();
+    if (view !== 'graph') { selectCurve(null); void graphDisplay?.exit(); }
     state.view = view;
     document.getElementById('pnj-graph').style.display           = view === 'graph' ? '' : 'none';
     document.getElementById('pnj-table-container').style.display = view === 'table' ? '' : 'none';
@@ -2173,6 +2331,20 @@ graphDisplay = createGraphDisplay({ onResize: () => {
     });
 } });
 
+document.getElementById('pnj-curve-range').addEventListener('input', e => {
+    if (selectedCurveId) previewCurve(selectedCurveId, Number(e.target.value));
+});
+document.getElementById('pnj-curve-range').addEventListener('change', e => {
+    if (selectedCurveId) void saveCurve(selectedCurveId, Number(e.target.value));
+});
+document.getElementById('pnj-curve-auto').addEventListener('click', () => {
+    if (selectedCurveId && state.links.find(link => link.id === selectedCurveId)?.curvature != null) void saveCurve(selectedCurveId, null);
+});
+document.getElementById('pnj-curve-close').addEventListener('click', () => {
+    const id = selectedCurveId;
+    selectCurve(null);
+    state.linkHitSel?.filter(d => d.id === id).node()?.focus();
+});
 document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', () => setView(btn.dataset.view)));
 document.querySelectorAll('.colorby-btn').forEach(btn => btn.addEventListener('click', () => applyColorBy(btn.dataset.dim)));
 

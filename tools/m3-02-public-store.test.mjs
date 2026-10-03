@@ -338,7 +338,7 @@ test('la composition injectable ne crée que les trois dépôts publics et ferme
     assert.equal(closed, true);
 });
 
-test('la composition publique ne charge ni Auth ni écritures et la CSP reste minimale', () => {
+test('la composition publique autorise le tracé partagé sans Auth et conserve une surface SDK minimale', () => {
     const runtime = read('js/mobile/public-runtime.js');
     assert.doesNotMatch(runtime, /getAuth|signIn|writeBatch|runTransaction|deleteField|arrayRemove/iu);
     assert.equal((runtime.match(/firebasejs\/10\.12\.0\//gu) || []).length, 3,
@@ -350,7 +350,7 @@ test('la composition publique ne charge ni Auth ni écritures et la CSP reste mi
         'collection', 'deleteApp', 'doc', 'documentId', 'enableMultiTabIndexedDbPersistence',
         'enableNetwork', 'getApps', 'getFirestore', 'getStorage', 'initializeApp',
         'initializeFirestore', 'memoryLocalCache', 'onSnapshot', 'persistentLocalCache',
-        'persistentMultipleTabManager', 'query', 'terminate', 'where',
+        'persistentMultipleTabManager', 'query', 'serverTimestamp', 'terminate', 'updateDoc', 'where',
     ].sort());
     assert.match(runtime, /createPublicSessionComposition/u);
     const html = read('app/index.html');

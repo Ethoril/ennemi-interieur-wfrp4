@@ -1,5 +1,5 @@
 import { getApps, initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, enableNetwork, enableMultiTabIndexedDbPersistence, terminate, collection, doc, query, where, documentId, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, enableNetwork, enableMultiTabIndexedDbPersistence, terminate, collection, doc, query, where, documentId, onSnapshot, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getStorage, ref, getBlob } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import { FIREBASE_CONFIG } from '../firebase-config.js';
 import { createPublicSessionComposition } from './public-composition.js';
@@ -7,7 +7,7 @@ import { createPublicSessionComposition } from './public-composition.js';
 const firestoreSdk = Object.freeze({
     getApps, initializeApp, getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
     memoryLocalCache, enableNetwork, enableMultiTabIndexedDbPersistence, getStorage, terminate, deleteApp,
-    collection, doc, query, where, documentId, onSnapshot,
+    collection, doc, query, where, documentId, onSnapshot, updateDoc, serverTimestamp,
 });
 const storageSdk = Object.freeze({ ref, getBlob });
 

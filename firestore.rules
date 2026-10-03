@@ -130,7 +130,7 @@ service cloud.firestore {
 
     function validRelation(data) {
       return hasOnly(data, ['source', 'cible', 'type', 'label', 'color', 'style',
-          'visibleJoueurs', 'createdAt', 'updatedAt'])
+          'visibleJoueurs', 'curvature', 'createdAt', 'updatedAt'])
         && data.visibleJoueurs is bool
         && data.source is string && data.source.size() > 0 && data.source.size() <= 150
         && data.cible is string && data.cible.size() > 0 && data.cible.size() <= 150
@@ -139,6 +139,9 @@ service cloud.firestore {
         && validText(data, 'label', 300)
         && (!data.keys().hasAny(['color']) || data.color == null || validText(data, 'color', 32))
         && (!data.keys().hasAny(['style']) || data.style == 'solid' || data.style == 'dashed')
+        && (!data.keys().hasAny(['curvature']) || data.curvature == null
+            || ((data.curvature is int || data.curvature is float)
+                && data.curvature >= -6 && data.curvature <= 6))
         && validTimestamp(data, 'createdAt')
         && validTimestamp(data, 'updatedAt');
     }
@@ -411,16 +414,24 @@ service cloud.firestore {
           && relationEndpointsExist(request.resource.data)
           && (request.resource.data.visibleJoueurs != true
               || publicRelationEndpointsExist(request.resource.data));
-      allow update: if isGM() && validRelation(request.resource.data)
+      allow update: if (
+          isGM() && validRelation(request.resource.data)
           && validUpdate(resource.data, request.resource.data,
               ['source', 'cible', 'type', 'label', 'color', 'style', 'visibleJoueurs',
-               'createdAt', 'updatedAt'])
+               'curvature', 'createdAt', 'updatedAt'])
           && createdAtUnchanged(resource.data, request.resource.data)
           && hasUpdatedTimestamp(request.resource.data)
           && serverUpdated(request.resource.data)
           && relationEndpointsExist(request.resource.data)
           && (request.resource.data.visibleJoueurs != true
-              || publicRelationEndpointsExist(request.resource.data));
+              || publicRelationEndpointsExist(request.resource.data)))
+        || (!isGM() && validRelation(request.resource.data)
+          && resource.data.visibleJoueurs == true
+          && request.resource.data.visibleJoueurs == true
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curvature', 'updatedAt'])
+          && hasUpdatedTimestamp(request.resource.data)
+          && serverUpdated(request.resource.data)
+          && publicRelationEndpointsExist(request.resource.data));
       allow delete: if isGM();
     }
 

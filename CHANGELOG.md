@@ -1,3 +1,9 @@
+## [2.28.0] - 2026-10-04
+
+- **Graphe PNJs** : courbes automatiques stables qui distinguent les liaisons entre les mêmes personnages, y compris les sens réciproques. Les libellés suivent leurs tracés.
+- **Graphe PNJs** : un clic sur une liaison affiche une poignée déplaçable et un curseur pour ajuster sa courbure, avec retour au mode automatique. Le tracé est enregistré et partagé entre MJ et joueurs, y compris après rechargement. Réglage accessible au clavier et dans le plein écran.
+- **Accès** : les joueurs ne peuvent modifier que le tracé des relations visibles ; le contenu, les endpoints et la visibilité restent contrôlés par le MJ. Les modifications d’une relation préservent les courbes indépendantes de chaque sens.
+
 ## [2.27.0] - 2026-10-03
 
 - **Graphe PNJs** : les déplacements sont enregistrés automatiquement et partagés en temps réel entre tous les écrans, joueurs compris. Les positions des PNJs masqués restent réservées au MJ. Le graphe conserve les positions après rechargement et changement de filtres.

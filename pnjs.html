@@ -86,10 +86,17 @@
                 </div>
 
                 <!-- Graphe -->
-                <p id="pnj-graph-help" class="visually-hidden">Réseau des personnages non-joueurs rencontrés durant la campagne. Chaque personnage est un bouton : Tab pour passer de l'un à l'autre, Entrée ou Espace pour afficher sa fiche, Échap pour la fermer.</p>
+                <p id="pnj-graph-help" class="visually-hidden">Réseau des personnages non-joueurs rencontrés durant la campagne. Chaque personnage est un bouton : Tab pour passer de l'un à l'autre, Entrée ou Espace pour afficher sa fiche, Échap pour la fermer. Cliquez sur une liaison pour ajuster sa courbure avec une poignée ou les flèches du clavier.</p>
                 <div id="pnj-graph" tabindex="-1" role="group" aria-label="Réseau des personnages" aria-describedby="pnj-graph-help">
                     <button type="button" id="pnj-fullscreen-toggle" class="pnj-fullscreen-toggle" aria-pressed="false" aria-label="Afficher le graphe en plein écran">⛶ Plein écran</button>
                     <p id="pnj-position-status" class="pnj-position-status" role="status" hidden></p>
+                    <div id="pnj-curve-controls" class="pnj-curve-controls" role="group" aria-label="Réglage de la courbure" hidden>
+                        <div class="pnj-curve-heading"><strong id="pnj-curve-name"></strong><button type="button" id="pnj-curve-close" aria-label="Fermer le réglage de courbure">×</button></div>
+                        <label for="pnj-curve-range">Courbure <output id="pnj-curve-value" for="pnj-curve-range">Automatique</output></label>
+                        <input type="range" id="pnj-curve-range" min="-6" max="6" step="0.01" value="0">
+                        <button type="button" id="pnj-curve-auto">Courbure automatique</button>
+                        <p id="pnj-curve-status" role="status"></p>
+                    </div>
                     <div id="pnj-loading">
                         <div class="pnj-spinner"></div>
                         <span class="loading-text">Chargement des personnages...</span>
