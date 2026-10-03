@@ -9,12 +9,13 @@
 import { app, auth, db, storage, functions } from './firebase-init.js';
 import { createBureauClient } from './data/firebase-clients.js';
 import { createMjPnjRepository, createPublicPnjRepository } from './data/pnjs-repository.js';
+import { createPnjPositionsRepository } from './data/pnj-positions-repository.js';
 import { createMjRelationsRepository, createPublicRelationsRepository } from './data/relations-repository.js';
 import { createMjIndicesRepository, createPublicIndicesRepository } from './data/indices-repository.js';
 import { createMjImagesRepository, createPublicImagesRepository } from './data/images-repository.js';
 import { createCarnavalRepository } from './data/carnaval-repository.js';
 import { collection, doc, query, where, getDoc, getDocs, updateDoc, deleteDoc, writeBatch,
-    deleteField, serverTimestamp, arrayRemove, runTransaction, onSnapshot } from
+    deleteField, serverTimestamp, arrayRemove, runTransaction, onSnapshot, documentId } from
     'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { ref, getBlob } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 import { uploadProtectedImage } from './protected-upload.js';
@@ -24,7 +25,7 @@ import { recoverPendingProtectedUploads } from './protected-upload-recovery.js';
 
 const firestoreSdk = Object.freeze({
     collection, doc, query, where, getDoc, getDocs, updateDoc, deleteDoc, writeBatch,
-    deleteField, serverTimestamp, arrayRemove, runTransaction, onSnapshot,
+    deleteField, serverTimestamp, arrayRemove, runTransaction, onSnapshot, documentId,
 });
 const storageSdk = Object.freeze({ ref, getBlob });
 
@@ -63,6 +64,7 @@ export function createBureauData({ isAdmin = false } = {}) {
     const pnjs = isAdmin
         ? createMjPnjRepository({ sdk: firestoreSdk, client, imageService })
         : createPublicPnjRepository({ sdk: firestoreSdk, client });
+    const positions = createPnjPositionsRepository({ sdk: firestoreSdk, client, role: isAdmin ? 'mj' : 'public' });
     const relations = isAdmin
         ? createMjRelationsRepository({ sdk: firestoreSdk, client })
         : createPublicRelationsRepository({ sdk: firestoreSdk, client });
@@ -78,10 +80,11 @@ export function createBureauData({ isAdmin = false } = {}) {
         if (closed) return;
         closed = true;
         carnaval?.close();
+        positions.close();
         imageService.close?.();
         await client.close();
     };
     // Les primitives Firebase restent privées à cette composition : les pages
     // ne reçoivent que des dépôts et le cycle de vie.
-    return Object.freeze({ pnjs, relations, indices, carnaval, images: imageService, close });
+    return Object.freeze({ pnjs, positions, relations, indices, carnaval, images: imageService, close });
 }

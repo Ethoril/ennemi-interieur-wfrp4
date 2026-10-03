@@ -12,6 +12,8 @@ import { reconcileFilterSets, panelIsStillCurrent, safeRelationColorValue } from
 import { statutLabel, vivantLabel, sealMarkup, morrMarkup } from './seal.js';
 import { pnjGroups, groupCatalog, groupLabel, groupKey, matchesGroupFilter } from './pnj-groups.js';
 import { createGroupPicker } from './pnj-group-picker.js';
+import { createGraphDisplay } from './pnj-graph-display.js';
+import { rememberGraphNodes, restoreGraphNodes, applySharedGraphPositions } from './pnj-graph-layout.js';
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
@@ -79,6 +81,14 @@ let cropGeneration = 0;
 let cropSourceUrl = null;
 let localPreviewUrl = null;
 let groupPicker = null;
+let graphDisplay = null;
+const sharedGraphPositions = new Map();
+const graphNodeMemory = new Map();
+const draggingNodes = new Set();
+let unsubscribePositions = null;
+let positionsSubscriptionKey = null;
+let positionsGeneration = 0;
+let positionSaveSequence = 0;
 // Déclencheur de la modale d'édition (« ＋ PNJ », « Modifier », « ✏ ») et sa
 // clé focusKey : la fiche ou le tableau peuvent l'avoir réécrit entre-temps.
 let _pnjModalReturn = null;
@@ -99,6 +109,8 @@ let _panelRewrite = null;
 // doivent pas ramener le joueur sur ce PNJ s'il est passé à un autre.
 let _deepLinkHonored = false;
 window.addEventListener('pagehide', () => {
+    resetPositionSubscriptions();
+    void graphDisplay?.exit();
     bureauGeneration += 1;
     currentLoadId += 1;
     editorSession += 1;
@@ -362,6 +374,7 @@ function handleAuth(user, isAdmin) {
     document.getElementById('add-pnj-btn').style.display = state.isAdmin ? '' : 'none';
     document.getElementById('pnj-private-fields').style.display = state.isAdmin ? '' : 'none';
     if (roleChanged || identityChanged) {
+        resetPositionSubscriptions();
         cancelLinkedIndices();
         unsubscribePnjs?.();
         unsubscribeRelations?.();
@@ -448,7 +461,10 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
             const previousPanelId = state.panelId;
             renderedImageHandles.forEach(release => release());
             renderedImageHandles.clear();
+            rememberGraphNodes(state.nodes, graphNodeMemory);
             state.nodes = nodes.map(repositoryPnjToPage).filter(node => state.isAdmin || visiblePourJoueurs(node));
+            restoreGraphNodes(state.nodes, sharedGraphPositions, graphNodeMemory);
+            subscribeGraphPositions();
             const nodeIds = new Set(state.nodes.map(node => node.id));
             if (state.editingId && !nodeIds.has(state.editingId)) {
                 closePnjModal();
@@ -1094,6 +1110,7 @@ function clearFilterGroups() {
 function clearFilters() {
     clearFilterGroups();
     setFilterCount('Aucun filtre');
+    graphDisplay?.updateGroups({ availableCount: 0, selectedCount: 0 });
 }
 
 // #pnj-filter-count est une région live : la réécrire à l'identique la ferait
@@ -1184,10 +1201,88 @@ function buildFilters() {
 function updateFilterBadge() {
     const activeCount = Object.values(state.active).reduce((count, values) => count + values.size, 0);
     setFilterCount(activeCount ? `${activeCount} filtre${activeCount > 1 ? 's' : ''}` : 'Aucun filtre');
+    graphDisplay?.updateGroups({ availableCount: groupCatalog(state.nodes).length, selectedCount: state.active.groupe.size });
+}
+
+function graphPositionStatus(message, kind = '') {
+    const status = document.getElementById('pnj-position-status');
+    if (!status) return;
+    status.textContent = message;
+    status.dataset.kind = kind;
+    status.hidden = !message;
+}
+
+function resetPositionSubscriptions() {
+    positionsGeneration += 1;
+    positionSaveSequence += 1;
+    unsubscribePositions?.();
+    unsubscribePositions = null;
+    positionsSubscriptionKey = null;
+    sharedGraphPositions.clear();
+    graphNodeMemory.clear();
+    draggingNodes.clear();
+    graphPositionStatus('');
+}
+
+function subscribeGraphPositions() {
+    const repository = bureauData?.positions;
+    if (!repository) return;
+    const ids = state.nodes.map(node => node.id).sort();
+    const key = JSON.stringify([state.isAdmin, ids]);
+    if (key === positionsSubscriptionKey) return;
+    unsubscribePositions?.();
+    unsubscribePositions = null;
+    positionsSubscriptionKey = key;
+    const generation = ++positionsGeneration;
+    let firstSnapshot = true;
+    const onNext = (positions, metadata = {}) => {
+        if (generation !== positionsGeneration || repository !== bureauData?.positions) return;
+        const allowed = new Set(state.nodes.map(node => node.id));
+        sharedGraphPositions.clear();
+        positions.forEach(point => { if (allowed.has(point.id)) sharedGraphPositions.set(point.id, { x: point.x, y: point.y }); });
+        if (applySharedGraphPositions(state.nodes, sharedGraphPositions, draggingNodes)) state.simulation?.alpha(0.1).restart();
+        if (firstSnapshot && sharedGraphPositions.size && state.nodeSel) {
+            fitGraphView();
+            state.pendingFit = true;
+        }
+        firstSnapshot = false;
+        if (metadata.hasPendingWrites) graphPositionStatus('Positions en cours de synchronisation…', 'pending');
+        else if (metadata.fromCache) graphPositionStatus('Positions en cache — synchronisation en attente.', 'pending');
+        else if (document.getElementById('pnj-position-status')?.dataset.kind !== 'error') graphPositionStatus('');
+    };
+    const onError = () => {
+        if (generation === positionsGeneration) graphPositionStatus('Positions partagées indisponibles. Vérifiez la connexion puis rechargez.', 'error');
+    };
+    try {
+        unsubscribePositions = state.isAdmin
+            ? repository.subscribeAll(onNext, onError)
+            : repository.subscribeForIds(ids, onNext, onError);
+    } catch { onError(); }
+}
+
+async function saveGraphPosition(node) {
+    if (node._dragGeneration !== positionsGeneration || !state.nodes.some(item => item.id === node.id)) return;
+    const repository = bureauData?.positions;
+    const generation = positionsGeneration;
+    const sequence = ++positionSaveSequence;
+    const point = { x: node.fx, y: node.fy };
+    sharedGraphPositions.set(node.id, point);
+    graphNodeMemory.set(node.id, { ...point, pinned: true });
+    graphPositionStatus('Enregistrement de la position…', 'pending');
+    try {
+        if (!repository) throw new Error('Positions indisponibles');
+        await repository.save(node.id, point);
+        if (generation === positionsGeneration && sequence === positionSaveSequence) graphPositionStatus('');
+    } catch {
+        if (generation === positionsGeneration && sequence === positionSaveSequence) {
+            graphPositionStatus('Position non enregistrée. Déplacez de nouveau le personnage pour réessayer.', 'error');
+        }
+    }
 }
 
 // ── Graph ──────────────────────────────────────────────────────
 function buildGraph() {
+    const fitShared = !state.zoomTransform && sharedGraphPositions.size > 0;
     const container = document.getElementById('pnj-graph');
     state.graphW = container.clientWidth  || window.innerWidth * 0.85;
     state.graphH = container.clientHeight || 550;
@@ -1276,9 +1371,14 @@ function buildGraph() {
         .attr('role', 'button')
         .attr('aria-label', nodeAriaLabel)
         .call(d3.drag()
-            .on('start', (e, d) => { if (!e.active) state.simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-            .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
-            .on('end',   (e, d) => { if (!e.active) state.simulation.alphaTarget(0); d.fx = d.x; d.fy = d.y; }))
+            .on('start', (e, d) => { d._dragGeneration = positionsGeneration; draggingNodes.add(d.id); if (!e.active) state.simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+            .on('drag',  (e, d) => { d.x = d.fx = e.x; d.y = d.fy = e.y; })
+            .on('end',   (e, d) => {
+                if (!e.active) state.simulation.alphaTarget(0);
+                d.x = d.fx = e.x; d.y = d.fy = e.y;
+                draggingNodes.delete(d.id);
+                void saveGraphPosition(d);
+            }))
         .on('click', (e, d) => { e.stopPropagation(); openPanel(d, { origin: true }); })
         .on('focus', (e, d) => revealGraphNode(d))
         .on('keydown', (e, d) => {
@@ -1388,6 +1488,7 @@ function buildGraph() {
 
     updateVisibility();
     updateLegend();
+    if (fitShared) { fitGraphView(); state.pendingFit = true; }
 }
 
 // Cadre la boîte englobante des nœuds. Marges : le médaillon et son anneau de
@@ -1424,7 +1525,10 @@ function applyColorBy(dim) {
     if (dim === 'statut') {
         state.simulation?.force('cluster-x', null).force('cluster-y', null);
     } else {
-        state.nodes.forEach(d => { d.fx = null; d.fy = null; });
+        state.nodes.forEach(d => {
+            if (sharedGraphPositions.has(d.id)) return;
+            d.fx = null; d.fy = null;
+        });
         const vals = state.dimColorMap ? [...state.dimColorMap.keys()] : [];
         const n = vals.length || 1, r = Math.min(state.layoutW, state.layoutH) * 0.28;
         const centers = Object.fromEntries(vals.map((v, i) => [v, {
@@ -1993,6 +2097,7 @@ function renderTable() {
 
 // ── View toggle ────────────────────────────────────────────────
 function setView(view) {
+    if (view !== 'graph') void graphDisplay?.exit();
     state.view = view;
     document.getElementById('pnj-graph').style.display           = view === 'graph' ? '' : 'none';
     document.getElementById('pnj-table-container').style.display = view === 'table' ? '' : 'none';
@@ -2019,10 +2124,11 @@ document.addEventListener('keydown', e => {
     const panel = document.getElementById('pnj-detail');
     // Dans un formulaire de relation, Échap n'annule que lui, comme son bouton Annuler.
     const editForm = e.target.closest?.('.rel-edit-form-inline');
-    if (editForm && panel.contains(editForm)) { closeRelEditForm(editForm); return; }
-    if (e.target.closest?.('.rel-add-form') && panel.contains(e.target)) { closeRelAddForm(); return; }
+    if (editForm && panel.contains(editForm)) { e.preventDefault(); closeRelEditForm(editForm); return; }
+    if (e.target.closest?.('.rel-add-form') && panel.contains(e.target)) { e.preventDefault(); closeRelAddForm(); return; }
     // Échap dans la recherche appartient au champ, pas à la fiche.
     if (!panel.contains(e.target) && e.target.matches?.('input, textarea, select, [contenteditable]')) return;
+    e.preventDefault();
     closePanel({ restoreFocus: true });
 });
 
@@ -2059,6 +2165,14 @@ if (pnjGraph && typeof ResizeObserver === 'function') {
         }, GRAPH_FIT_DELAY);
     }).observe(pnjGraph);
 }
+graphDisplay = createGraphDisplay({ onResize: () => {
+    requestAnimationFrame(() => {
+        state.graphW = pnjGraph.clientWidth || state.graphW;
+        state.graphH = pnjGraph.clientHeight || state.graphH;
+        fitGraphView();
+    });
+} });
+
 document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', () => setView(btn.dataset.view)));
 document.querySelectorAll('.colorby-btn').forEach(btn => btn.addEventListener('click', () => applyColorBy(btn.dataset.dim)));
 

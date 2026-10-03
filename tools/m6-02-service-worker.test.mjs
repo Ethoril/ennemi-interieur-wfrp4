@@ -72,7 +72,7 @@ function createWorkerHarness() {
         },
         caches: {
             async open() { return cache; },
-            async keys() { return ['wfrp-cache-v2.26.0', 'wfrp-cache-v2.24.1']; },
+            async keys() { return ['wfrp-cache-v2.27.0', 'wfrp-cache-v2.24.1']; },
             async delete(name) { deletedCacheNames.push(name); return true; },
             async match(request) { return cache.match(request); },
         },

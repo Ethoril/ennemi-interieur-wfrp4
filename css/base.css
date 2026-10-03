@@ -1837,6 +1837,136 @@ strong {
   cursor: grabbing;
 }
 
+/* Workspace stays layout-transparent in its regular view. In fullscreen it
+   becomes the viewport so the toolbar, graph, dossier and dialogs share it. */
+#pnj-workspace { display: contents; }
+#pnj-workspace.pnj-workspace-fullscreen,
+#pnj-workspace:fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  box-sizing: border-box;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  padding: var(--space-md);
+  overflow: hidden;
+  background: var(--bg-dark);
+}
+
+#pnj-workspace.pnj-workspace-fullscreen .pnj-toolbar,
+#pnj-workspace:fullscreen .pnj-toolbar {
+  flex: 0 0 auto;
+  max-height: 38vh;
+  overflow-y: auto;
+  padding: var(--space-xs) 0 var(--space-sm);
+  margin: 0;
+}
+
+#pnj-workspace.pnj-workspace-fullscreen #pnj-graph,
+#pnj-workspace:fullscreen #pnj-graph {
+  flex: 1 1 auto;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+}
+
+.pnj-fullscreen-toggle {
+  position: absolute;
+  z-index: 8;
+  top: 8px;
+  right: 8px;
+  padding: 5px 9px;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  background: var(--bg-dark);
+  color: var(--gold);
+  font: inherit;
+  font-size: .78rem;
+  cursor: pointer;
+}
+
+.pnj-group-filter-drawer { position: relative; }
+.pnj-group-filter-drawer > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: .75rem;
+  list-style: none;
+  white-space: nowrap;
+}
+.pnj-group-filter-drawer > summary::-webkit-details-marker { display: none; }
+.pnj-group-filter-count { color: var(--gold); font-variant-numeric: tabular-nums; }
+.pnj-group-filter-drawer[open] > .filter-group {
+  position: relative;
+  display: flex;
+  align-content: flex-start;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 100%;
+  max-height: min(32vh, 240px);
+  margin-top: 6px;
+  padding: 8px;
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-lg);
+}
+.pnj-group-filter-drawer[open] { flex: 1 1 100%; min-width: 0; }
+
+.pnj-position-status {
+  position: absolute;
+  z-index: 9;
+  top: 8px;
+  left: 8px;
+  max-width: calc(100% - 200px);
+  margin: 0;
+  padding: 4px 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: .8rem;
+}
+.pnj-position-status[data-kind="error"] { color: var(--danger, var(--text-primary)); }
+
+.pnj-workspace-fullscreen #pnj-detail {
+  position: absolute;
+  top: calc(var(--pnj-toolbar-h, 6rem) + var(--space-md) + var(--space-sm));
+  right: var(--space-md);
+  bottom: var(--space-md);
+  max-width: calc(100% - 2 * var(--space-md));
+}
+@media (min-width: 769px) {
+  body.pnj-panel-open #pnj-workspace.pnj-workspace-fullscreen #pnj-graph { width: calc(100% - 420px - var(--space-sm)); }
+}
+
+@media (max-width: 768px) {
+  #pnj-workspace.pnj-workspace-fullscreen,
+  #pnj-workspace:fullscreen { padding: 8px; gap: 6px; }
+  #pnj-workspace.pnj-workspace-fullscreen .pnj-toolbar,
+  #pnj-workspace:fullscreen .pnj-toolbar { max-height: 44vh; }
+  #pnj-workspace.pnj-workspace-fullscreen .pnj-admin-actions,
+  #pnj-workspace:fullscreen .pnj-admin-actions { margin-left: 0; }
+  .pnj-workspace-fullscreen #pnj-detail {
+    top: auto;
+    right: 8px;
+    bottom: 8px;
+    height: 55dvh;
+    width: calc(100% - 16px);
+    max-width: none;
+  }
+  .pnj-position-status { top: 44px; max-width: calc(100% - 16px); }
+}
+
 #pnj-loading {
   position: absolute;
   inset: 0;

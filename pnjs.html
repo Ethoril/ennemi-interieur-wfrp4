@@ -36,6 +36,7 @@
 
         <section class="section pnj-section" style="padding-top: 0; flex: 1; display: flex; flex-direction: column;">
             <div class="container" style="flex: 1; display: flex; flex-direction: column;">
+                <div id="pnj-workspace">
 
                 <!-- Toolbar -->
                 <div class="pnj-toolbar fade-in">
@@ -76,7 +77,10 @@
                         <div class="filter-group" id="filter-statut" hidden></div>
                         <div class="filter-group" id="filter-vivant" hidden></div>
                         <div class="filter-group" id="filter-lieu" hidden></div>
-                        <div class="filter-group" id="filter-groupe" hidden></div>
+                        <details id="pnj-group-filter-drawer" class="pnj-group-filter-drawer" hidden>
+                            <summary>Groupes <span class="pnj-group-filter-count" data-selected-count="0">0</span></summary>
+                            <div class="filter-group" id="filter-groupe" hidden></div>
+                        </details>
                     </div>
 
                 </div>
@@ -84,6 +88,8 @@
                 <!-- Graphe -->
                 <p id="pnj-graph-help" class="visually-hidden">Réseau des personnages non-joueurs rencontrés durant la campagne. Chaque personnage est un bouton : Tab pour passer de l'un à l'autre, Entrée ou Espace pour afficher sa fiche, Échap pour la fermer.</p>
                 <div id="pnj-graph" tabindex="-1" role="group" aria-label="Réseau des personnages" aria-describedby="pnj-graph-help">
+                    <button type="button" id="pnj-fullscreen-toggle" class="pnj-fullscreen-toggle" aria-pressed="false" aria-label="Afficher le graphe en plein écran">⛶ Plein écran</button>
+                    <p id="pnj-position-status" class="pnj-position-status" role="status" hidden></p>
                     <div id="pnj-loading">
                         <div class="pnj-spinner"></div>
                         <span class="loading-text">Chargement des personnages...</span>
@@ -98,9 +104,6 @@
 
                 <!-- Tableau (caché par défaut) -->
                 <div id="pnj-table-container" style="display:none;"></div>
-
-            </div>
-        </section>
 
         <!-- Panneau de détail -->
         <!-- Fermé, le panneau reste hors écran : inert le retire du parcours clavier -->
@@ -202,6 +205,10 @@
                 </form>
             </div>
         </dialog>
+
+                </div>
+            </div>
+        </section>
 
         <div class="ornament">⚜</div>
         <footer class="footer" id="site-footer"></footer>

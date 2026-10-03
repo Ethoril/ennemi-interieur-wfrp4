@@ -1,3 +1,9 @@
+## [2.27.0] - 2026-10-03
+
+- **Graphe PNJs** : les déplacements sont enregistrés automatiquement et partagés en temps réel entre tous les écrans, joueurs compris. Les positions des PNJs masqués restent réservées au MJ. Le graphe conserve les positions après rechargement et changement de filtres.
+- **Graphe PNJs** : bouton plein écran avec les filtres, le dossier sélectionné et les dialogues d’édition dans la même vue, avec une disposition adaptée au mobile.
+- **Filtres PNJs** : groupes rangés dans un tiroir repliable avec un compteur des groupes sélectionnés.
+
 ## [2.26.0] - 2026-10-03
 
 - **PNJs** : plusieurs groupes par personnage, ajout et retrait individuels, suggestions des groupes existants et prévention des doublons de casse, accents et espaces. Les fiches, le tableau, les filtres et les brouillons mobiles prennent en compte tous les groupes ; les anciens groupes restent compatibles.

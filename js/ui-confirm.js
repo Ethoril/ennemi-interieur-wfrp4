@@ -34,6 +34,9 @@ function ensureDialog() {
  */
 export function confirmAction({ titre, message, libelleAction = 'Confirmer', danger = false }) {
     const d = ensureDialog();
+    // Une confirmation doit appartenir au conteneur présenté en plein écran.
+    const parent = document.fullscreenElement || document.querySelector('.pnj-workspace-fullscreen') || document.body;
+    if (d.parentNode !== parent) parent.appendChild(d);
     d.querySelector('.ui-confirm-titre').textContent   = titre;
     d.querySelector('.ui-confirm-message').textContent = message;
     const valider = d.querySelector('.ui-confirm-valider');

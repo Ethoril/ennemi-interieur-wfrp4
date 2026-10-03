@@ -32,6 +32,28 @@ service cloud.firestore {
           && ownerId.matches('^[A-Za-z0-9_-]+$');
     }
 
+    function validGraphPosition(data) {
+      return data.keys().hasAll(['x', 'y', 'updatedAt'])
+          && data.keys().hasOnly(['x', 'y', 'updatedAt'])
+          && (data.x is int || data.x is float)
+          && (data.y is int || data.y is float)
+          && data.x >= -1000000 && data.x <= 1000000
+          && data.y >= -1000000 && data.y <= 1000000
+          && data.updatedAt is timestamp
+          && data.updatedAt == request.time;
+    }
+
+    function positionPnjVisible(id) {
+      let ref = /databases/$(database)/documents/pnjs/$(id);
+      return exists(ref)
+          && get(ref).data.visibleJoueurs == true
+          && get(ref).data.get('suppressionEnCours', false) != true;
+    }
+
+    function positionPnjExists(id) {
+      return exists(/databases/$(database)/documents/pnjs/$(id));
+    }
+
     function validOwnedImagePath(path, ownerId, prefix) {
       return validOwnerId(ownerId) && path is string
           && path.split('/').size() == 3
@@ -344,6 +366,16 @@ service cloud.firestore {
           && resource.data.get('suppressionEnCours', false) == true
           && deletionLockActive()
           && get(deletionLockRef()).data.get('pnjId', '') == id;
+    }
+
+    // ── Coordonnées de graphe : séparées des fiches PNJ et sans autre donnée. ──
+    // Les joueurs ne peuvent cibler que des IDs précis avec documentId() in;
+    // chaque document vérifie lui-même la visibilité de son PNJ lié.
+    match /pnj_positions/{id} {
+      allow read: if isGM() || positionPnjVisible(id);
+      allow create, update: if validGraphPosition(request.resource.data)
+          && ((isGM() && positionPnjExists(id)) || positionPnjVisible(id));
+      allow delete: if isGM();
     }
 
     match /integrity_locks/{id} {
