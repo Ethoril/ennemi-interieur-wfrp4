@@ -72,7 +72,7 @@ function createWorkerHarness() {
         },
         caches: {
             async open() { return cache; },
-            async keys() { return ['wfrp-cache-v2.24.1', 'wfrp-cache-v2.24.0']; },
+            async keys() { return ['wfrp-cache-v2.25.0', 'wfrp-cache-v2.24.1']; },
             async delete(name) { deletedCacheNames.push(name); return true; },
             async match(request) { return cache.match(request); },
         },
@@ -186,7 +186,7 @@ test('harness SW : purge migration, réseau protégé, opaque, offline app et CD
     harness.entries.set(recaptchaUrl, { response: { type: 'cors' } });
     harness.entries.set(opaqueUrl, { response: { type: 'opaque' } });
     await harness.dispatch('activate', {});
-    assert.deepEqual(harness.deletedCacheNames, ['wfrp-cache-v2.24.0']);
+    assert.deepEqual(harness.deletedCacheNames, ['wfrp-cache-v2.24.1']);
     assert.ok(harness.deleted.includes(protectedUrl));
     assert.ok(harness.deleted.includes(recaptchaUrl));
     assert.ok(harness.deleted.includes(opaqueUrl));

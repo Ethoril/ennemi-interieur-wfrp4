@@ -1,3 +1,16 @@
+## [2.25.0] - 2026-10-03
+
+### Ajouté
+
+- **Carnaval (MJ)** : programme par jour, lieu et PNJ, heure de jeu manuelle, présences individuelles, prochaine rencontre et chronologie secrète. Fiches PNJ reliées à leurs données actuelles dans un panneau latéral.
+- **Carnaval (MJ)** : adaptations du programme, annotations de scène, retour à la source, signalement des chevauchements et sauvegarde partagée avec détection des conflits.
+- **Cartes** : carte publique de Middenheim, zoomable et partagée avec le Carnaval.
+
+### Accès et données
+
+- Le programme et le suivi du Carnaval sont réservés au MJ authentifié par les règles Firestore. Le fichier d'initialisation reste hors du dépôt public et s'importe depuis la session MJ.
+- La déconnexion retire les données privées et leurs ressources ; le Carnaval n'ajoute aucun cache persistant de données MJ.
+
 ## [2.24.1] - 2026-09-28
 
 ### Corrigé

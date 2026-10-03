@@ -6,7 +6,8 @@ Site compagnon pour la campagne WFRP4 "L'Ennemi Intérieur".
 
 - **Fiche de Personnage** : Fiche interactive en ligne sauvegardée sur le cloud (Firebase Firestore/Auth) pour la gestion et le suivi des fiches des joueurs.
 - **PNJs** : Graphe interactif de relations (D3.js) et base de données éditable des personnages non-joueurs de la campagne.
-- **Cartes** : Visionneuse haute résolution (Leaflet.js) pour explorer les cartes de l'Empire et du Vieux Monde.
+- **Cartes** : Visionneuse publique (Leaflet.js) pour explorer l'Empire, le Vieux Monde et Middenheim.
+- **Carnaval · MJ** : Agenda des huit jours, vues par lieu et PNJ, rencontres, carte, annotations et adaptations synchronisées. Accès réservé au MJ vérifié.
 - **Règles** : Aides de jeu, résumés de règles de combat, de corruption, de magie, de peur et tables de critiques.
 - **Aides de Jeux** : Base de données des armes, armures, sorts, miracles et coûts en XP, synchronisée en temps réel depuis Google Sheets.
 - **Vidéos** : Galerie de vidéos YouTube sur le lore et l'univers.
@@ -50,6 +51,7 @@ Ce site est hébergé via [GitHub Pages](https://pages.github.com/).
 
 ## Documentation
 
+- [Carnaval de Middenheim — utilisation, initialisation privée et tests](docs/CARNAVAL.md)
 - [Plan d'action — Application mobile PWA PNJs & Enquêtes](docs/PLAN-PWA-MOBILE.md)
 - [Briefs d'implémentation — découpage, ordre et dépendances](docs/briefs/mobile/README.md)
 

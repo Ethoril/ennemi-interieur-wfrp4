@@ -1,6 +1,6 @@
 import { redirectLegacyStandaloneEntry } from './pwa-entry.js';
 
-const APP_VERSION = 'v2.24.1';
+const APP_VERSION = 'v2.25.0';
 
 const NAV_ITEMS = [
     { href: 'index.html',   label: 'Accueil' },
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
     { href: 'cartes.html',  label: 'Cartes' },
     { href: 'pnjs.html',    label: 'PNJs' },
     { href: 'enquetes.html', label: 'Enquêtes' },
+    { href: 'carnaval.html', label: 'Carnaval · MJ' },
     { href: 'app/',         label: 'Version mobile' },
     { href: 'doodle.html',  label: 'Calendrier' },
 ];

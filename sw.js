@@ -1,6 +1,6 @@
 // sw.js, en tête. Doit rester identique à APP_VERSION de js/layout.js :
 // la CI le vérifie (.github/workflows/validate.yml).
-const APP_VERSION = 'v2.24.1';
+const APP_VERSION = 'v2.25.0';
 const CACHE_NAME  = 'wfrp-cache-' + APP_VERSION;
 
 const ASSETS_LOCAUX = [
@@ -14,6 +14,7 @@ const ASSETS_LOCAUX = [
   './carte.html',
   './pnjs.html',
   './enquetes.html',
+  './carnaval.html',
   './doodle.html',
   './fiche.html',
   './offline.html',
@@ -23,11 +24,16 @@ const ASSETS_LOCAUX = [
   './css/hero3d.css',
   './css/fiche.css',
   './css/doodle.css',
+  './css/carnaval.css',
   './js/auth.js',
   './js/app-check.js',
   './js/bureau-data.js',
   './js/bureau-view-lifecycle.js',
   './js/calendar.js',
+  './js/carnaval.js',
+  './js/carnaval-model.js',
+  './js/middenheim-map.js',
+  './js/data/carnaval-repository.js',
   './js/data/firebase-clients.js',
   './js/data/firebase-errors.js',
   './js/data/firebase-normalizers.js',
@@ -82,6 +88,7 @@ const ASSETS_LOCAUX = [
   './img/pnj-default-medaillon.webp',
   './img/thumb-empire.webp',
   './img/thumb-vieux-monde.webp',
+  './img/thumb-middenheim.webp',
   './favicon.svg',
   './manifest.json',
   './icons/icon-192.png',

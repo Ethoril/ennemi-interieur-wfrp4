@@ -142,6 +142,33 @@ service cloud.firestore {
       return data.updatedAt == request.time;
     }
 
+    // Carnaval est exclusivement MJ. Le calendrier du livre et ses présences
+    // restent dans ce document privé et ne sont créés qu'une fois.
+    function validCarnavalSource(data) {
+      return data.keys().hasOnly(['version', 'days', 'places', 'characters', 'events', 'updatedAt'])
+        && data.version == 1
+        && data.days is list && data.days.size() == 8
+        && data.places is list && data.places.size() <= 50
+        && data.characters is list && data.characters.size() <= 500
+        && data.events is list && data.events.size() <= 250
+        && data.updatedAt is timestamp && serverUpdated(data);
+    }
+
+    function validCarnavalCampaign(data) {
+      return data.keys().hasOnly(['version', 'revision', 'clock', 'links', 'overrides', 'customEvents', 'notes', 'updatedAt'])
+        && data.version == 1
+        && data.revision is int && data.revision >= 0
+        && data.clock is map
+        && data.clock.keys().hasOnly(['day', 'minute'])
+        && data.clock.day is int && data.clock.day >= 1 && data.clock.day <= 8
+        && data.clock.minute is int && data.clock.minute >= 0 && data.clock.minute <= 1800
+        && data.links is map && data.links.size() <= 500
+        && data.overrides is map && data.overrides.size() <= 250
+        && data.customEvents is list && data.customEvents.size() <= 100
+        && data.notes is map && data.notes.size() <= 350
+        && data.updatedAt is timestamp && serverUpdated(data);
+    }
+
     function relationEndpointsExist(data) {
       let sourceRef = /databases/$(database)/documents/pnjs/$(data.source);
       let cibleRef = /databases/$(database)/documents/pnjs/$(data.cible);
@@ -401,6 +428,22 @@ service cloud.firestore {
         && request.resource.data.responses.keys()
                  .hasAll(resource.data.responses.keys())
       );
+    }
+
+    // ── Carnaval : contenu et suivi exclusivement MJ ──
+    match /carnaval_sources/current {
+      allow read: if isGM();
+      allow create: if isGM() && validCarnavalSource(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    match /carnaval_campaigns/current {
+      allow read: if isGM();
+      allow create: if isGM() && validCarnavalCampaign(request.resource.data)
+          && request.resource.data.revision == 0;
+      allow update: if isGM() && validCarnavalCampaign(request.resource.data)
+          && request.resource.data.revision == resource.data.revision + 1;
+      allow delete: if false;
     }
 
     // ── Courriels : création seule, destinataire et forme imposés ──

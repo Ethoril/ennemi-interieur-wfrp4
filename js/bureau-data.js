@@ -12,6 +12,7 @@ import { createMjPnjRepository, createPublicPnjRepository } from './data/pnjs-re
 import { createMjRelationsRepository, createPublicRelationsRepository } from './data/relations-repository.js';
 import { createMjIndicesRepository, createPublicIndicesRepository } from './data/indices-repository.js';
 import { createMjImagesRepository, createPublicImagesRepository } from './data/images-repository.js';
+import { createCarnavalRepository } from './data/carnaval-repository.js';
 import { collection, doc, query, where, getDoc, getDocs, updateDoc, deleteDoc, writeBatch,
     deleteField, serverTimestamp, arrayRemove, runTransaction, onSnapshot } from
     'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -68,15 +69,19 @@ export function createBureauData({ isAdmin = false } = {}) {
     const indices = isAdmin
         ? createMjIndicesRepository({ sdk: firestoreSdk, client, imageService })
         : createPublicIndicesRepository({ sdk: firestoreSdk, client });
+    const carnaval = isAdmin
+        ? createCarnavalRepository({ sdk: firestoreSdk, client: { ...client, isGM: true } })
+        : null;
 
     let closed = false;
     const close = async () => {
         if (closed) return;
         closed = true;
+        carnaval?.close();
         imageService.close?.();
         await client.close();
     };
     // Les primitives Firebase restent privées à cette composition : les pages
     // ne reçoivent que des dépôts et le cycle de vie.
-    return Object.freeze({ pnjs, relations, indices, images: imageService, close });
+    return Object.freeze({ pnjs, relations, indices, carnaval, images: imageService, close });
 }

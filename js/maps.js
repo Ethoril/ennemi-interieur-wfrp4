@@ -1,4 +1,13 @@
+import { MIDDENHEIM_MAP } from './middenheim-map.js';
+
 const MAPS_CONFIG = {
+    'middenheim': {
+        ...MIDDENHEIM_MAP,
+        name: 'Middenheim',
+        refW: MIDDENHEIM_MAP.width,
+        refH: MIDDENHEIM_MAP.height,
+        scale: 1,
+    },
     'empire': {
         name: "Carte de l'Empire",
         refW: 8192,
@@ -47,17 +56,43 @@ if (!config) {
         [config.refH / REF_ZOOM, config.refW / REF_ZOOM],
     ];
 
-    const tileLayer = L.tileLayer(`tiles/${mapId}/{z}/{x}/{y}.webp`, {
-        tileSize: TILE_SIZE,
-        minZoom: 0,
-        maxZoom: MAX_ZOOM,
-        bounds: bounds,
-        noWrap: true,
-        keepBuffer: 2,
-    }).addTo(map);
+    let tileLayer;
+    if (config.image) {
+        L.imageOverlay(config.image, bounds, { interactive: false }).addTo(map);
+        document.getElementById('measure-btn').hidden = true;
+    } else {
+        tileLayer = L.tileLayer(`tiles/${mapId}/{z}/{x}/{y}.webp`, {
+            tileSize: TILE_SIZE,
+            minZoom: 0,
+            maxZoom: MAX_ZOOM,
+            bounds: bounds,
+            noWrap: true,
+            keepBuffer: 2,
+        }).addTo(map);
+    }
 
     map.setMaxBounds(bounds);
     map.fitBounds(bounds);
+
+    const placeMarkers = [];
+    const placeStyle = () => {
+        const css = window.getComputedStyle(document.documentElement);
+        return { color: css.getPropertyValue('--gold-bright').trim(), fillColor: css.getPropertyValue('--bg-card').trim() };
+    };
+    if (config.places) {
+        config.places.forEach(place => {
+            const marker = L.circleMarker([place.y / REF_ZOOM, place.x / REF_ZOOM], {
+                radius: place.radius ? 10 : 6,
+                ...placeStyle(),
+                weight: 2,
+                fillOpacity: 0.9,
+            }).addTo(map);
+            placeMarkers.push(marker);
+            marker.bindTooltip(place.mapLabel ? `${place.mapLabel} · ${place.name}` : place.name);
+        });
+    }
+
+    document.addEventListener('themechange', () => placeMarkers.forEach(marker => marker.setStyle(placeStyle())));
 
     // --- OUTIL DE MESURE DE DISTANCE (RÈGLE) ---
     let isMeasureActive = false;

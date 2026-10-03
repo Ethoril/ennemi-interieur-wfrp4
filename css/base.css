@@ -1535,8 +1535,8 @@ strong {
 }
 
 /* ── Responsive ────────────────────────────────── */
-/* Burger : les dix entrées ne tiennent pas en ligne sous 1440 px (L3-01) */
-@media (max-width: 1439px) {
+/* Les onze entrées, la marque et le thème doivent rester accessibles. */
+@media (max-width: 1599px) {
   .nav-burger {
     display: flex;
     margin-left: auto;

@@ -21,7 +21,7 @@ test('les écrans protégés utilisent uniquement le dépôt callable et autoris
     assert.doesNotMatch(enquetes, /uploadBytes|updateMetadata|getMetadata/u);
     for (const screen of [pnjs, enquetes]) {
         assert.doesNotMatch(screen, /import\s*\{[^}]*\b(?:collection|doc|getDoc|getDocs|runTransaction|updateDoc|deleteDoc|writeBatch|ref|deleteObject)\b[^}]*\}\s*from ['"]\.\/bureau-data\.js['"]/su);
-        assert.doesNotMatch(screen, /(?:collection|doc|getDoc|getDocs|runTransaction|updateDoc|deleteDoc|writeBatch|ref|deleteObject)\s*\(/u);
+        assert.doesNotMatch(screen, /\b(?:collection|doc|getDoc|getDocs|runTransaction|updateDoc|deleteDoc|writeBatch|ref|deleteObject)\s*\(/u);
         assert.match(screen, /editorSession/u);
         assert.match(screen, /authSessionKey/u);
         assert.match(screen, /identityChanged/u);

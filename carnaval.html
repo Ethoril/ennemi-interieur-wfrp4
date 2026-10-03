@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://unpkg.com https://apis.google.com https://www.google.com https://*.firebaseapp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com https://*.firebasestorage.app https://*.googleusercontent.com https://unpkg.com; frame-src https://*.firebaseapp.com https://*.google.com https://accounts.google.com; connect-src 'self' https://*.googleapis.com https://*.firebasestorage.app https://*.firebaseapp.com https://europe-west1-campagne-wrpg.cloudfunctions.net https://apis.google.com https://www.gstatic.com https://www.google.com/recaptcha/">
+  <title>Carnaval de Middenheim — L'Ennemi Intérieur</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:wght@400;600;700&display=swap">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/theme-parchment.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+  <link rel="stylesheet" href="css/carnaval.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+</head>
+<body>
+  <a class="skip-link" href="#carnaval-content">Aller au programme</a>
+  <nav class="navbar" id="navbar"></nav>
+  <main id="carnaval-content" class="page-container carnaval-page">
+    <header class="carnaval-heading">
+      <div><p class="carnaval-kicker">Le Pouvoir derrière le Trône</p><h1>Carnaval de Middenheim</h1><p>Programme, rencontres et chronologie de la campagne</p></div>
+      <button type="button" class="btn-ghost" id="carnaval-auth" aria-label="Connexion ou déconnexion MJ">🔑 Connexion MJ</button>
+    </header>
+    <section id="carnaval-gate" class="carnaval-gate" aria-live="polite"><p>Vérification de l’accès MJ…</p></section>
+    <section id="carnaval-offline" class="carnaval-gate" aria-live="polite" hidden><h2>Données MJ indisponibles</h2><p id="carnaval-offline-message">Connexion sécurisée aux données en cours…</p><button type="button" id="retry-private-data" class="btn-primary">Réessayer</button></section>
+    <section id="carnaval-app" hidden>
+      <div class="carnaval-status" id="carnaval-status" role="status" aria-live="polite"></div>
+      <div id="carnaval-import" class="carnaval-import" hidden>
+        <h2>Initialiser le programme source</h2><p>Choisissez le fichier JSON de référence fourni au MJ. Il sera transmis au dépôt privé du Carnaval.</p>
+        <label class="carnaval-file-label" for="source-file">Fichier source JSON</label><input id="source-file" type="file" accept="application/json,.json">
+        <button id="source-import" class="btn-primary" type="button" disabled>Importer la source</button>
+      </div>
+      <p id="time-unknown-hint" class="carnaval-unknown-hint" role="status" hidden>Des scènes à horaire inconnu sont masquées par le filtre horaire ; désactivez ce filtre pour les consulter.</p>
+      <div id="campaign-warnings" class="carnaval-warnings" role="status" hidden></div>
+      <div class="carnaval-toolbar">
+        <div class="carnaval-day-control"><button type="button" id="previous-day" aria-label="Jour précédent">←</button><label for="day-select">Jour</label><select id="day-select"></select><button type="button" id="next-day" aria-label="Jour suivant">→</button></div>
+        <label class="carnaval-time-control" for="time-select">Heure de jeu <select id="time-select"></select></label>
+        <label class="carnaval-filter-label"><input type="checkbox" id="filter-current-time"> Filtrer à l’heure choisie</label>
+        <div class="carnaval-view-tabs" role="tablist" aria-label="Vue du programme">
+          <button role="tab" aria-selected="true" data-view="day">Jour</button><button role="tab" aria-selected="false" data-view="place">Lieu</button><button role="tab" aria-selected="false" data-view="character">PNJ</button>
+        </div>
+        <label class="carnaval-filter-label" for="place-filter">Lieu <select id="place-filter"><option value="">Tous</option></select></label>
+        <label class="carnaval-filter-label" id="place-day-filter-wrap" for="place-day-filter" hidden>Jour du lieu <select id="place-day-filter"><option value="all">Tous les jours</option></select></label>
+        <label class="carnaval-filter-label" for="character-filter">PNJ <select id="character-filter"><option value="">Tous</option></select></label>
+        <label class="carnaval-secret-toggle"><input type="checkbox" id="show-secrets" checked> Chronologie secrète</label>
+        <button type="button" id="add-event" class="btn-primary">＋ Scène</button>
+      </div>
+      <section class="carnaval-clock" aria-label="Temps de campagne"><span id="clock-label"></span><label for="clock-time">Temps de campagne</label><select id="clock-day"></select><select id="clock-time"></select><button id="save-clock" type="button" class="btn-ghost-sm">Enregistrer l’heure</button></section>
+      <div class="carnaval-workspace">
+        <section class="carnaval-program-panel" aria-labelledby="program-heading">
+          <div class="carnaval-panel-heading"><div><p class="carnaval-kicker">Agenda du Carnaval</p><h2 id="program-heading">Programme du jour</h2></div><button id="refresh-data" type="button" class="btn-ghost-sm">Actualiser</button></div>
+          <div id="next-encounter" class="carnaval-next" aria-live="polite"></div>
+          <div id="overlap-list" class="carnaval-overlaps" aria-live="polite"></div>
+          <div id="event-list" class="carnaval-event-list" aria-live="polite"></div>
+        </section>
+        <section class="carnaval-map-panel" aria-label="Carte des lieux du Carnaval"><div class="carnaval-map-toolbar"><h2>Plan de Middenheim</h2><button type="button" id="map-reset">Centrer la carte</button></div><div id="carnaval-map"></div><p class="carnaval-map-caption">Les repères montrent les cinq lieux du Carnaval. La carte reste publique ; les données affichées ici sont réservées au MJ.</p></section>
+      </div>
+    </section>
+    <dialog id="event-dialog" class="carnaval-dialog"><form id="event-form" method="dialog"><div class="carnaval-dialog-heading"><h2 id="event-dialog-title">Modifier une scène</h2><button type="button" id="event-dialog-close" aria-label="Fermer">×</button></div><input type="hidden" name="eventId"><label>Titre<input name="title" required maxlength="180"></label><div class="carnaval-form-row"><label>Jour<select name="day"></select></label><label>Lieu<select name="placeId"></select></label></div><div class="carnaval-form-row"><label>Début<select name="start"></select></label><label>Fin<select name="end"></select></label></div><label>Type<select name="kind"><option value="public">Attraction publique</option><option value="secret">Chronologie secrète MJ</option></select></label><div class="carnaval-form-row"><label>Page imprimée<input name="bookPage" inputmode="numeric"></label><label>Page PDF<input name="pdfPage" inputmode="numeric"></label></div><label>Notes MJ<textarea name="notes" rows="4"></textarea></label><div class="carnaval-presences-edit"><h3>Présences</h3><div id="presence-editor"></div><button type="button" id="add-presence" class="btn-ghost-sm">＋ Ajouter une présence</button></div><div class="carnaval-dialog-actions"><button type="button" id="reset-event" class="btn-ghost-sm">Réinitialiser vers la source</button><button type="button" id="cancel-event" class="btn-ghost-sm">Annuler</button><button type="submit" class="btn-primary">Enregistrer</button></div></form></dialog>
+    <dialog id="link-dialog" class="carnaval-dialog carnaval-link-dialog"><form method="dialog" id="link-form"><div class="carnaval-dialog-heading"><h2>Associer une fiche PNJ</h2><button type="button" id="link-dialog-close" aria-label="Fermer">×</button></div><p id="link-character-name"></p><label>Fiche existante<select id="link-pnj-select" required></select></label><div id="link-suggestions" class="carnaval-suggestions"></div><div class="carnaval-dialog-actions"><button type="button" id="link-cancel" class="btn-ghost-sm">Annuler</button><button type="submit" class="btn-primary">Confirmer l’association</button></div></form></dialog>
+    <footer class="footer" id="site-footer"></footer>
+  </main>
+  <aside id="character-drawer" class="carnaval-drawer" role="dialog" aria-label="Fiche du personnage" aria-hidden="true" aria-modal="false" inert><button type="button" id="drawer-close" class="carnaval-drawer-close" aria-label="Fermer la fiche">×</button><div id="character-drawer-content"></div></aside>
+  <script type="module" src="js/layout.js"></script>
+  <script type="module" src="js/carnaval.js"></script>
+</body>
+</html>
