@@ -1227,7 +1227,9 @@ function buildGraph() {
     const labelG = g.append('g').attr('class', 'pnj-link-labels').attr('aria-hidden', 'true');
     const linkTextSel = labelG.selectAll('text.pnj-link-label').data(state.links).join('text')
         .attr('class', 'pnj-link-label')
-        .attr('text-anchor', 'middle');
+        .attr('text-anchor', 'middle')
+        // Au-dessus du trait (épais de 3,5) plutôt que posé dessus.
+        .attr('dy', -8);
     const textPathSel = linkTextSel.append('textPath')
         .attr('href', (d, i) => `#pnj-lp-${i}`)
         .attr('startOffset', '50%')

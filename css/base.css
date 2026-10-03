@@ -2025,9 +2025,15 @@ strong {
   pointer-events: none;
 }
 
+/* Halo de la couleur du fond : le libellé se détache du trait et des liens
+   qu'il croise. */
 .pnj-link-label {
-  font-size: 10px;
+  font-size: 11px;
   fill: var(--text-secondary, #9a9aaa);
+  stroke: var(--bg-dark, #0e0e18);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  paint-order: stroke;
   pointer-events: none;
   user-select: none;
 }
