@@ -1,4 +1,5 @@
 import { statutKey } from '../seal.js';
+import { pnjGroups, groupCatalog, groupKey } from '../pnj-groups.js';
 
 const FILTER_DIMENSIONS = Object.freeze(['groupe', 'statut', 'lieu']);
 // Puces rapides : un critère distinct de la feuille de filtres, combiné avec elle en ET.
@@ -41,7 +42,7 @@ function valuesFor(item, field) {
 }
 
 function dimensionValues(item, dimension) {
-    if (dimension === 'groupe') return [...valuesFor(item, 'groupe'), ...valuesFor(item, 'groupes')].filter(Boolean);
+    if (dimension === 'groupe') return pnjGroups(item);
     return valuesFor(item, dimension).filter(Boolean);
 }
 
@@ -91,8 +92,9 @@ function uniqueSorted(values) {
 
 export function buildPnjFacets(items) {
     const source = Array.isArray(items) ? items : [];
-    return freezeValue(Object.fromEntries(FILTER_DIMENSIONS.map(dimension => [dimension,
-        uniqueSorted(source.flatMap(item => dimensionValues(item, dimension)))])));
+    return freezeValue(Object.fromEntries(FILTER_DIMENSIONS.map(dimension => [dimension, dimension === 'groupe'
+        ? groupCatalog(source)
+        : uniqueSorted(source.flatMap(item => dimensionValues(item, dimension)))])));
 }
 
 function normalizeFilterValues(value) {
@@ -103,8 +105,13 @@ function normalizeFilterValues(value) {
 export function reconcilePnjFilters(filters, facets) {
     const input = filters && typeof filters === 'object' && !Array.isArray(filters) ? filters : {};
     return freezeValue(Object.fromEntries(FILTER_DIMENSIONS.map(dimension => {
-        const allowed = new Set(Array.isArray(facets?.[dimension]) ? facets[dimension] : []);
-        return [dimension, normalizeFilterValues(input[dimension]).filter(value => allowed.has(value))];
+        const allowed = Array.isArray(facets?.[dimension]) ? facets[dimension] : [];
+        if (dimension === 'groupe') {
+            const byKey = new Map(allowed.map(value => [groupKey(value), value]));
+            return [dimension, [...new Set(normalizeFilterValues(input[dimension]).map(value => byKey.get(groupKey(value))).filter(Boolean))]];
+        }
+        const allowedSet = new Set(allowed);
+        return [dimension, normalizeFilterValues(input[dimension]).filter(value => allowedSet.has(value))];
     })));
 }
 
@@ -118,8 +125,8 @@ function matchesFilters(item, filters) {
     return FILTER_DIMENSIONS.every(dimension => {
         const selected = Array.isArray(filters?.[dimension]) ? filters[dimension] : [];
         if (!selected.length) return true;
-        const values = new Set(dimensionValues(item, dimension));
-        return selected.some(value => values.has(value));
+        const values = new Set(dimensionValues(item, dimension).map(value => dimension === 'groupe' ? groupKey(value) : value));
+        return selected.some(value => values.has(dimension === 'groupe' ? groupKey(value) : value));
     });
 }
 

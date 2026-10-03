@@ -1,8 +1,11 @@
+import { normalizeGroups, MAX_GROUPS, MAX_GROUP_LENGTH } from '../pnj-groups.js';
+
 const DRAFT_VERSION = 1;
 const KEY_PREFIX = 'wfrp4-mobile-public-draft:v1:';
 const MAX_DRAFTS = 12;
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const PUBLIC_FIELDS = Object.freeze(['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description', 'visibleJoueurs']);
+const GROUP_FIELDS = Object.freeze(['groupes']);
 
 function safeStorage(storage) {
     if (storage && typeof storage.getItem === 'function' && typeof storage.setItem === 'function'
@@ -28,6 +31,10 @@ function keyFor(id) { return `${KEY_PREFIX}${id || 'new'}`; }
 function sanitizeValues(input) {
     if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
     const values = {};
+    if (Object.hasOwn(input, 'groupes')) {
+        if (!Array.isArray(input.groupes) || input.groupes.length > MAX_GROUPS || input.groupes.some(value => typeof value !== 'string' || value.length > MAX_GROUP_LENGTH)) return null;
+        values.groupes = Object.freeze(normalizeGroups(input.groupes));
+    }
     for (const field of PUBLIC_FIELDS) {
         if (!Object.hasOwn(input, field)) continue;
         if (field === 'visibleJoueurs') {
@@ -105,4 +112,4 @@ export function createPublicDraftStore({ storage = safeDefaultStorage(), now = D
     return Object.freeze({ version: DRAFT_VERSION, maxDrafts: MAX_DRAFTS, maxAgeMs: MAX_AGE_MS, list, find, save, remove, clear, sanitizeValues });
 }
 
-export { DRAFT_VERSION, KEY_PREFIX, MAX_DRAFTS, MAX_AGE_MS, PUBLIC_FIELDS };
+export { DRAFT_VERSION, KEY_PREFIX, MAX_DRAFTS, MAX_AGE_MS, PUBLIC_FIELDS, GROUP_FIELDS };

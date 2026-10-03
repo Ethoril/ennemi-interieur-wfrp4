@@ -673,6 +673,11 @@ body {
 .m-form-field textarea:focus-visible { border-color: var(--border-gold); }
 .m-form-field [aria-invalid="true"] { border-color: var(--blood-bright); }
 .m-form-help { color: var(--text-muted); font-size: 0.82rem; }
+.m-form-field .pnj-group-chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.m-form-field .pnj-group-chip { display: inline-flex; align-items: center; gap: 0.35rem; max-width: 100%; padding: 0.2rem 0.45rem; color: var(--text-primary); background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 999px; }
+.m-form-field .pnj-group-chip > span { overflow-wrap: anywhere; }
+.m-form-field .pnj-group-remove { min-width: 1.8rem; min-height: 1.8rem; color: var(--text-primary); background: transparent; border: 0; cursor: pointer; }
+.m-form-field .pnj-group-add { justify-self: start; min-height: var(--m-touch-target); padding: var(--space-xs) var(--space-md); color: var(--text-primary); background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); font: inherit; }
 .m-form-error { color: var(--blood-bright); font-size: 0.84rem; }
 .m-form-summary { padding: var(--space-md); color: var(--blood-bright); background: var(--bg-surface); border: 1px solid var(--blood-bright); border-radius: var(--radius-sm); }
 .m-form-summary[hidden], .m-removal-confirmation[hidden] { display: none; }

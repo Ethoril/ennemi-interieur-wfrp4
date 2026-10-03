@@ -183,6 +183,18 @@ test('la vue branche le store, préserve le scroll et ne recharge pas les portra
     assert.equal(documentRef.body.children.length, 0);
 });
 
+test('une modification du second groupe réactualise la carte mobile', () => {
+    const documentRef = makeDocument();
+    const container = new FakeElement(documentRef, 'main');
+    const store = makeStore(readyState([publicPnj('a', { groupe: 'Garde', groupes: ['Garde', 'Ancien'] })]));
+    const view = createPnjsListView({ container, store });
+    view.mount();
+    assert.equal(container.querySelectorAll('.m-pnj-context')[0].textContent, 'Garde, Ancien');
+    store.emit(readyState([publicPnj('a', { groupe: 'Garde', groupes: ['Garde', 'Nouveau'] })]));
+    assert.equal(container.querySelectorAll('.m-pnj-context')[0].textContent, 'Garde, Nouveau');
+    view.unmount();
+});
+
 test('la recherche est temporisée, sauf effacement immédiat, et les filtres invalides sont réconciliés', () => {
     const documentRef = makeDocument();
     const container = new FakeElement(documentRef, 'main');

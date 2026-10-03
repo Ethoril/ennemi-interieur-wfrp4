@@ -1,3 +1,7 @@
+## [2.26.0] - 2026-10-03
+
+- **PNJs** : plusieurs groupes par personnage, ajout et retrait individuels, suggestions des groupes existants et prévention des doublons de casse, accents et espaces. Les fiches, le tableau, les filtres et les brouillons mobiles prennent en compte tous les groupes ; les anciens groupes restent compatibles.
+
 ## [2.25.3] - 2026-10-03
 
 - **PNJs (MJ)** : la vue Tableau propose un bouton « ＋ Relation » pour chaque personnage, qui ouvre directement le formulaire de relation de sa fiche.

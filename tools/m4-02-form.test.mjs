@@ -121,15 +121,19 @@ test('retrait portrait supprime aussi les références legacy sans accepter de n
 
 class Element {
     constructor(documentRef, tagName) { this.ownerDocument = documentRef; this.tagName = tagName; this.children = []; this.parentNode = null; this.attributes = new Map(); this.listeners = new Map(); this.dataset = {}; this.className = ''; this._textContent = ''; this.value = ''; this.checked = false; this.type = ''; this.hidden = false; this.disabled = false; }
+    get firstChild() { return this.children[0] ?? null; }
     get textContent() { return this._textContent + this.children.map(child => child.textContent).join(''); }
     set textContent(value) { this._textContent = String(value ?? ''); }
     append(...nodes) { for (const node of nodes) { node?.parentNode?.removeChild(node); node.parentNode = this; this.children.push(node); } }
+    appendChild(node) { this.append(node); return node; }
     replaceChildren(...nodes) { this.children = []; this.append(...nodes); }
     removeChild(node) { const index = this.children.indexOf(node); if (index >= 0) this.children.splice(index, 1); }
     remove() { this.parentNode?.removeChild(this); }
     setAttribute(name, value) { this.attributes.set(name, String(value)); }
     getAttribute(name) { return this.attributes.get(name) ?? null; }
     removeAttribute(name) { this.attributes.delete(name); }
+    setCustomValidity(message) { this.validationMessage = String(message ?? ''); }
+    after(...nodes) { const parent = this.parentNode; if (!parent) return; const index = parent.children.indexOf(this); for (const node of nodes) { node?.parentNode?.removeChild(node); node.parentNode = parent; parent.children.splice(parent.children.indexOf(this) < 0 ? index : parent.children.indexOf(this) + 1, 0, node); } }
     addEventListener(type, listener) { const list = this.listeners.get(type) || []; list.push(listener); this.listeners.set(type, list); }
     removeEventListener(type, listener) { this.listeners.set(type, (this.listeners.get(type) || []).filter(item => item !== listener)); }
     dispatch(type, extra = {}) { const event = { type, target: this, preventDefault() {}, ...extra }; for (const listener of [...(this.listeners.get(type) || [])]) listener(event); }
@@ -196,6 +200,40 @@ test('le formulaire initialisé sépare le payload public et privé', async () =
     assert.equal(mounted.navigated[0], '#/pnjs/a');
     assert.equal(mounted.fake.calls.createArgs[0].notes, undefined);
     assert.equal(mounted.fake.calls.createArgs[1].notes, 'secret');
+});
+
+test('le picker mobile enregistre le tableau de groupes et garde le premier groupe legacy', async () => {
+    const mounted = await mountedForm({ id: null });
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Ada';
+    const input = mounted.container.querySelectorAll('#m-pnj-groupe')[0];
+    input.value = 'Garde'; input.dispatch('keydown', { key: 'Enter' });
+    input.value = 'Compagnie'; input.dispatch('keydown', { key: 'Enter' });
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve(); await Promise.resolve();
+    const publicInput = mounted.fake.calls.createArgs[0];
+    assert.deepEqual(publicInput.groupes, ['Garde', 'Compagnie']);
+    assert.equal(publicInput.groupe, 'Garde');
+});
+
+test('un ancien brouillon sans groupes remplace le groupe serveur lors de la restauration', async () => {
+    const draftStore = { find: () => ({ draftId: 'draft:abcdefgh', updatedAt: Date.now(), values: { groupe: 'Local ancien' } }), save: () => ({ ok: false }), remove: () => true };
+    const mounted = await mountedForm({ draftStore, publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'oui', lieu: '', groupe: 'Serveur', groupes: ['Serveur', 'Autre'], description: '', visibleJoueurs: true, issues: [] } });
+    const chips = mounted.container.querySelectorAll('.pnj-group-chips')[0].textContent;
+    assert.match(chips, /Local ancien/u);
+    assert.doesNotMatch(chips, /Serveur/u);
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve(); await Promise.resolve();
+    assert.deepEqual(mounted.fake.calls.updateArgs[1].groupes, ['Local ancien']);
+    mounted.view.unmount();
+});
+
+test('le conflit garde les groupes saisis puis Recharge met à jour les chips depuis le serveur', async () => {
+    const mounted = await mountedForm();
+    const input = mounted.container.querySelectorAll('#m-pnj-groupe')[0];
+    input.value = 'Local'; input.dispatch('keydown', { key: 'Enter' });
+    mounted.fake.publicCallbacks[0].next({ id: 'a', nom: 'Ada', statut: '', vivant: 'inconnu', lieu: '', groupe: 'Garde', groupes: ['Garde', 'Serveur'], description: '', visibleJoueurs: true, updatedAt: { seconds: 2, nanoseconds: 0 }, issues: [] });
+    assert.match(mounted.container.querySelectorAll('.pnj-group-chips')[0].textContent, /Local/u);
+    mounted.container.querySelectorAll('button').find(button => button.textContent === 'Recharger le serveur').dispatch('click');
+    const chips = mounted.container.querySelectorAll('.pnj-group-chips')[0].textContent;
+    assert.match(chips, /Garde/u); assert.match(chips, /Serveur/u); assert.doesNotMatch(chips, /Local/u);
 });
 
 test('une révélation de relations en échec est signalée sans faire échouer la sauvegarde', async () => {
@@ -392,7 +430,7 @@ test('un privé absent en édition reste fail-closed et ne recrée pas des notes
 test('un privé orphelin ne remplit jamais le DOM sans public valide', async () => {
     const mounted = await mountedForm({ publicItem: null, privateItem: { id: 'a', notes: 'secret-orphelin', updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] } });
     assert.equal(mounted.container.querySelectorAll('#m-pnj-notes')[0].value, '');
-    assert.equal(mounted.container.querySelectorAll('button')[1].disabled, true);
+    assert.equal(mounted.container.querySelectorAll('button').find(button => button.textContent === 'Enregistrer').disabled, true);
 });
 
 test('un rechargement sans PNJ public retrouve le verrou et expose la reprise sans notes', async () => {
@@ -428,7 +466,7 @@ test('une saisie commencée pendant le chargement edit survit aux snapshots init
     assert.equal(mounted.container.querySelectorAll('#m-pnj-statut')[0].value, 'allié');
     assert.equal(mounted.container.querySelectorAll('#m-pnj-vivant')[0].value, 'non');
     assert.equal(mounted.container.querySelectorAll('#m-pnj-lieu')[0].value, 'Altdorf');
-    assert.equal(mounted.container.querySelectorAll('#m-pnj-groupe')[0].value, 'Garde');
+    assert.match(mounted.container.querySelectorAll('.pnj-group-chips')[0].textContent, /Garde/u);
     assert.equal(mounted.container.querySelectorAll('#m-pnj-description')[0].value, 'Texte serveur');
     assert.equal(mounted.container.querySelectorAll('#m-pnj-visibleJoueurs')[0].checked, false);
     assert.equal(mounted.container.querySelectorAll('#m-pnj-notes')[0].value, 'notes serveur');
@@ -609,7 +647,7 @@ test('un subscribe privé qui échoue ferme les listeners et ne permet pas au pu
 
 test('un portrait existant non éditable ne rend pas le formulaire dirty', async () => {
     const mounted = await mountedForm({ confirm: () => false, publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'inconnu', lieu: '', groupe: '', description: '', visibleJoueurs: true, imagePath: 'portraits/a/a.webp', updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] } });
-    mounted.container.querySelectorAll('button')[0].dispatch('click');
+    mounted.container.querySelectorAll('button').find(button => button.textContent === 'Annuler').dispatch('click');
     assert.deepEqual(mounted.back, [true]);
 });
 

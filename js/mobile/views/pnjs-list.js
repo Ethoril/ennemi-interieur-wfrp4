@@ -3,6 +3,7 @@ import { createFilterSheet } from '../components/filter-sheet.js';
 import { mountPnjPortrait } from '../components/portrait.js';
 import { createPnjListModel, DEFAULT_QUICK, FILTER_DIMENSIONS, QUICK_FILTERS, vivantKey } from '../pnj-list-model.js';
 import { renderState } from '../ui.js';
+import { groupLabel } from '../../pnj-groups.js';
 
 const FILTER_LABELS = Object.freeze({ groupe: 'Groupe', statut: 'Statut', lieu: 'Lieu' });
 const QUICK_LABELS = Object.freeze({ tous: 'Tous', allie: 'Alliés', neutre: 'Neutres', ennemi: 'Ennemis', decede: 'Décédés' });
@@ -33,7 +34,7 @@ function sameFilters(left, right) {
 
 function listSignature(model) {
     const rows = model.results.map(item => [
-        item.id, item.ordre, item.nom, item.statut, item.vivant, item.lieu, item.groupe,
+        item.id, item.ordre, item.nom, item.statut, item.vivant, item.lieu, groupLabel(item),
         item.image?.path, item.image?.legacy, item.image?.invalid,
     ].map(value => String(value ?? '')).join('\u001f')).join('\u001e');
     return `${model.search}\u001d${model.quick}\u001d${FILTER_DIMENSIONS.map(name => model.filters[name].join('\u001f')).join('\u001e')}\u001d${rows}`;
@@ -136,7 +137,7 @@ function renderPnjCard({ documentRef, pnj, imageService, portraits, links }) {
     // Le lieu est dans l'en-tête du groupe : la carte ne garde que le groupe.
     const context = documentRef.createElement('span');
     context.className = 'm-pnj-context';
-    context.textContent = typeof pnj.groupe === 'string' && pnj.groupe.trim() ? pnj.groupe : 'Groupe inconnu';
+    context.textContent = groupLabel(pnj) || 'Groupe inconnu';
     // Le sceau est masqué avec le portrait : son statut est redit en texte pour les lecteurs d'écran.
     const statut = documentRef.createElement('span');
     statut.className = 'visually-hidden';

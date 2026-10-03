@@ -1,3 +1,5 @@
+import { MAX_GROUP_LENGTH, MAX_GROUPS, normalizeGroups } from '../pnj-groups.js';
+
 const MAX_ID_LENGTH = 150;
 const MAX_IMAGE_FILE_LENGTH = 128;
 const STORAGE_BUCKETS = new Set(['campagne-wrpg.firebasestorage.app', 'campagne-wrpg.appspot.com']);
@@ -160,12 +162,25 @@ export function normalizePnjPublic(snapshot) {
         issues.push(issue('suppressionEnCours', 'invalid-type'));
     }
     const visibleJoueurs = boolean(data, 'visibleJoueurs', issues);
+    const legacyGroupe = text(data, 'groupe', issues, { max: 200 });
+    let groupes;
+    if (Array.isArray(data.groupes)) {
+        if (data.groupes.length > MAX_GROUPS) issues.push(issue('groupes', 'too-many-groups'));
+        if (data.groupes.some(value => typeof value !== 'string' || value.trim().length === 0 || value.length > MAX_GROUP_LENGTH)) {
+            issues.push(issue('groupes', 'invalid-group'));
+        }
+        groupes = normalizeGroups(data.groupes);
+    } else {
+        if (data.groupes !== undefined && data.groupes !== null) issues.push(issue('groupes', 'invalid-type'));
+        groupes = normalizeGroups([legacyGroupe]);
+    }
     return finish({
         nom: text(data, 'nom', issues, { max: 200 }),
         statut: text(data, 'statut', issues, { max: 64 }),
         vivant: text(data, 'vivant', issues, { max: 32 }),
         lieu: text(data, 'lieu', issues, { max: 200 }),
-        groupe: text(data, 'groupe', issues, { max: 200 }),
+        groupe: groupes[0] ?? '',
+        groupes,
         description: text(data, 'description', issues, { max: 20000 }),
         visibleJoueurs: suppressionEnCours === undefined || suppressionEnCours === false ? visibleJoueurs : false,
         suppressionEnCours: suppressionEnCours === true,

@@ -1,6 +1,8 @@
 import { errorForUi, ERROR_KINDS } from '../../data/firebase-errors.js';
 import { createPortraitEditor } from '../components/portrait-editor.js';
 import { createPnjRelationsEditor } from '../components/pnj-relations-editor.js';
+import { createGroupPicker } from '../../pnj-group-picker.js';
+import { normalizeGroups, groupCatalog, pnjGroups } from '../../pnj-groups.js';
 
 const STATUSES = Object.freeze(['', 'allié', 'neutre', 'ennemi']);
 const LIVING = Object.freeze(['oui', 'non', 'inconnu']);
@@ -9,7 +11,7 @@ const REVEAL_PENDING_NOTICE = ' Certaines relations n’ont pas pu être rendues
 
 export function defaultPnjFormValues() {
     // Le bureau crée un PNJ comme vivant ; l’état « inconnu » reste disponible explicitement.
-    return { nom: '', statut: '', vivant: 'oui', lieu: '', groupe: '', description: '', visibleJoueurs: true, notes: '', imagePath: null };
+    return { nom: '', statut: '', vivant: 'oui', lieu: '', groupe: '', groupes: [], description: '', visibleJoueurs: true, notes: '', imagePath: null };
 }
 
 function normalizeParagraphs(value) {
@@ -23,12 +25,14 @@ function normalizeOneLine(value) { return typeof value === 'string' ? value.repl
 export function normalizePnjFormValues(input = {}) {
     input = input && typeof input === 'object' && !Array.isArray(input) ? input : {};
     const defaults = defaultPnjFormValues();
+    const groupes = normalizeGroups(input.groupes ?? (input.groupe ? [input.groupe] : []));
     return {
         nom: normalizeOneLine(input.nom ?? defaults.nom),
         statut: normalizeOneLine(input.statut ?? defaults.statut),
         vivant: normalizeOneLine(input.vivant ?? defaults.vivant),
         lieu: normalizeOneLine(input.lieu ?? defaults.lieu),
-        groupe: normalizeOneLine(input.groupe ?? defaults.groupe),
+        groupe: groupes[0] ?? '',
+        groupes,
         description: normalizeParagraphs(input.description ?? defaults.description),
         visibleJoueurs: Object.hasOwn(input, 'visibleJoueurs') ? input.visibleJoueurs === true : defaults.visibleJoueurs,
         notes: normalizeParagraphs(input.notes ?? defaults.notes),
@@ -42,13 +46,18 @@ export function validatePnjForm(input = {}) {
     for (const fieldName of ['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description', 'notes']) {
         if (Object.hasOwn(source, fieldName) && typeof source[fieldName] !== 'string') errors[fieldName] = 'Ce champ doit être du texte.';
     }
+    if (Object.hasOwn(source, 'groupes') && Array.isArray(source.groupes) && source.groupes.length > 20) errors.groupes = 'Un personnage peut avoir au maximum 20 groupes.';
+    if (Object.hasOwn(source, 'groupes') && Array.isArray(source.groupes) && source.groupes.some(value => typeof value === 'string' && value.trim().length > 200)) errors.groupes = 'Un groupe ne peut pas dépasser 200 caractères.';
     if (Object.hasOwn(source, 'visibleJoueurs') && typeof source.visibleJoueurs !== 'boolean') {
         errors.visibleJoueurs = 'La visibilité doit être activée ou désactivée.';
     }
+    if (Object.hasOwn(source, 'groupes') && (!Array.isArray(source.groupes) || source.groupes.some(value => typeof value !== 'string'))) errors.groupes = 'Les groupes doivent être une liste de textes.';
     const values = normalizePnjFormValues(source);
+    if (values.groupes.length > 20) errors.groupes = 'Un personnage peut avoir au maximum 20 groupes.';
+    if (values.groupes.some(group => group.length > 200)) errors.groupes = 'Un groupe ne peut pas dépasser 200 caractères.';
     if (!values.nom) errors.nom = 'Le nom est obligatoire.';
     for (const field of ['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description', 'notes']) {
-        if (values[field].length > MAX[field]) errors[field] = `Ce champ ne peut pas dépasser ${MAX[field]} caractères.`;
+        if (typeof values[field] === 'string' && MAX[field] && values[field].length > MAX[field]) errors[field] = `Ce champ ne peut pas dépasser ${MAX[field]} caractères.`;
     }
     if (!STATUSES.includes(values.statut)) errors.statut = 'Choisissez un statut valide.';
     if (!LIVING.includes(values.vivant)) errors.vivant = 'Choisissez un état de vie valide.';
@@ -173,6 +182,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
     let imageRecoveryLocked = false;
     let imageRecoveryState = null;
     let relationsEditor = null;
+    let groupPicker = null;
     let draftTimer = null;
     let draftId = null;
     let draftPrompted = false;
@@ -189,6 +199,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
         refs.conflict?.querySelectorAll?.('button').forEach(button => { button.disabled = busy || removing || recoveryLocked || imageRecoveryLocked; });
         refs.save.textContent = busy ? 'Enregistrement…' : 'Enregistrer';
         for (const { control } of Object.values(refs.fields)) control.disabled = busy || removing || recoveryLocked;
+        groupPicker?.setDisabled?.(busy || removing || recoveryLocked);
         portraitEditor?.setDisabled?.(busy || removing || recoveryLocked || imageRecoveryLocked);
         relationsEditor?.setDisabled?.(busy || removing || recoveryLocked || imageRecoveryLocked);
     };
@@ -203,11 +214,12 @@ export function createPnjEditView({ container, id = null, repository = null, get
             for (const key of keys) {
                 const item = container.ownerDocument.createElement('li');
                 const link = container.ownerDocument.createElement('a');
-                link.href = `#m-pnj-${key}`;
+                const fieldKey = key === 'groupes' ? 'groupe' : key;
+                link.href = `#m-pnj-${fieldKey}`;
                 link.textContent = errors[key];
                 link.addEventListener('click', event => {
                     event.preventDefault();
-                    refs.fields[key]?.control?.focus?.();
+                    refs.fields[fieldKey]?.control?.focus?.();
                 });
                 item.append(link);
                 list.append(item);
@@ -215,20 +227,22 @@ export function createPnjEditView({ container, id = null, repository = null, get
             refs.summary.append(list);
         }
         for (const [key, value] of Object.entries(refs.fields)) {
+            if (key === 'groupe' && groupPicker) { value.error.textContent = errors.groupes || errors.groupe || ''; value.error.hidden = !value.error.textContent; if (value.error.hidden) value.control.removeAttribute('aria-invalid'); else value.control.setAttribute('aria-invalid', 'true'); continue; }
             const message = errors[key] || '';
             value.error.textContent = message;
             value.error.hidden = !message;
             if (message) value.control.setAttribute('aria-invalid', 'true');
             else value.control.removeAttribute('aria-invalid');
         }
-        if (keys.length) refs.fields[keys[0]]?.control?.focus?.();
+        if (keys.length) refs.fields[keys[0] === 'groupes' ? 'groupe' : keys[0]]?.control?.focus?.();
     };
     const fill = (values, fieldsToFill = null) => {
         for (const [key, value] of Object.entries(refs.fields)) {
+            if (key === 'groupe' && groupPicker) { if (!fieldsToFill || fieldsToFill.has(key) || fieldsToFill.has('groupes')) groupPicker.setGroups(values.groupes ?? (values.groupe ? [values.groupe] : [])); continue; }
             if (!fieldsToFill || fieldsToFill.has(key)) setControl(value.control, values[key]);
         }
     };
-    const valuesFromForm = () => Object.fromEntries(Object.entries(refs.fields).map(([key, value]) => [key, readControl(value.control)]));
+    const valuesFromForm = () => { const values = Object.fromEntries(Object.entries(refs.fields).map(([key, value]) => [key, readControl(value.control)])); values.groupes = groupPicker?.getGroups?.() ?? normalizeGroups(values.groupe ? [values.groupe] : []); values.groupe = values.groupes[0] || ''; return values; };
     const hasChanges = () => JSON.stringify(normalizePnjFormValues(valuesFromForm())) !== JSON.stringify(normalizePnjFormValues(initialValues)) || portraitDirty;
     const beforeLeave = () => {
         if (!mounted || !refs) return true;
@@ -253,7 +267,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
     const draftValues = () => {
         if (!refs) return null;
         const values = valuesFromForm();
-        return { nom: values.nom, statut: values.statut, vivant: values.vivant, lieu: values.lieu, groupe: values.groupe, description: values.description, visibleJoueurs: values.visibleJoueurs };
+        return { nom: values.nom, statut: values.statut, vivant: values.vivant, lieu: values.lieu, groupe: values.groupe, groupes: values.groupes, description: values.description, visibleJoueurs: values.visibleJoueurs };
     };
     const persistDraft = () => {
         if (!draftStore || !dirtyFields.size) return null;
@@ -302,8 +316,12 @@ export function createPnjEditView({ container, id = null, repository = null, get
         const restore = container.ownerDocument.defaultView?.confirm?.(`Un brouillon public local du ${date} est disponible. Restaurer les champs publics ?`);
         if (restore) {
             draftId = draft.draftId;
-            const publicFields = new Set(['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description', 'visibleJoueurs']);
-            fill({ ...initialValues, ...draft.values }, publicFields); publicFields.forEach(fieldName => dirtyFields.add(fieldName)); draftVersion += 1;
+            const publicFields = new Set(['nom', 'statut', 'vivant', 'lieu', 'groupe', 'groupes', 'description', 'visibleJoueurs']);
+            const restored = { ...initialValues, ...draft.values };
+            if (!Object.hasOwn(draft.values, 'groupes') && Object.hasOwn(draft.values, 'groupe')) {
+                restored.groupes = normalizeGroups([draft.values.groupe]);
+            }
+            fill(restored, publicFields); publicFields.forEach(fieldName => dirtyFields.add(fieldName)); draftVersion += 1;
             showStatus('✎ Brouillon local restauré — non synchronisé.', 'draft'); announce('Brouillon local restauré.');
         } else { draftId = draft.draftId; announce('Brouillon local conservé ; vous pourrez le restaurer depuis cette fiche.'); }
     };
@@ -321,16 +339,16 @@ export function createPnjEditView({ container, id = null, repository = null, get
         if (portraitDirty) force.setAttribute('aria-label', 'Rechargez le conflit avant de forcer : le portrait local est encore en attente.');
         reload.addEventListener('click', () => {
             if (!latestPublicItem || saving || removing || recoveryLocked || imageRecoveryLocked) return;
-            const server = { ...latestPublicItem, notes: latestPrivateItem?.notes ?? '' };
+            const server = { ...latestPublicItem, groupe: pnjGroups(latestPublicItem)[0] || '', groupes: latestPublicItem.groupes, notes: latestPrivateItem?.notes ?? '' };
             fill(server); initialValues = normalizePnjFormValues(server); initialUpdatedAt = latestPublicItem.updatedAt ?? null; initialPrivateUpdatedAt = latestPrivateItem?.updatedAt ?? null;
             initialPortraitReference = latestPublicItem.imagePath || latestPublicItem.imageUrl || null;
             initialHasLegacyImage = latestPublicItem.legacyImagePresent === true || Boolean(latestPublicItem.imageUrl);
-            loadedPublicSignature = JSON.stringify([latestPublicItem.nom, latestPublicItem.statut, latestPublicItem.vivant, latestPublicItem.lieu, latestPublicItem.groupe, latestPublicItem.description, latestPublicItem.visibleJoueurs, latestPublicItem.imagePath, latestPublicItem.updatedAt]);
+            loadedPublicSignature = JSON.stringify([latestPublicItem.nom, latestPublicItem.statut, latestPublicItem.vivant, latestPublicItem.lieu, latestPublicItem.groupe, latestPublicItem.groupes, latestPublicItem.description, latestPublicItem.visibleJoueurs, latestPublicItem.imagePath, latestPublicItem.updatedAt]);
             loadedPrivateSignature = JSON.stringify([latestPrivateItem?.updatedAt, latestPrivateItem?.notes ?? '']);
             dirtyFields.clear(); draftVersion += 1; portraitDirty = false; portraitEditor?.reset?.(); void portraitEditor?.setCurrentPath?.(initialPortraitReference, getImageService?.()); removeCurrentDraft(); clearConflict();
             if (!recoveryLocked && !imageRecoveryLocked && !saving && !removing) {
                 for (const { control } of Object.values(refs.fields)) control.disabled = false;
-                refs.save.disabled = false; refs.remove.disabled = false; portraitEditor?.setDisabled?.(false); relationsEditor?.setDisabled?.(false);
+                refs.save.disabled = false; refs.remove.disabled = false; groupPicker?.setDisabled?.(false); portraitEditor?.setDisabled?.(false); relationsEditor?.setDisabled?.(false);
             }
             showStatus('Version serveur rechargée.', 'saved');
         });
@@ -352,7 +370,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
             const values = validatePnjForm(valuesFromForm()); if (!values.valid) { renderErrors(values.errors); setBusy(false); return; }
             const forced = await getRepository().forceUpdate(id, {
                 nom: values.values.nom, statut: values.values.statut, vivant: values.values.vivant, lieu: values.values.lieu,
-                groupe: values.values.groupe, description: values.values.description, visibleJoueurs: values.values.visibleJoueurs,
+                groupe: values.values.groupe, groupes: values.values.groupes, description: values.values.description, visibleJoueurs: values.values.visibleJoueurs,
             }, { notes: values.values.notes }, { confirmed: true });
             if (!currentOperation(operation)) return;
             if (draftVersion !== operation.draftVersion) { setBusy(false); showStatus('La saisie a changé pendant le forçage. Vérifiez puis relancez.', ERROR_KINDS.CONFLICT); return; }
@@ -401,7 +419,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
         showStatus('Enregistrement…', 'saving');
         try {
             const publicInput = { nom: result.values.nom, statut: result.values.statut, vivant: result.values.vivant,
-                lieu: result.values.lieu, groupe: result.values.groupe, description: result.values.description,
+                lieu: result.values.lieu, groupe: result.values.groupe, groupes: result.values.groupes, description: result.values.description,
                 visibleJoueurs: result.values.visibleJoueurs };
             const privateInput = { notes: result.values.notes };
             const portraitState = portraitEditor?.getState?.() ?? { file: null, removalRequested: false };
@@ -535,6 +553,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
         refs.save.disabled = true;
         refs.remove.disabled = true;
         for (const { control } of Object.values(refs.fields)) control.disabled = true;
+        groupPicker?.setDisabled?.(true);
         refs.confirmation.hidden = false;
         refs.confirmationButton.hidden = true;
         refs.resumeButton.hidden = false;
@@ -836,6 +855,14 @@ export function createPnjEditView({ container, id = null, repository = null, get
         confirmation.append(confirmationText, confirmationButton, recoverImageButton, resumeButton); danger.append(remove, confirmation);
         screen.append(heading, status, form, relations, danger); container.append(screen);
         refs = { form, fields, summary, conflict, status, save: saveButton, cancel, remove, confirmation, confirmationText, confirmationButton, resumeButton, recoverImageButton };
+        groupPicker = createGroupPicker({ documentRef, input: fields.groupe.control, onChange: () => {
+            dirtyFields.add('groupe'); dirtyFields.add('groupes'); draftVersion += 1; scheduleDraft();
+        } });
+        const groupsRepository = getPnjRepository?.();
+        if (typeof groupsRepository?.subscribeAll === 'function') {
+            try { unsubs.push(groupsRepository.subscribeAll(items => groupPicker?.setCatalog?.(groupCatalog(items)), () => {})); }
+            catch { /* suggestions are optional */ }
+        }
         portraitEditor = createPortraitEditor({ container: portrait, document: documentRef,
             onChange: () => { portraitDirty = true; draftVersion += 1; }, ...(portraitProcessor ? { processFile: portraitProcessor } : {}) });
         if (id) {
@@ -849,8 +876,8 @@ export function createPnjEditView({ container, id = null, repository = null, get
         if (id) { saveButton.disabled = true; remove.disabled = true; }
         fill(defaultPnjFormValues());
         for (const [fieldName, { control }] of Object.entries(fields)) {
-            control.addEventListener('input', () => { dirtyFields.add(fieldName); draftVersion += 1; if (fieldName !== 'notes') scheduleDraft(); });
-            control.addEventListener('change', () => { dirtyFields.add(fieldName); draftVersion += 1; if (fieldName !== 'notes') scheduleDraft(); });
+            control.addEventListener('input', () => { dirtyFields.add(fieldName); if (fieldName === 'groupe') dirtyFields.add('groupes'); draftVersion += 1; if (fieldName !== 'notes') scheduleDraft(); });
+            control.addEventListener('change', () => { dirtyFields.add(fieldName); if (fieldName === 'groupe') dirtyFields.add('groupes'); draftVersion += 1; if (fieldName !== 'notes') scheduleDraft(); });
         }
         form.addEventListener('submit', save);
         cancel.addEventListener('click', () => {
@@ -862,7 +889,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
         const repo = getRepository();
         if (!repo || !isGm(getSession)) { showStatus('Vérification de la session MJ…', 'loading'); return; }
         let publicReady = false; let privateReady = false; let publicItem = null; let privateItem = null; let loadError = null;
-        const disableEditing = () => { refs.save.disabled = true; refs.remove.disabled = true; portraitEditor?.setDisabled?.(true); relationsEditor?.setDisabled?.(true); };
+        const disableEditing = () => { refs.save.disabled = true; refs.remove.disabled = true; groupPicker?.setDisabled?.(true); portraitEditor?.setDisabled?.(true); relationsEditor?.setDisabled?.(true); };
         const finish = () => {
             if (!mounted || localGeneration !== generation || !publicReady || !privateReady) return;
             if (initialized) return;
@@ -876,19 +903,20 @@ export function createPnjEditView({ container, id = null, repository = null, get
             void portraitEditor?.setCurrentPath?.(initialPortraitReference, getImageService?.());
             initialValues = {
                 nom: publicItem.nom, statut: publicItem.statut, vivant: publicItem.vivant,
-                lieu: publicItem.lieu, groupe: publicItem.groupe, description: publicItem.description,
+                lieu: publicItem.lieu, groupe: (publicItem.groupes?.[0] ?? publicItem.groupe ?? ''), groupes: publicItem.groupes ?? (publicItem.groupe ? [publicItem.groupe] : []), description: publicItem.description,
                 visibleJoueurs: publicItem.visibleJoueurs, notes: privateItem?.notes ?? '',
             };
             const cleanFields = new Set(Object.keys(fields).filter(fieldName => !dirtyFields.has(fieldName)));
             fill(initialValues, cleanFields);
             loadedPublicSignature = JSON.stringify([publicItem.nom, publicItem.statut, publicItem.vivant, publicItem.lieu,
-                publicItem.groupe, publicItem.description, publicItem.visibleJoueurs, publicItem.imagePath, publicItem.updatedAt]);
+                publicItem.groupe, publicItem.groupes, publicItem.description, publicItem.visibleJoueurs, publicItem.imagePath, publicItem.updatedAt]);
             loadedPrivateSignature = JSON.stringify([privateItem?.updatedAt, privateItem?.notes ?? '']);
             initialized = true;
             if (!recoveryLocked && !imageRecoveryLocked) {
                 for (const { control } of Object.values(refs.fields)) control.disabled = false;
                 refs.save.disabled = false;
                 refs.remove.disabled = false;
+                groupPicker?.setDisabled?.(false);
                 portraitEditor?.setDisabled?.(false);
                 relationsEditor?.setDisabled?.(false);
             }
@@ -901,7 +929,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
                 latestPublicItem = item;
                 if (item?.suppressionEnCours === true) { publicReady = true; publicItem = item; disableEditing(); showStatus('Ce PNJ est en cours de suppression.', ERROR_KINDS.CONFLICT); return; }
                 if (item?.issues?.length) { publicReady = true; loadError = Object.assign(new Error('invalid-public-snapshot'), { code: 'invalid-argument' }); disableEditing(); showStatus(errorForUi(loadError).message, classify(loadError)); return; }
-                const signature = item ? JSON.stringify([item.nom, item.statut, item.vivant, item.lieu, item.groupe,
+                const signature = item ? JSON.stringify([item.nom, item.statut, item.vivant, item.lieu, item.groupe, item.groupes,
                     item.description, item.visibleJoueurs, item.imagePath, item.updatedAt]) : null;
                 if (initialized) {
                     if (!item) { clearConflict(); disableEditing(); showStatus('Cette fiche n’est plus disponible.', ERROR_KINDS.NOT_FOUND); return; }
@@ -968,6 +996,7 @@ export function createPnjEditView({ container, id = null, repository = null, get
         if (!mounted) return;
         flushDraft(); mounted = false; generation += 1; cleanup();
         relationsEditor?.unmount?.(); relationsEditor = null;
+        groupPicker?.destroy?.(); groupPicker = null;
         portraitEditor?.destroy?.(); portraitEditor = null;
         signalRef?.removeEventListener?.('abort', unmount);
         refs = null; signalRef = null; latestPublicItem = null; latestPrivateItem = null;

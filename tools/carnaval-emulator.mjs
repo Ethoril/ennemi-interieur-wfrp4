@@ -15,7 +15,7 @@ try {
     }));
     const result = spawnSync(process.execPath, [join(root, 'node_modules/firebase-tools/lib/bin/firebase.js'),
         'emulators:exec', '--only', 'firestore', '--project', 'demo-carnaval', '--config', config,
-        `node "${join(root, 'tools/carnaval-rules.test.mjs')}"`,
+        `node --test --test-concurrency=1 "${join(root, 'tools/carnaval-rules.test.mjs')}" "${join(root, 'tools/pnj-groups-rules.test.mjs')}"`,
     ], { cwd: root, env: { ...process.env, XDG_CONFIG_HOME: temp, CI: '1' }, stdio: 'inherit' });
     if (result.error) throw result.error;
     process.exitCode = result.status ?? 1;

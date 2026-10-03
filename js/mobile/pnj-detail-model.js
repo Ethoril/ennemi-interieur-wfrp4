@@ -1,4 +1,5 @@
 import { safeRelationColorValue } from '../pnj-integrity.js';
+import { groupLabel, pnjGroups } from '../pnj-groups.js';
 import { statutKey, statutLabel, vivantLabel } from '../seal.js';
 import { foldSearchText, vivantKey } from './pnj-list-model.js';
 
@@ -45,6 +46,7 @@ function publicImage(id, image) {
 
 function publicItem(item) {
     return { id: item.id, nom: text(item.nom, 200), statut: text(item.statut, 64), vivant: text(item.vivant, 32),
+        groupe: groupLabel(item), groupes: pnjGroups(item),
         image: publicImage(item.id, item.image) };
 }
 
@@ -167,7 +169,8 @@ export function selectPnjDetailModel(state, id) {
 
     const visiblePnjs = visiblePnjMap(pnjs.items);
     const lieu = text(item.lieu, 200);
-    const groupe = text(item.groupe, 200);
+    const groupes = pnjGroups(item);
+    const groupe = groupLabel(item);
     return freeze({
         kind: 'ready',
         item: publicItem(item),
@@ -179,6 +182,7 @@ export function selectPnjDetailModel(state, id) {
         vivantLabel: vivantLabel(text(item.vivant, 32)),
         lieu,
         groupe,
+        groupes,
         context: [groupe, lieu].filter(Boolean).join(' · '),
         surnom: text(item.surnom, 200),
         role: text(item.role, 200) || text(item.rôle, 200) || text(item.profession, 200),

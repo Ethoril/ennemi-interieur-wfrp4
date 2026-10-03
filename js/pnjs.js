@@ -10,6 +10,8 @@ import { legacyPrivateNoteInfo, privateLoadCanApply } from './private-notes.js';
 import { isCurrentLoad, isCurrentPanel, isCurrentGeneration } from './load-generation.js';
 import { reconcileFilterSets, panelIsStillCurrent, safeRelationColorValue } from './pnj-integrity.js';
 import { statutLabel, vivantLabel, sealMarkup, morrMarkup } from './seal.js';
+import { pnjGroups, groupCatalog, groupLabel, groupKey, matchesGroupFilter } from './pnj-groups.js';
+import { createGroupPicker } from './pnj-group-picker.js';
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
@@ -39,7 +41,7 @@ const TABLE_COLS     = [
     { key: 'statut',      label: 'Statut' },
     { key: 'vivant',      label: 'Vivant' },
     { key: 'lieu',        label: 'Lieu' },
-    { key: 'groupe',      label: 'Groupe' },
+    { key: 'groupes',     label: 'Groupes' },
     { key: 'description', label: 'Description' },
 ];
 
@@ -76,6 +78,7 @@ let cropperInstance = null;
 let cropGeneration = 0;
 let cropSourceUrl = null;
 let localPreviewUrl = null;
+let groupPicker = null;
 // Déclencheur de la modale d'édition (« ＋ PNJ », « Modifier », « ✏ ») et sa
 // clé focusKey : la fiche ou le tableau peuvent l'avoir réécrit entre-temps.
 let _pnjModalReturn = null;
@@ -241,6 +244,8 @@ function repositoryPnjToPage(node) {
         legacyImageUrl: node?.imagePath ? '' : (node?.imageUrl || ''),
     };
 }
+
+const primaryGroup = node => pnjGroups(node)[0] || '';
 
 function showPnjDeletionStatus(message, action) {
     const loading = document.getElementById('pnj-loading');
@@ -571,6 +576,7 @@ async function savePnj(data, imageFile) {
         && capturedData === bureauData;
     const requireCurrentEditor = () => { if (!editorStillCurrent()) throw new Error('Édition annulée : la session ou le rôle a changé.'); };
     btn.disabled = true;
+    groupPicker?.setDisabled(true);
     btn.textContent = imageFile ? 'Upload…' : 'Enregistrement…';
     try {
         if (!pnjRepository || !capturedData?.images || !state.isAdmin) throw new Error('Session MJ indisponible.');
@@ -582,7 +588,7 @@ async function savePnj(data, imageFile) {
         const previousImagePath = data.imagePath || '';
         const publicData = {
             nom: data.nom || '', statut: data.statut || '', vivant: data.vivant || 'oui',
-            lieu: data.lieu || '', groupe: data.groupe || '', description: data.description || '',
+            lieu: data.lieu || '', groupes: pnjGroups({ groupes: data.groupes }), groupe: pnjGroups({ groupes: data.groupes })[0] || '', description: data.description || '',
             visibleJoueurs: data.visibleJoueurs !== false,
         };
         if (data.imagePath) publicData.imagePath = data.imagePath;
@@ -653,6 +659,7 @@ async function savePnj(data, imageFile) {
     } finally {
         btn.disabled = false;
         btn.textContent = 'Enregistrer';
+        groupPicker?.setDisabled(false);
     }
 }
 
@@ -783,6 +790,8 @@ function openPnjModal(pnjId = null) {
     state.croppedBlob = null;
     const preview = document.getElementById('f-image-preview');
     document.getElementById('pnj-form').reset();
+    groupPicker?.setGroups([]);
+    groupPicker?.setDisabled(false);
     clearPnjPreview();
     document.getElementById('pnj-modal-title').textContent = pnjId ? 'Modifier le personnage' : 'Nouveau personnage';
     document.getElementById('pnj-delete-btn').style.display = pnjId ? '' : 'none';
@@ -801,7 +810,7 @@ function openPnjModal(pnjId = null) {
             document.getElementById('f-statut').value      = p.statut      || '';
             document.getElementById('f-vivant').value      = p.vivant      || 'oui';
             document.getElementById('f-lieu').value        = p.lieu        || '';
-            document.getElementById('f-groupe').value      = p.groupe      || '';
+            groupPicker?.setGroups(pnjGroups(p));
             document.getElementById('f-description').value = p.description || '';
             document.getElementById('f-visible-joueurs').value = String(p.visibleJoueurs !== false);
             void loadPrivateNotes(pnjId, p);
@@ -900,6 +909,7 @@ function closePnjModal() {
     // que si la modale était réellement ouverte.
     const wasOpen = dialog.open;
     if (wasOpen) dialog.close();
+    groupPicker?.setGroups([]);
     state.editingId   = null;
     state.editingUpdatedAt = null;
     state.croppedBlob = null;
@@ -916,13 +926,18 @@ document.getElementById('pnj-form').addEventListener('submit', async e => {
         statut:      document.getElementById('f-statut').value,
         vivant:      document.getElementById('f-vivant').value,
         lieu:        document.getElementById('f-lieu').value.trim(),
-        groupe:      document.getElementById('f-groupe').value.trim(),
+        groupes:     groupPicker?.getGroups() || [],
         description: document.getElementById('f-description').value.trim(),
         imagePath:   preview.dataset.existingPath || '',
         imageUrl:    preview.dataset.existingLegacyUrl || '',
         visibleJoueurs: document.getElementById('f-visible-joueurs').value === 'true',
         notesPrivees: document.getElementById('f-notes-privees').value,
     }, state.croppedBlob);
+});
+
+groupPicker = createGroupPicker({
+    documentRef: document,
+    input: document.getElementById('f-groupe'),
 });
 
 document.getElementById('f-image').addEventListener('change', e => {
@@ -1035,11 +1050,12 @@ document.getElementById('add-pnj-btn').addEventListener('click', () => openPnjMo
 // ── Colors ─────────────────────────────────────────────────────
 function buildDimColorMap() {
     if (state.colorBy === 'statut') { state.dimColorMap = null; return; }
-    const vals = [...new Set(state.nodes.map(d => d[state.colorBy]).filter(Boolean))].sort();
+    const value = d => state.colorBy === 'groupe' ? primaryGroup(d) : d[state.colorBy];
+    const vals = [...new Set(state.nodes.map(value).filter(Boolean))].sort();
     state.dimColorMap = new Map(vals.map((v, i) => [v, DIM_PALETTE[i % DIM_PALETTE.length]]));
 }
 
-const getDimColor = d => state.dimColorMap ? (state.dimColorMap.get(d[state.colorBy]) || '#7a7a8a') : getStatutColor(d.statut);
+const getDimColor = d => state.dimColorMap ? (state.dimColorMap.get(state.colorBy === 'groupe' ? primaryGroup(d) : d[state.colorBy]) || '#7a7a8a') : getStatutColor(d.statut);
 
 // Les marques sont décoratives dans la légende : le libellé qui les suit
 // suffit, leur aria-label le répéterait.
@@ -1092,14 +1108,19 @@ function setFilterCount(text) {
 const filterPillLabel = (key, v) => key === 'vivant' ? vivantLabel(v) : v;
 
 function buildFilters() {
+    groupPicker?.setCatalog(groupCatalog(state.nodes));
     const uniq = arr => [...new Set(arr.filter(Boolean))].sort();
     const definitions = [
         ['filter-statut', 'Statut', 'statut', uniq(state.nodes.map(d => d.statut))],
         ['filter-vivant', 'Vivant', 'vivant', uniq(state.nodes.map(d => d.vivant))],
         ['filter-lieu',   'Lieu',   'lieu',   uniq(state.nodes.map(d => d.lieu))],
-        ['filter-groupe', 'Groupe', 'groupe', uniq(state.nodes.map(d => d.groupe))],
+        ['filter-groupe', 'Groupe', 'groupe', groupCatalog(state.nodes)],
     ];
     const available = Object.fromEntries(definitions.map(([, , key, vals]) => [key, vals]));
+    const groupSpellings = new Map(available.groupe.map(label => [groupKey(label), label]));
+    const selectedGroups = [...state.active.groupe].map(label => groupSpellings.get(groupKey(label))).filter(Boolean);
+    state.active.groupe.clear();
+    selectedGroups.forEach(label => state.active.groupe.add(label));
     // Les ensembles de filtres survivent à un rechargement ; une valeur disparue
     // doit être retirée avant de rendre les boutons, sinon le graphe reste masqué.
     reconcileFilterSets(state.active, available);
@@ -1430,7 +1451,7 @@ function isVisible(d) {
     if (state.active.statut.size && !state.active.statut.has(d.statut)) return false;
     if (state.active.vivant.size && !state.active.vivant.has(d.vivant)) return false;
     if (state.active.lieu.size   && !state.active.lieu.has(d.lieu))     return false;
-    if (state.active.groupe.size && !state.active.groupe.has(d.groupe)) return false;
+    if (!matchesGroupFilter(d, state.active.groupe)) return false;
     return true;
 }
 
@@ -1539,10 +1560,11 @@ async function openPanel(d, { origin = false, addRelation = false } = {}) {
         ? `<img class="pnj-dossier-portrait${deceased ? ' pnj-deceased' : ''}" alt="Portrait de ${esc(d.nom)}">`
         : (protectedImagePlaceholder(d, d.nom) || `<img class="pnj-dossier-default${deceased ? ' pnj-deceased' : ''}" src="${DEFAULT_PORTRAIT}" alt="">`);
 
-    const metaHtml = (d.lieu || d.groupe) ? `
+    const groups = groupLabel(d);
+    const metaHtml = (d.lieu || groups) ? `
         <dl class="pnj-detail-meta">
             ${d.lieu   ? `<div><dt>Lieu</dt><dd>${esc(d.lieu)}</dd></div>`     : ''}
-            ${d.groupe ? `<div><dt>Groupe</dt><dd>${esc(d.groupe)}</dd></div>` : ''}
+            ${groups ? `<div><dt>Groupes</dt><dd>${esc(groups)}</dd></div>` : ''}
         </dl>` : '';
 
     const descHtml = d.description ? `
@@ -1895,8 +1917,10 @@ function openRelAddForm() {
 // ── Table ──────────────────────────────────────────────────────
 function renderTable() {
     const container = document.getElementById('pnj-table-container');
-    const sorted = [...state.nodes.filter(isVisible)].sort((a, b) =>
-        state.sortDir * (a[state.sortCol] || '').localeCompare(b[state.sortCol] || '', 'fr', { sensitivity: 'base' }));
+    const sorted = [...state.nodes.filter(isVisible)].sort((a, b) => {
+        const value = item => state.sortCol === 'groupes' ? groupLabel(item) : (item[state.sortCol] || '');
+        return state.sortDir * value(a).localeCompare(value(b), 'fr', { sensitivity: 'base' });
+    });
 
     // L'en-tête triable est un bouton : atteignable au clavier, son état
     // de tri annoncé par aria-sort sur la cellule.
@@ -1923,6 +1947,7 @@ function renderTable() {
                 const vk = vivantKey(d);
                 return `<td><span class="pnj-badge vivant-${esc(vk)}">${esc(vivantLabel(d.vivant || 'oui'))}</span></td>`;
             }
+            if (c.key === 'groupes') return `<td>${esc(groupLabel(d) || '—')}</td>`;
             if (c.key === 'description') {
                 const full = d.description || '', short = full.length > 90 ? full.slice(0, 90) + '…' : full;
                 return `<td class="pnj-td-desc" title="${esc(full)}">${esc(short || '—')}</td>`;

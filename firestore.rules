@@ -58,13 +58,14 @@ service cloud.firestore {
     function validPnj(data) {
       return hasOnly(data, ['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description',
           'imageUrl', 'imagePath', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre',
-          'suppressionEnCours'])
+          'suppressionEnCours', 'groupes'])
         && data.visibleJoueurs is bool
         && data.nom is string && data.nom.size() > 0 && data.nom.size() <= 200
         && validText(data, 'statut', 64)
         && validText(data, 'vivant', 32)
         && validText(data, 'lieu', 200)
         && validText(data, 'groupe', 200)
+        && validGroups(data)
         && validText(data, 'description', 20000)
         && validText(data, 'imageUrl', 2048)
         && validText(data, 'imagePath', 512)
@@ -72,6 +73,32 @@ service cloud.firestore {
             || data.ordre is int || data.ordre is float)
         && validTimestamp(data, 'createdAt')
         && validTimestamp(data, 'updatedAt');
+    }
+
+    function validGroupAt(groups, index) {
+      return groups.size() <= index
+          || validGroupValue(groups[index]);
+    }
+
+    function validGroupValue(group) {
+      return group is string && group != '' && group.size() <= 200;
+    }
+
+    function validGroups(data) {
+      return !data.keys().hasAny(['groupes'])
+          || (data.groupes is list && data.groupes.size() <= 20
+              && validGroupAt(data.groupes, 0) && validGroupAt(data.groupes, 1)
+              && validGroupAt(data.groupes, 2) && validGroupAt(data.groupes, 3)
+              && validGroupAt(data.groupes, 4) && validGroupAt(data.groupes, 5)
+              && validGroupAt(data.groupes, 6) && validGroupAt(data.groupes, 7)
+              && validGroupAt(data.groupes, 8) && validGroupAt(data.groupes, 9)
+              && validGroupAt(data.groupes, 10) && validGroupAt(data.groupes, 11)
+              && validGroupAt(data.groupes, 12) && validGroupAt(data.groupes, 13)
+              && validGroupAt(data.groupes, 14) && validGroupAt(data.groupes, 15)
+              && validGroupAt(data.groupes, 16) && validGroupAt(data.groupes, 17)
+              && validGroupAt(data.groupes, 18) && validGroupAt(data.groupes, 19)
+              && data.keys().hasAny(['groupe'])
+              && data.groupe == (data.groupes.size() == 0 ? '' : data.groupes[0]));
     }
 
     function validDeletionMarker(data) {
@@ -296,7 +323,7 @@ service cloud.firestore {
           && validImagePath(request.resource.data, id, 'portraits')
           && validDeletionMarker(request.resource.data)
           && validUpdate(resource.data, request.resource.data,
-              ['nom', 'statut', 'vivant', 'lieu', 'groupe', 'description', 'imageUrl',
+              ['nom', 'statut', 'vivant', 'lieu', 'groupe', 'groupes', 'description', 'imageUrl',
                'imagePath', 'visibleJoueurs', 'createdAt', 'updatedAt', 'ordre', 'suppressionEnCours'])
           && createdAtUnchanged(resource.data, request.resource.data)
           && legacyImageUrlUnchanged(resource.data, request.resource.data)

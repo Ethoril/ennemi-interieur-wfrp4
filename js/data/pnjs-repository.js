@@ -2,6 +2,7 @@ import { normalizePnjPrivate, normalizePnjPublic } from './firebase-normalizers.
 import { FirebaseClientError, ERROR_KINDS, normalizeFirebaseError } from './firebase-errors.js';
 import { describeImage } from './images-repository.js';
 import { commitCascadeBatches } from '../pnj-integrity.js';
+import { MAX_GROUP_LENGTH, MAX_GROUPS, groupKey, normalizeGroups, pnjGroups } from '../pnj-groups.js';
 import {
     collectionRef, compareOrder, compareUnicode, documentIdConstraint, documentRef, getDocument, getDocuments,
     queryRef, requireRepository, serverTimestamp, snapshotData,
@@ -10,7 +11,7 @@ import {
 } from './repository-utils.js';
 
 const PUBLIC_FIELDS = Object.freeze([
-    'nom', 'statut', 'vivant', 'lieu', 'groupe', 'description', 'visibleJoueurs', 'imagePath', 'ordre',
+    'nom', 'statut', 'vivant', 'lieu', 'groupe', 'groupes', 'description', 'visibleJoueurs', 'imagePath', 'ordre',
 ]);
 const PRIVATE_FIELDS = Object.freeze(['notes']);
 // Le formulaire mobile et le bureau partagent ces valeurs contractuelles ;
@@ -65,6 +66,16 @@ function sanitizePublic(input, id, { create = false } = {}) {
     for (const [field, maximum] of [['statut', 64], ['vivant', 32], ['lieu', 200], ['groupe', 200], ['description', 20000]]) {
         if (Object.hasOwn(input, field)) output[field] = boundedString(input[field], field, maximum);
     }
+    if (Object.hasOwn(input, 'groupes')) {
+        if (!Array.isArray(input.groupes) || input.groupes.length > MAX_GROUPS
+            || input.groupes.some(value => typeof value !== 'string'
+                || value.trim().replace(/\s+/gu, ' ').length === 0
+                || value.trim().replace(/\s+/gu, ' ').length > MAX_GROUP_LENGTH)) {
+            throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'pnj-groupes' });
+        }
+        output.groupes = normalizeGroups(input.groupes);
+        output.groupe = output.groupes[0] ?? '';
+    }
     if (Object.hasOwn(output, 'statut') && !PNJ_STATUSES.has(output.statut)) {
         throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'pnj-statut' });
     }
@@ -87,6 +98,24 @@ function sanitizePublic(input, id, { create = false } = {}) {
         output.ordre = input.ordre;
     }
     return output;
+}
+
+function reconcileLegacyGroupPatch(publicData, current) {
+    if (Object.hasOwn(publicData, 'groupes')) return;
+    if (!Object.hasOwn(publicData, 'groupe')) return;
+    const hadCanonicalGroups = Array.isArray(current?.groupes);
+    const groups = hadCanonicalGroups ? pnjGroups(current) : [];
+    const requested = normalizeGroups([publicData.groupe]);
+    if (!hadCanonicalGroups) {
+        groups.splice(0, groups.length, ...requested);
+    } else if (requested.length) {
+        const key = groupKey(requested[0]);
+        const remaining = groups.filter(label => groupKey(label) !== key);
+        groups.splice(0, groups.length, requested[0], ...remaining);
+    }
+    if (groups.length > MAX_GROUPS) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'pnj-groupes' });
+    publicData.groupes = groups;
+    publicData.groupe = groups[0] ?? '';
 }
 
 function sanitizePrivate(input, { create = false } = {}) {
@@ -317,6 +346,10 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         const publicPayload = { ...(publicInput ?? {}) };
         delete publicPayload.id;
         const publicData = sanitizePublic(publicPayload, id, { create: true });
+        if (!Object.hasOwn(publicData, 'groupes')) {
+            publicData.groupes = normalizeGroups([publicData.groupe]);
+            publicData.groupe = publicData.groupes[0] ?? '';
+        }
         const privateData = sanitizePrivate(privateInput, { create: true });
         delete publicData.id;
         const batch = batchApi(sdk, db, 'create-pnj');
@@ -393,6 +426,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
                                 throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'update-pnj-private' });
                             }
                         }
+                        if (applyPnjPatch) reconcileLegacyGroupPatch(publicData, snapshotData(pnjSnapshot));
                         const timestamp = serverTimestamp(sdk);
                         const relationSnapshots = [];
                         for (const relationRef of relationsBatch) relationSnapshots.push(await transaction.get(relationRef));
