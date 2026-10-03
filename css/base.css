@@ -2025,15 +2025,11 @@ strong {
   pointer-events: none;
 }
 
-/* Halo de la couleur du fond : le libellé se détache du trait et des liens
-   qu'il croise. */
+/* Pas de halo : sur un textPath, le contour est peint lettre par lettre et
+   empiète sur la lettre voisine. Le décalage (dy) l'écarte déjà du trait. */
 .pnj-link-label {
   font-size: 11px;
   fill: var(--text-secondary, #9a9aaa);
-  stroke: var(--bg-dark, #0e0e18);
-  stroke-width: 4px;
-  stroke-linejoin: round;
-  paint-order: stroke;
   pointer-events: none;
   user-select: none;
 }
