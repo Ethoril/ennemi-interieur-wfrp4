@@ -91,6 +91,7 @@ const draggingNodes = new Set();
 let unsubscribePositions = null;
 let positionsSubscriptionKey = null;
 let positionsGeneration = 0;
+let positionReadErrorTimer = null;
 let positionSaveSequence = 0;
 let selectedCurveId = null;
 let curveGeneration = 0;
@@ -1239,7 +1240,13 @@ function graphPositionStatus(message, kind = '') {
     status.hidden = !message;
 }
 
+function cancelPositionReadError() {
+    if (positionReadErrorTimer !== null) globalThis.clearTimeout(positionReadErrorTimer);
+    positionReadErrorTimer = null;
+}
+
 function resetPositionSubscriptions() {
+    cancelPositionReadError();
     positionsGeneration += 1;
     positionSaveSequence += 1;
     resetCurveControls();
@@ -1258,6 +1265,8 @@ function subscribeGraphPositions() {
     const ids = state.nodes.map(node => node.id).sort();
     const key = JSON.stringify([state.isAdmin, ids]);
     if (key === positionsSubscriptionKey) return;
+    cancelPositionReadError();
+    if (document.getElementById('pnj-position-status')?.dataset.kind === 'read-error') graphPositionStatus('');
     unsubscribePositions?.();
     unsubscribePositions = null;
     positionsSubscriptionKey = key;
@@ -1265,6 +1274,7 @@ function subscribeGraphPositions() {
     let firstSnapshot = true;
     const onNext = (positions, metadata = {}) => {
         if (generation !== positionsGeneration || repository !== bureauData?.positions) return;
+        cancelPositionReadError();
         const allowed = new Set(state.nodes.map(node => node.id));
         sharedGraphPositions.clear();
         positions.forEach(point => { if (allowed.has(point.id)) sharedGraphPositions.set(point.id, { x: point.x, y: point.y }); });
@@ -1278,14 +1288,27 @@ function subscribeGraphPositions() {
         else if (metadata.fromCache) graphPositionStatus('Positions en cache — synchronisation en attente.', 'pending');
         else if (document.getElementById('pnj-position-status')?.dataset.kind !== 'error') graphPositionStatus('');
     };
-    const onError = () => {
-        if (generation === positionsGeneration) graphPositionStatus('Positions partagées indisponibles. Vérifiez la connexion puis rechargez.', 'error');
+    const onError = error => {
+        if (generation !== positionsGeneration || repository !== bureauData?.positions) return;
+        cancelPositionReadError();
+        const report = () => {
+            positionReadErrorTimer = null;
+            if (generation !== positionsGeneration || repository !== bureauData?.positions) return;
+            graphPositionStatus('Positions partagées indisponibles. Vérifiez la connexion puis rechargez.', 'read-error');
+        };
+        // Masquer un PNJ révoque d'abord sa position côté serveur. L'ancien
+        // abonnement peut être refusé avant que la liste publique retire cet ID.
+        // Le nouvel abonnement annule ce refus transitoire ; un refus persistant
+        // reste signalé. Les erreurs d'écriture conservent leur propre état.
+        if (!state.isAdmin && (error?.kind === 'permission' || error?.code === 'permission-denied')) {
+            positionReadErrorTimer = globalThis.setTimeout(report, 800);
+        } else report();
     };
     try {
         unsubscribePositions = state.isAdmin
             ? repository.subscribeAll(onNext, onError)
             : repository.subscribeForIds(ids, onNext, onError);
-    } catch { onError(); }
+    } catch (error) { onError(error); }
 }
 
 async function saveGraphPosition(node) {

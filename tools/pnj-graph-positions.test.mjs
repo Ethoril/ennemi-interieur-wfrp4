@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
 import { createPnjPositionsRepository } from '../js/data/pnj-positions-repository.js';
 
 function fixture() {
@@ -29,6 +31,79 @@ function fixture() {
     };
     return { sdk, listeners, writes, queries, client: { db: {} } };
 }
+
+async function pageFixture() {
+    const source = await readFile('js/pnjs.js', 'utf8');
+    const status = { textContent: '', dataset: {}, hidden: true };
+    const timers = new Map();
+    const subscriptions = [];
+    const repository = { subscribeForIds(ids, onNext, onError) {
+        const subscription = { ids, onNext, onError, stopped: false };
+        subscriptions.push(subscription);
+        return () => { subscription.stopped = true; };
+    } };
+    const context = {
+        state: { nodes: [{ id: 'a' }, { id: 'b' }], isAdmin: false },
+        bureauData: { positions: repository },
+        positionsGeneration: 0, positionSaveSequence: 0, positionsSubscriptionKey: null,
+        unsubscribePositions: null, positionReadErrorTimer: null,
+        sharedGraphPositions: new Map(), graphNodeMemory: new Map(), draggingNodes: new Set(),
+        document: { getElementById: () => status },
+        globalThis: { setTimeout(fn) { const id = {}; timers.set(id, fn); return id; }, clearTimeout(id) { timers.delete(id); } },
+        applySharedGraphPositions: () => false, resetCurveControls: () => {},
+    };
+    vm.createContext(context);
+    vm.runInContext(source.slice(source.indexOf('function graphPositionStatus('), source.indexOf('async function saveGraphPosition(')), context);
+    context.subscribeGraphPositions();
+    const flushTimers = () => { for (const [id, fn] of [...timers]) { timers.delete(id); fn(); } };
+    return { context, status, subscriptions, flushTimers, timers };
+}
+
+test('masquer un PNJ annule le refus transitoire de son ancien abonnement aux positions', async () => {
+    const f = await pageFixture();
+    const old = f.subscriptions[0];
+    old.onError({ kind: 'permission', code: 'permission-denied' });
+    assert.equal(f.status.hidden, true);
+    assert.equal(f.timers.size, 1);
+    f.context.state.nodes = [{ id: 'b' }];
+    f.context.subscribeGraphPositions();
+    assert.equal(old.stopped, true);
+    assert.deepEqual(Array.from(f.subscriptions[1].ids), ['b']);
+    f.subscriptions[1].onNext([{ id: 'b', x: 10, y: 20 }], { fromCache: false });
+    f.flushTimers();
+    old.onError({ kind: 'permission' });
+    f.flushTimers();
+    assert.equal(f.status.hidden, true);
+    assert.equal(f.context.sharedGraphPositions.get('b').x, 10);
+});
+
+test('un véritable échec de lecture reste signalé puis disparaît après reprise', async () => {
+    const f = await pageFixture();
+    f.subscriptions[0].onError({ kind: 'offline' });
+    assert.equal(f.status.dataset.kind, 'read-error');
+    assert.equal(f.status.hidden, false);
+    f.subscriptions[0].onNext([], { fromCache: false, hasPendingWrites: false });
+    assert.equal(f.status.hidden, true);
+    f.subscriptions[0].onError({ kind: 'permission' });
+    f.flushTimers();
+    assert.equal(f.status.dataset.kind, 'read-error');
+    f.context.state.nodes = [{ id: 'b' }];
+    f.context.subscribeGraphPositions();
+    f.subscriptions[1].onNext([], { fromCache: false });
+    assert.equal(f.status.hidden, true);
+});
+
+test('la lecture ne masque pas une erreur de sauvegarde et la déconnexion annule le message différé', async () => {
+    const f = await pageFixture();
+    f.context.graphPositionStatus('Position non enregistrée.', 'error');
+    f.subscriptions[0].onNext([], { fromCache: false });
+    assert.equal(f.status.textContent, 'Position non enregistrée.');
+    f.subscriptions[0].onError({ kind: 'permission' });
+    f.context.resetPositionSubscriptions();
+    f.flushTimers();
+    assert.equal(f.status.hidden, true);
+    assert.equal(f.timers.size, 0);
+});
 
 test('save ne persiste que les coordonnées, avec horodatage serveur, et valide les entrées', async () => {
     const f = fixture();

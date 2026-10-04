@@ -1,3 +1,7 @@
+## [2.28.3] - 2026-10-04
+
+- **Positions PNJs** : le masquage d’un personnage annule le refus transitoire de l’ancien abonnement aux positions. Un message d’erreur de lecture disparaît lorsque la synchronisation reprend, sans effacer les erreurs de sauvegarde.
+
 ## [2.28.2] - 2026-10-04
 
 - **Synchronisation PNJs** : les changements s’affichent dès réception sans attendre les portraits. Les images inchangées restent en mémoire et les nouveaux portraits apparaissent en arrière-plan.

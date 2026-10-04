@@ -1936,7 +1936,8 @@ strong {
   border-radius: var(--radius-sm);
   font-size: .8rem;
 }
-.pnj-position-status[data-kind="error"] { color: var(--danger, var(--text-primary)); }
+.pnj-position-status[data-kind="error"],
+.pnj-position-status[data-kind="read-error"] { color: var(--danger, var(--text-primary)); }
 
 .pnj-workspace-fullscreen #pnj-detail {
   position: absolute;
