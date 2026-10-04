@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc, Timestamp, writeBatch } from 'firebase/firestore';
 
 const project = 'demo-relation-curvature';
 let env;
@@ -25,6 +25,7 @@ before(async () => {
         await setDoc(doc(db, 'pnjs', 'hidden'), { nom: 'Secret', visibleJoueurs: false });
         const data = { source: 'a', cible: 'b', type: 'allié', label: 'allié', visibleJoueurs: true, curvature: null };
         await setDoc(doc(db, 'relations', 'public'), data);
+        await setDoc(doc(db, 'relations', 'public-reverse'), { ...data, source: 'b', cible: 'a' });
         await setDoc(doc(db, 'relations', 'hidden'), { ...data, cible: 'hidden', visibleJoueurs: false });
     });
 });
@@ -39,6 +40,24 @@ test('un joueur peut modifier seulement la courbure bornée d’une relation pub
     await updateDoc(target, { curvature: 6, updatedAt: serverTimestamp() });
     await updateDoc(target, { curvature: null, updatedAt: serverTimestamp() });
     await updateDoc(target, { curvature: 0, updatedAt: serverTimestamp() });
+});
+
+test('un batch public synchronise les deux sens et un miroir invisible refuse tout le batch', async () => {
+    const forward = doc(player, 'relations', 'public');
+    const reverse = doc(player, 'relations', 'public-reverse');
+    const pairBatch = writeBatch(player);
+    pairBatch.update(forward, { curvature: 2.5, updatedAt: serverTimestamp() });
+    pairBatch.update(reverse, { curvature: 2.5, updatedAt: serverTimestamp() });
+    await pairBatch.commit();
+    assert.equal((await getDoc(forward)).data().curvature, 2.5);
+    assert.equal((await getDoc(reverse)).data().curvature, 2.5);
+
+    const before = (await getDoc(forward)).data().curvature;
+    const rejectedBatch = writeBatch(player);
+    rejectedBatch.update(forward, { curvature: -1, updatedAt: serverTimestamp() });
+    rejectedBatch.update(doc(player, 'relations', 'hidden'), { curvature: -1, updatedAt: serverTimestamp() });
+    await assert.rejects(rejectedBatch.commit());
+    assert.equal((await getDoc(forward)).data().curvature, before);
 });
 
 test('les modifications de contenu, relations cachées et endpoints révoqués sont refusés', async () => {

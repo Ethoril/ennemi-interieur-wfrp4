@@ -7,6 +7,46 @@ function endpointId(endpoint) {
   return endpoint == null ? '' : String(endpoint);
 }
 
+const targetId = link => endpointId(link?.target ?? link?.cible);
+const SEMANTIC_FIELDS = ['type', 'label', 'color', 'style', 'visibleJoueurs'];
+
+function exactMirror(left, right) {
+  return right && left.id !== right.id && left.reciprocalId === right.id && right.reciprocalId === left.id
+    && endpointId(left.source) === targetId(right) && targetId(left) === endpointId(right.source)
+    && SEMANTIC_FIELDS.every(field => left[field] === right[field]);
+}
+
+function curveVersion(link) {
+  const time = link.updatedAt;
+  if (isFiniteNumber(time)) return time;
+  if (time instanceof Date) return time.getTime();
+  return (time?.seconds ?? 0) * 1000 + (time?.nanoseconds ?? 0) / 1e6;
+}
+
+/** Keep directional documents for dossiers, but draw each proven reciprocal pair once. */
+export function graphRelations(links) {
+  if (!Array.isArray(links)) return [];
+  const byId = new Map(links.map(link => [link.id, link]));
+  const seen = new Set();
+  const drawn = [];
+  for (const link of [...links].sort((a, b) => String(a.id).localeCompare(String(b.id), 'en'))) {
+    if (seen.has(link.id)) continue;
+    const mirror = byId.get(link.reciprocalId);
+    const paired = Boolean(exactMirror(link, mirror));
+    link._bidirectional = paired;
+    link._curveMemberIds = paired ? [link.id, mirror.id] : [link.id];
+    // Older releases could save different curvatures for the two directions.
+    // Keep the latest explicit setting (including an automatic reset).
+    const settings = (paired ? [link, mirror] : [link]).filter(item => Object.hasOwn(item, 'curvature'));
+    settings.sort((a, b) => curveVersion(b) - curveVersion(a)
+      || String(a.id).localeCompare(String(b.id), 'en'));
+    link._curveCurvature = settings[0]?.curvature ?? null;
+    for (const id of link._curveMemberIds) seen.add(id);
+    drawn.push(link);
+  }
+  return drawn;
+}
+
 function endpointPoint(endpoint) {
   const x = Number(endpoint && typeof endpoint === 'object' ? endpoint.x : NaN);
   const y = Number(endpoint && typeof endpoint === 'object' ? endpoint.y : NaN);
@@ -38,10 +78,10 @@ function linkGeometry(link, nodeRadius) {
 export function assignCurveLanes(links) {
   if (!Array.isArray(links)) return links;
   const groups = new Map();
-  for (const [index, link] of links.entries()) {
+  for (const [index, link] of graphRelations(links).entries()) {
     const sourceId = endpointId(link?.source);
-    const targetId = endpointId(link?.target);
-    const [lowId, highId] = sourceId <= targetId ? [sourceId, targetId] : [targetId, sourceId];
+    const endId = targetId(link);
+    const [lowId, highId] = sourceId <= endId ? [sourceId, endId] : [endId, sourceId];
     const key = `${lowId.length}:${lowId}${highId}`;
     const group = groups.get(key) || { links: [], lowId, highId };
     group.links.push({ link, index, sourceId });
@@ -55,21 +95,21 @@ export function assignCurveLanes(links) {
       return aid.localeCompare(bid, 'en');
     });
     const manualLanes = new Set(ordered
-      .filter(({ link }) => isFiniteNumber(link?.curvature) && Math.abs(link.curvature) <= MAX_CURVATURE)
-      .map(({ link }) => link.curvature));
+      .filter(({ link }) => isFiniteNumber(link._curveCurvature) && Math.abs(link._curveCurvature) <= MAX_CURVATURE)
+      .map(({ link }) => link._curveCurvature));
     const autoLanes = [];
     for (let lane = 1; lane <= MAX_CURVATURE; lane++) autoLanes.push(lane, -lane);
     let nextLane = 0;
     for (const item of ordered) {
       const { link, sourceId } = item;
-      const manual = isFiniteNumber(link?.curvature) && Math.abs(link.curvature) <= MAX_CURVATURE;
+      const manual = isFiniteNumber(link._curveCurvature) && Math.abs(link._curveCurvature) <= MAX_CURVATURE;
       if (!manual) {
         while (nextLane < autoLanes.length && manualLanes.has(autoLanes[nextLane])) nextLane++;
         const lane = autoLanes[Math.min(nextLane, autoLanes.length - 1)] ?? 0;
         link._canonicalCurveScale = lane;
         if (nextLane < autoLanes.length) nextLane++;
       } else {
-        link._canonicalCurveScale = link.curvature;
+        link._canonicalCurveScale = link._curveCurvature;
       }
       const orientation = sourceId === group.lowId ? 1 : -1;
       link._curveScale = link._canonicalCurveScale * orientation;

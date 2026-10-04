@@ -73,6 +73,9 @@ function makeFirestore() {
                 commit: async () => {
                     state.batchCommits += 1;
                     if (state.failBatchCommitAt === state.batchCommits) throw new Error('cascade-failure-secret');
+                    if (operations.some(([kind, ref]) => kind === 'update' && !collectionMap(ref.collection).has(ref.id))) {
+                        throw new Error('not-found');
+                    }
                     for (const [kind, ref, data, options] of operations) {
                         if (kind === 'set') applySet(ref, data, options?.merge === true);
                         else if (kind === 'update') applyUpdate(ref, data);
@@ -280,28 +283,41 @@ test('une mise à jour de relation re-clé sûrement et refuse un miroir non pro
     assert.equal(fake.collectionMap('relations').get(pairUpdated.reciprocalId).label, 'Nouveau miroir');
 });
 
-test('la courbure survit aux mises à jour et re-clés, et chaque direction garde sa valeur', async () => {
+test('la courbure commune survit aux mises à jour et re-clés de la paire', async () => {
     const fake = makeFirestore();
     const pnjRepo = createMjPnjRepository(fake);
     const repo = createMjRelationsRepository(fake);
     await pnjRepo.create({ id: 'a', nom: 'Ada', visibleJoueurs: true });
     await pnjRepo.create({ id: 'b', nom: 'Bob', visibleJoueurs: true });
     const pair = await repo.create({ source: 'a', cible: 'b', type: 'lien' }, true);
-    await repo.saveCurvature(pair.id, -2.5);
-    await repo.saveCurvature(pair.reciprocalId, 3.25);
+    await repo.saveCurvature(pair.id, -2.5, pair.reciprocalId);
+    assert.equal(fake.collectionMap('relations').get(pair.id).curvature, -2.5);
+    assert.equal(fake.collectionMap('relations').get(pair.reciprocalId).curvature, -2.5);
     const changed = await repo.update(pair.id, { label: 'renommé' }, undefined,
         { pair: true, reciprocalId: pair.reciprocalId });
     assert.equal(fake.collectionMap('relations').get(changed.nextId).curvature, -2.5);
-    assert.equal(fake.collectionMap('relations').get(changed.reciprocalId).curvature, 3.25);
+    assert.equal(fake.collectionMap('relations').get(changed.reciprocalId).curvature, -2.5);
     const rekeyed = await repo.update(changed.nextId, { type: 'nouveau' }, undefined,
         { pair: true, reciprocalId: changed.reciprocalId });
     assert.equal(fake.collectionMap('relations').get(rekeyed.nextId).curvature, -2.5);
-    assert.equal(fake.collectionMap('relations').get(rekeyed.reciprocalId).curvature, 3.25);
+    assert.equal(fake.collectionMap('relations').get(rekeyed.reciprocalId).curvature, -2.5);
+    await repo.saveCurvature(rekeyed.nextId, null, rekeyed.reciprocalId);
+    assert.equal(fake.collectionMap('relations').get(rekeyed.nextId).curvature, null);
+    assert.equal(fake.collectionMap('relations').get(rekeyed.reciprocalId).curvature, null);
+    const beforeForward = fake.collectionMap('relations').get(rekeyed.nextId).curvature;
+    const beforeReverse = fake.collectionMap('relations').get(rekeyed.reciprocalId).curvature;
+    fake.state.failBatchCommitAt = fake.state.batchCommits + 1;
+    await assert.rejects(repo.saveCurvature(rekeyed.nextId, 4, rekeyed.reciprocalId));
+    assert.equal(fake.collectionMap('relations').get(rekeyed.nextId).curvature, beforeForward);
+    assert.equal(fake.collectionMap('relations').get(rekeyed.reciprocalId).curvature, beforeReverse);
+    fake.state.failBatchCommitAt = null;
+    await assert.rejects(repo.saveCurvature(rekeyed.nextId, 4, rekeyed.nextId), error => error.kind === ERROR_KINDS.VALIDATION);
+    await assert.rejects(repo.saveCurvature(rekeyed.nextId, 4, 'bad id'), error => error.kind === ERROR_KINDS.VALIDATION);
     await assert.rejects(repo.saveCurvature(rekeyed.nextId, Number.NaN), error => error.kind === ERROR_KINDS.VALIDATION);
     await assert.rejects(repo.saveCurvature(rekeyed.nextId, 6.01), error => error.kind === ERROR_KINDS.VALIDATION);
 });
 
-test('une réciproque sans courbure reste sans champ lors du rekey de sa paire', async () => {
+test('un rekey de paire réconcilie la courbure absente de la réciproque', async () => {
     const fake = makeFirestore();
     const pnjs = createMjPnjRepository(fake);
     const repo = createMjRelationsRepository(fake);
@@ -314,13 +330,72 @@ test('une réciproque sans courbure reste sans champ lors du rekey de sa paire',
     const updated = await repo.update(pair.id, { label: 'renommé' }, undefined,
         { pair: true, reciprocalId: pair.reciprocalId });
     assert.equal(fake.collectionMap('relations').get(updated.nextId).curvature, 2);
-    assert.equal(Object.hasOwn(fake.collectionMap('relations').get(updated.reciprocalId), 'curvature'), false);
+    assert.equal(fake.collectionMap('relations').get(updated.reciprocalId).curvature, 2);
+});
+
+test('le rekey choisit la dernière courbure explicite, y compris inverse seul et reset récent', async () => {
+    const fake = makeFirestore();
+    const pnjs = createMjPnjRepository(fake);
+    const repo = createMjRelationsRepository(fake);
+    await pnjs.create({ id: 'a', nom: 'Ada', visibleJoueurs: true });
+    await pnjs.create({ id: 'b', nom: 'Bob', visibleJoueurs: true });
+    let pair = await repo.create({ source: 'a', cible: 'b', type: 'chronologie' }, true);
+    const writePairState = (forward, reverse) => {
+        put(fake, 'relations', pair.id, { ...fake.collectionMap('relations').get(pair.id), ...forward });
+        put(fake, 'relations', pair.reciprocalId, { ...fake.collectionMap('relations').get(pair.reciprocalId), ...reverse });
+    };
+    const rekey = async label => {
+        const updated = await repo.update(pair.id, { label }, undefined,
+            { pair: true, reciprocalId: pair.reciprocalId });
+        pair = { id: updated.nextId, reciprocalId: updated.reciprocalId };
+        return [fake.collectionMap('relations').get(pair.id), fake.collectionMap('relations').get(pair.reciprocalId)];
+    };
+
+    const primary = fake.collectionMap('relations').get(pair.id);
+    delete primary.curvature;
+    writePairState({}, { curvature: 4, updatedAt: { seconds: 20, nanoseconds: 0 } });
+    let [forward, reverse] = await rekey('inverse seul');
+    assert.equal(forward.curvature, 4);
+    assert.equal(reverse.curvature, 4);
+
+    writePairState(
+        { curvature: 2, updatedAt: { seconds: 30, nanoseconds: 0 } },
+        { curvature: -3, updatedAt: { seconds: 29, nanoseconds: 0 } },
+    );
+    [forward, reverse] = await rekey('primaire plus récent');
+    assert.equal(forward.curvature, 2);
+    assert.equal(reverse.curvature, 2);
+
+    writePairState(
+        { curvature: 2, updatedAt: { seconds: 40, nanoseconds: 0 } },
+        { curvature: null, updatedAt: { seconds: 41, nanoseconds: 0 } },
+    );
+    [forward, reverse] = await rekey('reset inverse plus récent');
+    assert.equal(forward.curvature, null);
+    assert.equal(reverse.curvature, null);
+
+    const lowerIdFirst = pair.id.localeCompare(pair.reciprocalId, 'en') < 0;
+    writePairState(
+        { curvature: lowerIdFirst ? 1 : 5, updatedAt: { seconds: 50, nanoseconds: 0 } },
+        { curvature: lowerIdFirst ? 5 : 1, updatedAt: { seconds: 50, nanoseconds: 0 } },
+    );
+    [forward, reverse] = await rekey('égalité temporelle');
+    assert.equal(forward.curvature, 1);
+    assert.equal(reverse.curvature, 1);
 });
 
 test('saveCurvature est exposé au dépôt public et n’accepte que null ou une valeur bornée', async () => {
     const fake = makeFirestore();
     const repo = createPublicRelationsRepository({ ...fake, visiblePnjIds: ['a', 'b'] });
     assert.equal(typeof repo.saveCurvature, 'function');
+    put(fake, 'relations', 'forward', { source: 'a', cible: 'b', type: 'lien', visibleJoueurs: true });
+    put(fake, 'relations', 'reverse', { source: 'b', cible: 'a', type: 'lien', visibleJoueurs: true });
+    await repo.saveCurvature('forward', 1.5, 'reverse');
+    assert.equal(fake.collectionMap('relations').get('forward').curvature, 1.5);
+    assert.equal(fake.collectionMap('relations').get('reverse').curvature, 1.5);
+    await repo.saveCurvature('forward', null, 'reverse');
+    assert.equal(fake.collectionMap('relations').get('forward').curvature, null);
+    assert.equal(fake.collectionMap('relations').get('reverse').curvature, null);
     await assert.rejects(repo.saveCurvature('r', Infinity), error => error.kind === ERROR_KINDS.VALIDATION);
     await assert.rejects(repo.saveCurvature('r', -6.1), error => error.kind === ERROR_KINDS.VALIDATION);
 });

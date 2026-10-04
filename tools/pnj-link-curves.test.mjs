@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assignCurveLanes, bezierPath, curveFromPoint, curveHandlePoint } from '../js/pnj-link-curves.js';
+import { assignCurveLanes, graphRelations, bezierPath, curveFromPoint, curveHandlePoint } from '../js/pnj-link-curves.js';
 
 const relation = (id, source, target, extra = {}) => ({
   id,
@@ -11,7 +11,7 @@ const relation = (id, source, target, extra = {}) => ({
 });
 const byId = links => Object.fromEntries(links.map(link => [link.id, link._curveScale]));
 
-test('automatic lanes are stable across input shuffles and reciprocal links get distinct paths', () => {
+test('automatic lanes are stable across input shuffles and distinct directional relations get distinct paths', () => {
   const linksA = [relation('r-c', 'b', 'a'), relation('r-a', 'a', 'b'), relation('r-b', 'b', 'a')];
   const linksB = [relation('r-b', 'b', 'a'), relation('r-c', 'b', 'a'), relation('r-a', 'a', 'b')];
   assignCurveLanes(linksA);
@@ -21,6 +21,76 @@ test('automatic lanes are stable across input shuffles and reciprocal links get 
   const paths = linksA.map(link => bezierPath(link.source.x, link.source.y, link.target.x, link.target.y, link._curveScale));
   assert.equal(new Set(paths).size, paths.length);
   assert.ok(linksA.every(link => link._showLabel === true));
+});
+
+const pair = (forwardId, reverseId, extra = {}) => [
+  relation(forwardId, 'a', 'b', { ...extra, reciprocalId: reverseId }),
+  relation(reverseId, 'b', 'a', { ...extra, reciprocalId: forwardId }),
+];
+
+test('a proven reciprocal pair is one graph edge, label, handle and force link regardless of snapshot order', () => {
+  const links = pair('forward', 'reverse');
+  assignCurveLanes(links);
+  const drawn = graphRelations(links);
+  assert.equal(drawn.length, 1);
+  assert.equal(drawn[0].id, 'forward');
+  assert.equal(drawn[0]._bidirectional, true);
+  assert.deepEqual(drawn[0]._curveMemberIds, ['forward', 'reverse']);
+  assert.equal(drawn[0]._canonicalCurveScale, 1);
+  assert.equal(graphRelations([...links].reverse())[0], drawn[0]);
+  assert.equal(links.length, 2, 'directional documents remain available to both dossiers');
+  assert.equal(links[1].source.id, 'b');
+});
+
+test('different relationships between the same PNJs stay separate from their reciprocal pairs', () => {
+  const friendship = pair('f-a', 'f-b', { type: 'amitié', label: 'Amis' });
+  const debt = pair('d-a', 'd-b', { type: 'dette', label: 'Dette' });
+  const links = [...friendship, ...debt, relation('one-way', 'b', 'a', { type: 'mentor' })];
+  assignCurveLanes(links);
+  const drawn = graphRelations(links);
+  assert.equal(drawn.length, 3);
+  assert.equal(drawn.filter(link => link._bidirectional).length, 2);
+  assert.equal(new Set(drawn.map(link => link._canonicalCurveScale)).size, 3);
+});
+
+test('unproven, ambiguous or semantically different mirrors are never collapsed', () => {
+  for (const field of ['type', 'label', 'color', 'style', 'visibleJoueurs']) {
+    const links = pair('a', 'b', { type: 'Amis', label: 'Amis', color: '#fff', style: 'solid', visibleJoueurs: true });
+    links[1][field] = field === 'visibleJoueurs' ? false : 'different';
+    assert.equal(graphRelations(links).length, 2, field);
+  }
+  const oneSided = pair('a', 'b');
+  oneSided[1].reciprocalId = null;
+  assert.equal(graphRelations(oneSided).length, 2);
+  const missing = pair('a', 'b')[0];
+  assert.equal(graphRelations([missing]).length, 1);
+  assert.equal(missing._bidirectional, false);
+  assert.equal(graphRelations([relation('a', 'a', 'b'), relation('b', 'b', 'a')]).length, 2);
+});
+
+test('legacy reciprocal settings use the latest explicit curvature, including an automatic reset', () => {
+  const links = pair('a', 'b');
+  links[1].curvature = -2.5;
+  links[1].updatedAt = { seconds: 10, nanoseconds: 0 };
+  assignCurveLanes(links);
+  assert.equal(graphRelations(links)[0]._curveCurvature, -2.5);
+  assert.equal(links[0]._canonicalCurveScale, -2.5);
+  links[0].curvature = null;
+  links[0].updatedAt = { seconds: 10, nanoseconds: 1000 };
+  assignCurveLanes(links);
+  assert.equal(graphRelations(links)[0]._curveCurvature, null);
+  assert.equal(links[0]._canonicalCurveScale, 1);
+  links.forEach(link => { link.curvature = 0; });
+  assignCurveLanes(links);
+  assert.equal(links[0]._canonicalCurveScale, 0, 'a straight pair also uses one shared curve');
+});
+
+test('reciprocal grouping accepts repository string endpoints and D3 node endpoints', () => {
+  const links = [
+    { id: 'a', source: 'first', cible: 'second', type: 'amis', reciprocalId: 'b' },
+    { id: 'b', source: { id: 'second' }, target: { id: 'first' }, type: 'amis', reciprocalId: 'a' },
+  ];
+  assert.equal(graphRelations(links).length, 1);
 });
 
 test('manual curvature is canonical, zero is straight, and reversing preserves the same curve', () => {

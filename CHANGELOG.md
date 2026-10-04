@@ -1,3 +1,8 @@
+## [2.28.1] - 2026-10-04
+
+- **Graphe PNJs** : les relations réciproques exactes restent une seule liaison, avec une flèche à chaque extrémité, un seul libellé et une seule poignée. Les relations de nature différente entre les mêmes personnages restent séparées.
+- **Courbure partagée** : le réglage et le retour automatique sont enregistrés ensemble pour les deux sens. Les anciens réglages divergents conservent la dernière valeur explicite ; les modifications de relation préservent cette courbure commune.
+
 ## [2.28.0] - 2026-10-04
 
 - **Graphe PNJs** : courbes automatiques stables qui distinguent les liaisons entre les mêmes personnages, y compris les sens réciproques. Les libellés suivent leurs tracés.

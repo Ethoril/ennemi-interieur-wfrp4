@@ -88,6 +88,18 @@ function relationFieldsKey(relation) {
     return JSON.stringify(RELATION_FIELDS.map(field => relation[field]));
 }
 
+function curvatureUpdatedAt(data) {
+    const value = data.updatedAt;
+    return value ? value.seconds * 1000 + (value.nanoseconds ?? 0) / 1e6 : 0;
+}
+
+function latestExplicitCurvature(left, right) {
+    const candidates = [left, right].filter(item => Object.hasOwn(item, 'curvature'));
+    candidates.sort((a, b) => curvatureUpdatedAt(b) - curvatureUpdatedAt(a)
+        || String(a.id).localeCompare(String(b.id), 'en'));
+    return candidates.length ? { present: true, value: candidates[0].curvature } : { present: false };
+}
+
 function withExactReciprocalIds(items) {
     const byKey = new Map();
     for (const item of items) {
@@ -275,11 +287,12 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
                 if (pair && (!reciprocalData || !sameRelationFields(reciprocalData, reverseRelation(currentData)))) {
                     throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'update-relation-reciprocal' });
                 }
-                let nextReverse = pair ? reverseRelation(next) : null;
                 if (pair && !Object.hasOwn(patch ?? {}, 'curvature')) {
-                    if (Object.hasOwn(reciprocalData, 'curvature')) nextReverse.curvature = reciprocalData.curvature;
-                    else delete nextReverse.curvature;
+                    const sharedCurvature = latestExplicitCurvature(currentData, reciprocalData);
+                    if (sharedCurvature.present) next.curvature = sharedCurvature.value;
+                    else delete next.curvature;
                 }
+                const nextReverse = pair ? reverseRelation(next) : null;
                 const nextReverseId = nextReverse ? relationId(nextReverse) : null;
                 const nextRef = documentRef(sdk, db, 'relations', nextId);
                 const nextReverseRef = nextReverseId ? documentRef(sdk, db, 'relations', nextReverseId) : null;
@@ -326,15 +339,27 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
         return update(id, patch, undefined, { ...options, force: true });
     }
 
-    async function saveCurvature(id, curvature) {
+    async function saveCurvature(id, curvature, reciprocalId = null) {
         if (!validId(id)) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'save-relation-curvature' });
+        if (reciprocalId !== null && (!validId(reciprocalId) || reciprocalId === id)) {
+            throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'save-relation-curvature-reciprocal' });
+        }
         if (curvature !== null && (typeof curvature !== 'number' || !Number.isFinite(curvature)
             || curvature < -6 || curvature > 6)) {
             throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'save-relation-curvature' });
         }
         try {
-            if (typeof sdk.updateDoc !== 'function') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'save-relation-curvature' });
-            await sdk.updateDoc(documentRef(sdk, db, 'relations', id), { curvature, updatedAt: serverTimestamp(sdk) });
+            const data = { curvature, updatedAt: serverTimestamp(sdk) };
+            if (reciprocalId !== null) {
+                if (typeof sdk.writeBatch !== 'function') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'save-relation-curvature' });
+                const batch = sdk.writeBatch(db);
+                batch.update(documentRef(sdk, db, 'relations', id), data);
+                batch.update(documentRef(sdk, db, 'relations', reciprocalId), data);
+                await batch.commit();
+            } else {
+                if (typeof sdk.updateDoc !== 'function') throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'save-relation-curvature' });
+                await sdk.updateDoc(documentRef(sdk, db, 'relations', id), data);
+            }
         } catch (error) { throw mutationError(error, 'save-relation-curvature'); }
     }
 

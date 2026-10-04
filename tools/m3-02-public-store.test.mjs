@@ -340,7 +340,7 @@ test('la composition injectable ne crée que les trois dépôts publics et ferme
 
 test('la composition publique autorise le tracé partagé sans Auth et conserve une surface SDK minimale', () => {
     const runtime = read('js/mobile/public-runtime.js');
-    assert.doesNotMatch(runtime, /getAuth|signIn|writeBatch|runTransaction|deleteField|arrayRemove/iu);
+    assert.doesNotMatch(runtime, /getAuth|signIn|runTransaction|deleteField|arrayRemove/iu);
     assert.equal((runtime.match(/firebasejs\/10\.12\.0\//gu) || []).length, 3,
         'les trois modules CDN doivent partager la version Firebase validée par M2');
     const sdkBlock = runtime.match(/const firestoreSdk\s*=\s*Object\.freeze\(\{([\s\S]*?)\}\);/u)?.[1];
@@ -350,7 +350,7 @@ test('la composition publique autorise le tracé partagé sans Auth et conserve 
         'collection', 'deleteApp', 'doc', 'documentId', 'enableMultiTabIndexedDbPersistence',
         'enableNetwork', 'getApps', 'getFirestore', 'getStorage', 'initializeApp',
         'initializeFirestore', 'memoryLocalCache', 'onSnapshot', 'persistentLocalCache',
-        'persistentMultipleTabManager', 'query', 'serverTimestamp', 'terminate', 'updateDoc', 'where',
+        'persistentMultipleTabManager', 'query', 'serverTimestamp', 'terminate', 'updateDoc', 'where', 'writeBatch',
     ].sort());
     assert.match(runtime, /createPublicSessionComposition/u);
     const html = read('app/index.html');
