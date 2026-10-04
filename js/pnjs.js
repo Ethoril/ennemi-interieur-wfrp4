@@ -5,7 +5,7 @@ import Cropper from 'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.e
 import { esc, cap, stripAccents } from './utils.js';
 import { confirmAction } from './ui-confirm.js';
 import { visiblePourJoueurs } from './visibility.js';
-import { createRenderGate, createPendingRecovery } from './bureau-view-lifecycle.js';
+import { createPendingRecovery } from './bureau-view-lifecycle.js';
 import { legacyPrivateNoteInfo, privateLoadCanApply } from './private-notes.js';
 import { isCurrentLoad, isCurrentPanel, isCurrentGeneration } from './load-generation.js';
 import { reconcileFilterSets, panelIsStillCurrent, safeRelationColorValue } from './pnj-integrity.js';
@@ -15,6 +15,8 @@ import { createGroupPicker } from './pnj-group-picker.js';
 import { assignCurveLanes, graphRelations, bezierPath, curveHandlePoint, curveFromPoint } from './pnj-link-curves.js';
 import { createGraphDisplay } from './pnj-graph-display.js';
 import { rememberGraphNodes, restoreGraphNodes, applySharedGraphPositions } from './pnj-graph-layout.js';
+
+import { createLiveImages, graphStructureKey } from './pnj-live-images.js';
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
@@ -105,6 +107,7 @@ let _filterSignature = null;
 // on ne réécrit le panneau que si son HTML a changé.
 let _panelHtml = '';
 let _panelShownId = null;
+let panelLinkedClues = { id: null, role: null, items: [] };
 // PNJ dont le nœud ou la ligne a ouvert la fiche : le focus y revient à la fermeture.
 let _panelReturnId = null;
 // Réécriture forcée du dossier après un enregistrement de relation : le HTML
@@ -126,6 +129,7 @@ window.addEventListener('pagehide', () => {
     document.getElementById('pnj-form')?.reset();
     if (document.getElementById('f-notes-privees')) document.getElementById('f-notes-privees').value = '';
     if (document.getElementById('pnj-private-status')) document.getElementById('pnj-private-status').textContent = '';
+    panelLinkedClues = { id: null, role: null, items: [] };
     state.nodes = [];
     state.links = [];
     d3.select('#pnj-graph > svg').remove();
@@ -135,8 +139,8 @@ window.addEventListener('pagehide', () => {
     unsubscribePnjs?.();
     unsubscribeRelations?.();
     unsubscribePrivateNotes?.();
-    renderedImageHandles.forEach(release => release());
-    renderedImageHandles.clear();
+    liveImages?.close();
+    liveImages = null;
     void bureauData?.close();
     bureauData = null;
 });
@@ -150,7 +154,7 @@ let unsubscribePrivateNotes = null;
 let unsubscribeLinkedIndices = null;
 let linkedIndicesGeneration = 0;
 let bureauGeneration = 0;
-const renderedImageHandles = new Map();
+let liveImages = null;
 
 // ── Utils ──────────────────────────────────────────────────────
 // Object.hasOwn : une valeur « constructor » remonterait sinon au prototype
@@ -342,10 +346,11 @@ async function performGlobalPnjDeletionLockRecovery(expectedGeneration) {
 }
 // ── Auth ───────────────────────────────────────────────────────
 function handleAuth(user, isAdmin) {
-    const nextBureauGeneration = ++bureauGeneration;
     const roleChanged = state.isAdmin !== isAdmin;
     const nextAuthSessionKey = user?.uid || '';
     const identityChanged = authSessionKey !== nextAuthSessionKey;
+    const nextBureauGeneration = roleChanged || identityChanged || !bureauData
+        ? ++bureauGeneration : bureauGeneration;
     authSessionKey = nextAuthSessionKey;
     state.isAdmin = isAdmin;
     if (isAdmin) {
@@ -364,6 +369,9 @@ function handleAuth(user, isAdmin) {
         unsubscribeRelations = null;
         unsubscribePrivateNotes?.();
         unsubscribePrivateNotes = null;
+        liveImages?.close();
+        liveImages = null;
+        panelLinkedClues = { id: null, role: null, items: [] };
         const previousData = bureauData;
         bureauData = null;
         void previousData?.close().catch(error => console.warn('Fermeture du client bureau différée.', error));
@@ -438,14 +446,34 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
                 document.createTextNode('Impossible de charger les données. Réessayez dans un instant.'),
             );
         };
-        const render = async (nodes, relations, token) => {
-            if (generation !== bureauGeneration || !isCurrentLoad(loadId, currentLoadId) || !renderGate.isCurrent(token)) return;
+        const capturedData = bureauData;
+        const stillCurrent = () => generation === bureauGeneration
+            && isCurrentLoad(loadId, currentLoadId) && capturedData === bureauData;
+        let structureKey = null;
+        liveImages?.close();
+        liveImages = createLiveImages(path => capturedData.images.loadObjectUrl(path), path => {
+            if (!stillCurrent()) return;
+            state.nodes.filter(node => node.imagePath === path).forEach(node => liveImages.apply(node));
+            refreshGraphContent();
+            if (state.view === 'table') renderTable();
+            const node = state.nodes.find(item => item.id === state.panelId);
+            if (node) openPanel(node);
+        });
+        const render = (nodes, relations) => {
+            if (!stillCurrent()) return;
             const previousPanelId = state.panelId;
-            renderedImageHandles.forEach(release => release());
-            renderedImageHandles.clear();
             rememberGraphNodes(state.nodes, graphNodeMemory);
-            state.nodes = nodes.map(repositoryPnjToPage).filter(node => state.isAdmin || visiblePourJoueurs(node));
-            restoreGraphNodes(state.nodes, sharedGraphPositions, graphNodeMemory);
+            const nextNodes = nodes.map(repositoryPnjToPage).filter(node => state.isAdmin || visiblePourJoueurs(node));
+            const nextStructureKey = graphStructureKey(nextNodes, relations);
+            const rebuild = structureKey !== nextStructureKey || (!state.nodeSel && nextNodes.length > 0);
+            structureKey = nextStructureKey;
+            const previousNodes = new Map(state.nodes.map(node => [node.id, node]));
+            // D3 et la simulation gardent ces objets : préserver leurs références.
+            state.nodes = nextNodes.map(node => {
+                const previous = previousNodes.get(node.id);
+                return previous ? Object.assign(previous, node) : node;
+            });
+            if (rebuild) restoreGraphNodes(state.nodes, sharedGraphPositions, graphNodeMemory);
             subscribeGraphPositions();
             const nodeIds = new Set(state.nodes.map(node => node.id));
             if (state.editingId && !nodeIds.has(state.editingId)) {
@@ -457,7 +485,7 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
                 closePanel();
                 showPnjDeletionStatus('Ce PNJ n’est plus visible ou a été supprimé.', null);
             }
-            state.links = relations.filter(link => nodeIds.has(link.source) && nodeIds.has(link.cible))
+            if (rebuild) state.links = relations.filter(link => nodeIds.has(link.source) && nodeIds.has(link.cible))
                 .map(link => ({ ...link, target: link.cible }));
             remoteCurvatures.clear();
             state.links.forEach(link => {
@@ -469,58 +497,37 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
                 if (!remoteCurvatures.has(id)) curvePreviews.delete(id);
             }
             bureauData.relations.setVisiblePnjIds?.([...nodeIds]);
-            await Promise.all(state.nodes.map(async node => {
-            node.legacyImageUrl = node.imageUrl || '';
-            if (!node.imagePath) {
-                node.imageState = node.imageUrl ? 'legacy' : 'missing';
-                node.imageError = null;
-                return;
-            }
-            try {
-                const handle = bureauData.images.loadObjectUrl(node.imagePath);
-                const result = await handle;
-                if (generation !== bureauGeneration || !renderGate.isCurrent(token)) { result.release?.(); return; }
-                renderedImageHandles.set(node.id, result.release);
-                node.imageState = 'ready';
-                node.imageError = null;
-                node.imageUrl = result.url;
-            } catch (error) {
-                node.imageState = ['storage/unauthorized', 'storage/unauthenticated'].includes(error?.cause?.code)
-                    ? 'access-denied' : 'missing';
-                node.imageError = error?.code || null;
-                node.imageUrl = '';
-            }
-            }));
-            if (generation !== bureauGeneration || !isCurrentLoad(loadId, currentLoadId) || !renderGate.isCurrent(token)) return;
+            liveImages.sync(state.nodes);
+            buildFilters();
+            if (rebuild) {
+                // Une modification de structure reconstruit le graphe en gardant le focus.
+                const focusedCurve = document.activeElement?.closest?.('.pnj-link-hit, .pnj-curve-handle');
+                const focusedCurveId = focusedCurve ? d3.select(focusedCurve).datum()?.id : null;
+                const focusedWasHandle = focusedCurve?.classList.contains('pnj-curve-handle');
+                const focusedNodeId = document.activeElement?.closest?.('.pnj-node')
+                    ? d3.select(document.activeElement.closest('.pnj-node')).datum()?.id : null;
+                // Enfant direct : la légende, dans #pnj-graph, contient aussi des SVG (sceaux).
+                d3.select('#pnj-graph > svg').remove();
+                state.nodeSel = null;
+                state.linkSel = null;
+                state.linkLabelSel = null;
+                if (state.simulation) { state.simulation.stop(); state.simulation = null; }
 
-        // Le graphe est reconstruit à chaque émission : un nœud focalisé au
-        // clavier doit le rester après la reconstruction.
-        const focusedCurve = document.activeElement?.closest?.('.pnj-link-hit, .pnj-curve-handle');
-        const focusedCurveId = focusedCurve ? d3.select(focusedCurve).datum()?.id : null;
-        const focusedWasHandle = focusedCurve?.classList.contains('pnj-curve-handle');
-        const focusedNodeId = document.activeElement?.closest?.('.pnj-node')
-            ? d3.select(document.activeElement.closest('.pnj-node')).datum()?.id : null;
-        // Enfant direct : la légende, dans #pnj-graph, contient aussi des SVG (sceaux).
-        d3.select('#pnj-graph > svg').remove();
-        state.nodeSel = null;
-        state.linkSel = null;
-        state.linkLabelSel = null;
-        if (state.simulation) { state.simulation.stop(); state.simulation = null; }
+                // Pas de clearFilters() ici : buildFilters() ne recrée les pastilles que
+                // si les facettes ont changé, pour ne pas voler le focus d'un joueur.
+                if (state.nodes.length) buildGraph();
+                else updateCurveControls();
+                if (focusedCurveId) {
+                    const selector = focusedWasHandle ? state.curveHandleSel : state.linkHitSel;
+                    const restored = selector?.filter(link => link.id === focusedCurveId).node();
+                    if (restored && restored.getAttribute('tabindex') !== '-1') restored.focus();
+                    else document.getElementById('pnj-graph')?.focus();
+                }
+                // Nœud retiré ou filtré : le focus se replie sur le graphe plutôt que sur body.
+                if (focusedNodeId && !focusGraphNode(focusedNodeId)) document.getElementById('pnj-graph')?.focus();
 
-        // Pas de clearFilters() ici : buildFilters() ne recrée les pastilles que
-        // si les facettes ont changé, pour ne pas voler le focus d'un joueur.
-        buildFilters();
-        if (state.nodes.length) buildGraph();
-        else updateCurveControls();
-        if (focusedCurveId) {
-            const selector = focusedWasHandle ? state.curveHandleSel : state.linkHitSel;
-            const restored = selector?.filter(link => link.id === focusedCurveId).node();
-            if (restored && restored.getAttribute('tabindex') !== '-1') restored.focus();
-            else document.getElementById('pnj-graph')?.focus();
-        }
-        // Nœud retiré ou filtré : le focus se replie sur le graphe plutôt que sur body.
-        if (focusedNodeId && !focusGraphNode(focusedNodeId)) document.getElementById('pnj-graph')?.focus();
-
+            } else refreshGraphContent();
+            updateVisibility();
             if (init) document.getElementById('pnj-loading').style.display = 'none';
         document.getElementById('pnj-empty').style.display    = state.nodes.length ? 'none' : 'flex';
         document.getElementById('graph-legend').style.display = state.nodes.length ? 'flex' : 'none';
@@ -546,10 +553,16 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
         const relationSubscribe = state.isAdmin ? bureauData.relations.subscribeAll : bureauData.relations.subscribeVisible;
         let latestNodes = [];
         let latestRelations = [];
-        const renderGate = createRenderGate();
+        let renderQueued = false;
         const update = () => {
-            const token = renderGate.next();
-            void render(latestNodes, latestRelations, token);
+            if (renderQueued) return;
+            renderQueued = true;
+            globalThis.queueMicrotask(() => {
+                renderQueued = false;
+                if (!stillCurrent()) return;
+                try { render(latestNodes, latestRelations); }
+                catch (error) { onError(error); }
+            });
         };
         unsubscribePnjs = pnjSubscribe.call(bureauData.pnjs, (nodes, metadata) => {
             latestNodes = nodes;
@@ -576,6 +589,21 @@ async function loadData({ init = false, generation = bureauGeneration } = {}) {
     }
 }
 
+
+function refreshGraphContent() {
+    const nodes = state.nodeSel;
+    if (!nodes) return;
+    nodes.attr('aria-label', nodeAriaLabel);
+    state.linkHitSel?.attr('aria-label', d => `Régler la courbure : ${curveRelationName(d)}`);
+    state.curveHandleSel?.attr('aria-label', d => `Déplacer la courbure : ${curveRelationName(d)}. Utilisez les flèches pour ajuster.`);
+    nodes.select('.node-name').text(d => d.nom || '');
+    nodes.select('.node-sub').text(d => d.lieu || '');
+    nodes.select('.node-initial').text(d => initials(d.nom))
+        .style('display', d => medallionHref(d) ? 'none' : '');
+    nodes.select('.node-portrait-bg').style('display', d => medallionHref(d) ? 'none' : '');
+    nodes.select('.node-portrait').attr('href', medallionHref)
+        .style('display', d => medallionHref(d) ? '' : 'none');
+}
 
 // ── CRUD ───────────────────────────────────────────────────────
 async function savePnj(data, imageFile) {
@@ -637,7 +665,6 @@ async function savePnj(data, imageFile) {
         void result;
         const prevEditingId = capturedEditingId;
         closePnjModal();
-        await loadData();
         if (capturedSession !== editorSession || capturedData !== bureauData) return;
         if (prevEditingId && panelIsStillCurrent({
             capturedGeneration: capturedPanelGeneration, currentGeneration: currentPanelGeneration,
@@ -666,7 +693,6 @@ async function savePnj(data, imageFile) {
             const wasCurrent = editorStillCurrent();
             if (wasCurrent && imageState.commitDone) {
                 closePnjModal();
-                await loadData();
             }
             showPnjImageRecoveryStatus(message, recover);
             if (imageState.commitUnknown) alert(message);
@@ -1897,71 +1923,76 @@ async function openPanel(d, { origin = false, addRelation = false } = {}) {
                 </div>` : ''}
         </div>`;
 
-    let linkedClues = [];
-    try {
-        linkedClues = await readLinkedIndices(d.id);
-    } catch (e) {
+    // Le dossier ne dépend pas du délai de lecture des indices liés.
+    const renderDetails = linkedClues => {
         if (!panelIsCurrent()) return;
-        console.error("Erreur lors de la récupération des indices liés :", e);
+        const cluesHtml = linkedClues.length ? `
+            <div class="pnj-detail-section">
+                <h3>Indices liés</h3>
+                <div class="pnj-clues-list">
+                    ${linkedClues.map(c => `
+                        <a href="enquetes.html?id=${esc(c.id)}" class="pnj-clue-badge${!c.decouvert ? ' clue-hidden' : ''}">
+                            🔎 ${esc(c.titre)}${!c.decouvert ? ' 👁️ (Non découvert)' : ''}
+                        </a>
+                    `).join('')}
+                </div>
+            </div>` : '';
+
+        // Le sceau (balisage de seal.js) remplace le badge de statut.
+        const html = `
+            <div class="pnj-dossier-banner">
+                ${portraitHtml}
+                <div class="pnj-dossier-title">
+                    <h2 id="pnj-detail-title" tabindex="-1">${esc(d.nom || '?')}</h2>
+                    <div class="pnj-badges">${sealMarkup(d.statut, { size: 34 })}${vitalBadge}</div>
+                </div>
+            </div>
+            <div class="pnj-dossier-body">
+                ${editActions}${metaHtml}${descHtml}${relHtml}${cluesHtml}
+            </div>`;
+
+        const panel = document.getElementById('pnj-detail');
+        const content = document.getElementById('pnj-detail-content');
+        const opening = !panel.classList.contains('open') || _panelShownId !== d.id;
+        // Réécrire une fiche inchangée ferait perdre le focus et les formulaires
+        // ouverts à chaque émission temps réel.
+        const rewrite = _panelRewrite?.id === d.id ? _panelRewrite : null;
+        if (rewrite || html !== _panelHtml) {
+            // body : l'élément focalisé (bouton du formulaire) a pu être retiré par
+            // une réécriture précédente.
+            const focusWasInside = panel.contains(document.activeElement) || document.activeElement === document.body;
+            const restoreKey = opening ? null : focusKey(panel);
+            content.innerHTML = html;
+            _panelHtml = html;
+            _panelRewrite = null;
+            if (rewrite && !opening && focusWasInside) (panel.querySelector(rewrite.focus) || document.getElementById('pnj-detail-title'))?.focus();
+            else if (restoreKey) (panel.querySelector(restoreKey) || document.getElementById('pnj-detail-title'))?.focus();
+        }
+        const portrait = content.querySelector('.pnj-dossier-portrait');
+        if (portrait && portrait.getAttribute('src') !== d.imageUrl) portrait.src = d.imageUrl;
+        _panelShownId = d.id;
+
+        panel.inert = false;
+        panel.classList.add('open');
+        // Le bureau se resserre à côté du dossier au lieu d'être recouvert.
+        document.body.classList.add('pnj-panel-open');
+        if (opening) document.getElementById('pnj-detail-title')?.focus();
+        highlightConnected(d.id);
+    };
+    const cachedClues = panelLinkedClues.id === d.id && panelLinkedClues.role === panelRole
+        ? panelLinkedClues.items : [];
+    renderDetails(cachedClues);
+    try {
+        const linkedClues = await readLinkedIndices(d.id);
+        if (!panelIsCurrent()) return;
+        panelLinkedClues = { id: d.id, role: panelRole, items: linkedClues };
+        renderDetails(linkedClues);
+    } catch (error) {
+        if (panelIsCurrent()) console.error('Erreur lors de la récupération des indices liés :', error);
     }
 
-    if (!panelIsCurrent()) return;
-
-    const cluesHtml = linkedClues.length ? `
-        <div class="pnj-detail-section">
-            <h3>Indices liés</h3>
-            <div class="pnj-clues-list">
-                ${linkedClues.map(c => `
-                    <a href="enquetes.html?id=${esc(c.id)}" class="pnj-clue-badge${!c.decouvert ? ' clue-hidden' : ''}">
-                        🔎 ${esc(c.titre)}${!c.decouvert ? ' 👁️ (Non découvert)' : ''}
-                    </a>
-                `).join('')}
-            </div>
-        </div>` : '';
-
-    // Le sceau (balisage de seal.js) remplace le badge de statut.
-    const html = `
-        <div class="pnj-dossier-banner">
-            ${portraitHtml}
-            <div class="pnj-dossier-title">
-                <h2 id="pnj-detail-title" tabindex="-1">${esc(d.nom || '?')}</h2>
-                <div class="pnj-badges">${sealMarkup(d.statut, { size: 34 })}${vitalBadge}</div>
-            </div>
-        </div>
-        <div class="pnj-dossier-body">
-            ${editActions}${metaHtml}${descHtml}${relHtml}${cluesHtml}
-        </div>`;
-
-    const panel = document.getElementById('pnj-detail');
-    const content = document.getElementById('pnj-detail-content');
-    const opening = !panel.classList.contains('open') || _panelShownId !== d.id;
-    // Réécrire une fiche inchangée ferait perdre le focus et les formulaires
-    // ouverts à chaque émission temps réel.
-    const rewrite = _panelRewrite?.id === d.id ? _panelRewrite : null;
-    if (rewrite || html !== _panelHtml) {
-        // body : l'élément focalisé (bouton du formulaire) a pu être retiré par
-        // une réécriture précédente.
-        const focusWasInside = panel.contains(document.activeElement) || document.activeElement === document.body;
-        const restoreKey = opening ? null : focusKey(panel);
-        content.innerHTML = html;
-        _panelHtml = html;
-        _panelRewrite = null;
-        if (rewrite && !opening && focusWasInside) (panel.querySelector(rewrite.focus) || document.getElementById('pnj-detail-title'))?.focus();
-        else if (restoreKey) (panel.querySelector(restoreKey) || document.getElementById('pnj-detail-title'))?.focus();
-    }
-    const portrait = content.querySelector('.pnj-dossier-portrait');
-    if (portrait && portrait.getAttribute('src') !== d.imageUrl) portrait.src = d.imageUrl;
-    _panelShownId = d.id;
-
-    panel.inert = false;
-    panel.classList.add('open');
-    // Le bureau se resserre à côté du dossier au lieu d'être recouvert.
-    document.body.classList.add('pnj-panel-open');
-    if (opening) document.getElementById('pnj-detail-title')?.focus();
-    // L'action directe depuis le tableau n'est appliquée qu'une fois la lecture
-    // asynchrone des indices terminée et cette ouverture toujours courante.
+    // Ouvrir le formulaire après le dernier rendu pour conserver la saisie.
     if (addRelation && panelIsCurrent()) openRelAddForm();
-    highlightConnected(d.id);
 }
 
 // `restoreFocus` : fermeture demandée par l'utilisateur (bouton, Échap). Le

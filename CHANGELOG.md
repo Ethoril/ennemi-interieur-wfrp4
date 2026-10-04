@@ -1,3 +1,8 @@
+## [2.28.2] - 2026-10-04
+
+- **Synchronisation PNJs** : les changements s’affichent dès réception sans attendre les portraits. Les images inchangées restent en mémoire et les nouveaux portraits apparaissent en arrière-plan.
+- **Graphe PNJs** : les modifications du nom, de la description et du portrait conservent le graphe et sa simulation. Les abonnements temps réel restent actifs après une sauvegarde MJ.
+
 ## [2.28.1] - 2026-10-04
 
 - **Graphe PNJs** : les relations réciproques exactes restent une seule liaison, avec une flèche à chaque extrémité, un seul libellé et une seule poignée. Les relations de nature différente entre les mêmes personnages restent séparées.

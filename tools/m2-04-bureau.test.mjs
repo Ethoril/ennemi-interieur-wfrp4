@@ -16,7 +16,7 @@ test('les pages détachent leurs abonnements et leurs images à la fermeture', (
     assert.match(pages[0], /unsubscribePnjs\?\.\(\)/u);
     assert.match(pages[0], /unsubscribeRelations\?\.\(\)/u);
     assert.match(pages[0], /unsubscribeLinkedIndices\?\.\(\)|cancelLinkedIndices\(\)/u);
-    assert.match(pages[0], /renderedImageHandles\.forEach/u);
+    assert.match(pages[0], /liveImages\?\.close/u);
     assert.match(pages[1], /unsubscribeIndices\?\.\(\)/u);
     assert.match(pages[1], /bureauData\?\.close\(\)/u);
     assert.match(pages[0], /closePnjModal\(\)/u);
