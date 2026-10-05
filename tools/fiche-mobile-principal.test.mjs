@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
+import { basicRowFor } from '../js/fiche/basic-skills.js';
 import { loadFicheCatalogue } from '../js/mobile/fiche-catalogue.js';
 import { ficheCaracs, resourceTokens, topSkills } from '../js/mobile/fiche-model.js';
 import { createPrincipalPanel } from '../js/mobile/views/fiche-principal.js';
@@ -37,11 +38,20 @@ test('topSkills : spécialité de base et compétence avancée', () => {
 });
 
 test('topSkills : une forme reliée affiche le nom principal du référentiel', () => {
-    const linked = read('js/catalogue/referentiel-public.json').skills.aliases;
-    const [label] = Object.keys(linked || {}).filter(name => resolver.resolve(name).entry && resolver.resolve(name).entry.nom !== name);
-    if (!label) return; // aucune forme reliée publiée : rien à vérifier
-    const rows = topSkills(data({ skillsAdvanced: [{ nom: label, carac: 'int', adv: 5 }] }), engine, 1);
-    assert.equal(rows[0].nom, resolver.resolve(label).entry.nom);
+    const { aliases } = read('js/catalogue/referentiel-public.json').skills;
+    const alias = aliases.find(({ label }) => resolver.resolve(label).entry && resolver.resolve(label).entry.nom !== label);
+    assert.ok(alias);
+    const [row] = topSkills(data({ skillsAdvanced: [{ id: 'a1', nom: alias.label, carac: 'int', adv: 5 }] }), engine, 1);
+    assert.equal(row.nom, resolver.resolve(alias.label).entry.nom);
+    assert.deepEqual([row.serverName, row.targetId], [alias.label, 'a1']);
+});
+
+test('topSkills : l’adressage d’une ligne de base avec spécialité retrouve sa ligne côté serveur', () => {
+    const basicSpecs = { 'Corps à corps (Base)': 'Escrime' };
+    const [row] = topSkills(data({ basicSpecs, skillsBasic: { 'Corps à corps (Base)': 4 } }), engine, 1);
+    assert.equal(row.nom, 'Corps à corps (Escrime)');
+    assert.equal(row.row, 'Corps à corps (Base)');
+    assert.equal(basicRowFor(row.serverName, basicSpecs), row.row);
 });
 
 test('topSkills : données absentes sans exception', () => {

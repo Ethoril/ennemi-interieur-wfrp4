@@ -1,5 +1,5 @@
 import { primarySkillLabel } from '../catalogue/skill-forms.js';
-import { BASIC_SKILLS } from '../fiche/basic-skills.js';
+import { basicSkillNom, BASIC_SKILLS } from '../fiche/basic-skills.js';
 import { activeCareerRank, findCareerByName, getActiveVariantForRang, getCareerCaracs, getRangVariants } from '../fiche/career-model.js';
 import { caracBonus, caracTotal } from '../fiche/derived.js';
 
@@ -49,6 +49,8 @@ export function ficheCaracs(data, careers = []) {
 
 /**
  * Les n compétences les plus hautes (de base puis avancées), total = caractéristique + avances.
+ * Chaque ligne porte aussi son adressage pour l'achat : `row` (clé BASIC_SKILLS) pour une compétence de base,
+ * `targetId` pour une avancée, et `serverName` (nom stocké côté serveur).
  * Tri par total décroissant puis nom ; les compétences sans avance ne comblent que les places libres.
  */
 export function topSkills(data, engine, n) {
@@ -63,16 +65,22 @@ export function topSkills(data, engine, n) {
         if (entry) shown.add(entry.id);
         const spec = data?.basicSpecs?.[nom];
         const stored = spec ? `${nom.replace(/ \(Base\)$/u, '')} (${spec})` : nom;
-        rows.push({ nom: primarySkillLabel(resolver, stored), carac, adv: count(data?.skillsBasic?.[nom]) });
+        rows.push({
+            nom: primarySkillLabel(resolver, stored), carac, adv: count(data?.skillsBasic?.[nom]),
+            row: nom, serverName: basicSkillNom(nom, data?.basicSpecs),
+        });
     }
     for (const skill of data?.skillsAdvanced || []) {
-        rows.push({ nom: primarySkillLabel(resolver, skill?.nom ?? ''), carac: skill?.carac, adv: count(skill?.adv) });
+        rows.push({
+            nom: primarySkillLabel(resolver, skill?.nom ?? ''), carac: skill?.carac, adv: count(skill?.adv),
+            serverName: skill?.nom ?? '', targetId: skill?.id,
+        });
     }
     const byTotal = (a, b) => b.total - a.total || a.nom.localeCompare(b.nom, 'fr');
     const scored = rows.map(row => ({
-        nom: row.nom, adv: row.adv, carac: caracAbbr[row.carac] || '', total: caracTotal(data, row.carac) + row.adv,
+        ...row, carac: caracAbbr[row.carac] || '', total: caracTotal(data, row.carac) + row.adv,
     }));
     const trained = scored.filter(row => row.adv > 0).sort(byTotal);
     const untrained = scored.filter(row => row.adv === 0).sort(byTotal);
-    return [...trained, ...untrained].slice(0, n).map(({ nom, carac, total }) => ({ nom, carac, total }));
+    return [...trained, ...untrained].slice(0, n).map(({ adv, ...row }) => row);
 }
