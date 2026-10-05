@@ -62,6 +62,7 @@ export function createFicheDetailView({
     let stopCatalogue = null;
     let role = null;
     let sessionKey = '';
+    let accessGeneration = 0;
     let screen = { name: 'loading' };
     let controllerState = null;
     let online = windowRef?.navigator?.onLine !== false;
@@ -243,6 +244,7 @@ export function createFicheDetailView({
     };
 
     const onAccess = async (value, isCurrent) => {
+        const access = ++accessGeneration;
         const user = value?.user || null;
         const capabilities = value?.capabilities || { role: 'public', characterIds: [] };
         if (!user) {
@@ -258,14 +260,19 @@ export function createFicheDetailView({
             const key = `${user.uid}:${nextRole}`;
             role = nextRole;
             importButton.hidden = nextRole !== 'mj';
-            if (key === sessionKey) return;
+            if (key === sessionKey) {
+                // Après un échec transitoire (Réessayer), la session tourne déjà : rétablir l'écran.
+                if (screen.name !== 'session') { screen = { name: 'session' }; render(); }
+                return;
+            }
             try { await ensureBackend(); } catch {
                 if (!isCurrent()) return;
                 screen = { name: 'failed' };
                 render();
                 return;
             }
-            if (!isCurrent() || !controller) return;
+            // Une déconnexion ou un autre compte arrivé pendant le chargement périme cet accès.
+            if (!isCurrent() || access !== accessGeneration || !controller) return;
             sessionKey = key;
             screen = { name: 'session' };
             controller.setSession({ uid: user.uid, charId, role });
@@ -286,7 +293,8 @@ export function createFicheDetailView({
             if (!isCurrent()) return;
             if (!client || typeof client.watch !== 'function') throw new Error('Session fiche indisponible');
             const stop = client.watch(value => { if (isCurrent()) void onAccess(value, isCurrent); }, () => {
-                if (!isCurrent()) return;
+                // L'erreur ne concerne que la vérification d'accès : une fiche déjà affichée reste affichée.
+                if (!isCurrent() || sessionKey) return;
                 screen = { name: 'failed' };
                 render();
             });

@@ -73,7 +73,11 @@ const data = () => ({
     customSpecs: {}, basicSpecs: {}, customTalents: {}, chosenVariants: {}, careerOverrides: {},
 });
 
-function setup({ hash = '#/fiches/test', capabilities = { role: 'joueur', characterIds: ['test'] }, user = { uid: 'u1' }, exists = true } = {}) {
+function setup({ hash = '#/fiches/test', capabilities = { role: 'joueur', characterIds: ['test'] }, user = { uid: 'u1' }, exists = true, manual = false } = {}) {
+    let emit = () => {};
+    let fail = () => {};
+    let release = () => {};
+    const gate = manual ? new Promise(resolve => { release = resolve; }) : null;
     const documentRef = fakeDocument();
     const container = documentRef.createElement('main');
     const windowRef = fakeWindow(hash);
@@ -91,16 +95,21 @@ function setup({ hash = '#/fiches/test', capabilities = { role: 'joueur', charac
     const view = createFicheDetailView({
         container, documentRef, windowRef, route: parseRoute(hash),
         getClient: async () => ({
-            watch(listener) { listener({ user, capabilities }); return () => {}; },
+            watch(listener, onError) {
+                emit = listener;
+                fail = onError;
+                if (!manual) listener({ user, capabilities });
+                return () => {};
+            },
         }),
         signIn: async () => { log.signIns += 1; },
-        loadRuntime: async () => ({ repository }),
+        loadRuntime: async () => { await gate; return { repository }; },
         loadCatalogue: async () => ({ careers, watch: () => () => {} }),
         setTitle: text => log.titles.push(text),
         announce: message => log.announces.push(message),
         navigate: target => log.navigations.push(target),
     });
-    return { view, container, windowRef, subscriptions, log };
+    return { view, container, windowRef, subscriptions, log, emit: value => emit(value), fail: error => fail(error), release: () => release(), capabilities, user };
 }
 
 const settle = async () => { for (let index = 0; index < 5; index += 1) await sleep(0); };
@@ -226,5 +235,32 @@ test('hors connexion : message dans la bande d\'état, retiré au retour du rés
     assert.equal(notice.hidden, false);
     windowRef.dispatch('online');
     assert.equal(notice.hidden, true);
+    view.unmount();
+});
+
+test("une erreur de vérification d'accès ne remplace pas la fiche déjà affichée", async () => {
+    const { view, container, fail, emit, capabilities, user } = setup();
+    view.mount({});
+    await settle();
+    const shell = container.querySelector('.m-fiche');
+    fail({ code: 'unavailable' });
+    assert.equal(container.querySelector('.m-fiche'), shell);
+    emit({ user, capabilities });
+    await settle();
+    assert.equal(container.querySelector('.m-fiche'), shell, 'même compte : rien à recharger');
+    view.unmount();
+});
+
+test("une déconnexion arrivée pendant le chargement n'ouvre pas la session de l'ancien compte", async () => {
+    const { view, container, subscriptions, emit, release, capabilities, user } = setup({ manual: true });
+    view.mount({});
+    await settle();
+    emit({ user, capabilities });
+    await settle();
+    emit({ user: null, capabilities: { role: 'public', characterIds: [] } });
+    release();
+    await settle();
+    assert.equal(subscriptions.size, 0, 'aucune lecture de fiche pour un compte déconnecté');
+    assert.ok(texts(container).includes('Connexion requise'));
     view.unmount();
 });
