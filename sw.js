@@ -145,6 +145,7 @@ const ASSETS_LOCAUX = [
   './js/mobile/app.js',
   './js/mobile/views/fiche-access.js',
   './js/mobile/views/fiche-detail.js',
+  './js/mobile/views/fiche-principal.js',
   './js/mobile/fiche-runtime.js',
   './js/mobile/fiche-catalogue.js',
   './js/mobile/fiche-model.js',

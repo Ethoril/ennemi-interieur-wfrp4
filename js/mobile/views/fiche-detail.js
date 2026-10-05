@@ -2,6 +2,7 @@ import { createFicheController } from '../../fiche-controller.js';
 import { createFicheDraftStore } from '../../fiche-draft-store.js';
 import { xpBalance } from '../../fiche/derived.js';
 import { ficheIdentity } from '../fiche-model.js';
+import { createPrincipalPanel } from './fiche-principal.js';
 import { parseRoute, routeToHash, ROUTE_NAMES } from '../router.js';
 import { createDialogController, renderState } from '../ui.js';
 
@@ -60,6 +61,7 @@ export function createFicheDetailView({
     let controller = null;
     let catalogue = null;
     let stopCatalogue = null;
+    let stopEngine = null;
     let role = null;
     let sessionKey = '';
     let accessGeneration = 0;
@@ -130,11 +132,20 @@ export function createFicheDetailView({
         shell.notice.textContent = legacy ? 'Fiche à migrer par le MJ depuis le bureau : lecture seule.'
             : online ? '' : 'Hors connexion.';
         shell.notice.hidden = !shell.notice.textContent;
+        updatePrincipal();
+    };
+
+    const updatePrincipal = () => {
+        if (!shell || !controllerState?.data) return;
+        shell.principal.update({ data: controllerState.data, careers: catalogue?.careers, engine: catalogue?.getEngine() });
     };
 
     const updatePanel = () => {
         if (!shell) return;
         shell.panelTitle.textContent = tabLabel(tab);
+        shell.panelTitle.className = tab === 'principal' ? 'visually-hidden' : '';
+        shell.principal.element.hidden = tab !== 'principal';
+        shell.soon.hidden = tab === 'principal';
         for (const [key, link] of shell.links) {
             if (key === tab) link.setAttribute('aria-current', 'page');
             else link.removeAttribute('aria-current');
@@ -156,7 +167,9 @@ export function createFicheDetailView({
         notice.hidden = true;
         const panel = make(documentRef, 'section', '', 'm-fiche-panel');
         const panelTitle = make(documentRef, 'h2');
-        panel.append(panelTitle, make(documentRef, 'p', 'Bientôt disponible.', 'm-fiche-soon'));
+        const soon = make(documentRef, 'p', 'Bientôt disponible.', 'm-fiche-soon');
+        const principal = createPrincipalPanel({ documentRef, aptitudesHref: tabHref('aptitudes') });
+        panel.append(panelTitle, principal.element, soon);
         const nav = make(documentRef, 'nav', '', 'm-fiche-tabs');
         nav.setAttribute('aria-label', 'Sections de la fiche');
         const links = new Map();
@@ -169,7 +182,7 @@ export function createFicheDetailView({
         }
         root.append(strip, notice, panel, nav);
         container.append(root);
-        shell = { identity: identityLine, xp, xpValue, notice, panelTitle, links };
+        shell = { identity: identityLine, xp, xpValue, notice, panelTitle, principal, soon, links };
         updateShell();
         updatePanel();
     };
@@ -239,6 +252,7 @@ export function createFicheDetailView({
                 onChange: next => { controllerState = next; render(); },
             });
             stopCatalogue = service.watch(runtime.repository);
+            stopEngine = service.subscribe(updatePrincipal);
         }, error => { backend = null; throw error; });
         return backend;
     };
@@ -334,6 +348,8 @@ export function createFicheDetailView({
         stopWatch = null;
         stopCatalogue?.();
         stopCatalogue = null;
+        stopEngine?.();
+        stopEngine = null;
         menu.close();
         controller?.close();
         abortSignal?.removeEventListener?.('abort', unmount);

@@ -104,7 +104,7 @@ function setup({ hash = '#/fiches/test', capabilities = { role: 'joueur', charac
         }),
         signIn: async () => { log.signIns += 1; },
         loadRuntime: async () => { await gate; return { repository }; },
-        loadCatalogue: async () => ({ careers, watch: () => () => {} }),
+        loadCatalogue: async () => ({ careers, getEngine: () => null, subscribe: () => () => {}, watch: () => () => {} }),
         setTitle: text => log.titles.push(text),
         announce: message => log.announces.push(message),
         navigate: target => log.navigations.push(target),

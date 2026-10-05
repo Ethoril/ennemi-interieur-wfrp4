@@ -107,3 +107,88 @@
 @media (min-width: 45rem) {
   .m-fiche-tabs { right: 50%; left: 50%; width: min(100%, var(--m-content-width)); transform: translateX(-50%); }
 }
+
+/* Onglet Principal : tient en 390 × 844 sans défilement. */
+.m-principal { display: grid; gap: var(--space-sm); }
+.m-principal[hidden] { display: none; }
+
+.m-principal-resources {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.m-principal-card,
+.m-principal-skill-list {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.m-principal-card { padding: var(--space-sm) var(--space-md); }
+.m-principal-card p { margin: 0; }
+.m-principal-max { color: var(--text-secondary); }
+.m-principal-label,
+.m-principal-title {
+  color: var(--gold);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.m-principal-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  min-height: 1.5rem;
+  margin-top: var(--space-xs);
+}
+
+.m-principal-token {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+}
+
+.m-principal-token.is-full { background: var(--gold); }
+
+.m-principal-title { margin: 0 0 var(--space-xs); }
+
+.m-principal-caracs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-xs);
+}
+
+.m-principal-carac {
+  display: grid;
+  justify-items: center;
+  min-height: 4.4rem;
+  padding: var(--space-xs) 0;
+  color: var(--text-primary);
+  line-height: 1.15;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.m-principal-carac.is-career { border: 2px solid var(--gold); }
+.m-principal-carac:focus-visible,
+.m-principal-all:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+.m-principal-carac-abbr { color: var(--text-secondary); font-size: 0.875rem; }
+.m-principal-carac-total { color: var(--text-heading); font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; }
+.m-principal-carac-bonus { color: var(--gold); font-size: 0.8125rem; }
+.m-principal-note { margin: var(--space-xs) 0 0; color: var(--text-secondary); font-size: 0.875rem; }
+
+.m-principal-head { display: flex; align-items: baseline; justify-content: space-between; }
+.m-principal-head .m-principal-title { margin: 0; }
+.m-principal-all { display: inline-flex; align-items: center; min-height: var(--m-touch-target); color: var(--gold-bright); }
+
+.m-principal-skill-list { margin: 0; padding: 0; list-style: none; }
+.m-principal-skill { display: flex; align-items: center; gap: var(--space-sm); min-height: 2.6rem; padding: 0 var(--space-md); }
+.m-principal-skill + .m-principal-skill { border-top: 1px solid var(--border-subtle); }
+.m-principal-skill-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.m-principal-skill-carac { color: var(--text-secondary); font-size: 0.875rem; }
+.m-principal-skill-total { min-width: 1.75rem; color: var(--gold-bright); font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; text-align: right; }
