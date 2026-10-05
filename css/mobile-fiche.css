@@ -1,0 +1,109 @@
+/* Fiche de personnage mobile : classes m-fiche-*, couleurs par jetons de base.css uniquement. */
+.m-fiche {
+  display: grid;
+  gap: var(--space-md);
+  font-size: 1.0625rem;
+}
+
+.m-fiche-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  min-height: var(--m-touch-target);
+}
+
+.m-fiche-identity-line {
+  min-width: 0;
+  margin: 0;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.m-fiche-xp {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  min-width: var(--m-touch-target);
+  min-height: var(--m-touch-target);
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--gold-bright);
+  text-decoration: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+}
+
+.m-fiche-xp strong {
+  font-family: var(--font-heading);
+  font-size: 1.0625rem;
+  line-height: 1.1;
+}
+
+.m-fiche-xp span {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.1;
+}
+
+.m-fiche-xp:focus-visible,
+.m-fiche-tab:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+
+.m-fiche-notice {
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.m-fiche-panel h2 {
+  margin: 0 0 var(--space-sm);
+  color: var(--text-heading);
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+}
+
+.m-fiche-soon { margin: 0; color: var(--text-secondary); }
+
+/* Barre d'onglets : même emprise que .m-bottom-nav, qu'elle remplace sur la fiche. */
+.m-fiche-tabs {
+  position: fixed;
+  z-index: 10;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 0 var(--m-safe-right) var(--m-safe-bottom) var(--m-safe-left);
+  background: var(--bg-dark);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.m-fiche-tab {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 0.15rem;
+  min-height: 3.6rem;
+  padding: var(--space-xs);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.m-fiche-tab[aria-current="page"] { color: var(--gold-bright); }
+
+.m-fiche-tab-icon {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.m-fiche-menu .m-dialog-card { display: grid; gap: var(--space-sm); }
+.m-fiche-menu-note { margin: 0; color: var(--text-secondary); font-size: 0.9rem; }
+.m-fiche-menu a.m-button { text-align: center; text-decoration: none; }
+
+@media (min-width: 45rem) {
+  .m-fiche-tabs { right: 50%; left: 50%; width: min(100%, var(--m-content-width)); transform: translateX(-50%); }
+}

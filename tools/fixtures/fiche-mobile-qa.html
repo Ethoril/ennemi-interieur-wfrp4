@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'">
+  <title>Fiche mobile — recette locale</title>
+  <link rel="stylesheet" href="../../css/fonts.css">
+  <link rel="stylesheet" href="../../css/base.css">
+  <link rel="stylesheet" href="../../css/theme-parchment.css">
+  <link rel="stylesheet" href="../../css/mobile-app.css">
+  <link rel="stylesheet" href="../../css/career-viewer.css">
+  <link rel="stylesheet" href="../../css/mobile-fiche.css">
+  <link rel="stylesheet" href="./fiche-mobile-qa.css">
+</head>
+<body>
+  <details class="fiche-mobile-qa">
+    <summary>QA locale — données fictives</summary>
+    <div id="qa-controls">
+      <button type="button" id="qa-player">Joueur</button>
+      <button type="button" id="qa-mj">MJ</button>
+      <button type="button" id="qa-offline">Hors ligne</button>
+      <button type="button" id="qa-refuse">Achat refusé</button>
+      <button type="button" id="qa-theme">Thème parchemin</button>
+      <button type="button" id="qa-reset">Réinitialiser</button>
+      <span id="qa-state" role="status"></span>
+    </div>
+  </details>
+  <div class="m-app" id="m-app">
+    <header class="m-header" aria-label="En-tête de l'application">
+      <button class="m-icon-button m-back-button" id="m-back" type="button" aria-label="Retour" hidden>‹</button>
+      <div class="m-header-copy">
+        <p class="m-eyebrow">L'Ennemi Intérieur</p>
+        <h1 id="m-title" tabindex="-1">Fiche</h1>
+      </div>
+      <button class="m-icon-button" id="m-header-action" type="button" aria-label="Menu de la fiche" hidden>⋯</button>
+    </header>
+    <div class="m-status" id="m-status" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div class="visually-hidden" id="m-route-status" role="status" aria-live="polite" aria-atomic="true"></div>
+    <main class="m-main" id="m-main" tabindex="-1"></main>
+  </div>
+  <script type="module" src="./fiche-mobile-qa.js"></script>
+</body>
+</html>
