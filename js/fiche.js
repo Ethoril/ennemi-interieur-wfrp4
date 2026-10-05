@@ -3,9 +3,10 @@ import { cloudSave, stageFicheDraft } from './fiche-client-bridge.js';
 import { confirmTextAction } from './ui-confirm.js';
 import { activeCareerRank, findCareerByName, getActiveVariantForRang as getActiveVariantForRangModel, getCareerCaracs as getCareerCaracsModel, getCareerSkillSets, getCareerTalentSets, getEffectiveCaracs as getEffectiveCareerCaracs, getEffectiveSkills as getEffectiveCareerSkills, getRangVariants, getVariantsToConsider as getVariantsToConsiderModel } from './fiche/career-model.js';
 import { BASIC_SKILLS, basicRowFor as findBasicRow, basicSkillNom as resolveBasicSkillNom } from './fiche/basic-skills.js';
-import { canonicalSkillNom, expandChoiceSkill, isOpenCareerSlot, OPEN_SPEC_PATTERN, sameSkill, skillBaseNom } from './fiche/skill-names.js';
+import { canonicalSkillNom as legacyCanonicalSkillNom, expandChoiceSkill, isOpenCareerSlot, OPEN_SPEC_PATTERN, sameSkill as legacySameSkill, skillBaseNom } from './fiche/skill-names.js';
 import { CARAC_XP_BANDS, SKILL_XP_BANDS, careerRankXpCost, miracleXpCost as calculateMiracleXpCost, spellXpCost as calculateSpellXpCost, talentXpCost, xpBandCost } from './fiche/xp.js';
 import { createPublishedCatalogueEngine } from './fiche/published-catalogue-engine.js';
+import { publishedSkillRows, primarySkillLabel } from './catalogue/skill-forms.js';
 import { createCareerViewer } from './fiche/career-viewer.js';
 import { migrateFicheDocument } from './fiche-schema.js';
 
@@ -99,7 +100,16 @@ export function setPublishedFicheCatalogue(catalogue) {
     window.FICHE_PUBLIC_CATALOGUE = catalogue;
     _localCommandEngine = nextEngine;
     if (_ruleCatalog?.catalogVersion) window.FICHE_CATALOG_VERSION = `skills:${catalogue.catalogVersion}|rules:${_ruleCatalog.catalogVersion}`;
+    invalidateCareerCache();
+    buildBasicSkills();
+    renderAdvancedSkills();
+    applyCareerHighlights();
+    renderCareerAdvGhosts();
+    if (document.getElementById('xf-group')) updateXfTarget();
+    withoutSaving(recalc);
+    renderCareerDetail();
     _careerViewer?.update();
+    setFicheRole(_activeFicheRole, { allowImport: _canImportFiche });
     return true;
 }
 
@@ -220,7 +230,7 @@ function invalidateCareerCache() {
 function _careerKey(careerId, rang) { return `${careerId}::${rang}`; }
 
 function _buildCareerSkillSets(career, rang) {
-    return getCareerSkillSets(career, rang, state.chosenVariants, state.careerOverrides);
+    return getCareerSkillSets(career, rang, state.chosenVariants, state.careerOverrides, getLocalCommandEngine()?.skillResolver);
 }
 
 function _buildCareerTalentSets(career, rang) {
@@ -348,18 +358,35 @@ function showXpForm(options = {}) {
     }
 }
 
+function canonicalSkillNom(label) {
+    const match = getLocalCommandEngine()?.skillResolver.resolve(label);
+    return match?.status === 'resolved' ? match.entry.nom : legacyCanonicalSkillNom(label);
+}
+
+function sameSkill(left, right) {
+    const resolver = getLocalCommandEngine()?.skillResolver;
+    const a = resolver?.resolve(left), b = resolver?.resolve(right);
+    return a?.entry && b?.entry ? a.entry.id === b.entry.id : legacySameSkill(left, right);
+}
+
+function publishedSkills() {
+    const resolver = getLocalCommandEngine()?.skillResolver;
+    return resolver ? publishedSkillRows(resolver) : (window.WFRP_SKILLS || []);
+}
+
 // Retourne les groupes uniques (triés) pour le type donné ('basic' | 'adv' | 'all')
 function getSkillGroups(filter) {
     if (!window.WFRP_SKILLS) return [];
-    const filtered = filter === 'all' ? WFRP_SKILLS
-        : WFRP_SKILLS.filter(s => filter === 'basic' ? s.basic : !s.basic);
+    const rows = publishedSkills();
+    const filtered = filter === 'all' ? rows
+        : rows.filter(s => filter === 'basic' ? s.basic : !s.basic);
     return [...new Set(filtered.map(s => s.group))].sort((a, b) => a.localeCompare(b, 'fr'));
 }
 
 // Retourne les spécialisations connues pour un groupe (basic + advanced) + '' si sans-spec
 function getSpecsForGroup(group) {
     if (!window.WFRP_SKILLS) return [];
-    return WFRP_SKILLS.filter(s => s.group === group && s.spec).map(s => s.spec);
+    return [...new Set(publishedSkills().filter(s => s.group === group && s.spec).map(s => s.spec))];
 }
 
 // Carac d'un groupe de compétence
@@ -506,6 +533,7 @@ function buildXfSpecPicker(group, wrap) {
     specSel.id = 'xf-spec-sel';
     specSel.className = 'xf-spec-sel';
     specSel.innerHTML =
+        (publishedSkills().some(row => row.group === group && !row.spec) ? '<option value="">Sans spécialité</option>' : '') +
         allSpecs.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('') +
         '<option value="_custom">Autre (personnalisé)…</option>';
     wrap.appendChild(specSel);
@@ -987,20 +1015,40 @@ function basicSkillNom(nom) {
 
 // Ligne de compétence de base correspondant à un nom complet, ou null.
 function basicRowFor(fullNom) {
+    const entry = getLocalCommandEngine()?.skillResolver.resolve(fullNom)?.entry;
+    if (entry && !entry.basic) return null;
+    if (entry?.basic) return BASIC_SKILLS.find(skill => skill.nom === entry.group || skill.nom === entry.nom
+        || skill.nom === `${entry.group} (Base)`)?.nom || findBasicRow(fullNom, state.basicSpecs);
     return findBasicRow(fullNom, state.basicSpecs);
 }
 
 // Spécialités connues d'une compétence de base (vide si elle n'en a pas).
 function basicSpecOptions(nom) {
     if (nom.includes('(') || !window.WFRP_SKILLS) return [];
-    return WFRP_SKILLS.filter(s => s.basic && s.group === nom && s.spec).map(s => s.spec);
+    const resolver = getLocalCommandEngine()?.skillResolver;
+    if (!resolver) return WFRP_SKILLS.filter(s => s.basic && s.group === nom && s.spec).map(s => s.spec);
+    return [...new Set(resolver.primaryEntries.filter(entry => entry.basic && entry.group === nom && entry.specialization)
+        .map(entry => entry.nom.match(/\(([^()]+)\)$/u)?.[1] || entry.specialization))];
 }
 
 let _basicSkillsBound = false;
 function buildBasicSkills() {
     const tbody = document.getElementById('tbody-skills-basic');
     if (!tbody) return;
-    tbody.innerHTML = BASIC_SKILLS.map(sk => {
+    const resolver = getLocalCommandEngine()?.skillResolver;
+    const shown = new Set();
+    const basicRows = BASIC_SKILLS.filter(sk => {
+        const match = resolver?.resolve(basicSkillNom(sk.nom));
+        if (!match?.entry) return true;
+        if (!match.entry.basic) return false;
+        const canonicalRow = BASIC_SKILLS.find(row => row.nom === match.entry.group || row.nom === match.entry.nom
+            || row.nom === `${match.entry.group} (Base)`);
+        if (canonicalRow && canonicalRow.nom !== sk.nom) return false;
+        if (shown.has(match.entry.id)) return false;
+        shown.add(match.entry.id); return true;
+    });
+    tbody.innerHTML = basicRows.map(sk => {
+        const displayName = canonicalSkillNom(sk.nom);
         const s     = sid(sk.nom);
         const adv   = state.skillsBasic[sk.nom] ?? 0;
         const specs = basicSpecOptions(sk.nom);
@@ -1010,7 +1058,7 @@ function buildBasicSkills() {
                        aria-label="Spécialité de ${esc(sk.nom)}">
                 <datalist id="basic-spec-${s}">${specs.map(v => `<option value="${esc(v)}">`).join('')}</datalist>` : '';
         return `<tr data-skill="${sk.nom}">
-            <td class="sk-nom">${sk.nom}${specH}</td>
+            <td class="sk-nom">${esc(displayName)}${specH}</td>
             <td class="sk-carac-lbl" data-label="Carac.">${CARAC_LABELS[sk.carac]}</td>
             <td class="sk-carac-val" data-label="Valeur" id="sk-carac-${s}">0</td>
             <td data-label="Avances"><input class="sk-adv" type="number" data-skill="${sk.nom}" min="0" max="30" value="${esc(adv)}" aria-label="Avances en ${esc(sk.nom)}"></td>
@@ -1042,11 +1090,10 @@ function buildBasicSkills() {
 // ── Compétences avancées ──────────────────────────────
 
 function ensureSkillsDatalist() {
-    if (document.getElementById('wfrp-skills-list')) return;
-    const dl = document.createElement('datalist');
+    const dl = document.getElementById('wfrp-skills-list') || document.createElement('datalist');
     dl.id = 'wfrp-skills-list';
     if (window.WFRP_SKILLS) {
-        dl.innerHTML = WFRP_SKILLS.map(s => `<option value="${esc(s.nom)}">`).join('');
+        dl.innerHTML = publishedSkills().map(s => `<option value="${esc(s.nom)}">`).join('');
     }
     document.body.appendChild(dl);
 }
@@ -1078,7 +1125,7 @@ function renderAdvancedSkills() {
         ? `<tr class="empty-row"><td colspan="6">Aucune compétence avancée</td></tr>`
         : state.skillsAdvanced.map((sk, i) => `<tr>
             <td><input class="sk-nom-input" type="text" list="wfrp-skills-list"
-                       data-idx="${i}" value="${esc(sk.nom)}" placeholder="Nom ou Groupe (Spécialisation)"
+                       data-idx="${i}" value="${esc(canonicalSkillNom(sk.nom))}" placeholder="Nom ou Groupe (Spécialisation)"
                        aria-label="Nom de la compétence, ligne ${i + 1}"></td>
             <td data-label="Carac."><select class="sk-carac-sel" data-idx="${i}" aria-label="Caractéristique, ligne ${i + 1}">
                 ${CARACS.map(c => `<option value="${c}" ${sk.carac===c?'selected':''}>${CARAC_LABELS[c]}</option>`).join('')}
@@ -1108,7 +1155,7 @@ function bindAdvancedSkillsDelegated(tbody) {
         if (Number.isNaN(idx) || !state.skillsAdvanced[idx]) return;
         if (t.classList.contains('sk-nom-input')) {
             state.skillsAdvanced[idx].nom = t.value;
-            const found = window.WFRP_SKILLS?.find(s => s.nom === t.value);
+            const found = publishedSkills().find(s => s.nom === t.value);
             if (found) {
                 state.skillsAdvanced[idx].carac = found.carac;
                 const sel = tbody.querySelector(`.sk-carac-sel[data-idx="${idx}"]`);
@@ -1248,7 +1295,11 @@ function getCareerAllSkills(career, rang) {
         for (let r = 1; r <= rang; r++) {
             for (const rd of getVariantsToConsider(career, r)) {
                 getEffectiveSkills(career, r, rd).forEach(s => {
-                    if (!seen.has(s.toLowerCase())) { seen.add(s.toLowerCase()); noms.push(s); }
+                    const resolver = getLocalCommandEngine()?.skillResolver;
+                    const slot = resolver?.resolveCareerSlot(s);
+                    const labels = slot?.status === 'resolved' && slot.alternatives
+                        ? slot.alternatives.map(item => item.entry.nom) : [primarySkillLabel(resolver, s, true)];
+                    for (const label of labels) if (!seen.has(label.toLowerCase())) { seen.add(label.toLowerCase()); noms.push(label); }
                 });
             }
         }
@@ -1278,8 +1329,8 @@ function applyCareerHighlights() {
         const nom  = tr.dataset.skill;
         const base = skillBaseNom(nom);
         const match = allSkills.some(s => {
-            return expandChoiceSkill(s).some(opt => {
-                if (opt.toLowerCase() === nom.toLowerCase()) return true;
+            return expandChoiceSkill(s, canonicalSkillNom).some(opt => {
+                if (sameSkill(opt, basicSkillNom(nom))) return true;
                 return isOpenCareerSlot(opt) && skillBaseNom(opt) === base;
             });
         });
@@ -1304,7 +1355,7 @@ function renderCareerAdvGhosts() {
 
     const rang = getActiveRang();
     const allSkills         = getCareerAllSkills(career, rang);
-    const basicBaseNoms     = new Set(BASIC_SKILLS.map(s => skillBaseNom(s.nom)));
+    const basicBaseNoms     = new Set(publishedSkills().filter(row => row.basic).map(row => skillBaseNom(row.nom)));
     const purchasedNoms     = new Set(state.skillsAdvanced.map(s => canonicalSkillNom(s.nom).toLowerCase()));
     const purchasedBaseNoms = new Set(state.skillsAdvanced.map(s => skillBaseNom(canonicalSkillNom(s.nom))));
 
@@ -1320,7 +1371,7 @@ function renderCareerAdvGhosts() {
     tbody.innerHTML = ghosts.map(nom => {
         const isOpen   = isOpenCareerSlot(nom);
         const base     = skillBaseNom(nom);
-        const found    = WFRP_SKILLS.find(s => skillBaseNom(s.nom) === base || skillBaseNom(s.group || '') === base);
+        const found    = publishedSkills().find(s => skillBaseNom(s.nom) === base || skillBaseNom(s.group || '') === base);
         const carac    = found?.carac || 'int';
         const caracVal = getCaracTotal(carac);
         const cls      = `sk-ghost-row${isOpen ? ' sk-ghost-open' : ''}`;
@@ -1343,7 +1394,7 @@ function renderCareerAdvGhosts() {
             const isOpen    = tr.dataset.ghostOpen === 'true';
             const base      = careerNom.split('(')[0].trim();
             // Trouver le nom de groupe exact dans WFRP_SKILLS (casse correcte)
-            const wfrpGroup = window.WFRP_SKILLS?.find(s =>
+            const wfrpGroup = publishedSkills().find(s =>
                 (s.group || '').toLowerCase() === base.toLowerCase()
             )?.group || base;
             // Pour un slot fixe avec spec (ex: "Langue (Noblesse)"), pré-remplir la spec
@@ -1373,22 +1424,30 @@ function renderCareerChips(career, rang, variant, kind, editing) {
     const isTalent  = (kind === 'talents');
 
     const chips = [];
+    const displayed = new Set();
+    const displayLabel = item => isTalent ? item : primarySkillLabel(getLocalCommandEngine()?.skillResolver, item, true);
 
     // Chips officielles (non retirées en mode normal ; retirées affichées barrées en édition)
     baseItems.forEach(item => {
         const isRem = removedSet.has(item.toLowerCase());
         if (isRem && !editing) return;
+        const label = displayLabel(item);
+        if (!editing && displayed.has(label)) return;
+        displayed.add(label);
         const baseCls = `career-tag${isTalent ? ' career-tag-talent' : ''}${isRem ? ' career-tag-removed' : ''}`;
         const talAttr = isTalent && !isRem
             ? ` data-talent="${esc(item)}" role="button" tabindex="0" title="Voir la description"` : '';
         const actionBtn = editing
             ? `<button class="career-tag-action" data-rang="${rang}" data-kind="${kind}" data-action="${isRem ? 'restore' : 'remove'}" data-name="${esc(item)}" title="${isRem ? 'Restaurer' : 'Retirer'}">${isRem ? '↺' : '×'}</button>`
             : '';
-        chips.push(`<span class="${baseCls}"${talAttr}>${esc(item)}${actionBtn}</span>`);
+        chips.push(`<span class="${baseCls}"${talAttr}>${esc(label)}${actionBtn}</span>`);
     });
 
     // Chips ajoutées (★)
     added.forEach(item => {
+        const label = displayLabel(item);
+        if (!editing && displayed.has(label)) return;
+        displayed.add(label);
         const baseCls = `career-tag career-tag-added${isTalent ? ' career-tag-talent' : ''}`;
         const talAttr = isTalent
             ? ` data-talent="${esc(item)}" role="button" tabindex="0" title="Voir la description"` : '';
@@ -1555,6 +1614,7 @@ function renderCareerDetail() {
             rank: getActiveRang(),
             chosenVariants: state.chosenVariants,
             careerOverrides: state.careerOverrides,
+            skillResolver: getLocalCommandEngine()?.skillResolver,
             resolveSkill: name => getLocalCommandEngine()?.resolveSkill(name),
             resolveTalent: name => getLocalCommandEngine()?.resolveTalent(name),
         }),

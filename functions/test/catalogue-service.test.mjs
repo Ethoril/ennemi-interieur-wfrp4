@@ -135,7 +135,7 @@ test('les brouillons et snapshots publics filtrent les champs privés fournis pa
     assert.equal(Object.hasOwn(saved.sources.talents, 'email'), false);
 });
 
-test('une fusion garde la clé de stockage BASIC_SKILLS et conserve une ligne avancée invalide intacte', async () => {
+test('une migration garde les clés BASIC_SKILLS, convertit une variante avancée de base et conserve une ligne invalide intacte', async () => {
     const base = makeCatalogue();
     base.skills.entries.push({ id: 'skill-corps-base', nom: 'Corps à corps', group: 'Corps à corps',
         groupId: 'group-corps', specialization: null, specializationId: null, carac: 'cc', basic: true, aliases: [] });
@@ -170,7 +170,8 @@ test('une fusion garde la clé de stockage BASIC_SKILLS et conserve une ligne av
     assert.equal(data.skillsBasic['Corps à corps (Base)'], 5);
     assert.deepEqual(data.skillsAdvanced.find(row => row.id === 'keep-invalid'),
         { id: 'keep-invalid', nom: 'Compétence inconnue', adv: '5', note: 'conserver exactement' });
-    assert.equal(data.skillsAdvanced.find(row => row.id === 'rename-me').nom, 'Athlétisme');
+    assert.equal(data.skillsBasic.Athlétisme, 3);
+    assert.equal(data.skillsAdvanced.some(row => row.id === 'rename-me'), false);
 });
 
 test('une publication de descriptions sans migration de compétence ne réécrit aucune fiche', async () => {
@@ -188,4 +189,35 @@ test('une publication de descriptions sans migration de compétence ne réécrit
     assert.equal(result.characterRevisions.bhelgi, 4);
     assert.equal(db.values.has('fiches/bhelgi/catalogue_backups/publish-description'), false);
     assert.equal(db.values.get('fiches/bhelgi').revision, 4);
+});
+
+test('load fournit un inventaire MJ des usages sans écrire ni imposer une migration des fiches absentes', async () => {
+    const catalogue = makeCatalogue();
+    const initial = makeDbData(catalogue); delete initial['fiches/wren'];
+    const db = createDb(initial); const before = JSON.stringify([...db.values]);
+    const service = createCatalogueService({ db, timestamp: () => new Date(), initialCatalogue: catalogue,
+        careers: [{ id: 'career', nom: 'Érudit', rangs: [{ rang: 1, skills: ['Nom carrière inédit'], talents: [] }] }], sheetSnapshot: { entries: [] } });
+    const loaded = await service.executeCatalogueCommand({ operationId: 'inventory-load', baseRevision: 0, type: 'load', payload: {} }, requestBase);
+    assert.ok(loaded.report.skills.some(row => row.name === 'Nom carrière inédit'));
+    assert.ok(loaded.report.skills.some(row => row.name === 'Athlétisme ancien' && row.occurrences.some(item => item.scopeId === 'bhelgi')));
+    assert.equal(JSON.stringify([...db.values]), before);
+});
+
+test('publication limitée aux formes modifiées : une ligne sans rapport et son historique restent inchangés', async () => {
+    const base = makeCatalogue(); base.talents.entries.push({ id: 'talent', nom: 'Vigilance', key: 'vigilance', sources: [] });
+    const initial = makeDbData(base);
+    for (const id of ['bhelgi', 'caelel', 'elysia', 'hellaya', 'wren']) {
+        initial[`fiches/${id}`].data.skillsAdvanced = [{ id: 'leave-owned', nom: 'Athlétisme', adv: 3, note: 'sans rapport' }];
+    }
+    const db = createDb(initial); const source = structuredClone(initial['fiches/bhelgi']);
+    const service = createCatalogueService({ db, timestamp: () => new Date(), initialCatalogue: base, sheetSnapshot: { entries: [] } });
+    const candidate = structuredClone(base); candidate.talents.localDescriptions.push({ talentId: 'talent', description: 'Texte.' });
+    await service.executeCatalogueCommand({ operationId: 'scope-draft', baseRevision: 1, type: 'saveDraft', payload: { catalogue: candidate } }, requestBase);
+    const preview = await service.executeCatalogueCommand({ operationId: 'scope-preview', baseRevision: 2, type: 'previewMigration', payload: {} }, requestBase);
+    assert.equal(preview.migration.collisions.length, 0);
+    await service.executeCatalogueCommand({ operationId: 'scope-publish', baseRevision: 2, type: 'publish', payload: {
+        publishedRevision: 3, characterRevisions: Object.fromEntries(['bhelgi', 'caelel', 'elysia', 'hellaya', 'wren'].map(id => [id, 4])),
+        decisions: [], reason: 'Description uniquement',
+    } }, requestBase);
+    assert.deepEqual(db.values.get('fiches/bhelgi'), source);
 });

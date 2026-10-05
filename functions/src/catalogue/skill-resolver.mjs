@@ -18,7 +18,12 @@ function makeResult(status, extra = {}) {
 }
 
 function asTargetId(value, entriesById, aliasesByKey, visiting = new Set()) {
-    if (entriesById.has(value)) return { status: 'resolved', id: value };
+    if (entriesById.has(value)) {
+        const entry = entriesById.get(value);
+        const redirected = aliasesByKey.get(exactKey(entry.nom));
+        if (!redirected?.length || (redirected.length === 1 && redirected[0] === value)) return { status: 'resolved', id: value };
+        value = entry.nom;
+    }
     const key = exactKey(value);
     if (visiting.has(key)) return { status: 'cycle' };
     const targets = aliasesByKey.get(key);
@@ -154,11 +159,13 @@ export function createSkillResolver({ version, entries, aliases = [] } = {}) {
         if (direct.length > 1) return makeResult('ambiguous', { label, candidates: direct.map(id => entriesById.get(id)) });
         return makeResult('unknown', { label });
     };
-    const allNames = [...entriesById.values()].map(entry => entry.nom);
+    const primaryEntries = [...entriesById.values()].filter(entry => lookup(entry.nom).entry?.id === entry.id);
+    const allNames = primaryEntries.map(entry => entry.nom);
     const allAliases = [...aliasesByKey.keys()];
     return Object.freeze({
         version,
         entries: Object.freeze([...entriesById.values()]),
+        primaryEntries: Object.freeze(primaryEntries),
         aliasErrors: Object.freeze(aliasErrors),
         resolve: lookup,
         resolveOwnedSkill(value) {
@@ -209,7 +216,7 @@ export function createSkillResolver({ version, entries, aliases = [] } = {}) {
                     base: resolvedBase.status === 'resolved' ? resolvedBase.entry : null,
                 });
             }
-            const alternatives = expandChoiceSkill(value);
+            const alternatives = expandChoiceSkill(value, label => label);
             if (alternatives.length > 1) {
                 const resolved = alternatives.map(label => ({ label, ...lookup(label) }));
                 return makeResult(resolved.every(item => item.status === 'resolved') ? 'resolved' : 'incomplete', {

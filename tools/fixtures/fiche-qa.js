@@ -6,7 +6,7 @@ if (!localHosts.has(location.hostname)) {
     throw new Error('Faux dépôt QA interdit hors localhost');
 }
 
-const [{ ficheLoadCloud, setFicheRole }, { createFicheController }, { createFicheDraftStore }, bridge, sessionModule] = await Promise.all([
+const [{ ficheLoadCloud, setFicheRole, setPublishedFicheCatalogue }, { createFicheController }, { createFicheDraftStore }, bridge, sessionModule] = await Promise.all([
     import('../../js/fiche.js'),
     import('../../js/fiche-controller.js'),
     import('../../js/fiche-draft-store.js'),
@@ -205,3 +205,19 @@ document.getElementById('qa-active')?.addEventListener('click', () => {
 globalThis.ficheQa = Object.freeze({ controller, getEnvelope: () => globalThis.structuredClone(current) });
 globalThis.ficheController = controller;
 enterRole('joueur');
+
+// Fake published catalogue only: verify labels refresh without changing stored keys or player rights.
+document.getElementById('qa-catalogue')?.addEventListener('click', async () => {
+    const catalogue = await fetch('../../js/catalogue/referentiel-public.json').then(response => response.json());
+    const calm = catalogue.skills.entries.find(entry => entry.nom === 'Calme');
+    const lore = catalogue.skills.entries.find(entry => entry.nom === 'Savoir (Guerre)');
+    calm.nom = 'Sang-froid';
+    catalogue.skills.aliases.push({ label: 'Calme', targetId: calm.id });
+    catalogue.skills.aliases.push({ label: 'Savoir (QA)', targetId: lore.id });
+    catalogue.catalogVersion = 'fixture-main-forms';
+    const before = JSON.stringify(current);
+    setPublishedFicheCatalogue(catalogue);
+    stateEl.textContent = JSON.stringify(current) === before
+        ? 'Noms principaux affichés : Sang-froid et Savoir (Guerre). Données fictives inchangées.'
+        : 'Échec : les données fictives ont changé.';
+});

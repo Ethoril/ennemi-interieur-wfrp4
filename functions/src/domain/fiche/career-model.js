@@ -67,6 +67,15 @@ export function getCareerSkillSets(career, rang, chosenVariants = {}, careerOver
     for (let currentRank = 1; currentRank <= rang; currentRank++) {
         for (const variant of getVariantsToConsider(career, currentRank, chosenVariants)) {
             for (const skill of getEffectiveSkills(career, currentRank, variant, careerOverrides)) {
+                const slot = skillResolver?.resolveCareerSlot(skill);
+                if (slot?.status === 'resolved' && slot.entry) { exact.add(slot.entry.nom.toLowerCase()); continue; }
+                if (slot?.status === 'resolved' && slot.alternatives) {
+                    slot.alternatives.forEach(item => exact.add(item.entry.nom.toLowerCase())); continue;
+                }
+                if (slot?.status === 'resolved' && slot.open) {
+                    for (const base of [slot.base?.group, slot.base?.nom]) if (base) openBases.add(skillBaseNom(base));
+                    continue;
+                }
                 for (const expanded of expandChoiceSkill(skill)) {
                     const resolved = skillResolver?.resolveCareerSlot(expanded);
                     if (resolved?.status === 'resolved' && resolved.open) {

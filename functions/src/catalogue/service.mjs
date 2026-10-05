@@ -239,8 +239,14 @@ function applyMigrationToCharacter(data, charId, migration, resolver) {
     const collisionTargets = new Set(migration.decisions
         .filter(decision => decision.key.startsWith(collisionPrefix))
         .map(decision => decision.key.slice(collisionPrefix.length)));
-    const changedRecords = migration.records.filter(record => record.scopeId === charId
-        && (record.sourceName !== record.nom || collisionTargets.has(record.targetId)));
+    const changedRecords = migration.records.filter(record => record.scopeId === charId).map(record => {
+        const target = resolver.entries.find(entry => entry.id === record.skillId);
+        const sourceCollection = record.sourceCollection || record.collection;
+        const sourceName = sourceCollection === 'skillsBasic'
+            ? basicSkillNom(record.basicKey || record.id, data.basicSpecs || {}) : record.original?.nom;
+        return { ...record, sourceName, sourceCollection, collection: target?.basic ? 'skillsBasic' : 'skillsAdvanced' };
+    }).filter(record => record.sourceName !== record.nom || record.sourceCollection !== record.collection
+        || collisionTargets.has(record.targetId));
     const dropped = migration.dropped.filter(record => record.scopeId === charId);
     if (!changedRecords.length && !dropped.length) return structuredClone(data);
 
@@ -274,7 +280,7 @@ function applyMigrationToCharacter(data, charId, migration, resolver) {
             if (target.specialization) specs[key] = target.specialization;
             else if (Object.hasOwn(specs, key)) delete specs[key];
         } else if (record.collection === 'skillsAdvanced') {
-            advanced.push({ ...(record.original || {}), id: record.id, nom: record.targetName,
+            advanced.push({ ...(record.original || {}), id: record.id, nom: record.targetName, carac: target.carac,
                 ...(Number.isSafeInteger(record.advances) && record.advances >= 0 ? { adv: record.advances } : {}) });
         }
     }
@@ -291,13 +297,36 @@ function skillPurchaseIds(data) {
         .map(row => row.purchaseId))];
 }
 
-function makePreview({ catalogue, sheetSnapshot, careers, envelopes }) {
+function makePreview({ catalogue, published, sheetSnapshot, careers, envelopes }) {
     const version = typeof catalogue.catalogVersion === 'string' ? catalogue.catalogVersion : digest(catalogue);
     const { skills, talents } = resolvers(withSheetSnapshot(catalogue, sheetSnapshot));
     const characters = envelopes.map((envelope, index) => ({ charId: CATALOGUE_CHARACTER_IDS[index], data: envelope.data }));
     const report = buildCatalogueImpactReport({ skillResolver: skills, talentResolver: talents, careers, characters });
     const records = envelopes.flatMap((envelope, index) => recordsForCharacter(CATALOGUE_CHARACTER_IDS[index], envelope.data));
-    const migration = planSkillMigration({ resolver: skills, records, toVersion: version });
+    const affectedLabels = new Set();
+    const previousEntries = new Map((published?.skills.entries || []).map(entry => [entry.id, entry]));
+    for (const entry of catalogue.skills.entries) {
+        const previous = previousEntries.get(entry.id);
+        if (!previous || canonical(previous) !== canonical(entry)) {
+            affectedLabels.add(entry.nom);
+            if (previous) affectedLabels.add(previous.nom);
+        }
+        previousEntries.delete(entry.id);
+    }
+    for (const entry of previousEntries.values()) affectedLabels.add(entry.nom);
+    const previousAliases = new Map((published?.skills.aliases || []).map(alias => [alias.label, alias]));
+    for (const alias of catalogue.skills.aliases) {
+        const previous = previousAliases.get(alias.label);
+        if (!previous || previous.targetId !== alias.targetId) affectedLabels.add(alias.label);
+        previousAliases.delete(alias.label);
+    }
+    for (const alias of previousAliases.values()) affectedLabels.add(alias.label);
+    const affectedTargetIds = [...new Set([...affectedLabels].flatMap(label => {
+        const target = skills.resolve(label).entry;
+        return target ? [target.id] : [];
+    }))];
+    const migration = planSkillMigration({ resolver: skills, records, toVersion: version,
+        affectedLabels: [...affectedLabels], affectedTargetIds });
     return { report, migration, skills, talents };
 }
 
@@ -323,7 +352,7 @@ export function createCatalogueService({ db, timestamp, initialCatalogue, sheetS
 
         return db.runTransaction(async transaction => {
             const readRefs = command.type === 'load'
-                ? [publishedRef, draftRef]
+                ? [publishedRef, draftRef, receiptRef, ...charRefs]
                 : command.type === 'saveDraft' ? [publishedRef, draftRef, receiptRef]
                     : [publishedRef, draftRef, receiptRef, ...charRefs];
             const snapshots = await Promise.all(readRefs.map(reference => transaction.get(reference)));
@@ -336,13 +365,25 @@ export function createCatalogueService({ db, timestamp, initialCatalogue, sheetS
             const published = dataOf(publishedSnapshot)?.catalogue || initialCatalogue;
             const publishedRevision = dataOf(publishedSnapshot)?.revision || 0;
             const draftEnvelope = dataOf(draftSnapshot) || { revision: 0, catalogue: publicCatalogue(published) };
-            if (command.type === 'load') return {
+            if (command.type === 'load') {
+                const { skills, talents } = resolvers(withSheetSnapshot(draftEnvelope.catalogue, sheetSnapshot));
+                return {
+                report: buildCatalogueImpactReport({
+                    skillResolver: skills, talentResolver: talents,
+                    careers,
+                    characters: characterSnapshots.flatMap((snapshot, index) => {
+                        const envelope = dataOf(snapshot);
+                        return envelope?.schemaVersion === 2 && isRecord(envelope.data)
+                            ? [{ charId: CATALOGUE_CHARACTER_IDS[index], data: envelope.data }] : [];
+                    }),
+                }),
                 draftRevision: draftEnvelope.revision,
                 publishedRevision,
                 draft: publicCatalogue(draftEnvelope.catalogue),
                 published: publicCatalogue(published),
                 catalogVersion: typeof published.catalogVersion === 'string' ? published.catalogVersion : digest(published),
-            };
+                };
+            }
             const envelopes = characterSnapshots.map((snapshot, index) => {
                 const envelope = dataOf(snapshot);
                 if (!envelope || envelope.schemaVersion !== 2 || !Number.isSafeInteger(envelope.revision) || !isRecord(envelope.data)) {
@@ -368,7 +409,7 @@ export function createCatalogueService({ db, timestamp, initialCatalogue, sheetS
 
             if (command.type === 'previewMigration') {
                 checkRevision(command, draftEnvelope.revision);
-                const preview = makePreview({ catalogue: draftEnvelope.catalogue, sheetSnapshot, careers, envelopes });
+                const preview = makePreview({ catalogue: draftEnvelope.catalogue, published, sheetSnapshot, careers, envelopes });
                 return {
                     operationId: command.operationId,
                     draftRevision: draftEnvelope.revision,
@@ -401,7 +442,7 @@ export function createCatalogueService({ db, timestamp, initialCatalogue, sheetS
             const candidate = publicCatalogue(draftEnvelope.catalogue, { allowVersion: false });
             const nextVersion = digest(candidate);
             candidate.catalogVersion = nextVersion;
-            const preview = makePreview({ catalogue: candidate, sheetSnapshot, careers, envelopes });
+            const preview = makePreview({ catalogue: candidate, published, sheetSnapshot, careers, envelopes });
             const migration = applySkillMigrationDecisions(preview.migration, command.payload.decisions || []);
             if (migration.unresolved.some(record => record.blocks)) fail('des compétences ciblées restent sans résolution', 'failed-precondition', { kind: 'unresolved-skills' });
             const nextEnvelopes = envelopes.map((envelope, index) => {

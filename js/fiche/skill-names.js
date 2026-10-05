@@ -52,7 +52,7 @@ export function canonicalSkillNom(s) {
 
 export const sameSkill = (a, b) => canonicalSkillNom(a).toLowerCase() === canonicalSkillNom(b).toLowerCase();
 
-export function expandChoiceSkill(s) {
+export function expandChoiceSkill(s, canonicalize = canonicalSkillNom) {
     const orMatch = s.match(/\(([^)]+)\)$/);
     if (orMatch) {
         if (isOpenCareerSlot(s)) return [s];
@@ -60,15 +60,15 @@ export function expandChoiceSkill(s) {
         if (content.startsWith('ou ')) {
             const base = s.split('(')[0].trim();
             const alt = content.substring(3).trim();
-            return [base, alt].map(canonicalSkillNom);
+            return [base, alt].map(canonicalize);
         }
         const parts = content.split(/,?\s+ou\s+|\s*,\s*/);
         if (parts.length > 1) {
             const base = s.split('(')[0].trim();
-            return parts.map(p => canonicalSkillNom(`${base} (${p.trim()})`));
+            return parts.map(p => canonicalize(`${base} (${p.trim()})`));
         }
     }
-    return [canonicalSkillNom(s)];
+    return [canonicalize(s)];
 }
 
 export function skillBaseNom(fullNom) {

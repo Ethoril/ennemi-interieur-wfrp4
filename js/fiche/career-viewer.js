@@ -1,3 +1,4 @@
+import { primarySkillLabel } from '../catalogue/skill-forms.js';
 import {
     getEffectiveCaracs,
     getEffectiveSkills,
@@ -36,7 +37,7 @@ function appendList(parent, label, values, format = value => value, onSelect = n
     const section = element('section', 'career-viewer-section');
     const heading = element('h4', '', label);
     const list = element('ul');
-    const items = unique(values).map(format);
+    const items = unique(unique(values).map(format));
     if (!items.length) list.append(element('li', 'is-empty', 'Aucun'));
     else for (const item of items) {
         const row = element('li');
@@ -84,7 +85,7 @@ function renderRank(parent, career, rank, variant, overrides, onTalent, context 
     const skills = getEffectiveSkills(career, rank, variant, overrides);
     const talents = getEffectiveTalents(career, rank, variant, overrides);
     appendList(panel, 'Caractéristiques', caracs);
-    appendList(panel, 'Compétences', skills, value => catalogLabel(value, context.resolveSkill));
+    appendList(panel, 'Compétences', skills, value => context.skillResolver ? primarySkillLabel(context.skillResolver, value, true) : catalogLabel(value, context.resolveSkill));
     appendList(panel, 'Talents', talents, value => catalogLabel(value, context.resolveTalent), onTalent
         ? value => onTalent(catalogLabel(value, context.resolveTalent))
         : null);

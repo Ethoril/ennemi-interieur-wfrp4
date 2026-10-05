@@ -237,11 +237,12 @@ function resolvedSkillTarget(data, payload, skills, skillResolver = null) {
     const rowForEntry = basicEntry ? BASIC_SKILLS.find(skill => skill.nom === basicEntry.nom
         || skill.nom === basicEntry.group || skill.nom === `${basicEntry.group} (Base)`
         || (basicEntry.group && skill.nom.startsWith(`${basicEntry.group} (`)))?.nom : null;
-    const basicKey = rowForEntry || basicRowFor(name, data.basicSpecs || {});
+    const basicKey = entry ? rowForEntry : basicRowFor(name, data.basicSpecs || {});
     const advanced = Array.isArray(data.skillsAdvanced) ? data.skillsAdvanced : [];
     if (payload.targetId !== undefined) {
         if (typeof payload.targetId !== 'string' || !payload.targetId) fail('identifiant de compétence invalide');
-        const targetEntry = skillResolver?.entries.find(skill => skill.id === payload.targetId);
+        const storedEntry = skillResolver?.entries.find(skill => skill.id === payload.targetId);
+        const targetEntry = storedEntry ? skillResolver.resolve(storedEntry.nom).entry : null;
         const targetBasicRow = targetEntry?.basic === true
             ? BASIC_SKILLS.find(skill => skill.nom === targetEntry.nom || skill.nom === targetEntry.group
                 || skill.nom === `${targetEntry.group} (Base)`
@@ -249,6 +250,7 @@ function resolvedSkillTarget(data, payload, skills, skillResolver = null) {
             : null;
         const physicalBasicRow = BASIC_SKILLS.find(skill => skill.nom === payload.targetId)?.nom;
         const row = targetBasicRow || physicalBasicRow;
+        if (row && entry && !entry.basic) fail('cible compétence de base incompatible', 'not-found', { kind: 'target-not-found' });
         if (row && (targetEntry?.basic === true || Object.hasOwn(data.skillsBasic || {}, payload.targetId))) {
             if (!row || (basicKey !== row && row !== basicRowFor(name, data.basicSpecs || {}))) {
                 fail('cible compétence de base incompatible', 'not-found', { kind: 'target-not-found' });
@@ -260,20 +262,23 @@ function resolvedSkillTarget(data, payload, skills, skillResolver = null) {
         if (matches.length !== 1) fail('compétence avancée introuvable', 'not-found', { kind: 'target-not-found' });
         const { skill, index } = matches[0];
         const owned = skillResolver?.resolveOwnedSkill(skill.nom);
-        if (!sameSkill(skill.nom, name) && !(entry && owned?.status === 'resolved' && owned.entry.id === entry.id)) {
+        if (entry && owned?.status === 'resolved' ? owned.entry.id !== entry.id : !sameSkill(skill.nom, name)) {
             fail('cible compétence avancée incompatible', 'invalid-argument');
         }
-        return { kind: 'advanced', name: canonicalSkillNom(skill.nom), skill, index, advances: skill.adv };
+        return { kind: 'advanced', name: entry?.nom || canonicalSkillNom(skill.nom), skill, index, advances: skill.adv };
     }
     if (basicKey) return { kind: 'basic', name, row: basicKey, advances: data.skillsBasic?.[basicKey] ?? 0 };
     const matches = advanced.map((skill, index) => ({ skill, index }))
-        .filter(({ skill }) => sameSkill(skill.nom, name));
+        .filter(({ skill }) => {
+            const owned = skillResolver?.resolve(skill.nom);
+            return entry && owned?.status === 'resolved' ? owned.entry.id === entry.id : sameSkill(skill.nom, name);
+        });
     if (matches.length > 1) fail('identifiant requis pour une compétence en doublon');
     if (matches.length === 1) {
         const { skill, index } = matches[0];
         return { kind: 'advanced', name: canonicalSkillNom(skill.nom), skill, index, advances: skill.adv };
     }
-    return { kind: 'new-advanced', name: canonicalSkillNom(name), advances: 0 };
+    return { kind: 'new-advanced', name: entry?.nom || canonicalSkillNom(name), advances: 0 };
 }
 
 function skillCarac(target, skills) {

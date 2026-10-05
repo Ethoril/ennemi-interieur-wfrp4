@@ -1,3 +1,9 @@
+## [2.30.0] - 2026-10-05
+
+- Référentiels : inventaire des formes de compétences et de leurs usages, filtres, regroupement par sélection multiple et choix explicite de la forme principale.
+- Fiches, carrières et achats XP : affichage et propositions issus du référentiel publié, variantes reconnues sans doublons, calcul des tarifs aligné sur les équivalences MJ.
+- Brouillon enregistré avant la prévisualisation, migration des doublons avec arbitrage des avances et conservation des identifiants et historiques.
+
 ## [2.29.3] - 2026-10-05
 
 - **Fiches mobile** : la politique de sécurité autorise le point d’échange réellement utilisé par App Check pour vérifier l’application. Les refus de sécurité et les erreurs du service d’accès affichent désormais des messages distincts, sans annoncer systématiquement une perte de connexion.

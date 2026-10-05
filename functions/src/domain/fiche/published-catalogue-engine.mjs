@@ -25,7 +25,8 @@ export function createPublishedCatalogueEngine({ catalogue, careers, skills, spe
         fail('référentiel publié invalide', 'failed-precondition', { kind: 'catalog-version-unsupported' });
     }
     const catalogVersion = `skills:${catalogue.catalogVersion}|rules:${spells.catalogVersion}`;
-    const engine = createFicheCommandEngine({ careers, skills, spells, catalogVersion,
+    const publishedSkills = (skillResolver.primaryEntries || skills).map(entry => ({ ...entry, group: entry.nom.split('(')[0].trim(), spec: entry.specialization || '' }));
+    const engine = createFicheCommandEngine({ careers, skills: publishedSkills, spells, catalogVersion,
         rankCompletionPolicy, skillResolver, talentResolver });
     function applyCommand(data, command, context) {
         if (command?.type !== 'purchase' || !command.payload || typeof command.payload.name !== 'string') {
@@ -52,8 +53,10 @@ export function createPublishedCatalogueEngine({ catalogue, careers, skills, spe
                 const knownGroup = skillResolver.entries.some(entry => entry.basic === true
                     && (entry.group === group || entry.nom === physicalKey || entry.group === physicalKey));
                 if (!knownGroup || typeof value !== 'string' || value.length > 200
-                    || (value !== '' && !skillResolver.entries.some(entry => entry.basic === true
-                        && (entry.group === group || entry.group === physicalKey) && entry.specialization === value))) {
+                    || (value !== '' && ![group, physicalKey].some(label => {
+                        const entry = skillResolver.resolve(`${label} (${value})`).entry;
+                        return entry?.basic === true && (entry.group === group || entry.group === physicalKey);
+                    }))) {
                     fail('spécialité de base absente du référentiel publié', 'invalid-argument', { kind: 'basic-specialization-invalid' });
                 }
                 const advances = data.skillsBasic?.[physicalKey] ?? 0;

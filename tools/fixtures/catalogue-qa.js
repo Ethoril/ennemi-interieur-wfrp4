@@ -17,9 +17,11 @@ const state = globalThis.catalogueQaState = {
     calls: [], lastDecisions: null,
 };
 
+const report = { skills: [{ name: 'Athlétisme ancien', occurrences: [{ kind: 'owned-advanced', scopeId: 'bhelgi' }] }],
+    talents: [], counts: { skillLabels: 2, unresolvedSkills: 1, talentLabels: 1 } };
 const callable = async envelope => {
     state.calls.push(clone(envelope));
-    if (envelope.type === 'load') return { data: { draft: clone(state.draft), published: clone(state.published),
+    if (envelope.type === 'load') return { data: { report: clone(report), draft: clone(state.draft), published: clone(state.published),
         draftRevision: state.draftRevision, publishedRevision: state.publishedRevision, catalogVersion: state.published.catalogVersion } };
     if (envelope.type === 'saveDraft') {
         if (envelope.baseRevision !== state.draftRevision) throw new Error('Révision de brouillon périmée.');
@@ -36,6 +38,7 @@ const callable = async envelope => {
         characters: state.characters.map(({ charId, revision }) => ({ charId, revision })),
         report: {
             counts: { skillLabels: 2, unresolvedSkills: 0, talentLabels: 2, talentMissingDescriptions: 1, talentSourceUnavailable: true },
+            skills: report.skills,
             talents: [
                 { name: 'Vigilance', occurrences: [{ resolved: { status: 'resolved', descriptionStatus: 'missing-reference' } }] },
                 { name: 'Vision obscure', occurrences: [{ resolved: { status: 'resolved', descriptionStatus: 'source-unavailable' } }] },

@@ -3,61 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#1a1a2e">
     <title>QA locale · Référentiels</title>
+    <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="../../css/base.css">
     <link rel="stylesheet" href="../../css/components.css">
+    <link rel="stylesheet" href="../../css/theme-parchment.css">
     <link rel="stylesheet" href="../../css/referentiels.css">
 </head>
 <body>
+
     <main class="container referentiel-page">
         <header class="referentiel-heading">
-            <p class="eyebrow">Fixture locale uniquement</p>
-            <h1>Référentiels · données fictives</h1>
-            <p>Aucun appel Firebase n’est effectué. Les cinq personnages et le service sont simulés dans cette page.</p>
+            <p class="eyebrow">Administration · MJ</p>
+            <h1>Référentiels de compétences et talents</h1>
+            <p>Retrouvez toutes les formes de compétences, reliez celles qui désignent la même compétence et choisissez le nom principal utilisé dans les fiches, les carrières et les achats XP.</p>
         </header>
+
         <section id="auth-panel" class="referentiel-panel" aria-live="polite">
-            <p id="auth-message">Connexion MJ locale…</p>
-            <button id="login-button" class="button-primary" type="button" hidden>Connexion</button>
+            <p id="auth-message">Vérification de la session…</p>
+            <button id="login-button" class="button-primary" type="button" hidden>Connexion MJ avec Google</button>
             <button id="logout-button" class="button-secondary" type="button" hidden>Déconnexion</button>
         </section>
+
         <section id="editor" hidden>
             <div class="referentiel-toolbar referentiel-panel">
-                <label for="catalogue-search">Rechercher une compétence ou un talent</label>
-                <input id="catalogue-search" type="search" autocomplete="off">
+                <div class="button-row" role="group" aria-label="Référentiel affiché">
+                    <button id="show-skills" class="button-secondary" type="button" aria-pressed="true">Compétences</button>
+                    <button id="show-talents" class="button-secondary" type="button" aria-pressed="false">Talents</button>
+                </div>
+                <label for="form-filter">Afficher</label>
+                <select id="form-filter"><option value="all">Toutes les formes</option><option value="primary">Formes principales</option><option value="variant">Variantes reliées</option><option value="unknown">Formes à relier</option></select>
+                <label for="catalogue-search">Rechercher un nom ou une variante</label>
+                <input id="catalogue-search" type="search" autocomplete="off" placeholder="Nom, spécialité, alias…">
                 <p id="catalogue-status" role="status"></p>
             </div>
+
             <div class="referentiel-columns">
                 <section class="referentiel-panel" aria-labelledby="entries-title">
-                    <div class="section-title-row"><h2 id="entries-title">Entrées</h2><span id="result-count" class="muted"></span></div>
-                    <ul id="entry-list" class="entry-list"></ul>
+                    <div class="section-title-row">
+                        <h2 id="entries-title">Toutes les formes de compétences</h2>
+                        <span id="result-count" class="muted"></span>
+                    </div>
+                    <p id="inventory-help" class="muted">Cochez les formes équivalentes, puis choisissez la principale. Les variantes restent reconnues mais ne sont plus proposées séparément.</p><ul id="entry-list" class="entry-list"></ul>
                     <button id="load-more-entries" class="button-secondary" type="button" hidden>Charger plus</button>
                 </section>
+
                 <section class="referentiel-panel" aria-labelledby="edit-title">
-                    <h2 id="edit-title">Éditer l’entrée sélectionnée</h2>
+                    <section id="link-forms-panel">
+                        <h2>Relier les formes sélectionnées</h2>
+                        <p id="checked-summary" class="muted">Aucune forme cochée.</p>
+                        <label for="primary-form">Forme principale</label>
+                        <select id="primary-form" disabled></select>
+                        <div class="button-row"><button id="link-forms" class="button-primary" type="button" disabled>Relier et choisir la principale</button><button id="clear-forms" class="button-secondary" type="button">Effacer la sélection</button></div>
+                    </section>
+                    <h2 id="edit-title">Compétence sélectionnée</h2>
+                    <ul id="form-usages" class="usage-list"></ul>
                     <p id="selection-summary" class="muted">Sélectionnez une entrée dans la liste.</p>
                     <form id="entry-form" hidden>
-                        <label for="display-name">Nom affiché</label><input id="display-name" maxlength="200" required>
+                        <label for="display-name">Nom principal</label>
+                        <input id="display-name" maxlength="200" required>
                         <label for="alias-label">Ajouter une forme ou traduction</label>
-                        <div class="inline-field"><input id="alias-label" maxlength="200"><button class="button-secondary" type="submit" name="action" value="alias">Ajouter</button></div>
-                        <fieldset id="alias-fieldset"><legend>Alias explicites</legend><ul id="alias-list" class="alias-list"></ul></fieldset>
-                        <div id="talent-description-field" hidden>
-                            <label for="local-description">Description locale publiée</label><textarea id="local-description" rows="7" maxlength="12000"></textarea>
-                            <div class="inline-field"><button class="button-secondary" type="button" id="save-description">Enregistrer la description</button><button class="button-secondary" type="button" id="remove-description">Retirer la correction locale</button></div>
+                        <div class="inline-field">
+                            <input id="alias-label" maxlength="200" placeholder="Autre libellé" autocomplete="off">
+                            <button class="button-secondary" type="submit" name="action" value="alias">Ajouter</button>
                         </div>
-                        <button class="button-primary" type="submit" name="action" value="rename">Enregistrer le nom</button>
+                        <fieldset id="alias-fieldset">
+                            <legend>Variantes reconnues</legend>
+                            <ul id="alias-list" class="alias-list"></ul>
+                        </fieldset>
+                        <div id="talent-description-field" hidden>
+                            <label for="local-description">Description locale publiée</label>
+                            <textarea id="local-description" rows="7" maxlength="12000"></textarea>
+                            <div class="inline-field">
+                                <button class="button-secondary" type="button" id="save-description">Enregistrer la description</button>
+                                <button class="button-secondary" type="button" id="remove-description">Retirer la correction locale</button>
+                            </div>
+                        </div>
+                        <button class="button-primary" type="submit" name="action" value="rename">Appliquer le nom principal</button>
                     </form>
                 </section>
             </div>
+
             <section class="referentiel-panel workflow-panel">
-                <div class="section-title-row"><div><h2>Brouillon et publication</h2><p class="muted">Fixture locale, aucune écriture en production.</p></div><span id="version-status" class="version-pill"></span></div>
-                <div class="button-row"><button id="save-draft" class="button-secondary" type="button">Enregistrer le brouillon</button><button id="preview-migration" class="button-secondary" type="button">Prévisualiser les impacts</button></div>
+                <div class="section-title-row">
+                    <div>
+                        <h2>Brouillon et publication</h2>
+                        <p class="muted">Les changements restent dans le brouillon jusqu’à la publication. Vérifiez les fiches concernées et décidez des avances à conserver en cas de doublon.</p>
+                    </div>
+                    <span id="version-status" class="version-pill"></span>
+                </div>
+                <div class="button-row">
+                    <button id="save-draft" class="button-secondary" type="button">Enregistrer le brouillon</button>
+                    <button id="preview-migration" class="button-secondary" type="button">Prévisualiser les impacts</button>
+                </div>
                 <div id="preview-results" class="preview-results" hidden></div>
-                <label for="publication-reason">Motif de publication</label><input id="publication-reason" maxlength="500" value="QA locale uniquement">
-                <button id="publish-catalogue" class="button-primary" type="button" disabled>Publier le référentiel et migrer les fiches fictives</button>
+                <label for="publication-reason">Motif de publication</label>
+                <input id="publication-reason" maxlength="500" placeholder="Ex. alias validés après revue des fiches">
+                <button id="publish-catalogue" class="button-primary" type="button" disabled>Publier le référentiel et migrer les fiches</button>
             </section>
         </section>
-        <section id="qa-results" class="referentiel-panel" aria-live="polite" hidden></section>
     </main>
-    <script type="module" src="catalogue-qa.js"></script>
+    <section id="qa-results" class="referentiel-panel" aria-live="polite" hidden></section><script type="module" src="catalogue-qa.js"></script>
 </body>
 </html>

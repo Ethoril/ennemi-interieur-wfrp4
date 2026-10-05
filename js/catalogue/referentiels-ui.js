@@ -1,3 +1,5 @@
+import { buildSkillForms, linkSkillForms, skillFormsResolver } from './skill-forms.js';
+
 export function createReferentielsUi({ callable, auth, documentRef = document }) {
 const el = id => documentRef.getElementById(id);
 const authMessage = el('auth-message');
@@ -10,6 +12,12 @@ let publishedRevision = 0;
 let preview = null;
 let selected = null;
 let entryLimit = 250;
+let mode = 'skill';
+let usageReport = null;
+let dirty = false;
+let editRevision = 0;
+let selectedLabel = null;
+const checkedForms = new Set();
 
 function operationId() {
     return `catalogue-${globalThis.crypto.randomUUID()}`;
@@ -45,31 +53,92 @@ async function send(type, payload = {}, baseRevision = draftRevision) {
     return result.data;
 }
 
+function skillRows() { return buildSkillForms(catalogue.skills, usageReport); }
+
+function renderChecked() {
+    const selector = el('primary-form');
+    const previous = selector.value;
+    selector.replaceChildren();
+    for (const label of checkedForms) selector.add(new globalThis.Option(label, label));
+    if (checkedForms.has(previous)) selector.value = previous;
+    selector.disabled = checkedForms.size === 0;
+    el('link-forms').disabled = checkedForms.size === 0;
+    el('checked-summary').textContent = checkedForms.size ? [...checkedForms].join(' · ') : 'Aucune forme cochée.';
+}
+
 function renderEntries() {
+    if (!catalogue) return;
     const query = normalize(el('catalogue-search').value);
-    const filtered = entries().filter(({ type, entry }) => {
-        const aliases = collection(type).aliases.filter(alias => alias.targetId === entry.id).map(alias => alias.label);
-        return !query || normalize([entry.nom, entry.group, entry.specialization, ...aliases].join(' ')).includes(query);
-    });
-    const rows = filtered.slice(0, entryLimit);
+    el('show-skills').setAttribute('aria-pressed', String(mode === 'skill'));
+    el('show-talents').setAttribute('aria-pressed', String(mode === 'talent'));
+    el('link-forms-panel').hidden = mode !== 'skill';
+    el('form-filter').hidden = mode !== 'skill';
+    el('inventory-help').hidden = mode !== 'skill';
+    el('entries-title').textContent = mode === 'skill' ? 'Toutes les formes de compétences' : 'Talents';
+    const filter = el('form-filter').value;
+    const rows = mode === 'skill' ? skillRows().filter(row => (!query || normalize([row.label, row.primary, ...row.sources].join(' ')).includes(query))
+        && (filter === 'all' || (filter === 'primary' && row.isPrimary) || (filter === 'variant' && row.targetId && !row.isPrimary)
+            || (filter === 'unknown' && !row.targetId)))
+        : entries().filter(({ type, entry }) => type === 'talent' && (!query || normalize([entry.nom,
+            ...catalogue.talents.aliases.filter(alias => alias.targetId === entry.id).map(alias => alias.label)].join(' ')).includes(query)))
+            .map(({ entry }) => ({ label: entry.nom, targetId: entry.id, isPrimary: true, sources: ['Talent'] }));
     entryList.replaceChildren();
-    el('result-count').textContent = `${rows.length} sur ${filtered.length} entrée${filtered.length === 1 ? '' : 's'} filtrée${filtered.length === 1 ? '' : 's'}`;
-    el('load-more-entries').hidden = rows.length >= filtered.length;
-    for (const { type, entry } of rows) {
+    el('result-count').textContent = `${Math.min(entryLimit, rows.length)} sur ${rows.length} forme(s)`;
+    el('load-more-entries').hidden = entryLimit >= rows.length;
+    for (const row of rows.slice(0, entryLimit)) {
         const item = documentRef.createElement('li');
+        item.className = 'form-row';
+        if (mode === 'skill') {
+            const checkbox = documentRef.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = checkedForms.has(row.label);
+            checkbox.setAttribute('aria-label', `Sélectionner ${row.label} pour le regroupement`);
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) checkedForms.add(row.label); else checkedForms.delete(row.label);
+                renderChecked();
+            });
+            item.append(checkbox);
+        }
         const button = documentRef.createElement('button');
         button.type = 'button';
         button.className = 'entry-choice';
-        button.setAttribute('aria-pressed', String(selected?.type === type && selected?.id === entry.id));
+        button.setAttribute('aria-pressed', String(selectedLabel === row.label));
         const name = documentRef.createElement('strong');
-        name.textContent = entry.nom;
+        name.textContent = row.label;
         const detail = documentRef.createElement('small');
-        detail.textContent = [type === 'skill' ? 'Compétence' : 'Talent', entry.group, entry.specialization, entry.carac].filter(Boolean).join(' · ');
+        detail.textContent = [mode === 'talent' ? 'Talent' : row.isPrimary ? 'Principale' : row.primary ? `Variante → ${row.primary}` : 'À relier', ...row.sources].join(' · ');
         button.append(name, detail);
-        button.addEventListener('click', () => selectEntry(type, entry.id));
+        button.addEventListener('click', () => {
+            selectedLabel = row.label;
+            if (row.targetId) selectEntry(mode, row.targetId);
+            else { selected = null; entryForm.hidden = true; el('selection-summary').textContent = `${row.label} : choisissez une compétence existante à laquelle relier cette forme.`; renderEntries(); }
+            renderUsages(row);
+        });
         item.append(button);
         entryList.append(item);
     }
+    renderChecked();
+}
+
+function renderUsages(row) {
+    const list = el('form-usages');
+    list.replaceChildren();
+    const descriptions = [...new Set((row.occurrences || []).map(occurrence => occurrence.kind === 'career'
+        ? `Carrière : ${occurrence.careerName} · rang ${occurrence.rank}`
+        : `${occurrence.historical ? 'Historique XP' : 'Fiche'} : ${occurrence.scopeId}`))];
+    for (const description of descriptions) {
+        const item = documentRef.createElement('li'); item.textContent = description; list.append(item);
+    }
+}
+
+function applyLinks(labels, primary) {
+    const result = linkSkillForms(catalogue.skills, labels, primary);
+    catalogue.skills = result.skills;
+    checkedForms.clear();
+    selectedLabel = result.primary;
+    selectEntry('skill', result.targetId);
+    invalidatePreview();
+    setStatus(`${result.labels.length} forme(s) reliée(s) à « ${result.primary} ». Brouillon à publier.`, 'ready');
 }
 
 function renderAliases() {
@@ -89,7 +158,7 @@ function renderAliases() {
         const item = documentRef.createElement('li');
         item.className = 'alias-row';
         const label = documentRef.createElement('span');
-        label.textContent = `${alias.label}${alias.provenance ? ` · ${alias.provenance}` : ''}`;
+        label.textContent = alias.label;
         const remove = documentRef.createElement('button');
         remove.type = 'button';
         remove.className = 'remove-alias';
@@ -101,27 +170,36 @@ function renderAliases() {
             renderEntries();
             invalidatePreview();
         });
-        item.append(label, remove);
+        item.append(label);
+        if (selected.type === 'skill') {
+            const promote = documentRef.createElement('button');
+            promote.type = 'button'; promote.textContent = 'Définir comme principale';
+            promote.addEventListener('click', () => { try { applyLinks([entry.nom, alias.label], alias.label); } catch (error) { setStatus(error.message, 'error'); } });
+            item.append(promote);
+        }
+        item.append(remove);
         aliasList.append(item);
     }
 }
 
 function selectEntry(type, id) {
     selected = { type, id };
+    selectedLabel ||= collection(type).entries.find(entry => entry.id === id)?.nom;
     const entry = selectedValue();
     renderEntries();
     if (!entry) return;
     entryForm.hidden = false;
     el('display-name').value = entry.nom;
     el('alias-label').value = '';
-    el('selection-summary').textContent = [entry.id, entry.group, entry.specialization, entry.carac,
-        entry.basic === true ? 'compétence de base' : '', ...(entry.sources || [])].filter(Boolean).join(' · ');
+    el('edit-title').textContent = type === 'skill' ? 'Compétence sélectionnée' : 'Talent sélectionné';
+    el('selection-summary').textContent = [entry.nom, entry.carac, entry.basic === true ? 'compétence de base' : type === 'skill' ? 'compétence avancée' : '', ...(entry.sources || [])].filter(Boolean).join(' · ');
     el('talent-description-field').hidden = type !== 'talent';
     el('local-description').value = catalogue.talents.localDescriptions.find(item => item.talentId === entry.id)?.description || '';
     renderAliases();
 }
 
-function invalidatePreview() {
+function invalidatePreview(markDirty = true) {
+    if (markDirty) { dirty = true; editRevision += 1; }
     preview = null;
     el('preview-results').hidden = true;
     el('publish-catalogue').disabled = true;
@@ -287,27 +365,37 @@ function renderPreview(result) {
 async function loadCatalogue() {
     const result = await send('load', {}, 0);
     catalogue = globalThis.structuredClone(result.draft);
+    usageReport = result.report || null;
+    dirty = false;
+    checkedForms.clear();
+    selected = null;
+    selectedLabel = null;
+    entryForm.hidden = true;
     draftRevision = result.draftRevision;
     publishedRevision = result.publishedRevision;
     el('version-status').textContent = `Publiée ${result.catalogVersion} · révision ${publishedRevision} · brouillon ${draftRevision}`;
     renderEntries();
-    invalidatePreview();
+    invalidatePreview(false);
 }
 
 async function saveDraft() {
     if (!catalogue) return;
     setStatus('Enregistrement du brouillon…');
-    const result = await send('saveDraft', { catalogue });
+    const savingRevision = editRevision;
+    const result = await send('saveDraft', { catalogue: globalThis.structuredClone(catalogue) });
     draftRevision = result.revision;
     el('version-status').textContent = `Brouillon ${draftRevision} · version calculée ${result.catalogVersion}`;
+    dirty = savingRevision !== editRevision;
+    if (dirty) throw new Error('Le brouillon a changé pendant son enregistrement. Relancez la prévisualisation pour enregistrer la dernière version.');
     setStatus('Brouillon enregistré. Il reste privé jusqu’à sa publication.', 'ready');
-    invalidatePreview();
+    invalidatePreview(false);
 }
 
 function addAlias(label) {
     const entry = selectedValue();
     const clean = label.trim().replace(/\s+/gu, ' ');
     if (!entry || !clean) return;
+    if (selected.type === 'skill') { applyLinks([entry.nom, clean], entry.nom); return; }
     const target = collection(selected.type);
     const key = normalize(clean);
     if (target.aliases.some(alias => normalize(alias.label) === key && alias.targetId === entry.id)) return;
@@ -322,6 +410,11 @@ function renameEntry(value) {
     const entry = selectedValue();
     const clean = value.trim().replace(/\s+/gu, ' ');
     if (!entry || !clean || clean === entry.nom) return;
+    if (selected.type === 'skill') {
+        const existing = skillFormsResolver(catalogue.skills).resolve(clean);
+        if (existing.entry && existing.entry.id !== entry.id) throw new Error('Ce nom existe déjà : cochez les deux formes pour les regrouper explicitement.');
+        applyLinks([entry.nom, clean], clean); return;
+    }
     const target = collection(selected.type);
     const oldName = entry.nom;
     entry.nom = clean;
@@ -370,20 +463,33 @@ function readDecisions() {
     });
 }
 
+for (const [id, type] of [['show-skills', 'skill'], ['show-talents', 'talent']]) el(id).addEventListener('click', () => {
+    mode = type; selected = null; selectedLabel = null; entryForm.hidden = true; el('form-usages').replaceChildren(); renderEntries();
+});
+el('form-filter').addEventListener('change', () => { entryLimit = 250; renderEntries(); });
+el('clear-forms').addEventListener('click', () => { checkedForms.clear(); renderEntries(); });
+el('link-forms').addEventListener('click', () => { try { applyLinks([...checkedForms], el('primary-form').value); } catch (error) { setStatus(error.message, 'error'); } });
 el('catalogue-search').addEventListener('input', () => { entryLimit = 250; renderEntries(); });
 el('load-more-entries').addEventListener('click', () => { entryLimit += 250; renderEntries(); });
 el('entry-form').addEventListener('submit', event => {
     event.preventDefault();
-    if (event.submitter?.value === 'alias') addAlias(el('alias-label').value);
-    else renameEntry(el('display-name').value);
+    try {
+        if (event.submitter?.value === 'alias') addAlias(el('alias-label').value);
+        else renameEntry(el('display-name').value);
+    } catch (error) { setStatus(error.message, 'error'); }
 });
 el('save-description').addEventListener('click', () => saveTalentDescription(false).catch(error => setStatus(error.message, 'error')));
 el('remove-description').addEventListener('click', () => saveTalentDescription(true).catch(error => setStatus(error.message, 'error')));
 el('save-draft').addEventListener('click', () => saveDraft().catch(error => setStatus(error.message, 'error')));
 el('preview-migration').addEventListener('click', async () => {
     try {
+        if (dirty) await saveDraft();
         setStatus('Calcul du rapport d’impact…');
+        const previewRevision = editRevision;
         const result = await send('previewMigration', {});
+        if (previewRevision !== editRevision) throw new Error('Le brouillon a changé pendant le calcul. Relancez la prévisualisation.');
+        usageReport = result.report;
+        renderEntries();
         renderPreview(result);
     } catch (error) { setStatus(error.message || 'Prévisualisation impossible.', 'error'); }
 });
