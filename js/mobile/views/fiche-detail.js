@@ -3,6 +3,7 @@ import { createFicheDraftStore } from '../../fiche-draft-store.js';
 import { xpBalance } from '../../fiche/derived.js';
 import { ficheIdentity } from '../fiche-model.js';
 import { createPrincipalPanel } from './fiche-principal.js';
+import { createPurchaseSheet } from './fiche-purchase-sheet.js';
 import { parseRoute, routeToHash, ROUTE_NAMES } from '../router.js';
 import { createDialogController, renderState } from '../ui.js';
 
@@ -103,6 +104,13 @@ export function createFicheDetailView({
     };
     buildMenu();
 
+    const purchase = createPurchaseSheet({
+        documentRef, announce,
+        getContext: () => ({
+            state: controllerState, careers: catalogue?.careers, engine: catalogue?.getEngine(), online, controller,
+        }),
+    });
+
     const tabHref = key => routeToHash({ name: ROUTE_NAMES.FICHE, id: charId, tab: key });
     const tabLabel = key => TABS.find(item => item.key === key)?.label || '';
     const identity = () => ficheIdentity(controllerState?.data, catalogue?.careers);
@@ -111,10 +119,11 @@ export function createFicheDetailView({
     const present = (key, build) => {
         if (key !== shownKey) {
             menu.close();
+            purchase.close();
             shownKey = key;
             shell = null;
             build();
-            container.append(menuDialog);
+            container.append(menuDialog, purchase.element);
         }
     };
     const showState = (key, options) => present(`state:${key}`, () => renderState(container, options));
@@ -133,6 +142,7 @@ export function createFicheDetailView({
             : online ? '' : 'Hors connexion.';
         shell.notice.hidden = !shell.notice.textContent;
         updatePrincipal();
+        purchase.update();
     };
 
     const updatePrincipal = () => {
@@ -168,7 +178,10 @@ export function createFicheDetailView({
         const panel = make(documentRef, 'section', '', 'm-fiche-panel');
         const panelTitle = make(documentRef, 'h2');
         const soon = make(documentRef, 'p', 'Bientôt disponible.', 'm-fiche-soon');
-        const principal = createPrincipalPanel({ documentRef, aptitudesHref: tabHref('aptitudes') });
+        const principal = createPrincipalPanel({
+            documentRef, aptitudesHref: tabHref('aptitudes'),
+            onOpenCarac: (key, trigger) => purchase.open({ kind: 'carac', key }, trigger),
+        });
         panel.append(panelTitle, principal.element, soon);
         const nav = make(documentRef, 'nav', '', 'm-fiche-tabs');
         nav.setAttribute('aria-label', 'Sections de la fiche');
@@ -252,7 +265,7 @@ export function createFicheDetailView({
                 onChange: next => { controllerState = next; render(); },
             });
             stopCatalogue = service.watch(runtime.repository);
-            stopEngine = service.subscribe(updatePrincipal);
+            stopEngine = service.subscribe(() => { updatePrincipal(); purchase.update(); });
         }, error => { backend = null; throw error; });
         return backend;
     };
@@ -351,6 +364,7 @@ export function createFicheDetailView({
         stopEngine?.();
         stopEngine = null;
         menu.close();
+        purchase.close();
         controller?.close();
         abortSignal?.removeEventListener?.('abort', unmount);
         abortSignal = null;

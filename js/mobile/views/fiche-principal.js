@@ -11,7 +11,7 @@ function make(documentRef, tag, text = '', className = '') {
 }
 
 /**
- * Onglet Principal, en lecture seule. La structure est construite une fois ; update() ne réécrit
+ * Onglet Principal ; toucher une caractéristique appelle onOpenCarac(clé, bouton). La structure est construite une fois ; update() ne réécrit
  * que les textes et les jetons, donc le bouton de caractéristique focalisé garde le focus.
  */
 export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac = () => {} }) {
@@ -42,7 +42,7 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
         const total = make(documentRef, 'span', '', 'm-principal-carac-total');
         const bonus = make(documentRef, 'span', '', 'm-principal-carac-bonus');
         button.append(abbr, total, bonus);
-        button.addEventListener('click', () => onOpenCarac(key));
+        button.addEventListener('click', () => onOpenCarac(key, button));
         grid.append(button);
         return { button, abbr, total, bonus };
     });
