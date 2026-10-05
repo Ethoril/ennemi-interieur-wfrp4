@@ -1,3 +1,7 @@
+## [2.29.3] - 2026-10-05
+
+- **Fiches mobile** : la politique de sécurité autorise le point d’échange réellement utilisé par App Check pour vérifier l’application. Les refus de sécurité et les erreurs du service d’accès affichent désormais des messages distincts, sans annoncer systématiquement une perte de connexion.
+
 ## [2.29.2] - 2026-10-05
 
 - **Accès mobile** : les relations publiques sont chargées avec des requêtes limitées aux deux PNJ visibles, compatibles avec les règles de sécurité renforcées. Le chargement fonctionne aussi dans la connexion publique séparée de la session MJ ; le masquage d’un PNJ ferme les anciens abonnements et retire immédiatement ses relations.

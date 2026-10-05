@@ -280,6 +280,39 @@ test('les réponses de retries concurrents du picker ne peuvent pas remplacer la
     view.unmount();
 });
 
+test('le picker distingue un refus de sécurité d’un service injoignable sans annoncer une fausse panne réseau', async () => {
+    class Node {
+        constructor(tag, ownerDocument) { this.tagName = tag; this.ownerDocument = ownerDocument; this.children = []; this.dataset = {}; }
+        append(node) { this.children.push(node); }
+        replaceChildren(...nodes) { this.children = nodes; }
+        addEventListener() {}
+        setAttribute() {}
+    }
+    const documentRef = { createElement(tag) { return new Node(tag, documentRef); } };
+    const walk = node => [node, ...node.children.flatMap(walk)];
+    for (const [code, message] of [
+        ['functions/unauthenticated', /vérification de sécurité/u],
+        ['functions/permission-denied', /vérification de sécurité/u],
+        ['functions/unavailable', /service.*injoignable/u],
+        ['functions/internal', /Impossible de vérifier les accès aux fiches/u],
+    ]) {
+        const container = new Node('main', documentRef);
+        let fail;
+        const view = createFicheAccessView({ container,
+            getClient: async () => ({ watch(_next, onError) { fail = onError; return () => {}; } }),
+            onOpenFiche() {},
+        });
+        view.mount();
+        await Promise.resolve();
+        fail({ code });
+        const content = walk(container).map(node => node.textContent || '').join(' ');
+        assert.match(content, message);
+        assert.doesNotMatch(content, /lorsque la connexion sera disponible/u);
+        assert.equal(walk(container).filter(node => node.dataset.charId).length, 0);
+        view.unmount();
+    }
+});
+
 test('le dialogue verrouille le fond, piège le focus et restaure le déclencheur', () => {
     const trigger = { focusCalled: 0, focus() { this.focusCalled += 1; } };
     const first = { focusCalled: 0, focus() { this.focusCalled += 1; documentRef.activeElement = this; } };

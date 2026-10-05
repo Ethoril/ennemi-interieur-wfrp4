@@ -3,6 +3,17 @@ const CHARACTER_LABELS = Object.freeze({
 });
 const ALLOWED_CHARACTER_IDS = new Set(Object.keys(CHARACTER_LABELS));
 
+function accessErrorMessage(error) {
+    const code = String(error?.code || '').toLowerCase();
+    if (code.includes('unauthenticated') || code.includes('permission') || code.includes('appcheck')) {
+        return 'La vérification de sécurité de votre session a échoué. Réessayez ou reconnectez-vous.';
+    }
+    if (code.includes('network') || code.includes('unavailable') || code.includes('deadline')) {
+        return 'Le service de vérification des accès est injoignable. Réessayez dans un instant.';
+    }
+    return 'Impossible de vérifier les accès aux fiches. Réessayez dans un instant.';
+}
+
 function make(documentRef, tag, text = '') {
     const node = documentRef.createElement(tag);
     if (text) node.textContent = text;
@@ -38,7 +49,7 @@ export function createFicheAccessView({
             status.textContent = 'Vérification des accès fiche…';
             section.append(status);
         } else if (state.error) {
-            status.textContent = 'Impossible de vérifier les accès. Réessayez lorsque la connexion sera disponible.';
+            status.textContent = accessErrorMessage(state.error);
             section.append(status);
             const retry = make(documentRef, 'button', 'Réessayer');
             retry.type = 'button';
@@ -108,16 +119,16 @@ export function createFicheAccessView({
                     error: false,
                 };
                 render();
-            }, () => {
+            }, error => {
                 if (!isCurrent()) return;
-                state = { loading: false, user: null, capabilities: null, error: true };
+                state = { loading: false, user: null, capabilities: null, error: error || {} };
                 render();
             });
             if (isCurrent()) unsubscribe = stop;
             else stop?.();
-        } catch {
+        } catch (error) {
             if (!isCurrent()) return;
-            state = { loading: false, user: null, capabilities: null, error: true };
+            state = { loading: false, user: null, capabilities: null, error: error || {} };
             render();
         }
     };

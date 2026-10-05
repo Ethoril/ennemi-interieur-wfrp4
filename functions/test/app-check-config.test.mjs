@@ -35,3 +35,11 @@ test('le client initialise App Check avec renouvellement automatique sans jeton 
     assert.doesNotMatch(source, /FIREBASE_APPCHECK_DEBUG_TOKEN/u);
     assert.doesNotMatch(source, /debug.?token/iu);
 });
+
+test('la CSP mobile autorise le point d’échange App Check utilisé par le SDK 10.12.0', async () => {
+    const html = await readFile(resolve(REPO_ROOT, 'app/index.html'), 'utf8');
+    const policy = html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/u)?.[1];
+    const connect = policy?.split(';').find(directive => directive.trim().startsWith('connect-src '));
+    assert.ok(connect?.split(/\s+/u).includes('https://content-firebaseappcheck.googleapis.com'));
+    assert.doesNotMatch(connect, /https:\/\/\*\.googleapis\.com/u);
+});
