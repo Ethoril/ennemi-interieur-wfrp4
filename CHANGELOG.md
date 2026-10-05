@@ -1,3 +1,8 @@
+## [2.31.1] - 2026-10-05
+
+### Référentiels
+- Filtre par défaut « Tout sauf variantes reliées » : noms principaux et formes à organiser visibles ; variantes accessibles via les autres filtres.
+
 ## [2.31.0] - 2026-10-05
 
 ### Référentiels

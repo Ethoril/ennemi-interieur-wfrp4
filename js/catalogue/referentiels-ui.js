@@ -69,7 +69,7 @@ function renderEntries() {
     const allRows = mode === 'skill' ? skillRows() : catalogue.talents.entries.map(entry => ({ label: entry.nom, targetId: entry.id, sources: ['Talent'], isPrimary: true, searchExtras: catalogue.talents.aliases.filter(alias => alias.targetId === entry.id).map(alias => alias.label) }));
     const filter = el('form-filter').value;
     const rows = allRows.filter(row => (!query || searchable([row.label, row.primary, ...row.sources, ...(row.searchExtras || [])].join(' ')).includes(query))
-        && (mode !== 'skill' || filter === 'all' || (filter === 'primary' && row.isPrimary)
+        && (mode !== 'skill' || filter === 'all' || (filter === 'active' && (row.isPrimary || !row.targetId)) || (filter === 'primary' && row.isPrimary)
             || (filter === 'variant' && row.targetId && !row.isPrimary) || (filter === 'unknown' && !row.targetId)));
     el('show-skills').setAttribute('aria-pressed', String(mode === 'skill'));
     el('show-talents').setAttribute('aria-pressed', String(mode === 'talent'));
@@ -496,7 +496,7 @@ function readDecisions() {
 }
 
 for (const [id, type] of [['show-skills', 'skill'], ['show-talents', 'talent']]) el(id).addEventListener('click', () => {
-    mode = type; selected = null; el('catalogue-search').value = ''; el('form-filter').value = 'all'; entryForm.hidden = true; el('selection-summary').hidden = true; renderUsages([]); renderEntries();
+    mode = type; selected = null; el('catalogue-search').value = ''; el('form-filter').value = 'active'; entryForm.hidden = true; el('selection-summary').hidden = true; renderUsages([]); renderEntries();
 });
 el('form-filter').addEventListener('change', renderEntries);
 el('clear-forms').addEventListener('click', clearSelection);

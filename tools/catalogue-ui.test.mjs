@@ -21,7 +21,7 @@ async function editor(t, { theology = false } = {}) {
     t.after(() => { globalThis.Option = previousOption; });
     const ids = [...fs.readFileSync(new URL('../referentiels.html', import.meta.url), 'utf8').matchAll(/id="([^"]+)"/gu)].map(match => match[1]);
     const elements = Object.fromEntries(ids.map(id => [id, new Element()]));
-    elements['form-filter'].value = 'all';
+    elements['form-filter'].value = 'active';
     const skills = ['Chevaucher', 'Équitation', 'Natation'].map((nom, index) => ({ id: 'skill-' + index, nom, carac: 'ag', basic: true }));
     if (theology) skills.push({ id: 'skill-theology', nom: 'Savoir (Théologie)', group: 'Savoir', groupId: 'group-savoir', specialization: 'Théologie', carac: 'int', basic: false });
     const draft = { skills: { entries: skills, aliases: [] }, talents: { entries: [], aliases: [], localDescriptions: [] } };
@@ -65,6 +65,12 @@ test('un bouton enregistre le regroupement et réinitialise la sélection pour l
     await ui.check('Chevaucher'); await ui.check('Équitation'); await ui.apply();
     const resolver = skillFormsResolver(ui.saved().skills);
     assert.equal(resolver.resolve('Équitation').entry.nom, 'Chevaucher');
+    assert.equal(ui.row('Équitation'), undefined);
+    assert.ok(ui.row('Chevaucher'));
+    assert.ok(ui.row('Conn. Théologie'));
+    ui.elements['form-filter'].value = 'all';
+    await ui.elements['form-filter'].dispatch('change');
+    assert.ok(ui.row('Équitation'));
     assert.equal(resolver.resolve('Natation').entry.nom, 'Natation');
     assert.equal(ui.elements['skill-group-form'].hidden, true);
     assert.equal(ui.elements['primary-name'].value, '');
