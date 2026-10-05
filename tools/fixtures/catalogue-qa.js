@@ -19,7 +19,14 @@ const state = globalThis.catalogueQaState = {
     calls: [], lastDecisions: null,
 };
 
-const report = { skills: [{ name: 'Athlétisme ancien', occurrences: [{ kind: 'owned-advanced', scopeId: 'bhelgi' }] }],
+if (new URLSearchParams(location.search).get('inventory') === 'full') {
+    state.draft = await (await fetch('../../js/catalogue/referentiel-public.json')).json();
+    state.published = clone(state.draft);
+}
+
+const report = { skills: [{ name: 'Athlétisme ancien', occurrences: [{ kind: 'owned-advanced', scopeId: 'bhelgi' }] },
+    { name: 'Conn. (Théologie)', occurrences: [{ kind: 'owned-advanced', scopeId: 'elysia' }] },
+    { name: 'Conn. Théologie', occurrences: [{ kind: 'owned-advanced', scopeId: 'elysia' }] }],
     talents: [], counts: { skillLabels: 2, unresolvedSkills: 1, talentLabels: 1 } };
 const callable = async envelope => {
     state.calls.push(clone(envelope));

@@ -5,20 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow">
     <meta name="theme-color" content="#1a1a2e">
-    <title>QA locale · Référentiels</title>
-    <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+    <title>Référentiels · L'Ennemi Intérieur</title>
+
     <link rel="stylesheet" href="../../css/base.css">
     <link rel="stylesheet" href="../../css/components.css">
     <link rel="stylesheet" href="../../css/theme-parchment.css">
     <link rel="stylesheet" href="../../css/referentiels.css">
+    <script type="module" src="catalogue-qa.js"></script>
 </head>
 <body>
-
+    <nav id="navbar"></nav>
     <main class="container referentiel-page">
         <header class="referentiel-heading">
             <p class="eyebrow">Administration · MJ</p>
             <h1>Référentiels de compétences et talents</h1>
-            <p>Retrouvez toutes les formes de compétences, reliez celles qui désignent la même compétence et choisissez le nom principal utilisé dans les fiches, les carrières et les achats XP.</p>
+            <p>Un seul nom par compétence, toutes ses variantes reconnues. Choisissez les formes équivalentes, définissez leur nom principal, puis publiez quand tout est prêt.</p>
         </header>
 
         <section id="auth-panel" class="referentiel-panel" aria-live="polite">
@@ -28,85 +29,67 @@
         </section>
 
         <section id="editor" hidden>
-            <div class="referentiel-toolbar referentiel-panel">
-                <div class="button-row" role="group" aria-label="Référentiel affiché">
-                    <button id="show-skills" class="button-secondary" type="button" aria-pressed="true">Compétences</button>
-                    <button id="show-talents" class="button-secondary" type="button" aria-pressed="false">Talents</button>
-                </div>
-                <label for="form-filter">Afficher</label>
-                <select id="form-filter"><option value="all">Toutes les formes</option><option value="primary">Formes principales</option><option value="variant">Variantes reliées</option><option value="unknown">Formes à relier</option></select>
-                <label for="catalogue-search">Rechercher un nom ou une variante</label>
-                <input id="catalogue-search" type="search" autocomplete="off" placeholder="Nom, spécialité, alias…">
-                <p id="catalogue-status" role="status"></p>
+            <div class="referentiel-tabs" role="group" aria-label="Référentiel affiché">
+                <button id="show-skills" class="button-secondary" type="button" aria-pressed="true">Compétences</button>
+                <button id="show-talents" class="button-secondary" type="button" aria-pressed="false">Talents</button>
+                <span id="draft-state" class="draft-state">Brouillon</span>
             </div>
-
+            <p id="catalogue-status" class="catalogue-status" role="status" aria-live="polite"></p>
             <div class="referentiel-columns">
-                <section class="referentiel-panel" aria-labelledby="entries-title">
-                    <div class="section-title-row">
-                        <h2 id="entries-title">Toutes les formes de compétences</h2>
-                        <span id="result-count" class="muted"></span>
+                <section class="referentiel-panel inventory-panel" aria-labelledby="entries-title">
+                    <div class="section-title-row"><h2 id="entries-title">1. Choisir les formes équivalentes</h2><span id="result-count" class="muted"></span></div>
+                    <p id="inventory-help" class="muted">Cliquez sur les noms qui désignent la même compétence. Votre sélection reste visible à droite, même en changeant la recherche.</p>
+                    <div class="inventory-filters">
+                        <div><label for="catalogue-search">Rechercher</label><input id="catalogue-search" type="search" autocomplete="off" placeholder="Ex. théologie, chevaucher…"></div>
+                        <div><label for="form-filter">Afficher</label><select id="form-filter"><option value="all">Toutes les formes</option><option value="unknown">À organiser</option><option value="primary">Noms principaux</option><option value="variant">Variantes reliées</option></select></div>
                     </div>
-                    <p id="inventory-help" class="muted">Cochez les formes équivalentes, puis choisissez la principale. Les variantes restent reconnues mais ne sont plus proposées séparément.</p><ul id="entry-list" class="entry-list"></ul>
-                    <button id="load-more-entries" class="button-secondary" type="button" hidden>Charger plus</button>
+                    <p id="inventory-counts" class="inventory-counts"></p><button id="selection-jump" class="button-secondary selection-jump" type="button" hidden>Voir ma sélection</button>
+                    <ul id="entry-list" class="entry-list"></ul>
+                    <p id="inventory-empty" class="muted" hidden>Aucun résultat. Essayez un nom plus court ou le filtre « Toutes les formes ».</p>
                 </section>
-
-                <section class="referentiel-panel" aria-labelledby="edit-title">
+                <section class="referentiel-panel selection-panel" aria-labelledby="edit-title">
+                    <h2 id="edit-title" tabindex="-1">2. Définir la compétence</h2>
                     <section id="link-forms-panel">
-                        <h2>Relier les formes sélectionnées</h2>
-                        <p id="checked-summary" class="muted">Aucune forme cochée.</p>
-                        <label for="primary-form">Forme principale</label>
-                        <select id="primary-form" disabled></select>
-                        <div class="button-row"><button id="link-forms" class="button-primary" type="button" disabled>Relier et choisir la principale</button><button id="clear-forms" class="button-secondary" type="button">Effacer la sélection</button></div>
-                    </section>
-                    <h2 id="edit-title">Compétence sélectionnée</h2>
-                    <ul id="form-usages" class="usage-list"></ul>
-                    <p id="selection-summary" class="muted">Sélectionnez une entrée dans la liste.</p>
-                    <form id="entry-form" hidden>
-                        <label for="display-name">Nom principal</label>
-                        <input id="display-name" maxlength="200" required aria-describedby="rename-help">
-                        <p id="rename-help" class="muted">Les formes cochées seront reliées à ce nom principal. Vous pouvez modifier ce champ pour choisir un autre nom.</p>
-                        <label for="alias-label">Ajouter une forme ou traduction</label>
-                        <div class="inline-field">
-                            <input id="alias-label" maxlength="200" placeholder="Autre libellé" autocomplete="off">
-                            <button class="button-secondary" type="submit" name="action" value="alias">Ajouter</button>
-                        </div>
-                        <fieldset id="alias-fieldset">
-                            <legend>Variantes reconnues</legend>
-                            <ul id="alias-list" class="alias-list"></ul>
-                        </fieldset>
-                        <div id="talent-description-field" hidden>
-                            <label for="local-description">Description locale publiée</label>
-                            <textarea id="local-description" rows="7" maxlength="12000"></textarea>
-                            <div class="inline-field">
-                                <button class="button-secondary" type="button" id="save-description">Enregistrer la description</button>
-                                <button class="button-secondary" type="button" id="remove-description">Retirer la correction locale</button>
+                        <p id="group-empty" class="empty-selection">Sélectionnez une ou plusieurs formes dans la liste pour les organiser.</p>
+                        <form id="skill-group-form" hidden>
+                            <div class="section-title-row"><p id="checked-summary" class="selection-count"></p><button id="clear-forms" class="text-button" type="button">Tout retirer</button></div>
+                            <ul id="selected-forms" class="selected-forms"></ul>
+                            <label for="primary-name">Nom principal à afficher</label>
+                            <input id="primary-name" list="catalogue-names" maxlength="200" required autocomplete="off" aria-describedby="primary-help">
+                            <datalist id="catalogue-names"></datalist>
+                            <p id="primary-help" class="muted">Choisissez un nom ci-dessus, saisissez un nouveau nom ou recherchez une compétence existante. C’est ce nom qui apparaîtra dans les fiches, les carrières et les achats XP.</p>
+                            <div id="name-suggestions" class="name-suggestions"></div>
+                            <div id="new-skill-fields" class="new-skill-fields" hidden>
+                                <p>Cette compétence n’existe pas encore. Elle sera créée comme <strong>compétence avancée</strong>.</p>
+                                <label for="new-skill-carac">Caractéristique utilisée</label>
+                                <select id="new-skill-carac"><option value="">Choisir une caractéristique…</option><option value="cc">Capacité de combat</option><option value="ct">Capacité de tir</option><option value="f">Force</option><option value="e">Endurance</option><option value="i">Initiative</option><option value="ag">Agilité</option><option value="dex">Dextérité</option><option value="int">Intelligence</option><option value="fm">Force mentale</option><option value="soc">Sociabilité</option></select>
                             </div>
-                        </div>
-                        <button class="button-primary" type="submit" name="action" value="rename">Appliquer le nom principal</button>
+                            <div class="group-preview"><span class="eyebrow">Résultat dans le brouillon</span><p id="group-result"></p><details id="result-details" hidden><summary>Autres noms reconnus</summary><ul id="result-forms"></ul></details></div>
+                            <button id="apply-group" class="button-primary" type="submit">Enregistrer cette compétence</button>
+                        </form>
+                    </section>
+                    <p id="selection-summary" class="muted" hidden></p>
+                    <form id="entry-form" hidden>
+                        <label for="display-name">Nom du talent</label><input id="display-name" maxlength="200" required>
+                        <label for="alias-label">Autre nom reconnu</label>
+                        <div class="inline-field"><input id="alias-label" maxlength="200" autocomplete="off"><button class="button-secondary" type="submit" name="action" value="alias">Ajouter</button></div>
+                        <fieldset id="alias-fieldset"><legend>Autres noms reconnus</legend><ul id="alias-list" class="alias-list"></ul></fieldset>
+                        <div id="talent-description-field"><label for="local-description">Description locale publiée</label><textarea id="local-description" rows="7" maxlength="12000"></textarea><div class="button-row"><button class="button-secondary" type="button" id="save-description">Enregistrer la description</button><button class="button-secondary" type="button" id="remove-description">Retirer la correction locale</button></div></div>
+                        <button class="button-primary" type="submit" name="action" value="rename">Enregistrer le nom du talent</button>
                     </form>
-                    <p id="entry-status" class="entry-status" role="status"></p>
+                    <p id="entry-status" class="entry-status" role="status" aria-live="polite"></p>
+                    <details id="usages-details" class="usages-details" hidden><summary>Où ces formes sont-elles utilisées ?</summary><ul id="form-usages" class="usage-list"></ul></details>
                 </section>
             </div>
-
-            <section class="referentiel-panel workflow-panel">
-                <div class="section-title-row">
-                    <div>
-                        <h2>Brouillon et publication</h2>
-                        <p class="muted">Les changements restent dans le brouillon jusqu’à la publication. Vérifiez les fiches concernées et décidez des avances à conserver en cas de doublon.</p>
-                    </div>
-                    <span id="version-status" class="version-pill"></span>
-                </div>
-                <div class="button-row">
-                    <button id="save-draft" class="button-secondary" type="button">Enregistrer le brouillon</button>
-                    <button id="preview-migration" class="button-secondary" type="button">Prévisualiser les impacts</button>
-                </div>
+            <section class="referentiel-panel workflow-panel" aria-labelledby="publication-title">
+                <div class="section-title-row"><div><h2 id="publication-title">3. Vérifier et publier</h2><p class="muted">Vous pouvez organiser plusieurs compétences avant de publier. Les fiches ne changent qu’après votre validation des impacts.</p></div><span id="version-status" class="version-pill"></span></div>
+                <p id="changes-summary"></p>
+                <div class="button-row"><button id="undo-change" class="button-secondary" type="button" disabled>Annuler la dernière modification</button><button id="save-draft" class="button-secondary" type="button">Réessayer l’enregistrement</button><button id="preview-migration" class="button-primary" type="button">Vérifier les impacts avant publication</button></div>
                 <div id="preview-results" class="preview-results" hidden></div>
-                <label for="publication-reason">Motif de publication</label>
-                <input id="publication-reason" maxlength="500" placeholder="Ex. alias validés après revue des fiches">
-                <button id="publish-catalogue" class="button-primary" type="button" disabled>Publier le référentiel et migrer les fiches</button>
+                <div id="publication-fields" hidden><label for="publication-reason">Note de publication (facultative)</label><input id="publication-reason" maxlength="500" placeholder="Ex. harmonisation des compétences"><p id="publication-ready" class="muted" role="status"></p><button id="publish-catalogue" class="button-primary" type="button" disabled>Publier et mettre à jour les fiches</button></div>
             </section>
         </section>
     </main>
-    <section id="qa-results" class="referentiel-panel" aria-live="polite" hidden></section><script type="module" src="catalogue-qa.js"></script>
+    <section id="qa-results" hidden></section>
 </body>
 </html>

@@ -221,3 +221,39 @@ test('publication limitée aux formes modifiées : une ligne sans rapport et son
     } }, requestBase);
     assert.deepEqual(db.values.get('fiches/bhelgi'), source);
 });
+
+
+test('deux formes de théologie hors catalogue sont créées, prévisualisées puis publiées avec un arbitrage explicite', async () => {
+    const { linkSkillForms } = await import('../../js/catalogue/skill-forms.js');
+    const original = makeCatalogue();
+    const initial = makeDbData(original);
+    const elysia = initial['fiches/elysia'].data;
+    elysia.skillsAdvanced = [
+        { id: 'theology-old', nom: 'Conn. (Théologie)', carac: 'int', adv: 5 },
+        { id: 'theology-new', nom: 'Conn. Théologie', carac: 'int', adv: 8 },
+    ];
+    const history = structuredClone(elysia.xpLog);
+    const db = createDb(initial);
+    const service = createCatalogueService({ db, timestamp: () => new Date(), initialCatalogue: original });
+    const catalogue = structuredClone(original);
+    catalogue.skills = linkSkillForms(original.skills, ['Conn. (Théologie)', 'Conn. Théologie'], 'Conn. Théologie', { newSkill: { carac: 'int' } }).skills;
+    await service.executeCatalogueCommand({ operationId: 'theology-save', baseRevision: 1, type: 'saveDraft', payload: { catalogue } }, requestBase);
+    const preview = await service.executeCatalogueCommand({ operationId: 'theology-preview', baseRevision: 2, type: 'previewMigration', payload: {} }, requestBase);
+    assert.equal(preview.migration.collisions.length, 1);
+    assert.equal(preview.migration.collisions[0].targetName, 'Conn. Théologie');
+    const collision = preview.migration.collisions[0];
+    const winner = collision.records.find(record => record.id === 'theology-new');
+    const revisions = Object.fromEntries(['bhelgi', 'caelel', 'elysia', 'hellaya', 'wren'].map(id => [id, 4]));
+    await service.executeCatalogueCommand({ operationId: 'theology-publish', baseRevision: 2, type: 'publish', payload: {
+        publishedRevision: 3, characterRevisions: revisions, reason: 'Organiser les formes de théologie',
+        decisions: [{ key: collision.key, keepRecordKey: winner.scopeId + '\u0000' + winner.collection + '\u0000' + winner.id, storageCollection: 'skillsAdvanced', advances: 8 }],
+    } }, requestBase);
+    const result = db.values.get('fiches/elysia').data;
+    assert.equal(result.skillsAdvanced.length, 1);
+    assert.equal(result.skillsAdvanced[0].nom, 'Conn. Théologie');
+    assert.equal(result.skillsAdvanced[0].adv, 8);
+    assert.equal(result.skillsAdvanced[0].carac, 'int');
+    assert.deepEqual(result.xpLog, history);
+    assert.deepEqual(db.values.get('fiches/bhelgi').data.skillsAdvanced, initial['fiches/bhelgi'].data.skillsAdvanced);
+    assert.ok(db.values.has('fiches/elysia/catalogue_backups/theology-publish'));
+});

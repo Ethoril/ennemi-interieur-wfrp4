@@ -53,7 +53,7 @@ test('un alias qui renvoie vers une entrée elle-même redirigée suit la princi
 
 test('un groupe inconnu ou une principale hors sélection ne modifie aucune donnée', () => {
     const source = skills(); const before = JSON.stringify(source);
-    assert.throws(() => linkSkillForms(source, ['Inconnu', 'Autre inconnu'], 'Inconnu'), /catalogue/);
+    assert.throws(() => linkSkillForms(source, ['Inconnu', 'Autre inconnu'], 'Inconnu'), /caractéristique/);
     assert.throws(() => linkSkillForms(source, ['Ancien savoir'], 'Autre'), /sélectionnées/);
     assert.equal(JSON.stringify(source), before);
 });
@@ -90,4 +90,32 @@ test('deux principales distinctes ne sont pas reliées par les anciennes équiva
     } }, { uid: 'player', role: 'joueur' });
     assert.equal(result.data.skillsAdvanced.length, 2);
     assert.equal(result.data.skillsAdvanced[1].nom, 'Connaissance (Guerre)');
+});
+
+
+test('création explicite de deux formes hors catalogue : identité stable, anciennes formes reconnues et achats possibles', () => {
+    const source = skills(); const before = JSON.stringify(source);
+    const labels = ['Conn. (Théologie)', 'Conn. Théologie'];
+    const next = linkSkillForms(source, labels, labels[1], { newSkill: { carac: 'int' } }).skills;
+    assert.equal(JSON.stringify(source), before);
+    const resolver = skillFormsResolver(next);
+    const created = resolver.resolve(labels[0]).entry;
+    assert.equal(created.nom, labels[1]); assert.equal(created.basic, false); assert.equal(created.carac, 'int');
+    assert.equal(created.id, resolver.resolve(labels[1]).entry.id);
+    assert.equal(resolver.primaryEntries.length, source.entries.length + 1);
+    assert.deepEqual(linkSkillForms(source, labels, labels[1], { newSkill: { carac: 'int' } }).skills, next);
+    const catalogue = { catalogVersion: 'new-forms', skills: next, talents: { entries: [], aliases: [] } };
+    const engine = createPublishedCatalogueEngine({ catalogue, careers: [], skills: [], spells: { catalogVersion: 'rules-v1', spells: [], miracles: [] } });
+    const result = engine.applyCommand({ xpLog: [{ kind: 'gain', montant: 500 }], skillsBasic: {}, skillsAdvanced: [], talentsAcq: [] },
+        { operationId: 'new-theology', type: 'purchase', payload: { kind: 'skill', name: labels[0], count: 1, expectedCost: 20, catalogVersion: engine.catalogVersion } }, { uid: 'player', role: 'joueur' });
+    assert.equal(result.data.skillsAdvanced[0].nom, labels[1]); assert.equal(result.data.skillsAdvanced[0].carac, 'int');
+});
+
+
+test('les identifiants de création restent compatibles avec le serveur pour un long nom principal', () => {
+    const label = 'Connaissance (' + 'Théologie '.repeat(15).trim() + ')';
+    const created = linkSkillForms(skills(), [label], label, { newSkill: { carac: 'int' } }).skills.entries.at(-1);
+    for (const id of [created.id, created.groupId, created.specializationId]) {
+        assert.ok(id.length <= 200); assert.match(id, /^[A-Za-z0-9_-]+$/u);
+    }
 });

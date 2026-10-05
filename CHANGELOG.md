@@ -1,3 +1,13 @@
+## [2.31.0] - 2026-10-05
+
+### Référentiels
+- Interface repensée en trois étapes : choisir les formes, définir la compétence, vérifier et publier.
+- Une sélection persistante et un seul nom principal modifiable, avec aperçu des variantes reconnues.
+- Liste complète sans pagination, recherche sans accents, filtres et accès à la sélection sur mobile.
+- Création explicite d’une compétence avancée lorsque les formes sont toutes absentes du catalogue, avec choix de sa caractéristique.
+- Enregistrement du brouillon lors de chaque validation, annulation de la dernière modification et récupération après erreur réseau.
+- Publication simplifiée : décisions explicites sur les doublons, avances de la ligne choisie proposées et bouton activé une fois les arbitrages complets.
+
 ## [2.30.1] - 2026-10-05
 
 ### Corrigé
