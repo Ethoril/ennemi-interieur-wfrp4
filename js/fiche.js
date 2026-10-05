@@ -2776,7 +2776,7 @@ export function setFicheRole(role, { allowImport = false } = {}) {
     }
     controls.forEach(control => { control.disabled = true; });
     content?.querySelectorAll(
-        '#nom, #race, #blessures-act, #resilience, #determination, #chance, #destin, #corruption, #possessions, '
+        '#blessures-act, #resilience, #determination, #chance, #destin, #corruption, #possessions, '
         + '.career-note, .career-variant-sel, .skill-note, .talent-note, .sort-note, .priere-note, '
         + '.btn-toggle-opt, .btn-close-section, #btn-export-fiche, #btn-add-xp, .btn-rm[data-type="xp-cancel"], '
         + '.career-viewer-control select, .career-viewer-check input, .career-viewer-open, .career-viewer-talent, .career-viewer-modal button, .career-viewer-modal select'
