@@ -1,3 +1,5 @@
+import { confirmTextAction } from './ui-confirm.js';
+
 const PHASE_LABELS = Object.freeze({
     ready: 'Fiche synchronisée', saving: 'Enregistrement du brouillon',
     'awaiting-snapshot': 'Confirmation serveur en attente',
@@ -11,12 +13,13 @@ function displayValue(value) {
     try { return JSON.stringify(value); } catch { return String(value); }
 }
 
-export function createFicheSessionView({ getContainer, controller } = {}) {
+export function createFicheSessionView({ getContainer, controller, confirmMigration = confirmTextAction } = {}) {
     if (typeof getContainer !== 'function' || !controller) throw new TypeError('Dépendances de vue de session invalides');
 
     let presence = [];
     let currentSessionId = null;
     let history = [];
+    let migrationInProgress = false;
 
     function render(state) {
         const container = getContainer();
@@ -77,14 +80,26 @@ export function createFicheSessionView({ getContainer, controller } = {}) {
             button.className = 'fiche-auth-btn';
             button.textContent = 'Migrer cette fiche historique';
             button.addEventListener('click', async () => {
-                const confirmId = globalThis.prompt(`Pour confirmer, saisissez l’identifiant « ${state.charId} » :`)?.trim();
-                if (!confirmId) return;
+                if (migrationInProgress) return;
+                migrationInProgress = true;
+                button.disabled = true;
                 try {
+                    const confirmId = await confirmMigration({
+                        titre: 'Confirmer la migration de fiche',
+                        message: `Cette opération convertit la fiche historique. Saisissez exactement l’identifiant « ${state.charId} » pour continuer.`,
+                        libelleAction: 'Migrer la fiche',
+                        danger: true,
+                        input: { label: 'Identifiant de la fiche', placeholder: state.charId, maxLength: 128 },
+                    });
+                    if (typeof confirmId !== 'string' || !confirmId.trim()) return;
                     const result = await controller.migrateLegacy(confirmId);
                     status.textContent = result?.status === 'blocked'
                         ? 'Migration bloquée : anomalies à examiner.' : 'Migration envoyée au serveur.';
                 } catch (error) {
                     status.textContent = `Migration refusée : ${error?.code || error?.message || 'erreur'}`;
+                } finally {
+                    migrationInProgress = false;
+                    button.disabled = false;
                 }
             });
             root.append(button);

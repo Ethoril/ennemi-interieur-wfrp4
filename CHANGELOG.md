@@ -1,3 +1,7 @@
+## [2.29.1] - 2026-10-05
+
+- **Migration des fiches** : la confirmation demande l’identifiant de la fiche dans une modale intégrée à l’application, compatible avec les navigateurs intégrés qui bloquent les invites natives.
+
 ## [2.29.0] - 2026-10-05
 
 - **Fiches et XP** : sauvegardes par commandes atomiques, fusion des champs compatibles et choix explicite en cas de conflit. Achats calculés côté serveur, reprise sans double débit, annulation contrôlée et corrections MJ motivées et historisées.
