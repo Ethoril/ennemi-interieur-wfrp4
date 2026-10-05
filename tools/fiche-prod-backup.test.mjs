@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, readdir, rm } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import {
@@ -24,8 +25,9 @@ import {
     unwrapKeyDpapi,
 } from './fiche-prod-backup.mjs';
 
-const outside = 'C:\\private\\fiche-backups';
-const archivePath = `${outside}\\synthetic.dpapi.json`;
+const requireFunctions = createRequire(new globalThis.URL('../functions/package.json', import.meta.url));
+const outside = resolve(tmpdir(), 'wfrp-fiche-prod-synthetic-backups');
+const archivePath = join(outside, 'synthetic.dpapi.json');
 const args = command => parseArgs(command);
 
 function protectForTest(key) { return `wrapped:${key.toString('base64')}`; }
@@ -64,7 +66,9 @@ test('garde opérateur limite le projet, les cinq IDs et les chemins hors dépô
     assert.match(validateArgs(args(['backup', '--project=autre', '--confirm-ids=test', `--out-dir=${outside}`])).join(' '), /campagne-wrpg/);
     assert.match(validateArgs(args(['backup', `--project=${PROJECT}`, `--confirm-ids=${[...CHARACTER_IDS, 'test'].join(',')}`, `--out-dir=${outside}`])).join(' '), /exactement/);
     assert.match(validateArgs(args(['backup', `--project=${PROJECT}`, `--confirm-ids=${CHARACTER_IDS.join(',')}`, '--out-dir=relative'])).join(' '), /absolu/);
-    assert.match(validateArgs(args(['preflight', `--project=${PROJECT}`, '--backup=E:\\repo\\bad.json']), { repoRoot: 'E:\\repo' }).join(' '), /hors du dépôt/);
+    const repoRoot = resolve(tmpdir(), 'wfrp-fiche-backup-args-repo');
+    const insideRepo = resolve(repoRoot, 'bad.json');
+    assert.match(validateArgs(args(['preflight', `--project=${PROJECT}`, `--backup=${insideRepo}`]), { repoRoot }).join(' '), /hors du dépôt/);
     assert.match(validateArgs(args(['apply', `--project=${PROJECT}`, `--backup=${archivePath}`])).join(' '), /commande/);
 });
 
@@ -234,7 +238,7 @@ test('un personnage manquant est un blocage structurel et le client Firestore re
     assert.throws(() => createAuthorizedUserFirestore({
         Firestore: FirestoreFake, clientId: 'x', clientSecret: 'y', refreshToken: 'z', projectId: 'other',
     }), /configuration/u);
-    const { Firestore } = await import('firebase-admin/firestore');
+    const { Firestore } = requireFunctions('firebase-admin/firestore');
     const firestore = createAuthorizedUserFirestore({
         Firestore,
         clientId: 'synthetic-oauth-client-id.apps.googleusercontent.com',
