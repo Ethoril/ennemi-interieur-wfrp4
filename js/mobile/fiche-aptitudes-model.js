@@ -1,4 +1,5 @@
 import { activeCareerRank, findCareerByName, getEffectiveTalents, getVariantsToConsider } from '../fiche/career-model.js';
+import { isOpenCareerSlot } from '../fiche/skill-names.js';
 import { talentXpCost } from '../fiche/xp.js';
 import { stripAccents } from '../utils.js';
 
@@ -17,6 +18,10 @@ export function sortSkills(rows) {
     return [...rows.filter(row => row.adv > 0).sort(byName), ...rows.filter(row => row.adv === 0).sort(byName)];
 }
 
+// Emplacement ouvert (« (au choix) », « (Goût ou Toucher) ») : le serveur stockerait le libellé tel quel, l'achat reste au bureau.
+const isOpenTalentSlot = nom => isOpenCareerSlot(nom) || /\([^)]*\sou\s[^)]*\)/iu.test(nom);
+const talentGroup = nom => fold(nom.split('(')[0]).trim();
+
 // Un modèle de spécialisation (« Maîtrise (Épées) ») partage l'entrée publiée de son talent : on le distingue par son libellé.
 function talentKey(engine, nom) {
     const match = engine?.resolveTalent?.(nom);
@@ -31,7 +36,8 @@ export function talentTaken(data, engine, nom) {
 
 /**
  * Talents acquis (nom affiché, nombre de prises) puis ceux de la carrière courante pas encore acquis (coût de carrière).
- * Ligne : { nom (nom à envoyer au serveur), label, count, acquired, cost? }.
+ * Ligne : { nom (nom à envoyer au serveur), label, count, acquired, cost?, open }. Un emplacement ouvert (`open`) reste
+ * listé mais n'est pas achetable ; il disparaît quand son groupe a déjà un talent acquis (Savoir-vivre (Guilde) → Savoir-vivre (au choix)).
  */
 export function talentRows(data, engine, careers = []) {
     const acquired = new Map();
@@ -40,8 +46,9 @@ export function talentRows(data, engine, careers = []) {
         const key = talentKey(engine, nom);
         const known = acquired.get(key);
         if (known) known.count += 1;
-        else acquired.set(key, { nom, label: engine?.resolveTalent?.(nom)?.displayedName || nom, count: 1, acquired: true });
+        else acquired.set(key, { nom, label: engine?.resolveTalent?.(nom)?.displayedName || nom, count: 1, acquired: true, open: false });
     }
+    const acquiredGroups = new Set([...acquired.values()].map(row => talentGroup(row.nom)));
     const career = findCareerByName(careers, String(data?.carriere ?? ''));
     const available = new Map();
     if (career) {
@@ -50,8 +57,9 @@ export function talentRows(data, engine, careers = []) {
             for (const variant of getVariantsToConsider(career, current, data?.chosenVariants || {})) {
                 for (const nom of getEffectiveTalents(career, current, variant, data?.careerOverrides || {})) {
                     const key = talentKey(engine, nom);
-                    if (!acquired.has(key) && !available.has(key)) {
-                        available.set(key, { nom, label: engine?.resolveTalent?.(nom)?.displayedName || nom, count: 0, acquired: false, cost: talentXpCost(true) });
+                    const open = isOpenTalentSlot(nom);
+                    if (!acquired.has(key) && !available.has(key) && !(open && acquiredGroups.has(talentGroup(nom)))) {
+                        available.set(key, { nom, label: engine?.resolveTalent?.(nom)?.displayedName || nom, count: 0, acquired: false, cost: talentXpCost(true), open });
                     }
                 }
             }

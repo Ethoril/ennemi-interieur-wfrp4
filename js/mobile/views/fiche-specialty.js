@@ -5,6 +5,7 @@ function make(documentRef, tag, text = '', className = '') {
     return node;
 }
 
+const UNCERTAIN = ['unavailable', 'deadline-exceeded', 'internal', 'unknown'];
 const SPEC_ERRORS = {
     'basic-specialization-invalid': 'Spécialité absente du référentiel publié.',
     'specialization-has-advances': 'La spécialité ne peut plus changer après des avances.',
@@ -104,12 +105,14 @@ export function createSpecialtySection({ documentRef, getContext, onChoose, anno
             if (!context.controller.stagePatch({ [path]: value }).ok) throw new Error('not-editable');
             try {
                 const result = await context.controller.submitPatch();
-                message = result?.status === 'blocked' && result.reason === 'offline'
-                    ? 'Enregistrée sur cet appareil, envoi dès le retour en ligne.' : '';
-                if (!message) announce('Spécialité enregistrée');
+                if (['saved', 'awaiting-snapshot'].includes(result?.status)) announce('Spécialité enregistrée');
+                else if (result?.status === 'blocked' && result.reason === 'offline') {
+                    message = 'Enregistrée sur cet appareil, envoi dès le retour en ligne.';
+                } else message = 'Enregistrement en attente : la fiche est occupée ou a changé. Réessayez dans un instant.';
             } catch (failure) {
-                // Un patch refusé ne doit pas rester en brouillon : on remet la valeur précédente.
-                context.controller.stagePatch({ [path]: previous });
+                // Un patch refusé ne doit pas rester en brouillon : on revient à la valeur du serveur (même quand
+                // aucune spécialité n'existait). Une réponse incertaine garde son opération en attente.
+                if (!UNCERTAIN.includes(String(failure?.code || '').split('/').at(-1))) context.controller.resolveConflict(path, 'server');
                 throw failure;
             }
         } catch (failure) {

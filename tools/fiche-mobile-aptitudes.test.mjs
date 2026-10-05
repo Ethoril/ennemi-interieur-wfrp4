@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { createFicheController } from '../js/fiche-controller.js';
+import { createFicheDraftStore } from '../js/fiche-draft-store.js';
 import { BASIC_SKILLS } from '../js/fiche/basic-skills.js';
 import {
     filterSkills, hasSpells, sortSkills, spellRows, talentRows, talentTaken,
@@ -293,6 +295,7 @@ function specialtySetup({ stageOk = true, submit = async () => ({ status: 'saved
     const announces = [];
     const controller = {
         stagePatch: changes => { staged.push(changes); return { ok: stageOk }; },
+        resolveConflict: (path, choice) => { staged.push([path, choice]); return true; },
         submitPatch: submit,
     };
     const section = createSpecialtySection({
@@ -340,7 +343,7 @@ test('spécialité de base : un envoi refusé remet la valeur précédente', asy
     setup.input().value = 'Calligraphie';
     setup.button('Enregistrer').click();
     await sleep(0);
-    assert.deepEqual(setup.staged, [{ 'basicSpecs.Art': 'Calligraphie' }, { 'basicSpecs.Art': 'Peinture' }]);
+    assert.deepEqual(setup.staged, [{ 'basicSpecs.Art': 'Calligraphie' }, ['basicSpecs.Art', 'server']]);
     assert.match(setup.note(), /après des avances/u);
     assert.deepEqual(setup.announces, []);
 
@@ -415,4 +418,77 @@ test('volet d’achat : description et prises d’un talent, spécialité choisi
     assert.equal(sheet.element.byClass('m-purchase-formula').textContent, 'Intelligence 30 + 0 avances = 30');
     assert.equal(documentRef.activeElement, sheet.element.byClass('m-purchase-title'));
     sheet.destroy();
+});
+
+test('talents : emplacements ouverts listés mais non achetables, masqués si leur groupe est acquis', () => {
+    const talents = ['Sociable', 'Savoir-vivre (au choix)', 'Sens aiguisé (Goût ou Toucher)', 'Artisan (Forgeron, Orfèvre ou Ingénieur)'];
+    const custom = [{ id: 'c1', nom: 'Test', rangs: [{ rang: 1, titre: 'T', statut: '', skills: [], talents }] }];
+    const rows = talentRows(data({ carriere: 'Test' }), engine, custom);
+    assert.deepEqual(rows.map(row => [row.nom, row.open]), [
+        ['Sociable', false], ['Savoir-vivre (au choix)', true], ['Sens aiguisé (Goût ou Toucher)', true],
+        ['Artisan (Forgeron, Orfèvre ou Ingénieur)', true],
+    ]);
+    // Un talent acquis du même groupe (ici une spécialité choisie) retire l'emplacement ouvert, pas les talents fermés.
+    const acquired = talentRows(data({ carriere: 'Test', talentsAcq: [{ id: 't1', nom: 'Savoir-vivre (Guilde)' }, { id: 't2', nom: 'Artisan (Forgeron)' }] }), engine, custom);
+    assert.deepEqual(acquired.filter(row => !row.acquired).map(row => row.nom), ['Sociable', 'Sens aiguisé (Goût ou Toucher)']);
+    assert.deepEqual(acquired.filter(row => row.acquired).map(row => row.open), [false, false]);
+
+    const panel = createAptitudesPanel({ documentRef: fakeDocument(), onOpenTalent: () => { throw new Error('ouverture interdite'); } });
+    panel.update({ data: data({ carriere: 'Test' }), careers: custom, engine });
+    press(panel, 'Talents').click();
+    const rowsOf = pane(panel, 1).allByClass('m-apt-row');
+    assert.deepEqual(rowsOf.map(row => row.disabled), [false, true, true, true]);
+    assert.equal(pane(panel, 1).allByClass('m-apt-detail').filter(node => !node.hidden).map(node => node.textContent)[0], 'Spécialité à choisir sur le bureau');
+});
+
+test('spécialité de base : seuls « saved » et « awaiting-snapshot » annoncent un enregistrement', async () => {
+    for (const status of ['saved', 'awaiting-snapshot']) {
+        const ok = specialtySetup({ submit: async () => ({ status }) });
+        ok.section.update({ specialty: { kind: 'basic', row: 'Art', value: '', options: ['Calligraphie'], locked: false } });
+        ok.input().value = 'Calligraphie';
+        ok.button('Enregistrer').click();
+        await sleep(0);
+        assert.deepEqual(ok.announces, ['Spécialité enregistrée'], status);
+    }
+    for (const result of [{ status: 'blocked', reason: 'conflict' }, { status: 'blocked', reason: 'command-pending' }, { status: 'retry-required' }]) {
+        const waiting = specialtySetup({ submit: async () => result });
+        waiting.section.update({ specialty: { kind: 'basic', row: 'Art', value: '', options: ['Calligraphie'], locked: false } });
+        waiting.input().value = 'Calligraphie';
+        waiting.button('Enregistrer').click();
+        await sleep(0);
+        assert.deepEqual(waiting.announces, [], result.status);
+        assert.match(waiting.note(), /Enregistrement en attente/u);
+    }
+});
+
+test('spécialité de base : un refus serveur sans spécialité préalable ne laisse aucun brouillon (vrai contrôleur)', async () => {
+    const values = new Map();
+    const storage = {
+        get length() { return values.size; }, key: index => [...values.keys()][index] ?? null,
+        getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, String(value)), removeItem: key => values.delete(key),
+    };
+    const listeners = [];
+    const repository = {
+        subscribe(_id, next) { listeners.push(next); return () => {}; },
+        async execute() { throw Object.assign(new Error('refus'), { code: 'failed-precondition', details: { kind: 'specialization-has-advances' } }); },
+    };
+    const controller = createFicheController({ repository, draftStore: createFicheDraftStore({ storage }), isOnline: () => true });
+    controller.setSession({ uid: 'u', charId: 'test', role: 'joueur' });
+    for (const next of listeners) next({ exists: true, envelope: { schemaVersion: 2, revision: 1, tombstone: false, data: data() } });
+    assert.equal(controller.getState().phase, 'ready');
+    const section = createSpecialtySection({
+        documentRef: fakeDocument(), onChoose: () => true,
+        getContext: () => ({ state: controller.getState(), engine, controller }),
+    });
+    section.update({ specialty: { kind: 'basic', row: 'Art', value: '', options: ['Calligraphie'], locked: false } });
+    section.element.all().find(node => node.id === 'm-spec-input').value = 'Calligraphie';
+    section.element.all().find(node => node.textContent === 'Enregistrer').click();
+    await sleep(10);
+    const state = controller.getState();
+    assert.deepEqual(controller.getDraftPaths(), []);
+    assert.equal(state.hasDraft, false);
+    assert.equal(state.data.basicSpecs.Art, undefined);
+    assert.equal(values.size, 0, 'aucun brouillon persistant');
+    assert.match(section.element.all().filter(node => node.className === 'm-spec-note').map(node => node.textContent).join(''), /après des avances/u);
+    controller.close();
 });
