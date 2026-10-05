@@ -2,6 +2,7 @@ import { createSeal } from '../../seal.js';
 import { mountPnjPortrait } from '../components/portrait.js';
 import { selectPnjDetailModel } from '../pnj-detail-model.js';
 import { renderState } from '../ui.js';
+import { mountContentTrashPanel, mountContributionButton } from '../../contributions/editor.js';
 
 const RELATION_ARROWS = Object.freeze({ sortante: '→', entrante: '←', paire: '↔' });
 
@@ -129,7 +130,7 @@ function renderMetadata(documentRef, metadata, model) {
     }
 }
 
-function renderReady({ documentRef, target, model, portrait, portraitSignature, imageService, getSession, onEdit }) {
+function renderReady({ documentRef, target, model, portrait, portraitSignature, imageService, getSession, onEdit, contributionClient, getContributionClient, signInContribution, announce, onContributionSaved }) {
     let refs = target._detail;
     if (!refs) {
         target.replaceChildren();
@@ -160,7 +161,7 @@ function renderReady({ documentRef, target, model, portrait, portraitSignature, 
         metadata.className = 'm-detail-metadata';
         metadata.dataset.detailMetadata = 'true';
         target.append(description.section, relations.section, indices.section, metadata);
-        refs = { hero, portraitTarget, title, extra, marks, context, edit: null, description: description.body,
+        refs = { hero, portraitTarget, title, extra, marks, context, edit: null, contribution: null, trash: null, description: description.body,
             relations: relations.body, indices: indices.body, metadata, signatures: {} };
         target._detail = refs;
     }
@@ -175,6 +176,15 @@ function renderReady({ documentRef, target, model, portrait, portraitSignature, 
     } else if (!canEdit && refs.edit) {
         refs.hero.removeChild(refs.edit);
         refs.edit = null;
+    }
+    if ((contributionClient || getContributionClient) && !refs.contribution) {
+        refs.contribution = mountContributionButton({ container: refs.hero, client: contributionClient,
+            getClient: getContributionClient, signIn: signInContribution, kind: 'pnj', id: model.item.id,
+            documentRef, announce, onSaved: onContributionSaved });
+    }
+    if ((contributionClient || getContributionClient) && !refs.trash) {
+        refs.trash = mountContentTrashPanel({ container: refs.hero, client: contributionClient,
+            getClient: getContributionClient, signIn: signInContribution, documentRef, announce });
     }
     refs.title.textContent = model.name;
     refs.portraitTarget.setAttribute('aria-label', `Portrait de ${model.name}`);
@@ -217,7 +227,7 @@ export { selectPnjDetailModel };
 
 export function createPnjDetailView({ container, id, store, onBack = () => {},
     onRetry = () => store?.restart?.(), getImageService = () => null, getSession = () => null, onEdit = null,
-    announce = () => {} } = {}) {
+    contributionClient = null, getContributionClient = null, signInContribution = null, announce = () => {} } = {}) {
     let mounted = false;
     let screen = null;
     let content = null;
@@ -246,6 +256,8 @@ export function createPnjDetailView({ container, id, store, onBack = () => {},
             portrait?.dispose?.();
             portrait = null;
             portraitSignature = null;
+            content?._detail?.contribution?.dispose?.();
+            content?._detail?.trash?.dispose?.();
             content._detail = null;
             renderState(content, {
                 state: model.kind === 'offline-empty' ? 'offline' : model.kind,
@@ -257,7 +269,8 @@ export function createPnjDetailView({ container, id, store, onBack = () => {},
             return;
         }
         const next = renderReady({ documentRef: container.ownerDocument, target: content,
-            model, portrait, portraitSignature, imageService: getImageService(), getSession, onEdit });
+            model, portrait, portraitSignature, imageService: getImageService(), getSession, onEdit, contributionClient, getContributionClient, signInContribution, announce,
+            onContributionSaved: () => store?.restart?.() });
         portrait = next.portrait;
         portraitSignature = next.portraitSignature;
         if (entryPending) {
@@ -306,6 +319,8 @@ export function createPnjDetailView({ container, id, store, onBack = () => {},
         portrait?.dispose?.();
         portrait = null;
         portraitSignature = null;
+        content?._detail?.contribution?.dispose?.();
+        content?._detail?.trash?.dispose?.();
         backButton?.removeEventListener('click', onBack);
         signalRef?.removeEventListener?.('abort', abortHandler);
         container.replaceChildren();

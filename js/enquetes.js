@@ -4,6 +4,8 @@ import { esc, stripAccents } from './utils.js';
 import { confirmAction } from './ui-confirm.js';
 import { visiblePourJoueurs } from './visibility.js';
 import { createRenderGate, preserveCheckedValues } from './bureau-view-lifecycle.js';
+import { mountContentTrashPanel, mountContributionButton } from './contributions/editor.js';
+import { loadContentEditContext, mutateContentThroughGateway, newContributionOperationId, trashManagedContent, uploadManagedImage } from './contributions/managed-commands.js';
 
 
 
@@ -26,6 +28,18 @@ function showIndiceReadStatus(metadata, error = null) {
     else target.remove();
 }
 
+function announceContribution(message) {
+    let status = document.getElementById('contribution-live-status');
+    if (!status) {
+        status = document.createElement('p');
+        status.id = 'contribution-live-status';
+        status.className = 'pnj-cleanup-status';
+        status.setAttribute('role', 'status');
+        document.getElementById('clues-container')?.before(status);
+    }
+    status.textContent = message;
+}
+
 // ── State ──────────────────────────────────────────────────────
 const state = {
     isAdmin: false,
@@ -35,6 +49,7 @@ const state = {
     filter: 'all', // 'all', 'discovered', 'hidden'
     editingId: null,
     editingUpdatedAt: null,
+    editingContributionContextPromise: null,
 };
 
 let currentLoadId = 0;
@@ -46,11 +61,28 @@ let unsubscribePnjs = null;
 let unsubscribeIndices = null;
 let bureauGeneration = 0;
 const renderedImageHandles = new Map();
+let contributionActions = [];
+let createContributionAction = null;
+const contributionToolbar = document.querySelector('.pnj-admin-actions');
+if (contributionToolbar) createContributionAction = mountContributionButton({ container: contributionToolbar,
+    getClient: () => import('./contributions/firebase-client.js').then(module => module.contributionClient),
+    signIn: loginWithGoogle, kind: 'indice', action: 'create', documentRef: document,
+    announce: announceContribution });
+let contentTrashPanel = null;
+if (contributionToolbar) contentTrashPanel = mountContentTrashPanel({ container: contributionToolbar,
+    getClient: () => import('./contributions/firebase-client.js').then(module => module.contributionClient),
+    signIn: loginWithGoogle, documentRef: document });
 window.addEventListener('pagehide', () => {
     bureauGeneration += 1;
     currentLoadId += 1;
     editorSession += 1;
     closeClueModal();
+    contributionActions.forEach(action => action?.dispose?.());
+    contributionActions = [];
+    createContributionAction?.dispose?.();
+    createContributionAction = null;
+    contentTrashPanel?.dispose?.();
+    contentTrashPanel = null;
     state.pnjs = [];
     state.clues = [];
     renderClues();
@@ -265,6 +297,8 @@ function populatePnjsCheckboxGrid() {
 function renderClues() {
     const container = document.getElementById('clues-container');
     if (!container) return;
+    contributionActions.forEach(action => action?.dispose?.());
+    contributionActions = [];
 
     const searchVal = stripAccents(state.searchQ.toLowerCase());
     const filtered = state.clues.filter(c => {
@@ -342,6 +376,14 @@ function renderClues() {
             openClueModal(btn.dataset.id);
         });
     });
+    for (const clue of filtered.filter(item => item.decouvert === true || state.isAdmin)) {
+        const host = document.getElementById(`clue-card-${CSS.escape(clue.id)}`)?.querySelector('.clue-header');
+        if (!host) continue;
+        contributionActions.push(mountContributionButton({ container: host,
+            getClient: () => import('./contributions/firebase-client.js').then(module => module.contributionClient),
+            signIn: loginWithGoogle, kind: 'indice', id: clue.id, documentRef: document,
+            announce: announceContribution }));
+    }
 }
 
 // ── Highlight clue from URL param ──────────────────────────────
@@ -364,6 +406,7 @@ function openClueModal(clueId = null) {
     editorSession += 1;
     clearLocalPreview();
     state.editingId = clueId;
+    state.editingContributionContextPromise = null;
     state.editingUpdatedAt = null;
     document.getElementById('clue-form').reset();
     document.getElementById('f-image-preview').innerHTML = '';
@@ -378,6 +421,26 @@ function openClueModal(clueId = null) {
     checkboxes.forEach(cb => cb.checked = false);
 
     if (clueId) {
+        const form = document.getElementById('clue-form');
+        const openSession = editorSession;
+        form.inert = true;
+        state.editingContributionContextPromise = import('./contributions/firebase-client.js')
+            .then(module => loadContentEditContext(module.contributionClient, 'indice', clueId))
+            .then(context => {
+                if (!context) throw new Error('Contexte versionné indisponible.');
+                if (openSession !== editorSession || state.editingId !== clueId
+                    || document.getElementById('clue-modal')?.style.display === 'none') return null;
+                const clue = context.data;
+                document.getElementById('f-titre').value = clue.titre || '';
+                document.getElementById('f-description').value = clue.description || '';
+                document.getElementById('f-decouvert').value = String(clue.decouvert === true);
+                const selectedPnjs = new Set(Array.isArray(clue.pnjsLies) ? clue.pnjsLies : []);
+                document.querySelectorAll('#f-pnjs-grid input[name="pnjsLies"]').forEach(input => { input.checked = selectedPnjs.has(input.value); });
+                document.getElementById('f-image-preview').dataset.existingPath = clue.imagePath || '';
+                return context;
+            })
+            .catch(error => { if (openSession === editorSession) announceContribution(error.message); return null; })
+            .finally(() => { if (openSession === editorSession) form.inert = false; });
         const c = state.clues.find(cl => cl.id === clueId);
         if (c) {
             state.editingUpdatedAt = c.updatedAt ?? null;
@@ -413,6 +476,7 @@ function closeClueModal() {
     document.getElementById('f-image').value = '';
     state.editingId = null;
     state.editingUpdatedAt = null;
+    state.editingContributionContextPromise = null;
 }
 
 function clearLocalPreview() {
@@ -457,11 +521,43 @@ document.getElementById('clue-form').addEventListener('submit', async e => {
         if (!stillCurrent()) throw new Error('Édition annulée : la session ou le rôle a changé.');
         const payload = { titre, description, decouvert, pnjsLies };
         if (capturedEditingId && !file && current?.imagePath) payload.imagePath = current.imagePath;
-        const result = capturedEditingId
-            ? await repository.update(capturedEditingId, payload, state.editingUpdatedAt, { imageFile: file })
-            : await repository.create(payload, { id, imageFile: file });
+        if (capturedEditingId) {
+            const client = (await import('./contributions/firebase-client.js')).contributionClient;
+            const context = await state.editingContributionContextPromise;
+            if (!context) throw new Error('Le contexte versionné de l’indice est indisponible. Réouvrez le formulaire.');
+            {
+                const candidates = { titre, description, decouvert, pnjsLies };
+                const changes = {};
+                const baseValues = {};
+                for (const [field, value] of Object.entries(candidates)) {
+                    const before = context.data[field] ?? (field === 'pnjsLies' ? [] : field === 'decouvert' ? false : '');
+                    if (JSON.stringify(value) !== JSON.stringify(before)) { changes[field] = value; baseValues[field] = before; }
+                }
+                if (file) {
+                    const operationId = globalThis.crypto?.randomUUID?.() || `indice_${Date.now().toString(36)}`;
+                    const bytes = new Uint8Array(await file.arrayBuffer());
+                    let binary = '';
+                    for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+                    changes.imagePath = (await client.uploadContributionImage({ kind: 'indice', ownerId: capturedEditingId,
+                        operationId, contentType: file.type, base64: globalThis.btoa(binary) })).imagePath;
+                    baseValues.imagePath = context.data.imagePath ?? null;
+                }
+                if (Object.keys(changes).length) {
+                    await mutateContentThroughGateway(client, context, { kind: 'indice', id: capturedEditingId,
+                        operationId: newContributionOperationId(), baseValues, changes });
+                }
+                if (!stillCurrent()) return;
+                closeClueModal();
+                return;
+            }
+        }
+        if (capturedEditingId) throw new Error('Modification legacy refusée : le contexte versionné est requis.');
+        const client = (await import('./contributions/firebase-client.js')).contributionClient;
+        const operationId = newContributionOperationId();
+        const changes = { titre, description, pnjsLies, decouvert };
+        if (file) changes.imagePath = await uploadManagedImage(client, { kind: 'indice', ownerId: id, file, operationId });
+        await client.mutatePublicContent({ kind: 'indice', action: 'create', id, operationId, baseRevision: 0, changes });
         if (!stillCurrent()) return;
-        void result;
         closeClueModal();
     } catch (error) {
         if (stillCurrent()) alert('Erreur lors de l’enregistrement : ' + (error?.message || 'réessayez.'));
@@ -477,18 +573,20 @@ document.getElementById('clue-delete-btn').addEventListener('click', async () =>
     const capturedSession = editorSession;
     const repository = bureauData?.indices;
     const clue = state.clues.find(item => item.id === capturedEditingId);
+    const client = (await import('./contributions/firebase-client.js')).contributionClient;
+    const context = await loadContentEditContext(client, 'indice', capturedEditingId);
+    if (!context) { alert('Le contexte versionné de l’indice est indisponible. Aucune suppression directe n’est autorisée.'); return; }
     const ok = await confirmAction({
-        titre: "Supprimer l'indice",
-        message: "L'indice « " + (clue?.titre || 'cet indice') + " » sera définitivement supprimé.",
-        libelleAction: 'Supprimer', danger: true,
+        titre: 'Mettre en corbeille',
+        message: `L’indice « ${clue?.titre || 'cet indice'} » sera placé en corbeille et pourra être restauré.`,
+        libelleAction: 'Mettre en corbeille', danger: true,
     });
     if (!ok || capturedSession !== editorSession) return;
     const btn = document.getElementById('clue-delete-btn');
     btn.disabled = true;
     btn.textContent = 'Suppression…';
     try {
-        if (!repository?.remove) throw new Error('Dépôt indices indisponible.');
-        await repository.remove(capturedEditingId);
+        await trashManagedContent(client, context, { kind: 'indice', id: capturedEditingId });
         if (capturedSession === editorSession && repository === bureauData?.indices) closeClueModal();
     } catch (error) {
         if (capturedSession === editorSession) alert('Erreur lors de la suppression : ' + (error?.message || 'réessayez.'));

@@ -54,6 +54,21 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/pnjs/$(id));
     }
 
+    function managedPnj(id) {
+      let metadataId = 'pnj_' + id;
+      return exists(/databases/$(database)/documents/content_metadata/$(metadataId));
+    }
+
+    function managedIndice(id) {
+      let metadataId = 'indice_' + id;
+      return exists(/databases/$(database)/documents/content_metadata/$(metadataId));
+    }
+
+    function managedRelation(id) {
+      let metadataId = 'relation_' + id;
+      return exists(/databases/$(database)/documents/content_metadata/$(metadataId));
+    }
+
     function validOwnedImagePath(path, ownerId, prefix) {
       return validOwnerId(ownerId) && path is string
           && path.split('/').size() == 3
@@ -97,29 +112,12 @@ service cloud.firestore {
         && validTimestamp(data, 'updatedAt');
     }
 
-    function validGroupAt(groups, index) {
-      return groups.size() <= index
-          || validGroupValue(groups[index]);
-    }
-
-    function validGroupValue(group) {
-      return group is string && group != '' && group.size() <= 200;
-    }
-
     function validGroups(data) {
       return !data.keys().hasAny(['groupes'])
           || (data.groupes is list && data.groupes.size() <= 20
-              && validGroupAt(data.groupes, 0) && validGroupAt(data.groupes, 1)
-              && validGroupAt(data.groupes, 2) && validGroupAt(data.groupes, 3)
-              && validGroupAt(data.groupes, 4) && validGroupAt(data.groupes, 5)
-              && validGroupAt(data.groupes, 6) && validGroupAt(data.groupes, 7)
-              && validGroupAt(data.groupes, 8) && validGroupAt(data.groupes, 9)
-              && validGroupAt(data.groupes, 10) && validGroupAt(data.groupes, 11)
-              && validGroupAt(data.groupes, 12) && validGroupAt(data.groupes, 13)
-              && validGroupAt(data.groupes, 14) && validGroupAt(data.groupes, 15)
-              && validGroupAt(data.groupes, 16) && validGroupAt(data.groupes, 17)
-              && validGroupAt(data.groupes, 18) && validGroupAt(data.groupes, 19)
               && data.keys().hasAny(['groupe'])
+              && (data.groupes.size() == 0 || (data.groupes[0] is string
+                  && data.groupes[0] != '' && data.groupes[0].size() <= 200))
               && data.groupe == (data.groupes.size() == 0 ? '' : data.groupes[0]));
     }
 
@@ -299,6 +297,16 @@ service cloud.firestore {
           && getAfter(cibleRef).data.visibleJoueurs == true;
     }
 
+    function publicRelationEndpointsNow(data) {
+      let sourceRef = /databases/$(database)/documents/pnjs/$(data.source);
+      let cibleRef = /databases/$(database)/documents/pnjs/$(data.cible);
+      return exists(sourceRef) && exists(cibleRef)
+          && get(sourceRef).data.visibleJoueurs == true
+          && get(cibleRef).data.visibleJoueurs == true
+          && get(sourceRef).data.get('suppressionEnCours', false) != true
+          && get(cibleRef).data.get('suppressionEnCours', false) != true;
+    }
+
     // exists() avant get() : sur un document absent, get(...).data fait échouer
     // l'évaluation de la règle, ce qui refuse l'accès à TOUT LE MONDE, MJ compris.
     // En repli sur {}, les joueurs sont refusés mais la branche isGM() continue
@@ -308,16 +316,81 @@ service cloud.firestore {
       return exists(ref) ? get(ref).data : {};
     }
 
-    // ── Fiches : le MJ, ou une adresse listée dans campagne/acces ──
-    match /fiches/{charId} {
-      allow read, write: if isGM()
-        || (request.auth != null
-            // .lower() sur l'adresse entrante : Google la renvoie en minuscules,
-            // mais rien ne le garantit. Les valeurs de campagne/acces doivent
-            // donc être saisies en minuscules — le langage de règles ne sait pas
-            // parcourir une liste pour les normaliser.
-            && request.auth.token.email.lower() in acces().get(charId, []));
+    function canReadFiche(charId) {
+      return isGM() || (charId in ['bhelgi', 'caelel', 'elysia', 'hellaya', 'wren']
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && request.auth.token.email is string
+          && request.auth.token.email.lower() in acces().get(charId, []));
     }
+
+    function validPresence(charId, sessionId, data) {
+      return request.auth != null
+          && data.keys().hasOnly(['uid', 'displayName', 'role', 'lastSeenAt'])
+          && data.uid == request.auth.uid
+          && data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128
+          && data.displayName is string && data.displayName.size() <= 100
+          && data.lastSeenAt is timestamp && data.lastSeenAt == request.time
+          && ((isGM() && data.role == 'mj')
+              || (charId in ['bhelgi', 'caelel', 'elysia', 'hellaya', 'wren']
+                  && request.auth.token.email_verified == true
+                  && request.auth.token.email is string
+                  && request.auth.token.email.lower() in acces().get(charId, [])
+                  && data.role == 'joueur'))
+          && sessionId.matches('^[A-Za-z0-9_-]{16,128}$');
+    }
+
+    // ── Fiches V2 : lecture vérifiée, écriture uniquement par callable Admin SDK ──
+    match /fiches/{charId} {
+      allow read: if canReadFiche(charId);
+      allow write: if false;
+      match /history/{operationId} {
+        allow read: if canReadFiche(charId);
+        allow write: if false;
+      }
+      match /operations/{operationId} {
+        allow read: if canReadFiche(charId);
+        allow write: if false;
+      }
+      match /migration_backups/{backupId} {
+        allow read: if isGM();
+        allow write: if false;
+      }
+      match /catalogue_backups/{backupId} {
+        allow read: if isGM();
+        allow write: if false;
+      }
+      match /command_backups/{operationId} {
+        allow read: if isGM();
+        allow write: if false;
+      }
+      match /presence/{sessionId} {
+        allow read: if canReadFiche(charId);
+        allow create: if validPresence(charId, sessionId, request.resource.data);
+        allow update: if resource.data.uid == request.auth.uid
+            && validPresence(charId, sessionId, request.resource.data);
+        allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      }
+    }
+
+    // Métadonnées et reçus ne sont accessibles que par les callables/Admin SDK.
+    match /content_metadata/{id} { allow read, write: if false; }
+    match /content_history/{contentKey}/events/{eventId} { allow read, write: if false; }
+    match /content_operations/{operationId} { allow read, write: if false; }
+    match /content_trash/{trashId} { allow read, write: if false; }
+    match /content_trash_archive/{archiveId} { allow read, write: if false; }
+    match /content_image_reservations/{reservationId} { allow read, write: if false; }
+
+    // Seul le snapshot filtré publié par le service catalogue est lisible côté client.
+    // Brouillons, prévisualisations persistées, opérations et décisions restent privés MJ/serveur.
+    match /referentiels/public {
+      allow get: if true;
+      allow list, write: if false;
+    }
+    match /referentiels/{document=**} { allow read, write: if false; }
+    match /referentiel_drafts/{document} { allow read, write: if false; }
+    match /referentiel_history/{operationId} { allow read, write: if false; }
+    match /referentiel_operations/{operationId} { allow read, write: if false; }
 
     // ── Table d'accès : contient les adresses des joueurs, donc des données
     //    personnelles. Lecture réservée au MJ, jamais exposée au navigateur.
@@ -334,7 +407,7 @@ service cloud.firestore {
     // ── PNJs et relations : lecture publique explicitement filtrée, édition MJ ──
     match /pnjs/{id} {
       allow read: if isGM() || resource.data.visibleJoueurs == true;
-      allow create: if isGM() && validPnj(request.resource.data)
+      allow create: if !managedPnj(id) && isGM() && validPnj(request.resource.data)
           && validImagePath(request.resource.data, id, 'portraits')
           && !deletionLockActive()
           && !imageLockActive('pnjs', id)
@@ -343,7 +416,7 @@ service cloud.firestore {
           && !request.resource.data.keys().hasAny(['imageUrl'])
           && hasWriteTimestamps(request.resource.data)
           && serverCreatedAndUpdated(request.resource.data);
-      allow update: if isGM() && !resource.data.get('suppressionEnCours', false)
+      allow update: if !managedPnj(id) && isGM() && !resource.data.get('suppressionEnCours', false)
           && validPnj(request.resource.data)
           && validImagePath(request.resource.data, id, 'portraits')
           && validDeletionMarker(request.resource.data)
@@ -365,7 +438,7 @@ service cloud.firestore {
             || (request.resource.data.get('suppressionEnCours', false) != true
               && !deletionLockActive())
           );
-      allow delete: if isGM()
+      allow delete: if !managedPnj(id) && isGM()
           && resource.data.get('suppressionEnCours', false) == true
           && deletionLockActive()
           && get(deletionLockRef()).data.get('pnjId', '') == id;
@@ -407,15 +480,15 @@ service cloud.firestore {
     match /relations/{id} {
       // Les règles ne peuvent pas prouver une jointure PNJ pour chaque document d'une liste.
       // L'invariant est donc imposé aux écritures et contrôlé par le préflight avant activation.
-      allow read: if isGM() || resource.data.visibleJoueurs == true;
-      allow create: if isGM() && validRelation(request.resource.data)
+      allow read: if isGM() || (resource.data.visibleJoueurs == true && publicRelationEndpointsNow(resource.data));
+      allow create: if !managedRelation(id) && isGM() && validRelation(request.resource.data)
           && hasWriteTimestamps(request.resource.data)
           && serverCreatedAndUpdated(request.resource.data)
           && relationEndpointsExist(request.resource.data)
           && (request.resource.data.visibleJoueurs != true
               || publicRelationEndpointsExist(request.resource.data));
       allow update: if (
-          isGM() && validRelation(request.resource.data)
+          !managedRelation(id) && isGM() && validRelation(request.resource.data)
           && validUpdate(resource.data, request.resource.data,
               ['source', 'cible', 'type', 'label', 'color', 'style', 'visibleJoueurs',
                'curvature', 'createdAt', 'updatedAt'])
@@ -432,7 +505,7 @@ service cloud.firestore {
           && hasUpdatedTimestamp(request.resource.data)
           && serverUpdated(request.resource.data)
           && publicRelationEndpointsExist(request.resource.data));
-      allow delete: if isGM();
+      allow delete: if isGM() && !managedRelation(id);
     }
 
     // ── Notes privées : aucune lecture ou écriture hors MJ vérifié ──
@@ -456,14 +529,14 @@ service cloud.firestore {
     // `where('decouvert', '==', true)` pour les utilisateurs non-MJ.
     match /indices/{id} {
       allow read:  if isGM() || resource.data.decouvert == true;
-      allow create: if isGM() && validIndice(request.resource.data)
+      allow create: if !managedIndice(id) && isGM() && validIndice(request.resource.data)
           && validImagePath(request.resource.data, id, 'indices')
           && !deletionLockActive()
           && !imageLockActive('indices', id)
           && !request.resource.data.keys().hasAny(['imageUrl'])
           && hasWriteTimestamps(request.resource.data)
           && serverCreatedAndUpdated(request.resource.data);
-      allow update: if isGM() && validIndice(request.resource.data)
+      allow update: if !managedIndice(id) && isGM() && validIndice(request.resource.data)
           && validImagePath(request.resource.data, id, 'indices')
           && (!deletionLockActive() || cascadeIndiceUpdate(resource.data, request.resource.data))
           && validUpdate(resource.data, request.resource.data,
@@ -475,7 +548,7 @@ service cloud.firestore {
           && serverUpdated(request.resource.data)
           && (!changesImage(resource.data, request.resource.data)
               || !imageLockActive('indices', id));
-      allow delete: if isGM();
+      allow delete: if !managedIndice(id) && isGM();
     }
 
     // ── Sondage : le vote reste anonyme, par choix de conception.

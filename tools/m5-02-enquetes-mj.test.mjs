@@ -357,7 +357,7 @@ test('un enregistrement MJ tardif après perte de session ne navigue pas', async
     const view = createEnqueteEditView({
         container,
         getSession: () => session,
-        getRepository: () => ({ create: async () => { calls += 1; return pending.promise; } }),
+        getContributionClient: () => ({ mutatePublicContent: async payload => { calls += 1; assert.equal(payload.kind, 'indice'); assert.equal(payload.action, 'create'); return pending.promise; } }),
         getPnjRepository: () => ({ subscribeAll: callback => { callback([]); return () => {}; } }),
         draftStore: createEnquetesDraftStore({ storage: memoryStorage(), now: () => 1000 }),
         onNavigate: () => { navigations += 1; },
@@ -368,11 +368,11 @@ test('un enregistrement MJ tardif après perte de session ne navigue pas', async
     titre.value = 'Titre';
     description.value = 'Description';
     container.querySelectorAll('form')[0].dispatch('submit');
-    await Promise.resolve();
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(calls, 1);
     session = { status: 'visitor', role: 'joueur', user: { uid: 'joueur-1' } };
     pending.resolve({ id: 'late' });
-    await Promise.resolve();
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(navigations, 0);
     view.unmount();
 });
@@ -393,7 +393,7 @@ test('un enregistrement hors ligne persiste le brouillon sans appeler le dépôt
     container.querySelectorAll('#m-enquete-titre')[0].value = 'Titre';
     container.querySelectorAll('#m-enquete-description')[0].value = 'Description';
     container.querySelectorAll('form')[0].dispatch('submit');
-    await Promise.resolve();
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(calls, 0);
     assert.equal(storage.length, 1);
     view.unmount();
@@ -418,23 +418,30 @@ test('le démontage flush le brouillon différé et conserve le draftId adopté'
     assert.match(drafts.list()[0].draftId, /^draft:/u);
 });
 
-test('la suppression commitée avec cleanup image reprend via le dépôt et navigue après succès', async () => {
+test('la suppression passe uniquement par trash avec revision et navigue après confirmation', async () => {
     const documentRef = fakeDocument();
     const container = new FakeElement(documentRef, 'main');
     let resumeCalls = 0;
+    let legacyRemoveCalls = 0;
+    let trashPayload;
     let navigations = 0;
     const announcements = [];
     const view = createEnqueteEditView({
         container,
         id: 'gone',
         getSession: () => ({ status: 'gm', role: 'mj', user: { uid: 'mj-1' } }),
+        getContributionClient: () => ({
+            getContentEditContext: async () => ({ canEdit: true, revision: 12, data: { id: 'gone', titre: 'À supprimer', description: 'Texte', decouvert: false, pnjsLies: [] } }),
+            trashPublicContent: async payload => { trashPayload = payload; return { deleted: true }; },
+        }),
         getRepository: () => ({
             subscribeOne(_id, callback) {
                 callback({ id: 'gone', titre: 'À supprimer', description: 'Texte', decouvert: false, pnjsLies: [] });
                 return () => {};
             },
-            remove: async () => ({ firestoreDone: true, imageCleanupPending: true,
-                legacyImageSkipped: true, skippedImagePathInvalid: true, skippedImagePathReason: 'external-reference' }),
+            remove: async () => { legacyRemoveCalls += 1; return { firestoreDone: true, imageCleanupPending: true,
+                legacyImageSkipped: true, skippedImagePathInvalid: true, skippedImagePathReason: 'external-reference' };
+            },
             resumeRemoval: async () => { resumeCalls += 1; },
         }),
         onNavigate: () => { navigations += 1; },
@@ -442,42 +449,52 @@ test('la suppression commitée avec cleanup image reprend via le dépôt et navi
     });
     view.mount();
     container.querySelectorAll('button').find(button => button.textContent === 'Supprimer cet indice').dispatch('click');
-    await Promise.resolve();
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     const recover = container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage');
-    assert.ok(recover);
-    recover.dispatch('click');
-    await Promise.resolve();
-    assert.equal(resumeCalls, 1);
+    assert.equal(recover.hidden, true);
+    assert.equal(resumeCalls, 0);
+    assert.equal(legacyRemoveCalls, 0);
     assert.equal(navigations, 1);
-    assert.match(announcements.at(-1), /référence image externe.*conservée/u);
-    assert.doesNotMatch(announcements.at(-1), /indices\//u);
+    assert.equal(trashPayload.kind, 'indice');
+    assert.equal(trashPayload.id, 'gone');
+    assert.equal(trashPayload.baseRevision, 12);
+    assert.match(announcements.at(-1), /placé en corbeille/u);
     view.unmount();
 });
 
-test('une suppression sans cleanup signale une référence image héritée sans exposer son chemin', async () => {
+test('un échec de trash conserve la fiche sans exposer de chemin de stockage', async () => {
     const documentRef = fakeDocument();
     const container = new FakeElement(documentRef, 'main');
     const announcements = [];
+    let navigations = 0;
+    let legacyRemoveCalls = 0;
     const view = createEnqueteEditView({
         container,
         id: 'legacy-delete',
         getSession: () => ({ status: 'gm', role: 'mj', user: { uid: 'mj-1' } }),
+        getContributionClient: () => ({
+            getContentEditContext: async () => ({ canEdit: true, revision: 4, data: { id: 'legacy-delete', titre: 'Ancienne', description: 'Texte', decouvert: false, pnjsLies: [] } }),
+            trashPublicContent: async () => { throw Object.assign(new Error('secret.invalid/token'), { code: 'unavailable' }); },
+        }),
         getRepository: () => ({
             subscribeOne(_id, callback) {
                 callback({ id: 'legacy-delete', titre: 'Ancienne', description: 'Texte', decouvert: false, pnjsLies: [] });
                 return () => {};
             },
-            remove: async () => ({ firestoreDone: true, imageCleanupPending: false,
-                legacyImageSkipped: true, legacyImageInvalid: true }),
+            remove: async () => { legacyRemoveCalls += 1; return { firestoreDone: true, imageCleanupPending: false,
+                legacyImageSkipped: true, legacyImageInvalid: true }; },
         }),
-        onNavigate: () => {},
+        onNavigate: () => { navigations += 1; },
         announce: message => announcements.push(message),
     });
     view.mount();
     container.querySelectorAll('button').find(button => button.textContent === 'Supprimer cet indice').dispatch('click');
-    await Promise.resolve();
-    assert.match(announcements.at(-1), /référence image héritée invalide.*conservée/u);
-    assert.doesNotMatch(announcements.at(-1), /secret\.invalid|token/u);
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(announcements.length, 0);
+    assert.match(container.querySelectorAll('.m-form-status')[0].textContent, /n’a pas pu être enregistré|Connexion indisponible/u);
+    assert.equal(navigations, 0);
+    assert.equal(legacyRemoveCalls, 0);
+    assert.doesNotMatch(container.querySelectorAll('.m-form-status')[0].textContent, /secret\.invalid|token/u);
     view.unmount();
 });
 
@@ -602,20 +619,24 @@ test('recover conserve le CTA pour busy, retry-pending ou résultat absent', asy
             callback({ id: 'retry-image', titre: 'Titre', description: 'Texte', decouvert: false, pnjsLies: [] });
             return () => {};
         },
-        update: async () => { throw Object.assign(new Error('incertain'), { state: { commitUnknown: true, indiceId: 'retry-image' } }); },
     };
     const view = createEnqueteEditView({
         container,
         id: 'retry-image',
         getSession: () => ({ status: 'gm', role: 'mj', user: { uid: 'mj-1' } }),
         getRepository: () => repository,
+        getContributionClient: () => ({
+            getContentEditContext: async () => ({ canEdit: true, revision: 3, data: { titre: 'Titre', description: 'Texte', decouvert: false, ordre: null, pnjsLies: [] } }),
+            mutateMjContent: async () => { throw Object.assign(new Error('incertain'), { state: { commitUnknown: true, indiceId: 'retry-image' } }); },
+        }),
         getImageService: () => ({ recover: async () => [
             { status: 'busy' }, undefined, { status: 'completed' },
         ][recoveryCalls++] }),
     });
     view.mount();
+    container.querySelectorAll('#m-enquete-titre')[0].value = 'Titre modifié';
     container.querySelectorAll('form')[0].dispatch('submit');
-    await Promise.resolve();
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     const recover = container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage');
     recover.dispatch('click');
     await Promise.resolve();
@@ -645,7 +666,6 @@ test('inspect commit confirmé purge le brouillon mais garde le CTA si cleanup i
             callback({ id: 'inspect-image', titre: 'Titre', description: 'Texte', decouvert: false, pnjsLies: [] });
             return () => {};
         },
-        update: async () => { throw Object.assign(new Error('incertain'), { state: { commitUnknown: true, indiceId: 'inspect-image' } }); },
         inspectCommit: async () => ({ status: 'committed' }),
     };
     const view = createEnqueteEditView({
@@ -653,12 +673,17 @@ test('inspect commit confirmé purge le brouillon mais garde le CTA si cleanup i
         id: 'inspect-image',
         getSession: () => ({ status: 'gm', role: 'mj', user: { uid: 'mj-1' } }),
         getRepository: () => repository,
+        getContributionClient: () => ({
+            getContentEditContext: async () => ({ canEdit: true, revision: 6, data: { titre: 'Titre', description: 'Texte', decouvert: false, ordre: null, pnjsLies: [] } }),
+            mutateMjContent: async () => { throw Object.assign(new Error('incertain'), { state: { commitUnknown: true, indiceId: 'inspect-image' } }); },
+        }),
         getImageService: () => ({ recover: async () => ({ status: 'retry-pending' }) }),
         draftStore: drafts,
     });
     view.mount();
+    container.querySelectorAll('#m-enquete-titre')[0].value = 'Titre modifié';
     container.querySelectorAll('form')[0].dispatch('submit');
-    await Promise.resolve();
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     const recover = container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage');
     recover.dispatch('click');
     await Promise.resolve();

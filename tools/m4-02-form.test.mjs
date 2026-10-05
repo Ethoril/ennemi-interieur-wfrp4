@@ -158,9 +158,10 @@ function fakeDocument(confirm = () => true) {
 
 function gmState(uid = 'gm') { return { status: 'gm', role: 'mj', user: { uid } }; }
 function fakeRepository({ id = 'a', skipInitial = false, publicItem = { id: 'a', nom: 'Ada', statut: '', vivant: 'inconnu', lieu: '', groupe: '', description: '', visibleJoueurs: true, updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] }, privateItem = { id: 'a', notes: 'secret', updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] }, throwPrivate = null, removalLock = null } = {}) {
-    const publicCallbacks = []; const privateCallbacks = []; const calls = { create: 0, update: 0, forceUpdate: 0, remove: 0, resume: 0 };
+    const publicCallbacks = []; const privateCallbacks = []; const calls = { create: 0, update: 0, forceUpdate: 0, remove: 0, resume: 0, privateUpdate: 0, mutate: [], trash: [], imageUploads: [] };
     const deferred = {};
     const repository = {
+        reserveId: () => id,
         subscribeOne: (_id, next, error) => { publicCallbacks.push({ next, error }); if (!skipInitial && publicItem !== undefined) next(publicItem); return () => {}; },
         subscribePrivate: (_id, next, error) => { privateCallbacks.push({ next, error }); if (throwPrivate) throw throwPrivate; if (!skipInitial && privateItem !== undefined) next(privateItem); return () => {}; },
         create: async (...args) => { calls.create += 1; calls.createArgs = args; deferred.create?.(args); return { id }; },
@@ -171,15 +172,32 @@ function fakeRepository({ id = 'a', skipInitial = false, publicItem = { id: 'a',
         inspectVisibilityImpact: async () => ({ id, visibleRelationsCount: 1, incompatibleVisibleRelationsCount: 1 }),
         remove: async (...args) => { calls.remove += 1; deferred.remove?.(args); return { firestoreDone: true, imageCleanupPending: false, lockRetained: false }; },
         resumeRemoval: async (...args) => { calls.resume += 1; deferred.resume?.(args); return { firestoreDone: true, imageCleanupPending: false, lockRetained: false }; },
+        updatePrivateOnly: async (...args) => { calls.privateUpdate += 1; calls.privateUpdateArgs = args; },
     };
-    return { repository, publicCallbacks, privateCallbacks, calls, deferred };
+    const contributionClient = {
+        getContentEditContext: async () => ({ canEdit: true, revision: 1, data: publicItem }),
+        mutatePublicContent: async payload => {
+            calls.create += 1; calls.createArgs = [payload.changes, {}, { id: payload.id }]; calls.mutate.push(payload);
+            await deferred.create?.(payload); return { id: payload.id };
+        },
+        mutateMjContent: async payload => {
+            calls.update += 1; calls.updateArgs = [payload.id, payload.changes, { baseRevision: payload.baseRevision, baseValues: payload.baseValues }]; calls.mutate.push(payload);
+            await deferred.update?.(payload); return { id: payload.id };
+        },
+        trashPublicContent: async payload => { calls.remove += 1; calls.trash.push(payload); deferred.remove?.(payload); return { id: payload.id }; },
+        uploadContributionImage: async upload => {
+            calls.imageUploads.push(upload);
+            return { imagePath: `${upload.kind === 'portrait' ? 'portraits' : 'indices'}/${upload.ownerId}/${upload.operationId}.webp` };
+        },
+    };
+    return { repository, contributionClient, publicCallbacks, privateCallbacks, calls, deferred };
 }
 
 async function mountedForm(options = {}) {
     const documentRef = fakeDocument(options.confirm || (() => true)); const container = new Element(documentRef, 'main');
     const fake = fakeRepository({ ...options, id: options.id === null ? 'a' : options.id, skipInitial: options.id === null || options.skipInitial === true }); const navigated = []; const announced = []; const events = [];
-    const back = []; const view = createPnjEditView({ container, id: options.id === null ? null : 'a', repository: fake.repository, getImageService: options.getImageService, portraitProcessor: options.portraitProcessor, draftStore: options.draftStore, isOnline: options.isOnline, getSession: () => gmState(), onNavigate: value => { navigated.push(value); events.push(['navigate', value]); }, onBack: () => back.push(true), announce: value => { announced.push(value); events.push(['announce', value]); } });
-    view.mount(); await Promise.resolve();
+    const back = []; const view = createPnjEditView({ container, id: options.id === null ? null : 'a', repository: fake.repository, getContributionClient: () => fake.contributionClient, getImageService: options.getImageService, portraitProcessor: options.portraitProcessor, draftStore: options.draftStore, isOnline: options.isOnline, getSession: () => gmState(), onNavigate: value => { navigated.push(value); events.push(['navigate', value]); }, onBack: () => back.push(true), announce: value => { announced.push(value); events.push(['announce', value]); } });
+    view.mount(); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     return { documentRef, container, fake, navigated, announced, events, back, view };
 }
 
@@ -195,11 +213,11 @@ test('le formulaire initialisé sépare le payload public et privé', async () =
     const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined });
     const fields = Object.fromEntries(mounted.container.querySelectorAll('[data-field]').map(control => [control.dataset.field, control]));
     fields.nom.value = 'Nouveau'; fields.description.value = 'public'; fields.notes.value = 'secret'; fields.visibleJoueurs.checked = true;
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(mounted.fake.calls.create, 1);
     assert.equal(mounted.navigated[0], '#/pnjs/a');
     assert.equal(mounted.fake.calls.createArgs[0].notes, undefined);
-    assert.equal(mounted.fake.calls.createArgs[1].notes, 'secret');
+    assert.equal(mounted.fake.calls.privateUpdateArgs[1].notes, 'secret');
 });
 
 test('le picker mobile enregistre le tableau de groupes et garde le premier groupe legacy', async () => {
@@ -208,7 +226,7 @@ test('le picker mobile enregistre le tableau de groupes et garde le premier grou
     const input = mounted.container.querySelectorAll('#m-pnj-groupe')[0];
     input.value = 'Garde'; input.dispatch('keydown', { key: 'Enter' });
     input.value = 'Compagnie'; input.dispatch('keydown', { key: 'Enter' });
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve(); await Promise.resolve();
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0)); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     const publicInput = mounted.fake.calls.createArgs[0];
     assert.deepEqual(publicInput.groupes, ['Garde', 'Compagnie']);
     assert.equal(publicInput.groupe, 'Garde');
@@ -220,7 +238,7 @@ test('un ancien brouillon sans groupes remplace le groupe serveur lors de la res
     const chips = mounted.container.querySelectorAll('.pnj-group-chips')[0].textContent;
     assert.match(chips, /Local ancien/u);
     assert.doesNotMatch(chips, /Serveur/u);
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve(); await Promise.resolve();
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0)); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(mounted.fake.calls.updateArgs[1].groupes, ['Local ancien']);
     mounted.view.unmount();
 });
@@ -236,36 +254,87 @@ test('le conflit garde les groupes saisis puis Recharge met à jour les chips de
     assert.match(chips, /Garde/u); assert.match(chips, /Serveur/u); assert.doesNotMatch(chips, /Local/u);
 });
 
-test('une révélation de relations en échec est signalée sans faire échouer la sauvegarde', async () => {
+test('le formulaire crée par callable et enregistre les notes dans le dépôt privé séparé', async () => {
+    const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined });
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Nouveau';
+    mounted.container.querySelectorAll('#m-pnj-description')[0].value = 'Public';
+    mounted.container.querySelectorAll('#m-pnj-notes')[0].value = 'Secret MJ';
+    mounted.container.querySelectorAll('form')[0].dispatch('submit');
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    const create = mounted.fake.calls.mutate[0];
+    assert.equal(create.action, 'create'); assert.equal(create.kind, 'pnj');
+    assert.equal(create.changes.nom, 'Nouveau'); assert.equal(create.changes.description, 'Public');
+    assert.equal(Object.hasOwn(create.changes, 'notes'), false);
+    assert.equal(mounted.fake.calls.privateUpdateArgs[0], create.id);
+    assert.equal(mounted.fake.calls.privateUpdateArgs[1].notes, 'Secret MJ');
+    assert.deepEqual(mounted.navigated, [`#/pnjs/${create.id}`]);
+});
+
+test('un portrait de création est uploadé au callable avec le même ID que la mutation publique', async () => {
+    const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined,
+        portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+    mounted.fake.repository.reserveId = () => 'reserved-portrait';
+    const fileInput = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
+    fileInput.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })];
+    fileInput.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Portrait';
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(mounted.fake.calls.imageUploads[0].ownerId, 'reserved-portrait');
+    assert.equal(mounted.fake.calls.mutate[0].id, 'reserved-portrait');
+    assert.equal(mounted.fake.calls.mutate[0].changes.imagePath, 'portraits/reserved-portrait/' + mounted.fake.calls.imageUploads[0].operationId + '.webp');
+});
+
+test('une édition soumet seulement le diff du formulaire avec la révision capturée à son ouverture', async () => {
+    const mounted = await mountedForm({ publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'inconnu', lieu: '', groupe: '', groupes: [], description: '', visibleJoueurs: true, updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] } });
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Ada II';
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].dispatch('input');
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    const mutation = mounted.fake.calls.mutate[0];
+    assert.equal(mutation.baseRevision, 1);
+    assert.deepEqual(mutation.baseValues, { nom: 'Ada' });
+    assert.deepEqual(mutation.changes, { nom: 'Ada II' });
+    assert.equal(mounted.fake.calls.remove, 0);
+});
+
+test('la suppression utilise la révision capturée et place le PNJ en corbeille', async () => {
     const mounted = await mountedForm();
-    mounted.fake.repository.update = async () => ({ id: 'a', relationsRevealPending: true });
+    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.deepEqual(mounted.fake.calls.trash, [{ kind: 'pnj', id: 'a', operationId: mounted.fake.calls.trash[0].operationId, baseRevision: 1 }]);
+    assert.equal(mounted.fake.calls.remove, 1);
+    assert.equal(mounted.fake.calls.resume, 0);
+    assert.deepEqual(mounted.navigated, ['#/pnjs']);
+});
+
+test('une édition publie le changement par callable et ne relit pas les relations au client', async () => {
+    const mounted = await mountedForm();
     mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Ada bis';
     mounted.container.querySelectorAll('form')[0].dispatch('submit');
     await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(mounted.navigated.at(-1), '#/pnjs/a');
-    assert.match(mounted.announced.at(-1), /^PNJ enregistré\. Certaines relations n’ont pas pu être rendues visibles/u);
+    assert.equal(mounted.fake.calls.mutate[0].kind, 'pnj');
+    assert.equal(mounted.fake.calls.mutate[0].changes.nom, 'Ada bis');
+    assert.match(mounted.announced.at(-1), /passerelle versionnée/u);
 });
 
 test('une sauvegarde navigue avant son annonce durable', async () => {
     const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined });
     mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Ordre';
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
-    assert.deepEqual(mounted.events.slice(-2), [['navigate', '#/pnjs/a'], ['announce', 'PNJ enregistré.']]);
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.deepEqual(mounted.events.slice(-2), [['navigate', '#/pnjs/a'], ['announce', 'PNJ créé par la passerelle versionnée.']]);
 });
 
 test('création avec portrait utilise le même ID réservé pour upload et create', async () => {
-    const imageCalls = []; const imageService = {
-        replace: async (_oldPath, ownerId, file, options) => { imageCalls.push(['upload', ownerId, file]); return { ...(await options.commit(`portraits/${ownerId}/portrait.webp`)), imagePath: `portraits/${ownerId}/portrait.webp` }; },
-    };
-    const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined, getImageService: () => imageService,
+    const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined,
         portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
     mounted.fake.repository.reserveId = () => 'reserved-portrait';
     const fileInput = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
     assert.ok(fileInput, 'file input');
     fileInput.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; fileInput.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Portrait'; mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.equal(imageCalls[0][1], 'reserved-portrait'); assert.equal(mounted.fake.calls.createArgs[0].imagePath, 'portraits/reserved-portrait/portrait.webp');
-    assert.deepEqual(mounted.fake.calls.createArgs[2], { id: 'reserved-portrait' }); assert.deepEqual(mounted.navigated, ['#/pnjs/reserved-portrait']);
+    assert.equal(mounted.fake.calls.imageUploads[0].ownerId, 'reserved-portrait');
+    assert.equal(mounted.fake.calls.mutate[0].changes.imagePath, `portraits/reserved-portrait/${mounted.fake.calls.imageUploads[0].operationId}.webp`);
+    assert.equal(mounted.fake.calls.mutate[0].id, 'reserved-portrait'); assert.deepEqual(mounted.navigated, ['#/pnjs/reserved-portrait']);
 });
 
 test('un remplacement modern+legacy transmet le signal booléen sans URL brute', async () => {
@@ -277,101 +346,81 @@ test('un remplacement modern+legacy transmet le signal booléen sans URL brute',
     const input = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
     input.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; input.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.equal(mounted.fake.calls.updateArgs[5].clearLegacyImageUrl, true); assert.match(mounted.announced.at(-1), /ancien portrait/u); assert.doesNotMatch(mounted.container.textContent + mounted.announced.join(''), /legacy\.example|token=secret/u);
+    assert.match(mounted.fake.calls.mutate[0].changes.imagePath, /^portraits\/a\//u);
+    assert.doesNotMatch(JSON.stringify(mounted.fake.calls.mutate) + mounted.container.textContent + mounted.announced.join(''), /legacy\.example|token=secret/u);
 });
 
-test('journal image en panne avant commit bloque la création et reprend sans écriture', async () => {
-    const cleaned = []; const imageService = {
-        replace: async () => { throw Object.assign(new Error('journal-pending'), { state: { uploadedPath: 'portraits/reserved-journal/new.webp', journalPending: true, commitNotStarted: true } }); },
-        cleanupImage: async path => { cleaned.push(path); }, ackUpload: () => true,
-    };
-    const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined, getImageService: () => imageService,
+test('échec du callable image bloque la création sans exposer de chemin', async () => {
+    const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined,
         portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+    mounted.fake.contributionClient.uploadContributionImage = async () => { throw Object.assign(new Error('network-detail'), { code: 'functions/unavailable' }); };
     mounted.fake.repository.reserveId = () => 'reserved-journal'; const input = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
     input.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; input.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Journal'; mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.equal(mounted.fake.calls.create, 0); assert.equal(mounted.fake.calls.update, 0);
-    const recover = mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage du portrait');
-    assert.equal(recover.hidden, false); assert.doesNotMatch(mounted.container.textContent, /reserved-journal|new\.webp/u);
-    recover.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.deepEqual(cleaned, ['portraits/reserved-journal/new.webp']); assert.deepEqual(mounted.navigated, []);
+    assert.equal(mounted.fake.calls.create, 0); assert.equal(mounted.fake.calls.mutate.length, 0);
+    assert.doesNotMatch(mounted.container.textContent, /network-detail|reserved-journal|new\.webp/u);
+    assert.deepEqual(mounted.navigated, []);
 });
 
-test('journal image en panne avant commit bloque aussi update et conserve la fiche', async () => {
-    const cleaned = []; const imageService = {
-        replace: async () => { throw Object.assign(new Error('journal-pending'), { state: { uploadedPath: 'portraits/a/new.webp', journalPending: true, commitNotStarted: true } }); },
-        cleanupImage: async path => { cleaned.push(path); }, ackUpload: () => true,
-    };
-    const mounted = await mountedForm({ getImageService: () => imageService, portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+test('échec du callable image bloque une édition sans mutation publique', async () => {
+    const mounted = await mountedForm({ portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+    mounted.fake.contributionClient.uploadContributionImage = async () => { throw Object.assign(new Error('network-detail'), { code: 'functions/unavailable' }); };
     const input = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
     input.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; input.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.equal(mounted.fake.calls.update, 0); const recover = mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage du portrait');
-    assert.equal(recover.hidden, false); recover.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.deepEqual(cleaned, ['portraits/a/new.webp']); assert.deepEqual(mounted.navigated, []);
+    assert.equal(mounted.fake.calls.update, 0); assert.equal(mounted.fake.calls.mutate.length, 0);
+    assert.doesNotMatch(mounted.container.textContent, /network-detail|portraits\/a\/new/u); assert.deepEqual(mounted.navigated, []);
 });
 
 test('un upload portrait devenu obsolète avant commit ne lance aucune écriture', async () => {
-    let commit; let resolveUpload; const imageService = { replace: async (_old, _owner, _file, options) => { commit = options.commit; await new Promise(resolve => { resolveUpload = resolve; }); return { imagePath: 'portraits/a/p.webp' }; } };
-    const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined, getImageService: () => imageService,
+    let resolveUpload;
+    const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined,
         portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+    mounted.fake.contributionClient.uploadContributionImage = () => new Promise(resolve => { resolveUpload = resolve; });
     mounted.fake.repository.reserveId = () => 'pending-portrait'; const input = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
     input.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; input.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Pending'; mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    mounted.view.unmount(); assert.throws(() => commit('portraits/pending-portrait/p.webp'), /save-cancelled/u); resolveUpload?.(); await Promise.resolve();
-    assert.equal(mounted.fake.calls.create, 0); assert.equal(mounted.fake.calls.update, 0);
+    assert.equal(typeof resolveUpload, 'function');
+    mounted.view.unmount(); resolveUpload({ imagePath: 'portraits/pending-portrait/operation.webp' }); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(mounted.fake.calls.create, 0); assert.equal(mounted.fake.calls.update, 0); assert.equal(mounted.fake.calls.mutate.length, 0);
 });
 
-test('reprise d un remplacement confirmé nettoie l ancien chemin avant reload', async () => {
-    const cleaned = []; const acked = []; const imageService = {
-        replace: async () => { throw Object.assign(new Error('cleanup-pending'), { state: { commitDone: true, cleanupPending: true, oldPath: 'portraits/a/old.webp', newPath: 'portraits/a/new.webp' } }); },
-        cleanupImage: async path => { cleaned.push(path); },
-        ackUpload: path => { acked.push(path); },
-    };
-    const mounted = await mountedForm({ publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'oui', lieu: '', groupe: '', description: '', visibleJoueurs: true, imagePath: 'portraits/a/old.webp', updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] }, getImageService: () => imageService,
+test('remplacement de portrait transmet le chemin callable et nettoie ensuite l’ancien portrait', async () => {
+    const removed = []; const imageService = { remove: async path => { removed.push(path); } };
+    const mounted = await mountedForm({ publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'oui', lieu: '', groupe: '', groupes: [], description: '', visibleJoueurs: true, imagePath: 'portraits/a/old.webp', updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] }, getImageService: () => imageService,
         portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
-    mounted.fake.repository.inspectPortraitCommit = async () => ({ status: 'committed' });
     const input = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
     input.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; input.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    const recover = mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage du portrait');
-    assert.equal(recover.hidden, false); recover.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.deepEqual(cleaned, ['portraits/a/old.webp']); assert.deepEqual(acked, ['portraits/a/old.webp', 'portraits/a/new.webp']); assert.deepEqual(mounted.navigated, ['#/pnjs/a']);
+    assert.match(mounted.fake.calls.mutate[0].changes.imagePath, /^portraits\/a\//u);
+    assert.deepEqual(removed, ['portraits/a/old.webp']); assert.deepEqual(mounted.navigated, ['#/pnjs/a']);
 });
 
-test('reprise rejetée nettoie le nouveau chemin et conserve le brouillon', async () => {
-    const cleaned = []; const acked = []; const imageService = {
-        replace: async () => { throw Object.assign(new Error('commit-unknown'), { state: { commitUnknown: true, cleanupPending: false, oldPath: 'portraits/a/old.webp', newPath: 'portraits/a/new.webp' } }); },
-        cleanupImage: async path => { cleaned.push(path); },
-        ackUpload: path => { acked.push(path); },
-    };
-    const mounted = await mountedForm({ getImageService: () => imageService, portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
-    mounted.fake.repository.inspectPortraitCommit = async () => ({ status: 'not-committed' });
+test('un échec d’association du nouveau portrait garde le formulaire et la fiche intacte', async () => {
+    const mounted = await mountedForm({ portraitProcessor: async file => ({ blob: file, finalBytes: file.size, width: 10, height: 10 }) });
+    mounted.fake.contributionClient.uploadContributionImage = async () => { throw Object.assign(new Error('network'), { code: 'functions/unavailable' }); };
     const input = mounted.container.querySelectorAll('input').find(control => control.type === 'file');
     input.files = [new globalThis.Blob([new Uint8Array([1])], { type: 'image/jpeg' })]; input.dispatch('change'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Ada locale';
     mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage du portrait').dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.deepEqual(cleaned, ['portraits/a/new.webp']); assert.deepEqual(acked, ['portraits/a/old.webp', 'portraits/a/new.webp']); assert.deepEqual(mounted.navigated, []); assert.equal(mounted.container.querySelectorAll('#m-pnj-nom')[0].value, 'Ada');
+    assert.equal(mounted.fake.calls.mutate.length, 0); assert.deepEqual(mounted.navigated, []);
+    assert.equal(mounted.container.querySelectorAll('#m-pnj-nom')[0].value, 'Ada locale');
 });
 
-test('retrait commitDone avec cleanup en panne expose une reprise immédiate de l ancien portrait', async () => {
-    const cleaned = []; const imageService = {
-        remove: async () => { throw new Error('cleanup-failed'); },
-        cleanupImage: async path => { cleaned.push(path); },
-        ackUpload: () => true,
-    };
+test('retrait de portrait envoie imagePath null au serveur avant nettoyage', async () => {
+    const removed = []; const imageService = { remove: async path => { removed.push(path); throw new Error('cleanup-failed'); } };
     const mounted = await mountedForm({ publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'oui', lieu: '', groupe: '', description: '', visibleJoueurs: true, imagePath: 'portraits/a/old.webp', updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] }, getImageService: () => imageService });
     mounted.container.querySelectorAll('button').find(button => button.textContent === 'Retirer le portrait').dispatch('click');
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve(); await Promise.resolve();
-    const recover = mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage du portrait');
-    assert.equal(recover.hidden, false); recover.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.deepEqual(cleaned, ['portraits/a/old.webp']); assert.deepEqual(mounted.navigated, ['#/pnjs']);
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0)); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(mounted.fake.calls.mutate[0].changes.imagePath, null);
+    assert.deepEqual(removed, ['portraits/a/old.webp']); assert.deepEqual(mounted.navigated, ['#/pnjs/a']);
+    assert.match(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /nettoyage.*reprendre/u);
 });
 
 test('un double toucher ne lance qu’une création', async () => {
     const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined });
     const form = mounted.container.querySelectorAll('form')[0]; form.querySelectorAll('[data-field]')[0].value = 'A';
-    form.dispatch('submit'); form.dispatch('submit'); await Promise.resolve();
+    form.dispatch('submit'); form.dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(mounted.fake.calls.create, 1);
 });
 
@@ -392,7 +441,7 @@ test('le résumé d’erreurs place le focus sans modifier la route hash', async
     const form = mounted.container.querySelectorAll('form')[0];
     mounted.container.querySelectorAll('#m-pnj-nom')[0].value = '';
     form.dispatch('submit');
-    await Promise.resolve();
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     const link = mounted.container.querySelectorAll('.m-form-summary')[0].children[1].children[0].children[0];
     let prevented = false;
     link.dispatch('click', { preventDefault: () => { prevented = true; } });
@@ -452,7 +501,7 @@ test('un verrou arrivé après logout est ignoré par la garde génération/UID'
     const documentRef = fakeDocument(); const container = new Element(documentRef, 'main'); const fake = fakeRepository();
     fake.repository.inspectRemovalLock = () => new Promise(resolve => { resolveLock = resolve; });
     const view = createPnjEditView({ container, id: 'a', repository: fake.repository, getSession: () => state });
-    view.mount(); state = { status: 'visitor', role: 'public', user: null }; resolveLock({ pnjId: 'a' }); await Promise.resolve();
+    view.mount(); state = { status: 'visitor', role: 'public', user: null }; resolveLock({ pnjId: 'a' }); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage').hidden, true);
     view.unmount();
 });
@@ -484,24 +533,27 @@ test('une note commencée pendant le chargement conserve seulement ce champ sale
 
 test('un save obsolète après démontage ne navigue ni n’annonce', async () => {
     const mounted = await mountedForm({ id: null, publicItem: undefined, privateItem: undefined });
-    let resolve; mounted.fake.repository.create = () => new Promise(done => { resolve = done; });
+    let resolve; mounted.fake.contributionClient.mutatePublicContent = payload => new Promise(done => { mounted.fake.calls.mutate.push(payload); resolve = done; });
     const form = mounted.container.querySelectorAll('form')[0]; form.querySelectorAll('[data-field]')[0].value = 'A'; form.dispatch('submit');
-    mounted.view.unmount(); resolve({ id: 'late' }); await Promise.resolve();
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.view.unmount(); resolve({ id: 'late' }); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(mounted.navigated, []); assert.deepEqual(mounted.announced, []);
 });
 
 test('l’aperçu d’impact précède la confirmation et conserve les comptes', async () => {
-    const mounted = await mountedForm(); const remove = mounted.container.querySelectorAll('.m-button-danger')[0]; remove.dispatch('click'); await Promise.resolve();
-    assert.equal(mounted.container.querySelectorAll('.m-removal-confirmation')[0].hidden, false); assert.match(mounted.container.textContent, /2 relations/u);
+    const mounted = await mountedForm(); const remove = mounted.container.querySelectorAll('.m-button-danger')[0]; remove.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(mounted.container.querySelectorAll('.m-removal-confirmation')[0].hidden, false);
+    assert.match(mounted.container.textContent, /placés en corbeille/u);
 });
 
 test('une suppression avec cleanup pending expose la reprise puis navigue en replace au succès', async () => {
-    const mounted = await mountedForm(); mounted.fake.repository.remove = async () => ({ firestoreDone: true, imageCleanupPending: true, lockRetained: true, legacyImageSkipped: true });
-    const remove = mounted.container.querySelectorAll('.m-button-danger')[0]; remove.dispatch('click'); await Promise.resolve();
-    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await Promise.resolve();
+    const mounted = await mountedForm();
+    mounted.fake.contributionClient.trashPublicContent = async () => { throw Object.assign(new Error('lock-retained'), { state: { firestoreDone: true, imageCleanupPending: true, lockRetained: true } }); };
+    const remove = mounted.container.querySelectorAll('.m-button-danger')[0]; remove.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(mounted.container.querySelectorAll('button').at(-1).textContent, 'Reprendre le nettoyage');
     assert.deepEqual(mounted.navigated, [], 'un cleanup en attente garde la vue et son CTA');
-    mounted.container.querySelectorAll('button').at(-1).dispatch('click'); await Promise.resolve();
+    mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage').dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(mounted.fake.calls.resume, 1); assert.deepEqual(mounted.navigated, ['#/pnjs']);
     assert.deepEqual(mounted.events.slice(-2), [['navigate', '#/pnjs'], ['announce', 'Nettoyage du PNJ terminé.']]);
 });
@@ -510,8 +562,8 @@ test('une suppression confirmée efface le draft retrouvé par PNJ, même sans d
     let available = false; const removed = [];
     const draftStore = { find: () => available ? { draftId: 'draft:abcdefgh' } : null, remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) };
     const mounted = await mountedForm({ draftStore }); available = true;
-    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
-    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await Promise.resolve();
+    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(removed, ['draft:abcdefgh']);
 });
 
@@ -519,15 +571,15 @@ test('cleanup pending confirmé efface le draft, tandis qu’un verrou avant Fir
     let available = false; const removed = [];
     const draftStore = { find: () => available ? { draftId: 'draft:abcdefgh' } : null, remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) };
     const mounted = await mountedForm({ draftStore }); available = true;
-    mounted.fake.repository.remove = async () => ({ firestoreDone: true, imageCleanupPending: true, lockRetained: false });
-    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
-    mounted.container.querySelectorAll('.m-button-danger').find(button => button.textContent === 'Confirmer la suppression').dispatch('click'); await Promise.resolve();
+    mounted.fake.contributionClient.trashPublicContent = async () => { throw Object.assign(new Error('cleanup-pending'), { state: { firestoreDone: true, imageCleanupPending: true, commitDone: true } }); };
+    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('.m-button-danger').find(button => button.textContent === 'Confirmer la suppression').dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(removed, ['draft:abcdefgh']);
 
     const second = await mountedForm({ draftStore: { find: () => ({ draftId: 'draft:abcdefgh' }), remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) } });
-    second.fake.repository.remove = async () => ({ firestoreDone: false, imageCleanupPending: false, lockRetained: true });
-    second.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
-    second.container.querySelectorAll('.m-button-danger').find(button => button.textContent === 'Confirmer la suppression').dispatch('click'); await Promise.resolve();
+    second.fake.contributionClient.trashPublicContent = async () => { throw Object.assign(new Error('lock-retained'), { state: { firestoreDone: false, imageCleanupPending: false, lockRetained: true } }); };
+    second.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    second.container.querySelectorAll('.m-button-danger').find(button => button.textContent === 'Confirmer la suppression').dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(removed, ['draft:abcdefgh']);
 });
 
@@ -535,15 +587,15 @@ test('une erreur post-commit efface le draft, mais commitUnknown le conserve', a
     const removed = []; let available = false;
     const draftStore = { find: () => available ? { draftId: 'draft:abcdefgh' } : null, remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) };
     const committed = await mountedForm({ draftStore }); available = true;
-    committed.fake.repository.remove = async () => { throw Object.assign(new Error('cleanup'), { state: { commitDone: true, cleanupPending: true, firestoreDone: true } }); };
-    committed.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
-    committed.container.querySelectorAll('.m-button-danger').find(button => button.textContent === 'Confirmer la suppression').dispatch('click'); await Promise.resolve();
+    committed.fake.contributionClient.trashPublicContent = async () => { throw Object.assign(new Error('cleanup'), { state: { commitDone: true, cleanupPending: true, firestoreDone: true } }); };
+    committed.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    committed.container.querySelectorAll('.m-button-danger').find(button => button.textContent === 'Confirmer la suppression').dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(removed, ['draft:abcdefgh']);
 
     const uncertain = await mountedForm({ draftStore: { find: () => ({ draftId: 'draft:ijklmnop' }), remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) } });
-    uncertain.fake.repository.remove = async () => { throw Object.assign(new Error('unknown'), { state: { commitUnknown: true, cleanupPending: true, firestoreDone: false } }); };
-    uncertain.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
-    uncertain.container.querySelectorAll('.m-button-danger').find(button => button.textContent === 'Confirmer la suppression').dispatch('click'); await Promise.resolve();
+    uncertain.fake.contributionClient.trashPublicContent = async () => { throw Object.assign(new Error('unknown'), { state: { commitUnknown: true, cleanupPending: true, firestoreDone: false } }); };
+    uncertain.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    uncertain.container.querySelectorAll('.m-button-danger').find(button => button.textContent === 'Confirmer la suppression').dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(removed, ['draft:abcdefgh']);
 });
 
@@ -551,17 +603,17 @@ test('une reprise avec erreur post-commit efface le draft et commitUnknown le co
     const removed = [];
     const draftStore = { find: () => ({ draftId: 'draft:abcdefgh' }), remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) };
     const committed = await mountedForm({ draftStore });
-    committed.fake.repository.remove = async () => ({ firestoreDone: true, imageCleanupPending: true, lockRetained: true });
+    committed.fake.contributionClient.trashPublicContent = async () => { throw Object.assign(new Error('lock-retained'), { state: { firestoreDone: true, imageCleanupPending: true, lockRetained: true } }); };
     committed.fake.repository.resumeRemoval = async () => { throw Object.assign(new Error('cleanup'), { state: { commitDone: true, cleanupPending: true, firestoreDone: true } }); };
-    committed.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
-    committed.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage').dispatch('click'); await Promise.resolve();
+    committed.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    committed.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage').dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(removed, ['draft:abcdefgh']);
 
     const uncertain = await mountedForm({ draftStore: { find: () => ({ draftId: 'draft:ijklmnop' }), remove: id => { removed.push(id); return true; }, save: () => ({ ok: false, reason: 'quota' }) } });
-    uncertain.fake.repository.remove = async () => ({ firestoreDone: true, imageCleanupPending: true, lockRetained: true });
+    uncertain.fake.contributionClient.trashPublicContent = async () => { throw Object.assign(new Error('lock-retained'), { state: { firestoreDone: true, imageCleanupPending: true, lockRetained: true } }); };
     uncertain.fake.repository.resumeRemoval = async () => { throw Object.assign(new Error('unknown'), { state: { commitUnknown: true, cleanupPending: true, firestoreDone: false } }); };
-    uncertain.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
-    uncertain.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage').dispatch('click'); await Promise.resolve();
+    uncertain.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    uncertain.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage').dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(removed, ['draft:abcdefgh']);
 });
 
@@ -585,7 +637,7 @@ test('un draft refusé est réutilisé puis tous les drafts du PNJ sont purgés 
     const mounted = await mountedForm({ confirm: () => false, draftStore });
     mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Après refus';
     mounted.container.querySelectorAll('#m-pnj-nom')[0].dispatch('input');
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(removed.sort(), ['draft:abcdefgh', 'draft:ijklmnop']); assert.equal(drafts.length, 0);
 });
 
@@ -597,9 +649,9 @@ test('le force-save reste bloqué pendant un recovery et vérifie le draftVersio
 
 test('une suppression interrompue avant Firestore conserve le CTA de reprise sans faux succès', async () => {
     const mounted = await mountedForm();
-    mounted.fake.repository.remove = async () => ({ firestoreDone: false, imageCleanupPending: false, lockRetained: true, legacyImageSkipped: true });
-    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
-    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await Promise.resolve();
+    mounted.fake.contributionClient.trashPublicContent = async () => { throw Object.assign(new Error('lock-retained'), { state: { firestoreDone: false, imageCleanupPending: false, lockRetained: true } }); };
+    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     const resume = mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage');
     assert.equal(resume.hidden, false); assert.equal(resume.disabled, false); assert.deepEqual(mounted.navigated, []);
     assert.match(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /interrompue/u);
@@ -607,9 +659,9 @@ test('une suppression interrompue avant Firestore conserve le CTA de reprise san
 
 test('un échec de déverrouillage conserve la reprise même après suppression Firestore', async () => {
     const mounted = await mountedForm();
-    mounted.fake.repository.remove = async () => ({ firestoreDone: true, imageCleanupPending: false, lockRetained: true });
-    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
-    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await Promise.resolve();
+    mounted.fake.contributionClient.trashPublicContent = async () => { throw Object.assign(new Error('lock-retained'), { state: { firestoreDone: true, imageCleanupPending: false, lockRetained: true } }); };
+    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage').hidden, false);
     assert.match(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /enregistrée/u);
     assert.deepEqual(mounted.navigated, []);
@@ -617,22 +669,21 @@ test('un échec de déverrouillage conserve la reprise même après suppression 
 
 test('un portrait legacy ignoré est signalé sans exposer son chemin et navigue en replace', async () => {
     const mounted = await mountedForm();
-    mounted.fake.repository.remove = async () => ({ firestoreDone: true, imageCleanupPending: false, lockRetained: false, legacyImageSkipped: true });
-    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
-    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await Promise.resolve();
+    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     const status = mounted.container.querySelectorAll('.m-form-status')[0].textContent;
     assert.doesNotMatch(status, /secret\.example|raw-token/u); assert.deepEqual(mounted.navigated, ['#/pnjs']);
-    assert.deepEqual(mounted.events.slice(-2), [['navigate', '#/pnjs'], ['announce', 'PNJ supprimé ; un ancien portrait reste à traiter.']]);
+    assert.deepEqual(mounted.events.slice(-2), [['navigate', '#/pnjs'], ['announce', 'PNJ placé en corbeille.']]);
 });
 
 test('une erreur de reprise conserve le CTA actif et ne navigue pas', async () => {
     const mounted = await mountedForm();
-    mounted.fake.repository.remove = async () => ({ firestoreDone: true, imageCleanupPending: true, lockRetained: true });
+    mounted.fake.contributionClient.trashPublicContent = async () => { throw Object.assign(new Error('lock-retained'), { state: { firestoreDone: true, imageCleanupPending: true, lockRetained: true } }); };
     mounted.fake.repository.resumeRemoval = async () => { throw Object.assign(new Error('resume-raw'), { state: { firestoreDone: false, imageCleanupPending: false, lockRetained: true } }); };
-    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
-    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await Promise.resolve();
+    mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    mounted.container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     const resume = mounted.container.querySelectorAll('button').find(button => button.textContent === 'Reprendre le nettoyage');
-    resume.dispatch('click'); await Promise.resolve();
+    resume.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(resume.hidden, false); assert.equal(resume.disabled, false); assert.deepEqual(mounted.navigated, []);
     assert.doesNotMatch(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /resume-raw/u);
 });
@@ -651,19 +702,19 @@ test('un portrait existant non éditable ne rend pas le formulaire dirty', async
     assert.deepEqual(mounted.back, [true]);
 });
 
-test('une modification transmet expectedUpdatedAt initial au dépôt', async () => {
-    const mounted = await mountedForm();
+test('une modification transmet la révision capturée et ses baseValues au callable', async () => {
+    const mounted = await mountedForm({ publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'inconnu', lieu: '', groupe: '', groupes: [], description: '', visibleJoueurs: true, updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] } });
     mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Nouveau nom';
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
-    assert.deepEqual(mounted.fake.calls.updateArgs[3], { seconds: 1, nanoseconds: 0 });
-    assert.deepEqual(mounted.fake.calls.updateArgs[4], { seconds: 1, nanoseconds: 0 });
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(mounted.fake.calls.updateArgs[2].baseRevision, 1);
+    assert.deepEqual(mounted.fake.calls.updateArgs[2].baseValues, { nom: 'Ada' });
 });
 
 test('un conflit update conserve exactement le brouillon et ne navigue pas', async () => {
     const mounted = await mountedForm();
-    mounted.fake.repository.update = async () => { throw Object.assign(new Error('raw-conflict'), { code: 'conflict' }); };
+    mounted.fake.contributionClient.mutateMjContent = async () => { throw Object.assign(new Error('raw-conflict'), { code: 'aborted', details: { kind: 'conflict' } }); };
     const nom = mounted.container.querySelectorAll('#m-pnj-nom')[0]; nom.value = 'Brouillon conflit';
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(nom.value, 'Brouillon conflit'); assert.deepEqual(mounted.navigated, []);
     assert.doesNotMatch(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /raw-conflict/u);
 });
@@ -674,19 +725,19 @@ test('un force différé verrouille le panneau conflit et ignore Reload hostile'
     mounted.fake.publicCallbacks[0].next({ id: 'a', nom: 'Version distante', statut: '', vivant: 'inconnu', lieu: '', groupe: '', description: '', visibleJoueurs: true, updatedAt: { seconds: 2, nanoseconds: 0 }, issues: [] });
     const panel = mounted.container.querySelectorAll('.m-form-conflict')[0]; const buttons = panel.querySelectorAll('button');
     assert.equal(buttons.length, 3); const force = buttons.find(button => button.textContent === 'Forcer après confirmation MJ');
-    force.dispatch('click'); await Promise.resolve();
+    force.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(mounted.fake.calls.forceUpdate, 1); assert.equal(buttons.every(button => button.disabled), true);
     const reload = buttons.find(button => button.textContent === 'Recharger le serveur'); reload.dispatch('click');
     assert.equal(nom.value, 'Saisie locale', 'Reload injecté pendant la mutation ne doit pas écraser la saisie');
-    mounted.fake.deferred.forceUpdate(); await Promise.resolve(); await Promise.resolve();
+    mounted.fake.deferred.forceUpdate(); await new Promise(resolve => globalThis.setTimeout(resolve, 0)); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(mounted.navigated, ['#/pnjs/a']);
 });
 
 test('une permission brute est convertie en message UI générique', async () => {
     const mounted = await mountedForm();
-    mounted.fake.repository.update = async () => { throw Object.assign(new Error('permission-secret'), { code: 'permission-denied' }); };
+    mounted.fake.contributionClient.mutateMjContent = async () => { throw Object.assign(new Error('permission-secret'), { code: 'permission-denied' }); };
     mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Nom';
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.doesNotMatch(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /permission-secret/u);
     assert.match(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /autorisée/u);
 });
@@ -695,56 +746,57 @@ test('un aperçu d’impact tardif après démontage ne réécrit pas le DOM', a
     const mounted = await mountedForm(); let resolve;
     mounted.fake.repository.inspectRemovalImpact = () => new Promise(done => { resolve = done; });
     mounted.container.querySelectorAll('.m-button-danger')[0].dispatch('click');
-    mounted.view.unmount(); resolve({ id: 'a', name: 'late', relationsCount: 1, indicesCount: 0 }); await Promise.resolve();
+    mounted.view.unmount(); resolve({ id: 'a', name: 'late', relationsCount: 1, indicesCount: 0 }); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.equal(mounted.container.children.length, 0); assert.deepEqual(mounted.navigated, []);
 });
 
 test('une suppression tardive après changement d UID ne produit ni annonce ni navigation', async () => {
     let state = gmState('a'); let resolve; const documentRef = fakeDocument(); const container = new Element(documentRef, 'main');
     const fake = fakeRepository(); const navigated = []; const announced = [];
-    fake.repository.remove = () => new Promise(done => { resolve = done; });
-    const view = createPnjEditView({ container, id: 'a', repository: fake.repository, getSession: () => state, onNavigate: value => navigated.push(value), announce: value => announced.push(value) });
-    view.mount(); await Promise.resolve();
-    container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await Promise.resolve();
-    container.querySelectorAll('.m-button-danger')[1].dispatch('click'); state = gmState('b'); resolve({ firestoreDone: true, imageCleanupPending: false }); await Promise.resolve();
+    fake.contributionClient.trashPublicContent = () => new Promise(done => { resolve = done; });
+    const view = createPnjEditView({ container, id: 'a', repository: fake.repository, getContributionClient: () => fake.contributionClient, getSession: () => state, onNavigate: value => navigated.push(value), announce: value => announced.push(value) });
+    view.mount(); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    container.querySelectorAll('.m-button-danger')[0].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    container.querySelectorAll('.m-button-danger')[1].dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0)); state = gmState('b'); resolve({ firestoreDone: true, imageCleanupPending: false }); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(navigated, []); assert.deepEqual(announced, []);
 });
 
-test('le warning de dépublication passe par la capacité read-only du dépôt', async () => {
-    const mounted = await mountedForm(); let resolve;
-    mounted.fake.repository.inspectVisibilityImpact = () => new Promise(done => { resolve = done; });
+test('une dépublication transmet son état au callable versionné', async () => {
+    const mounted = await mountedForm({ publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'inconnu', lieu: '', groupe: '', groupes: [], description: '', visibleJoueurs: true, updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] } });
     mounted.container.querySelectorAll('#m-pnj-visibleJoueurs')[0].checked = false;
     mounted.container.querySelectorAll('#m-pnj-nom')[0].value = 'Ada';
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
-    assert.match(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /Dépublication/u);
-    resolve({ visibleRelationsCount: 2 }); await Promise.resolve();
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(mounted.fake.calls.mutate[0].changes.visibleJoueurs, false);
+    assert.equal(mounted.fake.calls.mutate[0].baseRevision, 1);
 });
 
-test('la republication avertit les relations visibles incompatibles', async () => {
-    const mounted = await mountedForm({ publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'oui', lieu: '', groupe: '', description: '', visibleJoueurs: false, updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] } });
+test('une republication transmet son état au callable versionné', async () => {
+    const mounted = await mountedForm({ publicItem: { id: 'a', nom: 'Ada', statut: '', vivant: 'oui', lieu: '', groupe: '', groupes: [], description: '', visibleJoueurs: false, updatedAt: { seconds: 1, nanoseconds: 0 }, issues: [] } });
     mounted.container.querySelectorAll('#m-pnj-visibleJoueurs')[0].checked = true;
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
-    assert.match(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /PNJ masqué|incompatible/u);
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(mounted.fake.calls.mutate[0].changes.visibleJoueurs, true);
+    assert.equal(mounted.fake.calls.mutate[0].baseRevision, 1);
 });
 
-test('une saisie hostile pendant l’inspection visibilité annule le commit et verrouille les contrôles', async () => {
-    const mounted = await mountedForm(); let resolveImpact;
-    mounted.fake.repository.inspectVisibilityImpact = () => new Promise(resolve => { resolveImpact = resolve; });
+test('une saisie survenue pendant le callable ne navigue pas et conserve un brouillon local', async () => {
+    const drafts = []; const mounted = await mountedForm({ draftStore: { find: () => null, save: values => { drafts.push(values); return { ok: true, draft: { draftId: 'draft:abcdefgh', pnjId: 'a' } }; }, remove: () => true } });
+    let resolveUpdate; mounted.fake.deferred.update = () => new Promise(resolve => { resolveUpdate = resolve; });
     const visible = mounted.container.querySelectorAll('#m-pnj-visibleJoueurs')[0]; visible.checked = false; visible.dispatch('change');
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     const description = mounted.container.querySelectorAll('#m-pnj-description')[0];
     assert.equal(description.disabled, true);
-    description.value = 'mutation hostile'; description.dispatch('input'); resolveImpact({ visibleRelationsCount: 0, incompatibleVisibleRelationsCount: 0 }); await Promise.resolve();
-    assert.equal(mounted.fake.calls.update, 0); assert.match(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /changé pendant/u);
+    description.value = 'mutation locale'; description.dispatch('input'); resolveUpdate({}); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(mounted.navigated.length, 0); assert.match(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /changé pendant/u);
+    assert.equal(drafts.at(-1).description, 'mutation locale');
 });
 
 test('les contrôles restent verrouillés pendant update et un draftVersion changé ne navigue pas', async () => {
     const mounted = await mountedForm(); let resolveUpdate;
-    mounted.fake.repository.update = () => new Promise(resolve => { resolveUpdate = resolve; });
+    mounted.fake.deferred.update = () => new Promise(resolve => { resolveUpdate = resolve; });
     const nom = mounted.container.querySelectorAll('#m-pnj-nom')[0]; nom.value = 'Nom sauvegardé'; nom.dispatch('input');
-    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
+    mounted.container.querySelectorAll('form')[0].dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     const description = mounted.container.querySelectorAll('#m-pnj-description')[0]; assert.equal(description.disabled, true);
-    description.value = 'mutation hostile'; description.dispatch('input'); resolveUpdate({ id: 'a' }); await Promise.resolve();
+    description.value = 'mutation hostile'; description.dispatch('input'); resolveUpdate({ id: 'a' }); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
     assert.deepEqual(mounted.navigated, []); assert.equal(description.disabled, false); assert.match(mounted.container.querySelectorAll('.m-form-status')[0].textContent, /changé pendant/u);
 });
 

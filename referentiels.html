@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://*.firebaseapp.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleusercontent.com; frame-src https://*.firebaseapp.com https://*.google.com https://accounts.google.com; connect-src 'self' https://docs.google.com https://*.googleapis.com https://*.firebaseapp.com https://apis.google.com https://www.gstatic.com https://www.google.com/recaptcha/ https://europe-west1-campagne-wrpg.cloudfunctions.net">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Référentiels · L'Ennemi Intérieur</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/theme-parchment.css">
+    <link rel="stylesheet" href="css/referentiels.css">
+    <script type="module" src="js/layout.js"></script>
+    <script type="module" src="js/referentiels.js"></script>
+</head>
+<body>
+    <nav id="navbar"></nav>
+    <main class="container referentiel-page">
+        <header class="referentiel-heading">
+            <p class="eyebrow">Administration · MJ</p>
+            <h1>Référentiels de compétences et talents</h1>
+            <p>Préparez les alias et descriptions dans un brouillon, contrôlez les impacts sur les cinq fiches, puis publiez-les avec leur migration.</p>
+        </header>
+
+        <section id="auth-panel" class="referentiel-panel" aria-live="polite">
+            <p id="auth-message">Vérification de la session…</p>
+            <button id="login-button" class="button-primary" type="button" hidden>Connexion MJ avec Google</button>
+            <button id="logout-button" class="button-secondary" type="button" hidden>Déconnexion</button>
+        </section>
+
+        <section id="editor" hidden>
+            <div class="referentiel-toolbar referentiel-panel">
+                <label for="catalogue-search">Rechercher une compétence ou un talent</label>
+                <input id="catalogue-search" type="search" autocomplete="off" placeholder="Nom, spécialité, alias…">
+                <p id="catalogue-status" role="status"></p>
+            </div>
+
+            <div class="referentiel-columns">
+                <section class="referentiel-panel" aria-labelledby="entries-title">
+                    <div class="section-title-row">
+                        <h2 id="entries-title">Entrées</h2>
+                        <span id="result-count" class="muted"></span>
+                    </div>
+                    <ul id="entry-list" class="entry-list"></ul>
+                    <button id="load-more-entries" class="button-secondary" type="button" hidden>Charger plus</button>
+                </section>
+
+                <section class="referentiel-panel" aria-labelledby="edit-title">
+                    <h2 id="edit-title">Éditer l’entrée sélectionnée</h2>
+                    <p id="selection-summary" class="muted">Sélectionnez une entrée dans la liste.</p>
+                    <form id="entry-form" hidden>
+                        <label for="display-name">Nom affiché</label>
+                        <input id="display-name" maxlength="200" required>
+                        <label for="alias-label">Ajouter une forme ou traduction</label>
+                        <div class="inline-field">
+                            <input id="alias-label" maxlength="200" placeholder="Autre libellé" autocomplete="off">
+                            <button class="button-secondary" type="submit" name="action" value="alias">Ajouter</button>
+                        </div>
+                        <fieldset id="alias-fieldset">
+                            <legend>Alias explicites</legend>
+                            <ul id="alias-list" class="alias-list"></ul>
+                        </fieldset>
+                        <div id="talent-description-field" hidden>
+                            <label for="local-description">Description locale publiée</label>
+                            <textarea id="local-description" rows="7" maxlength="12000"></textarea>
+                            <div class="inline-field">
+                                <button class="button-secondary" type="button" id="save-description">Enregistrer la description</button>
+                                <button class="button-secondary" type="button" id="remove-description">Retirer la correction locale</button>
+                            </div>
+                        </div>
+                        <button class="button-primary" type="submit" name="action" value="rename">Enregistrer le nom</button>
+                    </form>
+                </section>
+            </div>
+
+            <section class="referentiel-panel workflow-panel">
+                <div class="section-title-row">
+                    <div>
+                        <h2>Brouillon et publication</h2>
+                        <p class="muted">Le brouillon reste privé. La publication est refusée si les alias sont ambigus ou si une collision n’a pas de décision.</p>
+                    </div>
+                    <span id="version-status" class="version-pill"></span>
+                </div>
+                <div class="button-row">
+                    <button id="save-draft" class="button-secondary" type="button">Enregistrer le brouillon</button>
+                    <button id="preview-migration" class="button-secondary" type="button">Prévisualiser les impacts</button>
+                </div>
+                <div id="preview-results" class="preview-results" hidden></div>
+                <label for="publication-reason">Motif de publication</label>
+                <input id="publication-reason" maxlength="500" placeholder="Ex. alias validés après revue des fiches">
+                <button id="publish-catalogue" class="button-primary" type="button" disabled>Publier le référentiel et migrer les fiches</button>
+            </section>
+        </section>
+    </main>
+    <footer id="site-footer"></footer>
+</body>
+</html>

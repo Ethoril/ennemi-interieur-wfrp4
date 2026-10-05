@@ -258,7 +258,9 @@ export function createMjSession({
                 unsubs: Array.isArray(createdContext?.unsubs) ? [...createdContext.unsubs] : [],
             };
             contextAdopted = true;
-            setState({ status: 'gm', private: Object.freeze({ repositories: createdContext.repositories, cache: createdContext.client.cache || { mode: 'memory', persistent: false } }) });
+            setState({ status: 'gm', private: Object.freeze({ repositories: createdContext.repositories,
+                contributions: createdContext.contributions || null,
+                cache: createdContext.client.cache || { mode: 'memory', persistent: false } }) });
         } catch (error) {
             if (createdContext && !contextAdopted) await closeContext(createdContext);
             await cleanupPrivate({ invalidate: false });

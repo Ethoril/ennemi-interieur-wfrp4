@@ -1,6 +1,7 @@
 import { mountIndiceImage } from '../components/indice-image.js';
 import { selectEnquetesListModel } from '../enquete-list-model.js';
 import { publicStatusMessage, renderState } from '../ui.js';
+import { mountContributionButton } from '../../contributions/editor.js';
 
 function excerpt(value, maximum = 180) {
     const text = typeof value === 'string' ? value.replace(/\s+/gu, ' ').trim() : '';
@@ -78,6 +79,9 @@ export function createEnquetesListView({
     getImageService = () => null,
     onRetry = () => store?.restart?.(),
     onOpen = () => {},
+    getContributionClient = null,
+    signInContribution = null,
+    announce = () => {},
 } = {}) {
     let mounted = false;
     let search = null;
@@ -95,6 +99,7 @@ export function createEnquetesListView({
     let signalRef = null;
     let abortHandler = null;
     let activeGeneration = null;
+    let contributionAction = null;
 
     const disposeImages = () => {
         imageDisposers.forEach(handle => handle?.dispose?.());
@@ -200,6 +205,11 @@ export function createEnquetesListView({
         resultCount.className = 'm-result-count';
         resultCount.setAttribute('aria-live', 'polite');
         toolbar.append(resultCount);
+        if (typeof getContributionClient === 'function') {
+            contributionAction = mountContributionButton({ container: toolbar, getClient: getContributionClient,
+                signIn: signInContribution, kind: 'indice', action: 'create', documentRef,
+                announce, onSaved: () => store?.restart?.() });
+        }
         badge = documentRef.createElement('p');
         badge.className = 'm-sync-badge';
         badge.hidden = true;
@@ -233,6 +243,8 @@ export function createEnquetesListView({
         unsubscribe();
         unsubscribe = () => {};
         disposeImages();
+        contributionAction?.dispose?.();
+        contributionAction = null;
         search?.removeEventListener('input', onSearch);
         retryButton?.removeEventListener('click', onRetry);
         signalRef?.removeEventListener?.('abort', abortHandler);

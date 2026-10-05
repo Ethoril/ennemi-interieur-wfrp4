@@ -259,6 +259,17 @@ test('la précondition privée protège les notes seules et le patch public simu
     assert.equal(fake.collectionMap('pnjs_prives').get('a').notes, 'nouveau');
 });
 
+test('la mise à jour privée seule évite toute écriture directe sur une fiche gérée', async () => {
+    const fake = makeFirestore(); const repo = createMjPnjRepository(fake);
+    await repo.create({ id: 'managed', nom: 'Ada', visibleJoueurs: true }, { notes: 'avant' });
+    await repo.updatePrivateOnly('managed', { notes: 'après' }, { seconds: 1, nanoseconds: 0 });
+    assert.equal(fake.collectionMap('pnjs_prives').get('managed').notes, 'après');
+    assert.equal(fake.state.lastTransactionOperations.length, 1);
+    assert.equal(fake.state.lastTransactionOperations[0][1].collection, 'pnjs_prives');
+    await assert.rejects(repo.updatePrivateOnly('managed', { notes: 'conflit' }, { seconds: 99, nanoseconds: 0 }),
+        error => error.kind === ERROR_KINDS.CONFLICT);
+});
+
 test('une mise à jour de relation re-clé sûrement et refuse un miroir non prouvé', async () => {
     const fake = makeFirestore();
     const pnjRepo = createMjPnjRepository(fake);

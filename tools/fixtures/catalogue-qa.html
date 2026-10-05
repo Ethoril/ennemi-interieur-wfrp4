@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QA locale · Référentiels</title>
+    <link rel="stylesheet" href="../../css/base.css">
+    <link rel="stylesheet" href="../../css/components.css">
+    <link rel="stylesheet" href="../../css/referentiels.css">
+</head>
+<body>
+    <main class="container referentiel-page">
+        <header class="referentiel-heading">
+            <p class="eyebrow">Fixture locale uniquement</p>
+            <h1>Référentiels · données fictives</h1>
+            <p>Aucun appel Firebase n’est effectué. Les cinq personnages et le service sont simulés dans cette page.</p>
+        </header>
+        <section id="auth-panel" class="referentiel-panel" aria-live="polite">
+            <p id="auth-message">Connexion MJ locale…</p>
+            <button id="login-button" class="button-primary" type="button" hidden>Connexion</button>
+            <button id="logout-button" class="button-secondary" type="button" hidden>Déconnexion</button>
+        </section>
+        <section id="editor" hidden>
+            <div class="referentiel-toolbar referentiel-panel">
+                <label for="catalogue-search">Rechercher une compétence ou un talent</label>
+                <input id="catalogue-search" type="search" autocomplete="off">
+                <p id="catalogue-status" role="status"></p>
+            </div>
+            <div class="referentiel-columns">
+                <section class="referentiel-panel" aria-labelledby="entries-title">
+                    <div class="section-title-row"><h2 id="entries-title">Entrées</h2><span id="result-count" class="muted"></span></div>
+                    <ul id="entry-list" class="entry-list"></ul>
+                    <button id="load-more-entries" class="button-secondary" type="button" hidden>Charger plus</button>
+                </section>
+                <section class="referentiel-panel" aria-labelledby="edit-title">
+                    <h2 id="edit-title">Éditer l’entrée sélectionnée</h2>
+                    <p id="selection-summary" class="muted">Sélectionnez une entrée dans la liste.</p>
+                    <form id="entry-form" hidden>
+                        <label for="display-name">Nom affiché</label><input id="display-name" maxlength="200" required>
+                        <label for="alias-label">Ajouter une forme ou traduction</label>
+                        <div class="inline-field"><input id="alias-label" maxlength="200"><button class="button-secondary" type="submit" name="action" value="alias">Ajouter</button></div>
+                        <fieldset id="alias-fieldset"><legend>Alias explicites</legend><ul id="alias-list" class="alias-list"></ul></fieldset>
+                        <div id="talent-description-field" hidden>
+                            <label for="local-description">Description locale publiée</label><textarea id="local-description" rows="7" maxlength="12000"></textarea>
+                            <div class="inline-field"><button class="button-secondary" type="button" id="save-description">Enregistrer la description</button><button class="button-secondary" type="button" id="remove-description">Retirer la correction locale</button></div>
+                        </div>
+                        <button class="button-primary" type="submit" name="action" value="rename">Enregistrer le nom</button>
+                    </form>
+                </section>
+            </div>
+            <section class="referentiel-panel workflow-panel">
+                <div class="section-title-row"><div><h2>Brouillon et publication</h2><p class="muted">Fixture locale, aucune écriture en production.</p></div><span id="version-status" class="version-pill"></span></div>
+                <div class="button-row"><button id="save-draft" class="button-secondary" type="button">Enregistrer le brouillon</button><button id="preview-migration" class="button-secondary" type="button">Prévisualiser les impacts</button></div>
+                <div id="preview-results" class="preview-results" hidden></div>
+                <label for="publication-reason">Motif de publication</label><input id="publication-reason" maxlength="500" value="QA locale uniquement">
+                <button id="publish-catalogue" class="button-primary" type="button" disabled>Publier le référentiel et migrer les fiches fictives</button>
+            </section>
+        </section>
+        <section id="qa-results" class="referentiel-panel" aria-live="polite" hidden></section>
+    </main>
+    <script type="module" src="catalogue-qa.js"></script>
+</body>
+</html>

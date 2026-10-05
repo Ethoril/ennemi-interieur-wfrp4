@@ -462,6 +462,27 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
         } catch (error) { throw makeMutationError(error, 'update-pnj'); }
     }
 
+    async function updatePrivateOnly(id, patchPrivate = {}, expectedPrivateUpdatedAt) {
+        if (!isMj) throw new FirebaseClientError(ERROR_KINDS.PERMISSION, { operation: 'update-pnj-private' });
+        if (!validId(id)) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'update-pnj-private' });
+        const privateRef = documentRef(sdk, db, 'pnjs_prives', id);
+        const privateData = sanitizePrivate(patchPrivate);
+        if (!Object.keys(privateData).length) throw new FirebaseClientError(ERROR_KINDS.VALIDATION, { operation: 'update-pnj-private-empty' });
+        try {
+            return await transactionApi(sdk, db, 'update-pnj-private')(db, async transaction => {
+                const snapshot = await transaction.get(privateRef);
+                if (expectedPrivateUpdatedAt !== undefined) {
+                    const current = snapshotExists(snapshot) ? readUpdatedAt(snapshot) : null;
+                    if (expectedPrivateUpdatedAt === null ? current !== null : !timestampEqual(current, expectedPrivateUpdatedAt)) {
+                        throw new FirebaseClientError(ERROR_KINDS.CONFLICT, { operation: 'update-pnj-private' });
+                    }
+                }
+                transaction.set(privateRef, { ...privateData, updatedAt: serverTimestamp(sdk) }, { merge: true });
+                return { id };
+            });
+        } catch (error) { throw makeMutationError(error, 'update-pnj-private'); }
+    }
+
     // Transactions distinctes et postérieures à la publication du PNJ : les règles
     // n'acceptent une relation visible que si ses deux PNJ sont déjà publics.
     async function revealRelations(id) {
@@ -785,7 +806,7 @@ function createRepository({ sdk, client, role, imageService = null } = {}) {
 
     const repository = { subscribeVisible, subscribeOne };
     if (isMj) Object.assign(repository, {
-        subscribeAll, subscribePrivate, create, reserveId, update, forceUpdate, remove, resumeRemoval, inspectRemovalLock, inspectPortraitCommit, inspectRemovalImpact,
+        subscribeAll, subscribePrivate, create, reserveId, update, updatePrivateOnly, forceUpdate, remove, resumeRemoval, inspectRemovalLock, inspectPortraitCommit, inspectRemovalImpact,
         inspectVisibilityImpact,
     });
     return Object.freeze(repository);

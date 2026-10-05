@@ -6,6 +6,7 @@ import { createMjRelationsRepository } from '../data/relations-repository.js';
 import { createMjSession } from './session.js';
 import { createProtectedImageUploader } from '../protected-upload.js';
 import { rememberProtectedUpload, forgetProtectedUpload } from '../protected-upload-journal.js';
+import { createContributionClient } from '../contributions/client-core.js';
 
 const DEFAULT_BUILDERS = Object.freeze({
     client: createMjMobileClient,
@@ -71,7 +72,11 @@ export function createMjSessionComposition({
             repositories.pnjs = builders.pnjs({ sdk, client, user, imageService: repositories.images });
             repositories.relations = builders.relations({ sdk, client, user });
             repositories.indices = builders.indices({ sdk, client, user, imageService: repositories.images });
-            return Object.freeze({ client, repositories, images: repositories.images });
+            const contributions = client.functions && typeof sdk.httpsCallable === 'function'
+                ? createContributionClient({ auth: client.auth, functions: client.functions,
+                    sdk: { onAuthStateChanged: sdk.onAuthStateChanged, httpsCallable: sdk.httpsCallable } })
+                : null;
+            return Object.freeze({ client, repositories, images: repositories.images, contributions });
         } catch (error) {
             await client?.close?.();
             throw error;

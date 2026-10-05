@@ -17,6 +17,7 @@ function ensureDialog() {
     _dialog.innerHTML = `
         <h3 class="ui-confirm-titre" id="ui-confirm-titre"></h3>
         <p  class="ui-confirm-message" id="ui-confirm-message"></p>
+        <div class="ui-confirm-input-wrap" hidden></div>
         <div class="ui-confirm-actions">
             <button class="ui-confirm-annuler" type="button">Annuler</button>
             <button class="ui-confirm-valider" type="button"></button>
@@ -32,7 +33,7 @@ function ensureDialog() {
  * titre et message passent par textContent : ils peuvent contenir un nom de
  * personnage ou de joueur, aucun échappement HTML n'est donc requis.
  */
-export function confirmAction({ titre, message, libelleAction = 'Confirmer', danger = false }) {
+export function confirmAction({ titre, message, libelleAction = 'Confirmer', danger = false, input = null }) {
     const d = ensureDialog();
     // Une confirmation doit appartenir au conteneur présenté en plein écran.
     const parent = document.fullscreenElement || document.querySelector('.pnj-workspace-fullscreen') || document.body;
@@ -43,6 +44,26 @@ export function confirmAction({ titre, message, libelleAction = 'Confirmer', dan
     valider.textContent = libelleAction;
     valider.classList.toggle('ui-confirm-danger', danger);
     d.classList.toggle('ui-confirm--danger', danger);
+
+    const inputWrap = d.querySelector('.ui-confirm-input-wrap');
+    inputWrap.replaceChildren();
+    inputWrap.hidden = !input;
+    let textInput = null;
+    if (input) {
+        const label = document.createElement('label');
+        label.className = 'ui-confirm-input-label';
+        label.textContent = input.label || 'Motif';
+        textInput = document.createElement('input');
+        textInput.className = 'ui-confirm-input';
+        textInput.type = 'text';
+        textInput.required = input.required !== false;
+        textInput.maxLength = Number.isInteger(input.maxLength) ? input.maxLength : 1000;
+        textInput.placeholder = input.placeholder || '';
+        textInput.autocomplete = 'off';
+        textInput.value = '';
+        label.append(textInput);
+        inputWrap.append(label);
+    }
 
     const annuler = d.querySelector('.ui-confirm-annuler');
 
@@ -55,7 +76,20 @@ export function confirmAction({ titre, message, libelleAction = 'Confirmer', dan
             d.close();
             resolve(reponse);
         };
-        const ok       = () => fin(true);
+        const ok = () => {
+            if (textInput) {
+                const value = textInput.value.trim();
+                if (textInput.required && !value) {
+                    textInput.setCustomValidity('Saisissez un motif pour continuer.');
+                    textInput.reportValidity();
+                    textInput.addEventListener('input', () => textInput.setCustomValidity(''), { once: true });
+                    return;
+                }
+                fin(value);
+                return;
+            }
+            fin(true);
+        };
         const nonMerci = () => fin(false);
         const annule   = () => fin(false);
         const voile    = (e) => { if (e.target === d) fin(false); };
@@ -65,6 +99,11 @@ export function confirmAction({ titre, message, libelleAction = 'Confirmer', dan
         d.addEventListener('close', annule);           // couvre Échap
         d.addEventListener('click', voile);            // clic sur le voile
         d.showModal();
-        annuler.focus();                               // défaut non destructif
+        if (textInput) textInput.focus();
+        else annuler.focus();                         // défaut non destructif
     });
+}
+
+export function confirmTextAction(options) {
+    return confirmAction(options);
 }

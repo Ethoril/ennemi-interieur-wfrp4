@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://*.firebaseapp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleusercontent.com; frame-src https://*.firebaseapp.com https://*.google.com https://accounts.google.com; connect-src 'self' https://docs.google.com https://*.googleapis.com https://*.firebaseapp.com https://apis.google.com https://www.gstatic.com https://www.google.com/recaptcha/">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com https://*.firebaseapp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.googleusercontent.com; frame-src https://*.firebaseapp.com https://*.google.com https://accounts.google.com; connect-src 'self' https://docs.google.com https://*.googleapis.com https://*.firebaseapp.com https://apis.google.com https://www.gstatic.com https://www.google.com/recaptcha/ https://europe-west1-campagne-wrpg.cloudfunctions.net">
     <meta name="robots" content="noindex, nofollow">
     <meta name="description" content="Fiche de personnage interactive sauvegardée dans le cloud pour la campagne Warhammer Fantasy RPG — L'Ennemi Intérieur.">
     <meta property="og:type" content="website">
@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/theme-parchment.css">
     <link rel="stylesheet" href="css/fiche.css">
+    <link rel="stylesheet" href="css/career-viewer.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#07070d">
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
@@ -30,6 +31,7 @@
 <body>
 
     <a class="skip-link" href="#contenu">Aller au contenu</a>
+    <a class="fiche-mobile-return" id="fiche-mobile-return" href="app/index.html#/fiches" hidden>‹ Retour à l’application mobile</a>
     <nav class="navbar" id="navbar"></nav>
 
     <main class="page-container" id="contenu">
@@ -106,50 +108,23 @@
                             <table class="carac-table">
                                 <thead>
                                     <tr>
-                                        <th>CC</th><th>CT</th><th>F</th><th>E</th><th>I</th>
-                                        <th>Ag</th><th>Dex</th><th>Int</th><th>FM</th><th>Soc</th>
+                                        <th scope="col">Caractéristique</th>
+                                        <th scope="col">Base</th>
+                                        <th scope="col">Avances</th>
+                                        <th scope="col">Total</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr class="carac-row-header"><td colspan="10">Base</td></tr>
-                                    <tr>
-                                        <td><input class="carac-input" id="base-cc"  type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="base-ct"  type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="base-f"   type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="base-e"   type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="base-i"   type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="base-ag"  type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="base-dex" type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="base-int" type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="base-fm"  type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="base-soc" type="number" min="0" max="99" value="0"></td>
-                                    </tr>
-                                    <tr class="carac-row-header"><td colspan="10">Avances</td></tr>
-                                    <tr>
-                                        <td><input class="carac-input" id="adv-cc"  type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="adv-ct"  type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="adv-f"   type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="adv-e"   type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="adv-i"   type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="adv-ag"  type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="adv-dex" type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="adv-int" type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="adv-fm"  type="number" min="0" max="99" value="0"></td>
-                                        <td><input class="carac-input" id="adv-soc" type="number" min="0" max="99" value="0"></td>
-                                    </tr>
-                                    <tr class="carac-row-header"><td colspan="10">Total</td></tr>
-                                    <tr>
-                                        <td class="carac-total-cell"><span id="total-cc">0</span></td>
-                                        <td class="carac-total-cell"><span id="total-ct">0</span></td>
-                                        <td class="carac-total-cell"><span id="total-f">0</span></td>
-                                        <td class="carac-total-cell"><span id="total-e">0</span></td>
-                                        <td class="carac-total-cell"><span id="total-i">0</span></td>
-                                        <td class="carac-total-cell"><span id="total-ag">0</span></td>
-                                        <td class="carac-total-cell"><span id="total-dex">0</span></td>
-                                        <td class="carac-total-cell"><span id="total-int">0</span></td>
-                                        <td class="carac-total-cell"><span id="total-fm">0</span></td>
-                                        <td class="carac-total-cell"><span id="total-soc">0</span></td>
-                                    </tr>
+                                    <tr><th scope="row">CC</th><td data-label="Base"><input class="carac-input" id="base-cc" type="number" min="0" max="99" value="0" aria-label="CC, base"></td><td data-label="Avances"><input class="carac-input" id="adv-cc" type="number" min="0" max="99" value="0" aria-label="CC, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-cc">0</span></td></tr>
+                                    <tr><th scope="row">CT</th><td data-label="Base"><input class="carac-input" id="base-ct" type="number" min="0" max="99" value="0" aria-label="CT, base"></td><td data-label="Avances"><input class="carac-input" id="adv-ct" type="number" min="0" max="99" value="0" aria-label="CT, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-ct">0</span></td></tr>
+                                    <tr><th scope="row">F</th><td data-label="Base"><input class="carac-input" id="base-f" type="number" min="0" max="99" value="0" aria-label="Force, base"></td><td data-label="Avances"><input class="carac-input" id="adv-f" type="number" min="0" max="99" value="0" aria-label="Force, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-f">0</span></td></tr>
+                                    <tr><th scope="row">E</th><td data-label="Base"><input class="carac-input" id="base-e" type="number" min="0" max="99" value="0" aria-label="Endurance, base"></td><td data-label="Avances"><input class="carac-input" id="adv-e" type="number" min="0" max="99" value="0" aria-label="Endurance, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-e">0</span></td></tr>
+                                    <tr><th scope="row">I</th><td data-label="Base"><input class="carac-input" id="base-i" type="number" min="0" max="99" value="0" aria-label="Initiative, base"></td><td data-label="Avances"><input class="carac-input" id="adv-i" type="number" min="0" max="99" value="0" aria-label="Initiative, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-i">0</span></td></tr>
+                                    <tr><th scope="row">Ag</th><td data-label="Base"><input class="carac-input" id="base-ag" type="number" min="0" max="99" value="0" aria-label="Agilité, base"></td><td data-label="Avances"><input class="carac-input" id="adv-ag" type="number" min="0" max="99" value="0" aria-label="Agilité, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-ag">0</span></td></tr>
+                                    <tr><th scope="row">Dex</th><td data-label="Base"><input class="carac-input" id="base-dex" type="number" min="0" max="99" value="0" aria-label="Dextérité, base"></td><td data-label="Avances"><input class="carac-input" id="adv-dex" type="number" min="0" max="99" value="0" aria-label="Dextérité, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-dex">0</span></td></tr>
+                                    <tr><th scope="row">Int</th><td data-label="Base"><input class="carac-input" id="base-int" type="number" min="0" max="99" value="0" aria-label="Intelligence, base"></td><td data-label="Avances"><input class="carac-input" id="adv-int" type="number" min="0" max="99" value="0" aria-label="Intelligence, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-int">0</span></td></tr>
+                                    <tr><th scope="row">FM</th><td data-label="Base"><input class="carac-input" id="base-fm" type="number" min="0" max="99" value="0" aria-label="Force Mentale, base"></td><td data-label="Avances"><input class="carac-input" id="adv-fm" type="number" min="0" max="99" value="0" aria-label="Force Mentale, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-fm">0</span></td></tr>
+                                    <tr><th scope="row">Soc</th><td data-label="Base"><input class="carac-input" id="base-soc" type="number" min="0" max="99" value="0" aria-label="Sociabilité, base"></td><td data-label="Avances"><input class="carac-input" id="adv-soc" type="number" min="0" max="99" value="0" aria-label="Sociabilité, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-soc">0</span></td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -197,6 +172,7 @@
 
                     <!-- ══ RÉFÉRENCE CARRIÈRE ══ -->
                     <div id="career-detail-panel" style="display:none"></div>
+                    <div id="career-viewer-host" class="career-viewer-host" style="display:none"></div>
 
                     <!-- ══ HISTORIQUE DES CARRIÈRES ══ -->
                     <div class="fiche-section">

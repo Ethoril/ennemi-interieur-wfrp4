@@ -1,0 +1,887 @@
+{
+  "catalogVersion": "sha256:17f53a7224130e7058ad08e51cf580d03d5e64938c245c0039e6d88e29496032",
+  "fetchedAt": "2026-10-04",
+  "source": {
+    "kind": "google-sheets-public-snapshot",
+    "spreadsheetId": "1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs",
+    "worksheet": "Talents",
+    "gid": "1096647859"
+  },
+  "entries": [
+    {
+      "nom": "Acrobaties équestres",
+      "description": "Vous pouvez utiliser vos compétences de Représentation et d'Esquive (non modifiée) à cheval. En selle, vous pouvez effectuer votre Mouvement au tout début du Round au lieu d'attendre votre Tour.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Affable",
+      "description": "Octroie un bonus permanent de +5 en Sociabilité.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Âme pure",
+      "description": "Vous pouvez subir un nombre de points de Corruption supplémentaires égal à votre niveau d'Âme pure avant de devoir effectuer un test de mutation.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Artilleur",
+      "description": "Ajoute +1 DR (par niveau du talent) à tout Test étendu visant à recharger une arme à poudre noire.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Artiste",
+      "description": "Permet de réaliser des œuvres précises pour des commandes (avis de recherche, illustrations). Ajoute la compétence Art à n'importe quelle carrière (ou réduit son coût d'achat de 5 PX).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Assaut féroce",
+      "description": "Une fois par Round, si vous touchez un adversaire au corps à corps, vous pouvez immédiatement dépenser 1 Avantage ou votre Mouvement pour effectuer une attaque supplémentaire.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Assistant Magique (Magical Assistant)",
+      "description": "Le familier accorde un bonus de +20 aux tests de Magie de son maître.",
+      "source": "Archives of the Empire 3, Winds of Magic"
+    },
+    {
+      "nom": "Attirant",
+      "description": "Lors d'un test de Charme envers quelqu'un qui vous trouve attirant, vous pouvez utiliser comme résultat votre DR ou le chiffre des unités de votre dé (le meilleur des deux).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Baratiner",
+      "description": "Action : Test opposé Charme/Intelligence. En cas de succès, la cible gagne 1 État Sonné (+1 par niveau du talent). Elle ne peut qu'écouter béatement. L'effet cesse si vous arrêtez de parler.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Battement (Beat Blade)",
+      "description": "Action de combat forçant l'adversaire à perdre ses Avantages.",
+      "source": "Up in Arms"
+    },
+    {
+      "nom": "Béni d'Isha (Blessed of Isha)",
+      "description": "Prérequis spirituel permettant d'apprendre la Haute Magie.",
+      "source": "High Elf Players Guide, Lustria"
+    },
+    {
+      "nom": "Bénédiction de Lileath (Blessing of Lileath)",
+      "description": "=+1 DR aux tests de Haute Magie et maintien de multiples auras.",
+      "source": "High Elf Players Guide"
+    },
+    {
+      "nom": "Béni (Savoir divin)",
+      "description": "Permet d'apprendre et d'utiliser les Bénédictions (prières mineures) de votre divinité.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Bon marcheur (Terrain)",
+      "description": "Ignore toutes les pénalités de Mouvement sur le type de terrain choisi.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Bonnes jambes",
+      "description": "Ajoute votre niveau de talent au DR de tous vos tests d'Athlétisme impliquant un saut.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Bricoleur",
+      "description": "Considère toutes les compétences de Métier non magiques comme \"de Base\" lorsqu'il s'agit de réparer des objets cassés.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Brouet",
+      "description": "Vous pouvez subsister avec la moitié de la nourriture nécessaire sans malus. Un test de faim n'est exigé que tous les 3 jours (au lieu de 2).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Caïd",
+      "description": "Permet d'ignorer la perte de Statut engendrée par le talent Criminel.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Cavalier émérite",
+      "description": "Vous pouvez directement demander à votre monture d'effectuer une Action (et pas seulement un Mouvement) pendant le combat sans nécessiter de test de Chevaucher.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Chanceux",
+      "description": "Votre maximum de Points de Chance est égal à vos Points de Destin + votre niveau dans ce talent.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Charge berserk",
+      "description": "Ajoute +1 Dégât par niveau du talent à toutes vos attaques de corps à corps lors d'une action de Charge.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Chat de gouttière",
+      "description": "Permet d'inverser les dés d'un test de Discrétion (Urbaine) raté si cela le transforme en succès.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Chirurgie",
+      "description": "Permet de traiter les Blessures Critiques graves et d'opérer. Test étendu de Guérison (le patient subit 1d10 Blessures et 1 Saignement par test durant l'opération).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Claquer le fouet",
+      "description": "Si vous utilisez un fouet, la monture ou l'animal que vous contrôlez gagne +1 Mouvement s'il Fuit ou Court.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Cœur vaillant",
+      "description": "Permet de tenter un test de Calme à la fin de votre Tour (en plus de la fin du Round global) pour retirer un État Brisé.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Combat déloyal",
+      "description": "Inflige +1 Dégât supplémentaire par niveau lors des attaques réussies à mains nues (Corps à corps (Bagarre)).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Combat instinctif",
+      "description": "Augmente votre Initiative de base de +10 par niveau de talent pour déterminer l'ordre de combat.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Combattant au contact",
+      "description": "Aucune pénalité face à une arme plus longue. Si la règle optionnelle de Corps à corps au contact est utilisée, confère un bonus de +10 pour toucher.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Combattant en espace clos",
+      "description": "Ignore les pénalités de corps à corps dues aux espaces confinés (tunnels, etc.) et permet d'utiliser l'Esquive même sans espace de recul.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Commandant d'Équipage (Crew Commander)",
+      "description": "L'équipage d'une machine de guerre peut utiliser votre Capacité de Tir à la place de la sienne.",
+      "source": "Up in Arms, Dwarf Players Guide"
+    },
+    {
+      "nom": "Concocter",
+      "description": "Vous pouvez effectuer une activité d'Artisanat pour utiliser Savoir (Apothicaire) (potions, philtres) sans avoir besoin d'un atelier.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Contorsionniste",
+      "description": "Permet de se faufiler dans des espaces improbables. Offre des Avantages en jeu (déterminés par le MJ) via un test d'Agilité.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Contrôle de la Frénésie",
+      "description": "Permet de tenter un test de Calme à la fin du round pour mettre fin à votre état de Frénésie.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Coopératif",
+      "description": "Lors d'un test social réussi pour influencer un supérieur hiérarchique, vous pouvez utiliser votre DR ou le chiffre des unités de votre dé (le meilleur des deux).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Corruption Contrôlée (Controlled Corruption)",
+      "description": "Tire 2 fois la mutation et choisit le meilleur résultat.",
+      "source": "Power Behind the Throne Companion"
+    },
+    {
+      "nom": "Corruption Volontaire (Voluntary Corruption)",
+      "description": "Permet de relancer les dés d'une mutation (Tzeentch).",
+      "source": "Ennemi dans l'Ombre Companion"
+    },
+    {
+      "nom": "Costaud",
+      "description": "Augmente votre limite d'Encombrement maximale d'une valeur égale à (Niveau du talent x 2).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Coude-à-coude",
+      "description": "Si un ennemi vous fait perdre vos Avantages alors que vous êtes à côté d'un allié avec ce talent, vous conservez 1 Avantage par niveau de Coude-à-coude.",
+      "source": "Livre de base FR (2), Up in Arms"
+    },
+    {
+      "nom": "Coup puissant",
+      "description": "Ajoute +1 Dégât par niveau du talent à vos frappes réussies au corps à corps.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Criminel",
+      "description": "Augmente l'argent gagné via les activités illégales selon votre Statut (Bronze/Argent/Or). L'usage visible peut faire baisser votre Statut social.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Destinée",
+      "description": "Vous avez reçu une prophétie (ex: \"La mort vient d'en haut\"). Vous gagnez une forme d'immunité narrative empêchant la mort tant que les circonstances de la prophétie ne sont pas réunies.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Détection d'artefact",
+      "description": "Test d'Intuition en touchant un objet. Succès = vous sentez qu'il est magique. Chaque DR révèle une règle spéciale liée à l'objet.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Déterminé",
+      "description": "Ajoute le niveau du talent à votre Bonus de Force lors du calcul des dégâts d'une Charge.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Diction instinctive",
+      "description": "Vous ne subissez pas d'Incantation Imparfaite Mineure si vous obtenez un double réussi sur un test de Langue (Magick).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Disciple du Changement (Disciple of Change)",
+      "description": "Relancez deux fois lors de l'obtention d'une mutation.",
+      "source": "Ennemi dans l'Ombre Companion"
+    },
+    {
+      "nom": "Discret",
+      "description": "Vous pouvez utiliser les règles de Filature avec un simple Test de Perception ou de Discrétion (le plus haut) au lieu d'un Test Combiné complexe.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Distraire (Distract)",
+      "description": "Remplace votre Mouvement par un Test opposé Athlétisme/Calme. Si vous gagnez, l'adversaire ne gagne pas d'Avantage jusqu'à la fin du prochain round.",
+      "source": "Up in Arms"
+    },
+    {
+      "nom": "Doigts de fée",
+      "description": "Octroie un bonus permanent de +5 en Dextérité.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Double Vie (Double Life)",
+      "description": "Évolue dans deux Carrières simultanément pour maintenir une couverture parfaite.",
+      "source": "Ennemi dans l'Ombre Companion"
+    },
+    {
+      "nom": "Doué en calcul",
+      "description": "Calcule mentalement avec aisance. (Le joueur est autorisé à utiliser une calculatrice à la table).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Dur à cuire",
+      "description": "Vous gagnez un montant de Points de Blessure supplémentaires égal à votre Bonus d'Endurance.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Effraction",
+      "description": "Ajoute +1 Dégât par niveau pour briser des objets inanimés (portes, coffres, fenêtres).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Effrayant",
+      "description": "Donne un Indice de Peur de 1 (+1 par niveau additionnel) qui terrifie vos ennemis.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Endurci",
+      "description": "Vous pouvez ignorer la perte d'1 Point de Blessure causée par un État Hémorragique, par niveau du talent.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Ergoteur",
+      "description": "Lors d'un test de Charme pour débattre, utilise le DR ou le chiffre des unités du dé (le meilleur des deux).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Escroquer",
+      "description": "Test opposé d'Intelligence contre votre employeur lors d'un gain d'argent. Succès = vous détournez une somme d'argent variable sans vous faire prendre.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Exaltant",
+      "description": "Démultiplie de façon massive le nombre de soldats influencés par vos tests de Commandement.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Faire la manche",
+      "description": "Permet d'effectuer un Test de Charme (Mendicité) toutes les demi-heures au lieu de toutes les heures.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Feinte",
+      "description": "Fausse attaque (Action) via un Test opposé de CàC (Escrime)/CàC. Si vous gagnez, le DR obtenu s'ajoute au résultat de votre prochaine vraie attaque contre cette cible.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Ferveur ardente",
+      "description": "Vous doublez votre Caractéristique de Sociabilité pour calculer le nombre de personnes ciblées par votre talent Orateur quand vous défendez votre cause.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Flagellant",
+      "description": "Oblige à passer 30 min/jour à se blesser en priant. Permet ensuite d'entrer en Frénésie instantanément sans test. (Si non fait, interdit d'utiliser Résilience/Détermination).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Flairer les ennuis",
+      "description": "Permet un Test d'Intuition (souvent secret du MJ) pour repérer une embuscade/des perturbateurs. En cas de succès, vous ignorez l'État Surpris.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Frappe assommante",
+      "description": "Ignore le malus de -20 pour viser la Tête avec une arme Assommante. Les armes improvisées gagnent l'Atout Assommante pour vous.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Frappe blessante",
+      "description": "Vous infligez un montant de Blessures supplémentaires égal au niveau de ce talent lorsque vous causez une Blessure Critique.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Frappe précise",
+      "description": "Permet de modifier manuellement le jet inversé de Localisation d'une valeur de +/- 10 par niveau du talent (ex: changer un 34 en 14 ou 54).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Frappe réactive",
+      "description": "Si vous êtes Chargé, Test d'Initiative (+0). Succès = vous gagnez 1 Attaque gratuite immédiate avant l'ordre de combat normal. Limité à (Niv du talent) fois par Round.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Frénésie",
+      "description": "Permet d'entrer dans un état de rage meurtrière (cf. règles de Psychologie).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Fuite !",
+      "description": "Augmente votre Mouvement de +1 lorsque vous fuyez.",
+      "source": "Livre de base FR (2), Up in Arms"
+    },
+    {
+      "nom": "Grand orateur",
+      "description": "Gagnez +1 DR (par niveau) à n'importe quel Test de Charme quand vous parlez en public devant une foule.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Grimpeur",
+      "description": "Permet de grimper sur des surfaces impossibles (glace, murs lisses) sans subir les pénalités liées à la difficulté de la surface.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Guerrier né",
+      "description": "Octroie un bonus permanent de +5 en Capacité de Combat.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Guide fluvial",
+      "description": "Navigue sur eaux dangereuses sans test (jusqu'à une difficulté de -10). Avec Savoir (Région), la Orientation ne nécessite jamais de test.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Haine (Groupe)",
+      "description": "Donne le trait psychologique Haine contre un type d'ennemis.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Haine sacrée",
+      "description": "Ajoute +1 Dégât par niveau à vos Prières offensives.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Harmonisation aethyrique",
+      "description": "Évite de subir une Incantation Imparfaite si vous obtenez un double réussi lors d'un test de Focalisation.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Haute Magie (High Magic)",
+      "description": "Permet de canaliser Qhaysh et compenser l'absence de certains vents élémentaires.",
+      "source": "High Elf Players Guide, Lustria"
+    },
+    {
+      "nom": "Identité secrète",
+      "description": "Vous adoptez le Statut Social d'une autre Carrière choisie. Ignore la perte liée au talent Criminel. Requiert des tests de Représentation en cas de soupçon.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Imperturbable",
+      "description": "Octroie un bonus permanent de +5 en Force Mentale.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Impitoyable",
+      "description": "Lors d'un Désengagement, vous conservez 1 Avantage (par niv) et pouvez vous désengager même si vous possédez moins d'Avantages que vos adversaires.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Imprégné de Magie (Imbued with Magic)",
+      "description": "=+1 DR à tous les sorts lancés dans un rayon autour de vous.",
+      "source": "Ennemi dans l'Ombre Companion"
+    },
+    {
+      "nom": "Imprégné par le (Vent) (Imbued with [Wind])",
+      "description": "=+1 DR aux sorts de ce vent et octroie un effet aethyrique passif puissant.",
+      "source": "Winds of Magic"
+    },
+    {
+      "nom": "Inébranlable",
+      "description": "Le test de Calme contre la panique des armes à poudre noire n'est requis que si vous êtes réellement blessé, pas simplement ciblé.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Infatigable",
+      "description": "Ajoute +1 DR (par niv) à tous les Tests opposés de Force, et augmente votre Encombrement maximum de +1 par niveau.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Insignifiant",
+      "description": "Les personnes de Statut supérieur vous ignorent. Les ennemis de Statut supérieur ne gagnent aucun Avantage s'ils vous battent au combat.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Intrigant",
+      "description": "1 fois par session, posez une question sur un complot au MJ. Le MJ fait un test d'Int secret et donne des indices selon le DR.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Invocation (Savoir)",
+      "description": "Apprend un Miracle de votre divinité (100 PX pour le premier, puis +100 cumulatif). Interdit d'apprendre la Magie Mineure ou Arcanique.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Lecture rapide",
+      "description": "Inversez les dés d'un test de Recherche raté pour le réussir. En combat : lit un nb de pages/round = (DR + niveau du talent).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Linguistique",
+      "description": "Après 1 mois d'écoute, Test d'Intelligence. Succès = la Langue devient une compétence de Base. (Ne fonctionne pas avec le Magick).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Lire sur les lèvres",
+      "description": "Test de Perception pour comprendre ce que dit quelqu'un au loin s'il y a une ligne de vue dégagée sur sa bouche.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Lire/Écrire",
+      "description": "Permet d'être lettré (lire et écrire les langues parlées).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Loup de mer",
+      "description": "Ignore tous les malus de roulis, de tempête ou de météo en pleine mer. Vous comptez comme deux marins pour l'équipage minimal requis.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Mâchoires d'acier",
+      "description": "Quand vous subissez un État Sonné, Test de Résistance (+0) immédiat. Chaque DR annule 1 État Sonné.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Mage de guerre",
+      "description": "À votre Tour, permet de lancer un sort (NI 5 max) sans utiliser votre Action (gratuitement). Aucun autre sort ne peut être lancé ce tour.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Magie des Arcanes",
+      "description": "Accès à un Domaine.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Magie des Runes",
+      "description": "Accès aux rituels pour forger des Runes sur l'équipement.",
+      "source": "Dwarf Players Guide"
+    },
+    {
+      "nom": "Magie des Runes de Maître",
+      "description": "Permet d'inscrire les redoutables Runes Majeures.",
+      "source": "Dwarf Players Guide"
+    },
+    {
+      "nom": "Magie du Chaos",
+      "description": "Permet d'apprendre les magies destructrices des Dieux Sombres.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Magie mineure",
+      "description": "Apprend (Bonus FM) Sorts Mineurs. Les suivants coûtent (Bonus FM x paliers) x 50 PX.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Magnum opus",
+      "description": "Permet de créer un chef-d'œuvre avec une compétence de Métier. Donne des bonus sociaux majeurs et se vend 10x le prix normal.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Mains agiles",
+      "description": "Les passants n'ont pas de Test de Perception passif pour voir vos vols (Escamotage). +10 (par niv) pour juste toucher (sans blesser) qqn en Bagarre.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Maître en Déguisement",
+      "description": "Tests concernés : Divertissement (Interprétation) lorsque vous êtes quelqu’un d’autre. Description : Vous excellez à prendre l’apparence et les manières des autres. Avec rien d’autre que des changements de posture, une torsion du visage et l’utilisation judicieuse de vêtements appropriés, vous parvenez à ne plus vous ressembler du tout sans même avoir besoin d’utiliser un nécessaire de déguisement. Ce talent est si efficace qu'il vous permet même de vous faire passer pour quelqu’un d'un sexe différent",
+      "source": ""
+    },
+    {
+      "nom": "Maîtrise des dés",
+      "description": "Vous permet d'utiliser le dé des unités ou le DR lors d'une partie de dés.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Maîtrise du combat",
+      "description": "Vous comptez pour un combattant supplémentaire face au surnombre.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Maniement de 2 armes",
+      "description": "Permet de lancer deux attaques distinctes avec la main secondaire (en ignorant certaines pénalités de main non-directrice).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Marinier",
+      "description": "Ignore les pénalités environnementales sur les navires fluviaux. Vous comptez comme deux bateliers dans l'équipage minimal.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Matraqueur (Pummeller)",
+      "description": "Ajoute des états Sonné supplémentaires lorsque vous utilisez l'atout Assommante.",
+      "source": "Dwarf Players Guide"
+    },
+    {
+      "nom": "Menaçant",
+      "description": "Ajoute le niveau du talent en DR à vos tests d'Intimidation.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Menteur",
+      "description": "Vos mensonges racontés avec Charme ne peuvent pas être détectés par un test d'Intuition passif de l'auditeur.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Négociateur",
+      "description": "Modifie le prix de + ou - 10% lors d'un test de Marchandage réussi.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Noblesse",
+      "description": "Toujours considéré d'un Statut supérieur aux autres (sauf s'ils ont ce talent), à condition d'être habillé de manière appropriée.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Noctambule",
+      "description": "Inversez le résultat de n'importe quel Test de Résistance à l'alcool raté si cela entraîne un succès.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Nomade",
+      "description": "Rôder en milieu sauvage ne déclenche pas de jets de Perception passifs chez les cibles non méfiantes.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Numismate",
+      "description": "Juge la valeur exacte d'une pièce sans test. Repère les fausses pièces d'un simple test d'Évaluation (non opposé au faussaire).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Obstiné",
+      "description": "Ajoute votre niveau de talent à votre limite maximale de Détermination.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Œil du chasseur",
+      "description": "Permet de nourrir automatiquement le groupe en chassant.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Orateur",
+      "description": "Démultiplie la taille de la foule influencée avec Charme.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Oreille absolue",
+      "description": "Reproduit les notes sans test. Ajoute Divertissement (Chant) à toute carrière (ou coûte 5 PX de moins).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Pansement de fortune",
+      "description": "Inverse les dés d'un test de Guérison raté (max +1 DR) si l'on agit dans l'urgence en plein combat.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Pas de côté",
+      "description": "Si vous remportez un Test d'Esquive face à une attaque au CàC, vous pouvez vous déplacer de 2m pour vous désengager sans attaque d'opportunité.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Pêcheur",
+      "description": "Avec 1h de pêche (minimum), nourrit automatiquement un nb de personnes égal à votre niveau de talent.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Perception de la Magie",
+      "description": "Test d'Intuition (+20) face à un mage : Succès = identifié comme sorcier. Succès +6 DR = détecte sa spécialisation exacte.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Persévérant",
+      "description": "Double le temps de résistance aux privations ou conditions extrêmes sur un test réussi.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Perspicace",
+      "description": "Octroie un bonus permanent de +5 en Intelligence.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Petit",
+      "description": "Personnage de Taille Petite (modifie dégâts subis/infligés selon les règles de Taille du Bestiaire).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Pharmacologie",
+      "description": "Vous pouvez inverser les dés de n'importe quel Test de Métier (Apothicaire) raté si cela permet d'obtenir un succès.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Pied marin",
+      "description": "Immunité totale aux pénalités et tests de mal de mer (sauf magie/tempêtes extrêmes).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Pilote",
+      "description": "Si vous ratez un test de Voile/Ramer en eaux dangereuses, vous pouvez inverser les dés (Max +1 DR) pour éviter le danger in extremis.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Porte-bouclier",
+      "description": "Même si vous ratez une parade au bouclier, vous gagnez un nb d'Avantages égal à votre niveau de talent.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Présence imposante",
+      "description": "Les personnes d'un Statut inférieur ne peuvent pas utiliser leur Force Mentale pour s'opposer à vos tests de Commandement.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Prévoyant",
+      "description": "X fois par session (X = niveau), \"découvrez\" dans votre sac un objet utile non encombrant, payé rétroactivement.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Rancune Ancestrale (Ancestral Grudge)",
+      "description": "Obligation mortelle d'éradiquer Orcs, Gobelins et Skavens.",
+      "source": "Dwarf Players Guide"
+    },
+    {
+      "nom": "Rat d'égout",
+      "description": "Rôder en souterrain ne déclenche pas de jets de Perception passifs chez les ennemis.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Rechargement rapide",
+      "description": "Ajoute le niveau du talent en DR à tout Test étendu pour recharger une arme à distance.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Réflexes foudroyants",
+      "description": "Octroie un bonus permanent de +5 en Agilité.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Renversement",
+      "description": "Au lieu de gagner 1 Avantage en remportant un test opposé, vous volez tous les Avantages de la cible.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Résistance (Menace)",
+      "description": "Réussit automatiquement le 1er test de la séance face à une menace (Poison/Maladie).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Résistance à la Magie",
+      "description": "Réduit passivement le DR de tous les sorts vous ciblant.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Riposte",
+      "description": "Si vous remportez un test de défense avec une arme Rapide, vous infligez directement des dégâts comme si c'était votre Action. Limité à (niv) fois par round.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Robuste",
+      "description": "Réduit tous les dégâts subis de 1 point par niveau du talent (pour un minimum de 1 dégât encaissé quoi qu'il arrive).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Sang d'Aenarion (Blood of Aenarion)",
+      "description": "Confère +1 Point de Destin et réduit le coût d'achat des sorts/talents.",
+      "source": "High Elf Players Guide"
+    },
+    {
+      "nom": "Sans peur (Ennemi spécifique)",
+      "description": "permet d'ignorer les effets d'Intimidation, de Peur ou de Terreur de l'ennemi spécifié en réussissant un simple Test de Calme Accessible (+20)",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Saut carpé",
+      "description": "Si mis À Terre, Test d'Athlétisme (+0) immédiat pour retomber sur ses pieds. Modifié de -10 par tranche de 10 points de Force du coup au-dessus de votre Endurance.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Savant (Savoir)",
+      "description": "Vous connaissez automatiquement, sans aucun test, un nb d'informations expertes exactes égal à votre niveau de talent sur le sujet de votre spécialisation.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Savoir-vivre (Groupe)",
+      "description": "Permet de s'intégrer socialement sans pénalité à une faction spécifique (Nobles, Criminels...).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Seconde vue",
+      "description": "Octroie la capacité sensorielle de voir les Vents de la Magie, les auras et de suivre les traces magiques.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Seigneur de guerre",
+      "description": "Tous vos subordonnés capables de vous voir peuvent ajouter votre niveau de talent au DR d'un test de Force Mentale par round.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Sociable",
+      "description": "Inverse un test de Ragot raté pour le transformer en succès.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Sorcier !",
+      "description": "Ajoute Langue (Magick) à toute carrière. Dépensez 1 point de Résilience pour lancer et mémoriser (0 PX) un sort de n'importe quel Domaine. Limité à (niv) utilisations.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Sort Supplémentaire (Additional Spell)",
+      "description": "Offre la possibilité d'utiliser un sort hors liste (Slaanesh).",
+      "source": "Power Behind the Throne Companion"
+    },
+    {
+      "nom": "Souplesse féline",
+      "description": "Test d'Athlétisme en tombant : un succès réduit la distance de chute de 1m (+1m par DR). Si distance réduite à 0, vous ne prenez aucun dégât.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Sprinter",
+      "description": "Votre attribut de Mouvement compte comme étant augmenté de +1 uniquement lorsque vous Courez.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Studieux",
+      "description": "Inverse les dés d'un test de Recherche raté pour le transformer en succès.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Suborneur",
+      "description": "Le MJ réduit le coût de base de tout pot-de-vin de 10% par niveau du talent (jusqu'à un minimum de 10% du coût initial).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Tête Brûlée",
+      "description": "Annule la pénalité de -20 pour les tirs à distance en vol.",
+      "source": "Dwarf Players Guide"
+    },
+    {
+      "nom": "Tir mortel",
+      "description": "Choisissez vous-même la Localisation de votre tir à distance réussi (au lieu de devoir inverser votre dé).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Tir précis",
+      "description": "Votre niveau de talent s'ajoute aux Dégâts infligés par toutes vos armes à distance.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Tir rapide",
+      "description": "Si votre arme est chargée, vous pouvez faire feu avant l'ordre d'Initiative au début du round suivant, mais cela consomme votre Mouvement et Action du tour à venir.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Tir sûr",
+      "description": "Vous ignorez un nombre de Points d'Armure (PA) de la cible égal à votre niveau de talent lors d'un tir réussi.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Tireur d'élite",
+      "description": "Ignore tous les modificateurs de difficulté liés à la Taille de votre cible.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Tireur de précision",
+      "description": "Octroie un bonus permanent de +5 en Capacité de Tir.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Tireur embusqué",
+      "description": "Vous ne subissez aucune pénalité lors d'un tir à Longue distance, et divisez par deux les pénalités à Portée extrême.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Tour des souvenirs",
+      "description": "Mémorise une longue suite d'événements égale à votre Int. Les suites supplémentaires demandent des tests d'Int (+20 à -30). Donne un gros bonus aux jeux de Paris (+20 à +60).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Trappeur",
+      "description": "Le MJ fait un test de Perception secret pour vous permettre de détecter automatiquement les pièges sans l'annoncer.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Travailleur qualifié",
+      "description": "Réduit de (votre niveau de talent) le total de DR exigés pour terminer un projet (Test étendu de Métier).",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Très fort",
+      "description": "Octroie un bonus permanent de +5 en Force.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Très résistant",
+      "description": "Octroie un bonus permanent de +5 en Endurance.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Tricheur",
+      "description": "Cartes (Pari/Escamotage) : utilisez le DR ou le dé des unités (le meilleur). Recevez +1 carte supp/niv à la donne, puis défaussez pour optimiser votre main.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Tueur",
+      "description": "Remplace votre Bonus de Force par l'Endurance ennemie si plus élevée. Sur un Critique contre un monstre plus grand, vos Dégâts de CàC sont multipliés par l'écart de catégories de Taille !",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Véloce",
+      "description": "Octroie un bonus permanent de +1 à votre attribut de Mouvement.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Vigilance",
+      "description": "Test de Perception (+0) face au danger : Succès = vous ignorez totalement l'État Surpris.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Vision nocturne",
+      "description": "Vous voyez parfaitement dans les ténèbres naturelles jusqu'à 20m par niveau de talent s'il y a un minimum de lumière ambiante.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Vision sacrée",
+      "description": "Vous savez automatiquement quand vous entrez sur un sol sacré, et pouvez effectuer un Test d’Intuition pour recevoir des visions (souvent obscures et interprétées via le paradigme de votre culte ou de votre système individuel de croyance) concernant la localité si des événements importants ont eu lieu ici par le passé",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Vivacité",
+      "description": "Octroie un bonus permanent de +5 en Initiative.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Volonté de fer",
+      "description": "L'utilisation de l'Intimidation contre vous ne provoque pas la Peur et ne vous empêche pas de vous y opposer.",
+      "source": "Livre de base FR (2)"
+    },
+    {
+      "nom": "Voyageur aguerri",
+      "description": "Ajoute Savoir (Région) à toute carrière entamée. (Ou permet de l'acheter 2x pour 5 PX de moins si déjà présent).",
+      "source": "Livre de base FR (2)"
+    }
+  ]
+}

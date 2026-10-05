@@ -137,6 +137,25 @@
   color: var(--text-secondary);
   line-height: 1.6;
 }
+.ui-confirm-input-wrap {
+  margin: 0 0 var(--space-lg);
+}
+.ui-confirm-input-label {
+  display: grid;
+  gap: var(--space-xs);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+.ui-confirm-input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-sm) var(--space-md);
+  color: var(--text-primary);
+  background: var(--bg-darkest);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
 .ui-confirm-actions {
   display: flex;
   justify-content: flex-end;
@@ -176,4 +195,44 @@
   background: var(--blood);
   border-color: var(--blood);
 }
+
+.contribution-dialog {
+  width: min(42rem, calc(100vw - 2rem));
+  max-height: min(88vh, 52rem);
+  overflow: auto;
+  padding: 1.25rem;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 45%);
+}
+.contribution-dialog::backdrop { background: rgb(0 0 0 / 68%); }
+.contribution-dialog form { display: grid; gap: 0.9rem; }
+.contribution-dialog h2 { margin: 0; color: var(--text-heading); font-family: var(--font-heading); }
+.contribution-dialog label { display: grid; gap: 0.35rem; color: var(--text-secondary); }
+.contribution-dialog input:not([type="checkbox"]),
+.contribution-dialog input[type="file"],
+.contribution-dialog textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.6rem;
+  padding: 0.55rem 0.7rem;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+.contribution-dialog textarea { resize: vertical; }
+.contribution-dialog input:focus-visible,
+.contribution-dialog textarea:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+.contribution-dialog .contribution-status { margin: 0; color: var(--text-secondary); white-space: pre-line; }
+.contribution-launch-status { color: var(--text-danger, var(--blood)); margin: .4rem 0 0; max-width: 42rem; white-space: pre-line; }
+.contribution-dialog .contribution-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.6rem; }
+.contribution-trash-dialog { width: min(52rem, calc(100vw - 2rem)); }
+.contribution-trash-list { display: grid; gap: .7rem; }
+.contribution-trash-entry { border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: .8rem; }
+.contribution-trash-entry h3 { margin: 0 0 .25rem; color: var(--text-heading); }
+.contribution-trash-meta,.contribution-trash-empty { color: var(--text-muted); margin: 0 0 .6rem; }
 

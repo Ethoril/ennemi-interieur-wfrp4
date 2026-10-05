@@ -69,6 +69,25 @@ jobs:
             node --check "$f"
           done
 
+  fiche-domain:
+    name: Synchronisation du domaine fiche
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - name: Installer les dépendances Functions
+        run: npm ci --prefix functions
+      - name: Vérifier les sources générées
+        run: node tools/sync-fiche-domain.mjs --check
+      - name: Tester le moteur et le contrôleur navigateur
+        run: node --test tools/fiche-*.test.mjs tools/catalogue-*.test.mjs tools/j2-contribution-client.test.mjs tools/contributions-editor.test.mjs
+      - name: Tester les callables et le domaine fiche
+        run: npm --prefix functions test
+
   lint:
     name: ESLint
     runs-on: ubuntu-latest
@@ -80,3 +99,26 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run lint
+
+  j2-emulators:
+    name: Contributions J2 (émulateurs locaux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Installer les outils racine
+        run: npm ci
+      - name: Installer les dépendances Functions
+        run: npm ci --prefix functions
+      - name: Tester les règles J2 dans Firestore Emulator
+        run: npm run test:j2-rules
+      - name: Tester les services J2 avec Admin SDK dans Firestore Emulator
+        run: npm run test:j2-services

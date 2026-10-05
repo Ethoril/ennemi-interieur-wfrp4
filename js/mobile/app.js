@@ -10,6 +10,8 @@ import { createEnqueteDetailView } from './views/enquete-detail.js';
 import { createEnquetesMjListView, clearEnquetesMjListMemory } from './views/enquetes-mj-list.js';
 import { createEnqueteEditView } from './views/enquete-edit.js';
 import { createPnjEditView } from './views/pnj-edit.js';
+import { createFicheAccessView } from './views/fiche-access.js';
+import { getContributionClient, logoutContributionAccount, signInContribution } from './contribution-runtime.js';
 import { createAdminRouteController } from './admin-route-controller.js';
 import { createPublicDraftStore } from './drafts-store.js';
 import { createEnquetesDraftStore } from './enquetes-drafts-store.js';
@@ -39,11 +41,13 @@ function placeholderView({ container, title, message, actionLabel = '', onAction
 function sectionForRoute(route) {
     if (route?.name?.startsWith('enquete')) return 'enquetes';
     if (route?.name === ROUTE_NAMES.REGLAGES) return 'reglages';
+    if (route?.name === ROUTE_NAMES.FICHES) return 'fiches';
     return 'pnjs';
 }
 
 function sectionHash(section) {
     if (section === 'enquetes') return '#/enquetes';
+    if (section === 'fiches') return '#/fiches';
     if (section === 'reglages') return '#/reglages';
     return '#/pnjs';
 }
@@ -68,7 +72,9 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
     let unsubscribePublic = null;
     let unsubscribeMj = null;
     let unsubscribePwa = null;
+    let unsubscribeContribution = null;
     let mounted = false;
+    let contributionState = { user: null, capabilities: { role: 'public', contribution: false } };
     const allDraftStores = [...new Set([draftStore, ...draftStores].filter(store => store && typeof store.clear === 'function'))];
     const render = () => {
         if (!mounted) return;
@@ -95,18 +101,26 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
                 : 'La connexion MJ n’a pas abouti. Vous pouvez réessayer.';
             section.append(error);
         }
+        const contributionIdentity = documentRef.createElement('p');
+        contributionIdentity.textContent = contributionState.user
+            ? contributionState.capabilities.contribution ? 'Session de contribution active.' : 'Compte connecté sans accès de contribution.'
+            : 'Aucune session de contribution active.';
+        section.append(contributionIdentity);
         const action = documentRef.createElement('button');
         action.type = 'button';
         action.className = 'm-button m-button-primary';
         const busy = ['checking', 'signing-in', 'signing-out'].includes(state.status);
         action.disabled = busy;
         action.setAttribute('aria-disabled', String(busy));
-        action.textContent = state.status === 'gm' || state.status === 'authenticated-non-gm'
+        const hasAnyAccount = state.status === 'gm' || state.status === 'authenticated-non-gm' || Boolean(contributionState.user);
+        action.textContent = hasAnyAccount
             ? 'Déconnexion' : 'Connexion Google';
         action.addEventListener('click', () => {
             if (busy) return;
-            return state.status === 'gm' || state.status === 'authenticated-non-gm'
-                ? mjSession.signOut() : mjSession.signIn();
+            if (hasAnyAccount) {
+                return Promise.allSettled([mjSession.signOut(), logoutContributionAccount()]);
+            }
+            return mjSession.signIn();
         });
         section.append(action);
         const cache = documentRef.createElement('p');
@@ -176,6 +190,9 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
             mounted = true;
             unsubscribePublic = publicSession.subscribe(render);
             unsubscribeMj = mjSession.subscribe(render);
+            void getContributionClient().then(client => {
+                if (mounted) unsubscribeContribution = client.watch(value => { contributionState = value; render(); }, () => render());
+            }).catch(() => {});
             unsubscribePwa = pwa?.subscribe(render) || null;
             render();
         },
@@ -184,9 +201,11 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
             unsubscribePublic?.();
             unsubscribeMj?.();
             unsubscribePwa?.();
+            unsubscribeContribution?.();
             unsubscribePublic = null;
             unsubscribeMj = null;
             unsubscribePwa = null;
+            unsubscribeContribution = null;
             container.replaceChildren();
         },
     });
@@ -236,6 +255,9 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             getImageService: () => session.getImages(),
             onRetry: retry,
             getSession: () => mjSession,
+            getContributionClient,
+            signInContribution,
+            announce: message => announce(routeStatus, message),
             onCreate: () => router.navigate({ name: ROUTE_NAMES.PNJ_NEW }),
         }),
         [ROUTE_NAMES.PNJ]: route => createPnjDetailView({
@@ -247,6 +269,8 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             onRetry: retry,
             getSession: () => mjSession.getState(),
             onEdit: () => router.navigate({ name: ROUTE_NAMES.PNJ_EDIT, id: route.id }),
+            getContributionClient,
+            signInContribution,
             announce: message => announce(routeStatus, message),
         }),
         [ROUTE_NAMES.PNJ_NEW]: () => {
@@ -277,12 +301,16 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
                 onEdit: id => router.navigate({ name: ROUTE_NAMES.ENQUETE_EDIT, id }),
             });
             return createEnquetesListView({ container, store, getImageService: () => session.getImages(), onRetry: retry,
+                getContributionClient, signInContribution, announce: message => announce(routeStatus, message),
                 onOpen: id => router.navigate({ name: ROUTE_NAMES.ENQUETE, id }) });
         },
         [ROUTE_NAMES.ENQUETE]: route => createEnqueteDetailView({
             container, id: route.id, store, getImageService: () => session.getImages(), onRetry: retry,
             onBack: () => router.back(),
             onOpenPnj: id => router.navigate({ name: ROUTE_NAMES.PNJ, id }),
+            getContributionClient,
+            signInContribution,
+            announce: message => announce(routeStatus, message),
         }),
         [ROUTE_NAMES.ENQUETE_NEW]: () => {
             const state = mjSession.getState();
@@ -290,6 +318,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             if (state.status !== 'gm' || state.role !== 'mj' || !state.user?.uid) return placeholderView({ container, title: 'Accès MJ requis', message: 'Cette action est réservée au MJ.', actionLabel: 'Retour', onAction: () => router.back() });
             return createEnqueteEditView({ container, getSession: () => mjSession.getState(), getRepository: () => mjSession.getState().private?.repositories?.indices,
                 getPnjRepository: () => mjSession.getState().private?.repositories?.pnjs, getImageService: () => mjSession.getState().private?.repositories?.images,
+                getContributionClient: () => mjSession.getState().private?.contributions,
                 draftStore: enqueteDraftStore, isOnline: () => windowRef.navigator?.onLine !== false,
                 onBack: () => router.back({ skipGuard: true }), onNavigate: target => router.navigate(parseRoute(target), { replace: true, skipGuard: true }), announce: message => announce(routeStatus, message) });
         },
@@ -299,11 +328,23 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             if (state.status !== 'gm' || state.role !== 'mj' || !state.user?.uid) return placeholderView({ container, title: 'Accès MJ requis', message: 'Cette action est réservée au MJ.', actionLabel: 'Retour', onAction: () => router.back() });
             return createEnqueteEditView({ container, id: route.id, getSession: () => mjSession.getState(), getRepository: () => mjSession.getState().private?.repositories?.indices,
                 getPnjRepository: () => mjSession.getState().private?.repositories?.pnjs, getImageService: () => mjSession.getState().private?.repositories?.images,
+                getContributionClient: () => mjSession.getState().private?.contributions,
                 draftStore: enqueteDraftStore, isOnline: () => windowRef.navigator?.onLine !== false,
                 onBack: () => router.back({ skipGuard: true }), onNavigate: target => router.navigate(parseRoute(target), { replace: true, skipGuard: true }), announce: message => announce(routeStatus, message) });
         },
         [ROUTE_NAMES.REGLAGES]: () => placeholderView({
             container, title: 'Réglages', message: 'Chargement des réglages…',
+        }),
+        [ROUTE_NAMES.FICHES]: () => createFicheAccessView({
+            container, documentRef,
+            getClient: getContributionClient,
+            signIn: signInContribution,
+            onOpenFiche: id => {
+                const target = `../fiche.html?char=${encodeURIComponent(id)}&return=mobile`;
+                if (typeof windowRef.location?.assign === 'function') windowRef.location.assign(target);
+                else windowRef.location.href = target;
+            },
+            announce: message => announce(routeStatus, message),
         }),
         [ROUTE_NAMES.PNJ_EDIT]: route => {
             const status = mjSession.getState();
@@ -320,6 +361,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
                 getRelationsRepository: () => mjSession.getState().private?.repositories?.relations,
                 getPnjRepository: () => mjSession.getState().private?.repositories?.pnjs,
                 getImageService: () => mjSession.getState().private?.repositories?.images,
+                getContributionClient: () => mjSession.getState().private?.contributions,
                 onBack: () => router.back({ skipGuard: true }), onNavigate: target => router.navigate(parseRoute(target), { replace: true, skipGuard: true }),
                 announce: message => announce(routeStatus, message) });
         },
@@ -343,7 +385,8 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             // Quitter la section PNJs périme la carte ouverte : au retour, le focus va au h1.
             if (section !== 'pnjs') forgetOpenedPnjCard();
             documentRef.title = documentTitleForRoute(route);
-            title.textContent = section === 'pnjs' ? 'PNJs' : section === 'enquetes' ? 'Enquêtes' : 'Réglages';
+            title.textContent = section === 'pnjs' ? 'PNJs' : section === 'enquetes' ? 'Enquêtes'
+                : section === 'fiches' ? 'Fiches' : 'Réglages';
             // La vue désigne son point d'entrée (nom de la fiche, carte d'où l'on revient) ; sinon le h1.
             (view?.focusTarget?.() || title).focus?.({ preventScroll: true });
             back.hidden = !(route.name === ROUTE_NAMES.PNJ || route.name === ROUTE_NAMES.PNJ_NEW || route.name === ROUTE_NAMES.PNJ_EDIT
@@ -433,6 +476,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             themeToggle?.removeEventListener('click', onThemeToggle);
             await session.stop();
             await mjSession.stop();
+            await logoutContributionAccount().catch(() => {});
         })();
         return stopPromise;
     };

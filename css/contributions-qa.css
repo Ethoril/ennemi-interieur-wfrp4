@@ -1,0 +1,20 @@
+.contributions-qa { min-height: 100vh; padding-bottom: 3rem; }
+.contributions-qa .page-container { max-width: 1180px; }
+.qa-banner,.qa-card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md, .7rem); padding: clamp(1rem, 3vw, 1.5rem); }
+.qa-banner { margin: 1rem 0 1.5rem; }
+.qa-banner h1,.qa-card h2 { color: var(--text-heading); font-family: var(--font-heading); }
+.qa-tag { color: var(--gold-bright); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.qa-toolbar { display: flex; flex-wrap: wrap; gap: .5rem; }
+.qa-toolbar button { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: .45rem; color: var(--text-primary); cursor: pointer; min-height: 2.7rem; padding: .45rem .8rem; }
+.qa-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); }
+.qa-card { min-width: 0; }
+.qa-ops { margin-top: 1rem; }
+.qa-ops pre { background: var(--bg-darkest); border: 1px solid var(--border-subtle); border-radius: .45rem; color: var(--text-primary); max-height: 18rem; overflow: auto; padding: .75rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.contributions-qa.qa-mobile-preview { max-width: 390px; margin-inline: auto; }
+.contributions-qa.qa-mobile-preview .page-container { padding-inline: .65rem; }
+.qa-card .contribution-dialog { max-width: min(44rem, calc(100vw - 2rem)); }
+@media (max-width: 600px) {
+  .qa-banner { margin-top: .5rem; }
+  .qa-toolbar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .qa-toolbar button { min-width: 0; }
+}

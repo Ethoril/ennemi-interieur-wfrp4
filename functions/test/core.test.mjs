@@ -70,6 +70,31 @@ test('uploadProtectedImage est idempotent, refuse les conflits et ne renvoie que
     assert.equal(cleanupSignal.error.code, 503);
 });
 
+test('une autorisation serveur explicitement injectée ouvre l’upload joueur après validation, le défaut reste MJ seul', async () => {
+    const player = { auth: { uid: 'player-1', token: { email: 'player@example.test', email_verified: true } } };
+    const payloadData = payload();
+    const defaultBucket = fakeBucket();
+    await assert.rejects(uploadProtectedImage(payloadData, player, { bucket: defaultBucket }), /MJ vérifiée/u);
+    assert.equal(defaultBucket.objects.size, 0);
+
+    const bucket = fakeBucket();
+    let authorizedDescriptor;
+    let completedDescriptor;
+    const dependencies = {
+        bucket,
+        authorizeUpload: async descriptor => { authorizedDescriptor = descriptor; return true; },
+        onUploadComplete: async descriptor => { completedDescriptor = descriptor; },
+    };
+    const result = await uploadProtectedImage(payloadData, player, dependencies);
+    assert.deepEqual(result, { imagePath: 'portraits/pnj-1/portrait-op-1.png' });
+    assert.deepEqual(authorizedDescriptor, completedDescriptor);
+    assert.equal(authorizedDescriptor.size, png.length);
+    assert.equal(authorizedDescriptor.md5Hash, createHash('md5').update(png).digest('base64'));
+
+    await assert.rejects(uploadProtectedImage(payload({ contentType: 'image/jpeg' }), player, dependencies), /signature/u);
+    await assert.rejects(uploadProtectedImage(payload({ base64: Buffer.alloc(2 * 1024 * 1024 + 3, 1).toString('base64') }), player, dependencies), /volumineux/u);
+});
+
 test('limite indice et taille encodée sont refusées avant décodage complet', () => {
     const exact = Buffer.alloc(5 * 1024 * 1024, 0);
     exact[0] = 0xff; exact[1] = 0xd8; exact[2] = 0xff;

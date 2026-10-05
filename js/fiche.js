@@ -1,9 +1,27 @@
 import { esc, stripAccents, parseCSV } from './utils.js';
-import { cloudSave } from './fiche-cloud.js';
-import { confirmAction } from './ui-confirm.js';
+import { cloudSave, stageFicheDraft } from './fiche-client-bridge.js';
+import { confirmTextAction } from './ui-confirm.js';
+import { activeCareerRank, findCareerByName, getActiveVariantForRang as getActiveVariantForRangModel, getCareerCaracs as getCareerCaracsModel, getCareerSkillSets, getCareerTalentSets, getEffectiveCaracs as getEffectiveCareerCaracs, getEffectiveSkills as getEffectiveCareerSkills, getRangVariants, getVariantsToConsider as getVariantsToConsiderModel } from './fiche/career-model.js';
+import { BASIC_SKILLS, basicRowFor as findBasicRow, basicSkillNom as resolveBasicSkillNom } from './fiche/basic-skills.js';
+import { canonicalSkillNom, expandChoiceSkill, isOpenCareerSlot, OPEN_SPEC_PATTERN, sameSkill, skillBaseNom } from './fiche/skill-names.js';
+import { CARAC_XP_BANDS, SKILL_XP_BANDS, careerRankXpCost, miracleXpCost as calculateMiracleXpCost, spellXpCost as calculateSpellXpCost, talentXpCost, xpBandCost } from './fiche/xp.js';
+import { createPublishedCatalogueEngine } from './fiche/published-catalogue-engine.js';
+import { createCareerViewer } from './fiche/career-viewer.js';
+import { migrateFicheDocument } from './fiche-schema.js';
 
 // Promesse de chargement des bases de données JSON et statut du cloud
-export const dbLoadingPromise = Promise.all([loadCareersData(), loadSkillsData()]);
+let _ruleCatalog = null;
+let _publishedCatalogue = null;
+let _talentSheetSnapshot = null;
+let _activeFicheRole = 'joueur';
+let _localCommandEngine = null;
+let _serverBaselineData = null;
+let _correctionDraftItems = [];
+let _correctionConflicts = [];
+let _correctionReasonDraft = '';
+let _canImportFiche = false;
+let _careerViewer = null;
+export const dbLoadingPromise = Promise.all([loadCareersData(), loadSkillsData(), loadRuleCatalog()]);
 export let isCloudLoaded = false;
 
 
@@ -16,7 +34,6 @@ const MOUVEMENT = {
     elfe:5, halfling:4, nain:3, // rétrocompat anciennes sauvegardes
 };
 const _charParam = new URLSearchParams(window.location.search).get('char');
-const STORAGE_KEY = 'wfrp4-fiche-' + (_charParam || 'test');
 
 const PORTRAITS = {
     bhelgi:  { src: 'img/Bhelgi.webp',  alt: 'Bhelgi'  },
@@ -28,159 +45,85 @@ const PORTRAITS = {
 const PORTRAIT_KEYS = Object.keys(PORTRAITS);
 
 // Slot de carrière ouvert : "(au choix)" ou catégorie générique à choisir
-const OPEN_SPEC_PATTERN   = /\((?:.*?\bchoix\b|n'importe quelle|celle du lanceur).*?\)$/i;
-const GENERIC_SPEC_WORDS  = new Set(['Région','Localité','Langue','Commerce','Peuple','Matériau','Arme','Ennemi','Organisation','Divinité','Vent']);
-function isOpenCareerSlot(s) {
-    if (OPEN_SPEC_PATTERN.test(s)) return true;
-    const m = s.match(/\(([^)]+)\)$/);
-    return m ? GENERIC_SPEC_WORDS.has(m[1].trim()) : false;
-}
-
-// Noms équivalents d'une même compétence, ramenés à une seule forme pour
-// comparer fiche et carrières (validé avec le MJ). « Conn. X » est « Savoir (X) ».
-// Clés en minuscules.
-const SKILL_NAME_ALIASES = {
-    'chevaucher (cheval)':     'Chevaucher',
-    'langage de bataille':     'Langue (Bataille)',
-    'lecture sur les lèvres':  'Lire sur les lèvres',
-    'signe secrets ranger':    'Signes secrets (Ranger)',
-    'représentation (acteur)': 'Divertissement (Acteur)',
-    'métier (calligraphe)':    'Art (Calligraphie)',
-    'métier (cartographe)':    'Art (Cartographie)',
-    'métier (graveur)':        'Art (Gravure)',
-};
-// Spécialisations équivalentes, par compétence : { compétence: { spé: spé canonique } }.
-const SKILL_SPEC_ALIASES = {
-    'savoir': {
-        'art de la guerre': 'Guerre', 'prophéties': 'Prophétie', 'locale': 'Local',
-        "l'empire": 'Empire', 'droit': 'Loi', 'démons': 'Démonologie',
-        'plantes': 'Herbes', 'généalogie': 'Noble',
-    },
-    'corps à corps':   { "arme d'hast": "Armes d'hast", 'fléaux': 'Fléau', 'lourde': 'Deux mains' },
-    'projectiles':     { 'lancer': 'Jet', 'armes de jet': 'Jet', 'armes à poudre': 'Poudre noire',
-                         'arbalète de poing': 'Arbalète' },
-    'discrétion':      { 'souterraine': 'Souterrains' },
-    'dressage':        { 'chiens': 'Chien', 'chevaux': 'Cheval', 'pigeons': 'Pigeon', 'blaireaux': 'Blaireau' },
-    'signes secrets':  { 'chasseurs': 'Chasseur', 'capes grises': 'Ordre Gris' },
-    'langue':          { 'elthàrin': 'Eltharin' },
-    'focalisation':    { 'qhaysh / haute magie': 'Qhaysh' },
-    'divertissement':  { 'narration': 'Contes', 'humour': 'Comédie', 'clownerie': 'Comédie',
-                         'rhétorique': 'Discours', 'conférence': 'Discours', 'provocation': 'Raillerie' },
-    'métier':          { 'imprimeur': 'Imprimerie', 'joaillier': 'Orfèvre', 'poisons': 'Empoisonneur',
-                         'matériel artistique': 'Artiste' },
-};
-function canonicalSkillNom(s) {
-    let n = s.trim().replace(/\s+/g, ' ');
-    const conn = n.match(/^(?:conn\.|connaissances?\b)\s*\(?\s*(.+?)\s*\)?$/i);
-    if (conn) n = `Savoir (${conn[1].charAt(0).toUpperCase()}${conn[1].slice(1)})`;
-    const whole = SKILL_NAME_ALIASES[n.toLowerCase()];
-    if (whole) return whole;
-    const m = n.match(/^(.+?) \((.+)\)$/);
-    const spec = m && SKILL_SPEC_ALIASES[m[1].toLowerCase()]?.[m[2].toLowerCase()];
-    return spec ? `${m[1]} (${spec})` : n;
-}
-const sameSkill = (a, b) => canonicalSkillNom(a).toLowerCase() === canonicalSkillNom(b).toLowerCase();
-
-function expandChoiceSkill(s) {
-    const orMatch = s.match(/\(([^)]+)\)$/);
-    if (orMatch) {
-        if (isOpenCareerSlot(s)) return [s];
-        const content = orMatch[1].trim();
-        if (content.startsWith('ou ')) {
-            const base = s.split('(')[0].trim();
-            const alt = content.substring(3).trim();
-            return [base, alt].map(canonicalSkillNom);
-        }
-        const parts = content.split(/,?\s+ou\s+|\s*,\s*/);
-        if (parts.length > 1) {
-            const base = s.split('(')[0].trim();
-            return parts.map(p => canonicalSkillNom(`${base} (${p.trim()})`));
-        }
-    }
-    return [canonicalSkillNom(s)];
-}
-
-const XP_TYPES = ['Caractéristique','Compétence','Talent','Carrière','Sort','Prière','Miracle','Autre'];
 
 const VENTS = ['Aqshy','Azyr','Chamon','Ghur','Ghyran','Hysh','Shyish','Ulgu','Qhaysh','Magie Commune','Autre'];
 
-// Compétences de base affichées sur la fiche (une ligne par groupe, Corps à corps avec "(Base)").
-// Les spécialisations de ces groupes se créent dans la section Compétences avancées.
-const BASIC_SKILLS = [
-    { nom:'Art',                     carac:'dex' },
-    { nom:'Athlétisme',              carac:'ag'  },
-    { nom:'Calme',                   carac:'fm'  },
-    { nom:'Charme',                  carac:'soc' },
-    { nom:'Chevaucher',              carac:'ag'  },
-    { nom:'Commandement',            carac:'soc' },
-    { nom:"Conduite d'attelage",     carac:'ag'  },
-    { nom:'Corps à corps (Base)',    carac:'cc'  },
-    { nom:'Discrétion',              carac:'ag'  },
-    { nom:'Divertissement',          carac:'soc' },
-    { nom:'Emprise sur les animaux', carac:'fm'  },
-    { nom:'Escalade',                carac:'f'   },
-    { nom:'Esquive',                 carac:'ag'  },
-    { nom:'Intimidation',            carac:'f'   },
-    { nom:'Intuition',               carac:'i'   },
-    { nom:'Marchandage',             carac:'soc' },
-    { nom:'Orientation',             carac:'i'   },
-    { nom:'Pari',                    carac:'int' },
-    { nom:'Perception',              carac:'i'   },
-    { nom:'Ragot',                   carac:'soc' },
-    { nom:'Ramer',                   carac:'f'   },
-    { nom:'Résistance',              carac:'e'   },
-    { nom:"Résistance à l'alcool",   carac:'e'   },
-    { nom:'Subornation',             carac:'soc' },
-    { nom:'Survie en extérieur',     carac:'int' },
-];
+async function loadRuleCatalog() {
+    try {
+        const [rulesResponse, catalogueResponse, talentResponse] = await Promise.all([
+            fetch('js/data/fiche-catalog.json'),
+            fetch('js/catalogue/referentiel-public.json'),
+            fetch('js/catalogue/talents-sheet-snapshot.json'),
+        ]);
+        if (!rulesResponse.ok || !catalogueResponse.ok || !talentResponse.ok) return null;
+        [_ruleCatalog, _publishedCatalogue, _talentSheetSnapshot] = await Promise.all([
+            rulesResponse.json(), catalogueResponse.json(), talentResponse.json(),
+        ]);
+        _publishedCatalogue = window.FICHE_PUBLIC_CATALOGUE || _publishedCatalogue;
+        window.FICHE_CATALOG = _ruleCatalog;
+        window.FICHE_PUBLIC_CATALOGUE = _publishedCatalogue;
+        _spellCache = Array.isArray(_ruleCatalog.spells) ? _ruleCatalog.spells : [];
+        _miracleCache = Array.isArray(_ruleCatalog.miracles) ? _ruleCatalog.miracles : [];
+        _localCommandEngine = null;
+        window.FICHE_CATALOG_VERSION = `skills:${_publishedCatalogue.catalogVersion}|rules:${_ruleCatalog.catalogVersion}`;
+        return _ruleCatalog;
+    } catch { return null; }
+}
+
+function getLocalCommandEngine() {
+    if (!_ruleCatalog?.catalogVersion || !_publishedCatalogue?.catalogVersion || !_talentSheetSnapshot
+        || !Array.isArray(window.WFRP_CAREERS) || !Array.isArray(window.WFRP_SKILLS)) return null;
+    _localCommandEngine ??= createPublishedCatalogueEngine({
+        catalogue: _publishedCatalogue,
+        careers: window.WFRP_CAREERS,
+        skills: window.WFRP_SKILLS,
+        spells: _ruleCatalog,
+        talentSheetSnapshot: _talentSheetSnapshot,
+    });
+    return _localCommandEngine;
+}
+
+export function setPublishedFicheCatalogue(catalogue) {
+    if (!catalogue || typeof catalogue.catalogVersion !== 'string') return false;
+    let nextEngine;
+    try {
+        nextEngine = createPublishedCatalogueEngine({
+            catalogue,
+            careers: window.WFRP_CAREERS,
+            skills: window.WFRP_SKILLS,
+            spells: _ruleCatalog,
+            talentSheetSnapshot: _talentSheetSnapshot,
+        });
+    } catch { return false; }
+    _publishedCatalogue = catalogue;
+    window.FICHE_PUBLIC_CATALOGUE = catalogue;
+    _localCommandEngine = nextEngine;
+    if (_ruleCatalog?.catalogVersion) window.FICHE_CATALOG_VERSION = `skills:${catalogue.catalogVersion}|rules:${_ruleCatalog.catalogVersion}`;
+    _careerViewer?.update();
+    return true;
+}
 
 // ── Moteur XP ─────────────────────────────────────────
 
 // Barème officiel par tranche de 5 avances (0–5, 6–10, … 66–70) ; même table
 // pour les compétences de base et avancées. Hors carrière : coût ×2.
-const CARAC_XP_BANDS = [25, 30, 40, 50, 70, 90, 120, 150, 190, 230, 280, 330, 390, 450];
-const SKILL_XP_BANDS = [10, 15, 20, 30, 40, 60,  80, 110, 140, 180, 220, 270, 320, 380];
-
-function xpBandCost(bands, currentAdv, count, inCareer) {
-    let total = 0;
-    for (let i = 0; i < count; i++) {
-        const band = Math.min(Math.floor((currentAdv + i) / 5), bands.length - 1);
-        total += inCareer ? bands[band] : bands[band] * 2;
-    }
-    return total;
-}
-
 // ── Carrière active ────────────────────────────────────
 
 function getActiveCareerData() {
     if (!window.WFRP_CAREERS) return null;
-    const name = getVal('carriere').toLowerCase().trim();
-    if (!name) return null;
-    return WFRP_CAREERS.find(c =>
-        c.nom.toLowerCase() === name ||
-        c.rangs.some(r => r.titre.toLowerCase() === name)
-    );
+    return findCareerByName(WFRP_CAREERS, getVal('carriere'));
 }
 
 function getActiveRang() {
     // Le rang max dépend de la carrière (Mage HE va jusqu'à 5, les autres à 4).
     const career = getActiveCareerData();
-    const maxRang = career ? Math.max(4, ...career.rangs.map(r => r.rang)) : 4;
-    return Math.min(maxRang, Math.max(1, +getVal('rang') || 1));
+    return activeCareerRank(career, getVal('rang'));
 }
 
 // ── Variantes de rang ──────────────────────────────────
 // Certains rangs ont plusieurs entrées (variantes par race / supplément).
 // L'utilisateur peut en choisir une dans le panneau de référence ;
 // le choix est persisté dans state.chosenVariants[careerId][rang].
-
-function getRangVariants(career, rang) {
-    return career.rangs.filter(r => r.rang === rang);
-}
-
-function getChosenVariantTitre(careerId, rang) {
-    return state.chosenVariants?.[careerId]?.[rang] || null;
-}
 
 function setChosenVariantTitre(careerId, rang, titre) {
     if (!state.chosenVariants[careerId]) state.chosenVariants[careerId] = {};
@@ -192,19 +135,14 @@ function setChosenVariantTitre(careerId, rang, titre) {
 // Renvoie la variante choisie pour ce rang, ou null si l'utilisateur n'a pas choisi
 // (ou s'il n'y a qu'une variante — pas besoin de choix).
 function getActiveVariantForRang(career, rang) {
-    const variants = getRangVariants(career, rang);
-    if (variants.length === 1) return variants[0];
-    if (variants.length === 0) return null;
-    const chosen = getChosenVariantTitre(career.id, rang);
-    return chosen ? variants.find(v => v.titre === chosen) || null : null;
+    return getActiveVariantForRangModel(career, rang, state.chosenVariants);
 }
 
 // Variantes à considérer comme "dans la carrière" : la choisie si choix, sinon toutes.
 // Comportement généreux par défaut — évite les faux négatifs pendant que la joueuse
 // achète des compétences avant d'avoir formalisé la variante avec le MJ.
 function getVariantsToConsider(career, rang) {
-    const active = getActiveVariantForRang(career, rang);
-    return active ? [active] : getRangVariants(career, rang);
+    return getVariantsToConsiderModel(career, rang, state.chosenVariants);
 }
 
 // ── Overrides par-fiche ────────────────────────────────
@@ -250,35 +188,13 @@ function hasOverrides(careerId, rang) {
 
 // Caractéristiques du rang : celles de la variante, sauf si la fiche les a remplacées.
 function getEffectiveCaracs(career, rang, variant) {
-    return getOverrides(career.id, rang)?.caracs || variant?.caracs || [];
+    return getEffectiveCareerCaracs(career, rang, variant, state.careerOverrides);
 }
 
 // Listes effectives : (skills/talents de la variante) − retirées + ajoutées.
 // Les overrides s'appliquent au rang, indépendamment de la variante choisie.
 function getEffectiveSkills(career, rang, variant) {
-    const base = (variant?.skills || []).slice();
-    const o = getOverrides(career.id, rang);
-    if (!o) return base;
-    const removed = new Set(o.skillsRemoved.map(s => s.toLowerCase()));
-    return [
-        ...base.filter(s => !removed.has(s.toLowerCase())),
-        ...o.skillsAdded,
-    ];
-}
-
-function getEffectiveTalents(career, rang, variant) {
-    const base = (variant?.talents || []).slice();
-    const o = getOverrides(career.id, rang);
-    if (!o) return base;
-    const removed = new Set(o.talentsRemoved.map(t => t.toLowerCase()));
-    return [
-        ...base.filter(t => !removed.has(t.toLowerCase())),
-        ...o.talentsAdded,
-    ];
-}
-
-function skillBaseNom(fullNom) {
-    return fullNom.split('(')[0].trim().toLowerCase();
+    return getEffectiveCareerSkills(career, rang, variant, state.careerOverrides);
 }
 
 // ── Cache des sets carrière ───────────────────────────
@@ -304,46 +220,15 @@ function invalidateCareerCache() {
 function _careerKey(careerId, rang) { return `${careerId}::${rang}`; }
 
 function _buildCareerSkillSets(career, rang) {
-    const exact = new Set(), openBases = new Set();
-    for (let r = 1; r <= rang; r++) {
-        for (const rd of getVariantsToConsider(career, r)) {
-            for (const s of getEffectiveSkills(career, r, rd)) {
-                for (const expanded of expandChoiceSkill(s)) {
-                    exact.add(expanded.toLowerCase());
-                    if (isOpenCareerSlot(expanded)) openBases.add(skillBaseNom(expanded));
-                }
-            }
-        }
-    }
-    return { exact, openBases };
+    return getCareerSkillSets(career, rang, state.chosenVariants, state.careerOverrides);
 }
 
 function _buildCareerTalentSets(career, rang) {
-    const exact = new Set(), openBases = new Set();
-    for (let r = 1; r <= rang; r++) {
-        for (const rd of getVariantsToConsider(career, r)) {
-            for (const t of getEffectiveTalents(career, r, rd)) {
-                exact.add(t.toLowerCase());
-                if (OPEN_SPEC_PATTERN.test(t)) openBases.add(t.split('(')[0].trim().toLowerCase());
-            }
-        }
-    }
-    return { exact, openBases };
+    return getCareerTalentSets(career, rang, state.chosenVariants, state.careerOverrides);
 }
 
 function _buildCareerCaracs(career, rang) {
-    // Rétrocompat (anciennes données sans rd.caracs) : liste agrégée de la carrière.
-    if (!(career.rangs || []).some(rd => Array.isArray(rd.caracs))
-        && !Object.values(state.careerOverrides?.[career.id] || {}).some(o => o.caracs)) {
-        return new Set(career.carac || []);
-    }
-    const set = new Set();
-    for (let r = 1; r <= rang; r++) {
-        for (const rd of getVariantsToConsider(career, r)) {
-            getEffectiveCaracs(career, r, rd).forEach(c => set.add(c));
-        }
-    }
-    return set;
+    return getCareerCaracsModel(career, rang, state.chosenVariants, state.careerOverrides);
 }
 
 // Caracs de carrière cumulées du rang 1 au rang donné.
@@ -404,7 +289,7 @@ function showXpForm(options = {}) {
                     <option value="sort">Sort</option>
                     <option value="miracle">Miracle</option>
                     <option value="rang">Rang de carrière</option>
-                    <option value="libre">Dépense libre</option>
+                    ${_activeFicheRole === 'mj' ? '<option value="libre">Dépense libre</option>' : ''}
                 </select>
                 <span id="xf-target-wrap" class="xf-target-wrap"></span>
                 <label class="xf-avances-label">
@@ -478,11 +363,6 @@ function getSpecsForGroup(group) {
 }
 
 // Carac d'un groupe de compétence
-function getCaracForGroup(group) {
-    if (!window.WFRP_SKILLS) return 'int';
-    return WFRP_SKILLS.find(s => s.group === group)?.carac || 'int';
-}
-
 // Nom complet sélectionné dans le formulaire XP
 function getXfSkillFullNom() {
     const group = document.getElementById('xf-group')?.value || '';
@@ -675,15 +555,10 @@ function buildXfRangPicker(wrap) {
     newWrap.style.display = canNext ? 'none' : '';
     wrap.appendChild(newWrap);
 
-    const doneLabel = document.createElement('label');
-    doneLabel.innerHTML = '<input type="checkbox" id="xf-rang-done" checked> Rang actuel terminé';
-    wrap.appendChild(doneLabel);
-
     modeSel.addEventListener('change', () => {
         newWrap.style.display = modeSel.value === 'new' ? '' : 'none';
         computeXfCost();
     });
-    doneLabel.querySelector('input').addEventListener('change', computeXfCost);
 }
 
 function updateXfTarget() {
@@ -840,12 +715,15 @@ function computeXfCost() {
         }
 
     } else if (type === 'talent') {
-        cost = inCareer ? 100 : 200;
+        cost = talentXpCost(inCareer);
 
     } else if (type === 'rang') {
-        // Passer au rang suivant ou changer de carrière : 100 XP si le rang
-        // actuel est terminé, 200 XP sinon.
-        cost = document.getElementById('xf-rang-done')?.checked ? 100 : 200;
+        // Aperçu calculé à partir de l’état de fiche. Le serveur revalide toutes
+        // les conditions et le tarif au moment de la commande.
+        const career = getActiveCareerData();
+        const engine = getLocalCommandEngine();
+        const completion = career && engine?.evaluateCareerCompletion(exportData(), career, getActiveRang());
+        cost = careerRankXpCost(!!completion?.complete);
 
     } else if (type === 'libre') {
         cost = Math.max(0, +document.getElementById('xf-libre-cout')?.value || 0);
@@ -855,7 +733,7 @@ function computeXfCost() {
         const sp   = findSpell(nom);
         const info = document.getElementById('xf-sort-info');
         const known = sp && state.sorts.some(s => sameSpellNom(s.nom, sp.nom));
-        if (sp && !known) cost = spellXpCost(sp);
+        if (sp && !known) cost = calculateSpellXpCost(sp, state.sorts.map(s => findSpell(s.nom)).filter(Boolean));
         if (info) {
             info.textContent = !nom.trim() ? ''
                 : !_spellCache ? 'Chargement de la liste des sorts…'
@@ -869,12 +747,12 @@ function computeXfCost() {
         const nom   = document.getElementById('xf-miracle')?.value?.trim() || '';
         const info  = document.getElementById('xf-miracle-info');
         const known = nom && state.prieres.some(p => sameSpellNom(p.nom, nom));
-        if (nom && !known) cost = miracleXpCost();
+        if (nom && !known && findMiracle(nom)) cost = calculateMiracleXpCost(state.prieres);
         if (info) {
             info.textContent = !nom ? ''
                 : known ? 'Déjà connu'
                 : findMiracle(nom) ? 'Repris de l\'aide de jeu'
-                : 'Hors aide de jeu : effets à saisir';
+                : 'Absent du catalogue versionné — achat indisponible';
         }
     }
 
@@ -895,211 +773,120 @@ function computeXfCost() {
     return cost;
 }
 
-function validateXpPurchase() {
-    const type     = document.getElementById('xf-type')?.value || '';
-    const avances  = Math.max(1, +document.getElementById('xf-avances')?.value || 1);
-    const inCareer = getXfInCareer();
-    const cost     = computeXfCost();
+function ficheCommandStatus(message, error = false) {
+    const status = document.getElementById('fiche-cloud-status') || document.getElementById('fiche-qa-state');
+    if (status) {
+        status.textContent = message;
+        if (status.dataset) status.dataset.state = error ? 'error' : 'saving';
+    }
+}
+
+async function executeFicheCommand(type, payload) {
+    const controller = globalThis.ficheController;
+    if (!controller?.executeOnlineCommand) {
+        ficheCommandStatus('Les commandes serveur ne sont pas disponibles.', true);
+        return null;
+    }
+    try {
+        const result = await controller.executeOnlineCommand(type, payload);
+        if (result.status === 'confirmed') {
+            ficheCommandStatus('Commande confirmée par le serveur.');
+            return result;
+        }
+        ficheCommandStatus(result.status === 'awaiting-snapshot'
+            ? 'Commande envoyée — confirmation serveur en attente. Réessayez si nécessaire.'
+            : 'Commande en attente — utilisez l’action de réessai avant toute nouvelle commande.', true);
+        return null;
+    } catch (error) {
+        const kind = error?.details?.kind || error?.code || 'command-failed';
+        ficheCommandStatus('Commande refusée : ' + kind, true);
+        return null;
+    }
+}
+
+async function validateXpPurchase() {
+    if (!['joueur', 'mj'].includes(_activeFicheRole)) return;
+    const type = document.getElementById('xf-type')?.value || '';
+    const count = Math.max(1, +document.getElementById('xf-avances')?.value || 1);
+    const cost = computeXfCost();
     if (!type || cost <= 0) return;
+    const payload = { count, expectedCost: cost, catalogVersion: getLocalCommandEngine()?.catalogVersion };
+    let commandType = 'purchase';
 
     if (type === 'libre') {
-        const achat = document.getElementById('xf-libre-achat')?.value?.trim() || '';
-        if (!achat) return;
-        // Ligne non appliquée : reste modifiable dans le journal.
-        state.xpLog.push({ type: 'Autre', achat, cout: cost, note: '' });
-        renderXpLog();
-        recalc();
-        document.getElementById('xp-add-form').style.display = 'none';
-        return;
-    }
-
-    let achatLabel = '', targetNom = '', targetType = '', targetStorage = '', prevCareer = null;
-
-    if (type === 'carac') {
-        const carac = document.getElementById('xf-target')?.value;
-        if (!carac) return;
-        state.carac[carac].adv = (state.carac[carac].adv || 0) + avances;
-        setVal(`adv-${carac}`, state.carac[carac].adv);
-        achatLabel = `${CARAC_LABELS[carac]} +${avances}`;
-        targetNom = carac; targetType = 'carac'; targetStorage = 'carac';
-
+        if (_activeFicheRole !== 'mj') return;
+        const reason = document.getElementById('xf-libre-achat')?.value?.trim() || '';
+        if (!reason) return;
+        commandType = 'correct';
+        Object.assign(payload, { kind: 'xp', amount: -cost, reason });
+        delete payload.count;
+        delete payload.expectedCost;
+        delete payload.catalogVersion;
+    } else if (type === 'carac') {
+        const name = document.getElementById('xf-target')?.value;
+        if (!name) return;
+        Object.assign(payload, { kind: 'carac', name });
     } else if (type === 'skill-basic' || type === 'skill-adv') {
-        const fullNom = getXfSkillFullNom();
-        if (!fullNom) return;
-        const group = document.getElementById('xf-group')?.value || fullNom;
-
-        // Mémoriser la spécialisation personnalisée pour la retrouver dans le picker
-        const specSel = document.getElementById('xf-spec-sel');
-        if (specSel?.value === '_custom') {
-            const customVal = document.getElementById('xf-spec-custom')?.value?.trim();
-            if (customVal && group) {
-                if (!state.customSpecs[group]) state.customSpecs[group] = [];
-                if (!state.customSpecs[group].includes(customVal)) state.customSpecs[group].push(customVal);
-            }
+        const name = getXfSkillFullNom();
+        if (!name) return;
+        const basicRow = basicRowFor(name);
+        const advancedMatches = state.skillsAdvanced.filter(row => sameSkill(row.nom, name));
+        if (!basicRow && advancedMatches.length > 1) {
+            ficheCommandStatus('Plusieurs lignes correspondent à cette compétence; correction MJ nécessaire.', true);
+            return;
         }
-
-        const carac = getCaracForGroup(group);
-
-        // Corps à corps (Base), compétences sans spec et compétence de base portant
-        // déjà cette spécialité sur la fiche → skillsBasic
-        const basicRow = basicRowFor(fullNom);
-        if (basicRow) {
-            state.skillsBasic[basicRow] = (state.skillsBasic[basicRow] || 0) + avances;
-            const inp = document.querySelector(`.sk-adv[data-skill="${CSS.escape(basicRow)}"]`);
-            if (inp) inp.value = state.skillsBasic[basicRow];
-            targetStorage = 'skillsBasic';
-        } else {
-            // Spécialisation ou compétence avancée → skillsAdvanced
-            let existing = state.skillsAdvanced.find(s => sameSkill(s.nom, fullNom));
-            if (!existing) {
-                state.skillsAdvanced.push({ nom: fullNom, carac, adv: 0 });
-                existing = state.skillsAdvanced[state.skillsAdvanced.length - 1];
-            }
-            existing.adv = (existing.adv || 0) + avances;
-            renderAdvancedSkills();
-            targetStorage = 'skillsAdvanced';
-        }
-        // Nom réellement stocké (peut être un libellé équivalent, ex. « Conn. Théologie »),
-        // pour que l'annulation retrouve la ligne.
-        const storedNom = targetStorage === 'skillsAdvanced'
-            ? state.skillsAdvanced.find(s => sameSkill(s.nom, fullNom)).nom : basicRow;
-        const basicSpec = targetStorage === 'skillsBasic' && state.basicSpecs[basicRow];
-        achatLabel = `${basicSpec ? `${basicRow} (${basicSpec})` : storedNom} +${avances}`;
-        targetNom = storedNom; targetType = type;
-
+        Object.assign(payload, {
+            kind: 'skill',
+            name,
+            ...(basicRow ? { targetId: basicRow } : advancedMatches[0]?.id ? { targetId: advancedMatches[0].id } : {}),
+        });
     } else if (type === 'talent') {
-        const nom = getXfTalentFullNom();
-        if (!nom) return;
-
-        // Mémoriser la spécialisation personnalisée
-        const specSel = document.getElementById('xf-talent-spec-sel');
-        if (specSel?.value === '_custom') {
-            const base     = document.getElementById('xf-talent')?.value?.trim().replace(OPEN_SPEC_PATTERN, '').trim();
-            const customVal = document.getElementById('xf-talent-spec-custom')?.value?.trim();
-            if (base && customVal) {
-                if (!state.customTalents[base]) state.customTalents[base] = [];
-                if (!state.customTalents[base].includes(customVal)) state.customTalents[base].push(customVal);
-            }
-        }
-
-        state.talentsAcq.push({ nom, note: inCareer ? '' : 'hors carrière' });
-        renderTalents();
-        achatLabel = nom; targetNom = nom; targetType = 'talent'; targetStorage = 'talent';
-
+        const name = getXfTalentFullNom();
+        if (!name) return;
+        Object.assign(payload, { kind: 'talent', name, count: 1 });
     } else if (type === 'sort') {
-        const sp = findSpell(document.getElementById('xf-sort')?.value || '');
-        if (!sp) return;
-        state.sorts.push(spellEntry(sp));
-        state.optVisible['section-sorts'] = true;
-        applyOptVisible();
-        renderSorts();
-        achatLabel = sp.nom; targetNom = sp.nom; targetType = 'sort'; targetStorage = 'sort';
-
+        const spell = findSpell(document.getElementById('xf-sort')?.value || '');
+        if (!spell) return;
+        Object.assign(payload, { kind: 'sort', name: spell.nom, count: 1 });
     } else if (type === 'miracle') {
-        const nom = document.getElementById('xf-miracle')?.value?.trim() || '';
-        if (!nom) return;
-        const m = findMiracle(nom);
-        state.prieres.push(m ? miracleEntry(m) : { nom, type: 'Miracle', resume: '' });
-        state.optVisible['section-prieres'] = true;
-        applyOptVisible();
-        renderPrieres();
-        const stored = state.prieres[state.prieres.length - 1].nom;
-        achatLabel = stored; targetNom = stored; targetType = 'miracle'; targetStorage = 'miracle';
-
+        const miracle = findMiracle(document.getElementById('xf-miracle')?.value || '');
+        if (!miracle) return;
+        Object.assign(payload, { kind: 'miracle', name: miracle.nom, count: 1 });
     } else if (type === 'rang') {
         const mode = document.getElementById('xf-rang-mode')?.value;
-        prevCareer = { carriere: getVal('carriere'), rang: getVal('rang') };
-        let nom, rang;
-        if (mode === 'next') {
-            nom  = prevCareer.carriere;
-            rang = getActiveRang() + 1;
-            const titre = getRangTitre(getActiveCareerData(), rang);
-            achatLabel = `Rang ${rang}${titre ? ` — ${titre}` : ''}`;
-        } else {
-            nom  = document.getElementById('xf-new-career')?.value?.trim() || '';
-            rang = Math.max(1, +document.getElementById('xf-new-rang')?.value || 1);
-            if (!nom) return;
-            if (prevCareer.carriere) {
-                state.careers.push({ nom: prevCareer.carriere, rang: +prevCareer.rang || 1, note: '' });
-                prevCareer.historyPushed = true;
-                renderCareers();
+        let targetCareer = getActiveCareerData();
+        let targetRank = getActiveRang() + 1;
+        if (mode === 'new') {
+            const careerName = document.getElementById('xf-new-career')?.value?.trim() || '';
+            targetCareer = findCareerByName(window.WFRP_CAREERS || [], careerName);
+            targetRank = Math.max(1, +document.getElementById('xf-new-rang')?.value || 1);
+            if (!targetCareer) {
+                ficheCommandStatus('Carrière cible absente du catalogue.', true);
+                return;
             }
-            achatLabel = `${nom} (rang ${rang})`;
+            payload.rankMode = 'changeCareer';
+            payload.careerId = targetCareer.id;
+        } else {
+            if (!targetCareer || !getRangVariants(targetCareer, targetRank).length) return;
+            payload.rankMode = 'advanceRank';
         }
-        setVal('carriere', nom);
-        setVal('rang', rang);
-        invalidateCareerCache();
-        renderCareerDetail();
-        targetNom = nom; targetType = 'rang'; targetStorage = 'career';
-    }
+        const currentCareer = getActiveCareerData();
+        const completion = currentCareer && getLocalCommandEngine()?.evaluateCareerCompletion(
+            exportData(), currentCareer, getActiveRang()
+        );
+        if (!completion) {
+            ficheCommandStatus('Calcul de complétion indisponible; achat bloqué.', true);
+            return;
+        }
+        payload.kind = 'rank';
+        payload.targetRank = targetRank;
+        payload.expectedCost = careerRankXpCost(completion.complete);
+        payload.count = 1;
+    } else return;
 
-    state.xpLog.push({
-        type:      { carac: 'Caractéristique', talent: 'Talent', rang: 'Carrière', sort: 'Sort', miracle: 'Miracle' }[type] || 'Compétence',
-        achat:     achatLabel,
-        cout:      cost,
-        note:      '',
-        applied:   true,
-        targetNom, targetType, targetStorage,
-        avances:   ['talent', 'rang', 'sort', 'miracle'].includes(type) ? 1 : avances,
-        ...(prevCareer && { prevCareer }),
-    });
-
-    renderXpLog();
-    recalc();
-    document.getElementById('xp-add-form').style.display = 'none';
+    const result = await executeFicheCommand(commandType, payload);
+    if (result?.status === 'confirmed') document.getElementById('xp-add-form').style.display = 'none';
 }
-
-function revertXpEntry(entry) {
-    if (!entry.applied) return;
-    const { targetStorage, targetNom, avances } = entry;
-    if (targetStorage === 'carac') {
-        state.carac[targetNom].adv = Math.max(0, (state.carac[targetNom].adv || 0) - avances);
-        setVal(`adv-${targetNom}`, state.carac[targetNom].adv);
-    } else if (targetStorage === 'skillsBasic') {
-        state.skillsBasic[targetNom] = Math.max(0, (state.skillsBasic[targetNom] || 0) - avances);
-        const inp = document.querySelector(`.sk-adv[data-skill="${CSS.escape(targetNom)}"]`);
-        if (inp) inp.value = state.skillsBasic[targetNom];
-    } else if (targetStorage === 'skillsAdvanced') {
-        const sk = state.skillsAdvanced.find(s => s.nom === targetNom);
-        if (sk) { sk.adv = Math.max(0, (sk.adv || 0) - avances); renderAdvancedSkills(); }
-    } else if (targetStorage === 'talent') {
-        const idx = state.talentsAcq.map(t => t.nom).lastIndexOf(targetNom);
-        if (idx >= 0) { state.talentsAcq.splice(idx, 1); renderTalents(); }
-    } else if (targetStorage === 'sort') {
-        const idx = state.sorts.map(s => sameSpellNom(s.nom, targetNom)).lastIndexOf(true);
-        if (idx >= 0) { state.sorts.splice(idx, 1); renderSorts(); }
-    } else if (targetStorage === 'miracle') {
-        const idx = state.prieres.map(p => sameSpellNom(p.nom, targetNom)).lastIndexOf(true);
-        if (idx >= 0) { state.prieres.splice(idx, 1); renderPrieres(); }
-    } else if (targetStorage === 'career') {
-        const prev = entry.prevCareer;
-        if (!prev) return;
-        setVal('carriere', prev.carriere);
-        setVal('rang', prev.rang);
-        if (prev.historyPushed) {
-            const idx = state.careers.map(c => c.nom).lastIndexOf(prev.carriere);
-            if (idx >= 0) { state.careers.splice(idx, 1); renderCareers(); }
-        }
-        invalidateCareerCache();
-        renderCareerDetail();
-    } else {
-        // Rétrocompat : anciennes entrées sans targetStorage
-        const { targetType } = entry;
-        if (targetType === 'carac') {
-            state.carac[targetNom].adv = Math.max(0, (state.carac[targetNom].adv || 0) - avances);
-            setVal(`adv-${targetNom}`, state.carac[targetNom].adv);
-        } else if (targetType === 'skill-basic') {
-            state.skillsBasic[targetNom] = Math.max(0, (state.skillsBasic[targetNom] || 0) - avances);
-        } else if (targetType === 'skill-adv') {
-            const sk = state.skillsAdvanced.find(s => s.nom === targetNom);
-            if (sk) { sk.adv = Math.max(0, (sk.adv || 0) - avances); renderAdvancedSkills(); }
-        } else if (targetType === 'talent') {
-            const idx = state.talentsAcq.map(t => t.nom).lastIndexOf(targetNom);
-            if (idx >= 0) { state.talentsAcq.splice(idx, 1); renderTalents(); }
-        }
-    }
-}
-
 // ── État ──────────────────────────────────────────────
 
 const state = {
@@ -1195,14 +982,12 @@ function recalc() {
 // Spécialité associée sur la fiche à une compétence de base (state.basicSpecs) :
 // « Divertissement » + « Chant » se compare comme « Divertissement (Chant) ».
 function basicSkillNom(nom) {
-    const spec = state.basicSpecs[nom];
-    return spec ? canonicalSkillNom(`${nom} (${spec})`) : nom;
+    return resolveBasicSkillNom(nom, state.basicSpecs);
 }
 
 // Ligne de compétence de base correspondant à un nom complet, ou null.
 function basicRowFor(fullNom) {
-    if (!fullNom) return null;
-    return BASIC_SKILLS.find(s => s.nom === fullNom || (state.basicSpecs[s.nom] && sameSkill(basicSkillNom(s.nom), fullNom)))?.nom || null;
+    return findBasicRow(fullNom, state.basicSpecs);
 }
 
 // Spécialités connues d'une compétence de base (vide si elle n'en a pas).
@@ -1226,10 +1011,10 @@ function buildBasicSkills() {
                 <datalist id="basic-spec-${s}">${specs.map(v => `<option value="${esc(v)}">`).join('')}</datalist>` : '';
         return `<tr data-skill="${sk.nom}">
             <td class="sk-nom">${sk.nom}${specH}</td>
-            <td class="sk-carac-lbl">${CARAC_LABELS[sk.carac]}</td>
-            <td class="sk-carac-val" id="sk-carac-${s}">0</td>
-            <td><input class="sk-adv" type="number" data-skill="${sk.nom}" min="0" max="30" value="${esc(adv)}" aria-label="Avances en ${esc(sk.nom)}"></td>
-            <td class="sk-total" id="sk-total-${s}">0</td>
+            <td class="sk-carac-lbl" data-label="Carac.">${CARAC_LABELS[sk.carac]}</td>
+            <td class="sk-carac-val" data-label="Valeur" id="sk-carac-${s}">0</td>
+            <td data-label="Avances"><input class="sk-adv" type="number" data-skill="${sk.nom}" min="0" max="30" value="${esc(adv)}" aria-label="Avances en ${esc(sk.nom)}"></td>
+            <td class="sk-total" data-label="Total" id="sk-total-${s}">0</td>
         </tr>`;
     }).join('');
     // Délégation : buildBasicSkills est rappelé sur ficheLoadCloud — sans
@@ -1295,12 +1080,12 @@ function renderAdvancedSkills() {
             <td><input class="sk-nom-input" type="text" list="wfrp-skills-list"
                        data-idx="${i}" value="${esc(sk.nom)}" placeholder="Nom ou Groupe (Spécialisation)"
                        aria-label="Nom de la compétence, ligne ${i + 1}"></td>
-            <td><select class="sk-carac-sel" data-idx="${i}" aria-label="Caractéristique, ligne ${i + 1}">
+            <td data-label="Carac."><select class="sk-carac-sel" data-idx="${i}" aria-label="Caractéristique, ligne ${i + 1}">
                 ${CARACS.map(c => `<option value="${c}" ${sk.carac===c?'selected':''}>${CARAC_LABELS[c]}</option>`).join('')}
             </select></td>
-            <td class="sk-carac-val" id="adv-carac-val-${i}">0</td>
-            <td><input class="sk-adv sk-adv-adv" type="number" data-idx="${i}" min="0" max="30" value="${esc(sk.adv ?? 0)}" aria-label="Avances, ligne ${i + 1}"></td>
-            <td class="sk-total" id="adv-total-${i}">0</td>
+            <td class="sk-carac-val" data-label="Valeur" id="adv-carac-val-${i}">0</td>
+            <td data-label="Avances"><input class="sk-adv sk-adv-adv" type="number" data-idx="${i}" min="0" max="30" value="${esc(sk.adv ?? 0)}" aria-label="Avances, ligne ${i + 1}"></td>
+            <td class="sk-total" data-label="Total" id="adv-total-${i}">0</td>
             <td><button class="btn-rm" data-type="adv-skill" data-idx="${i}" title="Supprimer" aria-label="Supprimer la compétence, ligne ${i + 1}">×</button></td>
         </tr>`).join('');
     if (!_advSkillsBound) {
@@ -1363,6 +1148,7 @@ function bindAdvancedSkillsDelegated(tbody) {
 const TALENT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs'
     + '/gviz/tq?tqx=out:csv&sheet=Talents';
 let _talentCache = null;
+let _talentModalRequestId = 0;
 
 async function fetchTalentData() {
     if (_talentCache) return _talentCache;
@@ -1380,52 +1166,78 @@ async function fetchTalentData() {
 
 function ensureTalentModal() {
     if (document.getElementById('talent-modal')) return;
-    const div = document.createElement('div');
-    div.id = 'talent-modal';
-    div.className = 'talent-modal-backdrop';
-    div.style.display = 'none';
-    div.innerHTML = `
-        <div class="talent-modal-box" role="dialog">
-            <button class="talent-modal-close" id="talent-modal-close" title="Fermer">×</button>
-            <div id="talent-modal-body"></div>
-        </div>`;
-    div.addEventListener('click', e => {
-        if (e.target === div || e.target.id === 'talent-modal-close') div.style.display = 'none';
+    const dialog = document.createElement('dialog');
+    dialog.id = 'talent-modal';
+    dialog.className = 'talent-modal-box';
+    dialog.setAttribute('aria-label', 'Description du talent');
+    dialog.innerHTML = `
+        <button class="talent-modal-close" id="talent-modal-close" title="Fermer" aria-label="Fermer">×</button>
+        <div id="talent-modal-body"></div>`;
+    dialog.addEventListener('click', e => {
+        if (e.target === dialog || e.target.id === 'talent-modal-close') dialog.close();
     });
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') div.style.display = 'none';
+    dialog.addEventListener('cancel', e => {
+        e.preventDefault();
+        dialog.close();
     });
-    document.body.appendChild(div);
+    document.body.appendChild(dialog);
 }
 
 async function showTalentModal(nom) {
     ensureTalentModal();
     const modal = document.getElementById('talent-modal');
     const body  = document.getElementById('talent-modal-body');
+    const requestId = ++_talentModalRequestId;
     body.innerHTML = '<p class="talent-modal-loading">Chargement…</p>';
-    modal.style.display = 'flex';
+    if (!modal.open) modal.showModal();
 
-    const td = await fetchTalentData();
-    // esc importé de js/utils.js
+    const result = getLocalCommandEngine()?.resolveTalent(nom);
+    if (requestId !== _talentModalRequestId || !modal.open) return;
     const _e = esc;
+    if (result?.status === 'resolved') {
+        const title = result.displayedName || result.entry?.nom || nom;
+        const sourceLabel = result.descriptionSource === 'site' ? 'Description locale'
+            : result.descriptionSource === 'sheet' ? 'Référentiel publié' : '';
+        if (result.descriptionStatus === 'available') {
+            body.innerHTML = `<h3 class="talent-modal-title">${_e(title)}</h3>
+                <div class="talent-modal-field"><span class="talent-modal-value">${_e(result.description).replace(/\n/g, '<br>')}</span></div>
+                ${sourceLabel ? `<p class="talent-modal-source">${_e(sourceLabel)}</p>` : ''}`;
+            return;
+        }
+        const message = result.descriptionStatus === 'source-unavailable'
+            ? 'Le référentiel des descriptions est momentanément indisponible.'
+            : result.descriptionStatus === 'empty-local' || result.descriptionStatus === 'empty-reference'
+                ? 'Aucune description n’est renseignée pour ce talent.'
+                : 'Aucune description publiée pour ce talent.';
+        body.innerHTML = `<h3 class="talent-modal-title">${_e(title)}</h3><p><em>${_e(message)}</em></p>`;
+        return;
+    }
+    if (result?.status === 'ambiguous') {
+        body.innerHTML = `<h3 class="talent-modal-title">${_e(nom)}</h3><p><em>Ce nom correspond à plusieurs talents dans le référentiel.</em></p>`;
+        return;
+    }
 
-    if (!td) { body.innerHTML = `<h3>${_e(nom)}</h3><p>Impossible de charger les données.</p>`; return; }
-
-    const nomIdx = td.headers.findIndex(h => h.toLowerCase() === 'nom');
-    const titleIdx = nomIdx >= 0 ? nomIdx : 0;
-    const row = td.data.find(r => (r[titleIdx] || '').toLowerCase() === nom.toLowerCase());
-
-    if (!row) { body.innerHTML = `<h3 class="talent-modal-title">${_e(nom)}</h3><p><em>Aucune description disponible.</em></p>`; return; }
-
-    let html = `<h3 class="talent-modal-title">${_e(row[titleIdx])}</h3>`;
-    td.headers.forEach((h, i) => {
-        if (i === titleIdx || !row[i]) return;
-        html += `<div class="talent-modal-field">
-            <span class="talent-modal-label">${_e(h)}</span>
-            <span class="talent-modal-value">${_e(row[i]).replace(/\n/g, '<br>')}</span>
-        </div>`;
-    });
-    body.innerHTML = html;
+    if (!_talentSheetSnapshot) {
+        const td = await fetchTalentData();
+        if (requestId !== _talentModalRequestId || !modal.open) return;
+        if (td) {
+            const nomIdx = td.headers.findIndex(h => h.toLowerCase() === 'nom');
+            const titleIdx = nomIdx >= 0 ? nomIdx : 0;
+            const row = td.data.find(r => (r[titleIdx] || '').toLowerCase() === nom.toLowerCase());
+            if (row) {
+                body.innerHTML = `<h3 class="talent-modal-title">${_e(row[titleIdx])}</h3>${td.headers.map((header, index) => {
+                    if (index === titleIdx || !row[index]) return '';
+                    return `<div class="talent-modal-field"><span class="talent-modal-label">${_e(header)}</span><span class="talent-modal-value">${_e(row[index]).replace(/\n/g, '<br>')}</span></div>`;
+                }).join('')}`;
+                return;
+            }
+            body.innerHTML = `<h3 class="talent-modal-title">${_e(nom)}</h3><p><em>Aucune description publiée pour ce talent.</em></p>`;
+            return;
+        }
+        body.innerHTML = `<h3 class="talent-modal-title">${_e(nom)}</h3><p><em>Le référentiel des descriptions est momentanément indisponible.</em></p>`;
+        return;
+    }
+    body.innerHTML = `<h3 class="talent-modal-title">${_e(nom)}</h3><p><em>Aucune description publiée pour ce talent.</em></p>`;
 }
 
 // ── Carrière — highlights & ghosts ────────────────────
@@ -1517,10 +1329,10 @@ function renderCareerAdvGhosts() {
             : 'Non achetée — cliquez pour l\'ouvrir dans le journal XP';
         return `<tr class="${cls}" data-ghost-nom="${esc(nom)}" data-ghost-open="${isOpen}" title="${title}" role="button" tabindex="0">
             <td class="sk-nom">${esc(nom)}</td>
-            <td class="sk-carac-lbl">${CARAC_LABELS[carac]}</td>
-            <td class="sk-carac-val">${caracVal}</td>
-            <td><input class="sk-adv" type="number" disabled value="0" tabindex="-1"></td>
-            <td class="sk-total">${caracVal}</td>
+            <td class="sk-carac-lbl" data-label="Carac.">${CARAC_LABELS[carac]}</td>
+            <td class="sk-carac-val" data-label="Valeur">${caracVal}</td>
+            <td data-label="Avances"><input class="sk-adv" type="number" disabled value="0" tabindex="-1"></td>
+            <td class="sk-total" data-label="Total">${caracVal}</td>
             <td></td>
         </tr>`;
     }).join('');
@@ -1618,10 +1430,12 @@ function renderCareerCaracs(career, rang, variant, editing) {
 function renderCareerDetail() {
     const panel = document.getElementById('career-detail-panel');
     if (!panel) return;
+    const viewerHost = document.getElementById('career-viewer-host');
 
     const career = getActiveCareerData();
     if (!career) {
         panel.style.display = 'none';
+        if (viewerHost) viewerHost.style.display = 'none';
         applyCareerHighlights();
         renderCareerAdvGhosts();
         return;
@@ -1632,6 +1446,7 @@ function renderCareerDetail() {
     const currentVariant  = getActiveVariantForRang(career, rang) || variantsCurrent[0];
     if (!currentVariant) {
         panel.style.display = 'none';
+        if (viewerHost) viewerHost.style.display = 'none';
         applyCareerHighlights();
         renderCareerAdvGhosts();
         return;
@@ -1730,6 +1545,22 @@ function renderCareerDetail() {
             </div>
             ${rangsHtml}
         </div>`;
+
+    if (viewerHost) viewerHost.style.display = '';
+    if (!_careerViewer && viewerHost) _careerViewer = createCareerViewer({
+        container: viewerHost,
+        getContext: () => ({
+            careers: Array.isArray(window.WFRP_CAREERS) ? window.WFRP_CAREERS : [],
+            careerName: getVal('carriere'),
+            rank: getActiveRang(),
+            chosenVariants: state.chosenVariants,
+            careerOverrides: state.careerOverrides,
+            resolveSkill: name => getLocalCommandEngine()?.resolveSkill(name),
+            resolveTalent: name => getLocalCommandEngine()?.resolveTalent(name),
+        }),
+        onTalent: name => showTalentModal(name),
+    });
+    else _careerViewer?.update();
 
     // Talent modal : ouvrir au clic sur un chip talent (sauf si on a cliqué sur le × d'édition)
     panel.querySelectorAll('[data-talent]').forEach(el => {
@@ -1841,7 +1672,7 @@ function renderCareers() {
     if (!tbody) return;
     tbody.innerHTML = state.careers.length === 0
         ? `<tr class="empty-row"><td colspan="4">Aucune ancienne carrière</td></tr>`
-        : state.careers.map((c, i) => `<tr>
+        : state.careers.map((c, i) => `<tr data-row-id="${esc(c.id ?? '')}">
             <td><input class="career-input" type="text" data-idx="${i}" data-field="nom" value="${esc(c.nom)}" placeholder="Nom de la carrière" aria-label="Nom de la carrière, ligne ${i + 1}"></td>
             <td><input class="career-rang" type="number" data-idx="${i}" data-field="rang" min="1" max="4" value="${esc(c.rang ?? 1)}" aria-label="Rang, ligne ${i + 1}"></td>
             <td><input class="career-note" type="text" data-idx="${i}" data-field="note" value="${esc(c.note)}" placeholder="Notes…" aria-label="Notes, ligne ${i + 1}"></td>
@@ -1939,40 +1770,10 @@ function renderTalents() {
 
 // ── Sorts ─────────────────────────────────────────────
 
-// Onglets de l'aide de jeu, lus une fois par page. Chaque ligne devient un objet
-// indexé par l'en-tête sans accents ni casse (« Durée » → duree).
-const AIDE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs'
-    + '/gviz/tq?tqx=out:csv&sheet=';
-const _aideFetches = {};
-
-function fetchAideSheet(sheet) {
-    _aideFetches[sheet] ??= (async () => {
-        try {
-            const res = await fetch(AIDE_SHEET_URL + sheet);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const [headers, ...data] = parseCSV(await res.text());
-            const keys = headers.map(h => stripAccents(h.toLowerCase()).trim());
-            return data
-                .map(r => Object.fromEntries(keys.map((k, i) => [k, (r[i] || '').trim()]).filter(([k]) => k)))
-                .filter(o => o.nom);
-        } catch {
-            delete _aideFetches[sheet];   // nouvel essai au prochain appel
-            return null;
-        }
-    })();
-    return _aideFetches[sheet];
-}
-
 // Premier paragraphe d'un texte, ramené à une ligne et coupé à `max` caractères.
 function firstParagraph(text, max = 200) {
     const first = text.split(/\n\s*\n/)[0].replace(/\s+/g, ' ').trim();
     return first.length > max ? `${first.slice(0, max - 1).trimEnd()}…` : first;
-}
-
-// Barème par tranches de 5 déjà connus : jusqu'à 5 → 1 cran, 6 à 10 → 2 crans…
-// plafonné à 5 crans.
-function tieredXpCost(step, known) {
-    return step * Math.min(5, Math.max(1, Math.ceil(known / 5)));
 }
 
 // Onglet Magie : Nom, Type, NI, Portée, Cible, Durée, Description.
@@ -1983,20 +1784,14 @@ function sameSpellNom(a, b) { return !!a && spellKey(a) === spellKey(b); }
 
 async function fetchSpellData() {
     if (_spellCache) return _spellCache;
-    const rows = await fetchAideSheet('Magie');
-    if (!rows) return null;
-    _spellCache = rows.map(r => ({ nom: r.nom, type: r.type || '', cn: +r.ni || 0,
-                                   portee: r.portee || '', duree: r.duree || '', desc: r.description || '' }));
-    return _spellCache;
+    const catalog = await loadRuleCatalog();
+    return catalog && Array.isArray(catalog.spells) ? (_spellCache = catalog.spells) : null;
 }
 
 function findSpell(nom) {
     if (!_spellCache || !nom?.trim()) return null;
     return _spellCache.find(s => sameSpellNom(s.nom, nom)) || null;
 }
-
-// Sorts mineurs (y compris la petite magie elfique) : barème à part.
-function isPettySpell(sp) { return /mineur|petite magie/i.test(sp.type); }
 
 function spellVent(type) {
     const first = type.split(/\s[-–]\s/)[0].trim();
@@ -2009,21 +1804,6 @@ function spellVent(type) {
 function spellEntry(sp) {
     return { nom: sp.nom, vent: spellVent(sp.type), cn: sp.cn, portee: sp.portee, duree: sp.duree,
              resume: firstParagraph(sp.desc) };
-}
-
-// Catégorie de décompte : tous les sorts mineurs ensemble, sinon le domaine
-// (colonne Type de l'aide de jeu ; les sorts d'arcane forment leur propre groupe).
-function spellCategory(sp) { return isPettySpell(sp) ? 'mineur' : sp.type; }
-
-// Coût selon le nombre de sorts déjà connus dans la même catégorie.
-// Un cran vaut 50 XP pour un sort mineur, 100 XP sinon.
-function spellXpCost(sp) {
-    const cat   = spellCategory(sp);
-    const known = state.sorts.filter(s => {
-        const k = findSpell(s.nom);
-        return k && spellCategory(k) === cat;
-    }).length;
-    return tieredXpCost(isPettySpell(sp) ? 50 : 100, known);
 }
 
 async function ensureSpellDatalist() {
@@ -2098,11 +1878,8 @@ let _miracleCache = null;
 
 async function fetchMiracleData() {
     if (_miracleCache) return _miracleCache;
-    const rows = await fetchAideSheet('Miracles');
-    if (!rows) return null;
-    _miracleCache = rows.map(r => ({ nom: r.nom, portee: r.portee || '', cible: r.cible || '',
-                                     duree: r.duree || '', effet: r.effet || '' }));
-    return _miracleCache;
+    const catalog = await loadRuleCatalog();
+    return catalog && Array.isArray(catalog.miracles) ? (_miracleCache = catalog.miracles) : null;
 }
 
 function findMiracle(nom) {
@@ -2116,11 +1893,6 @@ function miracleEntry(m) {
         .filter(([, v]) => v).map(([k, v]) => `${k} : ${v}`).join(' · ');
     const effet = firstParagraph(m.effet);
     return { nom: m.nom, type: 'Miracle', resume: [meta, effet].filter(Boolean).join(' — ') };
-}
-
-// 100 XP par cran, selon le nombre de miracles déjà connus (bénédictions exclues).
-function miracleXpCost() {
-    return tieredXpCost(100, state.prieres.filter(p => p.type === 'Miracle' && p.nom?.trim()).length);
 }
 
 async function ensureMiracleDatalist() {
@@ -2194,31 +1966,30 @@ function renderXpLog() {
 
     function rowHtml(e, i) {
         if (e.kind === 'gain') {
-            return `<tr class="xp-gain-row">
+            return `<tr class="xp-gain-row" data-row-id="${esc(e.id ?? '')}">
                 <td><span class="xp-gain-badge">Gain</span></td>
-                <td><input class="xp-gain-raison" type="text" data-idx="${i}" value="${esc(e.raison ?? '')}" placeholder="Raison…" aria-label="Raison du gain, ligne ${i + 1}"></td>
-                <td class="col-num"><input class="xp-gain-montant" type="number" data-idx="${i}" min="0" value="${esc(e.montant ?? 0)}" style="width:60px" aria-label="Montant du gain en XP, ligne ${i + 1}"></td>
+                <td><span>${esc(e.raison ?? '')}</span></td>
+                <td class="col-num">${esc(e.montant ?? 0)}</td>
                 <td></td>
-                <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer" aria-label="Supprimer le gain, ligne ${i + 1}">×</button></td>
+                <td></td>
             </tr>`;
         }
         if (e.applied) {
-            return `<tr class="xp-applied-row">
+            return `<tr class="xp-applied-row" data-row-id="${esc(e.id ?? '')}">
                 <td>${esc(e.type)}</td>
                 <td>${esc(e.achat)} <span class="xp-applied-badge">✓</span></td>
                 <td class="col-num">${esc(e.cout)}</td>
-                <td><input class="xp-note" type="text" data-idx="${i}" data-field="note" value="${esc(e.note ?? '')}" placeholder="Note…" aria-label="Note, ligne ${i + 1}"></td>
-                <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer (annule l'effet)" aria-label="Supprimer l'achat, ligne ${i + 1}">×</button></td>
+                <td>${esc(e.note ?? '')}</td>
+                <td>${e.origin === 'command' && e.purchaseId && !e.cancelledByOperationId
+                    ? `<button class="btn-rm" data-type="xp-cancel" data-purchase-id="${esc(e.purchaseId)}" title="Annuler cet achat" aria-label="Annuler l’achat ${esc(e.achat)}">×</button>` : ''}</td>
             </tr>`;
         }
-        return `<tr>
-            <td><select class="xp-type-sel" data-idx="${i}" aria-label="Type de dépense, ligne ${i + 1}">
-                ${XP_TYPES.map(t => `<option value="${t}" ${e.type===t?'selected':''}>${t}</option>`).join('')}
-            </select></td>
-            <td><input class="xp-achat" type="text" data-idx="${i}" data-field="achat" value="${esc(e.achat ?? '')}" placeholder="Achat (ex: +5 CC)" aria-label="Achat, ligne ${i + 1}"></td>
-            <td><input class="xp-cout" type="number" data-idx="${i}" data-field="cout" min="0" value="${esc(e.cout ?? 0)}" style="width:60px" aria-label="Coût en XP, ligne ${i + 1}"></td>
-            <td><input class="xp-note" type="text" data-idx="${i}" data-field="note" value="${esc(e.note ?? '')}" placeholder="Note…" aria-label="Note, ligne ${i + 1}"></td>
-            <td><button class="btn-rm" data-type="xp" data-idx="${i}" title="Supprimer" aria-label="Supprimer la dépense, ligne ${i + 1}">×</button></td>
+        return `<tr data-row-id="${esc(e.id ?? '')}">
+            <td>${esc(e.type ?? 'Autre')}</td>
+            <td>${esc(e.achat ?? '')}</td>
+            <td class="col-num">${esc(e.cout ?? 0)}</td>
+            <td>${esc(e.note ?? '')}</td>
+            <td></td>
         </tr>`;
     }
 
@@ -2227,39 +1998,18 @@ function renderXpLog() {
         : state.xpLog.map(rowHtml).join('');
 
     if (!renderXpLog._bound) {
-        tbody.addEventListener('input', e => {
-            const t = e.target;
-            const entry = state.xpLog[+t.dataset.idx];
-            if (!entry) return;
-            if (t.classList.contains('xp-gain-raison'))       { entry.raison  = t.value;             save();  return; }
-            if (t.classList.contains('xp-gain-montant'))      { entry.montant = +t.value || 0;       recalc(); return; }
-            if (t.classList.contains('xp-achat'))             { entry.achat   = t.value;             save();  return; }
-            if (t.classList.contains('xp-cout'))              { entry.cout    = +t.value || 0;       recalc(); return; }
-            if (t.classList.contains('xp-note'))              { entry.note    = t.value;             save();  return; }
-        });
-        tbody.addEventListener('change', e => {
-            const t = e.target;
-            if (!t.classList.contains('xp-type-sel')) return;
-            const entry = state.xpLog[+t.dataset.idx];
-            if (!entry) return;
-            entry.type = t.value;
-            recalc();
-        });
         tbody.addEventListener('click', e => {
-            const btn = e.target.closest('.btn-rm[data-type="xp"]');
+            const btn = e.target.closest('.btn-rm[data-type="xp-cancel"]');
             if (!btn || !tbody.contains(btn)) return;
-            const idx = +btn.dataset.idx;
-            const entry = state.xpLog[idx];
-            if (entry?.applied) revertXpEntry(entry);
-            state.xpLog.splice(idx, 1);
-            renderXpLog();
-            recalc();
+            if (_activeFicheRole !== 'mj' && _activeFicheRole !== 'joueur') return;
+            void executeFicheCommand('cancel', { purchaseId: btn.dataset.purchaseId });
         });
         renderXpLog._bound = true;
     }
 }
 
 function showXpGainForm() {
+    if (_activeFicheRole !== 'mj' && !_canImportFiche) return;
     const form = document.getElementById('xp-gain-form');
     if (!form) return;
     form.style.display = 'block';
@@ -2274,11 +2024,9 @@ function showXpGainForm() {
     document.getElementById('xg-save-btn').addEventListener('click', () => {
         const raison  = document.getElementById('xg-raison').value.trim();
         const montant = +document.getElementById('xg-montant').value || 0;
-        if (!raison || !montant) return;
-        state.xpLog.unshift({ kind: 'gain', raison, montant });
-        renderXpLog();
-        recalc();
-        form.style.display = 'none';
+        if (!raison || !Number.isSafeInteger(montant) || montant < 1) return;
+        void executeFicheCommand('gain', { amount: montant, reason: raison })
+            .then(result => { if (result?.status === 'confirmed') form.style.display = 'none'; });
     });
     document.getElementById('xg-cancel-btn').addEventListener('click', () => {
         form.style.display = 'none';
@@ -2368,21 +2116,34 @@ async function importFromFile(file) {
         alert("Ce fichier n'est pas un export de fiche de personnage.");
         return;
     }
-    const ok = await confirmAction({
-        titre: 'Remplacer la fiche',
-        message: `Le contenu de « ${file.name} » remplacera la fiche actuelle. `
-               + `L'état actuel sera définitivement perdu.`,
-        libelleAction: 'Remplacer',
+    if (_activeFicheRole !== 'mj' && !_canImportFiche) return;
+    const reason = await confirmTextAction({
+        titre: 'Importer une fiche',
+        message: `Le contenu de « ${file.name} » sera transmis au serveur pour validation et remplacera la fiche actuelle.`,
+        libelleAction: 'Importer',
         danger: true,
+        input: { label: 'Motif de cet import MJ', placeholder: 'Motif requis', maxLength: 1000 },
     });
-    if (!ok) return;
+    if (typeof reason !== 'string' || !reason.trim()) return;
+    const controller = globalThis.ficheController;
+    const charId = controller?.getState()?.charId;
+    if (!charId) return;
 
-    resetState();
-    applyData(payload);
-    renderAll();
-    recalc();          // recalc() appelle save(), qui propage vers le cloud
-    updatePageTitle();
-    updateCharacterPortrait();
+    const exportKeys = new Set([
+        'nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance',
+        'destin', 'corruption', 'possessions', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers',
+        'talentsAcq', 'talentsAvail', 'sorts', 'prieres', 'xpLog', 'customSpecs', 'basicSpecs',
+        'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible',
+    ]);
+    const cleaned = Object.fromEntries(Object.entries(payload).filter(([key]) => exportKeys.has(key)));
+    const migrated = await migrateFicheDocument({ schemaVersion: 1, revision: 1, data: cleaned }, { charId });
+    if (!migrated.canApply || !migrated.document?.data) {
+        alert('Import bloqué : le fichier comporte des anomalies à examiner avant migration.');
+        return;
+    }
+    const importData = Object.fromEntries(Object.entries(migrated.document.data).filter(([key]) => exportKeys.has(key)));
+    const result = await executeFicheCommand('import', { reason: reason.trim(), data: importData });
+    if (result?.status === 'confirmed') ficheCommandStatus('Import confirmé par le serveur.');
 }
 
 // Debounce local de 400 ms : évite un JSON.stringify + setItem à chaque keystroke.
@@ -2402,8 +2163,16 @@ function withoutSaving(fn) {
 let _saveLocalTimer = null;
 function save() {
     if (_suppressSave) return;
+    const data = exportData();
+    // Enregistrer l’intention avant tout snapshot distant. Seul l’envoi réseau
+    // est retardé; sinon une réponse reçue dans les 400 ms perd la frappe.
+    stageFicheDraft?.(data);
+    if (_activeFicheRole === 'mj') {
+        syncCorrectionDraftFromForm();
+        ensureCorrectionPanel();
+    }
     clearTimeout(_saveLocalTimer);
-    _saveLocalTimer = setTimeout(saveNow, 400);
+    _saveLocalTimer = setTimeout(saveNow, 2000);
 }
 
 // `_dirty` remplace la comparaison d'horodatages entre `_savedAt` (horloge du
@@ -2411,33 +2180,13 @@ function save() {
 // dit une chose vérifiable : cette copie locale porte des modifications qui n'ont
 // pas encore atteint le cloud. Il est posé à l'écriture locale et levé par
 // markCloudSaved(), appelée par fiche-cloud.js après une écriture réussie.
-function writeLocal(dirty) {
-    const data = exportData();
-    localStorage.setItem(STORAGE_KEY,
-        JSON.stringify({ _savedAt: Date.now(), _dirty: dirty, ...data }));
-    return data;
-}
-
-export function markCloudSaved() {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
-        const local = JSON.parse(raw);
-        local._dirty = false;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(local));
-    } catch { /* cache illisible : sans conséquence, il sera réécrit */ }
-}
-
 function saveNow() {
     if (_saveLocalTimer) { clearTimeout(_saveLocalTimer); _saveLocalTimer = null; }
-    const data = writeLocal(true);
+    const data = exportData();
 
-    // Cloud save debounced 2 s — cloudSave importé de fiche-cloud.js.
-    // `saveNow._t` est remis à null au déclenchement : sans cela il resterait un
-    // identifiant vrai indéfiniment, et flushAll() croirait avoir une écriture en
-    // attente à chaque passage en arrière-plan.
     clearTimeout(saveNow._t);
-    saveNow._t = setTimeout(() => { saveNow._t = null; cloudSave?.(data); }, 2000);
+    saveNow._t = null;
+    void cloudSave?.(data);
 }
 
 // Vidage complet avant disparition de la page : local ET cloud. `beforeunload`
@@ -2446,10 +2195,9 @@ function saveNow() {
 // `pagehide` et `visibilitychange` sont par ailleurs les seuls événements fiables
 // sur mobile, où l'onglet peut être supprimé sans émettre `beforeunload`.
 function flushAll() {
-    const enAttente = _saveLocalTimer !== null;
+    const enAttente = _saveLocalTimer !== null || saveNow._t !== null;
     if (_saveLocalTimer) { clearTimeout(_saveLocalTimer); _saveLocalTimer = null; }
-    let data;
-    if (enAttente) data = writeLocal(true);
+    const data = enAttente ? exportData() : undefined;
 
     // Rien à envoyer si aucune modification n'est en attente côté cloud.
     if (!enAttente && !saveNow._t) return;
@@ -2457,6 +2205,7 @@ function flushAll() {
     saveNow._t = null;
     cloudSave?.(data ?? exportData());
 }
+saveNow._t = null;
 
 window.addEventListener('pagehide', flushAll);
 document.addEventListener('visibilitychange', () => {
@@ -2571,53 +2320,410 @@ function renderAll() {
     applyOptVisible();
 }
 
-function load() {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    try {
-        applyData(JSON.parse(raw));
-    } catch (err) {
-        // localStorage corrompu (crash navigateur, extension capricieuse) :
-        // fallback sur un état neuf plutôt que planter le boot de la fiche.
-        console.warn('[fiche] localStorage illisible, reset', err);
-        resetState();
-    }
-}
-
-// Appelée par fiche-cloud.js quand la fiche Firestore est disponible
-// cloudMillis : timestamp Firestore en ms (updatedAt.toMillis())
-export async function ficheLoadCloud(data, cloudMillis) {
+// Le contrôleur fusionne explicitement les brouillons de champs avec le snapshot.
+// Un ancien cache complet marqué dirty n'est jamais rejoué sur le serveur.
+export async function ficheLoadCloud(data, isCurrent = () => true) {
     await dbLoadingPromise;
-
-    // Le cloud est la source de vérité, à une exception près : une copie locale
-    // portant des modifications qui ne l'ont jamais atteint (`_dirty`). On ne
-    // compare plus `_savedAt` à `updatedAt` — deux horloges différentes, dont l'une
-    // était stampée par la simple ouverture de la fiche.
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-        try {
-            const local = JSON.parse(raw);
-            if (local._dirty === true) {
-                console.warn('[fiche] modifications locales non synchronisées : envoi au cloud');
-                cloudSave?.(exportData());
-                isCloudLoaded = true;
-                return;
-            }
-        } catch { /* cache illisible : le cloud fait foi */ }
-    }
+    if (!isCurrent()) return false;
+    const focused = document.activeElement;
+    const focusId = focused?.id || '';
+    const focusRowId = focused?.closest?.('[data-row-id]')?.dataset.rowId || '';
+    const focusClass = focused?.classList?.[0] || '';
+    const focusField = focused?.dataset?.field || '';
+    const selection = focused && typeof focused.selectionStart === 'number'
+        ? [focused.selectionStart, focused.selectionEnd, focused.selectionDirection] : null;
+    if (_activeFicheRole === 'mj' && _serverBaselineData) syncCorrectionDraftFromForm();
+    const remoteData = globalThis.structuredClone(data);
+    _correctionDraftItems = _correctionDraftItems.filter(item =>
+        JSON.stringify(readCorrectionPath(remoteData, item.pathParts)) !== JSON.stringify(item.value));
+    _serverBaselineData = remoteData;
+    _correctionConflicts = correctionDraftConflictsFor(remoteData);
+    persistCorrectionDraft();
+    const renderData = _activeFicheRole === 'mj' ? applyCorrectionOverlays(remoteData) : remoteData;
 
     // Le rendu appelle recalc(), donc save() : le neutraliser, sinon charger une
     // fiche la marquerait aussitôt comme modifiée.
     withoutSaving(() => {
         resetState();
-        applyData(data);
+        applyData(renderData);
         renderAll();
         recalc();
     });
     isCloudLoaded = true;
-    // Miroir local propre : il reflète le cloud, il n'a rien en attente.
-    localStorage.setItem(STORAGE_KEY,
-        JSON.stringify({ _savedAt: cloudMillis || Date.now(), _dirty: false, ...data }));
+    let restore = focusId ? document.getElementById(focusId) : null;
+    if (!restore && focusRowId && focusClass) {
+        restore = [...document.querySelectorAll(`[data-row-id="${CSS.escape(focusRowId)}"] .${CSS.escape(focusClass)}`)]
+            .find(element => !focusField || element.dataset.field === focusField);
+    }
+    restore?.focus({ preventScroll: true });
+    if (selection && restore?.setSelectionRange) {
+        try { restore.setSelectionRange(...selection); } catch { /* input type without selection */ }
+    }
+    return true;
+}
+
+export function clearFicheView() {
+    _careerViewer?.destroy();
+    _careerViewer = null;
+    document.getElementById('fiche-correction-panel')?.remove();
+    const viewerHost = document.getElementById('career-viewer-host');
+    if (viewerHost) viewerHost.style.display = 'none';
+    const talentModal = document.getElementById('talent-modal');
+    if (talentModal?.open) talentModal.close();
+    _serverBaselineData = null;
+    _correctionDraftItems = [];
+    _correctionConflicts = [];
+    _correctionReasonDraft = '';
+    withoutSaving(() => { resetState(); renderAll(); recalc(); });
+    isCloudLoaded = false;
+}
+
+const _roleBaselineDisabled = new WeakMap();
+function collectCorrectionBatchChanges() {
+    if (!_serverBaselineData) return [];
+    const base = _serverBaselineData;
+    const next = exportData();
+    const changes = [];
+    const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+    for (const key of ['carriere', 'rang']) {
+        if (!same(base[key] ?? '', next[key] ?? '')) changes.push({ pathParts: [key], value: next[key] });
+    }
+    for (const carac of CARACS) {
+        for (const field of ['base', 'adv']) {
+            if (!same(base.carac?.[carac]?.[field], next.carac?.[carac]?.[field])) {
+                changes.push({ pathParts: ['carac', carac, field], value: next.carac?.[carac]?.[field] });
+            }
+        }
+    }
+    const basicKeys = new Set([...Object.keys(base.skillsBasic || {}), ...Object.keys(next.skillsBasic || {})]);
+    for (const key of basicKeys) {
+        if (!same(base.skillsBasic?.[key] ?? 0, next.skillsBasic?.[key] ?? 0)) {
+            changes.push({ pathParts: ['skillsBasic', key], value: next.skillsBasic?.[key] ?? 0 });
+        }
+    }
+    const rowsById = (value, root) => {
+        const oldRows = Array.isArray(base[root]) ? base[root] : [];
+        const newRows = Array.isArray(value) ? value : [];
+        const oldById = new Map(oldRows.filter(row => row?.id).map(row => [row.id, row]));
+        const newById = new Map(newRows.filter(row => row?.id).map(row => [row.id, row]));
+        for (const [id] of oldById) if (!newById.has(id)) changes.push({ pathParts: [root, id], value: null });
+        for (const row of newRows) {
+            if (!row?.id || String(row.id).startsWith('draft:')) {
+                const withoutId = { ...row };
+                delete withoutId.id;
+                changes.push({ pathParts: [root, '@new'], value: withoutId });
+                continue;
+            }
+            const old = oldById.get(row.id);
+            if (!old) continue;
+            const fields = {
+                skillsAdvanced: ['nom', 'adv', 'carac'], careers: ['nom', 'rang'],
+                talentsAcq: ['nom'], talentsAvail: ['nom'],
+                sorts: ['nom', 'vent', 'cn', 'portee', 'duree', 'resume'],
+                prieres: ['nom', 'type', 'resume'],
+            }[root] || [];
+            for (const field of fields) {
+                if (!same(old[field] ?? null, row[field] ?? null)) {
+                    changes.push({ pathParts: [root, row.id, field], value: row[field] ?? null });
+                }
+            }
+        }
+    };
+    for (const root of ['skillsAdvanced', 'careers', 'talentsAcq', 'talentsAvail', 'sorts', 'prieres']) rowsById(next[root], root);
+    for (const key of new Set([...Object.keys(base.basicSpecs || {}), ...Object.keys(next.basicSpecs || {})])) {
+        const before = base.basicSpecs?.[key] ?? null;
+        const after = next.basicSpecs?.[key] ?? null;
+        if (!same(before, after)) changes.push({ pathParts: ['basicSpecs', key], value: after });
+    }
+    for (const careerId of new Set([...Object.keys(base.chosenVariants || {}), ...Object.keys(next.chosenVariants || {})])) {
+        for (const rank of new Set([...Object.keys(base.chosenVariants?.[careerId] || {}), ...Object.keys(next.chosenVariants?.[careerId] || {})])) {
+            const before = base.chosenVariants?.[careerId]?.[rank] ?? null;
+            const after = next.chosenVariants?.[careerId]?.[rank] ?? null;
+            if (!same(before, after)) changes.push({ pathParts: ['chosenVariants', careerId, rank], value: after });
+        }
+    }
+    for (const careerId of new Set([...Object.keys(base.careerOverrides || {}), ...Object.keys(next.careerOverrides || {})])) {
+        for (const rank of new Set([...Object.keys(base.careerOverrides?.[careerId] || {}), ...Object.keys(next.careerOverrides?.[careerId] || {})])) {
+            for (const field of ['caracs', 'skillsAdded', 'skillsRemoved', 'talentsAdded', 'talentsRemoved']) {
+                const before = base.careerOverrides?.[careerId]?.[rank]?.[field] ?? null;
+                const after = next.careerOverrides?.[careerId]?.[rank]?.[field] ?? null;
+                if (!same(before, after)) changes.push({ pathParts: ['careerOverrides', careerId, rank, field], value: after });
+            }
+        }
+    }
+    return changes;
+}
+
+function correctionPathKey(pathParts) { return JSON.stringify(pathParts); }
+
+function readCorrectionPath(data, pathParts) {
+    const [root, id, field, nested] = pathParts;
+    if (pathParts.length === 1) return data?.[root] ?? null;
+    if (root === 'carac') return data?.carac?.[id]?.[field] ?? null;
+    if (root === 'skillsBasic' || root === 'basicSpecs') return data?.[root]?.[id] ?? null;
+    if (root === 'chosenVariants') return data?.chosenVariants?.[id]?.[field] ?? null;
+    if (root === 'careerOverrides') return data?.careerOverrides?.[id]?.[field]?.[nested] ?? null;
+    if (['skillsAdvanced', 'careers', 'talentsAcq', 'talentsAvail', 'sorts', 'prieres'].includes(root)) {
+        const row = data?.[root]?.find(item => item?.id === id);
+        return pathParts.length === 2 ? row ?? null : row?.[field] ?? null;
+    }
+    return null;
+}
+
+function applyCorrectionOverlays(data, items = _correctionDraftItems) {
+    const next = globalThis.structuredClone(data);
+    for (const item of items) {
+        const [root, id, field, nested] = item.pathParts;
+        if (item.value === null && ['skillsAdvanced', 'careers', 'talentsAcq', 'talentsAvail', 'sorts', 'prieres'].includes(root)
+            && item.pathParts.length === 2) {
+            next[root] = (next[root] || []).filter(row => row?.id !== id);
+        } else if (['skillsAdvanced', 'careers', 'talentsAcq', 'talentsAvail', 'sorts', 'prieres'].includes(root)
+            && item.pathParts.length === 2 && id === '@new') {
+            next[root] = [...(next[root] || []), { ...item.value, id: `draft:${_correctionDraftItems.indexOf(item)}` }];
+        } else if (['skillsAdvanced', 'careers', 'talentsAcq', 'talentsAvail', 'sorts', 'prieres'].includes(root)
+            && item.pathParts.length === 2) {
+            const rows = next[root] || [];
+            const index = rows.findIndex(row => row?.id === id);
+            if (index >= 0) rows[index] = { ...rows[index], ...item.value };
+        } else if (['skillsAdvanced', 'careers', 'talentsAcq', 'talentsAvail', 'sorts', 'prieres'].includes(root)
+            && item.pathParts.length === 3) {
+            next[root] = (next[root] || []).map(row => row?.id === id ? { ...row, [field]: item.value } : row);
+        } else if (root === 'carac') next.carac = { ...next.carac, [id]: { ...next.carac?.[id], [field]: item.value } };
+        else if (root === 'skillsBasic' || root === 'basicSpecs') next[root] = { ...next[root], [id]: item.value };
+        else if (root === 'chosenVariants') next.chosenVariants = { ...next.chosenVariants, [id]: { ...next.chosenVariants?.[id], [field]: item.value } };
+        else if (root === 'careerOverrides') next.careerOverrides = {
+            ...next.careerOverrides, [id]: { ...next.careerOverrides?.[id], [field]: { ...next.careerOverrides?.[id]?.[field], [nested]: item.value } },
+        };
+        else if (item.pathParts.length === 1) next[root] = item.value;
+    }
+    return next;
+}
+
+function syncCorrectionDraftFromForm() {
+    if (!_serverBaselineData || _activeFicheRole !== 'mj') return;
+    const detected = collectCorrectionBatchChanges();
+    const byPath = new Map(_correctionDraftItems.map(item => [correctionPathKey(item.pathParts), item]));
+    const next = [];
+    for (const change of detected) {
+        const key = correctionPathKey(change.pathParts);
+        const previous = byPath.get(key);
+        next.push({
+            ...change,
+            baseValue: previous?.baseValue ?? readCorrectionPath(_serverBaselineData, change.pathParts),
+        });
+    }
+    _correctionDraftItems = next;
+    _correctionConflicts = _correctionConflicts.filter(conflict => next.some(item => correctionPathKey(item.pathParts) === conflict.key));
+    const reasonInput = document.getElementById('fiche-correction-reason');
+    if (reasonInput) _correctionReasonDraft = reasonInput.value;
+    persistCorrectionDraft();
+}
+
+function persistCorrectionDraft() {
+    if (_activeFicheRole !== 'mj' || !globalThis.ficheController?.saveCorrectionDraft) return { ok: false, reason: 'not-authorized' };
+    const result = !_correctionDraftItems.length && !_correctionReasonDraft
+        ? (globalThis.ficheController.removeCorrectionDraft?.(), { ok: true })
+        : globalThis.ficheController.saveCorrectionDraft({ reason: _correctionReasonDraft, items: _correctionDraftItems });
+    const status = document.querySelector('#fiche-correction-panel .fiche-correction-persistence');
+    if (status) status.textContent = result.ok
+        ? (_correctionDraftItems.length || _correctionReasonDraft ? 'Brouillon de correction enregistré sur cet appareil.' : '')
+        : result.reason === 'not-authorized' ? '' : 'Correction gardée en mémoire seulement — sauvegarde locale indisponible.';
+    return result;
+}
+
+function correctionBatchChanges() {
+    syncCorrectionDraftFromForm();
+    return _correctionDraftItems.map(({ pathParts, value }) => ({ pathParts, value }));
+}
+
+function correctionDraftConflictsFor(remoteData) {
+    const remaining = [];
+    for (const item of _correctionDraftItems) {
+        const remoteValue = readCorrectionPath(remoteData, item.pathParts);
+        if (JSON.stringify(remoteValue) === JSON.stringify(item.value)) continue;
+        if (JSON.stringify(remoteValue) !== JSON.stringify(item.baseValue)) {
+            remaining.push({ key: correctionPathKey(item.pathParts), pathParts: item.pathParts,
+                base: item.baseValue, local: item.value, server: remoteValue });
+        }
+    }
+    return remaining;
+}
+
+function isSafePersistedCorrection(item) {
+    if (!item || !Array.isArray(item.pathParts) || item.pathParts.length < 1 || item.pathParts.length > 4
+        || item.pathParts.some(part => typeof part !== 'string' || !part || ['__proto__', 'constructor', 'prototype'].includes(part))) return false;
+    return new Set([
+        'carriere', 'rang', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers', 'talentsAcq',
+        'talentsAvail', 'sorts', 'prieres', 'basicSpecs', 'customSpecs', 'customTalents',
+        'chosenVariants', 'careerOverrides', 'nom', 'race', 'blessuresAct', 'resilience',
+        'determination', 'chance', 'destin', 'corruption', 'possessions', 'optVisible',
+    ]).has(item.pathParts[0]) && Object.hasOwn(item, 'value') && Object.hasOwn(item, 'baseValue');
+}
+
+function renderCorrectionOverlay() {
+    if (!_serverBaselineData || !_correctionDraftItems.length) return;
+    const merged = applyCorrectionOverlays(_serverBaselineData);
+    withoutSaving(() => { applyData(merged); renderAll(); recalc(); });
+}
+
+function ensureCorrectionPanel() {
+    if (_activeFicheRole !== 'mj') return;
+    const bar = document.getElementById('fiche-auth-bar') || document.querySelector('.fiche-page-header');
+    if (!bar) return;
+    let panel = document.getElementById('fiche-correction-panel');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'fiche-correction-panel';
+        panel.className = 'fiche-correction-panel';
+        panel.innerHTML = '<label>Corrections MJ (motif requis) <input id="fiche-correction-reason" maxlength="1000" placeholder="Motif" autocomplete="off"></label><button type="button" id="fiche-correction-submit" class="fiche-auth-btn">Enregistrer les corrections</button>';
+        const persistenceStatus = document.createElement('p');
+        persistenceStatus.className = 'fiche-correction-persistence';
+        persistenceStatus.setAttribute('aria-live', 'polite');
+        panel.append(persistenceStatus);
+        bar.append(panel);
+        panel.querySelector('#fiche-correction-reason').value = _correctionReasonDraft;
+        panel.querySelector('#fiche-correction-reason').addEventListener('input', event => {
+            _correctionReasonDraft = event.target.value;
+            persistCorrectionDraft();
+        });
+        panel.querySelector('#fiche-correction-submit').addEventListener('click', async () => {
+            const reason = panel.querySelector('#fiche-correction-reason').value.trim();
+            const changes = correctionBatchChanges();
+            if (_correctionConflicts.length || !reason || !changes.length || changes.length > 50) {
+                ficheCommandStatus(_correctionConflicts.length ? 'Résolvez les conflits de correction avant l’enregistrement.'
+                    : changes.length > 50 ? 'Réduisez cette correction à 50 changements.' : 'Saisissez un motif et au moins une modification.', true);
+                return;
+            }
+            const result = await executeFicheCommand('correct', { kind: 'batch', reason, changes });
+            if (result?.status === 'confirmed') {
+                _correctionDraftItems = [];
+                _correctionConflicts = [];
+                _correctionReasonDraft = '';
+                globalThis.ficheController?.removeCorrectionDraft?.();
+                panel.querySelector('#fiche-correction-reason').value = '';
+                ensureCorrectionPanel();
+            }
+        });
+    }
+    let recovery = panel.querySelector('.fiche-correction-recovery');
+    if (!recovery) {
+        recovery = document.createElement('div');
+        recovery.className = 'fiche-correction-recovery';
+        panel.append(recovery);
+    }
+    recovery.replaceChildren();
+    if (!_correctionDraftItems.length && !_correctionReasonDraft
+        && typeof globalThis.ficheController?.listOtherCorrectionDraftSessions === 'function') {
+        const sessions = globalThis.ficheController.listOtherCorrectionDraftSessions();
+        if (sessions.length) {
+            const label = document.createElement('span');
+            label.textContent = 'Brouillon(s) de correction à restaurer explicitement :';
+            recovery.append(label);
+            for (const item of sessions) {
+                const action = document.createElement('button');
+                action.type = 'button';
+                action.className = 'fiche-auth-btn';
+                const date = item.savedAt ? new Date(item.savedAt).toLocaleString('fr-FR') : 'date inconnue';
+                action.textContent = `Restaurer ${item.changeCount} correction(s) · ${date}`;
+                action.addEventListener('click', () => {
+                    const recovered = globalThis.ficheController?.loadCorrectionDraftSession?.(item.sessionId);
+                    if (!recovered || !_serverBaselineData) return;
+                    _correctionDraftItems = recovered.items.filter(isSafePersistedCorrection).map(entry => ({
+                        pathParts: [...entry.pathParts],
+                        value: globalThis.structuredClone(entry.value),
+                        baseValue: globalThis.structuredClone(entry.baseValue),
+                    }));
+                    _correctionReasonDraft = recovered.reason;
+                    const reasonInput = document.getElementById('fiche-correction-reason');
+                    if (reasonInput) reasonInput.value = _correctionReasonDraft;
+                    _correctionConflicts = correctionDraftConflictsFor(_serverBaselineData);
+                    renderCorrectionOverlay();
+                    const stored = persistCorrectionDraft();
+                    if (stored.ok) globalThis.ficheController?.removeCorrectionDraftSession?.(item.sessionId);
+                    ensureCorrectionPanel();
+                });
+                recovery.append(action);
+            }
+        }
+    }
+    const count = correctionBatchChanges().length;
+    const button = panel.querySelector('#fiche-correction-submit');
+    if (button) {
+        button.disabled = count === 0 || count > 50 || _correctionConflicts.length > 0;
+        button.textContent = _correctionConflicts.length ? 'Résoudre les conflits avant enregistrement'
+            : count ? `Enregistrer ${count} correction(s)` : 'Aucune correction en attente';
+    }
+    let conflicts = panel.querySelector('.fiche-correction-conflicts');
+    if (!conflicts) {
+        conflicts = document.createElement('div');
+        conflicts.className = 'fiche-correction-conflicts';
+        panel.append(conflicts);
+    }
+    conflicts.replaceChildren();
+    for (const conflict of _correctionConflicts) {
+        const item = document.createElement('div');
+        item.className = 'fiche-correction-conflict';
+        const description = document.createElement('span');
+        description.textContent = `${conflict.pathParts.join('.')} : base ${JSON.stringify(conflict.base)} · local ${JSON.stringify(conflict.local)} · serveur ${JSON.stringify(conflict.server)}`;
+        item.append(description);
+        for (const [choice, label] of [['server', 'Garder serveur'], ['local', 'Garder ma correction']]) {
+            const action = document.createElement('button');
+            action.type = 'button';
+            action.className = 'fiche-auth-btn';
+            action.textContent = label;
+            action.addEventListener('click', () => {
+                const index = _correctionDraftItems.findIndex(draft => correctionPathKey(draft.pathParts) === conflict.key);
+                if (index < 0) return;
+                if (choice === 'server') _correctionDraftItems.splice(index, 1);
+                else _correctionDraftItems[index].baseValue = conflict.server;
+                _correctionConflicts = _correctionConflicts.filter(candidate => candidate.key !== conflict.key);
+                renderCorrectionOverlay();
+                persistCorrectionDraft();
+                ensureCorrectionPanel();
+            });
+            item.append(action);
+        }
+        conflicts.append(item);
+    }
+}
+
+export function setFicheRole(role, { allowImport = false } = {}) {
+    _activeFicheRole = ['mj', 'joueur', 'readonly'].includes(role) ? role : 'readonly';
+    _canImportFiche = allowImport === true;
+    const content = document.getElementById('fiche-content-section');
+    const controls = content?.querySelectorAll('input, select, textarea, button') || [];
+    // Restaurer l’état intrinsèque avant d’appliquer le rôle : une transition
+    // joueur → MJ ne doit pas laisser des contrôles statiques désactivés.
+    controls.forEach(control => {
+        if (!_roleBaselineDisabled.has(control)) _roleBaselineDisabled.set(control, control.disabled);
+        control.disabled = _roleBaselineDisabled.get(control);
+    });
+    if (role === 'mj') {
+        content?.querySelectorAll('.xp-note').forEach(control => { control.disabled = true; });
+        ensureCorrectionPanel();
+        return;
+    }
+    document.getElementById('fiche-correction-panel')?.remove();
+    if (role === 'readonly') {
+        controls.forEach(control => { control.disabled = true; });
+        if (_canImportFiche) {
+            const importButton = document.getElementById('btn-import-fiche');
+            const importInput = document.getElementById('file-import-fiche');
+            if (importButton) importButton.disabled = false;
+            if (importInput) importInput.disabled = false;
+        }
+        return;
+    }
+    controls.forEach(control => { control.disabled = true; });
+    content?.querySelectorAll(
+        '#nom, #race, #blessures-act, #resilience, #determination, #chance, #destin, #corruption, #possessions, '
+        + '.career-note, .career-variant-sel, .skill-note, .talent-note, .sort-note, .priere-note, '
+        + '.btn-toggle-opt, .btn-close-section, #btn-export-fiche, #btn-add-xp, .btn-rm[data-type="xp-cancel"], '
+        + '.career-viewer-control select, .career-viewer-check input, .career-viewer-open, .career-viewer-talent, .career-viewer-modal button, .career-viewer-modal select'
+    ).forEach(control => { control.disabled = false; });
+    content?.querySelectorAll('.sk-basic-spec').forEach(control => {
+        control.disabled = Number(state.skillsBasic?.[control.dataset.skill] || 0) > 0;
+    });
 }
 
 // ── Listeners ─────────────────────────────────────────
@@ -2749,10 +2855,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Rendu initial neutralisé côté sauvegarde : afficher une fiche n'est pas la
     // modifier. C'est ce qui marquait le cache local comme plus frais que le cloud.
     withoutSaving(() => {
-        if (!isCloudLoaded) {
-            load();             // charger l'état en premier
-            renderAll();        // puis rendre avec les valeurs restaurées
-        }
+        if (!isCloudLoaded) renderAll();
         bindAll();
         recalc();
     });

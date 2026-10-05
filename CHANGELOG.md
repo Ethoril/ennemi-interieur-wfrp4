@@ -1,3 +1,13 @@
+## [2.29.0] - 2026-10-05
+
+- **Fiches et XP** : sauvegardes par commandes atomiques, fusion des champs compatibles et choix explicite en cas de conflit. Achats calculés côté serveur, reprise sans double débit, annulation contrôlée et corrections MJ motivées et historisées.
+- **Rangs de carrière** : achèvement calculé automatiquement avec le seuil de 5 × le rang pour les caractéristiques et huit compétences de carrière, plus un talent du rang actuel.
+- **Contributions joueurs** : création et édition des PNJ, indices et relations publics avec les comptes existants, sans accès aux secrets MJ. Historique et corbeille restaurable ; suppression joueur limitée à ses créations.
+- **Référentiels MJ** : alias explicites de compétences et talents, descriptions locales prioritaires sur la base Sheets, aperçu des impacts et arbitrage des collisions avant migration des fiches.
+- **Fiche mobile** : accès protégé depuis le site mobile, interface adaptée au téléphone et brouillons locaux ; validation des achats uniquement en ligne.
+- **Visionneuse de carrière** : aperçu du rang suivant, choix du rang, cumul et modale de consultation de toutes les carrières, sans modification du personnage.
+- **Activation** : les fiches anciennes nécessitent une migration MJ avec sauvegarde protégée avant de reprendre les écritures.
+
 ## [2.28.3] - 2026-10-04
 
 - **Positions PNJs** : le masquage d’un personnage annule le refus transitoire de l’ancien abonnement aux positions. Un message d’erreur de lecture disparaît lorsque la synchronisation reprend, sans effacer les erreurs de sauvegarde.

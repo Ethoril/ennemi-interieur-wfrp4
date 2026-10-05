@@ -9,6 +9,7 @@ const ROUTE_NAMES = Object.freeze({
     ENQUETE: 'enquete-detail',
     ENQUETE_NEW: 'enquete-new',
     ENQUETE_EDIT: 'enquete-edit',
+    FICHES: 'fiches',
     REGLAGES: 'reglages',
     UNKNOWN: 'unknown',
 });
@@ -53,6 +54,7 @@ export function parseRoute(hash = '') {
             : Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
     }
     if (section === 'reglages' && segments.length === 1) return Object.freeze({ name: ROUTE_NAMES.REGLAGES });
+    if (section === 'fiches' && segments.length === 1) return Object.freeze({ name: ROUTE_NAMES.FICHES });
     return Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
 }
 
@@ -71,6 +73,7 @@ export function documentTitleForRoute(route) {
         case ROUTE_NAMES.ENQUETE: return 'Enquête — L\'Ennemi Intérieur';
         case ROUTE_NAMES.ENQUETE_NEW: return 'Nouvelle enquête — L\'Ennemi Intérieur';
         case ROUTE_NAMES.ENQUETE_EDIT: return 'Modifier une enquête — L\'Ennemi Intérieur';
+        case ROUTE_NAMES.FICHES: return 'Mes fiches — L\'Ennemi Intérieur';
         case ROUTE_NAMES.REGLAGES: return 'Réglages — L\'Ennemi Intérieur';
         default: return 'Écran introuvable — L\'Ennemi Intérieur';
     }
@@ -86,6 +89,7 @@ export function routeToHash(route) {
         case ROUTE_NAMES.ENQUETE: return ROUTE_ID.test(route.id) ? `#/enquetes/${encodeURIComponent(route.id)}` : '#/enquetes';
         case ROUTE_NAMES.ENQUETE_NEW: return '#/enquetes/nouveau';
         case ROUTE_NAMES.ENQUETE_EDIT: return ROUTE_ID.test(route.id) ? `#/enquetes/${encodeURIComponent(route.id)}/modifier` : '#/enquetes';
+        case ROUTE_NAMES.FICHES: return '#/fiches';
         case ROUTE_NAMES.REGLAGES: return '#/reglages';
         default: return '#/pnjs';
     }

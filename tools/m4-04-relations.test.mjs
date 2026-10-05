@@ -5,6 +5,7 @@ import { createPnjRelationsEditor } from '../js/mobile/components/pnj-relations-
 class Element {
     constructor(documentRef, tagName) { this.ownerDocument = documentRef; this.tagName = tagName; this.children = []; this.parentNode = null; this.listeners = new Map(); this.attributes = new Map(); this.dataset = {}; this.className = ''; this._textContent = ''; this.value = ''; this.checked = false; this.disabled = false; this.hidden = false; this.type = ''; this.style = {}; }
     get textContent() { return this._textContent + this.children.map(child => child.textContent || '').join(''); }
+    get isConnected() { return Boolean(this.parentNode); }
     set textContent(value) { this._textContent = String(value ?? ''); this.children = []; }
     append(...nodes) { for (const node of nodes) { if (!node) continue; node.parentNode = this; this.children.push(node); } }
     replaceChildren(...nodes) { this.children = []; this.append(...nodes); }
@@ -42,15 +43,18 @@ function fixture() {
     const pnjs = [{ id: 'a', nom: 'Ada', visibleJoueurs: true }, { id: 'b', nom: 'Émile', visibleJoueurs: true }, { id: 'c', nom: 'Zoë', visibleJoueurs: false }, { id: 'd', nom: 'Éléonore', visibleJoueurs: true }];
     const repository = {
         subscribeAll: (next, error) => { relationCallbacks.push({ next, error }); return () => {}; },
-        create: async (...args) => { calls.create += 1; calls.createArgs = args; return { id: 'created' }; },
-        update: async (...args) => { calls.update += 1; calls.updateArgs = args; return { id: 'updated' }; },
-        remove: async (...args) => { calls.remove += 1; calls.removeArgs = args; return { id: args[0] }; },
+    };
+    const contributionClient = {
+        getContentEditContext: async ({ kind, id }) => ({ canEdit: true, revision: 7, data: { ...relations.find(item => item.id === id), reciprocalRevision: 8 } }),
+        mutatePublicContent: async (...args) => { calls.create += 1; calls.createArgs = args; return { id: 'created' }; },
+        mutateMjContent: async (...args) => { calls.update += 1; calls.updateArgs = args; return { id: 'updated' }; },
+        trashPublicContent: async (...args) => { calls.remove += 1; calls.removeArgs = args; return { id: args[1] }; },
     };
     const pnjRepository = { subscribeAll: (next, error) => { pnjCallbacks.push({ next, error }); return () => {}; } };
     const announcements = []; let state = session();
-    const view = createPnjRelationsEditor({ container, pnjId: 'a', getSession: () => state, getRelationsRepository: () => repository, getPnjRepository: () => pnjRepository, announce: value => announcements.push(value), document: documentRef });
+    const view = createPnjRelationsEditor({ container, pnjId: 'a', getSession: () => state, getRelationsRepository: () => repository, getPnjRepository: () => pnjRepository, getContributionClient: () => contributionClient, announce: value => announcements.push(value), document: documentRef });
     view.mount(); relationCallbacks[0].next(relations); pnjCallbacks[0].next(pnjs);
-    return { documentRef, container, view, relations, pnjs, repository, relationCallbacks, pnjCallbacks, calls, announcements, setSession: value => { state = value; } };
+    return { documentRef, container, view, relations, pnjs, repository, contributionClient, relationCallbacks, pnjCallbacks, calls, announcements, setSession: value => { state = value; } };
 }
 
 test('éditeur MJ liste clairement vers, depuis et anomalies orphelines', () => {
@@ -79,7 +83,7 @@ test('création simple transmet le sens et la paire reste un seul appel atomique
     const inputs = f.container.querySelectorAll('input'); inputs.find(input => input.name === 'type').value = 'allié'; inputs.find(input => input.name === 'label').value = 'Aide';
     const pair = inputs.find(input => input.name === 'pair'); pair.checked = true;
     const form = f.container.children.at(-1).children[0].children.find(node => node.tagName === 'form'); form.dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.equal(f.calls.create, 1); assert.equal(f.calls.createArgs[0].source, 'a'); assert.equal(f.calls.createArgs[0].cible, 'b'); assert.equal(f.calls.createArgs[1], true);
+    assert.equal(f.calls.create, 1); assert.equal(f.calls.createArgs[0].kind, 'relation'); assert.equal(f.calls.createArgs[0].action, 'create'); assert.equal(f.calls.createArgs[0].baseRevision, 0); assert.equal(f.calls.createArgs[0].changes.source, 'a'); assert.equal(f.calls.createArgs[0].changes.cible, 'b'); assert.equal(f.calls.createArgs[0].pair, true);
 });
 
 test('double soumission ne double pas la création et un endpoint masqué ne la bloque pas', async () => {
@@ -87,7 +91,7 @@ test('double soumission ne double pas la création et un endpoint masqué ne la 
     const selects = f.container.querySelectorAll('select'); selects[0].value = 'c';
     const inputs = f.container.querySelectorAll('input'); inputs.find(input => input.name === 'type').value = 'rival'; inputs.find(input => input.name === 'label').value = 'Chasse';
     const form = f.container.children.at(-1).children[0].children.find(node => node.tagName === 'form'); form.dispatch('submit'); form.dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.equal(f.calls.create, 1); assert.equal(Object.hasOwn(f.calls.createArgs[0], 'visibleJoueurs'), false);
+    assert.equal(f.calls.create, 1); assert.equal(f.calls.createArgs[0].changes.cible, 'c'); assert.equal(Object.hasOwn(f.calls.createArgs[0].changes, 'visibleJoueurs'), false);
 });
 
 test('aucune case de visibilité : le dépôt la dérive même si le PNJ courant est masqué', async () => {
@@ -104,12 +108,12 @@ test('édition transmet updatedAt et portée de paire explicite', async () => {
     const f = fixture(); f.container.querySelectorAll('button').find(button => button.textContent === 'Modifier').dispatch('click');
     assert.equal(f.container.querySelectorAll('input').find(input => input.name === 'pair')?.disabled, true);
     const inputs = f.container.querySelectorAll('input'); inputs.find(input => input.name === 'label').value = 'Aide encore'; inputs.find(input => input.name === 'pair').checked = false;
-    const form = f.container.children.at(-1).children[0].children.find(node => node.tagName === 'form'); form.dispatch('submit'); await Promise.resolve();
-    assert.equal(f.calls.update, 1); assert.equal(f.calls.updateArgs[0], 'r-out'); assert.deepEqual(f.calls.updateArgs[2], { seconds: 1, nanoseconds: 0 }); assert.equal(f.calls.updateArgs[3].pair, false); assert.equal(Object.hasOwn(f.calls.updateArgs[3], 'reciprocalId'), false);
+    const form = f.container.children.at(-1).children[0].children.find(node => node.tagName === 'form'); form.dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(f.calls.update, 1); assert.equal(f.calls.updateArgs[0].kind, 'relation'); assert.equal(f.calls.updateArgs[0].id, 'r-out'); assert.equal(f.calls.updateArgs[0].baseRevision, 7); assert.equal(f.calls.updateArgs[0].changes.label, 'Aide encore'); assert.equal(Object.hasOwn(f.calls.updateArgs[0], 'reciprocalId'), false);
 });
 
 test('une paire inexistante reste impossible après erreur ou cycle disabled', async () => {
-    const f = fixture(); f.repository.update = async () => { throw Object.assign(new Error('offline'), { kind: 'offline' }); };
+    const f = fixture(); f.contributionClient.mutateMjContent = async () => { throw Object.assign(new Error('offline'), { kind: 'offline' }); };
     f.container.querySelectorAll('button').find(button => button.textContent === 'Modifier').dispatch('click');
     const pair = f.container.querySelectorAll('input').find(input => input.name === 'pair');
     const label = f.container.querySelectorAll('input').find(input => input.name === 'label'); label.value = 'Essai';
@@ -118,11 +122,11 @@ test('une paire inexistante reste impossible après erreur ou cycle disabled', a
 });
 
 test('une erreur normalisée de permission reste explicite sans détail technique', async () => {
-    const f = fixture(); f.repository.create = async () => { throw Object.assign(new Error('sensitive'), { kind: 'permission' }); };
+    const f = fixture(); f.contributionClient.mutatePublicContent = async () => { throw Object.assign(new Error('sensitive'), { kind: 'permission' }); };
     f.container.querySelectorAll('button')[0].dispatch('click'); const select = f.container.querySelectorAll('select')[0]; select.value = 'b';
     const inputs = f.container.querySelectorAll('input'); inputs.find(input => input.name === 'type').value = 'allié'; inputs.find(input => input.name === 'label').value = 'Aide';
     f.container.querySelectorAll('form')[0].dispatch('submit'); await Promise.resolve();
-    assert.match(f.container.textContent, /session MJ/u); assert.doesNotMatch(f.container.textContent, /sensitive/u);
+    assert.match(f.container.textContent, /session MJ n’autorise plus/u); assert.doesNotMatch(f.container.textContent, /sensitive/u);
 });
 
 test('snapshot distant recharge un éditeur intact mais signale le conflit d’une saisie sale', () => {
@@ -133,12 +137,12 @@ test('snapshot distant recharge un éditeur intact mais signale le conflit d’u
 });
 
 test('suppression demande confirmation et not-found devient déjà supprimée sans faux succès', async () => {
-    const f = fixture(); f.documentRef.defaultView.confirm = message => { assert.match(message, /Émile/u); return true; };
-    f.container.querySelectorAll('button').find(button => button.textContent === 'Supprimer').dispatch('click'); await Promise.resolve(); assert.equal(f.calls.remove, 1);
+    const f = fixture(); f.documentRef.defaultView.confirm = message => { assert.match(message, /Émile/u); assert.match(message, /corbeille/u); return true; };
+    f.container.querySelectorAll('button').find(button => button.textContent === 'Supprimer').dispatch('click'); await Promise.resolve(); await Promise.resolve(); assert.equal(f.calls.remove, 1); assert.deepEqual(f.calls.removeArgs[0], { kind: 'relation', id: 'r-out', operationId: f.calls.removeArgs[0].operationId, baseRevision: 7 });
 });
 
 test('une erreur réseau de création conserve la feuille et la saisie', async () => {
-    const f = fixture(); f.repository.create = async () => { throw Object.assign(new Error('network details'), { code: 'unavailable' }); };
+    const f = fixture(); f.contributionClient.mutatePublicContent = async () => { throw Object.assign(new Error('network details'), { code: 'unavailable' }); };
     f.container.querySelectorAll('button')[0].dispatch('click'); const selects = f.container.querySelectorAll('select'); selects[0].value = 'b';
     const inputs = f.container.querySelectorAll('input'); inputs.find(input => input.name === 'type').value = 'allié'; inputs.find(input => input.name === 'label').value = 'Saisie à garder';
     const form = f.container.children.at(-1).children[0].children.find(node => node.tagName === 'form'); form.dispatch('submit'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
@@ -154,10 +158,10 @@ test('un succès réactive la surface pour une nouvelle action', async () => {
 
 test('une paire expose suppression d’un sens ou des deux avec précondition exacte', async () => {
     const f = fixture(); const one = f.container.querySelectorAll('button').find(button => button.textContent === 'Supprimer ce sens');
-    f.documentRef.defaultView.confirm = message => { assert.match(message, /dans ce sens/u); return true; }; one.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.deepEqual(f.calls.removeArgs, ['r-pair-out', { pair: false }]);
-    const pair = f.container.querySelectorAll('button').find(button => button.textContent === 'Supprimer la paire'); f.documentRef.defaultView.confirm = message => { assert.match(message, /dans les deux sens/u); return true; }; pair.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
-    assert.deepEqual(f.calls.removeArgs, ['r-pair-out', { pair: true, reciprocalId: 'r-pair-in' }]);
+    f.documentRef.defaultView.confirm = message => { assert.match(message, /Contact avec Éléonore/u); return true; }; one.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(f.calls.removeArgs[0].kind, 'relation'); assert.equal(f.calls.removeArgs[0].id, 'r-pair-out'); assert.equal(f.calls.removeArgs[0].baseRevision, 7);
+    const pair = f.container.querySelectorAll('button').find(button => button.textContent === 'Supprimer la paire'); f.documentRef.defaultView.confirm = message => { assert.match(message, /miroir exact/u); return true; }; pair.dispatch('click'); await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(f.calls.removeArgs[0].id, 'r-pair-out'); assert.equal(f.calls.removeArgs[0].kind, 'relation');
 });
 
 test('une suppression distante ferme la feuille sans recréer la relation', () => {
@@ -166,7 +170,7 @@ test('une suppression distante ferme la feuille sans recréer la relation', () =
 });
 
 test('une opération terminée après changement d’identité ne produit aucun résultat', async () => {
-    const f = fixture(); let resolveCreate; f.repository.create = () => new Promise(resolve => { resolveCreate = resolve; });
+    const f = fixture(); let resolveCreate; f.contributionClient.mutatePublicContent = () => new Promise(resolve => { resolveCreate = resolve; });
     f.container.querySelectorAll('button')[0].dispatch('click'); const selects = f.container.querySelectorAll('select'); selects[0].value = 'b';
     const inputs = f.container.querySelectorAll('input'); inputs.find(input => input.name === 'type').value = 'allié'; inputs.find(input => input.name === 'label').value = 'Aide';
     const form = f.container.children.at(-1).children.find(node => node.tagName === 'form') || f.container.children.at(-1).children[0].children.find(node => node.tagName === 'form'); form.dispatch('submit');

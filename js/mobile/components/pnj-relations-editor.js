@@ -1,3 +1,5 @@
+import { loadContentEditContext, mutateContentThroughGateway, newContributionOperationId, trashManagedContent } from '../../contributions/managed-commands.js';
+
 const PALETTE = Object.freeze([
     { value: '', label: 'Automatique' },
     { value: '#c9a84c', label: 'Or' },
@@ -81,10 +83,11 @@ function validForm(values) {
 
 export function createPnjRelationsEditor({ container, pnjId, getSession = () => null,
     getRelationsRepository = () => null, getPnjRepository = () => null,
+    getContributionClient = () => null,
     announce = () => {}, isOnline = () => true, document: documentRef = container?.ownerDocument ?? globalThis.document } = {}) {
     if (!container || !documentRef?.createElement || typeof pnjId !== 'string' || !pnjId) throw new TypeError('Éditeur de relations requis');
     let mounted = false; let generation = 0; let controller = null; let externalSignal = null; let unsubs = [];
-    let relations = []; let pnjs = []; let busy = false; let dirty = false; let externallyDisabled = false; let editor = null; let editorRelation = null; let editorFields = null; let editorPanel = null; let conflictActions = null;
+    let relations = []; let pnjs = []; let busy = false; let dirty = false; let externallyDisabled = false; let editor = null; let editorRelation = null; let editorFields = null; let editorPanel = null; let editorContextPromise = null; let conflictActions = null;
     let lastFocus = null; let previousOverflow = null; let ownsScrollLock = false; let refs = null;
 
     const cleanup = () => { for (const unsubscribe of unsubs.splice(0)) { try { unsubscribe?.(); } catch { /* best-effort */ } } };
@@ -134,7 +137,7 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
     };
     const closeEditor = () => {
         if (!editor) return;
-        editor.remove(); editor = null; editorRelation = null; editorFields = null; editorPanel = null; conflictActions = null; dirty = false;
+        editor.remove(); editor = null; editorRelation = null; editorFields = null; editorPanel = null; editorContextPromise = null; conflictActions = null; dirty = false;
         if (documentRef.body?.style) documentRef.body.style.overflow = previousOverflow ?? '';
         if (documentRef.body && ownsScrollLock) {
             documentRef.body.className = String(documentRef.body.className || '').split(/\s+/u)
@@ -164,7 +167,7 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
     const openEditor = relation => {
         if (!mounted || busy || externallyDisabled || !strictGm(getSession)) return;
         lastFocus = documentRef.activeElement; editor = documentRef.createElement('div'); editor.className = 'm-relation-sheet';
-        editorRelation = relation || null; dirty = false;
+        editorRelation = relation || null; editorContextPromise = null; dirty = false;
         editor.setAttribute('role', 'dialog'); editor.setAttribute('aria-modal', 'true'); editor.setAttribute('aria-labelledby', 'm-relation-sheet-title');
         const panel = documentRef.createElement('section'); panel.className = 'm-relation-sheet-panel'; editorPanel = panel;
         const heading = text(documentRef, 'h3', relation ? 'Modifier la relation' : 'Ajouter une relation'); heading.id = 'm-relation-sheet-title';
@@ -210,6 +213,26 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
         lockScroll();
         fields.search.control.focus?.();
         form.addEventListener('submit', event => { event.preventDefault(); void saveRelation(relation, fields, status); });
+        if (relation) {
+            form.inert = true;
+            const openOperation = capture();
+            editorContextPromise = Promise.resolve().then(async () => {
+                const context = await loadContentEditContext(getContributionClient?.(), 'relation', relation.id);
+                if (!context) throw Object.assign(new Error('Contexte versionné indisponible.'), { code: 'failed-precondition' });
+                if (!current(openOperation) || !editor?.isConnected) return null;
+                const data = context.data;
+                const targetValue = relationTarget({ source: data.source, cible: data.cible }, pnjId);
+                if (targetValue && targetMap().has(targetValue)) fields.target.control.value = targetValue;
+                fields.direction.control.value = data.source === pnjId ? 'outgoing' : 'incoming';
+                fields.type.control.value = data.type || '';
+                fields.label.control.value = data.label || data.type || '';
+                fields.style.control.value = data.style || 'solid';
+                fields.color.control.value = data.color || PALETTE[0]?.value || '';
+                fields.pair.control.checked = Boolean(data.reciprocalId);
+                return context;
+            }).catch(error => { if (editorPanel) setStatus(safeError(error), 'error'); return null; })
+                .finally(() => { if (editor?.isConnected && form.isConnected) form.inert = false; });
+        }
     };
     const showConflictChoice = next => {
         if (!editorPanel || conflictActions) return;
@@ -225,14 +248,23 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
     };
     const forceRelation = async () => {
         if (isOnline?.() === false) { setStatus('Hors ligne. La relation reste conservée en mémoire.', 'offline'); return; }
-        const relation = editorRelation; const fields = editorFields; const operation = capture(); const repo = getRelationsRepository();
-        if (!relation || !fields || !operation || typeof repo?.forceUpdate !== 'function' || busy) return;
+        const relation = editorRelation; const fields = editorFields; const operation = capture();
+        if (!relation || !fields || !operation || busy) return;
         const values = { target: fields.target.control.value, direction: fields.direction.control.value, type: fields.type.control.value.trim(), label: fields.label.control.value.trim(), style: fields.style.control.value, color: fields.color.control.value };
         const validation = validForm(values); if (!validation.valid) { applyErrors(fields, validation.errors); return; }
         const target = targetMap().get(values.target); if (!target) return;
         const payload = { source: values.direction === 'outgoing' ? pnjId : values.target, cible: values.direction === 'outgoing' ? values.target : pnjId, type: values.type, label: values.label || values.type, style: values.style, color: values.color || null };
         busy = true; submitDisabled(fields, true);
-        try { const pair = fields.pair.control.checked === true; const options = pair ? { confirmed: true, pair: true, reciprocalId: relation.reciprocalId } : { confirmed: true, pair: false }; await repo.forceUpdate(relation.id, payload, options); if (!current(operation)) return; busy = false; closeEditor(); announce('Relation forcée après confirmation MJ.'); }
+        try {
+            const client = getContributionClient?.();
+            const context = await loadContentEditContext(client, 'relation', relation.id);
+            if (!context) throw Object.assign(new Error('Contexte versionné indisponible.'), { code: 'failed-precondition' });
+            if (fields.pair.control.checked && !context.data.reciprocalId) throw new Error('Le miroir doit être créé depuis la création de relation.');
+            await mutateContentThroughGateway(client, context, { kind: 'relation', id: relation.id, changes: payload,
+                operationId: newContributionOperationId(), pair: Boolean(context.data.reciprocalId),
+                reciprocalId: context.data.reciprocalId, reciprocalBaseRevision: context.data.reciprocalRevision });
+            if (!current(operation)) return; busy = false; closeEditor(); announce('Relation enregistrée par la passerelle versionnée après confirmation MJ.');
+        }
         catch (error) { if (current(operation)) { busy = false; submitDisabled(fields, false); setStatus(safeError(error), 'error'); } }
     };
     const saveRelation = async (relation, fields, status) => {
@@ -246,13 +278,19 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
         const payload = { source, cible, type: values.type, label: values.label || values.type, style: values.style, color: values.color || null };
         busy = true; submitDisabled(fields, true); status.textContent = 'Enregistrement…';
         try {
-            const repo = getRelationsRepository(); if (!repo) throw Object.assign(new Error('relations-unavailable'), { code: 'failed-precondition' });
+            const client = getContributionClient?.();
             if (relation) {
-                const pair = fields.pair.control.checked === true;
-                const options = pair ? { pair, reciprocalId: relation.reciprocalId } : { pair: false };
-                await repo.update(relation.id, payload, relation.updatedAt, options);
+                const context = await editorContextPromise;
+                if (!context) throw Object.assign(new Error('Contexte versionné indisponible.'), { code: 'failed-precondition' });
+                if (fields.pair.control.checked && !context.data.reciprocalId) throw new Error('Le miroir doit être créé depuis la création de relation.');
+                await mutateContentThroughGateway(client, context, { kind: 'relation', id: relation.id, changes: payload,
+                    operationId: newContributionOperationId(), pair: Boolean(context.data.reciprocalId),
+                    reciprocalId: context.data.reciprocalId, reciprocalBaseRevision: context.data.reciprocalRevision });
+            } else {
+                if (!client?.mutatePublicContent) throw Object.assign(new Error('Passerelle indisponible.'), { code: 'failed-precondition' });
+                await client.mutatePublicContent({ kind: 'relation', action: 'create', operationId: newContributionOperationId(), baseRevision: 0,
+                    pair: fields.pair.control.checked === true, changes: payload });
             }
-            else await repo.create(payload, fields.pair.control.checked === true);
             if (!current(operation)) return;
             busy = false; closeEditor(); announce(relation ? 'Relation modifiée.' : 'Relation créée.');
         } catch (error) { if (current(operation)) { status.textContent = safeError(error); busy = false; submitDisabled(fields, false); } }
@@ -265,9 +303,15 @@ export function createPnjRelationsEditor({ container, pnjId, getSession = () => 
         if (!mounted || busy || externallyDisabled || !strictGm(getSession)) return;
         if (isOnline?.() === false) { setStatus('Hors ligne. La relation n’est pas supprimée.', 'offline'); return; }
         const target = targetMap().get(relationTarget(relation, pnjId)); const pair = removePair === true && Boolean(relation.reciprocalId);
-        if (!documentRef.defaultView?.confirm?.(`Supprimer la relation ${relation.label || relation.type} avec ${target?.nom || 'PNJ introuvable'}${pair ? ' dans les deux sens' : ' dans ce sens'} ?`)) return;
+        if (!documentRef.defaultView?.confirm?.(`Placer en corbeille la relation ${relation.label || relation.type} avec ${target?.nom || 'PNJ introuvable'}${pair ? ' et son miroir exact' : ''} ?`)) return;
         const operation = capture(); if (!operation) return; busy = true; setStatus('Suppression en cours…');
-        try { const repo = getRelationsRepository(); const options = pair ? { pair: true, reciprocalId: relation.reciprocalId } : { pair: false }; await repo.remove(relation.id, options); if (current(operation)) { busy = false; announce(pair ? 'Paire supprimée.' : 'Relation supprimée.'); } }
+        try {
+            const client = getContributionClient?.();
+            const context = await loadContentEditContext(client, 'relation', relation.id);
+            if (!context) throw Object.assign(new Error('Contexte versionné indisponible.'), { code: 'failed-precondition' });
+            await trashManagedContent(client, context, { kind: 'relation', id: relation.id });
+            if (current(operation)) { busy = false; announce(pair ? 'Paire placée en corbeille.' : 'Relation placée en corbeille.'); }
+        }
         catch (error) { if (current(operation)) { busy = false; setStatus(error?.kind === 'not-found' ? 'Cette relation était déjà supprimée.' : safeError(error), 'error'); } }
     };
     const subscribe = () => {

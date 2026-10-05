@@ -63,8 +63,26 @@ function sameContent(metadata, upload) {
 }
 
 export async function uploadProtectedImage(data, context, deps) {
-    if (!isAuthorized(context?.auth)) throw new UploadValidationError('authentification MJ vérifiée obligatoire', 'permission-denied');
     const upload = validateUpload(data);
+    const uploadAuthorization = {
+        kind: upload.kind,
+        ownerId: upload.ownerId,
+        operationId: upload.operationId,
+        contentType: upload.contentType,
+        imagePath: upload.imagePath,
+        size: upload.bytes.length,
+        md5Hash: upload.md5Hash,
+    };
+    if (typeof deps.authorizeUpload === 'function') {
+        const authorized = await deps.authorizeUpload(uploadAuthorization, context);
+        if (authorized !== true) throw new UploadValidationError('autorisation de contribution image refusée', 'permission-denied');
+    } else if (!isAuthorized(context?.auth)) {
+        throw new UploadValidationError('authentification MJ vérifiée obligatoire', 'permission-denied');
+    }
+    const completed = async () => {
+        await deps.onUploadComplete?.(uploadAuthorization, context);
+        return { imagePath: upload.imagePath };
+    };
     const file = deps.bucket.file(upload.imagePath);
     let existing = null;
     try { [existing] = await file.getMetadata(); } catch (error) { if (error.code !== 404 && error.code !== 5) throw error; }
@@ -72,7 +90,7 @@ export async function uploadProtectedImage(data, context, deps) {
         if (!sameContent(existing, upload)) throw new UploadValidationError('operationId déjà utilisé avec un contenu différent', 'already-exists');
         if (hasExploitableToken(existing)) throw new UploadValidationError('objet existant avec token exploitable', 'failed-precondition');
         if (existing.cacheControl !== 'no-store') throw new UploadValidationError('objet existant avec cache persistant', 'failed-precondition');
-        return { imagePath: upload.imagePath };
+        return completed();
     }
     try {
         await file.save(upload.bytes, { resumable: false, preconditionOpts: { ifGenerationMatch: 0 }, metadata: {
@@ -81,7 +99,7 @@ export async function uploadProtectedImage(data, context, deps) {
     } catch (error) {
         try {
             const [afterRace] = await file.getMetadata();
-            if (sameContent(afterRace, upload) && afterRace.cacheControl === 'no-store' && !hasExploitableToken(afterRace)) return { imagePath: upload.imagePath };
+            if (sameContent(afterRace, upload) && afterRace.cacheControl === 'no-store' && !hasExploitableToken(afterRace)) return completed();
         } catch { /* La première erreur reste la cause visible. */ }
         throw error;
     }
@@ -98,5 +116,5 @@ export async function uploadProtectedImage(data, context, deps) {
         }
         throw error;
     }
-    return { imagePath: upload.imagePath };
+    return completed();
 }

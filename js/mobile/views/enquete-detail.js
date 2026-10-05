@@ -1,6 +1,7 @@
 import { mountIndiceImage } from '../components/indice-image.js';
 import { selectEnqueteDetailModel } from '../enquete-detail-model.js';
 import { publicStatusMessage, renderState } from '../ui.js';
+import { mountContentTrashPanel, mountContributionButton } from '../../contributions/editor.js';
 
 function appendText(documentRef, parent, tag, className, value) {
     const element = documentRef.createElement(tag);
@@ -38,7 +39,7 @@ function makeRefs(documentRef, content) {
     const metadata = documentRef.createElement('div');
     metadata.className = 'm-detail-metadata';
     content.append(hero, description, pnjs, metadata);
-    return { hero, imageTarget, title, descriptionBody, pnjsBody, metadata, signatures: {} };
+    return { hero, imageTarget, title, descriptionBody, pnjsBody, metadata, trash: null, signatures: {} };
 }
 
 function renderDescription(documentRef, body, description) {
@@ -93,6 +94,10 @@ export function createEnqueteDetailView({
     onBack = () => {},
     onRetry = () => store?.restart?.(),
     onOpenPnj = () => {},
+    contributionClient = null,
+    getContributionClient = null,
+    signInContribution = null,
+    announce = () => {},
 } = {}) {
     let mounted = false;
     let content = null;
@@ -113,6 +118,8 @@ export function createEnqueteDetailView({
         if (model.kind !== 'ready') {
             image?.dispose?.();
             image = null;
+            content?._refs?.contribution?.dispose?.();
+            content?._refs?.trash?.dispose?.();
             content._refs = null;
             renderState(content, {
                 state: model.kind === 'offline-empty' ? 'offline' : model.kind,
@@ -151,6 +158,16 @@ export function createEnqueteDetailView({
             image = mountIndiceImage({ container: refs.imageTarget, item, imageService: getImageService(), size: 240 });
             refs.signatures.image = nextImageSignature;
         }
+        if ((contributionClient || getContributionClient) && !refs.contribution) {
+            refs.contribution = mountContributionButton({ container: refs.hero, client: contributionClient,
+                getClient: getContributionClient, signIn: signInContribution,
+                kind: 'indice', id: item.id, documentRef, announce,
+                onSaved: () => store?.restart?.() });
+        }
+        if ((contributionClient || getContributionClient) && !refs.trash) {
+            refs.trash = mountContentTrashPanel({ container: refs.hero, client: contributionClient,
+                getClient: getContributionClient, signIn: signInContribution, documentRef, announce });
+        }
     };
 
     const mount = ({ signal } = {}) => {
@@ -183,6 +200,8 @@ export function createEnqueteDetailView({
         unsubscribe = () => {};
         image?.dispose?.();
         image = null;
+        content?._refs?.contribution?.dispose?.();
+        content?._refs?.trash?.dispose?.();
         backButton?.removeEventListener('click', onBack);
         signalRef?.removeEventListener?.('abort', abortHandler);
         container.replaceChildren();

@@ -7,6 +7,32 @@
         { "fieldPath": "pnjsLies", "arrayConfig": "CONTAINS" },
         { "fieldPath": "decouvert", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "pnjs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "visibleJoueurs", "order": "ASCENDING" },
+        { "fieldPath": "nom", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "content_trash",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "state", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "content_trash",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "state", "order": "ASCENDING" },
+        { "fieldPath": "ownerUid", "order": "ASCENDING" },
+        { "fieldPath": "ownerCanRestore", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

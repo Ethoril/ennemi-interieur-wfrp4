@@ -90,7 +90,7 @@ export function sanitizePreferences(value) {
     const preferences = {
         version: 1,
         theme: value.theme === 'parchment' ? 'parchment' : 'dark',
-        lastSection: ['pnjs', 'enquetes', 'reglages'].includes(value.lastSection)
+        lastSection: ['pnjs', 'enquetes', 'fiches', 'reglages'].includes(value.lastSection)
             ? value.lastSection : 'pnjs',
         filters: safeFilters(value.filters),
     };

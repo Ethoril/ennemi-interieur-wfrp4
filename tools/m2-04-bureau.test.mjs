@@ -42,11 +42,13 @@ test('la composition fabrique les quatre dépôts et ferme le client', async () 
     assert.match(source, /cleanupPnjImages: async \(\{ pnjId, imagePaths/u);
 });
 
-test('les mutations gardent leur identité et le portrait passe toujours par replace', () => {
+test('les mutations versionnées associent le portrait par callable et gardent les identités', () => {
     const [pnjs] = pages;
-    assert.match(pnjs, /images\.replace\(previousImagePath \|\| null/u);
+    assert.match(pnjs, /client\.uploadContributionImage\(/u);
+    assert.match(pnjs, /mutateContentThroughGateway\(client/u);
     assert.doesNotMatch(pnjs, /images\.uploadPortrait/u);
     assert.doesNotMatch(pnjs, /images\.cleanupImage/u);
+    assert.doesNotMatch(pnjs, /repository\.update\s*\(/u);
     assert.match(pnjs, /const stillCurrent = \(\) => capturedSession/u);
     assert.match(pnjs, /reciprocalId/u);
     assert.match(pnjs, /if \(!ok \|\| !stillCurrent\(\)\) return/u);

@@ -1,6 +1,6 @@
 // sw.js, en tête. Doit rester identique à APP_VERSION de js/layout.js :
 // la CI le vérifie (.github/workflows/validate.yml).
-const APP_VERSION = 'v2.28.3';
+const APP_VERSION = 'v2.29.0';
 const CACHE_NAME  = 'wfrp-cache-' + APP_VERSION;
 
 const ASSETS_LOCAUX = [
@@ -54,6 +54,35 @@ const ASSETS_LOCAUX = [
   './js/main.js',
   './js/maps.js',
   './js/pnjs.js',
+  './js/contributions/client-core.js',
+  './js/contributions/editor.js',
+  './js/contributions/firebase-client.js',
+  './js/contributions/managed-commands.js',
+  './js/catalogue/referentiels-ui.js',
+  './js/catalogue/referentiel-public.json',
+  './js/catalogue/talents-sheet-snapshot.json',
+  './js/catalogue/impact-report.js',
+  './js/catalogue/skill-migration.js',
+  './js/catalogue/skill-resolver.js',
+  './js/catalogue/talent-resolver.js',
+  './js/referentiels.js',
+  './js/fiche/career-model.js',
+  './js/fiche/basic-skills.js',
+  './js/fiche/skill-names.js',
+  './js/fiche/xp.js',
+  './js/fiche/published-catalogue-engine.js',
+  './js/fiche/career-viewer.js',
+  './js/fiche/commands.js',
+  './js/data/fiche-catalog.json',
+  './js/fiche-client-bridge.js',
+  './js/fiche-controller.js',
+  './js/fiche-draft-store.js',
+  './js/fiche-repository.js',
+  './js/fiche-schema.js',
+  './js/fiche-session-view.js',
+  './referentiels.html',
+  './css/referentiels.css',
+  './css/career-viewer.css',
   './js/pnj-live-images.js',
   './js/pnj-graph-display.js',
   './js/pnj-graph-layout.js',
@@ -111,6 +140,8 @@ const ASSETS_LOCAUX = [
   './css/mobile-app.css',
   './js/mobile/admin-route-controller.js',
   './js/mobile/app.js',
+  './js/mobile/views/fiche-access.js',
+  './js/mobile/contribution-runtime.js',
   './js/mobile/drafts-store.js',
   './js/mobile/enquete-admin-list-model.js',
   './js/mobile/enquete-detail-model.js',

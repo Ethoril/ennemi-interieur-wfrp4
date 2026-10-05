@@ -1,0 +1,2046 @@
+[
+  {
+    "group": "Art",
+    "spec": "Boucherie",
+    "nom": "Art (Boucherie)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Calligraphie",
+    "nom": "Art (Calligraphie)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Cartographie",
+    "nom": "Art (Cartographie)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Écriture",
+    "nom": "Art (Écriture)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Gravure",
+    "nom": "Art (Gravure)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Icones",
+    "nom": "Art (Icones)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Mosaïque",
+    "nom": "Art (Mosaïque)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Peinture",
+    "nom": "Art (Peinture)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Poésie",
+    "nom": "Art (Poésie)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Sculpture",
+    "nom": "Art (Sculpture)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Tatouage",
+    "nom": "Art (Tatouage)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Art",
+    "spec": "Tissage",
+    "nom": "Art (Tissage)",
+    "carac": "dex",
+    "basic": true
+  },
+  {
+    "group": "Athlétisme",
+    "spec": "",
+    "nom": "Athlétisme",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Calme",
+    "spec": "",
+    "nom": "Calme",
+    "carac": "fm",
+    "basic": true
+  },
+  {
+    "group": "Charme",
+    "spec": "",
+    "nom": "Charme",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Chevaucher",
+    "spec": "Blaireau",
+    "nom": "Chevaucher (Blaireau)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Chevaucher",
+    "spec": "Cheval",
+    "nom": "Chevaucher (Cheval)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Chevaucher",
+    "spec": "Demi-griffon",
+    "nom": "Chevaucher (Demi-griffon)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Chevaucher",
+    "spec": "Griffon",
+    "nom": "Chevaucher (Griffon)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Chevaucher",
+    "spec": "Loup géant",
+    "nom": "Chevaucher (Loup géant)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Chevaucher",
+    "spec": "Pégase",
+    "nom": "Chevaucher (Pégase)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Chevaucher",
+    "spec": "Rhinox",
+    "nom": "Chevaucher (Rhinox)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Commandement",
+    "spec": "",
+    "nom": "Commandement",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Conduite d'attelage",
+    "spec": "",
+    "nom": "Conduite d'attelage",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Arme d'hast",
+    "nom": "Corps à corps (Arme d'hast)",
+    "carac": "cc",
+    "basic": true
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Base",
+    "nom": "Corps à corps (Base)",
+    "carac": "cc",
+    "basic": true
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Ingénierie",
+    "nom": "Corps à corps (Ingénierie)",
+    "carac": "cc",
+    "basic": true
+  },
+  {
+    "group": "Discrétion",
+    "spec": "Rurale",
+    "nom": "Discrétion (Rurale)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Discrétion",
+    "spec": "Souterraine",
+    "nom": "Discrétion (Souterraine)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Discrétion",
+    "spec": "Souterrains",
+    "nom": "Discrétion (Souterrains)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Discrétion",
+    "spec": "Urbaine",
+    "nom": "Discrétion (Urbaine)",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Acteur",
+    "nom": "Divertissement (Acteur)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Braille",
+    "nom": "Divertissement (Braille)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Chant",
+    "nom": "Divertissement (Chant)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Clownerie",
+    "nom": "Divertissement (Clownerie)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Comédie",
+    "nom": "Divertissement (Comédie)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Conférence",
+    "nom": "Divertissement (Conférence)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Contes",
+    "nom": "Divertissement (Contes)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Discours",
+    "nom": "Divertissement (Discours)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Humour",
+    "nom": "Divertissement (Humour)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Interprétation",
+    "nom": "Divertissement (Interprétation)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Narration",
+    "nom": "Divertissement (Narration)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Prophétie",
+    "nom": "Divertissement (Prophétie)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Provocation",
+    "nom": "Divertissement (Provocation)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Raillerie",
+    "nom": "Divertissement (Raillerie)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Rhétorique",
+    "nom": "Divertissement (Rhétorique)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Divertissement",
+    "spec": "Voyance",
+    "nom": "Divertissement (Voyance)",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Emprise sur les animaux",
+    "spec": "",
+    "nom": "Emprise sur les animaux",
+    "carac": "fm",
+    "basic": true
+  },
+  {
+    "group": "Escalade",
+    "spec": "",
+    "nom": "Escalade",
+    "carac": "f",
+    "basic": true
+  },
+  {
+    "group": "Esquive",
+    "spec": "",
+    "nom": "Esquive",
+    "carac": "ag",
+    "basic": true
+  },
+  {
+    "group": "Intimidation",
+    "spec": "",
+    "nom": "Intimidation",
+    "carac": "f",
+    "basic": true
+  },
+  {
+    "group": "Intuition",
+    "spec": "",
+    "nom": "Intuition",
+    "carac": "i",
+    "basic": true
+  },
+  {
+    "group": "Marchandage",
+    "spec": "",
+    "nom": "Marchandage",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Orientation",
+    "spec": "",
+    "nom": "Orientation",
+    "carac": "i",
+    "basic": true
+  },
+  {
+    "group": "Pari",
+    "spec": "",
+    "nom": "Pari",
+    "carac": "int",
+    "basic": true
+  },
+  {
+    "group": "Perception",
+    "spec": "",
+    "nom": "Perception",
+    "carac": "i",
+    "basic": true
+  },
+  {
+    "group": "Ragot",
+    "spec": "",
+    "nom": "Ragot",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Ramer",
+    "spec": "",
+    "nom": "Ramer",
+    "carac": "f",
+    "basic": true
+  },
+  {
+    "group": "Résistance",
+    "spec": "",
+    "nom": "Résistance",
+    "carac": "e",
+    "basic": true
+  },
+  {
+    "group": "Résistance à l'alcool",
+    "spec": "",
+    "nom": "Résistance à l'alcool",
+    "carac": "e",
+    "basic": true
+  },
+  {
+    "group": "Subornation",
+    "spec": "",
+    "nom": "Subornation",
+    "carac": "soc",
+    "basic": true
+  },
+  {
+    "group": "Survie en extérieur",
+    "spec": "",
+    "nom": "Survie en extérieur",
+    "carac": "int",
+    "basic": true
+  },
+  {
+    "group": "Augure",
+    "spec": "",
+    "nom": "Augure",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Conduite d'attelage",
+    "spec": "Skycutter",
+    "nom": "Conduite d'attelage (Skycutter)",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Armes d'hast",
+    "nom": "Corps à corps (Armes d'hast)",
+    "carac": "cc",
+    "basic": false
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Bagarre",
+    "nom": "Corps à corps (Bagarre)",
+    "carac": "cc",
+    "basic": false
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Cavalerie",
+    "nom": "Corps à corps (Cavalerie)",
+    "carac": "cc",
+    "basic": false
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Deux mains",
+    "nom": "Corps à corps (Deux mains)",
+    "carac": "cc",
+    "basic": false
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Escrime",
+    "nom": "Corps à corps (Escrime)",
+    "carac": "cc",
+    "basic": false
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Fléau",
+    "nom": "Corps à corps (Fléau)",
+    "carac": "cc",
+    "basic": false
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Fléaux",
+    "nom": "Corps à corps (Fléaux)",
+    "carac": "cc",
+    "basic": false
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Lourde",
+    "nom": "Corps à corps (Lourde)",
+    "carac": "cc",
+    "basic": false
+  },
+  {
+    "group": "Corps à corps",
+    "spec": "Parade",
+    "nom": "Corps à corps (Parade)",
+    "carac": "cc",
+    "basic": false
+  },
+  {
+    "group": "Crochetage",
+    "spec": "",
+    "nom": "Crochetage",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Dressage",
+    "spec": "",
+    "nom": "Dressage",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Dressage",
+    "spec": "Blaireaux",
+    "nom": "Dressage (Blaireaux)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Dressage",
+    "spec": "Cheval",
+    "nom": "Dressage (Cheval)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Dressage",
+    "spec": "Chevaux",
+    "nom": "Dressage (Chevaux)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Dressage",
+    "spec": "Chien",
+    "nom": "Dressage (Chien)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Dressage",
+    "spec": "Chiens",
+    "nom": "Dressage (Chiens)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Dressage",
+    "spec": "Ours",
+    "nom": "Dressage (Ours)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Dressage",
+    "spec": "Pigeon",
+    "nom": "Dressage (Pigeon)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Dressage",
+    "spec": "Pigeons",
+    "nom": "Dressage (Pigeons)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Dressage",
+    "spec": "Rhinox",
+    "nom": "Dressage (Rhinox)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Escamotage",
+    "spec": "",
+    "nom": "Escamotage",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Évaluation",
+    "spec": "",
+    "nom": "Évaluation",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "",
+    "nom": "Focalisation",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "Aqshy",
+    "nom": "Focalisation (Aqshy)",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "Azyr",
+    "nom": "Focalisation (Azyr)",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "Chamon",
+    "nom": "Focalisation (Chamon)",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "Domaine de la Grande Gueule",
+    "nom": "Focalisation (Domaine de la Grande Gueule)",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "Ghur",
+    "nom": "Focalisation (Ghur)",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "Ghyran",
+    "nom": "Focalisation (Ghyran)",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "Hysh",
+    "nom": "Focalisation (Hysh)",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "Qhaysh",
+    "nom": "Focalisation (Qhaysh)",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "Qhaysh / Haute Magie",
+    "nom": "Focalisation (Qhaysh / Haute Magie)",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "Shyish",
+    "nom": "Focalisation (Shyish)",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Focalisation",
+    "spec": "Ulgu",
+    "nom": "Focalisation (Ulgu)",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Forge des Runes",
+    "spec": "",
+    "nom": "Forge des Runes",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Guérison",
+    "spec": "",
+    "nom": "Guérison",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Hypnotisme",
+    "spec": "",
+    "nom": "Hypnotisme",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Albionese",
+    "nom": "Langue (Albionese)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Basse-cour",
+    "nom": "Langue (Basse-cour)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Bataille",
+    "nom": "Langue (Bataille)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Bretonnien",
+    "nom": "Langue (Bretonnien)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Cathayen",
+    "nom": "Langue (Cathayen)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Classique",
+    "nom": "Langue (Classique)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Eltharin",
+    "nom": "Langue (Eltharin)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Estalien",
+    "nom": "Langue (Estalien)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Gospodar",
+    "nom": "Langue (Gospodar)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Grumbarth",
+    "nom": "Langue (Grumbarth)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Guilde",
+    "nom": "Langue (Guilde)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Khazalid",
+    "nom": "Langue (Khazalid)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Magick",
+    "nom": "Langue (Magick)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Mootish",
+    "nom": "Langue (Mootish)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Norse",
+    "nom": "Langue (Norse)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Queekish",
+    "nom": "Langue (Queekish)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Reikspiel",
+    "nom": "Langue (Reikspiel)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Sauvage",
+    "nom": "Langue (Sauvage)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Sombre / Dark Tongue",
+    "nom": "Langue (Sombre / Dark Tongue)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Tiléen",
+    "nom": "Langue (Tiléen)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Voleur",
+    "nom": "Langue (Voleur)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Langue",
+    "spec": "Wastelander",
+    "nom": "Langue (Wastelander)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Lire sur les lèvres",
+    "spec": "",
+    "nom": "Lire sur les lèvres",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Alchimiste",
+    "nom": "Métier (Alchimiste)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Apothicaire",
+    "nom": "Métier (Apothicaire)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Armurier",
+    "nom": "Métier (Armurier)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Arquebusier",
+    "nom": "Métier (Arquebusier)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Artiste",
+    "nom": "Métier (Artiste)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Barbier",
+    "nom": "Métier (Barbier)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Bâtelier",
+    "nom": "Métier (Bâtelier)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Boucher",
+    "nom": "Métier (Boucher)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Brasseur",
+    "nom": "Métier (Brasseur)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Bricoleur",
+    "nom": "Métier (Bricoleur)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Calligraphe",
+    "nom": "Métier (Calligraphe)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Cartographe",
+    "nom": "Métier (Cartographe)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Charpentier",
+    "nom": "Métier (Charpentier)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Colifichets",
+    "nom": "Métier (Colifichets)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Construction de bateaux",
+    "nom": "Métier (Construction de bateaux)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Cordonnier",
+    "nom": "Métier (Cordonnier)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Cuisinier",
+    "nom": "Métier (Cuisinier)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Embaumeur",
+    "nom": "Métier (Embaumeur)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Empenneur",
+    "nom": "Métier (Empenneur)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Empoisonneur",
+    "nom": "Métier (Empoisonneur)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Explosifs",
+    "nom": "Métier (Explosifs)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Fabricant d'arcs",
+    "nom": "Métier (Fabricant d'arcs)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Forgeron",
+    "nom": "Métier (Forgeron)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Graveur",
+    "nom": "Métier (Graveur)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Herboriste",
+    "nom": "Métier (Herboriste)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Imprimerie",
+    "nom": "Métier (Imprimerie)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Imprimeur",
+    "nom": "Métier (Imprimeur)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Ingénieur",
+    "nom": "Métier (Ingénieur)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Joaillier",
+    "nom": "Métier (Joaillier)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Maçon",
+    "nom": "Métier (Maçon)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Marchand",
+    "nom": "Métier (Marchand)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Maréchal-ferrant",
+    "nom": "Métier (Maréchal-ferrant)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Matériel artistique",
+    "nom": "Métier (Matériel artistique)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Mineur",
+    "nom": "Métier (Mineur)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Orfèvre",
+    "nom": "Métier (Orfèvre)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Poisons",
+    "nom": "Métier (Poisons)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Tanneur",
+    "nom": "Métier (Tanneur)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Métier",
+    "spec": "Vigneron",
+    "nom": "Métier (Vigneron)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Musicien",
+    "spec": "Clavecin",
+    "nom": "Musicien (Clavecin)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Musicien",
+    "spec": "Cor",
+    "nom": "Musicien (Cor)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Musicien",
+    "spec": "Cornemuse",
+    "nom": "Musicien (Cornemuse)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Musicien",
+    "spec": "Fifre",
+    "nom": "Musicien (Fifre)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Musicien",
+    "spec": "Flûte",
+    "nom": "Musicien (Flûte)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Musicien",
+    "spec": "Luth",
+    "nom": "Musicien (Luth)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Musicien",
+    "spec": "Tambour",
+    "nom": "Musicien (Tambour)",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Natation",
+    "spec": "",
+    "nom": "Natation",
+    "carac": "f",
+    "basic": false
+  },
+  {
+    "group": "Piégeage",
+    "spec": "",
+    "nom": "Piégeage",
+    "carac": "dex",
+    "basic": false
+  },
+  {
+    "group": "Pistage",
+    "spec": "",
+    "nom": "Pistage",
+    "carac": "i",
+    "basic": false
+  },
+  {
+    "group": "Prière",
+    "spec": "",
+    "nom": "Prière",
+    "carac": "soc",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Arbalète",
+    "nom": "Projectiles (Arbalète)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Arbalète de poing",
+    "nom": "Projectiles (Arbalète de poing)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Arc",
+    "nom": "Projectiles (Arc)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Armes à poudre",
+    "nom": "Projectiles (Armes à poudre)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Armes de jet",
+    "nom": "Projectiles (Armes de jet)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Entraves",
+    "nom": "Projectiles (Entraves)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Explosifs",
+    "nom": "Projectiles (Explosifs)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Fronde",
+    "nom": "Projectiles (Fronde)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Ingénierie",
+    "nom": "Projectiles (Ingénierie)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Jet",
+    "nom": "Projectiles (Jet)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Lance-flammes",
+    "nom": "Projectiles (Lance-flammes)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Lancer",
+    "nom": "Projectiles (Lancer)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Projectiles",
+    "spec": "Poudre noire",
+    "nom": "Projectiles (Poudre noire)",
+    "carac": "ct",
+    "basic": false
+  },
+  {
+    "group": "Psychométrie",
+    "spec": "",
+    "nom": "Psychométrie",
+    "carac": "fm",
+    "basic": false
+  },
+  {
+    "group": "Recherche",
+    "spec": "",
+    "nom": "Recherche",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Représentation",
+    "spec": "",
+    "nom": "Représentation",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Représentation",
+    "spec": "Acrobatie",
+    "nom": "Représentation (Acrobatie)",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Représentation",
+    "spec": "Acteur",
+    "nom": "Représentation (Acteur)",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Représentation",
+    "spec": "Combat",
+    "nom": "Représentation (Combat)",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Représentation",
+    "spec": "Danse",
+    "nom": "Représentation (Danse)",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Représentation",
+    "spec": "Parade",
+    "nom": "Représentation (Parade)",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Représentation",
+    "spec": "Tours de cartes",
+    "nom": "Représentation (Tours de cartes)",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Altdorf",
+    "nom": "Savoir (Altdorf)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Anatomie",
+    "nom": "Savoir (Anatomie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Art",
+    "nom": "Savoir (Art)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Artillerie",
+    "nom": "Savoir (Artillerie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Astrologie",
+    "nom": "Savoir (Astrologie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Astronomie",
+    "nom": "Savoir (Astronomie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Bêtes",
+    "nom": "Savoir (Bêtes)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Chaos",
+    "nom": "Savoir (Chaos)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Chimie",
+    "nom": "Savoir (Chimie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Démonologie",
+    "nom": "Savoir (Démonologie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Démons",
+    "nom": "Savoir (Démons)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Dragons",
+    "nom": "Savoir (Dragons)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Droit",
+    "nom": "Savoir (Droit)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Empire",
+    "nom": "Savoir (Empire)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Épaves",
+    "nom": "Savoir (Épaves)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Esprits",
+    "nom": "Savoir (Esprits)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Folklore",
+    "nom": "Savoir (Folklore)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Géants",
+    "nom": "Savoir (Géants)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Généalogie",
+    "nom": "Savoir (Généalogie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Géographie",
+    "nom": "Savoir (Géographie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Géologie",
+    "nom": "Savoir (Géologie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Guerre",
+    "nom": "Savoir (Guerre)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Héraldique",
+    "nom": "Savoir (Héraldique)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Herbes",
+    "nom": "Savoir (Herbes)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Histoire",
+    "nom": "Savoir (Histoire)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Ingénierie",
+    "nom": "Savoir (Ingénierie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Itinéraires",
+    "nom": "Savoir (Itinéraires)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "l'Empire",
+    "nom": "Savoir (l'Empire)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "La Grande Gueule",
+    "nom": "Savoir (La Grande Gueule)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Local",
+    "nom": "Savoir (Local)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Locale",
+    "nom": "Savoir (Locale)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Loi",
+    "nom": "Savoir (Loi)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Magie",
+    "nom": "Savoir (Magie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Magie noire",
+    "nom": "Savoir (Magie noire)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Médecine",
+    "nom": "Savoir (Médecine)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Métallurgie",
+    "nom": "Savoir (Métallurgie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Middenheim",
+    "nom": "Savoir (Middenheim)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Mootland",
+    "nom": "Savoir (Mootland)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Morts-vivants",
+    "nom": "Savoir (Morts-vivants)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Nains",
+    "nom": "Savoir (Nains)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Nécromancie",
+    "nom": "Savoir (Nécromancie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Nehekhara",
+    "nom": "Savoir (Nehekhara)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Noble",
+    "nom": "Savoir (Noble)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Plantes",
+    "nom": "Savoir (Plantes)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Poison",
+    "nom": "Savoir (Poison)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Politique",
+    "nom": "Savoir (Politique)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Prophétie",
+    "nom": "Savoir (Prophétie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Prophéties",
+    "nom": "Savoir (Prophéties)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Ranald",
+    "nom": "Savoir (Ranald)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Reikland",
+    "nom": "Savoir (Reikland)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Remèdes",
+    "nom": "Savoir (Remèdes)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Rhinox",
+    "nom": "Savoir (Rhinox)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Runes",
+    "nom": "Savoir (Runes)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Savoir-vivre",
+    "nom": "Savoir (Savoir-vivre)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Science",
+    "nom": "Savoir (Science)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Sigmar",
+    "nom": "Savoir (Sigmar)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Skavens",
+    "nom": "Savoir (Skavens)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Sorcières",
+    "nom": "Savoir (Sorcières)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Taxes",
+    "nom": "Savoir (Taxes)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Théologie",
+    "nom": "Savoir (Théologie)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Torture",
+    "nom": "Savoir (Torture)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Trolls",
+    "nom": "Savoir (Trolls)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Ulric",
+    "nom": "Savoir (Ulric)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Voies fluviales",
+    "nom": "Savoir (Voies fluviales)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Braconnier",
+    "nom": "Signes secrets (Braconnier)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Chasseur",
+    "nom": "Signes secrets (Chasseur)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Chasseurs",
+    "nom": "Signes secrets (Chasseurs)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Chevaliers Panthères",
+    "nom": "Signes secrets (Chevaliers Panthères)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Confrérie de Grimnir",
+    "nom": "Signes secrets (Confrérie de Grimnir)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Contrebandier",
+    "nom": "Signes secrets (Contrebandier)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Cultiste",
+    "nom": "Signes secrets (Cultiste)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Éclaireur",
+    "nom": "Signes secrets (Éclaireur)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Espion",
+    "nom": "Signes secrets (Espion)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Fraternité de Grimnir",
+    "nom": "Signes secrets (Fraternité de Grimnir)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Guerriers Fantômes",
+    "nom": "Signes secrets (Guerriers Fantômes)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Guilde",
+    "nom": "Signes secrets (Guilde)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "La Grande Gueule",
+    "nom": "Signes secrets (La Grande Gueule)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Mineur",
+    "nom": "Signes secrets (Mineur)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Ordre chevaleresque",
+    "nom": "Signes secrets (Ordre chevaleresque)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Ordre d'Ambre",
+    "nom": "Signes secrets (Ordre d'Ambre)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Ordre Gris",
+    "nom": "Signes secrets (Ordre Gris)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Patrouilleur",
+    "nom": "Signes secrets (Patrouilleur)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Ranger",
+    "nom": "Signes secrets (Ranger)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Skaven",
+    "nom": "Signes secrets (Skaven)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Soleil Flamboyant",
+    "nom": "Signes secrets (Soleil Flamboyant)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Ulric",
+    "nom": "Signes secrets (Ulric)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Vagabond",
+    "nom": "Signes secrets (Vagabond)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Signes secrets",
+    "spec": "Voleur",
+    "nom": "Signes secrets (Voleur)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Soin aux animaux",
+    "spec": "",
+    "nom": "Soin aux animaux",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Soin aux animaux",
+    "spec": "Roc",
+    "nom": "Soin aux animaux (Roc)",
+    "carac": "int",
+    "basic": false
+  },
+  {
+    "group": "Voile",
+    "spec": "",
+    "nom": "Voile",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Voile",
+    "spec": "Aéronef nain",
+    "nom": "Voile (Aéronef nain)",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Voile",
+    "spec": "Barge",
+    "nom": "Voile (Barge)",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Voile",
+    "spec": "Caravelle",
+    "nom": "Voile (Caravelle)",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Voile",
+    "spec": "Cogue",
+    "nom": "Voile (Cogue)",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Voile",
+    "spec": "Drakkar",
+    "nom": "Voile (Drakkar)",
+    "carac": "ag",
+    "basic": false
+  },
+  {
+    "group": "Voile",
+    "spec": "Skycraft",
+    "nom": "Voile (Skycraft)",
+    "carac": "ag",
+    "basic": false
+  }
+]

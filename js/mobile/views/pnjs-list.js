@@ -4,6 +4,7 @@ import { mountPnjPortrait } from '../components/portrait.js';
 import { createPnjListModel, DEFAULT_QUICK, FILTER_DIMENSIONS, QUICK_FILTERS, vivantKey } from '../pnj-list-model.js';
 import { renderState } from '../ui.js';
 import { groupLabel } from '../../pnj-groups.js';
+import { mountContributionButton } from '../../contributions/editor.js';
 
 const FILTER_LABELS = Object.freeze({ groupe: 'Groupe', statut: 'Statut', lieu: 'Lieu' });
 const QUICK_LABELS = Object.freeze({ tous: 'Tous', allie: 'Alliés', neutre: 'Neutres', ennemi: 'Ennemis', decede: 'Décédés' });
@@ -193,6 +194,9 @@ export function createPnjsListView({
     getImageService = () => null,
     onRetry = () => store?.restart?.(),
     getSession = () => null,
+    getContributionClient = null,
+    signInContribution = null,
+    announce = () => {},
     onCreate = null,
 } = {}) {
     let mounted = false;
@@ -215,6 +219,7 @@ export function createPnjsListView({
     let sheet = null;
     let unsubscribeSession = () => {};
     let createButton = null;
+    let contributionAction = null;
     let focusPending = false;
 
     const renderCreateAction = state => {
@@ -408,6 +413,11 @@ export function createPnjsListView({
             createButton.addEventListener('click', onCreate);
             meta.append(createButton);
         }
+        if (typeof getContributionClient === 'function') {
+            contributionAction = mountContributionButton({ container: meta, getClient: getContributionClient,
+                signIn: signInContribution, kind: 'pnj', action: 'create', documentRef,
+                announce, onSaved: () => store?.restart?.() });
+        }
         quickRow = documentRef.createElement('div');
         quickRow.className = 'm-quick-filters';
         quickRow.setAttribute('role', 'group');
@@ -481,6 +491,8 @@ export function createPnjsListView({
         listTarget?.removeEventListener('click', onListClick);
         retryButton?.removeEventListener('click', onRetry);
         createButton?.removeEventListener('click', onCreate);
+        contributionAction?.dispose?.();
+        contributionAction = null;
         sheet?.destroy();
         sheet = null;
         releasePortraits();

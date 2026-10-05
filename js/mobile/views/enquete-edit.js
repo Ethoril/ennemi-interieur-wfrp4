@@ -1,6 +1,7 @@
 import { errorForUi, ERROR_KINDS } from '../../data/firebase-errors.js';
 import { createPnjPicker } from '../components/pnj-picker.js';
 import { createPortraitEditor, processPortraitFile } from '../components/portrait-editor.js';
+import { loadContentEditContext, mutateContentThroughGateway, newContributionOperationId, trashManagedContent, uploadManagedImage } from '../../contributions/managed-commands.js';
 
 const MAX = Object.freeze({ titre: 200, description: 30000 });
 
@@ -107,6 +108,7 @@ export function createEnqueteEditView({
     getRepository = () => null,
     getPnjRepository = () => null,
     getImageService = () => null,
+    getContributionClient = () => null,
     getSession = () => ({}),
     draftStore = null,
     isOnline = () => true,
@@ -124,6 +126,7 @@ export function createEnqueteEditView({
     let portraitEditor = null;
     let initialized = id === null;
     let latestItem = null;
+    let initialContributionContextPromise = null;
     let updatedAt;
     let dirty = false;
     let draftVersion = 0;
@@ -247,18 +250,44 @@ export function createEnqueteEditView({
         const operation = captureOperation();
         if (!operation) return;
         setBusy(true); showStatus('Enregistrement…', 'saving');
-        const repo = getRepository();
         try {
             const data = { titre: validation.values.titre, description: validation.values.description, decouvert: validation.values.decouvert, ordre: validation.values.ordre, pnjsLies: validation.values.pnjsLies };
-            const imageOptions = selectedImage
-                ? { imageFile: selectedImage }
-                : removeImageRequested ? { removeImage: true } : {};
             pendingIntent = { expectedData: data, imageMode: selectedImage ? 'replace' : removeImageRequested ? 'remove' : 'unchanged', previousUpdatedAt: safeTimestamp(updatedAt) };
-            const result = id
-                ? force && typeof repo.forceUpdate === 'function'
-                    ? await repo.forceUpdate(id, data, { ...imageOptions, confirmed: true })
-                    : await repo.update(id, data, updatedAt, imageOptions)
-                : await repo.create(data, imageOptions);
+            if (id) {
+                const client = getContributionClient?.();
+                const context = await initialContributionContextPromise;
+                if (!currentOperation(operation)) return;
+                if (!context) throw Object.assign(new Error('Contexte versionné indisponible.'), { code: 'failed-precondition' });
+                const changes = {};
+                for (const [field, value] of Object.entries(data)) {
+                    const before = Object.hasOwn(context.data, field) ? context.data[field] : null;
+                    if (JSON.stringify(value) !== JSON.stringify(before)) changes[field] = value;
+                }
+                if (selectedImage) changes.imagePath = await uploadManagedImage(client, { kind: 'indice', ownerId: id, file: selectedImage });
+                else if (removeImageRequested && context.data.imagePath) changes.imagePath = null;
+                if (Object.keys(changes).length) await mutateContentThroughGateway(client, context, {
+                    kind: 'indice', id, changes, operationId: newContributionOperationId(),
+                });
+                if (!currentOperation(operation)) return;
+                if (Object.hasOwn(changes, 'imagePath') && context.data.imagePath) {
+                    try { await getImageService()?.remove(context.data.imagePath, { kind: 'indice', ownerId: id, collection: 'indices' }); }
+                    catch { showStatus('Indice enregistré; le nettoyage de l’ancienne illustration reste à reprendre.', ERROR_KINDS.CONFLICT); }
+                }
+                dirty = false; draftVersion += 1; removeDrafts(); draftId = null; selectedImage = null; removeImageRequested = false; pendingIntent = null;
+                onNavigate(`#/enquetes/${encodeURIComponent(id)}`);
+                announce('Indice enregistré par la passerelle versionnée.');
+                return;
+            }
+            if (id) throw Object.assign(new Error('Modification legacy refusée : le contexte versionné est requis.'), { code: 'failed-precondition' });
+            const client = getContributionClient?.();
+            if (!client?.mutatePublicContent) throw Object.assign(new Error('Passerelle indisponible.'), { code: 'failed-precondition' });
+            const operationId = newContributionOperationId();
+            const indiceId = `indice-${operationId}`;
+            const changes = { titre: data.titre, description: data.description, decouvert: data.decouvert,
+                ordre: data.ordre, pnjsLies: data.pnjsLies };
+            if (selectedImage) changes.imagePath = await uploadManagedImage(client, { kind: 'indice', ownerId: indiceId, file: selectedImage, operationId });
+            const result = await client.mutatePublicContent({ kind: 'indice', action: 'create', id: indiceId,
+                operationId, baseRevision: 0, changes });
             if (!currentOperation(operation)) return;
             const savedId = id || result?.id;
             const imageNotice = imageSkipNotice(result);
@@ -393,26 +422,18 @@ export function createEnqueteEditView({
     const remove = async () => {
         if (!id || removing || saving || recoveryState || !latestItem || !isMj(getSession) || isOnline() === false) { showStatus('Hors ligne, mutation en cours ou session MJ indisponible. La suppression n’est pas lancée.', 'offline'); return; }
         const linkedTotalCount = picker?.getValues?.()?.length ?? 0;
-        if (!container.ownerDocument.defaultView?.confirm?.(`Supprimer « ${latestItem?.titre || 'cet indice'} », son image et ${linkedTotalCount} lien(s) PNJ ?`)) return;
+        if (!container.ownerDocument.defaultView?.confirm?.(`Mettre « ${latestItem?.titre || 'cet indice'} » et ${linkedTotalCount} lien(s) PNJ en corbeille ?`)) return;
         const operation = captureOperation(); if (!operation) return;
         removing = true; setBusy(true); showStatus('Suppression en cours…', 'saving');
         try {
-            const result = await getRepository().remove(id);
+            const client = getContributionClient?.();
+            const context = await loadContentEditContext(client, 'indice', id);
+            if (!context) throw Object.assign(new Error('Contexte versionné indisponible.'), { code: 'failed-precondition' });
+            await trashManagedContent(client, context, { kind: 'indice', id });
             if (!currentOperation(operation)) return;
-            if (result?.imageCleanupPending || result?.lockRetained) {
-                recoveryState = projectRecoveryState(result, 'remove');
-                if (result.firestoreDone === true) removeDrafts();
-                refs.recover.hidden = false;
-                setBusy(false);
-                const imageNotice = imageSkipNotice(recoveryState);
-                showStatus(`Indice supprimé ; le nettoyage doit être repris.${imageNotice ? ` ${imageNotice}` : ''}`, ERROR_KINDS.CONFLICT);
-                return;
-            }
-            if (result?.firestoreDone !== true) throw new Error('Suppression non confirmée');
             removeDrafts();
-            const imageNotice = imageSkipNotice(result);
             onNavigate('#/enquetes');
-            announce(`Indice supprimé.${imageNotice ? ` ${imageNotice}` : ''}`);
+            announce('Indice placé en corbeille.');
         } catch (error) {
             if (!currentOperation(operation)) return;
             if (error?.state?.commitUnknown || error?.state?.firestoreDone === true && error?.state?.imageCleanupPending) {
@@ -465,6 +486,19 @@ export function createEnqueteEditView({
         const danger = documentRef.createElement('section'); danger.className = 'm-danger-zone'; const removeButton = documentRef.createElement('button'); removeButton.type = 'button'; removeButton.className = 'm-button m-button-danger'; removeButton.textContent = 'Supprimer cet indice'; removeButton.hidden = !id; const recoverButton = documentRef.createElement('button'); recoverButton.type = 'button'; recoverButton.className = 'm-button'; recoverButton.textContent = 'Reprendre le nettoyage'; recoverButton.hidden = true; danger.append(removeButton, recoverButton);
         form.append(summary, conflict, publicSet, publication, pickerHost, media, actions); screen.append(heading, status, form, danger); container.append(screen);
         refs = { form, summary, conflict, status, save: saveButton, cancel, remove: removeButton, recover: recoverButton, titre, description, decouvert, ordre, fields: { titre, description, decouvert, ordre }, errors };
+        if (id) {
+            form.inert = true;
+            const openGeneration = generation;
+            initialContributionContextPromise = Promise.resolve().then(async () => {
+                const context = await loadContentEditContext(getContributionClient?.(), 'indice', id);
+                if (!context) throw Object.assign(new Error('Contexte versionné indisponible.'), { code: 'failed-precondition' });
+                if (!mounted || openGeneration !== generation) return null;
+                fill(context.data, { preserveServer: true });
+                void portraitEditor?.setCurrentPath?.(context.data.imagePath, getImageService?.());
+                return context;
+            }).catch(error => { showStatus(`Chargement du contexte versionné impossible : ${errorForUi(error).message}`, ERROR_KINDS.CONFLICT); return null; })
+                .finally(() => { if (mounted && openGeneration === generation) form.inert = false; });
+        } else initialContributionContextPromise = Promise.resolve(null);
         picker = createPnjPicker({ documentRef, getRepository: getPnjRepository, initial: [], onChange: () => { dirty = true; draftVersion += 1; scheduleDraft(); } }); picker.mount(pickerHost);
         portraitEditor = createPortraitEditor({
             container: media,

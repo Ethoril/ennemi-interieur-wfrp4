@@ -12,6 +12,8 @@ import { reconcileFilterSets, panelIsStillCurrent, safeRelationColorValue } from
 import { statutLabel, vivantLabel, sealMarkup, morrMarkup } from './seal.js';
 import { pnjGroups, groupCatalog, groupLabel, groupKey, matchesGroupFilter } from './pnj-groups.js';
 import { createGroupPicker } from './pnj-group-picker.js';
+import { mountContentTrashPanel, mountContributionButton } from './contributions/editor.js';
+import { newContributionOperationId, loadContentEditContext, mutateContentThroughGateway, trashManagedContent, uploadManagedImage } from './contributions/managed-commands.js';
 import { assignCurveLanes, graphRelations, bezierPath, curveHandlePoint, curveFromPoint } from './pnj-link-curves.js';
 import { createGraphDisplay } from './pnj-graph-display.js';
 import { rememberGraphNodes, restoreGraphNodes, applySharedGraphPositions } from './pnj-graph-layout.js';
@@ -72,7 +74,10 @@ const state = {
     privateLoadId: 0,
     privateDocExists: false,
     privateLoadError: false,
+    editingPrivateUpdatedAt: null,
+    editingPrivateNotes: '',
     editingUpdatedAt: null,
+    editingContributionContextPromise: null,
 };
 
 let currentLoadId = 0;
@@ -84,6 +89,7 @@ let cropGeneration = 0;
 let cropSourceUrl = null;
 let localPreviewUrl = null;
 let groupPicker = null;
+const relationEditContexts = new WeakMap();
 let graphDisplay = null;
 const sharedGraphPositions = new Map();
 const graphNodeMemory = new Map();
@@ -109,6 +115,8 @@ let _filterSignature = null;
 let _panelHtml = '';
 let _panelShownId = null;
 let panelLinkedClues = { id: null, role: null, items: [] };
+let panelContributionAction = null;
+let relationContributionActions = [];
 // PNJ dont le nœud ou la ligne a ouvert la fiche : le focus y revient à la fermeture.
 let _panelReturnId = null;
 // Réécriture forcée du dossier après un enregistrement de relation : le HTML
@@ -126,6 +134,10 @@ window.addEventListener('pagehide', () => {
     editorSession += 1;
     closePnjModal();
     closePanel();
+    panelContributionAction?.dispose?.();
+    panelContributionAction = null;
+    relationContributionActions.forEach(action => action.dispose());
+    relationContributionActions = [];
     cancelLinkedIndices();
     document.getElementById('pnj-form')?.reset();
     if (document.getElementById('f-notes-privees')) document.getElementById('f-notes-privees').value = '';
@@ -156,6 +168,24 @@ let unsubscribeLinkedIndices = null;
 let linkedIndicesGeneration = 0;
 let bureauGeneration = 0;
 let liveImages = null;
+let createContributionAction = null;
+const contributionToolbar = document.querySelector('.pnj-admin-actions');
+if (contributionToolbar) createContributionAction = mountContributionButton({
+    container: contributionToolbar,
+    getClient: () => import('./contributions/firebase-client.js').then(module => module.contributionClient),
+    signIn: loginWithGoogle,
+    kind: 'pnj', action: 'create', documentRef: document,
+    announce: message => showPnjDeletionStatus(message),
+});
+let createRelationContributionAction = null;
+if (contributionToolbar) createRelationContributionAction = mountContributionButton({ container: contributionToolbar,
+    getClient: () => import('./contributions/firebase-client.js').then(module => module.contributionClient),
+    signIn: loginWithGoogle, kind: 'relation', action: 'create', documentRef: document,
+    announce: message => showPnjDeletionStatus(message) });
+let contentTrashPanel = null;
+if (contributionToolbar) contentTrashPanel = mountContentTrashPanel({ container: contributionToolbar,
+    getClient: () => import('./contributions/firebase-client.js').then(module => module.contributionClient),
+    signIn: loginWithGoogle, documentRef: document });
 
 // ── Utils ──────────────────────────────────────────────────────
 // Object.hasOwn : une valeur « constructor » remonterait sinon au prototype
@@ -395,6 +425,12 @@ function handleAuth(user, isAdmin) {
         if (roleChanged || identityChanged) {
             // Déconnexion : retirer immédiatement l'état MJ avant le nouveau chargement public.
             closePnjModal();
+    createContributionAction?.dispose?.();
+    createContributionAction = null;
+    createRelationContributionAction?.dispose?.();
+    createRelationContributionAction = null;
+    contentTrashPanel?.dispose?.();
+    contentTrashPanel = null;
             closeCropModal();
             state.nodes = [];
             state.links = [];
@@ -631,7 +667,6 @@ async function savePnj(data, imageFile) {
         }
         requireCurrentEditor();
         const id = capturedEditingId || `pnj-${Date.now().toString(36)}`;
-        const previousImagePath = data.imagePath || '';
         const publicData = {
             nom: data.nom || '', statut: data.statut || '', vivant: data.vivant || 'oui',
             lieu: data.lieu || '', groupes: pnjGroups({ groupes: data.groupes }), groupe: pnjGroups({ groupes: data.groupes })[0] || '', description: data.description || '',
@@ -639,41 +674,64 @@ async function savePnj(data, imageFile) {
         };
         if (data.imagePath) publicData.imagePath = data.imagePath;
         const privateData = { notes: data.notesPrivees || '' };
-        let result;
-        const expectedUpdatedAt = state.editingUpdatedAt;
-        // images.replace ne renvoie pas le résultat du commit : on le capture ici.
-        let relationsRevealPending = false;
-        const commitPnj = async imagePath => {
-            requireCurrentEditor();
-            const nextPublicData = imagePath ? { ...publicData, imagePath } : publicData;
-            const committed = capturedEditingId
-                ? await pnjRepository.update(capturedEditingId, nextPublicData, privateData, expectedUpdatedAt)
-                : await pnjRepository.create(nextPublicData, privateData, { id });
-            if (committed?.relationsRevealPending === true) relationsRevealPending = true;
-            return committed;
-        };
-        if (imageFile) {
-            btn.textContent = 'Upload…';
-            result = await capturedData.images.replace(previousImagePath || null,
-                { kind: 'portrait', ownerId: id }, imageFile, { commit: commitPnj });
-        } else {
-            result = await commitPnj(null);
+        if (capturedEditingId) {
+            const client = (await import('./contributions/firebase-client.js')).contributionClient;
+            const context = await state.editingContributionContextPromise;
+            if (!context) throw new Error('Le contexte versionné du PNJ est indisponible. Réouvrez la fiche avant de réessayer.');
+            {
+                const changes = {};
+                const baseValues = {};
+                const candidates = {
+                    nom: publicData.nom, statut: publicData.statut, vivant: publicData.vivant, lieu: publicData.lieu,
+                    groupes: publicData.groupes, description: publicData.description, visibleJoueurs: publicData.visibleJoueurs,
+                };
+                for (const [field, value] of Object.entries(candidates)) {
+                    const before = context.data[field] ?? (field === 'groupes' ? [] : field === 'visibleJoueurs' ? false : '');
+                    if (JSON.stringify(value) !== JSON.stringify(before)) { changes[field] = value; baseValues[field] = before; }
+                }
+                if (imageFile) {
+                    const imageOperationId = globalThis.crypto?.randomUUID?.() || `portrait_${Date.now().toString(36)}`;
+                    const bytes = new Uint8Array(await imageFile.arrayBuffer());
+                    let binary = '';
+                    for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+                    const upload = await client.uploadContributionImage({ kind: 'portrait', ownerId: capturedEditingId,
+                        operationId: imageOperationId, contentType: imageFile.type, base64: globalThis.btoa(binary) });
+                    changes.imagePath = upload.imagePath;
+                    baseValues.imagePath = context.data.imagePath ?? null;
+                }
+                if (Object.keys(changes).length) {
+                    await mutateContentThroughGateway(client, context, { kind: 'pnj', id: capturedEditingId,
+                        operationId: newContributionOperationId(), baseValues, changes });
+                }
+                requireCurrentEditor();
+                if (privateData.notes !== state.editingPrivateNotes) {
+                    await pnjRepository.updatePrivateOnly(capturedEditingId, privateData, state.editingPrivateUpdatedAt);
+                }
+                requireCurrentEditor();
+                const prevEditingId = capturedEditingId;
+                closePnjModal();
+                if (panelIsStillCurrent({ capturedGeneration: capturedPanelGeneration, currentGeneration: currentPanelGeneration,
+                    capturedId: capturedPanelId, currentId: state.panelId })) {
+                    const node = state.nodes.find(item => item.id === prevEditingId);
+                    if (node) openPanel(node);
+                }
+                return;
+            }
         }
-        if (relationsRevealPending) {
-            showPnjImageRecoveryStatus('PNJ enregistré, mais certaines relations n’ont pas pu être rendues visibles ; réenregistrez le PNJ pour réessayer.', null);
+        if (capturedEditingId) throw new Error('Modification legacy refusée : le contexte versionné est requis.');
+        const client = (await import('./contributions/firebase-client.js')).contributionClient;
+        const createOperationId = newContributionOperationId();
+        const createChanges = { nom: publicData.nom, statut: publicData.statut, vivant: publicData.vivant,
+            lieu: publicData.lieu, groupes: publicData.groupes, description: publicData.description,
+            visibleJoueurs: publicData.visibleJoueurs };
+        if (imageFile) createChanges.imagePath = await uploadManagedImage(client, { kind: 'portrait', ownerId: id, file: imageFile, operationId: createOperationId });
+        await client.mutatePublicContent({ kind: 'pnj', action: 'create', id, operationId: createOperationId, baseRevision: 0, changes: createChanges });
+        if (privateData.notes) {
+            try { await pnjRepository.updatePrivateOnly(id, privateData); }
+            catch { showPnjImageRecoveryStatus('PNJ public créé ; les notes privées n’ont pas pu être enregistrées.', null); }
         }
         requireCurrentEditor();
-        void result;
-        const prevEditingId = capturedEditingId;
         closePnjModal();
-        if (capturedSession !== editorSession || capturedData !== bureauData) return;
-        if (prevEditingId && panelIsStillCurrent({
-            capturedGeneration: capturedPanelGeneration, currentGeneration: currentPanelGeneration,
-            capturedId: capturedPanelId, currentId: state.panelId,
-        })) {
-            const node = state.nodes.find(n => n.id === prevEditingId);
-            if (node) openPanel(node);
-        }
     } catch (e) {
         const imageState = e?.state;
         if (imageState?.commitDone || imageState?.commitUnknown) {
@@ -717,16 +775,18 @@ async function deletePnj(id) {
         && capturedRole && capturedPanelGeneration === currentPanelGeneration
         && capturedPanelId === state.panelId && repository === bureauData?.pnjs;
     const pnj = state.nodes.find(node => node.id === id);
+    const client = (await import('./contributions/firebase-client.js')).contributionClient;
+    const editContext = await loadContentEditContext(client, 'pnj', id);
+    if (!editContext) { alert('Le contexte versionné du PNJ est indisponible. Aucune suppression directe n’est autorisée.'); return; }
     const ok = await confirmAction({
-        titre: 'Supprimer le personnage',
-        message: (pnj?.nom || 'Ce personnage') + ' sera définitivement supprimé avec ses relations et indices liés.',
-        libelleAction: 'Supprimer', danger: true,
+        titre: 'Mettre le personnage en corbeille',
+        message: `${pnj?.nom || 'Ce personnage'} et ses relations/indices dépendants seront placés en corbeille, avec possibilité de restauration.`,
+        libelleAction: 'Mettre en corbeille', danger: true,
     });
     if (!ok || !stillCurrent()) return;
-    if (!repository?.remove) { alert('Dépôt PNJ indisponible.'); return; }
     try {
         if (!stillCurrent()) return;
-        await repository.remove(id);
+        await trashManagedContent(client, editContext, { kind: 'pnj', id });
         if (!stillCurrent()) return;
         closePnjModal();
         closePanel();
@@ -753,9 +813,10 @@ async function saveRelation(sourceId, cibleId, type, label, color, style, bidir)
         && repository === bureauData?.relations;
     // La visibilité joueurs est dérivée des deux PNJ par le dépôt.
     try {
-        const result = await repository.create({ source: sourceId, cible: cibleId, type,
-            label: label || type, color: safeRelationColor(color, type),
-            style: style === 'dashed' ? 'dashed' : 'solid' }, bidir);
+        const client = (await import('./contributions/firebase-client.js')).contributionClient;
+        const result = await client.mutatePublicContent({ kind: 'relation', action: 'create', operationId: newContributionOperationId(),
+            baseRevision: 0, pair: bidir === true, changes: { source: sourceId, cible: cibleId, type,
+                label: label || type, color: safeRelationColor(color, type), style: style === 'dashed' ? 'dashed' : 'solid' } });
         if (!stillCurrent()) return;
         void result;
         const node = state.nodes.find(item => item.id === sourceId);
@@ -764,7 +825,7 @@ async function saveRelation(sourceId, cibleId, type, label, color, style, bidir)
     } catch (error) { if (stillCurrent()) alert('Création de la relation impossible : ' + (error?.message || 'réessayez.')); }
 }
 
-async function updateRelation(relId, type, label, color, style) {
+async function updateRelation(relId, type, label, color, style, context) {
     if (!type) { alert('Le type de relation est requis.'); return; }
     const repository = bureauData?.relations;
     if (!repository?.update) { alert('Dépôt relations indisponible.'); return; }
@@ -783,10 +844,13 @@ async function updateRelation(relId, type, label, color, style) {
         && capturedRepository === bureauData?.relations;
     try {
         if (!stillCurrent()) return;
-        await repository.update(relId, {
-            type, label: label || type, color: color ? safeRelationColor(color, type) : undefined,
-            style: style === 'dashed' ? 'dashed' : 'solid',
-        }, current?.updatedAt, pair ? { pair: true, reciprocalId: reciprocal.id } : {});
+        if (!context) throw new Error('Le contexte versionné de la relation est indisponible. Réouvrez le formulaire.');
+        const client = (await import('./contributions/firebase-client.js')).contributionClient;
+        const changes = { type, label: label || type, style: style === 'dashed' ? 'dashed' : 'solid' };
+        if (color) changes.color = safeRelationColor(color, type);
+        const reciprocalId = pair ? reciprocal.id : undefined;
+        await mutateContentThroughGateway(client, context, { kind: 'relation', id: relId, changes,
+            pair, reciprocalId, reciprocalBaseRevision: pair ? context.data.reciprocalRevision : undefined });
         if (!stillCurrent()) return;
         const node = state.nodes.find(item => item.id === panelId);
         _panelRewrite = { id: panelId, focus: `.rel-edit-btn[data-rel="${CSS.escape(relId)}"]` };
@@ -800,19 +864,20 @@ async function deleteRelation(relId) {
     const capturedGeneration = currentPanelGeneration;
     const capturedPanelId = state.panelId;
     const repository = bureauData?.relations;
-    if (!repository?.remove) { alert('Dépôt relations indisponible.'); return; }
-    const current = state.links.find(relation => relation.id === relId);
-    const reciprocal = exactReciprocal(current);
-    const pair = Boolean(reciprocal);
+    if (!repository) { alert('Dépôt relations indisponible.'); return; }
     const stillCurrent = () => capturedRole && state.isAdmin && capturedSession === editorSession
         && capturedGeneration === currentPanelGeneration && capturedPanelId === state.panelId
         && repository === bureauData?.relations;
-    const ok = await confirmAction({ titre: 'Supprimer la relation',
-        message: 'Cette relation sera définitivement supprimée.', libelleAction: 'Supprimer', danger: true });
+    const client = (await import('./contributions/firebase-client.js')).contributionClient;
+    const context = await loadContentEditContext(client, 'relation', relId);
+    if (!context) throw new Error('Le contexte versionné de la relation est indisponible.');
+    const ok = await confirmAction({ titre: 'Mettre en corbeille',
+        message: 'La relation sera placée en corbeille et pourra être restaurée.',
+        libelleAction: 'Mettre en corbeille', danger: true });
     if (!ok || !stillCurrent()) return;
     try {
         if (!stillCurrent()) return;
-        await repository.remove(relId, pair ? { pair: true, reciprocalId: reciprocal.id } : false);
+        await trashManagedContent(client, context, { kind: 'relation', id: relId });
         if (!stillCurrent()) return;
     } catch (error) { if (stillCurrent()) alert('Suppression de la relation impossible : ' + (error?.message || 'réessayez.')); }
 }
@@ -830,6 +895,7 @@ function openPnjModal(pnjId = null) {
     state.privateLoadId += 1;
     closeCropModal();
     state.editingId  = pnjId;
+    state.editingContributionContextPromise = null;
     state.editingUpdatedAt = null;
     state.croppedBlob = null;
     const preview = document.getElementById('f-image-preview');
@@ -844,9 +910,34 @@ function openPnjModal(pnjId = null) {
     document.getElementById('f-notes-privees').value = '';
     state.privateDocExists = false;
     state.privateLoadError = false;
+    state.editingPrivateUpdatedAt = null;
+    state.editingPrivateNotes = '';
     document.getElementById('pnj-private-status').textContent = '';
 
     if (pnjId) {
+        const form = document.getElementById('pnj-form');
+        const openSession = editorSession;
+        form.inert = true;
+        const contextPromise = import('./contributions/firebase-client.js')
+            .then(module => loadContentEditContext(module.contributionClient, 'pnj', pnjId))
+            .then(context => {
+                if (!context) throw new Error('Le contexte versionné du PNJ est indisponible.');
+                if (openSession !== editorSession || state.editingId !== pnjId || !dialog.open) return null;
+                const p = context.data;
+                document.getElementById('f-nom').value = p.nom || '';
+                document.getElementById('f-statut').value = p.statut || '';
+                document.getElementById('f-vivant').value = p.vivant || 'oui';
+                document.getElementById('f-lieu').value = p.lieu || '';
+                groupPicker?.setGroups(pnjGroups(p));
+                document.getElementById('f-description').value = p.description || '';
+                document.getElementById('f-visible-joueurs').value = String(p.visibleJoueurs === true);
+                const imagePreview = document.getElementById('f-image-preview');
+                imagePreview.dataset.existingPath = p.imagePath || '';
+                return context;
+            })
+            .catch(error => { if (openSession === editorSession) document.getElementById('pnj-private-status').textContent = error.message; return null; })
+            .finally(() => { if (openSession === editorSession) form.inert = false; });
+        state.editingContributionContextPromise = contextPromise;
         const p = state.nodes.find(n => n.id === pnjId);
         if (p) {
             state.editingUpdatedAt = p.updatedAt ?? null;
@@ -916,9 +1007,13 @@ async function loadPrivateNotes(pnjId, pnj) {
                 return;
             }
             document.getElementById('f-notes-privees').value = notes;
+            state.editingPrivateUpdatedAt = snap.updatedAt ?? null;
+            state.editingPrivateNotes = notes;
             return;
         }
         document.getElementById('f-notes-privees').value = legacyNote(pnj);
+        state.editingPrivateUpdatedAt = null;
+        state.editingPrivateNotes = legacyNote(pnj);
         const legacyError = legacyNoteError(pnj);
         if (legacyError) {
             state.privateLoadError = true;
@@ -955,10 +1050,13 @@ function closePnjModal() {
     if (wasOpen) dialog.close();
     groupPicker?.setGroups([]);
     state.editingId   = null;
+    state.editingContributionContextPromise = null;
     state.editingUpdatedAt = null;
     state.croppedBlob = null;
     state.privateDocExists = false;
     state.privateLoadError = false;
+    state.editingPrivateUpdatedAt = null;
+    state.editingPrivateNotes = '';
     if (wasOpen) restorePnjModalFocus();
 }
 
@@ -1988,6 +2086,26 @@ async function openPanel(d, { origin = false, addRelation = false } = {}) {
             content.innerHTML = html;
             _panelHtml = html;
             _panelRewrite = null;
+            panelContributionAction?.dispose?.();
+            panelContributionAction = null;
+            relationContributionActions.forEach(action => action.dispose());
+            relationContributionActions = [];
+            if (d.visibleJoueurs === true || state.isAdmin) {
+                panelContributionAction = mountContributionButton({ container: content.querySelector('.pnj-dossier-body') || content,
+                    getClient: () => import('./contributions/firebase-client.js').then(module => module.contributionClient),
+                    signIn: loginWithGoogle, kind: 'pnj', id: d.id, documentRef: document,
+                    announce: message => showPnjDeletionStatus(message) });
+            }
+            relationContributionActions = related.filter(item => (item.node.visibleJoueurs === true || state.isAdmin)
+                && (state.nodes.some(node => node.id === d.id && node.visibleJoueurs === true) || state.isAdmin)
+                && (state.links.find(link => link.id === item.relId)?.visibleJoueurs === true || state.isAdmin))
+                .map(item => {
+                    const host = content.querySelector(`#rel-row-${CSS.escape(item.relId)}`);
+                    return host ? mountContributionButton({ container: host,
+                        getClient: () => import('./contributions/firebase-client.js').then(module => module.contributionClient),
+                        signIn: loginWithGoogle, kind: 'relation', id: item.relId, documentRef: document,
+                        announce: message => showPnjDeletionStatus(message) }) : null;
+                }).filter(Boolean);
             if (rewrite && !opening && focusWasInside) (panel.querySelector(rewrite.focus) || document.getElementById('pnj-detail-title'))?.focus();
             else if (restoreKey) (panel.querySelector(restoreKey) || document.getElementById('pnj-detail-title'))?.focus();
         }
@@ -2031,6 +2149,10 @@ function closePanel({ restoreFocus = false } = {}) {
     _panelHtml = '';
     _panelShownId = null;
     _panelRewrite = null;
+    panelContributionAction?.dispose?.();
+    panelContributionAction = null;
+    relationContributionActions.forEach(action => action.dispose());
+    relationContributionActions = [];
     state.panelId = null;
     updateVisibility();
     if (restoreFocus || focusWasInside) focusPnjOrigin(_panelReturnId);
@@ -2172,20 +2294,42 @@ document.getElementById('pnj-detail-content').addEventListener('click', e => {
                 </div>
             </div>`;
         const chipRow = document.getElementById(`rel-row-${relId}`);
-        if (chipRow) { chipRow.style.display = 'none'; chipRow.insertAdjacentHTML('afterend', formHtml); }
+        if (chipRow) {
+            chipRow.style.display = 'none'; chipRow.insertAdjacentHTML('afterend', formHtml);
+            const form = chipRow.nextElementSibling;
+            form.inert = true;
+            const openSession = editorSession;
+            relationEditContexts.set(form, import('./contributions/firebase-client.js')
+                .then(module => loadContentEditContext(module.contributionClient, 'relation', relId))
+                .then(context => {
+                    if (!context) throw new Error('Contexte versionné indisponible.');
+                    form.querySelector('.rel-edit-type').value = context.data.type || '';
+                    form.querySelector('.rel-edit-label').value = context.data.label || context.data.type || '';
+                    const colorInput = document.getElementById('rel-edit-color');
+                    if (colorInput && context.data.color) colorInput.value = safeRelationColor(context.data.color, context.data.type);
+                    form.querySelectorAll('.style-btn').forEach(button => button.classList.toggle('active', button.dataset.style === (context.data.style || 'solid')));
+                    return context;
+                })
+                .catch(error => { form.dataset.contextError = error.message; return null; })
+                .finally(() => { if (openSession === editorSession && form.isConnected) form.inert = false; }));
+        }
         return;
     }
 
     if (e.target.closest('.rel-edit-save-btn')) {
         const btn = e.target.closest('.rel-edit-save-btn');
         const form = btn.closest('.rel-edit-form-inline');
-        void updateRelation(
-            form.dataset.rel,
-            form.querySelector('.rel-edit-type').value.trim(),
-            form.querySelector('.rel-edit-label').value.trim(),
-            document.getElementById('rel-edit-color')?.value || REL_PALETTE[0],
-            form.querySelector('.style-btn.active')?.dataset.style || 'solid',
-        ).catch(error => alert(`Modification de la relation impossible : ${error.message}`));
+        void (async () => {
+            const context = await relationEditContexts.get(form);
+            await updateRelation(
+                form.dataset.rel,
+                form.querySelector('.rel-edit-type').value.trim(),
+                form.querySelector('.rel-edit-label').value.trim(),
+                document.getElementById('rel-edit-color')?.value || REL_PALETTE[0],
+                form.querySelector('.style-btn.active')?.dataset.style || 'solid',
+                context,
+            );
+        })().catch(error => alert(`Modification de la relation impossible : ${error.message}`));
         return;
     }
 

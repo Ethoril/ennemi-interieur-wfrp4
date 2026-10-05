@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <base href="../../">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self';">
+  <meta name="robots" content="noindex,nofollow">
+  <title>QA locale — contributions publiques</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/theme-parchment.css">
+  <link rel="stylesheet" href="css/mobile-app.css">
+  <link rel="stylesheet" href="css/referentiels.css">
+  <link rel="stylesheet" href="css/contributions-qa.css">
+</head>
+<body class="m-app contributions-qa">
+  <main class="page-container">
+    <header class="qa-banner">
+      <p class="qa-tag">Recette locale · toutes les données et réponses sont fictives</p>
+      <h1>Contributions publiques</h1>
+      <p>Cette page monte le vrai éditeur de contribution avec un client de démonstration en mémoire. Elle ne charge aucun SDK Firebase.</p>
+      <div class="qa-toolbar">
+        <button id="role-player" type="button">Simuler joueur autorisé</button>
+        <button id="role-mj" type="button">Simuler MJ</button>
+        <button id="role-public" type="button">Simuler visiteur</button>
+        <button id="network-offline" type="button">Simuler erreur réseau</button>
+        <button id="network-conflict" type="button">Simuler conflit de révision</button>
+        <button id="viewport-mobile" type="button">Largeur 390 px</button>
+        <button id="viewport-desktop" type="button">Largeur bureau</button>
+      </div>
+      <div id="qa-trash-panel"></div>
+      <p id="qa-status" role="status" aria-live="polite">Démonstration locale prête.</p>
+    </header>
+
+    <section class="qa-grid" aria-label="Exemples de formulaires">
+      <article class="qa-card"><h2>PNJ public</h2><p>Édition autorisée selon la session simulée.</p><div id="qa-pnj-public"></div></article>
+      <article class="qa-card"><h2>PNJ secret</h2><p>Le MJ peut l’éditer par callable; les autres sessions reçoivent un contenu indisponible.</p><div id="qa-pnj-secret"></div></article>
+      <article class="qa-card"><h2>Indice public</h2><p>Liens PNJ, découverte et illustration de test.</p><div id="qa-indice"></div></article>
+      <article class="qa-card"><h2>Relation publique</h2><p>La paire réciproque et ses révisions sont simulées.</p><div id="qa-relation"></div></article>
+      <article class="qa-card"><h2>Nouvelle proposition</h2><p>Création fictive d’un indice, sans écriture distante.</p><div id="qa-create"></div></article>
+    </section>
+
+    <section class="qa-card qa-ops" aria-labelledby="qa-ops-title">
+      <h2 id="qa-ops-title">Historique et corbeille (client fictif)</h2>
+      <div class="qa-toolbar">
+        <button id="qa-history" type="button">Lire l’historique</button>
+        <button id="qa-trash" type="button">Mettre en corbeille</button>
+        <button id="qa-restore" type="button">Restaurer</button>
+        <button id="qa-hide-trash" type="button">Masquer de la corbeille joueur</button>
+        <button id="qa-purge" type="button">Purger (MJ fictif)</button>
+        <button id="qa-upload" type="button">Réserver image de test</button>
+      </div>
+      <pre id="qa-ops-output" aria-live="polite">Aucun appel manuel.</pre>
+    </section>
+  </main>
+  <script type="module" src="tools/fixtures/contributions-qa.js"></script>
+</body>
+</html>
