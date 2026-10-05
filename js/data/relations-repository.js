@@ -176,28 +176,86 @@ function createRepository({ sdk, client, role, visiblePnjIds = [] } = {}) {
     const activeVisibleSubscriptions = new Set();
 
     function setVisiblePnjIds(ids) {
-        visibleIds = new Set(Array.isArray(ids) ? ids.filter(validId) : []);
+        const nextIds = new Set(Array.isArray(ids) ? ids.filter(validId) : []);
+        if (nextIds.size === visibleIds.size && [...nextIds].every(id => visibleIds.has(id))) return;
+        visibleIds = nextIds;
         for (const subscription of activeVisibleSubscriptions) {
-            if (subscription.snapshot) emitRelations(subscription.snapshot, subscription.onData, subscription.state,
-                relation => relation.visibleJoueurs === true
-                    && visibleIds.has(relation.source) && visibleIds.has(relation.cible));
+            subscription.restart();
         }
     }
 
     function subscribeVisible(onData, onError, options = {}) {
         if (Array.isArray(options.visiblePnjIds)) setVisiblePnjIds(options.visiblePnjIds);
-        const target = queryRef(sdk, collectionRef(sdk, db, 'relations'), [whereConstraint(sdk, 'visibleJoueurs', '==', true)]);
         const state = { lastKey: null };
-        const subscription = { snapshot: null, onData, state };
+        let generation = 0;
+        let closed = false;
+        let unsubscribers = [];
+        let lastDocs = [];
+        const emit = (documents, metadata) => {
+            lastDocs = documents.filter(document => {
+                const data = snapshotData(document);
+                return data.visibleJoueurs === true && visibleIds.has(data.source) && visibleIds.has(data.cible);
+            });
+            emitRelations({ docs: lastDocs, metadata }, onData, state, relation => relation.visibleJoueurs === true
+                && visibleIds.has(relation.source) && visibleIds.has(relation.cible));
+        };
+        const restart = () => {
+            const token = ++generation;
+            unsubscribers.forEach(unsubscribe => unsubscribe());
+            unsubscribers = [];
+            // Purger immédiatement les liens révoqués, même avant les nouveaux snapshots.
+            const retained = lastDocs.filter(document => {
+                const data = snapshotData(document);
+                return visibleIds.has(data.source) && visibleIds.has(data.cible);
+            });
+            emit(retained, { fromCache: true, hasPendingWrites: false });
+            const ids = [...visibleIds].sort(compareUnicode);
+            if (!ids.length) {
+                emit([], { fromCache: false, hasPendingWrites: false });
+                return;
+            }
+            // Les règles vérifient les DEUX PNJ : un filtre visibleJoueurs seul
+            // est refusé. Chaque requête doit prouver ses endpoints, avec au plus
+            // dix documents PNJ consultés par les règles (deux groupes de cinq).
+            const chunks = [];
+            for (let offset = 0; offset < ids.length; offset += 5) chunks.push(ids.slice(offset, offset + 5));
+            const batches = chunks.flatMap(source => chunks.map(cible => ({ source, cible, snapshot: null, error: false })));
+            for (const batch of batches) {
+                const target = queryRef(sdk, collectionRef(sdk, db, 'relations'), [
+                    whereConstraint(sdk, 'visibleJoueurs', '==', true),
+                    whereConstraint(sdk, 'source', 'in', batch.source),
+                    whereConstraint(sdk, 'cible', 'in', batch.cible),
+                ]);
+                const unsubscribe = subscribeSnapshot(sdk, target, snapshot => {
+                    if (closed || token !== generation) return;
+                    batch.snapshot = snapshot;
+                    batch.error = false;
+                    if (!batches.every(item => item.snapshot && !item.error)) return;
+                    try {
+                        const metadata = batches.map(item => snapshotMetadata(item.snapshot));
+                        emit(batches.flatMap(item => docs(item.snapshot)), {
+                            fromCache: metadata.some(item => item.fromCache),
+                            hasPendingWrites: metadata.some(item => item.hasPendingWrites),
+                        });
+                    } catch (error) { onError?.(mutationError(error, 'subscribe-relations')); }
+                }, error => {
+                    if (closed || token !== generation) return;
+                    batch.error = true;
+                    onError?.(mutationError(error, 'subscribe-relations'));
+                }, client?.listen);
+                unsubscribers.push(unsubscribe);
+            }
+        };
+        const subscription = { restart };
         activeVisibleSubscriptions.add(subscription);
-        const unsubscribe = subscribeSnapshot(sdk, target, snapshot => {
-            subscription.snapshot = snapshot;
-            try {
-                emitRelations(snapshot, onData, state, relation => relation.visibleJoueurs === true
-                    && visibleIds.has(relation.source) && visibleIds.has(relation.cible));
-            } catch (error) { if (typeof onError === 'function') onError(mutationError(error, 'subscribe-relations')); }
-        }, onError, client?.listen);
-        return () => { activeVisibleSubscriptions.delete(subscription); unsubscribe(); };
+        restart();
+        return () => {
+            closed = true;
+            generation += 1;
+            activeVisibleSubscriptions.delete(subscription);
+            unsubscribers.forEach(unsubscribe => unsubscribe());
+            unsubscribers = [];
+        };
     }
 
     function subscribeAll(onData, onError) {

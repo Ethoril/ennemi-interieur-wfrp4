@@ -208,7 +208,61 @@ test('les relations publiques filtrent les endpoints visibles et réémettent ap
     ], metadata: {} });
     assert.deepEqual(received.at(-1).map(item => item.id), ['r-ok']);
     repo.setVisiblePnjIds(['a', 'x']);
+    assert.equal(subscription.active, false);
+    assert.deepEqual(received.at(-1), []);
+    subscription.next({ docs: [{ id: 'late', data: () => ({ source: 'a', cible: 'x', type: 'z', visibleJoueurs: true }) }], metadata: {} });
+    assert.deepEqual(received.at(-1), []);
+    fake.state.subscriptions.at(-1).next({ docs: [
+        { id: 'r-hidden', data: () => ({ source: 'a', cible: 'x', type: 'z', visibleJoueurs: true }) },
+    ], metadata: {} });
     assert.deepEqual(received.at(-1).map(item => item.id), ['r-hidden']);
+});
+
+test('les requêtes publiques bornent les deux endpoints et attendent tous les lots avant de confirmer le serveur', () => {
+    const fake = makeFirestore();
+    const ids = ['a', 'b', 'c', 'd', 'e', 'f'];
+    const repo = createPublicRelationsRepository({ ...fake, visiblePnjIds: ids });
+    const received = [], errors = [];
+    const stop = repo.subscribeVisible((items, metadata) => received.push({ items, metadata }), error => errors.push(error));
+    assert.equal(fake.state.subscriptions.length, 4);
+    for (const subscription of fake.state.subscriptions) {
+        const constraints = subscription.target.constraints;
+        assert.ok(constraints.some(filter => filter.field === 'visibleJoueurs' && filter.value === true));
+        for (const field of ['source', 'cible']) {
+            const filter = constraints.find(filter => filter.field === field);
+            assert.equal(filter.operator, 'in');
+            assert.ok(filter.value.length > 0 && filter.value.length <= 5);
+            assert.ok(filter.value.every(id => ids.includes(id)));
+        }
+    }
+    const snapshot = { docs: [], metadata: { fromCache: false, hasPendingWrites: false } };
+    fake.state.subscriptions[0].next(snapshot);
+    fake.state.subscriptions[1].error({ code: 'permission-denied' });
+    fake.state.subscriptions[2].next(snapshot);
+    fake.state.subscriptions[3].next(snapshot);
+    assert.equal(errors.length, 1);
+    assert.equal(received.at(-1).metadata.fromCache, true);
+    fake.state.subscriptions[1].next(snapshot);
+    assert.equal(received.at(-1).metadata.fromCache, false);
+    repo.setVisiblePnjIds([...ids].reverse());
+    assert.equal(fake.state.subscriptions.length, 4);
+    stop();
+    const count = received.length;
+    fake.state.subscriptions[0].next(snapshot);
+    assert.equal(received.length, count);
+    assert.ok(fake.state.subscriptions.every(subscription => !subscription.active));
+});
+
+test('sans PNJ public, aucun abonnement aux relations ne contourne les règles', () => {
+    const fake = makeFirestore();
+    const repo = createPublicRelationsRepository(fake);
+    const received = [];
+    const stop = repo.subscribeVisible(items => received.push(items));
+    assert.equal(fake.state.subscriptions.length, 0);
+    assert.deepEqual(received.at(-1), []);
+    repo.setVisiblePnjIds(['a', 'b']);
+    assert.equal(fake.state.subscriptions.length, 1);
+    stop();
 });
 
 test('les émissions annotent uniquement un miroir exact et unique', () => {

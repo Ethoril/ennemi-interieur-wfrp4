@@ -1,3 +1,7 @@
+## [2.29.2] - 2026-10-05
+
+- **Accès mobile** : les relations publiques sont chargées avec des requêtes limitées aux deux PNJ visibles, compatibles avec les règles de sécurité renforcées. Le chargement fonctionne aussi dans la connexion publique séparée de la session MJ ; le masquage d’un PNJ ferme les anciens abonnements et retire immédiatement ses relations.
+
 ## [2.29.1] - 2026-10-05
 
 - **Migration des fiches** : la confirmation demande l’identifiant de la fiche dans une modale intégrée à l’application, compatible avec les navigateurs intégrés qui bloquent les invites natives.
