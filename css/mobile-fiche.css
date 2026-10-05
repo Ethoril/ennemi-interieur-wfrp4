@@ -222,6 +222,7 @@
   box-sizing: content-box;
   border-block: 0.75rem solid transparent;
   background-clip: content-box;
+  touch-action: none;
 }
 
 .m-sheet-body {

@@ -78,7 +78,7 @@ export function renderState(container, { state = 'loading', title = '', message 
 
 export function focusableElements(root) {
     if (!root?.querySelectorAll) return [];
-    return [...root.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')];
+    return [...root.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(element => !element.hidden);
 }
 
 export function createDialogController({ dialog, documentRef = globalThis.document } = {}) {

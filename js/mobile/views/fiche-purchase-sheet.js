@@ -21,6 +21,7 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
     let count = 1;
     let busy = false;
     let error = '';
+    let info = '';
     let nodes = null;
 
     const build = body => {
@@ -89,6 +90,13 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         const balance = xpBalance(context.state.data).libre;
         const preview = purchasePreview(current, count, balance);
         const pending = !!context.state.pendingOperationId && !busy;
+        if (info && !context.state.pendingOperationId && !busy) {
+            // Le snapshot attendu est arrivé : l'achat est confirmé.
+            info = '';
+            sheet.close();
+            announce('Achat confirmé');
+            return;
+        }
 
         nodes.title.textContent = current.title;
         nodes.nature.textContent = `${current.nature}${current.inCareer ? ' · de carrière' : ''}`;
@@ -110,7 +118,7 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         const reason = !context.online ? 'Achat possible une fois en ligne'
             : phase === 'legacy-readonly' ? 'Fiche en lecture seule : achat impossible'
             : !pending && !busy && phase !== 'ready' ? 'Fiche en cours de mise à jour…'
-            : !pending && !preview.affordable ? `XP insuffisants : il manque ${-preview.after} XP` : '';
+            : !pending && !preview.affordable ? `XP insuffisants : il manque ${-preview.after} XP` : info;
         nodes.reason.textContent = reason;
         nodes.reason.hidden = !reason;
         nodes.failure.textContent = error;
@@ -139,11 +147,13 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
             : `${current.title} : +${count} avance${count > 1 ? 's' : ''} achetée${count > 1 ? 's' : ''}`;
         busy = true;
         error = '';
+        info = '';
         refresh();
         try {
             const result = await execute(context);
             if (result?.status === 'retry-required') error = 'Un achat précédent est en attente. Utilisez Réessayer.';
-            else if (result?.status !== 'stale') {
+            else if (result?.status === 'awaiting-snapshot') info = 'Achat en cours de confirmation…';
+            else if (result?.status === 'confirmed') {
                 sheet.close();
                 announce(fresh ? message : 'Achat confirmé');
             }
@@ -151,7 +161,12 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
             error = purchaseErrorMessage(failure);
         } finally {
             busy = false;
-            if (sheet.isOpen()) refresh();
+            if (sheet.isOpen()) {
+                refresh();
+                // Le bouton était désactivé pendant l'envoi : le focus a été perdu.
+                const next = !nodes.retry.hidden ? nodes.retry : nodes.buy.disabled ? null : nodes.buy;
+                next?.focus();
+            }
         }
     }
 

@@ -32,8 +32,8 @@ class FakeElement {
         return event;
     }
     all() { return this.children.flatMap(child => [child, ...child.all()]); }
-    // Le contrôleur de dialogue ne demande que les éléments focalisables : boutons actifs et visibles.
-    querySelectorAll() { return this.all().filter(node => node.tagName === 'button' && !node.disabled && !node.hidden); }
+    // Comme le sélecteur réel : boutons non désactivés, cachés compris (focusableElements doit les écarter).
+    querySelectorAll() { return this.all().filter(node => node.tagName === 'button' && !node.disabled); }
     closest(selector) {
         const name = selector.slice(1, -1);
         for (let node = this; node; node = node.parentNode) if (node.attributes?.has(name)) return node;
@@ -52,8 +52,8 @@ function fakeDocument() {
         createElement: tag => new FakeElement(documentRef, tag),
         addEventListener: (type, listener) => listeners.set(type, [...(listeners.get(type) || []), listener]),
         removeEventListener: (type, listener) => listeners.set(type, (listeners.get(type) || []).filter(item => item !== listener)),
-        press: key => {
-            const event = { type: 'keydown', key, preventDefault() {} };
+        press: (key, extra = {}) => {
+            const event = { type: 'keydown', key, preventDefault() {}, ...extra };
             (listeners.get('keydown') || []).forEach(listener => listener(event));
         },
     };
@@ -173,7 +173,16 @@ test('volet d’achat : refus du serveur affiché dans le volet, valeurs inchang
     assert.ok(setup.sheet.element.open);
     assert.equal(setup.text('m-purchase-error'), 'Le coût a changé : 30 XP. Vérifiez et réessayez.');
     assert.equal(setup.buy().textContent, 'Acheter pour 100 XP');
+    assert.equal(setup.documentRef.activeElement, setup.buy());
     assert.deepEqual(setup.announces, []);
+
+    // Le bouton « Réessayer » caché ne compte pas dans le piège de focus : Tab sur le dernier bouton visible revient au premier.
+    assert.ok(setup.buttons().at(-1).hidden);
+    setup.buy().focus();
+    let prevented = false;
+    setup.documentRef.press('Tab', { preventDefault() { prevented = true; } });
+    assert.ok(prevented);
+    assert.equal(setup.documentRef.activeElement, setup.buy().parentNode.children.find(node => node.tagName === 'button' && !node.hidden && !node.disabled));
 });
 
 test('volet d’achat : réponse incertaine, « Réessayer » rejoue la commande en attente sans nouvel achat', async () => {
@@ -195,6 +204,25 @@ test('volet d’achat : réponse incertaine, « Réessayer » rejoue la commande
     retry.dispatch('click');
     await flush();
     assert.deepEqual([executed, retried], [1, 1]);
+    assert.ok(!setup.sheet.element.open);
+    assert.deepEqual(setup.announces, ['Achat confirmé']);
+});
+
+test('volet d’achat : « awaiting-snapshot » ne ferme ni n’annonce, puis le snapshot confirme', async () => {
+    // Le contrôleur garde pendingOperationId pendant l'attente du snapshot.
+    const setup = purchaseSetup({ execute: async () => {
+        setup.context.state = { ...setup.context.state, pendingOperationId: 'op-1' };
+        return { status: 'awaiting-snapshot' };
+    } });
+    setup.sheet.open({ kind: 'carac', key: 'soc' }, setup.trigger);
+    setup.buy().dispatch('click');
+    await flush();
+    assert.ok(setup.sheet.element.open);
+    assert.equal(setup.text('m-purchase-reason'), 'Achat en cours de confirmation…');
+    assert.ok(!setup.buttons().find(node => node.textContent === 'Réessayer').hidden);
+    assert.deepEqual(setup.announces, []);
+    setup.context.state = { ...setup.context.state, pendingOperationId: null };
+    setup.sheet.update();
     assert.ok(!setup.sheet.element.open);
     assert.deepEqual(setup.announces, ['Achat confirmé']);
 });
