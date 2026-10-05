@@ -273,3 +273,97 @@
 .m-purchase-step:disabled,
 .m-sheet-body .m-button:disabled { opacity: 0.55; }
 .m-sheet-body .m-button { min-height: var(--m-touch-target); }
+
+/* Onglet Aptitudes. */
+.m-aptitudes,
+.m-apt-pane,
+.m-apt-group { display: grid; gap: var(--space-sm); }
+.m-apt-group { gap: var(--space-xs); }
+
+.m-apt-switch {
+  display: flex;
+  padding: 3px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+}
+
+.m-apt-switch-button {
+  flex: 1 1 0;
+  min-height: var(--m-touch-target);
+  color: var(--text-secondary);
+  font: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+
+.m-apt-switch-button[aria-pressed="true"] { color: var(--gold-bright); background: var(--bg-surface); }
+.m-apt-switch-button:focus-visible,
+.m-apt-row:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: -2px; }
+
+/* Recherche et puces restent visibles pendant le défilement : le collage se fait sous le padding haut de .m-main,
+   qu'on rend en padding de la barre pour que rien ne défile au-dessus. */
+.m-apt-tools {
+  position: sticky;
+  z-index: 2;
+  top: calc(-1 * var(--space-md));
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-md) 0 var(--space-xs);
+  background: var(--bg-darkest);
+}
+
+.m-apt-tools .m-result-count { text-align: left; }
+.m-apt-title {
+  margin: var(--space-xs) 0 0;
+  color: var(--gold);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.m-apt-list { margin: 0; padding: 0; list-style: none; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); overflow: hidden; }
+.m-apt-list li + li { border-top: 1px solid var(--border-subtle); }
+.m-apt-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  min-height: 3.125rem;
+  padding: 0 var(--space-md);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+}
+
+.m-apt-dot { flex: none; width: 0.45rem; height: 0.45rem; border-radius: 50%; }
+.m-apt-dot.is-career { background: var(--gold); }
+.m-apt-main { flex: 1; min-width: 0; display: grid; line-height: 1.2; }
+.m-apt-name { overflow-wrap: anywhere; }
+.m-apt-detail { color: var(--text-secondary); font-size: 0.875rem; }
+.m-apt-total { min-width: 1.9rem; color: var(--text-primary); font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; text-align: right; }
+.m-apt-total.is-trained { color: var(--gold-bright); }
+.m-apt-side { flex: none; color: var(--gold-bright); font-size: 0.9rem; }
+.m-apt-empty { display: grid; justify-items: start; gap: var(--space-sm); }
+.m-apt-empty p { margin: 0; color: var(--text-secondary); }
+.m-apt-facts { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); margin: 0; }
+.m-apt-facts dt { color: var(--text-secondary); font-size: 0.875rem; }
+.m-apt-facts dd { margin: 0; color: var(--text-heading); }
+
+/* Volet d'achat : spécialités et description de talent. */
+.m-spec,
+.m-spec-block,
+.m-spec-picker,
+.m-purchase-talent,
+.m-purchase-description { display: grid; gap: var(--space-sm); }
+.m-spec-label { color: var(--text-secondary); }
+.m-spec-field { display: flex; gap: var(--space-sm); }
+.m-spec-field input { flex: 1; min-width: 0; }
+.m-spec-note { margin: 0; color: var(--text-secondary); font-size: 0.9rem; }
+.m-spec-choices { display: flex; flex-wrap: wrap; gap: var(--space-xs); max-height: 11rem; overflow-y: auto; }
+.m-purchase-taken { margin: 0; color: var(--gold-bright); }
+.m-purchase-description p { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }

@@ -2,6 +2,7 @@ import { createFicheController } from '../../fiche-controller.js';
 import { createFicheDraftStore } from '../../fiche-draft-store.js';
 import { xpBalance } from '../../fiche/derived.js';
 import { ficheIdentity } from '../fiche-model.js';
+import { createAptitudesPanel } from './fiche-aptitudes.js';
 import { createPrincipalPanel } from './fiche-principal.js';
 import { createPurchaseSheet } from './fiche-purchase-sheet.js';
 import { parseRoute, routeToHash, ROUTE_NAMES } from '../router.js';
@@ -111,6 +112,13 @@ export function createFicheDetailView({
         }),
     });
 
+    // Un seul panneau pour toute la vie de la vue : la recherche et les filtres survivent aux changements d'écran et d'onglet.
+    const aptitudes = createAptitudesPanel({
+        documentRef,
+        onOpenSkill: (row, trigger) => purchase.open({ kind: 'skill', ...row }, trigger),
+        onOpenTalent: (nom, trigger) => purchase.open({ kind: 'talent', nom }, trigger),
+    });
+
     const tabHref = key => routeToHash({ name: ROUTE_NAMES.FICHE, id: charId, tab: key });
     const tabLabel = key => TABS.find(item => item.key === key)?.label || '';
     const identity = () => ficheIdentity(controllerState?.data, catalogue?.careers);
@@ -120,10 +128,11 @@ export function createFicheDetailView({
         if (key !== shownKey) {
             menu.close();
             purchase.close();
+            aptitudes.closeDetail();
             shownKey = key;
             shell = null;
             build();
-            container.append(menuDialog, purchase.element);
+            container.append(menuDialog, purchase.element, aptitudes.detailElement);
         }
     };
     const showState = (key, options) => present(`state:${key}`, () => renderState(container, options));
@@ -142,6 +151,7 @@ export function createFicheDetailView({
             : online ? '' : 'Hors connexion.';
         shell.notice.hidden = !shell.notice.textContent;
         updatePrincipal();
+        updateAptitudes();
         purchase.update();
     };
 
@@ -150,16 +160,24 @@ export function createFicheDetailView({
         shell.principal.update({ data: controllerState.data, careers: catalogue?.careers, engine: catalogue?.getEngine() });
     };
 
+    // Calculé seulement quand l'onglet est visible : les compétences de carrière coûtent plus qu'un simple rendu.
+    const updateAptitudes = () => {
+        if (!shell || tab !== 'aptitudes' || !controllerState?.data) return;
+        aptitudes.update({ data: controllerState.data, careers: catalogue?.careers, engine: catalogue?.getEngine() });
+    };
+
     const updatePanel = () => {
         if (!shell) return;
         shell.panelTitle.textContent = tabLabel(tab);
         shell.panelTitle.className = tab === 'principal' ? 'visually-hidden' : '';
         shell.principal.element.hidden = tab !== 'principal';
-        shell.soon.hidden = tab === 'principal';
+        aptitudes.element.hidden = tab !== 'aptitudes';
+        shell.soon.hidden = tab === 'principal' || tab === 'aptitudes';
         for (const [key, link] of shell.links) {
             if (key === tab) link.setAttribute('aria-current', 'page');
             else link.removeAttribute('aria-current');
         }
+        updateAptitudes();
     };
 
     const buildShell = () => {
@@ -182,7 +200,7 @@ export function createFicheDetailView({
             documentRef, aptitudesHref: tabHref('aptitudes'),
             onOpenCarac: (key, trigger) => purchase.open({ kind: 'carac', key }, trigger),
         });
-        panel.append(panelTitle, principal.element, soon);
+        panel.append(panelTitle, principal.element, aptitudes.element, soon);
         const nav = make(documentRef, 'nav', '', 'm-fiche-tabs');
         nav.setAttribute('aria-label', 'Sections de la fiche');
         const links = new Map();
@@ -265,7 +283,7 @@ export function createFicheDetailView({
                 onChange: next => { controllerState = next; render(); },
             });
             stopCatalogue = service.watch(runtime.repository);
-            stopEngine = service.subscribe(() => { updatePrincipal(); purchase.update(); });
+            stopEngine = service.subscribe(() => { updatePrincipal(); updateAptitudes(); purchase.update(); });
         }, error => { backend = null; throw error; });
         return backend;
     };
@@ -365,6 +383,7 @@ export function createFicheDetailView({
         stopEngine = null;
         menu.close();
         purchase.close();
+        aptitudes.closeDetail();
         controller?.close();
         abortSignal?.removeEventListener?.('abort', unmount);
         abortSignal = null;

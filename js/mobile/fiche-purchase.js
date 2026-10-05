@@ -1,18 +1,20 @@
+import { primarySkillLabel, publishedSkillRows } from '../catalogue/skill-forms.js';
 import { basicSkillNom, BASIC_SKILLS } from '../fiche/basic-skills.js';
 import {
     activeCareerRank, findCareerByName, isCaracInCareer, isSkillInCareer, isTalentInCareer,
 } from '../fiche/career-model.js';
 import { caracTotal } from '../fiche/derived.js';
-import { canonicalSkillNom } from '../fiche/skill-names.js';
+import { canonicalSkillNom, sameSkill } from '../fiche/skill-names.js';
 import { CARAC_XP_BANDS, SKILL_XP_BANDS, talentXpCost, xpBandCost } from '../fiche/xp.js';
-import { CARACS } from './fiche-model.js';
+import { talentTaken } from './fiche-aptitudes-model.js';
+import { basicLabel, basicSpecOptions, CARACS } from './fiche-model.js';
 
 export const MAX_ADVANCES = 10;
 
 /**
  * Description affichable d'une cible d'achat, ou null si la ligne n'existe plus.
- * `careers` : js/data/careers.json ; `spec` : { kind: 'carac', key } | { kind: 'skill', ...ligne de topSkills }
- * | { kind: 'talent', nom }. Le nom et `targetId` suivent ce que le serveur adresse (jamais le libellé affiché).
+ * `careers` : js/data/careers.json ; `spec` : { kind: 'carac', key } | { kind: 'skill', ...ligne de skillRows }
+ * | { kind: 'skill', newName } (compétence avancée choisie par son nom) | { kind: 'talent', nom }. Le nom et `targetId` suivent ce que le serveur adresse (jamais le libellé affiché).
  * ponytail: le « de carrière » rejoue les règles de commands.js ; le test d'accord avec le moteur
  * (tools/fiche-mobile-purchase.test.mjs) échoue si elles divergent.
  */
@@ -36,7 +38,25 @@ export function purchaseTarget(data, engine, careers, spec) {
 
     if (spec.kind === 'skill') {
         let row;
-        if (spec.row) {
+        let title;
+        let specialty = null;
+        if (spec.newName) {
+            const resolved = resolver?.resolve(spec.newName);
+            const entry = resolved?.status === 'resolved' ? resolved.entry : null;
+            // Une spécialité de base se règle sur sa compétence de base, pas par un achat de ligne avancée.
+            if (entry?.basic || (!entry && !spec.newName.trim())) return null;
+            const name = entry?.nom || canonicalSkillNom(spec.newName.trim());
+            // Le serveur reprend la ligne déjà possédée sur la même entrée : on la cible pour afficher ses avances.
+            const owned = (data?.skillsAdvanced || []).find(skill => (entry
+                ? resolver.resolve(skill.nom).entry?.id === entry.id : sameSkill(skill.nom, name)));
+            const group = entry?.group || groupOf(name);
+            row = {
+                nature: 'Compétence avancée', name, adv: owned?.adv ?? 0, targetId: owned?.id, canonical: name,
+                carac: owned?.carac || entry?.carac || publishedSkillRows(resolver).find(item => item.group === group)?.carac || 'int',
+            };
+            title = name;
+            specialty = groupSpecialty(resolver, group);
+        } else if (spec.row) {
             const basic = BASIC_SKILLS.find(({ nom }) => nom === spec.row);
             if (!basic) return null;
             const name = basicSkillNom(spec.row, data?.basicSpecs || {});
@@ -46,6 +66,11 @@ export function purchaseTarget(data, engine, careers, spec) {
                 targetId: Object.hasOwn(data?.skillsBasic || {}, spec.row) ? spec.row : undefined,
                 canonical: name,
             };
+            title = basicLabel(resolver, spec.row, data?.basicSpecs?.[spec.row]);
+            const options = basicSpecOptions(resolver, spec.row);
+            if (options.length) {
+                specialty = { kind: 'basic', row: spec.row, value: data?.basicSpecs?.[spec.row] || '', options, locked: row.adv > 0 };
+            }
         } else {
             const skill = (data?.skillsAdvanced || []).find(({ id }) => id === spec.targetId);
             if (!skill) return null;
@@ -54,21 +79,38 @@ export function purchaseTarget(data, engine, careers, spec) {
                 nature: 'Compétence avancée', name: skill.nom, carac: skill.carac, adv: skill.adv ?? 0, targetId: skill.id,
                 canonical: resolved?.status === 'resolved' ? resolved.entry.nom : canonicalSkillNom(skill.nom),
             };
+            title = primarySkillLabel(resolver, skill.nom);
+            specialty = groupSpecialty(resolver, resolved?.entry?.group || groupOf(skill.nom));
         }
         const carac = CARACS.find(({ key }) => key === row.carac);
         if (!carac) return null;
         const inCareer = career ? isSkillInCareer(career, rank, row.canonical, chosen, overrides, resolver) : false;
         return advances('skill', {
-            title: spec.nom || row.name, nature: row.nature, name: row.name, targetId: row.targetId, bands: SKILL_XP_BANDS,
+            title, nature: row.nature, name: row.name, targetId: row.targetId, bands: SKILL_XP_BANDS, specialty,
             inCareer, baseLabel: carac.nom, baseValue: caracTotal(data, carac.key), adv: row.adv,
         });
     }
 
     if (spec.kind === 'talent') {
         const inCareer = career ? isTalentInCareer(career, rank, spec.nom, chosen, overrides, engine?.talentResolver) : false;
-        return { kind: 'talent', title: spec.nom, nature: 'Talent', name: spec.nom, inCareer, maxCount: 1 };
+        const described = engine?.resolveTalent?.(spec.nom);
+        return {
+            kind: 'talent', title: spec.nom, nature: 'Talent', name: spec.nom, inCareer, maxCount: 1,
+            taken: talentTaken(data, engine, spec.nom),
+            // Texte publié localement (aucun réseau) ; une ligne vide n'est pas un paragraphe.
+            description: String(described?.description ?? '').split('\n').map(line => line.trim()).filter(Boolean),
+        };
     }
     return null;
+}
+
+const groupOf = nom => nom.match(/^(.+?)\s+\(/u)?.[1] || nom;
+
+// Les spécialités (non de base) publiées d'un groupe : de quoi ajouter une ligne avancée au même groupe.
+function groupSpecialty(resolver, group) {
+    const options = publishedSkillRows(resolver).filter(item => item.group === group && item.spec && !item.basic)
+        .map(({ nom, spec }) => ({ nom, spec }));
+    return options.length ? { kind: 'group', group, options } : null;
 }
 
 function costOf(target, count) {

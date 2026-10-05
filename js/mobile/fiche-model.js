@@ -1,6 +1,8 @@
 import { primarySkillLabel } from '../catalogue/skill-forms.js';
 import { basicSkillNom, BASIC_SKILLS } from '../fiche/basic-skills.js';
-import { activeCareerRank, findCareerByName, getActiveVariantForRang, getCareerCaracs, getRangVariants } from '../fiche/career-model.js';
+import {
+    activeCareerRank, findCareerByName, getActiveVariantForRang, getCareerCaracs, getRangVariants, isSkillInCareer,
+} from '../fiche/career-model.js';
 import { caracBonus, caracTotal } from '../fiche/derived.js';
 
 /** Bandeau d'identité : nom, carrière, titre et statut du rang courant (variante choisie, sinon la première). */
@@ -47,40 +49,75 @@ export function ficheCaracs(data, careers = []) {
     }));
 }
 
+/** Nom affiché d'une compétence de base, spécialité comprise (« Art » + « Écriture » → « Art (Écriture) »). */
+export function basicLabel(resolver, nom, spec) {
+    return primarySkillLabel(resolver, spec ? `${nom.replace(/ \(Base\)$/u, '')} (${spec})` : nom);
+}
+
+/** Spécialités publiées d'une compétence de base (vide si elle n'en a pas : « Corps à corps (Base) » n'en propose pas, comme le bureau). */
+export function basicSpecOptions(resolver, nom) {
+    if (nom.includes('(')) return [];
+    return [...new Set((resolver?.primaryEntries || []).filter(entry => entry.basic && entry.group === nom && entry.specialization)
+        .map(entry => entry.nom.match(/\(([^()]+)\)$/u)?.[1] || entry.specialization))];
+}
+
 /**
- * Les n compétences les plus hautes (de base puis avancées), total = caractéristique + avances.
- * Chaque ligne porte aussi son adressage pour l'achat : `row` (clé BASIC_SKILLS) pour une compétence de base,
- * `targetId` pour une avancée, et `serverName` (nom stocké côté serveur).
- * Tri par total décroissant puis nom ; les compétences sans avance ne comblent que les places libres.
+ * Toutes les compétences du personnage : une ligne par compétence de base (filtrée comme buildBasicSkills du bureau),
+ * puis une par compétence avancée (deux lignes sur la même entrée principale restent séparées, chacune son `targetId`).
+ * Ligne : { key, nom (affiché), caracKey, caracAbbr, caracTotal, adv, total, inCareer, basic, group, spec,
+ * serverName (nom stocké côté serveur), row (clé BASIC_SKILLS) | targetId }.
+ * `careers` n'est lu que pour « de carrière » : sans lui, inCareer vaut false.
  */
-export function topSkills(data, engine, n) {
+export function skillRows(data, engine, careers = []) {
     const resolver = engine?.skillResolver;
+    const career = findCareerByName(careers, String(data?.carriere ?? ''));
+    const rank = career ? activeCareerRank(career, data?.rang) : 1;
+    const inCareer = name => !!career
+        && isSkillInCareer(career, rank, name, data?.chosenVariants || {}, data?.careerOverrides || {}, resolver);
     const caracAbbr = Object.fromEntries(CARACS.map(({ key, abbr }) => [key, abbr]));
+    const build = (fields, adv, careerName) => ({
+        ...fields, caracAbbr: caracAbbr[fields.caracKey] || '', caracTotal: caracTotal(data, fields.caracKey), adv,
+        total: caracTotal(data, fields.caracKey) + adv, inCareer: inCareer(careerName),
+    });
     const rows = [];
     const shown = new Set();
     for (const { nom, carac } of BASIC_SKILLS) {
         const entry = resolver?.resolve(nom)?.entry;
-        // Même filtre que le bureau : une seule ligne par entrée, et seulement les compétences de base.
-        if (entry && (!entry.basic || shown.has(entry.id))) continue;
-        if (entry) shown.add(entry.id);
-        const spec = data?.basicSpecs?.[nom];
-        const stored = spec ? `${nom.replace(/ \(Base\)$/u, '')} (${spec})` : nom;
-        rows.push({
-            nom: primarySkillLabel(resolver, stored), carac, adv: count(data?.skillsBasic?.[nom]),
-            row: nom, serverName: basicSkillNom(nom, data?.basicSpecs),
-        });
+        if (entry) {
+            // Même filtre que le bureau : seulement les compétences de base, et une seule ligne (la canonique) par entrée.
+            const canonical = BASIC_SKILLS.find(item => item.nom === entry.group || item.nom === entry.nom
+                || item.nom === `${entry.group} (Base)`);
+            if (!entry.basic || shown.has(entry.id) || (canonical && canonical.nom !== nom)) continue;
+            shown.add(entry.id);
+        }
+        const spec = data?.basicSpecs?.[nom] || '';
+        rows.push(build({
+            key: `b:${nom}`, nom: basicLabel(resolver, nom, spec), caracKey: carac, basic: true,
+            group: nom.replace(/ \(Base\)$/u, ''), spec, row: nom, serverName: basicSkillNom(nom, data?.basicSpecs),
+        }, count(data?.skillsBasic?.[nom]), basicSkillNom(nom, data?.basicSpecs)));
     }
-    for (const skill of data?.skillsAdvanced || []) {
-        rows.push({
-            nom: primarySkillLabel(resolver, skill?.nom ?? ''), carac: skill?.carac, adv: count(skill?.adv),
-            serverName: skill?.nom ?? '', targetId: skill?.id,
-        });
-    }
+    (data?.skillsAdvanced || []).forEach((skill, index) => {
+        const stored = skill?.nom ?? '';
+        const parts = stored.match(/^(.+?)\s+\(([^()]+)\)$/u);
+        const entry = resolver?.resolve(stored)?.entry;
+        rows.push(build({
+            key: `a:${skill?.id ?? index}`, nom: primarySkillLabel(resolver, stored), caracKey: skill?.carac, basic: false,
+            group: entry?.group || (parts ? parts[1] : stored), spec: parts ? parts[2] : '',
+            serverName: stored, targetId: skill?.id,
+        }, count(skill?.adv), stored));
+    });
+    return rows;
+}
+
+/**
+ * Les n compétences les plus hautes (de base puis avancées), total = caractéristique + avances ; `carac` est l'abréviation.
+ * Les lignes gardent l'adressage d'achat de skillRows (`row` ou `targetId`, `serverName`).
+ * Tri par total décroissant puis nom ; les compétences sans avance ne comblent que les places libres.
+ */
+export function topSkills(data, engine, n) {
     const byTotal = (a, b) => b.total - a.total || a.nom.localeCompare(b.nom, 'fr');
-    const scored = rows.map(row => ({
-        ...row, carac: caracAbbr[row.carac] || '', total: caracTotal(data, row.carac) + row.adv,
-    }));
-    const trained = scored.filter(row => row.adv > 0).sort(byTotal);
-    const untrained = scored.filter(row => row.adv === 0).sort(byTotal);
-    return [...trained, ...untrained].slice(0, n).map(({ adv, ...row }) => row);
+    const rows = skillRows(data, engine).map(row => ({ ...row, carac: row.caracAbbr }));
+    const trained = rows.filter(row => row.adv > 0).sort(byTotal);
+    const untrained = rows.filter(row => row.adv === 0).sort(byTotal);
+    return [...trained, ...untrained].slice(0, n);
 }

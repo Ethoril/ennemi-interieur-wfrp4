@@ -26,6 +26,7 @@ const testData = () => ({
     skillsAdvanced: [
         { id: 'qa-skill-politique', nom: 'Savoir (Politique)', carac: 'int', adv: 5, note: '' },
         { id: 'qa-skill-imprimerie', nom: 'Métier (Imprimerie)', carac: 'dex', adv: 2, note: '' },
+        { id: 'qa-skill-langue', nom: 'Langue (Reikspiel)', carac: 'int', adv: 3, note: '' },
     ],
     careers: [{ id: 'qa-career-1', nom: 'Agitateur', rang: 1, note: '' }],
     talentsAcq: [{ id: 'qa-talent-sociable', nom: 'Sociable', note: '' }],
@@ -48,6 +49,23 @@ const testData = () => ({
 let current = { schemaVersion: FICHE_SCHEMA_VERSION, revision: 1, tombstone: false, data: testData() };
 const snapshots = new Set();
 const operations = new Map();
+// Sorts et prières fictifs pour l'onglet Sorts (bouton « Sorts »), absents de la fiche par défaut.
+const SPELLS = {
+    sorts: [{ id: 'qa-spell-1', nom: 'Couronne de Flammes', vent: 'Aqshy - Rouge - Domaine du Feu', cn: 8, portee: 'Vous', duree: '(Bonus de Force Mentale) Rounds', resume: 'Vous focalisez Aqshy en une couronne de feu.' }],
+    prieres: [{ id: 'qa-prayer-1', nom: 'Appel à la Fureur', type: 'Miracle', resume: 'Portée : (Sociabilité) mètres — Vos alliés reçoivent la Haine.' }],
+};
+// Comme le serveur : le moteur valide le patch, puis les chemins sont appliqués (basicSpecs.<clé> ou champ simple).
+const applyPatch = (data, changes) => {
+    const next = { ...data };
+    for (const [path, value] of Object.entries(changes)) {
+        const [root, key] = path.split('.').map(decodeURIComponent);
+        if (root !== 'basicSpecs' || !key) { next[path] = value; continue; }
+        const specs = { ...next.basicSpecs, [key]: value };
+        if (value === '') delete specs[key];
+        next.basicSpecs = specs;
+    }
+    return next;
+};
 let role = 'joueur';
 let refuseNext = false;
 const stateEl = document.getElementById('qa-state');
@@ -72,8 +90,9 @@ const repository = {
         }
         if (operations.has(command.operationId)) return operations.get(command.operationId);
         const data = globalThis.structuredClone(current.data);
+        if (command.type === 'patch') catalogue.getEngine().validatePatch(data, command.payload);
         const applied = command.type === 'patch'
-            ? { data: { ...data, ...command.payload.changes } } // champs simples seulement : suffisant pour la recette
+            ? { data: applyPatch(data, command.payload.changes) }
             : catalogue.getEngine().applyCommand(data, command, { uid: 'qa-user', role });
         current = { ...current, revision: current.revision + 1, data: applied.data };
         const receipt = { operationId: command.operationId, revision: current.revision };
@@ -162,10 +181,19 @@ document.getElementById('qa-theme').addEventListener('click', event => {
     document.documentElement.dataset.theme = parchment ? 'parchment' : 'dark';
     event.currentTarget.textContent = parchment ? 'Thème sombre' : 'Thème parchemin';
 });
+document.getElementById('qa-spells').addEventListener('click', event => {
+    const on = event.currentTarget.dataset.on !== 'true';
+    event.currentTarget.dataset.on = String(on);
+    event.currentTarget.textContent = on ? 'Retirer les sorts' : 'Ajouter des sorts';
+    current = { ...current, revision: current.revision + 1, data: { ...current.data, ...(on ? SPELLS : { sorts: [], prieres: [] }) } };
+    publishSnapshot();
+});
 document.getElementById('qa-reset').addEventListener('click', () => {
     current = { ...current, revision: current.revision + 1, data: testData() };
     operations.clear();
     publishSnapshot();
+    document.getElementById('qa-spells').dataset.on = 'false';
+    document.getElementById('qa-spells').textContent = 'Ajouter des sorts';
     stateEl.textContent = 'Fiche fictive réinitialisée.';
 });
 

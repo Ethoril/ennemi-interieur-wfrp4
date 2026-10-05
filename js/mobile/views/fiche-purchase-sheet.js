@@ -1,6 +1,7 @@
 import { xpBalance } from '../../fiche/derived.js';
 import { createBottomSheet } from '../components/bottom-sheet.js';
 import { purchaseErrorMessage, purchasePayload, purchasePreview, purchaseTarget } from '../fiche-purchase.js';
+import { createSpecialtySection } from './fiche-specialty.js';
 
 function make(documentRef, tag, text = '', className = '') {
     const node = documentRef.createElement(tag);
@@ -12,7 +13,9 @@ function make(documentRef, tag, text = '', className = '') {
 /**
  * Volet d'achat d'avances (caractéristique, compétence) ou de talent.
  * `getContext()` → { state (contrôleur), careers, engine, online, controller }.
- * open(spec, trigger) : spec = { kind: 'carac', key } | { kind: 'skill', ...ligne de topSkills } | { kind: 'talent', nom }.
+ * open(spec, trigger) : spec = { kind: 'carac', key } | { kind: 'skill', ...ligne de skillRows } | { kind: 'talent', nom }.
+ * Une compétence à spécialités ajoute son bloc (champ de base, ou « Ajouter une spécialité » qui re-cible le volet) ;
+ * un talent ajoute sa description publiée et son nombre de prises.
  * Le contenu est construit une fois par ouverture puis mis à jour sur place (le focus reste sur +/−).
  */
 export function createPurchaseSheet({ documentRef, getContext, announce = () => {} }) {
@@ -23,6 +26,7 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
     let error = '';
     let info = '';
     let nodes = null;
+    let shownDescription = '';
 
     const build = body => {
         const head = make(documentRef, 'div', '', 'm-purchase-head');
@@ -30,11 +34,17 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         const titles = make(documentRef, 'div');
         const title = make(documentRef, 'h2', '', 'm-purchase-title');
         title.id = 'm-purchase-title';
+        title.tabIndex = -1;
         const nature = make(documentRef, 'p', '', 'm-purchase-nature');
         titles.append(title, nature);
         const total = make(documentRef, 'p', '', 'm-purchase-total');
         head.append(titles, total);
         const formula = make(documentRef, 'p', '', 'm-purchase-formula');
+        const specialty = createSpecialtySection({ documentRef, getContext, announce, onChoose: choose });
+        const talent = make(documentRef, 'div', '', 'm-purchase-talent');
+        const taken = make(documentRef, 'p', '', 'm-purchase-taken');
+        const description = make(documentRef, 'div', '', 'm-purchase-description');
+        talent.append(taken, description);
 
         const stepper = make(documentRef, 'div', '', 'm-purchase-stepper');
         const stepLabel = make(documentRef, 'span', 'Avances à acheter', 'm-purchase-step-label');
@@ -75,9 +85,23 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
             'purchase', purchasePayload(target(context), count, context.engine)), true));
         retry.addEventListener('click', () => run(context => context.controller.retryPendingCommand(), false));
 
-        body.replaceChildren(head, formula, stepper, figures, tariff, reason, failure, buy, retry);
-        nodes = { title, nature, total, formula, stepper, less, value, more, newTotal, cost, after, tariff, reason, failure, buy, retry };
+        body.replaceChildren(head, formula, specialty.element, talent, stepper, figures, tariff, reason, failure, buy, retry);
+        shownDescription = '';
+        nodes = { title, nature, total, formula, specialty, talent, taken, description, stepper, less, value, more, newTotal, cost, after, tariff, reason, failure, buy, retry };
     };
+
+    // Re-cible le volet sur une nouvelle ligne avancée du groupe ; faux si le nom ne peut pas être acheté ainsi.
+    function choose(name) {
+        const next = { kind: 'skill', newName: name };
+        const context = getContext();
+        if (!purchaseTarget(context.state?.data, context.engine, context.careers, next)) return false;
+        spec = next;
+        count = 1;
+        error = '';
+        refresh();
+        nodes.title.focus();
+        return true;
+    }
 
     const target = context => purchaseTarget(context.state?.data, context.engine, context.careers, spec);
 
@@ -105,6 +129,17 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         nodes.formula.textContent = talent ? '' : `${current.baseLabel} ${current.baseValue} + ${current.adv} avances = ${current.total}`;
         nodes.formula.hidden = talent;
         nodes.stepper.hidden = talent;
+        nodes.specialty.update(current);
+        nodes.talent.hidden = !talent;
+        if (talent) {
+            nodes.taken.textContent = current.taken ? `Prises : ${current.taken}` : 'Pas encore acquis';
+            const key = JSON.stringify(current.description);
+            if (shownDescription !== key) {
+                shownDescription = key;
+                nodes.description.replaceChildren(...(current.description.length ? current.description : ['Aucune description publiée'])
+                    .map(line => make(documentRef, 'p', line)));
+            }
+        }
         nodes.value.textContent = String(count);
         nodes.less.disabled = busy || count <= 1;
         nodes.more.disabled = busy || count >= current.maxCount;
@@ -179,6 +214,8 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
             busy = false;
             error = '';
             sheet.open({ trigger, render: body => { build(body); refresh(); } });
+            // Le premier champ serait la spécialité : ne pas ouvrir le clavier à l'ouverture du volet.
+            if (!nodes.specialty.element.hidden) nodes.title.focus();
         },
         update() { if (sheet.isOpen()) refresh(); },
         close: sheet.close,
