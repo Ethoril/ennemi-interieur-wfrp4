@@ -1,3 +1,10 @@
+## [2.30.1] - 2026-10-05
+
+### Corrigé
+- Référentiels : cocher une forme actualise la compétence sélectionnée sans perdre le regroupement en cours.
+- « Appliquer le nom principal » relie les formes cochées au nom affiché, même si ce nom est inchangé.
+- Confirmation et erreurs visibles dans le panneau de sélection ; retour explicite si le nom est déjà principal.
+
 ## [2.30.0] - 2026-10-05
 
 - Référentiels : inventaire des formes de compétences et de leurs usages, filtres, regroupement par sélection multiple et choix explicite de la forme principale.

@@ -5,7 +5,9 @@ const clone = value => globalThis.structuredClone(value);
 const makeCatalogue = () => ({
     catalogVersion: 'fixture-v1',
     skills: { entries: [{ id: 'skill-athle', groupId: 'group-athle', group: 'Athlétisme',
-        specializationId: null, specialization: null, nom: 'Athlétisme', carac: 'ag', basic: true, aliases: [] }], aliases: [] },
+        specializationId: null, specialization: null, nom: 'Athlétisme', carac: 'ag', basic: true, aliases: [] },
+        { id: 'skill-chevaucher', nom: 'Chevaucher', carac: 'ag', basic: true },
+        { id: 'skill-equitation', nom: 'Équitation', carac: 'ag', basic: true }], aliases: [] },
     talents: { entries: [{ id: 'talent-vigilance', key: 'vigilance', nom: 'Vigilance', sources: ['fixture'] }],
         aliases: [], templates: [], localDescriptions: [] },
 });

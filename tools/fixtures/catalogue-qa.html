@@ -63,7 +63,8 @@
                     <p id="selection-summary" class="muted">Sélectionnez une entrée dans la liste.</p>
                     <form id="entry-form" hidden>
                         <label for="display-name">Nom principal</label>
-                        <input id="display-name" maxlength="200" required>
+                        <input id="display-name" maxlength="200" required aria-describedby="rename-help">
+                        <p id="rename-help" class="muted">Les formes cochées seront reliées à ce nom principal. Vous pouvez modifier ce champ pour choisir un autre nom.</p>
                         <label for="alias-label">Ajouter une forme ou traduction</label>
                         <div class="inline-field">
                             <input id="alias-label" maxlength="200" placeholder="Autre libellé" autocomplete="off">
@@ -83,6 +84,7 @@
                         </div>
                         <button class="button-primary" type="submit" name="action" value="rename">Appliquer le nom principal</button>
                     </form>
+                    <p id="entry-status" class="entry-status" role="status"></p>
                 </section>
             </div>
 

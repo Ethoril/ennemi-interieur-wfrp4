@@ -46,6 +46,8 @@ function setStatus(message, state = '') {
     const status = el('catalogue-status');
     status.textContent = message;
     status.dataset.state = state;
+    const feedback = el('entry-status');
+    if (feedback) { feedback.textContent = message; feedback.dataset.state = state; }
 }
 
 async function send(type, payload = {}, baseRevision = draftRevision) {
@@ -82,6 +84,7 @@ function renderEntries() {
         : entries().filter(({ type, entry }) => type === 'talent' && (!query || normalize([entry.nom,
             ...catalogue.talents.aliases.filter(alias => alias.targetId === entry.id).map(alias => alias.label)].join(' ')).includes(query)))
             .map(({ entry }) => ({ label: entry.nom, targetId: entry.id, isPrimary: true, sources: ['Talent'] }));
+    const scrollTop = entryList.scrollTop;
     entryList.replaceChildren();
     el('result-count').textContent = `${Math.min(entryLimit, rows.length)} sur ${rows.length} forme(s)`;
     el('load-more-entries').hidden = entryLimit >= rows.length;
@@ -95,7 +98,7 @@ function renderEntries() {
             checkbox.setAttribute('aria-label', `Sélectionner ${row.label} pour le regroupement`);
             checkbox.addEventListener('change', () => {
                 if (checkbox.checked) checkedForms.add(row.label); else checkedForms.delete(row.label);
-                renderChecked();
+                if (checkbox.checked) selectRow(row); else renderChecked();
             });
             item.append(checkbox);
         }
@@ -108,16 +111,27 @@ function renderEntries() {
         const detail = documentRef.createElement('small');
         detail.textContent = [mode === 'talent' ? 'Talent' : row.isPrimary ? 'Principale' : row.primary ? `Variante → ${row.primary}` : 'À relier', ...row.sources].join(' · ');
         button.append(name, detail);
-        button.addEventListener('click', () => {
-            selectedLabel = row.label;
-            if (row.targetId) selectEntry(mode, row.targetId);
-            else { selected = null; entryForm.hidden = true; el('selection-summary').textContent = `${row.label} : choisissez une compétence existante à laquelle relier cette forme.`; renderEntries(); }
-            renderUsages(row);
-        });
+        button.addEventListener('click', () => selectRow(row));
         item.append(button);
         entryList.append(item);
     }
+    entryList.scrollTop = scrollTop;
     renderChecked();
+}
+
+function selectRow(row) {
+    selectedLabel = row.label;
+    const feedback = el('entry-status');
+    if (feedback) feedback.textContent = '';
+    if (row.targetId) selectEntry(mode, row.targetId);
+    else {
+        selected = null;
+        entryForm.hidden = true;
+        el('selection-summary').textContent = `${row.label} : choisissez une compétence existante à laquelle relier cette forme.`;
+        renderEntries();
+    }
+    if (selected?.type === 'skill' && checkedForms.has(el('display-name').value)) el('primary-form').value = el('display-name').value;
+    renderUsages(row);
 }
 
 function renderUsages(row) {
@@ -409,7 +423,16 @@ function addAlias(label) {
 function renameEntry(value) {
     const entry = selectedValue();
     const clean = value.trim().replace(/\s+/gu, ' ');
-    if (!entry || !clean || clean === entry.nom) return;
+    if (!entry) throw new Error('Sélectionnez une compétence ou un talent.');
+    if (!clean) throw new Error('Indiquez le nom principal.');
+    if (selected.type === 'skill' && checkedForms.size) {
+        applyLinks([...checkedForms, entry.nom, clean], clean);
+        return;
+    }
+    if (clean === entry.nom) {
+        setStatus(`« ${clean} » est déjà le nom principal.${dirty ? ' Le brouillon reste à enregistrer et à publier.' : ' Aucun changement à appliquer.'}`, 'ready');
+        return;
+    }
     if (selected.type === 'skill') {
         const existing = skillFormsResolver(catalogue.skills).resolve(clean);
         if (existing.entry && existing.entry.id !== entry.id) throw new Error('Ce nom existe déjà : cochez les deux formes pour les regrouper explicitement.');
@@ -420,9 +443,10 @@ function renameEntry(value) {
     entry.nom = clean;
     target.aliases = target.aliases.filter(alias => normalize(alias.label) !== normalize(oldName));
     target.aliases.push({ label: oldName, targetId: entry.id, provenance: 'renommage-mj' });
-    renderAliases();
-    renderEntries();
+    selectedLabel = clean;
+    selectEntry(selected.type, entry.id);
     invalidatePreview();
+    setStatus(`Nom principal « ${clean} » appliqué au brouillon. Enregistrez puis publiez pour l’utiliser dans les fiches.`, 'ready');
 }
 
 async function saveTalentDescription(remove = false) {
@@ -468,6 +492,9 @@ for (const [id, type] of [['show-skills', 'skill'], ['show-talents', 'talent']])
 });
 el('form-filter').addEventListener('change', () => { entryLimit = 250; renderEntries(); });
 el('clear-forms').addEventListener('click', () => { checkedForms.clear(); renderEntries(); });
+el('primary-form').addEventListener('change', () => {
+    if (selected?.type === 'skill') el('display-name').value = el('primary-form').value;
+});
 el('link-forms').addEventListener('click', () => { try { applyLinks([...checkedForms], el('primary-form').value); } catch (error) { setStatus(error.message, 'error'); } });
 el('catalogue-search').addEventListener('input', () => { entryLimit = 250; renderEntries(); });
 el('load-more-entries').addEventListener('click', () => { entryLimit += 250; renderEntries(); });

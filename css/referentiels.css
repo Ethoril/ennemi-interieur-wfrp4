@@ -102,3 +102,6 @@
 .usage-list { color: var(--text-secondary); font-size: .9rem; padding-left: 1.2rem; }
 .alias-row { flex-wrap: wrap; }
 .button-secondary[aria-pressed="true"] { border-color: var(--gold); box-shadow: inset 0 -2px var(--gold); }
+
+.entry-status { min-height: 1.4em; color: var(--text-secondary); overflow-wrap: anywhere; }
+.entry-status[data-state="error"] { color: var(--text-primary); border-left: 3px solid var(--gold); padding-left: var(--space-sm); }
