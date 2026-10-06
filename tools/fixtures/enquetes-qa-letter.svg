@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="680" viewBox="0 0 540 680">
+  <rect width="540" height="680" rx="3" fill="#e6d7b5"/>
+  <g fill="#2a2116" font-family="Georgia,serif">
+    <text x="48" y="78" font-size="22" font-style="italic">Mon cher ami,</text>
+    <text x="48" y="128" font-size="17">Le conseiller attend votre réponse avant la fête.</text>
+    <text x="48" y="159" font-size="17">Le paiement arrivera avant le carnaval.</text>
+    <text x="48" y="207" font-size="17">Brûlez ceci après lecture.</text>
+    <text x="430" y="600" font-size="32" font-style="italic">— J.</text>
+  </g>
+  <g stroke="#8a7656" stroke-width="2" opacity=".6">
+    <path d="M48 254h422M48 273h397M48 292h411M48 311h350"/>
+  </g>
+  <circle cx="110" cy="570" r="42" fill="#292929"/>
+  <g stroke="#888" stroke-width="3" fill="none">
+    <circle cx="110" cy="570" r="10"/>
+    <path d="M110 546v-8M110 594v8M86 570h-8M134 570h8M93 553l-6-6M127 587l6 6M93 587l-6 6M127 553l6-6"/>
+  </g>
+</svg>

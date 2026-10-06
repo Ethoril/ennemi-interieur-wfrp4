@@ -19,5 +19,5 @@ export class Element {
   querySelector(s){return this.querySelectorAll(s)[0]||null;}
   setSelectionRange(a,b){this.selectionStart=a;this.selectionEnd=b;}
 }
-export function createDocument(){const d=new Element(null,'document');d.ownerDocument=d;d.activeElement=null;d.createElement=tag=>new Element(d,tag);d.createTextNode=text=>Object.assign(new Element(d,'text'),{textContent:text});return d;}
+export function createDocument(){const d=new Element(null,'document');d.ownerDocument=d;d.activeElement=null;d.createElement=tag=>new Element(d,tag);d.createElementNS=(_,tag)=>new Element(d,tag);d.createTextNode=text=>Object.assign(new Element(d,'text'),{textContent:text});return d;}
 export const flush=async()=>{for(let i=0;i<30;i++)await Promise.resolve();};

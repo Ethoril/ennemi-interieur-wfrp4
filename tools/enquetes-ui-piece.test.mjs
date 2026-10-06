@@ -2,6 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fixture } from './lib/enquetes-ui-fixture.mjs';
 import { flush } from './lib/enquetes-test-dom.mjs';
+
+test('keyboard annotation creation starts at normalized image center',async()=>{
+    const f=await fixture({id:'lettre'});
+    assert.equal(f.button('Ajouter une annotation au centre').hidden,true);
+    f.button('Mode annotation').click();
+    assert.equal(f.button('Ajouter une annotation au centre').hidden,false);
+    f.button('Ajouter une annotation au centre').click();
+    const fields=f.container.querySelector('.enq-editor').querySelectorAll('label');
+    for(const name of ['Position horizontale','Position verticale'])assert.equal(fields.find(l=>l.textContent.startsWith(name)).firstChild.value,.5);
+    f.view.unmount();
+});
 test('image click enlarges by default and annotates only in explicit mode',async()=>{
     const f=await fixture({id:'lettre'});const image=f.container.querySelector('.enq-image-box').querySelector('img');
     image.getBoundingClientRect=()=>({left:10,top:20,width:200,height:100});image.dispatch('click',{clientX:60,clientY:70});await flush();

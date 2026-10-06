@@ -4,11 +4,16 @@ import { selectEnqueteExport } from './data/enquetes-export.js';
 import { recordTitle, buildSearch, fold } from './data/enquetes-domain.js';
 let mobileSpace={uid:null,section:'enquetes',filter:'',category:'',search:'',scope:''};
 const mobileTabs=new Map(),mobileContexts=new Map();
-export function createEnqueteWorkspaceView({container,id=null,initialAction=null,loadRuntime=()=>import('./enquetes-runtime.js'),onOpen=()=>{},onOpenPnj=()=>{},layout='desktop'}={}) {
+export function createEnqueteWorkspaceView({container,id=null,initialAction=null,loadRuntime=()=>import('./enquetes-runtime.js'),onOpen=()=>{},onOpenPnj=()=>{},onMenuLabelChange=()=>{},layout='desktop'}={}) {
   const d=container.ownerDocument;
   let initialOpened=false,legacyResolved=false,detailSignature='',linksIndex=new Map();
   let client=null,state={session:null,records:[],pnjs:[]},mounted=false,token=0,section='enquetes',selected=id,search='',scope='',filter='',category='',editor=null,timer=null,graph=null,handles=[],busy=false;
   const node=(tag,text='',className='')=>{const e=d.createElement(tag);e.textContent=text;e.className=className;return e;};
+  function icon(kind){
+    const svg=d.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','16');svg.setAttribute('height','16');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');
+    const shape=(tag,attributes)=>{const child=d.createElementNS('http://www.w3.org/2000/svg',tag);for(const [key,value]of Object.entries(attributes))child.setAttribute(key,value);svg.append(child);};
+    if(kind==='search'){shape('circle',{cx:10,cy:10,r:7});shape('path',{d:'m15 15 6 6'});}else{shape('rect',{x:5,y:10,width:14,height:11,rx:2});shape('path',{d:'M8 10V7a4 4 0 0 1 8 0v3'});}return svg;
+  }
   const button=(label,action,variant='')=>{const b=node('button',label,'enq-button'+(variant?' enq-button--'+variant:''));b.type='button';b.addEventListener('click',()=>Promise.resolve(action()).catch(showError));return b;};
   let root,toolbar,list,detail,status,searchInput,notebook,panes,fab;
   let mobileSearchOpen=false;
@@ -42,6 +47,10 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     }
     return box;
   }
+  function restoreFocus(anchor){
+    if(anchor&&(anchor.isConnected||root.contains(anchor)||d.contains?.(anchor)))anchor.focus();
+    else{const heading=detail.querySelector('h3');heading?.setAttribute('tabindex','-1');heading?.focus();}
+  }
   function revealDetail(){
     const heading=detail.querySelector('h3');heading?.setAttribute('tabindex','-1');heading?.focus({preventScroll:true});
     if(layout!=='mobile'&&globalThis.matchMedia?.('(max-width:850px)')?.matches)detail.scrollIntoView?.({behavior:'smooth',block:'start'});
@@ -65,10 +74,10 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     syncMobileScreen();rememberMobile();fab.hidden=layout!=='mobile'||!state.session||!!editor;
     toolbar.replaceChildren();
     if(!state.session){
-      toolbar.append(node('h2','Documents et enquêtes'),button('Se connecter avec Google',()=>client?.signIn()));
-      list.replaceChildren(node('p','Connecte-toi pour retrouver les pièces du groupe et ton carnet personnel.'));if(!editor)detail.replaceChildren();return;
+      toolbar.append(button('Se connecter avec Google',()=>client?.signIn()));
+      list.replaceChildren(node('p','Connecte-toi pour retrouver les pièces du groupe et ton carnet personnel.'));release();detail.replaceChildren(node('p','Connecte-toi pour retrouver les pièces du groupe et ton carnet personnel.'));notebook.replaceChildren();return;
     }
-    if(!state.session.active){status.textContent='Le nouvel espace sera disponible après sa mise en service.';list.replaceChildren();return;}
+    if(!state.session.active){status.textContent='Le nouvel espace sera disponible après sa mise en service.';release();list.replaceChildren();detail.replaceChildren(node('p',status.textContent));notebook.replaceChildren();return;}
     if(state.session.maintenance){status.textContent='Réorganisation des accès en cours. Ton carnet personnel reste accessible.';}
     else if(state.session.role==='ancien'){status.textContent='Accès au groupe retiré. Ton carnet personnel reste consultable et exportable.';section='notes';}
     else if(state.session.offline){status.textContent='Hors connexion : textes en cache et brouillons locaux.';}
@@ -81,10 +90,10 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     section=value;filter='';category='';scope='';selected=null;contextDossier=null;if(layout==='mobile')mobileContexts.clear();detailSignature='';closeEditor();
   }
   function tabs(choices,value,change,label){
-    const bar=node('div','','enq-tabs');bar.setAttribute('role','tablist');bar.setAttribute('aria-label',label);
-    const buttons=choices.map(([key,text])=>{const b=button(text,()=>change(key),'quiet');b.setAttribute('role','tab');b.setAttribute('aria-selected',String(key===value));b.setAttribute('aria-current',String(key===value));b.tabIndex=key===value?0:-1;return b;});
-    buttons.forEach((b,i)=>b.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const n=event.key==='Home'?0:event.key==='End'?buttons.length-1:(i+(event.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;change(choices[n][0]);const bars=root.querySelectorAll('.enq-tabs');const fresh=bars.find?.(v=>v.getAttribute('aria-label')===label)||Array.from(bars).find(v=>v.getAttribute('aria-label')===label);fresh?.querySelectorAll('button')[n]?.focus();}}));
-    bar.append(...buttons);return bar;
+    const bar=node('div','','enq-tabs'),key=label==='Espace de recherche'?'space':label==='Vue du dossier'?'dossier':'content';bar.setAttribute('role','tablist');bar.setAttribute('aria-label',label);
+    const activate=i=>{change(choices[i][0]);const fresh=Array.from(root.querySelectorAll('.enq-tabs')).find(v=>v.getAttribute('aria-label')===label);fresh?.querySelectorAll('button')[i]?.focus();};
+    const buttons=choices.map(([valueKey,text],i)=>{const buttonRef=button(text,()=>activate(i),'quiet');buttonRef.id='enq-'+key+'-tab-'+valueKey;buttonRef.setAttribute('role','tab');buttonRef.setAttribute('aria-controls','enq-'+key+'-panel');buttonRef.setAttribute('aria-selected',String(valueKey===value));buttonRef.setAttribute('aria-current',String(valueKey===value));buttonRef.tabIndex=valueKey===value?0:-1;return buttonRef;});
+    buttons.forEach((buttonRef,i)=>buttonRef.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();activate(event.key==='Home'?0:event.key==='End'?buttons.length-1:(i+(event.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length);}}));bar.append(...buttons);return bar;
   }
   function quickTargets(){
     const ids=[];if(current())ids.push(current().id);if(current()?.type==='documents'&&contextDossier)ids.push(contextDossier);return ids;
@@ -96,7 +105,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     const uid=state.session.uid,contextKey=current()?.id||'unclassified';
     const resumed=client.listDrafts(uid).find(v=>v.quick&&v.quickContext===contextKey),id=resumed?.id||client.newId();
     let revision=resumed?.baseRevision||0,operationId=resumed?.operationId||client.newId(),pending=resumed?.pending||null;
-    const targets=new Set(resumed?.links||targetIds),form=node('form','','enq-quick-form'),text=node('textarea');text.rows=3;text.value=resumed?.body?.texte||'';text.placeholder='Une idée, un nom entendu…';text.setAttribute('aria-label','Note rapide sur '+(current()?.type==='documents'?'cette pièce':'ce dossier'));
+    const targets=new Set(resumed?.links||targetIds),form=node('form','','enq-quick-form'),text=node('textarea');text.rows=3;text.value=resumed?.body?.texte||'';text.placeholder='Une idée, un nom entendu…';text.setAttribute('aria-label',current()?'Note rapide sur '+(current().type==='documents'?'cette pièce':'ce dossier'):'Note rapide dans mon carnet');
     const message=node('p','Brouillon gardé sur cet appareil','enq-save-status');message.setAttribute('role','status');
     const persist=()=>client.saveDraft(uid,id,{type:'notes',body:{titre:'',texte:text.value,etiquettes:[]},zone:'user:'+uid,baseRevision:revision,operationId,pending,quick:true,quickContext:contextKey,links:[...targets],context:targets.size?{id:[...targets][0],type:all().find(r=>r.id===[...targets][0])?.type}:null});
     text.addEventListener('input',()=>{message.textContent=persist()?'Brouillon gardé sur cet appareil':'Brouillon local indisponible ; garde cette saisie ouverte';});
@@ -126,7 +135,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   }
   function renderNotebook(){
     notebook.replaceChildren(node('h3','Mon carnet','enq-section-title'));notebook.firstChild.id='enq-notebook-title';if(!state.session||!client)return;
-    const lock=node('span','⚿');lock.setAttribute('aria-hidden','true');notebook.append(lock,node('small','Privé'),quickForm(quickTargets()).form,button('Nouvelle note',()=>openEditor(null,'notes',current()),'quiet'));
+    notebook.firstChild.prepend(icon('lock'));notebook.append(node('small','Privé'),quickForm(quickTargets()).form,button('Nouvelle note',()=>openEditor(null,'notes',current()),'quiet'));
     for(const note of [...linkedNotes(current(),state.records,linksIndex)].reverse()){
       const row=node('article','','enq-notebook-note');row.append(button(recordTitle(note),()=>openObject(note),'quiet'));
       const excerpt=textView(note.texte);excerpt.className+=' enq-note-excerpt';row.append(excerpt,button('Lire la suite',()=>openObject(note),'quiet'));
@@ -140,13 +149,13 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   function openQuickSheet(){
     if(!state.session||editor)return;
     const anchor=d.activeElement||fab,dialog=node('dialog','','enq-quick-sheet');dialog.setAttribute('aria-label','Note rapide · mon carnet');
-    const quick=quickForm(quickTargets(),()=>dialog.close(),true);dialog.append(node('h3','Note rapide · mon carnet'),button('Fermer',()=>dialog.close()),quick.form);
-    dialog.addEventListener('close',()=>{dialog.remove();anchor?.focus();},{once:true});root.append(dialog);dialog.showModal();quick.text.focus();
+    const quick=quickForm(quickTargets(),()=>dialog.close(),true);const heading=node('h3','Note rapide · mon carnet');heading.prepend(icon('lock'));dialog.append(heading,button('Fermer',()=>dialog.close()),quick.form);
+    dialog.addEventListener('close',()=>{dialog.remove();restoreFocus(anchor);},{once:true});root.append(dialog);dialog.showModal();quick.text.focus();
   }
   function selectLinkedTarget(onSelect){
     const anchor=d.activeElement,dialog=node('dialog'),select=node('select');dialog.setAttribute('aria-label','Objet à relier');select.setAttribute('aria-label','Objet à relier');
     for(const target of all().filter(r=>['enquetes','documents','pnjs'].includes(r.type))){const option=node('option',target.nom||recordTitle(target));option.value=target.id;select.append(option);}
-    dialog.append(select,button('Relier',()=>{const target=all().find(r=>r.id===select.value);if(target)onSelect(target);dialog.close();}),button('Annuler',()=>dialog.close()));dialog.addEventListener('close',()=>{dialog.remove();anchor?.focus();},{once:true});root.append(dialog);dialog.showModal();
+    dialog.append(select,button('Relier',()=>{const target=all().find(r=>r.id===select.value);if(target)onSelect(target);dialog.close();}),button('Annuler',()=>dialog.close()));dialog.addEventListener('close',()=>{dialog.remove();restoreFocus(anchor);},{once:true});root.append(dialog);dialog.showModal();
   }
   function renderList(){
     rememberMobile();
@@ -156,13 +165,13 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     list.append(tabs([['enquetes','Dossiers '+counts.enquetes],['documents','Pièces '+counts.documents],['notes','Carnet '+counts.notes]],section,switchSpace,'Espace de recherche'));
     if(section==='trash'){list.append(button('Retour aux dossiers',()=>switchSpace('enquetes'),'quiet'));renderTrash();return;}
     const heading=node('div','','enq-list-heading');heading.append(node('h3',section==='notes'?'Mon carnet':section==='documents'?'Bibliothèque':'Dossiers d’enquête'));
-    if(section!=='enquetes'||isGm())heading.append(button(section==='notes'?'Nouvelle note':section==='documents'?'Nouveau document':'Nouvelle enquête',()=>openEditor(null,section),'primary'));
+    if(section!=='enquetes'||isGm())heading.append(button(section==='notes'?'Nouvelle note':section==='documents'?'Nouveau document':'Nouvelle enquête',()=>openEditor(null,section),current()?'quiet':'primary'));
     if(layout==='mobile'){const toggle=button(mobileSearchOpen?'×':'⌕',()=>{mobileSearchOpen=!mobileSearchOpen;if(!mobileSearchOpen)search='';renderList();if(mobileSearchOpen)searchInput.focus();});toggle.className='enq-icon-button';toggle.setAttribute('aria-label',mobileSearchOpen?'Fermer la recherche':'Ouvrir la recherche');heading.append(toggle);}
     list.append(heading);
     const controls=node('div','','enq-filters');
     const searchLabel=node('label','Rechercher dans cet espace','visually-hidden');searchLabel.htmlFor='enq-search';controls.append(searchLabel);
     searchInput=node('input');searchInput.id='enq-search';searchInput.type='search';searchInput.placeholder='Pièce, PNJ, note…';searchInput.value=search;searchInput.setAttribute('aria-label','Rechercher dans cet espace');
-    searchInput.addEventListener('input',e=>{search=e.target.value;rememberMobile();renderResults();});if(layout==='mobile')searchInput.hidden=!mobileSearchOpen;controls.append(searchInput);
+    searchInput.addEventListener('input',e=>{search=e.target.value;rememberMobile();renderResults();});if(layout==='mobile')searchInput.hidden=!mobileSearchOpen;const searchBox=node('div','','enq-search-box');searchBox.append(icon('search'),searchInput);controls.append(searchBox);
     const states=countStates(state.records),chips=node('div','','enq-chips');
     const choices=section==='documents'?[['piece','Pièces reçues'],['contribution','Contributions'],['personnel','Personnel'],...isGm()?[['mj','Secret MJ']]:[]]:section==='enquetes'?[['Ouverte','Ouvertes '+states.Ouverte],['En pause','En pause '+states['En pause']],['Résolue','Résolues '+states.Résolue],['archive','Archivées '+states.archive]]:[['','Toutes'],['non-classees','Non classées']];
     for(const [value,label]of choices){const b=button(label,()=>{filter=filter===value?'':value;renderList();},'quiet');b.setAttribute('aria-pressed',String(value===filter));if(section==='enquetes'&&value!=='archive')b.append(node('span','','enq-state-dot enq-state-dot--'+({'Ouverte':'open','En pause':'paused','Résolue':'solved'}[value])));chips.append(b);}
@@ -170,7 +179,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     if(section==='documents'){const categories=node('select');categories.setAttribute('aria-label','Catégorie');for(const value of ['','Lettre','Témoignage','Carte','Illustration','Rapport','Autre']){const option=node('option',value||'Toutes les catégories');option.value=value;categories.append(option);}categories.value=category;categories.addEventListener('change',()=>{category=categories.value;renderResults();});controls.append(categories);}
     const scopeSelect=node('select');scopeSelect.setAttribute('aria-label',section==='notes'?'Limiter à une enquête, un document ou un personnage':'Limiter à une enquête');scopeSelect.append(node('option',section==='notes'?'Tous les objets liés':'Toutes les enquêtes'));scopeSelect.firstChild.value='';
     for(const r of all().filter(r=>section==='notes'?['enquetes','documents','pnjs'].includes(r.type):r.type==='enquetes')){const o=node('option',r.nom||r.titre);o.value=r.id;scopeSelect.append(o);}scopeSelect.value=scope;scopeSelect.addEventListener('change',()=>{scope=scopeSelect.value;rememberMobile();renderResults();});
-    controls.append(scopeSelect);list.append(controls,node('ul','','enq-results'));renderResults();
+    controls.append(scopeSelect);const results=node('ul','','enq-results');const panel=node('div');panel.id='enq-space-panel';panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby','enq-space-tab-'+section);panel.append(results);list.append(controls,panel);renderResults();
     const footer=node('footer','','enq-rail-footer');
     const drafts=client?.listDrafts?.(state.session.uid)||[];
     for(const draft of drafts.filter(v=>v.type===section))footer.append(button('Reprendre le brouillon : '+(draft.body?.titre||'Sans titre'),()=>openEditor(state.records.find(r=>r.id===draft.id)||null,draft.type,null,{},draft.id),'quiet'));
@@ -225,7 +234,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     if(r.type==='enquetes'){renderDossier(r,viewToken);return;}
     if(r.type==='documents'){await renderPiece(r,viewToken);return;}
     detail.append(node('h3',recordTitle(r)),textView(r.texte||''));
-    renderLinks(r);detail.append(actionMenu('Actions de la note',objectActions(r,viewToken)).element);
+    renderLinks(r);if(layout==='desktop')detail.append(actionMenu('Actions de la note',objectActions(r,viewToken)).element);
   }
   async function renderPiece(r,viewToken){
     const dossier=state.records.find(v=>v.id===contextDossier&&v.type==='enquetes'),context=pieceContext(r.id,dossier,state.records,linksIndex);
@@ -302,26 +311,26 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     if(r.question)title.append(node('p','« '+r.question+' »','enq-question'));if(r.description)title.append(node('p',r.description));const tags=node('div');for(const tag of r.etiquettes||[])tags.append(node('span','#'+tag,'enq-badge'));title.append(tags);header.append(seal,title);detail.append(header);
     if(layout==='mobile'){renderMobileDossier(r,viewToken);return;}
     const actions=node('div','','enq-actions');actions.append(tabs([['dossier','Dossier'],['graph','Tableau des liens']],dossierTab,value=>{dossierTab=value;renderDetail();},'Vue du dossier'),button('Ajouter une pièce',()=>openEditor(null,'documents',r),'primary'),actionMenu('Actions du dossier',objectActions(r,viewToken)).element);detail.append(actions);
-    if(dossierTab==='graph'){const host=node('div','','enq-graph');detail.append(host);showGraph(r,host).catch(showError);return;}
+    const panel=node('div','','enq-dossier-panel');panel.id='enq-dossier-panel';panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby','enq-dossier-tab-'+dossierTab);detail.append(panel);if(dossierTab==='graph'){const host=node('div','','enq-graph');panel.append(host);showGraph(r,host).catch(showError);return;}
     if(r.etat==='Résolue'&&r.conclusion){const conclusion=node('section','','enq-conclusion');conclusion.append(node('h4','Conclusion'),textView(r.conclusion));detail.append(conclusion);}
-    detail.append(renderPieces(r,viewToken));const lower=node('div','','enq-dossier-lower');lower.append(renderCast(r),renderTimeline(r));detail.append(lower);
+    panel.append(renderPieces(r,viewToken));const lower=node('div','','enq-dossier-lower');lower.append(renderCast(r),renderTimeline(r));panel.append(lower);
     const others=state.records.filter(v=>v.type==='enquetes'&&v.id!==r.id&&linkedIds(r.id).has(v.id));if(others.length){const box=node('div','Dossiers liés : ');for(const other of others)box.append(button(recordTitle(other),()=>openObject(other),'quiet'));detail.append(box);}
   }
   function renderMobileDossier(r,viewToken){
     const pieces=dossierPieces(r,state.records,linksIndex),cast=dossierPnjs(r,state.records,state.pnjs),notes=linkedNotes(r,state.records,linksIndex),active=mobileTabs.get(r.id)||'pieces';
     detail.append(tabs([['pieces','Pièces '+pieces.length],['pnjs','PNJ '+cast.length],['timeline','Chronologie'],['notes','Mes notes '+notes.length]],active,value=>{mobileTabs.set(r.id,value);renderDetail();},'Contenu du dossier'));
-    const panel=node('div','','enq-tab-panel');panel.setAttribute('role','tabpanel');panel.setAttribute('aria-label',{pieces:'Pièces',pnjs:'Personnages',timeline:'Chronologie',notes:'Mes notes'}[active]);
+    const panel=node('div','','enq-tab-panel');panel.id='enq-content-panel';panel.setAttribute('aria-labelledby','enq-content-tab-'+active);panel.setAttribute('role','tabpanel');panel.setAttribute('aria-label',{pieces:'Pièces',pnjs:'Personnages',timeline:'Chronologie',notes:'Mes notes'}[active]);
     if(active==='pieces')panel.append(renderPieces(r,viewToken));else if(active==='pnjs')panel.append(renderCast(r));else if(active==='timeline')panel.append(renderTimeline(r));else{renderNotebook();panel.append(notebook);}detail.append(panel);
   }
   function graphDialog(r){
-    const anchor=d.activeElement,dialog=node('dialog','','enq-graph-dialog');dialog.setAttribute('aria-label','Tableau des liens');const host=node('div','','enq-graph');dialog.append(button('Fermer',()=>dialog.close()),host);dialog.addEventListener('close',()=>{graph?.stop();graph=null;dialog.remove();anchor?.focus();},{once:true});root.append(dialog);dialog.showModal();showGraph(r,host).catch(showError);
+    const anchor=d.activeElement,dialog=node('dialog','','enq-graph-dialog');dialog.setAttribute('aria-label','Tableau des liens');const host=node('div','','enq-graph');dialog.append(button('Fermer',()=>dialog.close()),host);dialog.addEventListener('close',()=>{graph?.stop();graph=null;dialog.remove();restoreFocus(anchor);},{once:true});root.append(dialog);dialog.showModal();showGraph(r,host).catch(showError);
   }
   function renderPieces(r,viewToken){
     const box=node('section','','enq-pieces');box.append(node('h4','Pièces du dossier','enq-section-title'));if(r.ordre?.length)box.append(node('small','Ordre fixé par le MJ'));const grid=node('div','','enq-slips');
     for(const {record:doc,numero,relations} of dossierPieces(r,state.records,linksIndex)){
       const slip=button('',()=>openObject(doc));slip.className='enq-slip enq-slip--'+(numero%3);const top=node('span','','enq-slip-top');top.append(node('span','PIÈCE N° '+numero,'enq-slip-number'),node('span',doc.categorie||''));slip.append(top,node('strong',recordTitle(doc),'enq-slip-title'),node('span',doc.description||doc.texte||'','enq-slip-excerpt'));
       const annotations=state.records.filter(a=>a.type==='annotations'&&a.document===doc.id).length;slip.append(node('small',(doc.files?.length||0)+' fichier(s) · '+annotations+' annotation(s)'));if(doc.origine==='contribution')slip.append(node('small','Contribution'+(doc.authorName?' · '+doc.authorName:'')));
-      for(const relation of relations)slip.append(node('span',relation.nature+' la pièce n° '+relation.autreNumero,'enq-relation enq-relation--'+({'Appuie':'supports','Contredit':'opposes'}[relation.nature]||'neutral')));if(doc.zone!==r.zone)slip.append(node('span',audienceLabel(doc),'enq-badge'));grid.append(slip);if(doc.files?.length)loadSlipImage(doc,slip,viewToken).catch(showError);
+      for(const relation of relations){const other=dossierPieces(r,state.records,linksIndex).find(p=>p.numero===relation.autreNumero),source=state.records.find(v=>v.type==='relations'&&v.nature===relation.nature&&v.a===other?.record.id&&v.b===doc.id),nature=source?{Appuie:'Appuyée par',Contredit:'Contredite par',Complète:'Complétée par','Renvoie à':'Référencée par'}[relation.nature]||relation.nature:relation.nature;slip.append(node('span',nature+' la pièce n° '+relation.autreNumero,'enq-relation enq-relation--'+({'Appuie':'supports','Contredit':'opposes'}[relation.nature]||'neutral')));}if(doc.zone!==r.zone)slip.append(node('span',audienceLabel(doc),'enq-badge'));grid.append(slip);if(doc.files?.length)loadSlipImage(doc,slip,viewToken).catch(showError);
     }
     const add=button(layout==='mobile'?'Verser une pièce ou une photo':'Verser une pièce',()=>openEditor(null,'documents',r));add.className='enq-slip-add';grid.append(add);box.append(grid);return box;
   }
@@ -348,18 +357,18 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     for(const [key,row]of annotationRows)row.setAttribute('data-highlight',String(key===id));
     for(const [key,markers]of annotationMarkers)for(const marker of markers)marker.setAttribute('data-highlight',String(key===id));
   }
-  function imagePins(f,r,imageBox){
+  function imagePins(f,r,imageBox,inZoom=false){
     const overlay=node('div','','enq-image-overlay');imageBox.append(overlay);
     state.records.filter(a=>a.type==='annotations'&&a.document===r.id&&a.fileId===f.id).forEach((a,i)=>{
-      const marker=button(String(i+1),()=>{highlightAnnotation(a.id);annotationRows.get(a.id)?.focus();annotationRows.get(a.id)?.scrollIntoView?.({block:'nearest'});});marker.className='enq-marker'+(a.zone.startsWith('user:')?' enq-marker--private':'');marker.setAttribute('aria-label','Annotation '+(i+1)+' : '+(a.texte||'Sans texte'));
+      const marker=button(String(i+1),()=>{highlightAnnotation(a.id);if(!inZoom){annotationRows.get(a.id)?.focus();annotationRows.get(a.id)?.scrollIntoView?.({block:'nearest'});}});marker.className='enq-marker'+(a.zone.startsWith('user:')?' enq-marker--private':'');marker.setAttribute('aria-label','Annotation '+(i+1)+' : '+(a.texte||'Sans texte'));
       const anchor=node('div','','enq-pin-anchor');anchor.style.left=(a.x*100)+'%';anchor.style.top=(a.y*100)+'%';if(a.width&&a.height){anchor.style.width=(a.width*100)+'%';anchor.style.height=(a.height*100)+'%';anchor.classList.add('enq-marker-zone');}anchor.append(marker);overlay.append(anchor);
       if(!annotationMarkers.has(a.id))annotationMarkers.set(a.id,[]);annotationMarkers.get(a.id).push(marker);marker.addEventListener('focus',()=>highlightAnnotation(a.id));
     });
   }
   async function zoomFile(f,r,trigger){
     const viewToken=token,h=await client.objectUrl(f);if(viewToken!==token||!mounted){h.release();return;}
-    const dialog=node('dialog','','enq-zoom');dialog.setAttribute('aria-label','Agrandissement : '+f.name);const image=node('img');image.src=h.url;image.alt=f.name;const box=node('div','','enq-image-box');box.append(image);imagePins(f,r,box);
-    let released=false;const close=()=>{if(released)return;released=true;h.release();dialog.remove();trigger?.focus();};dialog.addEventListener('close',close,{once:true});handles.push({release:()=>{dialog.close();close();}});
+    const dialog=node('dialog','','enq-zoom');dialog.setAttribute('aria-label','Agrandissement : '+f.name);const image=node('img');image.src=h.url;image.alt=f.name;const box=node('div','','enq-image-box');box.append(image);imagePins(f,r,box,true);
+    let released=false;const close=()=>{if(released)return;released=true;h.release();dialog.remove();restoreFocus(trigger);};dialog.addEventListener('close',close,{once:true});handles.push({release:()=>{dialog.close();close();}});
     dialog.append(button('Fermer',()=>dialog.close()),box);root.append(dialog);dialog.showModal();
   }
   async function showFile(f,r,host,viewToken){
@@ -368,8 +377,9 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     const download=node('a','Télécharger','enq-button enq-button--quiet');download.href=h.url;download.download=f.name;
     if(f.contentType.startsWith('image/')){
       const image=node('img');image.src=h.url;image.alt=f.name;const imageBox=node('div','','enq-image-box');imageBox.append(image);wrap.append(imageBox);imagePins(f,r,imageBox);
-      const mode=button('Mode annotation',()=>{annotationMode=!annotationMode;mode.setAttribute('aria-pressed',String(annotationMode));help.hidden=!annotationMode;});mode.setAttribute('aria-pressed',String(annotationMode));const help=node('small','Clique sur l’image pour placer une annotation.');help.hidden=!annotationMode;
-      const enlarge=button('Agrandir',()=>zoomFile(f,r,enlarge));bar.append(mode,help,enlarge,download);
+      const center=button('Ajouter une annotation au centre',()=>openEditor(null,'annotations',null,{document:r.id,fileId:f.id,version:f.version,x:.5,y:.5,width:0,height:0}),'quiet');center.hidden=!annotationMode;
+      const mode=button('Mode annotation',()=>{annotationMode=!annotationMode;mode.setAttribute('aria-pressed',String(annotationMode));help.hidden=!annotationMode;center.hidden=!annotationMode;});mode.setAttribute('aria-pressed',String(annotationMode));const help=node('small','Clique sur l’image pour placer une annotation.');help.hidden=!annotationMode;
+      const enlarge=button('Agrandir',()=>zoomFile(f,r,enlarge));bar.append(mode,help,center,enlarge,download);
       image.addEventListener('click',event=>{if(!annotationMode){zoomFile(f,r,enlarge).catch(showError);return;}const rect=image.getBoundingClientRect();openEditor(null,'annotations',null,{document:r.id,fileId:f.id,version:f.version,x:Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width)),y:Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height)),width:0,height:0});});
     }else if(f.contentType==='application/pdf'){bar.append(download);const frame=node('iframe');frame.title=f.name;frame.src=h.url;frame.className='enq-pdf';wrap.append(frame);}
     else {bar.append(download);const blob=await client.blob(f);if(viewToken===token)wrap.append(textView(await blob.text()));}
@@ -471,7 +481,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     try{return await client.save({type:'liens',body:{a,b,role},zone});}catch(error){if(error.code?.includes('already-exists'))return {exists:true};throw error;}
   }
   function openLinkEditor(r,onlyType=null){
-    const dialog=node('dialog'),form=node('form'),select=node('select');select.setAttribute('aria-label','Objet à relier');
+    const dialog=node('dialog'),form=node('form'),select=node('select');dialog.setAttribute('aria-label','Ajouter un lien');const anchor=d.activeElement;dialog.addEventListener('close',()=>{dialog.remove();restoreFocus(anchor);},{once:true});select.setAttribute('aria-label','Objet à relier');
     const compatible={documents:['enquetes','pnjs','notes'],enquetes:['documents','pnjs','notes'],notes:['documents','enquetes','pnjs'],pnjs:['documents','enquetes','notes']}[r.type]||[];
     for(const target of all().filter(t=>t.id!==r.id&&compatible.includes(t.type)&&(!onlyType||t.type===onlyType))){const o=node('option',target.nom||recordTitle(target));o.value=target.id;select.append(o);}
     const role=node('input');role.placeholder='Rôle dans l’affaire, si utile';role.setAttribute('aria-label','Rôle');form.append(node('h3','Ajouter un lien'),select,role);
@@ -492,9 +502,9 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   }
   async function orderDocuments(r){
     const linked=state.records.filter(v=>v.type==='documents'&&v.zone===r.zone&&linkedIds(r.id).has(v.id));
-    const dialog=node('dialog'),box=node('ol'),order=[...(r.ordre||[]).filter(id=>linked.some(v=>v.id===id)),...linked.filter(v=>!r.ordre?.includes(v.id)).map(v=>v.id)];
-    const draw=()=>{box.replaceChildren();order.forEach((id,index)=>{const item=node('li',recordTitle(linked.find(v=>v.id===id)));item.append(button('Monter',()=>{if(index){[order[index-1],order[index]]=[order[index],order[index-1]];draw();}}),button('Descendre',()=>{if(index<order.length-1){[order[index],order[index+1]]=[order[index+1],order[index]];draw();}}));box.append(item);});};
-    draw();dialog.append(node('h3','Ordre éditorial'),box,button('Enregistrer',async()=>{await client.save({type:r.type,id:r.id,zone:r.zone,baseRevision:r.revision,body:editableBody({...r,ordre:order})});dialog.close();dialog.remove();render();}),button('Annuler',()=>{dialog.close();dialog.remove();}));root.append(dialog);dialog.showModal();
+    const dialog=node('dialog'),box=node('ol'),anchor=d.activeElement,message=node('p');dialog.setAttribute('aria-label','Ordre éditorial');message.setAttribute('role','status');dialog.addEventListener('close',()=>{dialog.remove();restoreFocus(anchor);},{once:true});const order=[...(r.ordre||[]).filter(id=>linked.some(v=>v.id===id)),...linked.filter(v=>!r.ordre?.includes(v.id)).map(v=>v.id)];
+    const draw=()=>{box.replaceChildren();order.forEach((id,index)=>{const item=node('li',recordTitle(linked.find(v=>v.id===id)));item.append(button('Monter',()=>{if(index){[order[index-1],order[index]]=[order[index],order[index-1]];draw();box.querySelectorAll('li')[index-1]?.querySelectorAll('button')[0]?.focus();message.textContent=recordTitle(linked.find(v=>v.id===id))+' : pièce n° '+index;}}),button('Descendre',()=>{if(index<order.length-1){[order[index],order[index+1]]=[order[index+1],order[index]];draw();box.querySelectorAll('li')[index+1]?.querySelectorAll('button')[1]?.focus();message.textContent=recordTitle(linked.find(v=>v.id===id))+' : pièce n° '+(index+2);}}));box.append(item);});};
+    draw();dialog.append(node('h3','Ordre éditorial'),box,message,button('Enregistrer',async()=>{await client.save({type:r.type,id:r.id,zone:r.zone,baseRevision:r.revision,body:editableBody({...r,ordre:order})});dialog.close();dialog.remove();render();}),button('Annuler',()=>{dialog.close();dialog.remove();}));root.append(dialog);dialog.showModal();
   }
   async function showGraph(r,host){
     const viewToken=token,{select,forceSimulation,forceLink,forceManyBody,forceCenter,drag}=await import('./vendor/enquetes-d3.js');if(viewToken!==token||!mounted)return;
@@ -524,11 +534,11 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     async mount({signal}={}){
       if(mounted||signal?.aborted)return;mounted=true;build();d.addEventListener('keydown',searchShortcut);
       const runtime=await loadRuntime();if(!mounted||signal?.aborted)return;
-      client=runtime.createEnqueteClient({onChange:next=>{if(editor&&(!next.session||next.session.uid!==editor.uid||!editor.zone.startsWith('user:')&&(!next.session.active||next.session.maintenance&&!busy||next.session.role==='ancien'))){editor=null;if(timer)globalThis.clearTimeout(timer);timer=null;detailSignature='';}if(!next.session||next.session.uid!==state.session?.uid||next.session.maintenance)for(const dialog of root.querySelectorAll('dialog'))if(dialog.open&&(!next.session||next.session.uid!==state.session?.uid||!dialog.className.includes('enq-quick-sheet'))){dialog.close();dialog.remove();}if(layout==='mobile'&&next.session?.uid!==state.session?.uid){if(mobileSpace.uid===next.session?.uid){({section,filter,category,search,scope}=mobileSpace);}else{mobileSpace={uid:next.session?.uid,section:'enquetes',filter:'',category:'',search:'',scope:''};mobileTabs.clear();mobileContexts.clear();contextDossier=null;}}state=next;linksIndex=buildLinksIndex(next.records);if(selected&&!legacyResolved&&next.session?.active&&client){legacyResolved=true;client.read('resolveLegacy',selected).then(result=>{if(mounted&&result.id){selected=result.id;render();}}).catch(()=>{});}if(selected&&!editor){const found=next.records.find(r=>r.id===selected);if(found&&['documents','enquetes','notes'].includes(found.type))section=found.type;}render();if(!initialOpened&&initialAction&&next.session?.active&&(initialAction==='new'||current())){initialOpened=true;openEditor(initialAction==='edit'?current():null,current()?.type||'enquetes');}},onError:showError});
+      client=runtime.createEnqueteClient({onChange:next=>{if(!mounted)return;if(editor&&(!next.session||next.session.uid!==editor.uid||!editor.zone.startsWith('user:')&&(!next.session.active||next.session.maintenance&&!busy||next.session.role==='ancien'))){editor=null;if(timer)globalThis.clearTimeout(timer);timer=null;detailSignature='';}if(!next.session||next.session.uid!==state.session?.uid||next.session.maintenance)for(const dialog of root.querySelectorAll('dialog'))if(dialog.open&&(!next.session||next.session.uid!==state.session?.uid||!dialog.className.includes('enq-quick-sheet'))){dialog.close();dialog.remove();}if(layout==='mobile'&&next.session?.uid!==state.session?.uid){if(mobileSpace.uid===next.session?.uid){({section,filter,category,search,scope}=mobileSpace);}else{mobileSpace={uid:next.session?.uid,section:'enquetes',filter:'',category:'',search:'',scope:''};mobileTabs.clear();mobileContexts.clear();contextDossier=null;}}state=next;onMenuLabelChange(current()?.type==='enquetes'?'Actions du dossier':'Actions de la pièce');linksIndex=buildLinksIndex(next.records);if(selected&&!legacyResolved&&next.session?.active&&client){legacyResolved=true;client.read('resolveLegacy',selected).then(result=>{if(mounted&&result.id){selected=result.id;render();}}).catch(()=>{});}if(selected&&!editor){const found=next.records.find(r=>r.id===selected);if(found&&['documents','enquetes','notes'].includes(found.type))section=found.type;}render();if(!initialOpened&&initialAction&&next.session?.active&&(initialAction==='new'||current())){initialOpened=true;openEditor(initialAction==='edit'?current():null,current()?.type||'enquetes');}},onError:showError});
       Object.assign(client,{newId:runtime.newEnqueteId,saveDraft:runtime.saveEnqueteDraft,readDraft:runtime.readEnqueteDraft,removeDraft:runtime.removeEnqueteDraft,listDrafts:runtime.listEnqueteDrafts});
       signal?.addEventListener('abort',()=>this.unmount(),{once:true});
     },
-    openMenu(anchor){const r=current();if(!r||editor)return;const menu=actionMenu(r.type==='enquetes'?'Actions du dossier':'Actions de la pièce',objectActions(r,token));menu.element.className+=' enq-header-menu';menu.element.firstChild.hidden=true;root.append(menu.element);menu.open(anchor);},
+    openMenu(anchor){const previous=menus.find(menu=>menu.element.className.includes('enq-header-menu'));if(previous){const open=!previous.element.children[1].hidden;previous.close();previous.element.remove();menus=menus.filter(menu=>menu!==previous);if(open)return;}const r=current();if(!r||editor)return;const menu=actionMenu(r.type==='enquetes'?'Actions du dossier':'Actions de la pièce',objectActions(r,token));menu.element.className+=' enq-header-menu';menu.element.firstChild.hidden=true;root.append(menu.element);menu.open(anchor);},
     menuLabel(){return current()?.type==='enquetes'?'Actions du dossier':'Actions de la pièce';},
     beforeLeave(){return !busy&&(!editor||globalThis.confirm('Quitter en conservant le brouillon local ?'));},
     unmount(){for(const dialog of root?.querySelectorAll('dialog')||[])if(dialog.open)dialog.close();mounted=false;d.removeEventListener('keydown',searchShortcut);++token;if(timer)globalThis.clearTimeout(timer);release();client?.close();editor=null;container.replaceChildren();}

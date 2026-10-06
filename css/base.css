@@ -9,6 +9,9 @@
   --document-paper: #e6d7b5;
   --document-ink: #2a2116;
   --document-ink-muted: #6b5a3e;
+  --annotation-gold: #c9a84c;
+  --annotation-private: #8a8a9a;
+  --viewer-overlay: rgba(7, 7, 13, .85);
   --viewer-ground: #07070d;
   --viewer-text: #e8dcc8;
   --bg-darkest: #07070d;

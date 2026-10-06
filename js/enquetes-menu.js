@@ -19,11 +19,14 @@ export function createActionMenu({ documentRef: d, label, items }) {
     function close(restore = true) {
         menu.hidden = true;
         trigger.setAttribute('aria-expanded', 'false');
+        focusTarget?.setAttribute('aria-expanded', 'false');
         d.removeEventListener('click', outside);
         if (restore) focusTarget?.focus();
     }
     function open(anchor = trigger) {
         focusTarget = anchor;
+        focusTarget?.setAttribute('aria-haspopup', 'menu');
+        focusTarget?.setAttribute('aria-expanded', 'true');
         menu.hidden = false;
         trigger.setAttribute('aria-expanded', 'true');
         buttons[0]?.focus();
@@ -51,7 +54,7 @@ export function createActionMenu({ documentRef: d, label, items }) {
             const i = buttons.indexOf(d.activeElement);
             buttons[event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 :
                 (i + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
-        } else if (event.key === 'Tab') close(false);
+        } else if (event.key === 'Tab') close();
     });
     element.append(trigger, menu);
     return { element, close, open };
