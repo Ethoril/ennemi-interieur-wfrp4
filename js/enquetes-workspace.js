@@ -1,5 +1,5 @@
 import { createActionMenu } from './enquetes-menu.js';
-import { buildLinksIndex, countSpaces, countStates, dossierSummary, dossierPieces, dossierPnjs, dossierTimeline, linkedNotes } from './enquetes-view-model.js';
+import { buildLinksIndex, countSpaces, countStates, dossierSummary, dossierPieces, dossierPnjs, dossierTimeline, pieceContext, linkedNotes } from './enquetes-view-model.js';
 import { selectEnqueteExport } from './data/enquetes-export.js';
 import { recordTitle, buildSearch, fold } from './data/enquetes-domain.js';
 export function createEnqueteWorkspaceView({container,id=null,initialAction=null,loadRuntime=()=>import('./enquetes-runtime.js'),onOpen=()=>{},onOpenPnj=()=>{},layout='desktop'}={}) {
@@ -9,7 +9,8 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   const node=(tag,text='',className='')=>{const e=d.createElement(tag);e.textContent=text;e.className=className;return e;};
   const button=(label,action,variant='')=>{const b=node('button',label,'enq-button'+(variant?' enq-button--'+variant:''));b.type='button';b.addEventListener('click',()=>Promise.resolve(action()).catch(showError));return b;};
   let root,toolbar,list,detail,status,searchInput,notebook;
-  let dossierTab='dossier',menus=[];
+  let dossierTab='dossier',menus=[],contextDossier=null,activeFileId=null,annotationMode=false,notebookOpen=false;
+  let annotationRows=new Map(),annotationMarkers=new Map();
   const current=()=>state.records.find(r=>r.id===selected)||state.pnjs.find(r=>r.id===selected);
   const all=()=>[...state.records,...state.pnjs];
   const isGm=()=>state.session?.role==='mj';
@@ -66,7 +67,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   }
   function switchSpace(value){
     if(editor&&!globalThis.confirm('Conserver le brouillon et quitter l’éditeur ?'))return;
-    section=value;filter='';category='';scope='';selected=null;detailSignature='';closeEditor();
+    section=value;filter='';category='';scope='';selected=null;contextDossier=null;detailSignature='';closeEditor();
   }
   function tabs(choices,value,change,label){
     const bar=node('div','','enq-tabs');bar.setAttribute('role','tablist');bar.setAttribute('aria-label',label);
@@ -129,7 +130,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     matched.sort((a,b)=>recordTitle(a).localeCompare(recordTitle(b),'fr'));
     if(!matched.length)results.append(node('p','Aucun résultat. Ajoute une pièce, une note ou ajuste les filtres.'));
     for(const r of matched){
-      const card=node('li','','enq-card');const open=button(recordTitle(r),()=>{if(editor&&!globalThis.confirm('Conserver le brouillon et quitter l’éditeur ?'))return;openObject(r);});open.setAttribute('aria-current',String(selected===r.id));
+      const card=node('li','','enq-card');const open=button(recordTitle(r),()=>{if(editor&&!globalThis.confirm('Conserver le brouillon et quitter l’éditeur ?'))return;openObject(r,true);});open.setAttribute('aria-current',String(selected===r.id));
       card.append(open,node('small',r.type==='documents'?(r.origine==='piece'?'Pièce':'Contribution')+' · '+r.categorie:r.type==='enquetes'?r.etat:'Note privée'));
       if(r.type==='enquetes'){const summary=dossierSummary(r,state.records,state.pnjs,linksIndex);card.append(node('small',summary.pieces+' pièces · '+summary.pnjs+' PNJ'+(summary.lastSession?' · màj session '+summary.lastSession:'')));open.append(node('span','','enq-state-dot enq-state-dot--'+({'Ouverte':'open','En pause':'paused','Résolue':'solved'}[r.etat]||'open')));}
       if(r.zone==='mj')card.append(node('span','Secret MJ','enq-badge'));else if(r.zone.startsWith('user:')&&r.type!=='notes')card.append(node('span','Personnel','enq-badge'));
@@ -137,66 +138,64 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
       results.append(card);
     }
   }
-  function openObject(r){
+  function openObject(r,fromRail=false){
     if(r.type==='pnjs'){onOpenPnj(r.id);return;}
+    if(fromRail)contextDossier=null;else if(current()?.type==='enquetes'&&r.type==='documents')contextDossier=current().id;
+    activeFileId=null;annotationMode=false;notebookOpen=false;dossierTab='dossier';
     closeEditor();selected=r.id;section=['documents','enquetes','notes'].includes(r.type)?r.type:section;render();revealDetail();onOpen(r.id);
   }
   async function renderDetail(){
     if(section==='trash'){release();detail.replaceChildren();return;}
-    const viewToken=++token;release();detail.replaceChildren();
+    const viewToken=++token;release();detail.replaceChildren();annotationRows=new Map();annotationMarkers=new Map();
+    root.className='enq-workspace enq-workspace--'+layout+(current()?.type==='documents'?' enq-workspace--piece':'')+(notebookOpen?' enq-workspace--notebook-open':'');
     const r=current();
     if(section==='trash'){return;}
     if(!r){detail.append(node('h3','Choisis un dossier ou une pièce'),node('p','Les documents peuvent appartenir à plusieurs enquêtes. Les notes restent dans ton carnet.'));return;}
     if(r.type==='pnjs'){detail.append(node('h3',r.nom),button('Ajouter une note',()=>openEditor(null,'notes',r)),button('Ajouter un document lié',()=>openEditor(null,'documents',r)));renderLinks(r);return;}
     if(r.type==='enquetes'){renderDossier(r,viewToken);return;}
-    detail.append(node('h3',recordTitle(r)));
-    const actions=node('div','','enq-actions');
-    if(canEdit(r))actions.append(button('Modifier',()=>openEditor(r,r.type)),button('Mettre en corbeille',()=>performAction(r,'trash'),'danger'));
-    actions.append(button('Ajouter une note',()=>openEditor(null,'notes',r)),button('Exporter',()=>exportSpace(r)));
-    if(r.type==='notes')actions.append(button('Partager une copie',()=>openEditor(null,'documents',r,{titre:recordTitle(r),texte:r.texte,origine:'contribution',shareNote:r,zone:'commun'})));
-    if(canEdit(r)&&r.type==='documents'){
-      if(r.zone.startsWith('user:'))actions.append(button('Publier dans le groupe',()=>performAction(r,'visibility','commun')));
-      if(isGm()&&!r.zone.startsWith('user:'))actions.append(button(r.zone==='commun'?'Rendre secret':'Publier',()=>performAction(r,'visibility',r.zone==='commun'?'mj':'commun')));
-      if(isGm()&&r.zone==='commun'&&r.authorUid!==state.session.uid)actions.append(button('Masquer chez son auteur',()=>performAction(r,'visibility',`user:${r.authorUid}`)));
-    }
-    if(isGm()&&r.type==='enquetes')actions.append(button(r.zone==='commun'?'Rendre secret':'Publier',()=>performAction(r,'visibility',r.zone==='commun'?'mj':'commun')));
-    detail.append(actions);
-    if(r.description)detail.append(node('p',r.description));if(r.question)detail.append(node('p',r.question,'enq-question'));
-    if(r.texte)detail.append(textView(r.texte));if(r.provenance)detail.append(node('p','Provenance : '+r.provenance));
-    if(r.conclusion)detail.append(textView(r.conclusion));
-    renderLinks(r);
-    if(r.type==='documents'){
-      const gallery=node('section','','enq-gallery');gallery.append(node('h4','Fichiers'));detail.append(gallery);
-      try{
-        const response=await client.read('files',r.id);if(!mounted||viewToken!==token||editor)return;
-        const selectedFiles=response.items.filter(f=>(r.files||[]).includes(f.id));
-        for(const f of selectedFiles)await showFile(f,r,gallery,viewToken);
-        if(canEdit(r)){
-          const input=node('input');input.type='file';input.multiple=true;input.accept='.jpg,.jpeg,.png,.webp,.pdf,.txt,.md';input.setAttribute('aria-label','Ajouter des fichiers');
-          input.addEventListener('change',async()=>{
-            try{
-              const next=[...(r.files||[])];if(next.length+input.files.length>10)throw new Error('Dix fichiers maximum');
-              busy=true;
-              for(const file of input.files){status.textContent='Envoi de '+file.name;const uploaded=await client.upload(r.id,file,{onProgress:p=>{status.textContent='Envoi : '+Math.round(p*100)+' %';}});next.push(uploaded.id);}
-              await client.save({type:r.type,id:r.id,zone:r.zone,baseRevision:r.revision,body:editableBody({...r,files:next})});
-              status.textContent='Fichiers ajoutés.';busy=false;render();
-            }catch(error){busy=false;showError(error);}
-          });
-          gallery.append(input);
-          for(const f of selectedFiles)gallery.append(button('Remplacer '+f.name,()=>replaceFile(r,f)));
-        }
-        const annotations=state.records.filter(a=>a.type==='annotations'&&a.document===r.id);
-        for(const a of annotations){
-          const row=node('p',a.texte||a.description||'Annotation');row.append(node('small',' · '+(a.zone.startsWith('user:')?'Privée':'Commune')));
-          const file=response.items.find(f=>f.id===a.fileId);
-          if(file&&!selectedFiles.some(f=>f.id===file.id))row.append(button('Voir la version annotée',()=>showFile(file,r,gallery,viewToken)));
-          if(canEdit(a))row.append(button('Modifier',()=>openEditor(a,'annotations')),button('Supprimer',()=>performAction(a,'trash')));
-          if(a.zone.startsWith('user:'))row.append(button('Partager une copie',()=>openEditor(null,'annotations',null,{...editableBody(a),zone:'commun'})));
-          gallery.append(row);
-        }
-      }catch(error){if(viewToken===token)gallery.append(node('p',error.message));}
-    }
-    if(canEdit(r)&&!r.zone.startsWith('user:'))detail.append(button('Voir l’historique',async()=>{const history=await client.read('history',r.id);if(viewToken!==token)return;const h=node('div');for(const event of history.items)h.append(node('p',event.action+' · révision '+event.revision));detail.append(h);}));
+    if(r.type==='documents'){await renderPiece(r,viewToken);return;}
+    detail.append(node('h3',recordTitle(r)),textView(r.texte||''));
+    renderLinks(r);detail.append(actionMenu('Actions de la note',objectActions(r,viewToken)).element);
+  }
+  async function renderPiece(r,viewToken){
+    const dossier=state.records.find(v=>v.id===contextDossier&&v.type==='enquetes'),context=pieceContext(r.id,dossier,state.records,linksIndex);
+    const breadcrumb=node('nav','','enq-breadcrumb');breadcrumb.setAttribute('aria-label','Contexte de la pièce');
+    if(context){breadcrumb.append(button('‹ '+recordTitle(dossier),()=>openObject(dossier),'quiet'),node('span','Pièce n° '+context.numero+' sur '+context.total));for(const [id,label]of [[context.precedent,'Pièce précédente'],[context.suivant,'Pièce suivante']])if(id){const b=button(label,()=>openObject(state.records.find(v=>v.id===id)),'quiet');b.setAttribute('aria-label',label);breadcrumb.append(b);}}
+    else breadcrumb.append(button('Retour aux pièces',()=>switchSpace('documents'),'quiet'));
+    breadcrumb.append(button('Mon carnet',()=>{notebookOpen=!notebookOpen;renderDetail();},'quiet'));detail.append(breadcrumb);
+    const panes=node('div','','enq-piece-panes'),viewer=node('section','','enq-viewer'),sheet=node('section','','enq-piece-sheet');panes.append(viewer,sheet);detail.append(panes);
+    sheet.append(node('p',(context?'PIÈCE N° '+context.numero+' · ':'')+(r.categorie||'Document'),'enq-piece-eyebrow'),node('span',(r.origine==='piece'?'Pièce reçue':'Contribution')+' · '+audienceLabel(r),'enq-badge'),node('h3',recordTitle(r)));
+    if(r.description)sheet.append(node('p',r.description,'enq-piece-description'));if(r.provenance)sheet.append(node('p','Provenance : '+r.provenance,'enq-piece-description'));if(r.texte)sheet.append(textView(r.texte));
+    const annotations=node('section','','enq-annotations');annotations.append(node('h4','Annotations'));sheet.append(annotations);
+    const linked=node('section','','enq-piece-links');linked.append(node('h4','Liée à'));sheet.append(linked);renderPieceLinks(r,linked,context);
+    const actions=node('div','','enq-piece-actions');actions.append(button('Noter dans mon carnet',()=>openEditor(null,'notes',r),'primary'));if(canEdit(r))actions.append(button('Modifier',()=>openEditor(r,r.type)));actions.append(actionMenu('Actions de la pièce',objectActions(r,viewToken).filter(item=>item.label!=='Modifier')).element);sheet.append(actions);
+    try{
+      const response=await client.read('files',r.id);if(!mounted||viewToken!==token||editor)return;
+      const files=response.items.filter(f=>(r.files||[]).includes(f.id)),file=files.find(f=>f.id===activeFileId)||files[0];activeFileId=file?.id||null;
+      for(const annotation of state.records.filter(a=>a.type==='annotations'&&a.document===r.id)){
+        const row=node('article','','enq-annotation-row'),siblings=state.records.filter(a=>a.type==='annotations'&&a.document===r.id&&a.fileId===annotation.fileId),numero=siblings.findIndex(a=>a.id===annotation.id)+1;
+        row.tabIndex=0;row.setAttribute('aria-label','Annotation '+numero+' : '+annotation.texte);row.append(node('span',String(numero),'enq-annotation-number'),textView(annotation.texte),node('small',annotation.zone.startsWith('user:')?'Privée':'Commune'));
+        const items=[];if(canEdit(annotation))items.push({label:'Modifier',action:()=>openEditor(annotation,'annotations')},{label:'Supprimer',variant:'danger',action:()=>performAction(annotation,'trash')});if(annotation.zone.startsWith('user:'))items.push({label:'Partager une copie',action:()=>openEditor(null,'annotations',null,{...editableBody(annotation),zone:'commun'})});if(items.length)row.append(actionMenu('Actions de l’annotation '+numero,items).element);
+        const original=response.items.find(f=>f.id===annotation.fileId);if(original&&original.id!==file?.id)row.append(button('Voir la version annotée',async()=>{viewer.replaceChildren();await showFile(original,r,viewer,viewToken);},'quiet'));
+        for(const event of ['focus','mouseenter'])row.addEventListener(event,()=>highlightAnnotation(annotation.id));annotationRows.set(annotation.id,row);annotations.append(row);
+      }
+      if(file)await showFile(file,r,viewer,viewToken);else viewer.append(node('p','Aucun fichier. Le texte de la pièce reste consultable.'));
+      if(viewToken!==token)return;
+      const strip=node('div','','enq-file-strip');strip.setAttribute('aria-label','Fichiers de la pièce');
+      for(const f of files){const choose=button(f.name,()=>{activeFileId=f.id;renderDetail();},'quiet');choose.setAttribute('aria-current',String(f.id===file?.id));if(f.contentType.startsWith('image/')){const h=await client.objectUrl(f);if(viewToken!==token||!mounted){h.release();return;}handles.push(h);const thumbnail=node('img');thumbnail.src=h.url;thumbnail.alt='';choose.append(thumbnail);}strip.append(choose);}
+      if(canEdit(r)){const input=node('input');input.type='file';input.multiple=true;input.accept='.jpg,.jpeg,.png,.webp,.pdf,.txt,.md';input.hidden=true;input.setAttribute('aria-label','Ajouter des fichiers');input.addEventListener('change',()=>uploadFiles(r,input.files).catch(showError));const add=button('+',()=>input.click());add.setAttribute('aria-label','Ajouter des fichiers');strip.append(add,input);if(file)strip.append(button('Remplacer ce fichier',()=>replaceFile(r,file),'quiet'));}
+      viewer.append(strip,node('small',(file?file.name+' · version '+file.version+' · ':'')+files.length+' fichiers sur 10'));
+    }catch(error){if(viewToken===token)viewer.append(node('p',error.message));}
+  }
+  function renderPieceLinks(r,host,context){
+    for(const lien of state.records.filter(l=>l.type==='liens'&&(l.a===r.id||l.b===r.id))){const target=all().find(v=>v.id===(lien.a===r.id?lien.b:lien.a));if(!target)continue;const chip=node('div','','enq-link-chip');chip.append(button((target.nom||recordTitle(target))+(lien.role?' · '+lien.role:''),()=>openObject(target),'quiet'));if(canEdit(lien))chip.append(actionMenu('Actions du lien '+(target.nom||recordTitle(target)),[{label:'Retirer le lien',variant:'danger',action:()=>performAction(lien,'trash')}]).element);host.append(chip);}
+    for(const relation of state.records.filter(v=>v.type==='relations'&&(v.a===r.id||v.b===r.id))){const other=state.records.find(v=>v.id===(relation.a===r.id?relation.b:relation.a));if(!other)continue;const dossier=state.records.find(v=>v.id===contextDossier),otherContext=pieceContext(other.id,dossier,state.records,linksIndex),reverse=relation.b===r.id;
+      const label=(reverse?{Appuie:'Appuyée par',Contredit:'Contredite par',Complète:'Complétée par','Renvoie à':'Référencée par'}[relation.nature]||relation.nature:relation.nature)+(context&&otherContext?' la pièce n° '+otherContext.numero:' '+recordTitle(other));const row=node('div',label,'enq-relation enq-relation--'+({'Appuie':'supports','Contredit':'opposes'}[relation.nature]||'neutral'));row.append(button('Ouvrir la pièce liée',()=>openObject(other),'quiet'));if(canEdit(relation))row.append(actionMenu('Actions de la relation',[{label:'Modifier la relation',action:()=>openEditor(relation,'relations')},{label:'Retirer la relation',variant:'danger',action:()=>performAction(relation,'trash')}]).element);host.append(row);}
+    host.append(button('+ Relier',()=>openLinkEditor(r),'quiet'),button('Ajouter une relation',()=>openEditor(null,'relations',null,{a:r.id}),'quiet'));
+  }
+  async function uploadFiles(r,files){
+    const next=[...(r.files||[])];if(next.length+files.length>10)throw new Error('Dix fichiers maximum');busy=true;
+    try{for(const file of files){status.textContent='Envoi de '+file.name;const uploaded=await client.upload(r.id,file,{onProgress:p=>{status.textContent='Envoi : '+Math.round(p*100)+' %';}});next.push(uploaded.id);}await client.save({type:r.type,id:r.id,zone:r.zone,baseRevision:r.revision,body:editableBody({...r,files:next})});status.textContent='Fichiers ajoutés.';}finally{busy=false;render();}
   }
   function renderLinks(r){
     const box=node('section','','enq-links');box.append(node('h4','Liens'));
@@ -206,7 +205,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     detail.append(box);
   }
   function actionMenu(label,items){
-    const menu=createActionMenu({documentRef:d,label,items:items.map(item=>({...item,action:()=>Promise.resolve().then(item.action).catch(showError)}))});menus.push(menu);return menu;
+    const menu=createActionMenu({documentRef:d,label,items:items.map(item=>({...item,action:()=>{try{return Promise.resolve(item.action()).catch(showError);}catch(error){showError(error);}}}))});menus.push(menu);return menu;
   }
   function audienceLabel(r){return r.zone==='mj'?'secret MJ':r.zone?.startsWith('user:')?'personnel':'visible du groupe';}
   function objectActions(r,viewToken){
@@ -264,22 +263,36 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
       if(canEdit(e))row.append(actionMenu('Actions de l’événement '+(e.titre||e.repere),[{label:'Modifier',action:()=>openEditor(e,'evenements')},{label:'Retirer',variant:'danger',action:()=>performAction(e,'trash')}]).element);list.append(row);
     }box.append(list,button('Ajouter un événement',()=>openEditor(null,'evenements',r),'quiet'));return box;
   }
+  function highlightAnnotation(id){
+    for(const [key,row]of annotationRows)row.setAttribute('data-highlight',String(key===id));
+    for(const [key,markers]of annotationMarkers)for(const marker of markers)marker.setAttribute('data-highlight',String(key===id));
+  }
+  function imagePins(f,r,imageBox){
+    const overlay=node('div','','enq-image-overlay');imageBox.append(overlay);
+    state.records.filter(a=>a.type==='annotations'&&a.document===r.id&&a.fileId===f.id).forEach((a,i)=>{
+      const marker=button(String(i+1),()=>{highlightAnnotation(a.id);annotationRows.get(a.id)?.focus();annotationRows.get(a.id)?.scrollIntoView?.({block:'nearest'});});marker.className='enq-marker'+(a.zone.startsWith('user:')?' enq-marker--private':'');marker.setAttribute('aria-label','Annotation '+(i+1)+' : '+(a.texte||'Sans texte'));
+      const anchor=node('div','','enq-pin-anchor');anchor.style.left=(a.x*100)+'%';anchor.style.top=(a.y*100)+'%';if(a.width&&a.height){anchor.style.width=(a.width*100)+'%';anchor.style.height=(a.height*100)+'%';anchor.classList.add('enq-marker-zone');}anchor.append(marker);overlay.append(anchor);
+      if(!annotationMarkers.has(a.id))annotationMarkers.set(a.id,[]);annotationMarkers.get(a.id).push(marker);marker.addEventListener('focus',()=>highlightAnnotation(a.id));
+    });
+  }
+  async function zoomFile(f,r,trigger){
+    const viewToken=token,h=await client.objectUrl(f);if(viewToken!==token||!mounted){h.release();return;}
+    const dialog=node('dialog','','enq-zoom');dialog.setAttribute('aria-label','Agrandissement : '+f.name);const image=node('img');image.src=h.url;image.alt=f.name;const box=node('div','','enq-image-box');box.append(image);imagePins(f,r,box);
+    let released=false;const close=()=>{if(released)return;released=true;h.release();dialog.remove();trigger?.focus();};dialog.addEventListener('close',close,{once:true});handles.push({release:()=>{dialog.close();close();}});
+    dialog.append(button('Fermer',()=>dialog.close()),box);root.append(dialog);dialog.showModal();
+  }
   async function showFile(f,r,host,viewToken){
     const h=await client.objectUrl(f);if(!mounted||viewToken!==token){h.release();return;}handles.push(h);
-    const wrap=node('figure','','enq-file');wrap.append(node('figcaption',f.name+' · version '+f.version));
-    const download=node('a','Télécharger');download.href=h.url;download.download=f.name;wrap.append(download);
+    const wrap=node('figure','','enq-file'),bar=node('div','','enq-viewer-toolbar');wrap.append(bar);
+    const download=node('a','Télécharger','enq-button enq-button--quiet');download.href=h.url;download.download=f.name;
     if(f.contentType.startsWith('image/')){
-      const image=node('img');image.src=h.url;image.alt=f.name;image.loading='lazy';wrap.append(image);
-      const imageBox=node('div','','enq-image-box');imageBox.append(image);wrap.append(imageBox);
-      const overlay=node('div','','enq-image-overlay');imageBox.append(overlay);
-      image.addEventListener('click',event=>{const rect=image.getBoundingClientRect();openEditor(null,'annotations',null,{document:r.id,fileId:f.id,version:f.version,x:(event.clientX-rect.left)/rect.width,y:(event.clientY-rect.top)/rect.height,width:0,height:0});});
-      for(const a of state.records.filter(a=>a.type==='annotations'&&a.fileId===f.id)){const marker=button(a.texte||'Annotation',()=>{status.textContent=a.texte;});marker.className='enq-marker';marker.style.left=(a.x*100)+'%';marker.style.top=(a.y*100)+'%';if(a.width&&a.height){marker.style.width=(a.width*100)+'%';marker.style.height=(a.height*100)+'%';marker.classList.add('enq-marker-zone');}overlay.append(marker);}
-      wrap.append(button('Agrandir',async()=>{const zoom=await client.objectUrl(f),copy=image.cloneNode(),dialog=node('dialog');copy.src=zoom.url;dialog.addEventListener('close',()=>zoom.release(),{once:true});dialog.append(button('Fermer',()=>{dialog.close();dialog.remove();}),copy);root.append(dialog);dialog.showModal();}));
-      wrap.append(node('small','Clique sur l’image pour placer une annotation, ou utilise le bouton ci-dessous.'));
-      wrap.append(button('Annoter cette image',()=>openEditor(null,'annotations',null,{document:r.id,fileId:f.id,version:f.version,x:.5,y:.5,width:0,height:0})));
-    }else if(f.contentType==='application/pdf'){const frame=node('iframe');frame.title=f.name;frame.src=h.url;frame.className='enq-pdf';wrap.append(frame);}
-    else {const blob=await client.blob(f);if(viewToken===token)wrap.append(textView(await blob.text()));}
-    host.append(wrap);
+      const image=node('img');image.src=h.url;image.alt=f.name;const imageBox=node('div','','enq-image-box');imageBox.append(image);wrap.append(imageBox);imagePins(f,r,imageBox);
+      const mode=button('Mode annotation',()=>{annotationMode=!annotationMode;mode.setAttribute('aria-pressed',String(annotationMode));help.hidden=!annotationMode;});mode.setAttribute('aria-pressed',String(annotationMode));const help=node('small','Clique sur l’image pour placer une annotation.');help.hidden=!annotationMode;
+      const enlarge=button('Agrandir',()=>zoomFile(f,r,enlarge));bar.append(mode,help,enlarge,download);
+      image.addEventListener('click',event=>{if(!annotationMode){zoomFile(f,r,enlarge).catch(showError);return;}const rect=image.getBoundingClientRect();openEditor(null,'annotations',null,{document:r.id,fileId:f.id,version:f.version,x:Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width)),y:Math.max(0,Math.min(1,(event.clientY-rect.top)/rect.height)),width:0,height:0});});
+    }else if(f.contentType==='application/pdf'){bar.append(download);const frame=node('iframe');frame.title=f.name;frame.src=h.url;frame.className='enq-pdf';wrap.append(frame);}
+    else {bar.append(download);const blob=await client.blob(f);if(viewToken===token)wrap.append(textView(await blob.text()));}
+    if(viewToken===token)host.append(wrap);
   }
   async function replaceFile(r,f){
     const input=node('input');input.type='file';input.accept='.jpg,.jpeg,.png,.webp,.pdf,.txt,.md';
