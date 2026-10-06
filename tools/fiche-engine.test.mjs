@@ -234,3 +234,13 @@ test('la reconnaissance et les variantes carrière conservent les choix et les r
     assert.equal(isCaracInCareer(career, 5, 'int', selected, overrides), true);
     assert.equal(isCaracInCareer(career, 5, 'cc', selected, overrides), false);
 });
+
+test('une alternative « A (X ou Y) » rend chaque option listée talent de carrière, pas les autres', () => {
+    const career = { id: 'alt', rangs: [{ rang: 1, talents: ['Sens aiguisé (Goût ou Toucher)', 'Artisan (Forgeron, Orfèvre ou Ingénieur)', 'Maître (au choix)'] }] };
+    for (const name of ['Sens aiguisé (Goût)', 'Sens aiguisé (Toucher)', 'Artisan (Orfèvre)', 'Artisan (Ingénieur)', 'Maître (Escrime)']) {
+        assert.equal(isTalentInCareer(career, 1, name), true, name);
+    }
+    for (const name of ['Sens aiguisé (Odorat)', 'Artisan (Tailleur)', 'Sens aiguisé']) {
+        assert.equal(isTalentInCareer(career, 1, name), false, name);
+    }
+});

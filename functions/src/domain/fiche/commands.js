@@ -340,18 +340,11 @@ function requirementForPath(data, career, rank, chosen, overrides, skillResolver
         .filter(([name, advances]) => advances >= threshold && hasAvailableSkill(available, name, skillResolver));
     const currentRankVariants = getVariantsToConsider(career, rank, chosen);
     const currentRankTalents = currentRankVariants.flatMap(variant => getEffectiveTalents(career, rank, variant, overrides));
-    const talentNames = new Set(currentRankTalents.map(name => {
-        const resolved = talentResolver?.resolve(name);
-        return (resolved?.status === 'resolved' ? resolved.entry.nom : name).toLowerCase().trim();
-    }));
+    // Même règle que la tarification : alternatives « A (X ou Y) » et emplacements « au choix » compris.
+    const rankTalents = { id: 'rank-talents', rangs: [{ rang: 1, talents: currentRankTalents }] };
     const hasTalent = (Array.isArray(data.talentsAcq) ? data.talentsAcq : []).some(entry => {
         const name = typeof entry === 'string' ? entry : entry?.nom;
-        if (typeof name !== 'string') return false;
-        const resolved = talentResolver?.resolve(name);
-        const normalized = (resolved?.status === 'resolved' ? resolved.entry.nom : name).toLowerCase().trim();
-        return talentNames.has(normalized)
-            || (currentRankTalents.some(talent => /\((?:.*?\bchoix\b|n'importe quelle|celle du lanceur).*?\)$/i.test(talent)
-                && talent.split('(')[0].trim().toLowerCase() === normalized.split('(')[0].trim()));
+        return typeof name === 'string' && isTalentInCareer(rankTalents, 1, name, {}, {}, talentResolver);
     });
     return {
         complete: missingCaracs.length === 0 && qualifiedSkills.length >= 8 && hasTalent,

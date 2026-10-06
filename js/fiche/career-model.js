@@ -102,6 +102,11 @@ export function getCareerTalentSets(career, rang, chosenVariants = {}, careerOve
             for (const talent of getEffectiveTalents(career, currentRank, variant, careerOverrides)) {
                 const resolved = talentResolver?.resolve(talent);
                 exact.add((resolved?.status === 'resolved' ? resolved.entry.nom : talent).toLowerCase());
+                // « A (X ou Y) » : acheter une seule option listée compte comme talent de carrière.
+                for (const option of expandChoiceSkill(talent, name => name)) {
+                    const optionResolved = talentResolver?.resolve(option);
+                    exact.add((optionResolved?.status === 'resolved' ? optionResolved.entry.nom : option).toLowerCase());
+                }
                 if (/\((?:.*?\bchoix\b|n'importe quelle|celle du lanceur).*?\)$/i.test(talent)) {
                     openBases.add(talent.split('(')[0].trim().toLowerCase());
                 }

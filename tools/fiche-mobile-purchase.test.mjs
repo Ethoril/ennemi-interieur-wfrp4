@@ -142,7 +142,21 @@ test('talent « A ou B » : seuls les choix listés sont acceptés, tarif identi
     const picked = purchaseTarget(artisan, engine, careers, { kind: 'talent', nom: slot, pick: 'Toucher' });
     assert.equal(picked.name, 'Sens aiguisé (Toucher)');
     // Le serveur tarife le nom composé : même résultat que l'aperçu, quel que soit le rattachement à la carrière.
-    assertAgrees('sens aiguisé', artisan, { kind: 'talent', nom: slot, pick: 'Toucher' }, 1, picked.inCareer);
+    assertAgrees('sens aiguisé', artisan, { kind: 'talent', nom: slot, pick: 'Toucher' }, 1, true);
+    // Option listée = talent de carrière (100 XP) ; le serveur et l'aperçu s'accordent.
+    assert.equal(picked.inCareer, true);
+    assert.equal(purchasePreview(picked, 1, 5000).cost, 100);
+    // Hors liste : rangs du Rang 3 de l'Artisan, un autre sens reste hors carrière (200 XP).
+    const sense = { kind: 'talent', nom: 'Sens aiguisé (Odorat)' };
+    assertAgrees('sens hors liste', artisan, sense, 1, false);
+});
+
+test('achèvement de rang : une option choisie d’une alternative compte comme talent du rang', () => {
+    const r3 = data('Artisan', { rang: '3' });
+    const withTalent = nom => engine.evaluateCareerCompletion({ ...r3, talentsAcq: [{ id: 't', nom }] }, careers.find(c => c.nom === 'Artisan'), 3);
+    assert.equal(withTalent('Sens aiguisé (Goût)').hasTalent, true);
+    assert.equal(withTalent('Sens aiguisé (Odorat)').hasTalent, false);
+    assert.equal(withTalent('Bricoleur').hasTalent, true);
 });
 
 // Sorts (mineur, domaine avec palier) et miracle : l'aperçu égale le coût accepté par le moteur, le payload est exact.
