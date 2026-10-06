@@ -274,6 +274,10 @@
   display: grid;
   gap: var(--space-md);
   padding: 0 var(--space-lg) calc(var(--space-lg) + var(--m-safe-bottom, 0px));
+  /* Lignes à leur hauteur de contenu : sans cela, une liste à overflow: hidden (sorts, miracles, carrières) était
+     écrasée à la hauteur restante et coupée, sans défilement. Le corps défile, la poignée reste en place. */
+  grid-auto-rows: max-content;
+  min-height: 0;
   overflow-y: auto;
 }
 
