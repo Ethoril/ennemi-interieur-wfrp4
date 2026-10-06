@@ -6,33 +6,20 @@ import { createEnqueteWorkspaceView } from '../js/enquetes-workspace.js';
 import { buildSearch } from '../js/data/enquetes-domain.js';
 import { selectEnqueteExport } from '../js/data/enquetes-export.js';
 import { convertLegacyIndice,legacyStoragePath } from './lib/enquetes-import-model.mjs';
-class Element {
-  constructor(d,tag){this.ownerDocument=d;this.tagName=tag;this.children=[];this.listeners=new Map();this.attributes={};this.className='';this.textContent='';this.value='';this.selectionStart=0;this.selectionEnd=0;this.classList={add:value=>{this.className+=' '+value;}};}
-  get firstChild(){return this.children[0];}get options(){return this.children;}get selectedOptions(){return this.options.filter(v=>v.selected);}
-  append(...children){for(const c of children){c.remove?.();c.parentNode=this;this.children.push(c);}}
-  replaceChildren(...children){for(const c of this.children)c.parentNode=null;this.children=[];this.append(...children);}
-  remove(){if(this.parentNode){this.parentNode.children=this.parentNode.children.filter(c=>c!==this);this.parentNode=null;}}
-  setAttribute(k,v){this.attributes[k]=String(v);}getAttribute(k){return this.attributes[k]??null;}
-  addEventListener(k,fn){if(!this.listeners.has(k))this.listeners.set(k,[]);this.listeners.get(k).push(fn);}
-  dispatch(type){for(const fn of this.listeners.get(type)||[])fn({target:this,preventDefault(){}});}
-  focus(){this.ownerDocument.activeElement=this;}
-  querySelectorAll(selector){const result=[],selectors=selector.split(',');const walk=n=>{for(const c of n.children||[]){if(selectors.some(s=>s.startsWith('.')?c.className?.split(' ').includes(s.slice(1)):c.tagName===s))result.push(c);walk(c);}};walk(this);return result;}
-  querySelector(s){return this.querySelectorAll(s)[0]||null;}
-  setSelectionRange(a,b){this.selectionStart=a;this.selectionEnd=b;}
-}
+import { Element, createDocument } from './lib/enquetes-test-dom.mjs';
 const flush=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
 async function fixture({role='joueur',id=null}={}){
   let counter=0,onChange,saveHook=null;
   const records=[{id:'e',type:'enquetes',titre:'Affaire',zone:'commun',authorUid:'gm',revision:1,ordre:[]},{id:'n',type:'notes',texte:'Mon texte',titre:'Note',zone:'user:a',authorUid:'a',revision:1,etiquettes:[]}];
   const drafts=new Map(),receipts=new Map(),calls=[],session={uid:'a',active:true,role,maintenance:false};
-  const d={activeElement:null,createElement:tag=>new Element(d,tag),createTextNode:text=>Object.assign(new Element(d,'text'),{textContent:text})};
+  const d=createDocument();
   const container=new Element(d,'main'),emit=()=>onChange({session,records:[...records],pnjs:[]});
   const runtime={newEnqueteId:()=> 'new'+(++counter),saveEnqueteDraft:(uid,id,v)=>{drafts.set(id,{...globalThis.structuredClone(v),uid});return true;},readEnqueteDraft:(uid,id)=>drafts.get(id),removeEnqueteDraft:(uid,id)=>drafts.delete(id),listEnqueteDrafts:uid=>[...drafts].filter(([,v])=>v.uid===uid).map(([id,v])=>({id,...v})),createEnqueteClient(options){onChange=options.onChange;globalThis.queueMicrotask(emit);return{
     async save(c){calls.push(globalThis.structuredClone(c));if(saveHook)await saveHook(c);if(receipts.has(c.operationId))return receipts.get(c.operationId);const current=records.find(r=>r.id===c.id);if((current?.revision||0)!==(c.baseRevision||0)){const error=new Error('La note a changé');error.code='aborted';error.current=current;throw error;}const value={...c.body,id:c.id||runtime.newEnqueteId(),type:c.type,zone:c.zone||'user:a',authorUid:'a',revision:(current?.revision||0)+1};if(current)records.splice(records.indexOf(current),1);records.push(value);const result={id:value.id,zone:value.zone,revision:value.revision};if(c.operationId)receipts.set(c.operationId,result);emit();return result;},
     read:async()=>({items:[{id:'trash',type:'documents',titre:'Pièce supprimée',zone:'user:a',authorUid:'a',revision:2}],id:null}),close(){},signOut(){},action:async()=>{}
   };}};
   const view=createEnqueteWorkspaceView({container,id,loadRuntime:async()=>runtime});await view.mount();await flush();
-  const button=label=>container.querySelectorAll('button').find(b=>b.textContent===label);
+  const button=label=>container.querySelectorAll('button').find(b=>b.textContent===label||b.getAttribute('role')==='tab'&&b.textContent.startsWith(({Enquêtes:'Dossiers',Documents:'Pièces','Mon carnet':'Carnet'}[label]||label)+' '));
   const field=label=>container.querySelectorAll('label').find(l=>l.textContent===label).children[0];
   return{view,container,records,drafts,calls,emit,button,field,hook:fn=>{saveHook=fn;},session};
 }
@@ -43,7 +30,7 @@ test('player entry points keep enquiries read-only and notes private',async()=>{
 });
 test('unsaved new draft remains discoverable after leaving the editor',async()=>{
   const f=await fixture();f.button('Mon carnet').dispatch('click');f.button('Nouvelle note').dispatch('click');
-  f.field('Titre').value='À reprendre';f.field('Texte').value='Une piste';f.container.querySelector('form').dispatch('input');
+  f.field('Titre').value='À reprendre';f.field('Texte').value='Une piste';f.container.querySelector('.enq-editor').dispatch('input');
   f.button('Fermer en conservant le brouillon').dispatch('click');assert.ok(f.button('Reprendre le brouillon : À reprendre'));f.view.unmount();
 });
 test('trash async response renders despite the detail pane refresh',async()=>{
@@ -53,17 +40,17 @@ test('trash async response renders despite the detail pane refresh',async()=>{
 test('editing during an outstanding save keeps the newer body and the updated revision',async()=>{
   const f=await fixture({id:'n'});f.button('Modifier').dispatch('click');
   let resolve;f.hook(()=>new Promise(r=>{resolve=r;}));
-  f.field('Texte').value='Première version';f.container.querySelector('form').dispatch('input');f.container.querySelector('form').dispatch('submit');await flush();
-  f.field('Texte').value='Version plus récente';f.container.querySelector('form').dispatch('input');resolve();await flush();
+  f.field('Texte').value='Première version';f.container.querySelector('.enq-editor').dispatch('input');f.container.querySelector('.enq-editor').dispatch('submit');await flush();
+  f.field('Texte').value='Version plus récente';f.container.querySelector('.enq-editor').dispatch('input');resolve();await flush();
   assert.equal(f.records.find(r=>r.id==='n').texte,'Première version');
   const draft=f.drafts.get('n');assert.equal(draft.body.texte,'Version plus récente');assert.equal(draft.baseRevision,2);assert.equal(draft.pending,null);
-  f.hook(null);f.container.querySelector('form').dispatch('submit');await flush();
+  f.hook(null);f.container.querySelector('.enq-editor').dispatch('submit');await flush();
   assert.equal(f.records.find(r=>r.id==='n').texte,'Version plus récente');assert.equal(f.records.find(r=>r.id==='n').revision,3);f.view.unmount();
 });
 test('conflict preserves the local text until explicit comparison choice',async()=>{
-  const f=await fixture({id:'n'});f.button('Modifier').dispatch('click');f.field('Texte').value='Mon brouillon';f.container.querySelector('form').dispatch('input');
+  const f=await fixture({id:'n'});f.button('Modifier').dispatch('click');f.field('Texte').value='Mon brouillon';f.container.querySelector('.enq-editor').dispatch('input');
   f.records.find(r=>r.id==='n').revision=2;f.records.find(r=>r.id==='n').texte='Autre appareil';f.emit();
-  f.container.querySelector('form').dispatch('submit');await flush();
+  f.container.querySelector('.enq-editor').dispatch('submit');await flush();
   assert.equal(f.drafts.get('n').body.texte,'Mon brouillon');assert.ok(f.button('Garder mon texte après comparaison'));assert.equal(f.records.find(r=>r.id==='n').texte,'Autre appareil');f.view.unmount();
 });
 test('an enquiry export includes authorized evidence and timeline, with private content only by choice',()=>{
@@ -85,9 +72,9 @@ test('search handles the reference campaign volume, case and accents in under 20
 
 
 test('switching accounts closes the private editor and preserves its draft only for the original owner',async()=>{
-  const f=await fixture({id:'n'});f.button('Modifier').dispatch('click');f.field('Texte').value='Confidentiel A';f.container.querySelector('form').dispatch('input');
+  const f=await fixture({id:'n'});f.button('Modifier').dispatch('click');f.field('Texte').value='Confidentiel A';f.container.querySelector('.enq-editor').dispatch('input');
   f.session.uid='b';f.records.splice(0);f.emit();
-  assert.equal(f.container.querySelector('form'),null);assert.equal(f.button('Reprendre le brouillon : Note'),undefined);
+  assert.equal(f.container.querySelector('.enq-editor'),null);assert.equal(f.button('Reprendre le brouillon : Note'),undefined);
   assert.equal(f.drafts.get('n').body.texte,'Confidentiel A');f.view.unmount();
 });
 

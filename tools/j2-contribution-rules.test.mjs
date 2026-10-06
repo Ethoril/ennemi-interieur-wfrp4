@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 
 const project = 'demo-j2-contributions';
 let env, gm, player, unverified, stranger;
@@ -103,6 +103,13 @@ test('seul le snapshot catalogue publié est lisible; draft et historique resten
     await assert.rejects(getDoc(doc(gm, 'referentiel_drafts/mj')));
     await assert.rejects(getDoc(doc(gm, 'referentiel_history/op-1')));
     await assert.rejects(setDoc(doc(gm, 'referentiels/public'), { catalogue: { secret: true } }));
+});
+
+test('la requête publique de relations reste disponible sans exposer les liens vers un PNJ masqué', async () => {
+    const publicIds = ['a', 'b'];
+    const snapshot = await getDocs(query(collection(player, 'relations'),
+        where('visibleJoueurs', '==', true), where('source', 'in', publicIds), where('cible', 'in', publicIds)));
+    assert.deepEqual(snapshot.docs.map(item => item.id), ['managed']);
 });
 
 test('une fois géré, le contenu public ne peut plus être modifié directement, tandis que les relations conservent la courbure', async () => {

@@ -1,0 +1,7 @@
+/* Habillage propre à la fixture de recette : jamais chargé en production. */
+.qa--mobile .page-header--compact { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; }
+.qa--mobile .page-header--compact h1 { font-size:18px; }
+.qa--mobile .page-header--compact p { display:none; }
+.qa--mobile #m-header-action { border:0; background:transparent; color:var(--gold); font-size:24px; min-width:44px; min-height:44px; }
+.qa--scroll { overflow:hidden; }
+.qa--scroll #qa { height:calc(100dvh - 64px); overflow-y:auto; }

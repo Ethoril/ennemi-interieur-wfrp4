@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440">
+<title>Bureau — dossier d’enquête</title>
+<!-- Maquette statique de référence (1440×1080). Couleurs en dur : le code réel utilise les variables de css/base.css (voir ../README.md, § Jetons). -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=Crimson+Text:ital,wght@0,400;0,600;1,400&amp;display=swap">
+<style>
+body{margin:0;background:#07070d}
+a{color:#e4c76b}a:hover{color:#f0d98a}
+.chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:15px;border:1px solid rgba(201,168,76,.28);background:transparent;color:#cbbfa8;font:500 15px 'Crimson Text',serif;cursor:pointer}
+.chip.on{background:rgba(201,168,76,.16);border-color:#c9a84c;color:#f0e6d3}
+.slip{position:relative;display:flex;flex-direction:column;gap:8px;padding:18px 18px 14px;background:#e6d7b5;color:#2a2116;border-radius:3px;box-shadow:0 1px 0 rgba(255,255,255,.4) inset,0 10px 24px rgba(0,0,0,.45);text-decoration:none}
+.slip:hover{color:#2a2116;transform:translateY(-2px)}
+.num{white-space:nowrap;font:700 11px Cinzel,serif;letter-spacing:.14em;color:#7a1f1f}
+.cat{font:600 11px Cinzel,serif;letter-spacing:.12em;color:#6b5a3e;text-transform:uppercase}
+.ghost{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:6px;border:1px solid rgba(201,168,76,.3);background:transparent;color:#e8dcc8;font:600 15px 'Crimson Text',serif;cursor:pointer}
+.eyebrow{font:600 11px Cinzel,serif;letter-spacing:.16em;text-transform:uppercase;color:#a89b84}
+</style>
+</head>
+<body>
+<div style="width:1440px;height:1080px;box-sizing:border-box;display:flex;flex-direction:column;background:#07070d;color:#e8dcc8;font-family:'Crimson Text',Georgia,serif">
+
+  <nav aria-label="Navigation du site" style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:28px;padding:0 32px;border-bottom:1px solid rgba(201,168,76,.18);background:#0b0b14">
+    <span style="font:700 16px Cinzel,serif;color:#c9a84c;letter-spacing:.06em">L’Ennemi Intérieur</span>
+    <span style="display:flex;gap:22px;font-size:16px;color:#a89b84">
+      <a href="#" style="color:#a89b84;text-decoration:none">Le Groupe</a>
+      <a href="#" style="color:#a89b84;text-decoration:none">Cartes</a>
+      <a href="#" style="color:#a89b84;text-decoration:none">PNJs</a>
+      <a href="#" aria-current="page" style="color:#e4c76b;text-decoration:none;border-bottom:2px solid #c9a84c;padding-bottom:3px">Enquêtes</a>
+      <a href="#" style="color:#a89b84;text-decoration:none">Calendrier</a>
+    </span>
+    <span style="margin-left:auto;display:flex;align-items:center;gap:10px;font-size:15px;color:#a89b84">
+      <span style="width:28px;height:28px;border-radius:50%;background:#2a2440;display:inline-flex;align-items:center;justify-content:center;color:#e4c76b;font:600 13px Cinzel,serif">E</span>Elysia
+    </span>
+  </nav>
+
+  <div style="flex:1;min-height:0;display:grid;grid-template-columns:316px minmax(0,1fr) 320px">
+
+    <aside aria-label="Dossiers" style="display:flex;flex-direction:column;gap:16px;padding:22px 20px;border-right:1px solid rgba(201,168,76,.14);background:#0b0b14;min-height:0">
+      <div role="tablist" aria-label="Espace" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:4px;border-radius:9px;background:#141422;border:1px solid rgba(201,168,76,.16)">
+        <button role="tab" aria-selected="true" style="height:38px;border:0;border-radius:6px;background:#2a2440;color:#f0e6d3;font:600 15px 'Crimson Text',serif">Dossiers <span style="color:#c9a84c">3</span></button>
+        <button role="tab" aria-selected="false" style="height:38px;border:0;border-radius:6px;background:transparent;color:#a89b84;font:600 15px 'Crimson Text',serif">Pièces <span>5</span></button>
+        <button role="tab" aria-selected="false" style="height:38px;border:0;border-radius:6px;background:transparent;color:#a89b84;font:600 15px 'Crimson Text',serif">Carnet <span>2</span></button>
+      </div>
+      <label style="display:flex;align-items:center;gap:10px;height:42px;padding:0 12px;border-radius:8px;background:#141422;border:1px solid rgba(201,168,76,.22);color:#a89b84">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <span style="position:absolute;left:-9999px">Rechercher partout</span>
+        <input type="search" placeholder="Pièce, PNJ, note…" style="flex:1;min-width:0;border:0;background:transparent;color:#e8dcc8;font:16px 'Crimson Text',serif;outline:none">
+        <kbd style="font:12px ui-monospace,monospace;color:#7d7363;border:1px solid #3a3550;border-radius:4px;padding:1px 6px">/</kbd>
+      </label>
+      <div style="display:flex;flex-wrap:wrap;gap:6px" aria-label="Filtrer par état">
+        <button class="chip on"><span style="width:8px;height:8px;border-radius:50%;background:#c9a84c"></span>Ouvertes 1</button>
+        <button class="chip"><span style="width:8px;height:8px;border-radius:50%;background:#8a8a9a"></span>En pause 1</button>
+        <button class="chip"><span style="width:8px;height:8px;border-radius:50%;background:#4caf7d"></span>Résolues 1</button>
+        <button class="chip">Archivées</button>
+      </div>
+
+      <ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px">
+        <li>
+          <a href="#" aria-current="true" style="display:grid;grid-template-columns:14px 1fr;gap:4px 10px;padding:14px;border-radius:10px;background:#1a1a2e;outline:1px solid #c9a84c;text-decoration:none;color:#e8dcc8">
+            <span style="margin-top:7px;width:10px;height:10px;border-radius:50%;background:#c9a84c;box-shadow:0 0 0 3px rgba(201,168,76,.2)"></span>
+            <span style="font:600 17px Cinzel,serif;color:#f0e6d3;line-height:1.25">Qui finance la Main Pourpre ?</span>
+            <span></span>
+            <span style="font-size:14px;color:#a89b84">3 pièces · 2 PNJ · màj session 13</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" style="display:grid;grid-template-columns:14px 1fr;gap:4px 10px;padding:14px;border-radius:10px;text-decoration:none;color:#e8dcc8">
+            <span style="margin-top:7px;width:10px;height:10px;border-radius:50%;background:#8a8a9a"></span>
+            <span style="font:600 17px Cinzel,serif;color:#d9cdb6;line-height:1.25">L’héritage de Kastor Lieberung</span>
+            <span></span>
+            <span style="font-size:14px;color:#8f846f">Aucune pièce · en pause</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" style="display:grid;grid-template-columns:14px 1fr;gap:4px 10px;padding:14px;border-radius:10px;text-decoration:none;color:#e8dcc8">
+            <span style="margin-top:7px;width:10px;height:10px;border-radius:50%;background:#4caf7d"></span>
+            <span style="font:600 17px Cinzel,serif;color:#d9cdb6;line-height:1.25">Ce qui rampe sous Bögenhafen</span>
+            <span></span>
+            <span style="font-size:14px;color:#8f846f">Résolue · conclusion rédigée</span>
+          </a>
+        </li>
+      </ul>
+
+      <div style="margin-top:auto;display:flex;flex-direction:column;gap:4px;border-top:1px solid rgba(201,168,76,.12);padding-top:12px;font-size:15px">
+        <a href="#" style="color:#a89b84;text-decoration:none;padding:6px 0">Reprendre le brouillon : « Filature au port »</a>
+        <span style="display:flex;gap:18px"><a href="#" style="color:#8f846f;text-decoration:none">Corbeille</a><a href="#" style="color:#8f846f;text-decoration:none">Exporter</a></span>
+      </div>
+    </aside>
+
+    <main style="min-width:0;overflow:hidden;padding:28px 40px;display:flex;flex-direction:column;gap:24px;background:radial-gradient(ellipse at 50% 0%,rgba(122,31,31,.10),transparent 60%),#0e0e18">
+      <header style="display:grid;grid-template-columns:76px 1fr;gap:16px 22px;align-items:start">
+        <div aria-label="État : ouverte" style="width:76px;height:76px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#b23a2e,#7a1f1f 62%,#4a0e0e);box-shadow:0 4px 10px rgba(0,0,0,.6),inset 0 -3px 6px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;transform:rotate(-8deg)">
+          <span style="width:56px;height:56px;border-radius:50%;border:1.5px dashed rgba(240,214,170,.55);display:flex;align-items:center;justify-content:center;font:700 11px Cinzel,serif;letter-spacing:.1em;color:#f3dcb4">OUVERTE</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+          <span class="eyebrow">Dossier d’enquête · visible du groupe</span>
+          <h1 style="margin:0;font:700 34px/1.15 Cinzel,serif;color:#f0e6d3;letter-spacing:.01em">Qui finance la Main Pourpre ?</h1>
+          <p style="margin:0;font:italic 21px/1.45 'Crimson Text',serif;color:#d9c9a3;max-width:720px">« Suivre la piste du marchand Teugen et de son correspondant au conseil. »</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
+            <span style="font-size:14px;color:#a89b84;border:1px solid rgba(201,168,76,.22);border-radius:4px;padding:1px 8px">#secte</span>
+            <span style="font-size:14px;color:#a89b84;border:1px solid rgba(201,168,76,.22);border-radius:4px;padding:1px 8px">#argent</span>
+          </div>
+        </div>
+        <div style="grid-column:2;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div role="tablist" aria-label="Vue du dossier" style="display:flex;padding:3px;border-radius:8px;border:1px solid rgba(201,168,76,.2)">
+            <button role="tab" aria-selected="true" style="height:34px;padding:0 12px;border:0;border-radius:6px;background:#2a2440;color:#f0e6d3;font:600 14px 'Crimson Text',serif">Dossier</button>
+            <button role="tab" aria-selected="false" style="height:34px;padding:0 12px;border:0;border-radius:6px;background:transparent;color:#a89b84;font:600 14px 'Crimson Text',serif">Tableau des liens</button>
+          </div>
+          <button style="display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px;border-radius:6px;border:0;background:#c9a84c;color:#1a1408;font:700 15px 'Crimson Text',serif;cursor:pointer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Ajouter une pièce
+          </button>
+          <button class="ghost" aria-label="Plus d’actions : relier, exporter, historique, visibilité, corbeille" style="width:40px;padding:0;justify-content:center">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg>
+          </button>
+        </div>
+      </header>
+
+      <section aria-labelledby="h-pieces" style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:baseline;gap:12px">
+          <h2 id="h-pieces" style="margin:0;font:600 15px Cinzel,serif;letter-spacing:.14em;color:#c9a84c;text-transform:uppercase">Pièces du dossier</h2>
+          <span style="font-size:15px;color:#8f846f">ordre fixé par le MJ</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px">
+          <a href="#" class="slip" style="transform:rotate(-.6deg)">
+            <span style="display:flex;justify-content:space-between"><span class="num">PIÈCE N° 1</span><span class="cat">Lettre</span></span>
+            <span style="font:700 18px/1.2 Cinzel,serif">Lettre retrouvée chez le marchand</span>
+            <span style="font-size:15px;line-height:1.35;color:#4a3d2a">Le sceau porte un soleil noir. Signée d’un simple « J. »</span>
+            <span style="height:74px;border-radius:2px;background:linear-gradient(135deg,#8a7656,#5b4a33);display:flex;align-items:flex-end;padding:6px;box-sizing:border-box;font-size:12px;color:#f3e7cc">lettre-scellee.webp</span>
+            <span style="display:flex;gap:10px;font-size:13px;color:#6b5a3e"><span>1 fichier</span><span>2 annotations</span></span>
+          </a>
+          <a href="#" class="slip" style="transform:rotate(.5deg)">
+            <span style="display:flex;justify-content:space-between"><span class="num">PIÈCE N° 2</span><span class="cat">Rapport</span></span>
+            <span style="font:700 18px/1.2 Cinzel,serif">Extrait du registre des péages</span>
+            <span style="font-size:15px;line-height:1.35;color:#4a3d2a">Trois barges de Teugen passées sans inspection.</span>
+            <span style="margin-top:auto;align-self:flex-start;font:600 13px 'Crimson Text',serif;color:#2f5a3f;background:rgba(76,175,125,.18);border-radius:3px;padding:2px 8px">Appuie la pièce n° 1</span>
+          </a>
+          <a href="#" class="slip" style="transform:rotate(-.3deg)">
+            <span style="display:flex;justify-content:space-between"><span class="num">PIÈCE N° 3</span><span class="cat">Carte</span></span>
+            <span style="font:700 18px/1.2 Cinzel,serif">Plan des égouts annoté</span>
+            <span style="font-size:15px;line-height:1.35;color:#4a3d2a">Croquis réalisé par Elysia.</span>
+            <span style="margin-top:auto;font-size:13px;color:#6b5a3e">Contribution · Elysia</span>
+          </a>
+          <button style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:220px;border:1.5px dashed rgba(201,168,76,.4);border-radius:4px;background:transparent;color:#c9a84c;font:600 16px 'Crimson Text',serif;cursor:pointer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+            Verser une pièce<span style="font-size:14px;color:#8f846f;font-weight:400">ou glisser un fichier ici</span>
+          </button>
+        </div>
+      </section>
+
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:36px">
+        <section aria-labelledby="h-pnj" style="display:flex;flex-direction:column;gap:12px">
+          <h2 id="h-pnj" style="margin:0;font:600 15px Cinzel,serif;letter-spacing:.14em;color:#c9a84c;text-transform:uppercase">Personnages</h2>
+          <a href="#" style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;background:#141422;text-decoration:none;color:#e8dcc8">
+            <span style="width:44px;height:44px;border-radius:50%;background:#2a2440;border:1.5px solid #c9a84c;display:flex;align-items:center;justify-content:center;font:700 15px Cinzel,serif;color:#e4c76b">JT</span>
+            <span style="display:flex;flex-direction:column"><span style="font-size:17px;font-weight:600;color:#f0e6d3">Johannes Teugen</span><span style="font-size:14px;color:#e06a6a">Suspect</span></span>
+          </a>
+          <a href="#" style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;background:#141422;text-decoration:none;color:#e8dcc8">
+            <span style="width:44px;height:44px;border-radius:50%;background:#2a2440;border:1.5px solid #8a8a9a;display:flex;align-items:center;justify-content:center;font:700 15px Cinzel,serif;color:#cbbfa8">CM</span>
+            <span style="display:flex;flex-direction:column"><span style="font-size:17px;font-weight:600;color:#f0e6d3">Conseiller Magirius</span><span style="font-size:14px;color:#a89b84">Destinataire présumé</span></span>
+          </a>
+          <button class="ghost" style="align-self:flex-start;height:36px;font-size:14px">Relier un personnage</button>
+        </section>
+
+        <section aria-labelledby="h-chrono" style="display:flex;flex-direction:column;gap:12px">
+          <h2 id="h-chrono" style="margin:0;font:600 15px Cinzel,serif;letter-spacing:.14em;color:#c9a84c;text-transform:uppercase">Chronologie</h2>
+          <ol style="list-style:none;margin:0;padding:0 0 0 22px;border-left:1.5px solid rgba(201,168,76,.35);display:flex;flex-direction:column;gap:16px">
+            <li style="position:relative">
+              <span style="position:absolute;left:-29px;top:6px;width:11px;height:11px;border-radius:50%;background:#0e0e18;border:2px solid #c9a84c"></span>
+              <span style="display:block;font-size:13px;color:#a89b84;letter-spacing:.04em">AVANT LE CARNAVAL · SESSION 12</span>
+              <span style="display:block;font-size:18px;font-weight:600;color:#f0e6d3">Découverte de la lettre</span>
+              <span style="display:block;font-size:15px;color:#b8ac94">La pièce n° 1 est remise au groupe.</span>
+            </li>
+            <li style="position:relative">
+              <span style="position:absolute;left:-29px;top:6px;width:11px;height:11px;border-radius:50%;background:#c9a84c"></span>
+              <span style="display:block;font-size:13px;color:#a89b84;letter-spacing:.04em">VEILLE DE LA SCHAFFENFEST · SESSION 13</span>
+              <span style="display:block;font-size:18px;font-weight:600;color:#f0e6d3">Filature au port</span>
+              <span style="display:block;font-size:15px;color:#b8ac94">Les barges sont déchargées de nuit.</span>
+            </li>
+          </ol>
+          <button class="ghost" style="align-self:flex-start;height:36px;font-size:14px">Ajouter un événement</button>
+        </section>
+      </div>
+    </main>
+
+    <aside aria-labelledby="h-carnet" style="display:flex;flex-direction:column;gap:14px;padding:24px 22px;border-left:1px solid rgba(201,168,76,.14);background:#11111d;min-height:0">
+      <div style="display:flex;align-items:center;gap:8px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>
+        <h2 id="h-carnet" style="margin:0;font:600 15px Cinzel,serif;letter-spacing:.14em;color:#c9a84c;text-transform:uppercase">Mon carnet</h2>
+        <span style="margin-left:auto;font-size:13px;color:#8f846f">privé</span>
+      </div>
+      <div style="border-radius:8px;background:#1a1a2e;border:1px solid rgba(201,168,76,.3);padding:12px;display:flex;flex-direction:column;gap:10px">
+        <label for="quick" style="position:absolute;left:-9999px">Note rapide sur ce dossier</label>
+        <textarea id="quick" rows="3" placeholder="Une idée, un nom entendu…" style="resize:none;border:0;background:transparent;color:#e8dcc8;font:italic 17px/1.4 'Crimson Text',serif;outline:none"></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:13px;color:#8f846f">Reliée à ce dossier</span>
+          <button style="height:34px;padding:0 14px;border-radius:6px;border:0;background:#2a2440;color:#e4c76b;font:600 14px 'Crimson Text',serif">Noter</button>
+        </div>
+      </div>
+      <article style="padding:14px 4px;border-bottom:1px solid rgba(201,168,76,.12);display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:17px;font-weight:600;color:#f0e6d3">Le sceau</span>
+        <p style="margin:0;font-size:16px;line-height:1.45;color:#cbbfa8">Le sceau ressemble à celui aperçu chez le conseiller Magirius.</p>
+        <span style="font-size:13px;color:#8f846f">Pièce n° 1 · il y a 2 jours</span>
+      </article>
+      <article style="padding:14px 4px;display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:17px;font-weight:600;color:#f0e6d3">À vérifier</span>
+        <p style="margin:0;font-size:16px;line-height:1.45;color:#cbbfa8">Demander à Franz qui livre les barges.</p>
+        <span style="display:flex;align-items:center;gap:8px;font-size:14px;color:#a89b84">Non classée —<a href="#">Relier à ce dossier</a></span>
+      </article>
+      <p style="margin:auto 0 0;font-size:13px;line-height:1.4;color:#7d7363">Visible de toi seul dans l’application. L’administrateur Firebase garde un accès technique.</p>
+    </aside>
+  </div>
+</div>
+</body>
+</html>

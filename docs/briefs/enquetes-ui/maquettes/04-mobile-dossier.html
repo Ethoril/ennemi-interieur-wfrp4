@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390">
+<title>Mobile — dossier</title>
+<!-- Maquette statique de référence (390×844). Couleurs en dur : le code réel utilise les variables de css/base.css (voir ../README.md, § Jetons). -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=Crimson+Text:ital,wght@0,400;0,600;1,400&amp;display=swap">
+<style>
+body{margin:0;background:#07070d}
+.tab{flex-shrink:0;height:46px;padding:0 4px;border:0;border-bottom:2px solid transparent;background:transparent;color:#a89b84;font:600 15px 'Crimson Text',serif}
+.tab.on{color:#f0e6d3;border-bottom-color:#c9a84c}
+.slip{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:14px 14px 12px;background:#e6d7b5;color:#2a2116;border-radius:3px;box-shadow:0 6px 16px rgba(0,0,0,.45);text-decoration:none}
+.num{font:700 10px Cinzel,serif;letter-spacing:.14em;color:#7a1f1f}
+.cat{font:600 10px Cinzel,serif;letter-spacing:.12em;color:#6b5a3e;text-transform:uppercase;text-align:right}
+.navi{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8f846f;text-decoration:none;font-size:12px}
+</style>
+</head>
+<body>
+<div style="width:390px;height:844px;box-sizing:border-box;display:flex;flex-direction:column;background:#07070d;color:#e8dcc8;font-family:'Crimson Text',Georgia,serif;position:relative;overflow:hidden">
+  <header style="height:60px;flex-shrink:0;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:6px;padding:0 8px;background:#0e0e18;border-bottom:1px solid rgba(201,168,76,.2)">
+    <a href="03-mobile-liste.html" aria-label="Retour aux dossiers" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:#c9a84c">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"></path></svg></a>
+    <span style="font:600 10px Cinzel,serif;letter-spacing:.14em;color:#8f846f;text-align:center">DOSSIER D’ENQUÊTE</span>
+    <button aria-label="Plus d’actions" style="width:44px;height:44px;border:0;background:transparent;color:#c9a84c">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></button>
+  </header>
+
+  <section style="flex-shrink:0;padding:18px 16px 4px;display:grid;grid-template-columns:52px 1fr;gap:14px;align-items:start;background:radial-gradient(ellipse at 20% 0%,rgba(122,31,31,.16),transparent 70%)">
+    <span aria-label="État : ouverte" style="width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#b23a2e,#7a1f1f 62%,#4a0e0e);box-shadow:0 3px 8px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;transform:rotate(-8deg);font:700 8px Cinzel,serif;letter-spacing:.08em;color:#f3dcb4">OUVERTE</span>
+    <span style="display:flex;flex-direction:column;gap:6px">
+      <span style="font:700 22px/1.15 Cinzel,serif;color:#f0e6d3">Qui finance la Main Pourpre ?</span>
+      <span style="font:italic 16px/1.4 'Crimson Text',serif;color:#d9c9a3">« Suivre la piste du marchand Teugen et de son correspondant au conseil. »</span>
+    </span>
+  </section>
+
+  <div role="tablist" aria-label="Contenu du dossier" style="flex-shrink:0;display:flex;gap:18px;padding:0 16px;border-bottom:1px solid rgba(201,168,76,.18);background:#07070d">
+    <button role="tab" aria-selected="true" class="tab on">Pièces 3</button>
+    <button role="tab" aria-selected="false" class="tab">PNJ 2</button>
+    <button role="tab" aria-selected="false" class="tab">Chronologie</button>
+    <button role="tab" aria-selected="false" class="tab">Mes notes 1</button>
+  </div>
+
+  <div style="flex:1;min-height:0;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:12px">
+    <a href="05-mobile-piece.html" class="slip" style="transform:rotate(-.4deg)">
+      <span class="num">PIÈCE N° 1</span><span class="cat">Lettre</span>
+      <span style="font:700 17px/1.2 Cinzel,serif">Lettre retrouvée chez le marchand</span>
+      <span style="grid-row:span 2;width:52px;height:52px;border-radius:2px;background:linear-gradient(135deg,#8a7656,#5b4a33)"></span>
+      <span style="font-size:14px;color:#6b5a3e">1 fichier · 2 annotations</span>
+    </a>
+    <a href="#" class="slip" style="transform:rotate(.4deg)">
+      <span class="num">PIÈCE N° 2</span><span class="cat">Rapport</span>
+      <span style="grid-column:span 2;font:700 17px/1.2 Cinzel,serif">Extrait du registre des péages</span>
+      <span style="grid-column:span 2;justify-self:start;font:600 13px 'Crimson Text',serif;color:#2f5a3f;background:rgba(76,175,125,.18);border-radius:3px;padding:1px 8px">Appuie la pièce n° 1</span>
+    </a>
+    <a href="#" class="slip" style="transform:rotate(-.2deg)">
+      <span class="num">PIÈCE N° 3</span><span class="cat">Carte</span>
+      <span style="grid-column:span 2;font:700 17px/1.2 Cinzel,serif">Plan des égouts annoté</span>
+      <span style="grid-column:span 2;font-size:14px;color:#6b5a3e">Contribution · Elysia</span>
+    </a>
+    <button style="height:48px;border:1.5px dashed rgba(201,168,76,.4);border-radius:4px;background:transparent;color:#c9a84c;font:600 16px 'Crimson Text',serif">Verser une pièce ou une photo</button>
+  </div>
+
+  <a href="06-mobile-note-rapide.html" aria-label="Note rapide sur ce dossier" style="position:absolute;right:16px;bottom:92px;width:56px;height:56px;border-radius:50%;background:#c9a84c;color:#1a1408;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.6)">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg>
+  </a>
+
+  <nav aria-label="Navigation principale" style="height:72px;flex-shrink:0;display:flex;align-items:center;background:#0e0e18;border-top:1px solid rgba(201,168,76,.2);padding:0 8px">
+    <a href="#" class="navi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M5 21a7 7 0 0 1 14 0"></path></svg>PNJs</a>
+    <a href="#" class="navi" aria-current="page" style="color:#e4c76b"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h10l6 6v10H4z"></path><path d="M14 4v6h6"></path></svg>Enquêtes</a>
+    <a href="#" class="navi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h5"></path></svg>Fiches</a>
+    <a href="#" class="navi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>Réglages</a>
+  </nav>
+</div>
+</body>
+</html>

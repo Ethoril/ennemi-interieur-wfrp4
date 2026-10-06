@@ -385,7 +385,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
         }),
     };
     for (const routeName of [ROUTE_NAMES.ENQUETES, ROUTE_NAMES.ENQUETE, ROUTE_NAMES.ENQUETE_NEW, ROUTE_NAMES.ENQUETE_EDIT]) {
-      views[routeName] = route => createEnqueteWorkspaceView({container,id:route.id,initialAction:routeName.endsWith('-new')?'new':routeName.endsWith('-edit')?'edit':null,onOpen:id=>router.navigate({name:ROUTE_NAMES.ENQUETE,id}),onOpenPnj:id=>router.navigate({name:ROUTE_NAMES.PNJ,id})});
+      views[routeName] = route => createEnqueteWorkspaceView({container,layout:'mobile',onMenuLabelChange:label=>headerAction.setAttribute('aria-label',label),id:route.id,initialAction:routeName.endsWith('-new')?'new':routeName.endsWith('-edit')?'edit':null,onOpen:id=>router.navigate({name:ROUTE_NAMES.ENQUETE,id}),onOpenPnj:id=>router.navigate({name:ROUTE_NAMES.PNJ,id})});
     }
     views[ROUTE_NAMES.REGLAGES] = () => createSettingsView({ container, publicSession: session, mjSession, documentRef, draftStore, draftStores: [enqueteDraftStore], pwa, announce: message => announce(routeStatus, message) });
     router = createRouter({
@@ -409,8 +409,15 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             const onFiche = route.name === ROUTE_NAMES.FICHE;
             currentView = view;
             if (bottomNav) bottomNav.hidden = onFiche;
-            headerAction.setAttribute('aria-label', onFiche ? 'Menu de la fiche' : 'Actions');
-            headerAction.hidden = !(onFiche || route.name === ROUTE_NAMES.REGLAGES);
+            headerAction.setAttribute('aria-label', onFiche ? 'Menu de la fiche' : route.name === ROUTE_NAMES.ENQUETE ? (view?.menuLabel?.() || 'Actions du dossier') : 'Actions');
+            headerAction.hidden = !(onFiche || route.name === ROUTE_NAMES.ENQUETE || route.name === ROUTE_NAMES.REGLAGES);
+            if (onFiche || route.name === ROUTE_NAMES.ENQUETE) {
+                headerAction.setAttribute('aria-haspopup', 'menu');
+                headerAction.setAttribute('aria-expanded', 'false');
+            } else {
+                headerAction.removeAttribute('aria-haspopup');
+                headerAction.removeAttribute('aria-expanded');
+            }
             documentRef.querySelectorAll('.m-bottom-nav a[data-route]').forEach(link => {
                 if (link.dataset.route === section) link.setAttribute('aria-current', 'page');
                 else link.removeAttribute('aria-current');
@@ -438,7 +445,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
 
     const onBack = () => router.back();
     const onHeaderAction = event => {
-        if (router.getRoute()?.name === ROUTE_NAMES.FICHE) currentView?.openMenu?.(event.currentTarget);
+        if ([ROUTE_NAMES.FICHE, ROUTE_NAMES.ENQUETE].includes(router.getRoute()?.name)) currentView?.openMenu?.(event.currentTarget);
         else dialog.show(event.currentTarget);
     };
     const onDialogClose = () => dialog.close();

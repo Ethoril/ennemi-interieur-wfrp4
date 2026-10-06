@@ -127,3 +127,19 @@ Le navigateur de vérification ne dispose pas d’une session Google de campagne
 Les utilisateurs ayant une PWA déjà ouverte doivent accepter sa mise à jour ; sur le bureau, fermer les anciens onglets du site puis rouvrir l’entrée permet d’activer le nouveau cache.
 
 Site : [Documents et enquêtes](https://ethoril.github.io/ennemi-interieur-wfrp4/enquetes.html).
+
+## Interface — v2.35.0
+
+La refonte visuelle utilise le composant commun `js/enquetes-workspace.js` avec une option `layout: 'desktop' | 'mobile'`. Le bureau fournit un rail, le détail et un carnet ; la coque mobile monte uniquement la liste, le dossier en quatre onglets ou la pièce. Les espaces, filtres et onglets mobiles restent en mémoire de module, par compte, et les contextes de pièce sont conservés pendant la navigation.
+
+`js/enquetes-view-model.js` contient les projections pures (compteurs, liens, pièces, numéros, personnages, chronologie et notes). `js/enquetes-menu.js` gère les menus au clavier et le retour du focus. Les deux modules figurent dans le précache. Les jetons `--enq-*` sont définis dans `css/enquetes-workspace.css` et redéfinis dans `css/theme-parchment.css` ; les couleurs de papier et de visionneuse viennent des jetons des deux thèmes.
+
+L’image s’agrandit au clic hors mode annotation. En mode annotation, le clic place une épingle ; un bouton permet aussi de créer au clavier une annotation centrale, dont les coordonnées restent éditables. Les numéros sont relatifs au dossier pour les pièces et au fichier pour les annotations.
+
+La note rapide et l’éditeur complet passent par le même `saveNote`, puis par `addLink` en zone personnelle. Un brouillon est associé au compte et à l’identifiant de note, jamais enregistré dans les données de campagne avant l’envoi. Hors connexion, reprendre le brouillon après reconnexion pour l’envoyer ; aucune nouvelle file d’attente n’est créée.
+
+Les mises à jour du même objet ne remettent plus la lecture mobile en haut. La saisie rapide conserve son formulaire par compte et contexte ; seule la liste du carnet est reconstruite. Depuis une note, ses cibles sont les enquêtes, documents et PNJ liés, sans lien entre notes. Si le stockage local est indisponible, la saisie reste ouverte et l'envoi en ligne demeure possible.
+
+Les métadonnées de fichiers sont mises en cache dans la vue jusqu'au changement de la liste `document.files`, avec invalidation au changement de compte et au démontage. Les vignettes utilisent `objectUrl(file, { thumbnail: true })`. Le zoom possède son propre cycle de libération d'URL, indépendant des re-rendus du détail, jusqu'à sa fermeture ou au démontage.
+
+Recette locale : `tools/fixtures/enquetes-qa.html` ; paramètres `role=joueur`, `layout=mobile`, `id=` (liste), `id=affaire` (dossier), `id=lettre` (pièce), `theme=parchment`. Le rapport de recette et les captures sont dans `docs/briefs/enquetes-ui/recette/`. La fusion et le push sur master nécessitent une demande explicite.

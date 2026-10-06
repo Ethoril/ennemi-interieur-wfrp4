@@ -5,6 +5,14 @@
 
 [data-theme="parchment"] {
   /* Fonds — palette parchemin/papier vieilli */
+  --document-paper: #fbf5e6;
+  --document-ink: #2a2116;
+  --document-ink-muted: #6b5a3e;
+  --annotation-gold: #c9a84c;
+  --annotation-private: #8a8a9a;
+  --viewer-overlay: rgba(7, 7, 13, .85);
+  --viewer-ground: #07070d;
+  --viewer-text: #e8dcc8;
   --bg-darkest:    #D4C9AB;
   --bg-dark:       #E7DAC1;
   --bg-card:       #f2e8d5;
@@ -414,3 +422,23 @@
   border-color: var(--border-gold);
   color: var(--gold);
 }
+
+/* Enquêtes : fond clair, fiches de papier et visionneuse sombre. */
+[data-theme="parchment"] .enq-workspace {
+  --enq-ground:var(--bg-dark);
+  --enq-rail:var(--bg-card);
+  --enq-raised:var(--bg-card-hover);
+  --enq-line:var(--border-gold);
+  --enq-accent:var(--gold);
+  --enq-paper:var(--document-paper);
+  --enq-ink:var(--document-ink);
+  --enq-wax:var(--blood);
+  --enq-state-open:var(--gold);
+  --enq-state-paused:var(--statut-neutre);
+  --enq-state-solved:var(--statut-allie);
+  --enq-suspect:var(--statut-ennemi);
+  --enq-paper-shadow:var(--shadow-sm);
+}
+[data-theme="parchment"] .enq-workspace h2 { color:var(--text-heading); }
+[data-theme="parchment"] .enq-workspace .enq-section-title { color:var(--enq-accent); }
+[data-theme="parchment"] .enq-workspace .enq-button--primary:hover { background:var(--enq-accent); }

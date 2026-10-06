@@ -1,3 +1,14 @@
+## [2.35.0] - 2026-10-06
+
+### Documents et enquêtes
+- Bureau organisé en trois colonnes : dossiers, pièces du dossier et carnet privé.
+- Pièces numérotées sur fiches de parchemin, personnages et chronologie structurés, tableau des liens directement accessible.
+- Visionneuse avec épingles numérotées et mode annotation explicite, navigation dans le dossier et fiche de pièce séparée.
+- Écrans mobiles distincts, onglets de dossier et menus accessibles au clavier.
+- Note rapide privée dans le carnet ou la feuille mobile, brouillons conservés en cas d’erreur ou hors connexion.
+- Thèmes sombre et parchemin, focus et mouvement réduit vérifiés ; aucun changement de services, de schéma ou de données.
+- Correctifs de recette : lecture mobile et curseur préservés lors des mises à jour, cibles valides de note rapide, boutons lisibles sur papier, audience des épingles, titres structurés, menus et historique accessibles, zoom conservé et miniatures mises en cache.
+
 ## [2.34.0] - 2026-10-06
 
 - Remplacement de l’espace Enquêtes par les documents, dossiers d’enquête et carnet personnel partagés entre bureau et mobile.
