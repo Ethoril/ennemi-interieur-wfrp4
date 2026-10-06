@@ -402,3 +402,12 @@ test('conflits : un emplacement épinglé est nommé et ses valeurs montrent les
     assert.equal(notice.element.all().find(n => n.tagName === 'p').textContent,
         'Conflit sur Compétence affichée 2 : le serveur a Savoir (Politique), vous avez aucune.');
 });
+
+test('panneau : le lien « Toutes » reste un vrai lien et prévient avant de naviguer', () => {
+    const asked = [];
+    const panel = createPrincipalPanel({ documentRef: fakeDocument(), aptitudesHref: '#/fiches/x/aptitudes', onShowAllSkills: () => asked.push('all') });
+    const link = panel.element.all().find(node => node.className === 'm-principal-all');
+    assert.deepEqual([link.tagName, link.href], ['a', '#/fiches/x/aptitudes']);
+    link.click();
+    assert.deepEqual(asked, ['all']);
+});

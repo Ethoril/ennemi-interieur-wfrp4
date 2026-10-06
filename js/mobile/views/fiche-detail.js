@@ -334,6 +334,7 @@ export function createFicheDetailView({
             onOpenCarac: (key, trigger) => purchase.open({ kind: 'carac', key }, trigger),
             onChangeResource: (spec, trigger) => resource.open(spec, trigger),
             onOpenSlot: (slot, trigger) => pinSkill.open(slot, trigger),
+            onShowAllSkills: () => aptitudes.showAllSkills(),
         });
         const career = createCareerPanel({
             documentRef,

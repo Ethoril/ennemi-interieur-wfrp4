@@ -282,9 +282,18 @@ export function createAptitudesPanel({ documentRef, onOpenSkill = () => {}, onOp
         else renderSpells();
     }
 
+    // « Toutes » depuis Principal : la liste complète des compétences, quel que soit l'état laissé par une visite précédente.
+    function showAllSkills() {
+        mode = 'competences';
+        Object.assign(filters, { query: '', career: false, trained: false, carac: '' });
+        search.value = '';
+        render();
+    }
+
     return Object.freeze({
         element: root,
         detailElement: detail.element,
+        showAllSkills,
         update({ data, careers, engine }) { context = { data, careers, engine }; render(); },
         closeDetail: detail.close,
     });

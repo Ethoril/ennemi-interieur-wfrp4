@@ -14,7 +14,7 @@ function make(documentRef, tag, text = '', className = '') {
  * compétences épinglées appellent onOpenSlot(numéro 1-5, bouton), qu'ils soient vides ou remplis. La structure est construite
  * une fois ; update() ne réécrit que les textes et les points (réutilisés par rang), donc le bouton focalisé garde le focus.
  */
-export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac = () => {}, onChangeResource = () => {}, onOpenSlot = () => {} }) {
+export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac = () => {}, onChangeResource = () => {}, onOpenSlot = () => {}, onShowAllSkills = () => {} }) {
     const root = make(documentRef, 'div', '', 'm-principal');
 
     const resources = make(documentRef, 'div', '', 'm-principal-resources');
@@ -61,6 +61,8 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
     const all = make(documentRef, 'a', 'Toutes', 'm-principal-all');
     all.href = aptitudesHref;
     all.setAttribute('aria-label', 'Toutes les compétences');
+    // Pas de preventDefault : le lien navigue ; l'appelant remet la liste à zéro avant.
+    all.addEventListener('click', () => onShowAllSkills());
     skillsHead.append(skillsTitle, all);
     const skillList = make(documentRef, 'ul', '', 'm-principal-skill-list');
     const slots = FAVORITE_SLOTS.map(slot => {
