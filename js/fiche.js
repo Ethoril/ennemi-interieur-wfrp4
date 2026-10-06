@@ -260,7 +260,9 @@ function isSkillInCareer(nom) {
     if (!career) return false;
     const sets = _memo(_careerCache.skills, _careerKey(career.id, getActiveRang()),
                        () => _buildCareerSkillSets(career, getActiveRang()));
-    const canon = canonicalSkillNom(nom);
+    // Résolution par le référentiel, comme le serveur : une forme fusionnée par le MJ vaut son nom principal.
+    const resolved = getLocalCommandEngine()?.skillResolver.resolve(nom);
+    const canon = resolved?.status === 'resolved' ? resolved.entry.nom : canonicalSkillNom(nom);
     if (sets.exact.has(canon.toLowerCase())) return true;
     return sets.openBases.has(skillBaseNom(canon));
 }
