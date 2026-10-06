@@ -238,7 +238,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   }
   async function renderDetail(){
     if(section==='trash'){release();detail.replaceChildren();return;}
-    const scrollTop=container.scrollTop,renderedId=selected,viewToken=++token;
+    const scrollTop=container.scrollTop,renderedId=selected,viewToken=++token;let restored=false;const restoreScroll=()=>{if(restored)return;restored=true;if(layout==='mobile'&&mounted&&viewToken===token&&selected===renderedId)container.scrollTop=scrollTop;};
     try{release();detail.replaceChildren();annotationRows=new Map();annotationMarkers=new Map();
     root.className='enq-workspace enq-workspace--'+layout+(current()?.type==='documents'?' enq-workspace--piece':'')+(notebookOpen?' enq-workspace--notebook-open':'');
     const r=current();
@@ -246,10 +246,11 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     if(!r){detail.append(node('h2','Choisis un dossier ou une pièce'),node('p','Les documents peuvent appartenir à plusieurs enquêtes. Les notes restent dans ton carnet.'));return;}
     if(r.type==='pnjs'){detail.append(node('h2',r.nom),button('Ajouter une note',()=>openEditor(null,'notes',r)),button('Ajouter un document lié',()=>openEditor(null,'documents',r)));renderLinks(r);return;}
     if(r.type==='enquetes'){renderDossier(r,viewToken);return;}
-    if(r.type==='documents'){await renderPiece(r,viewToken);return;}
+    if(r.type==='documents'){// Restore the reading position once the synchronous sheet exists, before file loading.
+      const loading=renderPiece(r,viewToken);restoreScroll();await loading;return;}
     detail.append(node('h2',recordTitle(r)),textView(r.texte||''));
     renderLinks(r);if(layout==='desktop')detail.append(actionMenu('Actions de la note',objectActions(r,viewToken)).element);
-    }finally{if(layout==='mobile'&&mounted&&viewToken===token&&selected===renderedId)container.scrollTop=scrollTop;}
+    }finally{restoreScroll();}
   }
   async function renderPiece(r,viewToken){
     const dossier=state.records.find(v=>v.id===contextDossier&&v.type==='enquetes'),context=pieceContext(r.id,dossier,state.records,linksIndex);

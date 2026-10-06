@@ -4,6 +4,13 @@ import { fixture } from './lib/enquetes-ui-fixture.mjs';
 import { createDocument,flush } from './lib/enquetes-test-dom.mjs';
 import { createActionMenu } from '../js/enquetes-menu.js';
 
+test('mobile reading position is not rewound when slow files finish loading',async()=>{
+    const f=await fixture({layout:'mobile',id:'lettre'});f.container.scrollTop=360;
+    let open;f.gateFiles(new Promise(resolve=>{open=resolve;}));
+    f.records.find(r=>r.id==='lettre').description='Une description actualisée';f.emit();await flush();assert.equal(f.container.scrollTop,360);
+    f.container.scrollTop=520;open();await flush();assert.equal(f.container.scrollTop,520);f.view.unmount();
+});
+
 test('mobile reading position survives metadata and content updates',async()=>{
     const f=await fixture({layout:'mobile',id:'lettre'});f.container.scrollTop=360;
     f.records.find(r=>r.id==='lettre').fromCache=true;f.emit();await flush();assert.equal(f.container.scrollTop,360);

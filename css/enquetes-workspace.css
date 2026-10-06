@@ -399,7 +399,7 @@
 .enq-file-strip [aria-current=true] { border-color:var(--enq-accent); }
 .enq-pin-anchor { position:absolute; pointer-events:none; }
 .enq-marker { position:relative; width:30px; height:30px; border-radius:50%; padding:0; font:700 15px var(--font-heading); border:2px solid var(--enq-paper); background:var(--enq-accent); color:var(--enq-ink); cursor:pointer; }
-.enq-marker--private { background:var(--enq-state-paused); }
+.enq-marker--private { background:var(--enq-state-paused); border-style:dashed; }
 .enq-marker-zone { border:1px solid var(--enq-accent); background:var(--gold-wash); overflow:visible; }
 .enq-annotation-row { border:1px solid transparent; margin:10px 0; padding:10px; border-radius:4px; }
 .enq-annotation-number { font:700 16px var(--font-heading); color:var(--enq-wax); }
