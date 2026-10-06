@@ -85,9 +85,11 @@ body {
   margin: 0;
   color: var(--text-heading);
   font-family: var(--font-heading);
-  font-size: clamp(1.15rem, 5vw, 1.55rem);
+  /* Plafonné en vw : à 200 % de texte sur 320 px, un mot du titre tient sur la ligne. */
+  font-size: clamp(min(1.15rem, 7vw), 5vw, 1.55rem);
   line-height: 1.25;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .m-icon-button,
@@ -763,7 +765,7 @@ body {
   gap: 0.1rem;
   padding: 0.25rem;
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: min(0.78rem, 4.2vw);
   line-height: 1.2;
   text-decoration: none;
 }
