@@ -1,0 +1,102 @@
+.bureau { --bureau-gold: var(--gold-bright); }
+[data-theme="parchment"] .bureau { --bureau-gold: var(--gold-dim); }
+.bureau { max-width: 1376px; margin: 0 auto; padding: 100px 24px 48px; font: 1.0625rem/1.4 var(--font-body); color: var(--text-primary); }
+.bureau [hidden] { display: none !important; }
+.bureau * { box-sizing: border-box; }
+.bureau button, .bureau input, .bureau select, .bureau textarea { font: inherit; color: inherit; max-width: 100%; }
+.bureau button, .bureau summary { cursor: pointer; }
+.bureau button { background: var(--bg-surface); border: 1px solid var(--border-gold); border-radius: 8px; padding: 7px 10px; }
+.bureau button:hover { background: var(--bg-card-hover); }
+.bureau button:disabled { cursor: not-allowed; color: var(--text-secondary); }
+.bureau :focus-visible { outline: 2px solid var(--bureau-gold); outline-offset: 3px; }
+.bureau input, .bureau textarea, .bureau select { background: var(--bg-dark); border: 1px solid var(--border-strong); padding: 8px; border-radius: 7px; width: 100%; }
+.bureau label { display: block; color: var(--text-secondary); }
+.bureau a { color: var(--bureau-gold); }
+.bureau-card { background: var(--bg-card); border: 1px solid var(--border-gold); border-radius: 14px; padding: 16px; min-width: 0; overflow-wrap: anywhere; }
+.bureau-card h2 { font: 600 .9375rem var(--font-heading); color: var(--bureau-gold); text-transform: uppercase; letter-spacing: .12em; margin: 0 0 12px; }
+.bureau-card h3 { font-size: 1rem; color: var(--text-secondary); margin: 14px 0 8px; }
+.bureau-header { display: flex; align-items: center; gap: 16px 24px; flex-wrap: wrap; margin-bottom: 20px; padding: 18px 22px; }
+.bureau-identity { flex: 1 1 240px; min-width: 0; }
+.bureau-identity h1 { font: 700 1.875rem var(--font-heading); color: var(--text-heading); margin: 0; }
+.bureau-identity p { margin: 4px 0; }
+.bureau-portrait { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--gold); object-fit: cover; display: grid; place-items: center; font: 700 1.625rem var(--font-heading); color: var(--bureau-gold); }
+.bureau-resources { display: flex; gap: 22px; flex-wrap: wrap; }
+.bureau-resource-title { font: 600 .8125rem var(--font-heading); color: var(--bureau-gold); }
+.bureau .bureau-pip { width: 28px; height: 28px; border-radius: 50%; padding: 0; border: 2px solid var(--gold); background: transparent; margin: 3px; }
+.bureau .bureau-pip[aria-pressed="true"] { background: var(--gold); }
+.bureau-xp { display: flex; gap: 12px; align-items: center; font-variant-numeric: tabular-nums; }
+.bureau-xp a { border: 1px solid var(--border-gold); border-radius: 12px; padding: 6px 18px; text-align: center; text-decoration: none; }
+.bureau-xp strong { display: block; font: 700 1.875rem var(--font-heading); }
+.bureau-menu { position: relative; }
+.bureau-menu summary { padding: 8px; min-width: 44px; min-height: 44px; font-size: 1.5rem; }
+.bureau-menu-panel { position: absolute; right: 0; top: 100%; z-index: 5; background: var(--bg-card); border: 1px solid var(--border-gold); border-radius: 10px; padding: 12px; width: 210px; display: grid; gap: 8px; }
+.bureau-grid { display: grid; grid-template-columns: 300px minmax(0, 1fr) 360px; gap: 20px; align-items: start; }
+.bureau-left { grid-column: 1; grid-row: 1; }
+.bureau-center { grid-column: 2; grid-row: 1; }
+.bureau-left, .bureau-center { display: grid; gap: 20px; min-width: 0; }
+.bureau-rail { grid-column: 3; grid-row: 1 / span 2; position: sticky; top: 80px; max-height: calc(100vh - 96px); overflow-y: auto; display: grid; gap: 16px; min-width: 0; padding: 3px; }
+.bureau-rail > [role="status"] { margin: 0; color: var(--text-primary); }
+.bureau-journal { grid-column: 1 / span 2; grid-row: 2; }
+.bureau-caracs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.bureau .bureau-carac { padding: 7px 0; border-color: var(--border-subtle); }
+.bureau .bureau-carac.is-career { border: 2px solid var(--gold); }
+.bureau-carac span { display: block; font: 600 .8125rem var(--font-heading); }
+.bureau-carac strong { font: 700 1.375rem var(--font-heading); }
+.bureau-carac em { color: var(--bureau-gold); font-style: normal; }
+.bureau-muted { color: var(--text-secondary); font-size: .875rem; }
+.bureau-state-row, .bureau-actions, .bureau-stepper { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bureau-state-row { justify-content: space-between; margin: 8px 0; }
+.bureau-state-row input { width: 75px; }
+.bureau textarea { resize: vertical; min-height: 170px; }
+.bureau progress { width: 100%; accent-color: var(--gold); height: 10px; }
+.bureau-filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.bureau-filters label:first-child { flex: 1; min-width: 140px; }
+.bureau-skill-columns { columns: 2; column-gap: 12px; }
+.bureau .bureau-skill { width: 100%; height: 36px; display: flex; align-items: center; gap: 6px; border: 0; border-bottom: 1px solid var(--border-subtle); background: transparent; border-radius: 0; padding: 4px; break-inside: avoid; text-align: left; font-size: .9375rem; }
+.bureau-skill-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bureau-skill small { color: var(--text-secondary); font-size: .75rem; }
+.bureau-skill strong { min-width: 22px; text-align: right; font-variant-numeric: tabular-nums; }
+.bureau-skill.is-trained strong, .bureau-career-dot { color: var(--bureau-gold); }
+.bureau-plus { opacity: 0; }
+.bureau-skill:hover .bureau-plus, .bureau-skill:focus-visible .bureau-plus { opacity: 1; }
+.bureau-talents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.bureau .bureau-talent { text-align: left; padding: 12px; }
+.bureau-talent small { display: block; color: var(--text-secondary); }
+.bureau-talent.is-available, .bureau-placeholder { border-style: dashed; }
+.bureau-inspector-title { display: flex; justify-content: space-between; align-items: start; gap: 10px; }
+.bureau .bureau-close { min-width: 44px; min-height: 44px; }
+.bureau-inspector-title h2 { font-size: 1.25rem; text-transform: none; letter-spacing: 0; }
+.bureau .bureau-purchase { width: 100%; padding: 12px; color: var(--text-heading); border: 2px solid var(--gold); font-weight: 600; margin-top: 12px; }
+.bureau-negative, .bureau-error { color: var(--statut-ennemi); }
+.bureau-stepper button { min-width: 44px; min-height: 44px; }
+.bureau-stepper output { min-width: 35px; text-align: center; }
+.bureau-chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 14px; }
+.bureau .bureau-chip { font-size: .875rem; padding: 5px 8px; }
+.bureau table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.bureau th, .bureau td { text-align: left; border-bottom: 1px solid var(--border-subtle); padding: 9px 6px; overflow-wrap: anywhere; }
+.bureau th:nth-child(2) { width: 28%; }
+.bureau th:last-child { width: 26%; }
+.bureau td:last-child, .bureau th:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.bureau .bureau-results { max-height: 350px; overflow-y: auto; display: grid; gap: 6px; margin-top: 12px; }
+.bureau .bureau-results button { text-align: left; }
+.bureau-session { margin-bottom: 12px; }
+.bureau-correction-form { display: grid; gap: 10px; }
+.bureau-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 1099px) {
+  .bureau-grid { display: flex; flex-direction: column; }
+  .bureau-grid > * { width: 100%; }
+  .bureau-rail { position: static; max-height: none; overflow: visible; }
+}
+@media (max-width: 600px) {
+  .bureau { padding: 90px 10px 30px; }
+  .bureau-card { padding: 12px; }
+  .bureau-skill-columns { columns: 1; }
+  .bureau-talents { grid-template-columns: 1fr; }
+  .bureau-header { gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .bureau *, .bureau *::before, .bureau *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+.bureau-menu summary { list-style: none; }
+.bureau-menu summary::-webkit-details-marker { display: none; }
+.bureau-rail > [role="status"]:not(:empty) { background: var(--bg-card); border: 1px solid var(--border-gold); border-radius: 10px; padding: 10px; }
+.bureau strong { color: inherit; }

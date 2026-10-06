@@ -1,6 +1,6 @@
 import { redirectLegacyStandaloneEntry } from './pwa-entry.js';
 
-const APP_VERSION = 'v2.32.4';
+const APP_VERSION = 'v2.33.0';
 
 const NAV_ITEMS = [
     { href: 'index.html',   label: 'Accueil' },

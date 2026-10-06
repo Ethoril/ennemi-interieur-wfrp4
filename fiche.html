@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/theme-parchment.css">
-    <link rel="stylesheet" href="css/fiche.css">
+    <link rel="stylesheet" href="css/fiche-bureau.css">
     <link rel="stylesheet" href="css/career-viewer.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#07070d">
@@ -29,315 +29,38 @@
 </head>
 
 <body>
-
-    <a class="skip-link" href="#contenu">Aller au contenu</a>
-    <a class="fiche-mobile-return" id="fiche-mobile-return" href="app/index.html#/fiches" hidden>‹ Retour à l’application mobile</a>
-    <nav class="navbar" id="navbar"></nav>
-
-    <main class="page-container" id="contenu">
-
-        <div class="page-header fade-in fiche-page-header">
-            <h1 id="fiche-page-title">Fiche de Personnage</h1>
-            <div id="fiche-auth-bar" class="fiche-auth-bar"></div>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <nav class="navbar" id="navbar"></nav>
+  <main class="bureau" id="contenu">
+    <a id="fiche-mobile-return" href="app/index.html#/fiches" hidden>‹ Retour à l’application mobile</a>
+    <div class="bureau-session"><div id="fiche-session"></div><button id="bureau-logout" type="button" hidden>Déconnexion</button></div>
+    <section id="bureau-wall" class="bureau-card"><h1>Fiche de personnage</h1><p id="bureau-wall-message">Connexion requise pour accéder à la fiche.</p><button id="bureau-login" type="button">Connexion Google</button></section>
+    <div id="bureau-content" hidden>
+      <header id="bureau-header" class="bureau-card bureau-header"></header>
+      <div class="bureau-grid">
+        <div class="bureau-left" id="bureau-left"></div>
+        <div class="bureau-center">
+          <section class="bureau-card" aria-labelledby="skills-title">
+            <h2 id="skills-title">Compétences</h2>
+            <div class="bureau-filters"><label>Rechercher <input id="skill-query" type="search" placeholder="Nom d’une compétence…" autocomplete="off"></label><label>Afficher <select id="skill-filter"><option value="all">Toutes</option><option value="career">Carrière</option><option value="trained">Entraînées</option></select></label></div>
+            <div id="bureau-skills"></div>
+            <button type="button" data-action="search" data-kind="skill">+ Apprendre une compétence avancée</button>
+          </section>
+          <section class="bureau-card" aria-labelledby="talents-title"><h2 id="talents-title">Talents</h2><div id="bureau-talents"></div><button type="button" data-action="search" data-kind="talent">+ Talent hors carrière</button></section>
+          <section class="bureau-card" aria-labelledby="spells-title"><h2 id="spells-title">Sorts et miracles</h2><div id="bureau-spells"></div><div class="bureau-actions"><button type="button" data-action="search" data-kind="sort">+ Apprendre un sort</button><button type="button" data-action="search" data-kind="miracle">+ Apprendre un miracle</button></div></section>
+          <section class="bureau-card bureau-placeholder"><h2>Équipement</h2><p>Emplacement réservé</p></section>
         </div>
-
-        <!-- Écran de connexion (visible par défaut, masqué après auth) -->
-        <div id="fiche-login-wall" class="fiche-login-wall">
-            <div class="fiche-login-box">
-                <p class="fiche-login-msg">Connexion requise pour accéder à la fiche.</p>
-                <button class="fiche-auth-btn fiche-login-btn" id="btn-login-wall">☁ Connexion Google</button>
-            </div>
-        </div>
-
-        <section class="section" style="padding-top: 0; display:none" id="fiche-content-section">
-            <div class="container">
-                <div class="fiche-sheet">
-
-                    <!-- ══ PORTRAIT & INFORMATIONS GÉNÉRALES ══ -->
-                    <div class="fiche-identity-block">
-                        <div class="fiche-portrait-wrapper">
-                            <div id="fiche-portrait" class="character-portrait character-portrait--placeholder">📜</div>
-                        </div>
-                        <div class="fiche-header">
-                            <div class="fiche-field">
-                                <label for="nom">Nom</label>
-                                <input type="text" id="nom" placeholder="Nom du personnage">
-                            </div>
-                            <div class="fiche-field">
-                                <label for="race">Race</label>
-                                <select id="race">
-                                    <option value="humain">Humain.e</option>
-                                    <option value="elfe-sylvain">Elfe Sylvain.e</option>
-                                    <option value="haut-elfe">Haut.e Elfe</option>
-                                    <option value="halfelin">Halfelin.ne</option>
-                                    <option value="nain">Nain.e</option>
-                                    <option value="ogre">Ogre</option>
-                                </select>
-                            </div>
-                            <div class="fiche-field">
-                                <label for="carriere">Carrière actuelle</label>
-                                <input type="text" id="carriere" placeholder="Carrière" list="career-names-list" autocomplete="off">
-                                <datalist id="career-names-list"></datalist>
-                            </div>
-                            <div class="fiche-field">
-                                <label for="rang">Rang</label>
-                                <input type="number" id="rang" min="1" max="5" value="1">
-                            </div>
-
-                            <div class="fiche-xp-block">
-                                <div class="xp-dispo">
-                                    <span class="derived-label">XP Total <span class="xp-from-log">(depuis journal)</span></span>
-                                    <span class="xp-dispo-val" id="xp-total-display">0</span>
-                                </div>
-                                <div class="xp-dispo">
-                                    <span class="derived-label">XP Dépensé <span class="xp-from-log">(depuis journal)</span></span>
-                                    <span class="xp-dispo-val" id="xp-spent-display">0</span>
-                                </div>
-                                <div class="xp-dispo">
-                                    <span class="derived-label">XP Disponible</span>
-                                    <span class="xp-dispo-val xp-dispo-avail" id="xp-dispo">0</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ══ CARACTÉRISTIQUES ══ -->
-                    <div class="fiche-section">
-                        <h2>Caractéristiques</h2>
-                        <div class="carac-wrapper">
-                            <table class="carac-table">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">Caractéristique</th>
-                                        <th scope="col">Base</th>
-                                        <th scope="col">Avances</th>
-                                        <th scope="col">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr><th scope="row">CC</th><td data-label="Base"><input class="carac-input" id="base-cc" type="number" min="0" max="99" value="0" aria-label="CC, base"></td><td data-label="Avances"><input class="carac-input" id="adv-cc" type="number" min="0" max="99" value="0" aria-label="CC, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-cc">0</span></td></tr>
-                                    <tr><th scope="row">CT</th><td data-label="Base"><input class="carac-input" id="base-ct" type="number" min="0" max="99" value="0" aria-label="CT, base"></td><td data-label="Avances"><input class="carac-input" id="adv-ct" type="number" min="0" max="99" value="0" aria-label="CT, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-ct">0</span></td></tr>
-                                    <tr><th scope="row">F</th><td data-label="Base"><input class="carac-input" id="base-f" type="number" min="0" max="99" value="0" aria-label="Force, base"></td><td data-label="Avances"><input class="carac-input" id="adv-f" type="number" min="0" max="99" value="0" aria-label="Force, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-f">0</span></td></tr>
-                                    <tr><th scope="row">E</th><td data-label="Base"><input class="carac-input" id="base-e" type="number" min="0" max="99" value="0" aria-label="Endurance, base"></td><td data-label="Avances"><input class="carac-input" id="adv-e" type="number" min="0" max="99" value="0" aria-label="Endurance, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-e">0</span></td></tr>
-                                    <tr><th scope="row">I</th><td data-label="Base"><input class="carac-input" id="base-i" type="number" min="0" max="99" value="0" aria-label="Initiative, base"></td><td data-label="Avances"><input class="carac-input" id="adv-i" type="number" min="0" max="99" value="0" aria-label="Initiative, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-i">0</span></td></tr>
-                                    <tr><th scope="row">Ag</th><td data-label="Base"><input class="carac-input" id="base-ag" type="number" min="0" max="99" value="0" aria-label="Agilité, base"></td><td data-label="Avances"><input class="carac-input" id="adv-ag" type="number" min="0" max="99" value="0" aria-label="Agilité, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-ag">0</span></td></tr>
-                                    <tr><th scope="row">Dex</th><td data-label="Base"><input class="carac-input" id="base-dex" type="number" min="0" max="99" value="0" aria-label="Dextérité, base"></td><td data-label="Avances"><input class="carac-input" id="adv-dex" type="number" min="0" max="99" value="0" aria-label="Dextérité, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-dex">0</span></td></tr>
-                                    <tr><th scope="row">Int</th><td data-label="Base"><input class="carac-input" id="base-int" type="number" min="0" max="99" value="0" aria-label="Intelligence, base"></td><td data-label="Avances"><input class="carac-input" id="adv-int" type="number" min="0" max="99" value="0" aria-label="Intelligence, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-int">0</span></td></tr>
-                                    <tr><th scope="row">FM</th><td data-label="Base"><input class="carac-input" id="base-fm" type="number" min="0" max="99" value="0" aria-label="Force Mentale, base"></td><td data-label="Avances"><input class="carac-input" id="adv-fm" type="number" min="0" max="99" value="0" aria-label="Force Mentale, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-fm">0</span></td></tr>
-                                    <tr><th scope="row">Soc</th><td data-label="Base"><input class="carac-input" id="base-soc" type="number" min="0" max="99" value="0" aria-label="Sociabilité, base"></td><td data-label="Avances"><input class="carac-input" id="adv-soc" type="number" min="0" max="99" value="0" aria-label="Sociabilité, avances"></td><td data-label="Total" class="carac-total-cell"><span id="total-soc">0</span></td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- ══ STATS DÉRIVÉES ══ -->
-                    <div class="fiche-section">
-                        <h2>Stats Dérivées</h2>
-                        <div class="derived-grid">
-                            <div class="derived-stat">
-                                <span class="derived-label">Mouvement</span>
-                                <span class="derived-stat-val" id="mouvement">4</span>
-                            </div>
-                            <div class="derived-stat">
-                                <span class="derived-label">Blessures max</span>
-                                <span class="derived-stat-val" id="blessures-max">0</span>
-                            </div>
-                            <div class="derived-separator"></div>
-                            <div class="derived-stat">
-                                <label for="blessures-act">Blessures actuelles</label>
-                                <input type="number" id="blessures-act" min="0" value="0">
-                            </div>
-                            <div class="derived-stat">
-                                <label for="resilience">Résilience max</label>
-                                <input type="number" id="resilience" min="0" value="0">
-                            </div>
-                            <div class="derived-stat">
-                                <label for="determination">Détermination</label>
-                                <input type="number" id="determination" min="0" value="0">
-                            </div>
-                            <div class="derived-stat">
-                                <label for="chance">Chance</label>
-                                <input type="number" id="chance" min="0" value="0">
-                            </div>
-                            <div class="derived-stat">
-                                <label for="destin">Destin</label>
-                                <input type="number" id="destin" min="0" value="0">
-                            </div>
-                            <div class="derived-stat">
-                                <label for="corruption">Corruption</label>
-                                <input type="number" id="corruption" min="0" value="0">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ══ RÉFÉRENCE CARRIÈRE ══ -->
-                    <div id="career-detail-panel" style="display:none"></div>
-                    <div id="career-viewer-host" class="career-viewer-host" style="display:none"></div>
-
-                    <!-- ══ HISTORIQUE DES CARRIÈRES ══ -->
-                    <div class="fiche-section">
-                        <h2>Historique des Carrières</h2>
-                        <table class="career-table">
-                            <thead>
-                                <tr>
-                                    <th>Carrière</th>
-                                    <th class="col-num">Rang atteint</th>
-                                    <th>Notes</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-careers"></tbody>
-                        </table>
-                        <button class="btn-add" id="btn-add-career">+ Ancienne carrière</button>
-                    </div>
-
-                    <!-- ══ COMPÉTENCES ══ -->
-                    <div class="fiche-section">
-                        <h2>Compétences</h2>
-                        <div class="fiche-skills-grid">
-                            <div>
-                                <table class="skills-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Compétence de base</th>
-                                            <th class="col-num">Carac.</th>
-                                            <th class="col-num">Val.</th>
-                                            <th class="col-num">Av.</th>
-                                            <th class="col-num">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tbody-skills-basic"></tbody>
-                                </table>
-                            </div>
-                            <div>
-                                <table class="skills-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Compétence avancée</th>
-                                            <th class="col-num">Carac.</th>
-                                            <th class="col-num">Val.</th>
-                                            <th class="col-num">Av.</th>
-                                            <th class="col-num">Total</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tbody-skills-advanced"></tbody>
-                                    <tbody id="tbody-career-adv-ghost"></tbody>
-                                </table>
-                                <button class="btn-add" id="btn-add-adv-skill">+ Ajouter une compétence</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ══ TALENTS ══ -->
-                    <div class="fiche-section">
-                        <h2>Talents</h2>
-                        <div class="talents-acq-chips" id="talents-acq-chips"></div>
-                        <button class="btn-add" id="btn-add-talent-acq">+ Ajouter manuellement</button>
-                    </div>
-
-                    <!-- ══ SORTS (optionnel) ══ -->
-                    <div class="fiche-section fiche-optional" id="section-sorts" style="display:none">
-                        <h2>
-                            Sorts
-                            <button class="btn-close-section" data-target="section-sorts">× Masquer</button>
-                        </h2>
-                        <table class="skills-table">
-                            <thead>
-                                <tr>
-                                    <th>Nom</th>
-                                    <th>Vent / Type</th>
-                                    <th>CN</th>
-                                    <th>Portée</th>
-                                    <th>Durée</th>
-                                    <th>Résumé</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-sorts"></tbody>
-                        </table>
-                        <button class="btn-add" id="btn-add-sort">+ Ajouter un sort</button>
-                    </div>
-
-                    <!-- ══ PRIÈRES & MIRACLES (optionnel) ══ -->
-                    <div class="fiche-section fiche-optional" id="section-prieres" style="display:none">
-                        <h2>
-                            Prières &amp; Miracles
-                            <button class="btn-close-section" data-target="section-prieres">× Masquer</button>
-                        </h2>
-                        <table class="skills-table">
-                            <thead>
-                                <tr>
-                                    <th>Nom</th>
-                                    <th>Type</th>
-                                    <th>Résumé / Effets</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-prieres"></tbody>
-                        </table>
-                        <button class="btn-add" id="btn-add-priere">+ Ajouter</button>
-                    </div>
-
-                    <!-- ══ BOUTONS SECTIONS OPTIONNELLES ══ -->
-                    <div class="optional-toggles">
-                        <span class="optional-label">Sections optionnelles :</span>
-                        <button class="btn-toggle-opt" data-target="section-sorts">+ Sorts</button>
-                        <button class="btn-toggle-opt" data-target="section-prieres">+ Prières &amp; Miracles</button>
-                    </div>
-
-                    <!-- ══ HISTORIQUE XP ══ -->
-                    <div class="fiche-section">
-                        <h2>Journal XP</h2>
-                        <table class="xp-log-table">
-                            <thead>
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Achat</th>
-                                    <th class="col-num">Coût</th>
-                                    <th>Note</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-xp-log"></tbody>
-                        </table>
-                        <div class="xp-log-footer">
-                            <button class="btn-add" id="btn-add-xp-gain">+ Gain XP</button>
-                            <button class="btn-add" id="btn-add-xp">+ Dépense XP</button>
-                            <span class="xp-log-total">Total dépensé : <strong id="xp-log-total">0</strong> XP</span>
-                        </div>
-                        <div id="xp-gain-form" style="display:none"></div>
-                        <div id="xp-add-form" style="display:none"></div>
-                    </div>
-
-                    <!-- ══ POSSESSIONS ══ -->
-                    <div class="fiche-section">
-                        <h2 id="possessions-heading">Possessions &amp; Notes</h2>
-                        <textarea id="possessions" placeholder="Équipement, argent, objets notables…" aria-labelledby="possessions-heading"></textarea>
-                    </div>
-
-                    <!-- ══ SAUVEGARDE LOCALE & EXPORT ══ -->
-                    <div class="fiche-backup-row">
-                        <button class="btn-add" id="btn-export-fiche" type="button">⬇ Exporter en JSON</button>
-                        <button class="btn-add" id="btn-import-fiche" type="button">⬆ Importer un JSON</button>
-                        <input type="file" id="file-import-fiche" accept=".json,application/json" hidden>
-                        <span class="fiche-backup-hint">Sauvegarde locale de la fiche, à conserver hors du navigateur.</span>
-                    </div>
-
-                </div>
-            </div>
-        </section><!-- /fiche-content-section -->
-
-        <div class="ornament">⚜</div>
-        <footer class="footer" id="site-footer"></footer>
-
-    </main>
-
-    <script type="module" src="js/layout.js"></script>
-    <script type="module" src="js/main.js"></script>
-    <!-- skills.json et careers.json sont fetchés paresseusement par fiche.js au DOMContentLoaded -->
-    <script type="module" src="js/fiche.js"></script>
-    <script type="module" src="js/fiche-cloud.js"></script>
+        <aside class="bureau-rail" aria-label="Carrière et détail"><p id="bureau-status" role="status" aria-live="polite" aria-atomic="true"></p><div id="bureau-inspector" class="bureau-card"></div><div id="bureau-recent" class="bureau-card"></div></aside>
+        <section id="journal" class="bureau-card bureau-journal" aria-labelledby="journal-title"><h2 id="journal-title">Journal d’expérience</h2><div id="bureau-journal"></div><div id="bureau-corrections"></div></section>
+      </div>
+    </div>
+    <div id="career-viewer-host"></div>
+    <button id="btn-import-fiche" type="button" hidden>Importer</button>
+    <input id="bureau-import" type="file" accept=".json,application/json" hidden>
+    <footer class="footer" id="site-footer"></footer>
+  </main>
+  <script type="module" src="js/layout.js"></script>
+  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/fiche-bureau/app.js"></script>
 </body>
-
 </html>

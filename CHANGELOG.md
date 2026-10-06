@@ -1,3 +1,10 @@
+## [2.33.0] - 2026-10-06
+
+- **Fiche bureau** : nouvelle disposition en trois colonnes, caractéristiques avec bonus doré, liste fusionnée des compétences, talents, sorts et miracles. Le journal s’aligne sous les deux premières colonnes ; l’inspecteur reste visible au défilement.
+- **Achats contextuels** : détails et achats depuis chaque caractéristique, compétence, talent, sort, miracle et puce manquante de carrière. Coût, total et XP restantes affichés avant l’achat ; commandes existantes et reprise sans double débit.
+- **Suivi en séance et MJ** : points de Chance et Détermination, blessures, corruption et notes enregistrés automatiquement ; corrections groupées, gains, dépenses libres et annulations réservés au MJ.
+- **Compatibilité** : ancienne fiche conservée dans le menu, retour au mobile maintenu, thèmes sombre et parchemin, lecture seule et achats désactivés hors connexion. Le mobile, le serveur et les règles partagées restent inchangés.
+
 ## [2.32.4] - 2026-10-06
 
 - **Caractéristiques (mobile)** : sur l’onglet Principal, la ligne de bonus (« B3 ») disparaît. L’abréviation est plus grande et en clair, et le total met le bonus en valeur : pour « 34 », le « 3 » est doré et le « 4 » reste blanc. Le lecteur d’écran annonce toujours le bonus.

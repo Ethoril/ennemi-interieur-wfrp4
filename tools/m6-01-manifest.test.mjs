@@ -85,7 +85,8 @@ test('le manifeste conserve l’identité historique et lance l interface mobile
         .filter(name => name.endsWith('.html'))
         .map(name => [name, read(name)])
         .filter(([, html]) => html.includes('<link rel="manifest"'));
-    assert.equal(desktopPages.length, 11);
+    assert.equal(desktopPages.length, 12, 'la fiche ancienne conserve son manifeste pendant la transition');
+    assert.ok(desktopPages.some(([name]) => name === 'fiche-ancienne.html'));
     for (const [name, html] of desktopPages) {
         assert.equal((html.match(/<link rel="manifest"/gu) ?? []).length, 1, `${name} manifeste unique`);
         assert.match(html, /<link rel="manifest" href="manifest\.json">/u, `${name} manifeste racine`);
