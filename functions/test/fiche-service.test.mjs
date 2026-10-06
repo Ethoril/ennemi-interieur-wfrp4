@@ -272,6 +272,27 @@ test('basicSpecs et variantes choisies requièrent une validation catalogue serv
     assert.equal(store.documents.get('fiches/bhelgi').data.chosenVariants.agitateur[1], 'Pamphlétaire');
 });
 
+test('patch écrit les compétences épinglées du joueur et refuse emplacement, valeur ou longueur invalides', async () => {
+    const store = createStore(seed());
+    let n = 0;
+    const patch = (path, value, base = null) => command('patch', { changes: { [path]: value }, baseValues: { [path]: base } },
+        { operationId: `pin-${++n}`, baseRevision: store.documents.get('fiches/bhelgi').revision });
+    const result = await executeFicheCommand(patch('favoriteSkills.1', 'basic:Esquive'), PLAYER, deps(store));
+    assert.equal(result.revision, 1);
+    assert.equal(store.documents.get('fiches/bhelgi').data.favoriteSkills['1'], 'basic:Esquive');
+    await executeFicheCommand(patch('favoriteSkills.5', 'adv:a1'), PLAYER, deps(store));
+    await executeFicheCommand(patch('favoriteSkills.1', '', 'basic:Esquive'), PLAYER, deps(store));
+    assert.equal(store.documents.get('fiches/bhelgi').data.favoriteSkills['1'], '');
+    assert.equal(store.documents.get('fiches/bhelgi').data.favoriteSkills['5'], 'adv:a1');
+    await rejectCode(executeFicheCommand(patch('favoriteSkills.6', 'basic:Esquive'), PLAYER, deps(store)), 'permission-denied');
+    await rejectCode(executeFicheCommand(patch('favoriteSkills.0', 'basic:Esquive'), PLAYER, deps(store)), 'permission-denied');
+    await rejectCode(executeFicheCommand(patch('favoriteSkills', 'basic:Esquive'), PLAYER, deps(store)), 'permission-denied');
+    await rejectCode(executeFicheCommand(patch('favoriteSkills.2', 'Esquive'), PLAYER, deps(store)), 'invalid-argument');
+    await rejectCode(executeFicheCommand(patch('favoriteSkills.2', 'basic:'), PLAYER, deps(store)), 'invalid-argument');
+    await rejectCode(executeFicheCommand(patch('favoriteSkills.2', `adv:${'x'.repeat(200)}`), PLAYER, deps(store)), 'invalid-argument');
+    await rejectCode(executeFicheCommand(patch('favoriteSkills.2', 7), PLAYER, deps(store)), 'invalid-argument');
+});
+
 test('un changement concurrent du même champ bloque sans exposer la fiche', async () => {
     const store = createStore(seed());
     const services = deps(store);

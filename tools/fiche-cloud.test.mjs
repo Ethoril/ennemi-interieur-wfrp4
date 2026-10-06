@@ -280,6 +280,9 @@ test('patch encodé prend en charge les noms de compétence et IDs stables ponct
     assert.equal(controller.getState().data.skillsAdvanced[0].note, 'ancien détour');
     assert.deepEqual(controller.stagePatch({ 'basicSpecs.Divertissement%20%28Chant%29': 'Chant' }), { ok: true, hasDraft: true });
     assert.deepEqual(controller.stagePatch({ 'basicSpecs.%5F%5Fproto%5F%5F': 'pollué' }), { ok: false, reason: 'field-forbidden' });
+    assert.deepEqual(controller.stagePatch({ 'favoriteSkills.3': 'basic:Esquive' }), { ok: true, hasDraft: true });
+    assert.equal(controller.getState().data.favoriteSkills['3'], 'basic:Esquive');
+    assert.deepEqual(controller.stagePatch({ 'favoriteSkills.6': 'basic:Esquive' }), { ok: false, reason: 'field-forbidden' });
 });
 
 test('un nouveau champ prend la valeur serveur récente comme base et les segments prototype sont refusés', () => {

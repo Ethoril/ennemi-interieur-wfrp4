@@ -118,7 +118,9 @@ function validatePatchPayload(payload) {
         const basicSpec = segments.length === 2 && segments[0] === 'basicSpecs' && !!segments[1];
         const chosenVariant = segments.length === 3 && segments[0] === 'chosenVariants'
             && !!segments[1] && /^[1-5]$/u.test(segments[2]);
-        if (!simple && !rowNote && !basicSpec && !chosenVariant) {
+        // Compétences épinglées de l'onglet Principal mobile : emplacement 1 à 5, identifiant `basic:<ligne>` / `adv:<id>` ou vide.
+        const favoriteSkill = segments.length === 2 && segments[0] === 'favoriteSkills' && /^[1-5]$/u.test(segments[1]);
+        if (!simple && !rowNote && !basicSpec && !chosenVariant && !favoriteSkill) {
             fail('champ non autorisé', 'permission-denied', { kind: 'field-forbidden', path });
         }
         const value = payload.changes[path];
@@ -128,6 +130,9 @@ function validatePatchPayload(payload) {
             if (typeof value !== 'boolean' || (base !== null && typeof base !== 'boolean')) fail('valeur de visibilité invalide');
         } else if (rowNote) {
             if (typeof value !== 'string' || value.length > 2_000 || (base !== null && typeof base !== 'string')) fail('note invalide');
+        } else if (favoriteSkill) {
+            if (typeof value !== 'string' || value.length > 200 || !/^(?:(?:basic|adv):.+)?$/su.test(value)
+                || (base !== null && typeof base !== 'string')) fail('compétence épinglée invalide');
         } else if (basicSpec || chosenVariant) {
             if (typeof value !== 'string' || value.length > 200 || (base !== null && typeof base !== 'string')) fail('choix de carrière invalide');
         } else if (typeof value !== 'string' || (base !== null && typeof base !== 'string')) {

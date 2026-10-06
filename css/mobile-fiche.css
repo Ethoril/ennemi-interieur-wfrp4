@@ -232,7 +232,22 @@
 .m-principal-all { display: inline-flex; align-items: center; min-height: var(--m-touch-target); color: var(--m-accent); }
 
 .m-principal-skill-list { margin: 0; padding: 0; list-style: none; }
-.m-principal-skill { display: flex; align-items: center; gap: var(--space-sm); min-height: 2.6rem; padding: 0 var(--space-md); }
+.m-principal-skill-button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  min-height: var(--m-touch-target);
+  padding: 0 var(--space-md);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+}
+.m-principal-skill-button:focus-visible { outline: 2px solid var(--m-accent); outline-offset: -2px; }
+.m-principal-skill-button:disabled { cursor: default; }
+.m-principal-skill-empty { color: var(--m-accent); }
 .m-principal-skill + .m-principal-skill { border-top: 1px solid var(--border-subtle); }
 .m-principal-skill-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .m-principal-skill-carac { color: var(--text-secondary); font-size: 0.875rem; }

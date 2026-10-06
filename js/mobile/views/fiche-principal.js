@@ -1,7 +1,5 @@
 import { blessuresMax, mouvement } from '../../fiche/derived.js';
-import { CARACS, dotTarget, ficheCaracs, resourceTokens, topSkills } from '../fiche-model.js';
-
-const TOP_SKILLS = 5;
+import { CARACS, dotTarget, FAVORITE_SLOTS, favoriteSlots, ficheCaracs, resourceTokens } from '../fiche-model.js';
 
 function make(documentRef, tag, text = '', className = '') {
     const node = documentRef.createElement(tag);
@@ -12,10 +10,11 @@ function make(documentRef, tag, text = '', className = '') {
 
 /**
  * Onglet Principal ; toucher une caractéristique appelle onOpenCarac(clé, bouton). Toucher un point de Destin ou de Résilience
- * appelle onChangeResource({ maxKey, currentKey, maxLabel, label, value }, bouton) avec la valeur proposée. La structure est construite
+ * appelle onChangeResource({ maxKey, currentKey, maxLabel, label, value }, bouton) avec la valeur proposée. Les cinq emplacements de
+ * compétences épinglées appellent onOpenSlot(numéro 1-5, bouton), qu'ils soient vides ou remplis. La structure est construite
  * une fois ; update() ne réécrit que les textes et les points (réutilisés par rang), donc le bouton focalisé garde le focus.
  */
-export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac = () => {}, onChangeResource = () => {} }) {
+export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac = () => {}, onChangeResource = () => {}, onOpenSlot = () => {} }) {
     const root = make(documentRef, 'div', '', 'm-principal');
 
     const resources = make(documentRef, 'div', '', 'm-principal-resources');
@@ -64,6 +63,15 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
     all.setAttribute('aria-label', 'Toutes les compétences');
     skillsHead.append(skillsTitle, all);
     const skillList = make(documentRef, 'ul', '', 'm-principal-skill-list');
+    const slots = FAVORITE_SLOTS.map(slot => {
+        const li = make(documentRef, 'li', '', 'm-principal-skill');
+        const button = make(documentRef, 'button', '', 'm-principal-skill-button');
+        button.type = 'button';
+        button.addEventListener('click', () => onOpenSlot(slot, button));
+        li.append(button);
+        skillList.append(li);
+        return { button };
+    });
     skillsSection.append(skillsHead, skillList);
 
     root.append(resources, caracsSection, skillsSection);
@@ -103,17 +111,25 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
                 `${carac.nom} ${carac.total}, bonus ${carac.bonus}${carac.career ? ', de carrière' : ''}`);
         });
         derived.textContent = `Mouvement ${mouvement(data)} · Blessures max ${blessuresMax(data)} · Corruption ${Math.max(0, Math.floor(+data?.corruption) || 0)}`;
-        skillList.replaceChildren(...topSkills(data, engine, TOP_SKILLS).map(skill => {
-            const row = make(documentRef, 'li', '', 'm-principal-skill');
-            row.append(make(documentRef, 'span', skill.nom, 'm-principal-skill-name'),
-                make(documentRef, 'span', skill.carac, 'm-principal-skill-carac'),
-                make(documentRef, 'span', String(skill.total), 'm-principal-skill-total'));
-            return row;
-        }));
+        favoriteSlots(data, engine, careers).forEach(({ slot, row }, index) => {
+            const { button } = slots[index];
+            button.disabled = readonly;
+            if (!row) {
+                button.replaceChildren(make(documentRef, 'span', 'Choisir une compétence', 'm-principal-skill-empty'));
+                button.setAttribute('aria-label', `Compétence affichée ${slot} : choisir une compétence`);
+                return;
+            }
+            button.replaceChildren(make(documentRef, 'span', row.nom, 'm-principal-skill-name'),
+                make(documentRef, 'span', row.caracAbbr, 'm-principal-skill-carac'),
+                make(documentRef, 'span', String(row.total), 'm-principal-skill-total'));
+            button.setAttribute('aria-label', `${row.nom}, ${row.caracAbbr}, total ${row.total}. Changer ou retirer`);
+        });
     }
 
     // Le point touché peut avoir disparu (brûlé) : le focus revient au dernier point de la ressource.
     const focusResource = maxKey => cards.find(card => card.maxKey === maxKey)?.dots.at(-1)?.focus?.();
 
-    return Object.freeze({ element: root, update, focusResource });
+    const focusSlot = slot => slots[slot - 1]?.button.focus?.();
+
+    return Object.freeze({ element: root, update, focusResource, focusSlot });
 }

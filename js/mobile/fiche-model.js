@@ -133,6 +133,23 @@ export function topSkills(data, engine, n) {
     return [...trained, ...untrained].slice(0, n);
 }
 
+export const FAVORITE_SLOTS = Object.freeze([1, 2, 3, 4, 5]);
+
+/** Identifiant stable d'une ligne de skillRows pour l'épingler (`basic:<ligne BASIC_SKILLS>`, `adv:<id>`) ; '' sans identifiant. */
+export const skillPinId = row => (row.basic ? `basic:${row.row}` : row.targetId ? `adv:${row.targetId}` : '');
+
+/**
+ * Les cinq compétences épinglées sur Principal : [{ slot, row }] où `row` est la ligne de skillRows, ou null si l'emplacement est
+ * vide ou pointe une compétence qui n'existe plus (ligne de base masquée, compétence avancée supprimée).
+ */
+export function favoriteSlots(data, engine, careers = []) {
+    const rows = skillRows(data, engine, careers);
+    return FAVORITE_SLOTS.map(slot => {
+        const id = data?.favoriteSkills?.[slot];
+        return { slot, row: (typeof id === 'string' && id && rows.find(row => skillPinId(row) === id)) || null };
+    });
+}
+
 // Libellé lisible d'un achat récent (nom principal de la compétence, nom complet de la caractéristique) ; sinon celui du serveur.
 function purchaseLabel(entry, engine) {
     const advances = Math.floor(+entry.avances);
