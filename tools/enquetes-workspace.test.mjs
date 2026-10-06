@@ -19,7 +19,7 @@ async function fixture({role='joueur',id=null}={}){
     read:async()=>({items:[{id:'trash',type:'documents',titre:'Pièce supprimée',zone:'user:a',authorUid:'a',revision:2}],id:null}),close(){},signOut(){},action:async()=>{}
   };}};
   const view=createEnqueteWorkspaceView({container,id,loadRuntime:async()=>runtime});await view.mount();await flush();
-  const button=label=>container.querySelectorAll('button').find(b=>b.textContent===label);
+  const button=label=>container.querySelectorAll('button').find(b=>b.textContent===label||b.getAttribute('role')==='tab'&&b.textContent.startsWith(({Enquêtes:'Dossiers',Documents:'Pièces','Mon carnet':'Carnet'}[label]||label)+' '));
   const field=label=>container.querySelectorAll('label').find(l=>l.textContent===label).children[0];
   return{view,container,records,drafts,calls,emit,button,field,hook:fn=>{saveHook=fn;},session};
 }

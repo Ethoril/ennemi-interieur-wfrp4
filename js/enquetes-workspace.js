@@ -1,13 +1,13 @@
-import { buildLinksIndex, dossierPieces, linkedNotes } from './enquetes-view-model.js';
+import { buildLinksIndex, countSpaces, countStates, dossierSummary, dossierPieces, linkedNotes } from './enquetes-view-model.js';
 import { selectEnqueteExport } from './data/enquetes-export.js';
 import { recordTitle, buildSearch, fold } from './data/enquetes-domain.js';
-export function createEnqueteWorkspaceView({container,id=null,initialAction=null,loadRuntime=()=>import('./enquetes-runtime.js'),onOpen=()=>{},onOpenPnj=()=>{}}={}) {
+export function createEnqueteWorkspaceView({container,id=null,initialAction=null,loadRuntime=()=>import('./enquetes-runtime.js'),onOpen=()=>{},onOpenPnj=()=>{},layout='desktop'}={}) {
   const d=container.ownerDocument;
   let initialOpened=false,legacyResolved=false,detailSignature='',linksIndex=new Map();
-  let client=null,state={session:null,records:[],pnjs:[]},mounted=false,token=0,section='enquetes',selected=id,search='',scope='',filter='',editor=null,timer=null,graph=null,handles=[],busy=false;
+  let client=null,state={session:null,records:[],pnjs:[]},mounted=false,token=0,section='enquetes',selected=id,search='',scope='',filter='',category='',editor=null,timer=null,graph=null,handles=[],busy=false;
   const node=(tag,text='',className='')=>{const e=d.createElement(tag);e.textContent=text;e.className=className;return e;};
   const button=(label,action,variant='')=>{const b=node('button',label,'enq-button'+(variant?' enq-button--'+variant:''));b.type='button';b.addEventListener('click',()=>Promise.resolve(action()).catch(showError));return b;};
-  let root,toolbar,list,detail,status,searchInput;
+  let root,toolbar,list,detail,status,searchInput,notebook;
   const current=()=>state.records.find(r=>r.id===selected)||state.pnjs.find(r=>r.id===selected);
   const all=()=>[...state.records,...state.pnjs];
   const isGm=()=>state.session?.role==='mj';
@@ -40,10 +40,11 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     const heading=detail.querySelector('h3');heading?.setAttribute('tabindex','-1');heading?.focus({preventScroll:true});
     if(globalThis.matchMedia?.('(max-width:850px)')?.matches)detail.scrollIntoView?.({behavior:'smooth',block:'start'});
   }
+  const searchShortcut=event=>{if(event.key==='/'&&!['input','textarea','select'].includes(d.activeElement?.tagName?.toLowerCase())){event.preventDefault();searchInput?.focus();}};
   function build(){
-    root=node('section','','enq-workspace');toolbar=node('div','','enq-toolbar');status=node('p','','enq-status');status.setAttribute('role','status');
+    root=node('section','','enq-workspace enq-workspace--'+layout);toolbar=node('div','','enq-toolbar');status=node('p','','enq-status');status.setAttribute('role','status');
     root.append(toolbar,status);
-    const panes=node('div','','enq-panes');list=node('div','','enq-list');detail=node('article','','enq-detail');panes.append(list,detail);root.append(panes);container.replaceChildren(root);
+    const panes=node('div','','enq-panes');list=node('div','','enq-list');detail=node('article','','enq-detail');notebook=node('aside','','enq-notebook');notebook.setAttribute('aria-labelledby','enq-notebook-title');panes.append(list,detail,notebook);root.append(panes);container.replaceChildren(root);
     render();
   }
   function render(){
@@ -53,42 +54,56 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
       toolbar.append(node('h2','Documents et enquêtes'),button('Se connecter avec Google',()=>client?.signIn()));
       list.replaceChildren(node('p','Connecte-toi pour retrouver les pièces du groupe et ton carnet personnel.'));if(!editor)detail.replaceChildren();return;
     }
-    toolbar.append(node('h2','Documents et enquêtes'));
-    for(const [value,label] of [['enquetes','Enquêtes'],['documents','Documents'],['notes','Mon carnet'],['trash','Corbeille']]){
-      const b=button(label,()=>{if(editor&&!globalThis.confirm('Conserver le brouillon et quitter l’éditeur ?'))return;closeEditor();section=value;filter='';scope='';selected=null;render();});b.setAttribute('aria-pressed',String(section===value));toolbar.append(b);
-    }
-    toolbar.append(button('Déconnexion',()=>client.signOut()));
     if(!state.session.active){status.textContent='Le nouvel espace sera disponible après sa mise en service.';list.replaceChildren();return;}
     if(state.session.maintenance){status.textContent='Réorganisation des accès en cours. Ton carnet personnel reste accessible.';}
     else if(state.session.role==='ancien'){status.textContent='Accès au groupe retiré. Ton carnet personnel reste consultable et exportable.';section='notes';}
     else if(state.session.offline){status.textContent='Hors connexion : textes en cache et brouillons locaux.';}
     else if(!editor&&!busy)status.textContent='';
-    renderList();
+    renderList();renderNotebook();
     if(!editor){const signature=JSON.stringify([selected,section,state.session?.uid,state.session?.maintenance,state.records.map(({fromCache,...r})=>r),state.pnjs]);if(signature!==detailSignature){detailSignature=signature;renderDetail();}}
+  }
+  function switchSpace(value){
+    if(editor&&!globalThis.confirm('Conserver le brouillon et quitter l’éditeur ?'))return;
+    section=value;filter='';category='';scope='';selected=null;detailSignature='';closeEditor();
+  }
+  function tabs(choices,value,change,label){
+    const bar=node('div','','enq-tabs');bar.setAttribute('role','tablist');bar.setAttribute('aria-label',label);
+    const buttons=choices.map(([key,text])=>{const b=button(text,()=>change(key),'quiet');b.setAttribute('role','tab');b.setAttribute('aria-selected',String(key===value));b.setAttribute('aria-current',String(key===value));b.tabIndex=key===value?0:-1;return b;});
+    buttons.forEach((b,i)=>b.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const n=event.key==='Home'?0:event.key==='End'?buttons.length-1:(i+(event.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;change(choices[n][0]);const bars=root.querySelectorAll('.enq-tabs');const fresh=bars.find?.(v=>v.getAttribute('aria-label')===label)||Array.from(bars).find(v=>v.getAttribute('aria-label')===label);fresh?.querySelectorAll('button')[n]?.focus();}}));
+    bar.append(...buttons);return bar;
+  }
+  function renderNotebook(){
+    notebook.replaceChildren(node('h3','Mon carnet','enq-section-title'));notebook.firstChild.id='enq-notebook-title';
+    if(!state.session)return;
+    notebook.append(node('small','Privé'),button('Nouvelle note',()=>openEditor(null,'notes',current()),'quiet'));
+    for(const note of linkedNotes(current(),state.records,linksIndex))notebook.append(button(recordTitle(note),()=>openObject(note),'quiet'),textView(note.texte));
+    notebook.append(node('p','Carnet privé dans l’application. L’administrateur de l’infrastructure Firebase conserve un accès technique.','enq-privacy'));
   }
   function renderList(){
     const focused=searchInput&&d.activeElement===searchInput,selection=focused?[searchInput.selectionStart,searchInput.selectionEnd]:null;
     list.replaceChildren();
-    if(section==='trash'){renderTrash();return;}
+    const counts=countSpaces(state.records);
+    list.append(tabs([['enquetes','Dossiers '+counts.enquetes],['documents','Pièces '+counts.documents],['notes','Carnet '+counts.notes]],section,switchSpace,'Espace de recherche'));
+    if(section==='trash'){list.append(button('Retour aux dossiers',()=>switchSpace('enquetes'),'quiet'));renderTrash();return;}
     const heading=node('div','','enq-list-heading');heading.append(node('h3',section==='notes'?'Mon carnet':section==='documents'?'Bibliothèque':'Dossiers d’enquête'));
     if(section!=='enquetes'||isGm())heading.append(button(section==='notes'?'Nouvelle note':section==='documents'?'Nouveau document':'Nouvelle enquête',()=>openEditor(null,section),'primary'));
     list.append(heading);
     const controls=node('div','','enq-filters');
-    searchInput=node('input');searchInput.type='search';searchInput.placeholder='Rechercher';searchInput.value=search;searchInput.setAttribute('aria-label','Rechercher dans cet espace');
-    searchInput.addEventListener('input',e=>{search=e.target.value;renderResults();});
-    controls.append(searchInput);
-    const filters=node('select');filters.setAttribute('aria-label','Filtrer');
-    const choices=section==='documents'?[['','Tout'],['piece','Pièces'],['contribution','Contributions'],['Lettre','Lettres'],['Carte','Cartes'],['personnel','Personnel'],['mj','Secret MJ']]:section==='enquetes'?[['','Actives'],['archive','Archivées'],['Ouverte','Ouvertes'],['En pause','En pause'],['Résolue','Résolues']]:[['','Toutes les notes'],['non-classees','Non classées']];
-    for(const [value,label]of choices){const o=node('option',label);o.value=value;filters.append(o);}filters.value=filter;filters.addEventListener('change',()=>{filter=filters.value;renderResults();});
-    controls.append(filters);
+    const searchLabel=node('label','Rechercher dans cet espace','visually-hidden');searchLabel.htmlFor='enq-search';controls.append(searchLabel);
+    searchInput=node('input');searchInput.id='enq-search';searchInput.type='search';searchInput.placeholder='Pièce, PNJ, note…';searchInput.value=search;searchInput.setAttribute('aria-label','Rechercher dans cet espace');
+    searchInput.addEventListener('input',e=>{search=e.target.value;renderResults();});controls.append(searchInput);
+    const states=countStates(state.records),chips=node('div','','enq-chips');
+    const choices=section==='documents'?[['piece','Pièces reçues'],['contribution','Contributions'],['personnel','Personnel'],...isGm()?[['mj','Secret MJ']]:[]]:section==='enquetes'?[['Ouverte','Ouvertes '+states.Ouverte],['En pause','En pause '+states['En pause']],['Résolue','Résolues '+states.Résolue],['archive','Archivées '+states.archive]]:[['','Toutes'],['non-classees','Non classées']];
+    for(const [value,label]of choices){const b=button(label,()=>{filter=filter===value?'':value;renderList();},'quiet');b.setAttribute('aria-pressed',String(value===filter));if(section==='enquetes'&&value!=='archive')b.append(node('span','','enq-state-dot enq-state-dot--'+({'Ouverte':'open','En pause':'paused','Résolue':'solved'}[value])));chips.append(b);}
+    controls.append(chips);
+    if(section==='documents'){const categories=node('select');categories.setAttribute('aria-label','Catégorie');for(const value of ['','Lettre','Témoignage','Carte','Illustration','Rapport','Autre']){const option=node('option',value||'Toutes les catégories');option.value=value;categories.append(option);}categories.value=category;categories.addEventListener('change',()=>{category=categories.value;renderResults();});controls.append(categories);}
     const scopeSelect=node('select');scopeSelect.setAttribute('aria-label',section==='notes'?'Limiter à une enquête, un document ou un personnage':'Limiter à une enquête');scopeSelect.append(node('option',section==='notes'?'Tous les objets liés':'Toutes les enquêtes'));scopeSelect.firstChild.value='';
     for(const r of all().filter(r=>section==='notes'?['enquetes','documents','pnjs'].includes(r.type):r.type==='enquetes')){const o=node('option',r.nom||r.titre);o.value=r.id;scopeSelect.append(o);}scopeSelect.value=scope;scopeSelect.addEventListener('change',()=>{scope=scopeSelect.value;renderResults();});
-    controls.append(scopeSelect);list.append(controls,node('div','','enq-results'));
-    if(section==='notes')list.append(node('p','Carnet privé dans l’application. L’administrateur de l’infrastructure Firebase conserve un accès technique.','enq-privacy'));
-    list.append(button('Exporter cet espace',()=>exportSpace()));
-    renderResults();
+    controls.append(scopeSelect);list.append(controls,node('ul','','enq-results'));renderResults();
+    const footer=node('footer','','enq-rail-footer');
     const drafts=client?.listDrafts?.(state.session.uid)||[];
-    for(const draft of drafts.filter(v=>v.type===section)){list.append(button('Reprendre le brouillon : '+(draft.body?.titre||'Sans titre'),()=>openEditor(state.records.find(r=>r.id===draft.id)||null,draft.type,null,{},draft.id)));}
+    for(const draft of drafts.filter(v=>v.type===section))footer.append(button('Reprendre le brouillon : '+(draft.body?.titre||'Sans titre'),()=>openEditor(state.records.find(r=>r.id===draft.id)||null,draft.type,null,{},draft.id),'quiet'));
+    footer.append(button('Corbeille',()=>switchSpace('trash'),'quiet'),button('Exporter cet espace',()=>exportSpace(),'quiet'),button('Déconnexion',()=>client.signOut(),'quiet'));list.append(footer);
     if(focused&&searchInput){searchInput.focus();if(selection&&selection[0]!==null)searchInput.setSelectionRange(...selection);}
   }
   function renderResults(){
@@ -101,6 +116,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
       else if(filter==='non-classees')source=source.filter(r=>!state.records.some(l=>l.type==='liens'&&(l.a===r.id||l.b===r.id)));
       else if(section!=='notes')source=source.filter(r=>[r.origine,r.categorie,r.etat].includes(filter));
     }
+    if(category&&section==='documents')source=source.filter(r=>r.categorie===category);
     const matched=buildSearch(source,search,scope?linkedIds(scope):null);
     // A visible linked PNJ is also a searchable entry point.
     for(const r of source){
@@ -111,8 +127,9 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     matched.sort((a,b)=>recordTitle(a).localeCompare(recordTitle(b),'fr'));
     if(!matched.length)results.append(node('p','Aucun résultat. Ajoute une pièce, une note ou ajuste les filtres.'));
     for(const r of matched){
-      const card=node('div','','enq-card');const open=button(recordTitle(r),()=>{if(editor&&!globalThis.confirm('Conserver le brouillon et quitter l’éditeur ?'))return;closeEditor();selected=r.id;renderDetail();revealDetail();onOpen(r.id);});
+      const card=node('li','','enq-card');const open=button(recordTitle(r),()=>{if(editor&&!globalThis.confirm('Conserver le brouillon et quitter l’éditeur ?'))return;openObject(r);});open.setAttribute('aria-current',String(selected===r.id));
       card.append(open,node('small',r.type==='documents'?(r.origine==='piece'?'Pièce':'Contribution')+' · '+r.categorie:r.type==='enquetes'?r.etat:'Note privée'));
+      if(r.type==='enquetes'){const summary=dossierSummary(r,state.records,state.pnjs,linksIndex);card.append(node('small',summary.pieces+' pièces · '+summary.pnjs+' PNJ'+(summary.lastSession?' · màj session '+summary.lastSession:'')));open.append(node('span','','enq-state-dot enq-state-dot--'+({'Ouverte':'open','En pause':'paused','Résolue':'solved'}[r.etat]||'open')));}
       if(r.zone==='mj')card.append(node('span','Secret MJ','enq-badge'));else if(r.zone.startsWith('user:')&&r.type!=='notes')card.append(node('span','Personnel','enq-badge'));
       if(search)card.append(node('p',(r.texte||r.description||'').slice(0,180)));
       results.append(card);
@@ -371,14 +388,14 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   }
   return {
     async mount({signal}={}){
-      if(mounted||signal?.aborted)return;mounted=true;build();
+      if(mounted||signal?.aborted)return;mounted=true;build();d.addEventListener('keydown',searchShortcut);
       const runtime=await loadRuntime();if(!mounted||signal?.aborted)return;
       client=runtime.createEnqueteClient({onChange:next=>{if(editor&&(!next.session||next.session.uid!==editor.uid||!editor.zone.startsWith('user:')&&(!next.session.active||next.session.maintenance&&!busy||next.session.role==='ancien'))){editor=null;if(timer)globalThis.clearTimeout(timer);timer=null;detailSignature='';}if(!next.session||next.session.maintenance)for(const dialog of root.querySelectorAll('dialog'))if(dialog.open){dialog.close();dialog.remove();}state=next;linksIndex=buildLinksIndex(next.records);if(selected&&!legacyResolved&&next.session?.active&&client){legacyResolved=true;client.read('resolveLegacy',selected).then(result=>{if(mounted&&result.id){selected=result.id;render();}}).catch(()=>{});}if(selected&&!editor){const found=next.records.find(r=>r.id===selected);if(found&&['documents','enquetes','notes'].includes(found.type))section=found.type;}render();if(!initialOpened&&initialAction&&next.session?.active&&(initialAction==='new'||current())){initialOpened=true;openEditor(initialAction==='edit'?current():null,current()?.type||'enquetes');}},onError:showError});
       Object.assign(client,{newId:runtime.newEnqueteId,saveDraft:runtime.saveEnqueteDraft,readDraft:runtime.readEnqueteDraft,removeDraft:runtime.removeEnqueteDraft,listDrafts:runtime.listEnqueteDrafts});
       signal?.addEventListener('abort',()=>this.unmount(),{once:true});
     },
     beforeLeave(){return !busy&&(!editor||globalThis.confirm('Quitter en conservant le brouillon local ?'));},
-    unmount(){for(const dialog of root?.querySelectorAll('dialog')||[])if(dialog.open)dialog.close();mounted=false;++token;if(timer)globalThis.clearTimeout(timer);release();client?.close();editor=null;container.replaceChildren();}
+    unmount(){for(const dialog of root?.querySelectorAll('dialog')||[])if(dialog.open)dialog.close();mounted=false;d.removeEventListener('keydown',searchShortcut);++token;if(timer)globalThis.clearTimeout(timer);release();client?.close();editor=null;container.replaceChildren();}
   };
 }
 
