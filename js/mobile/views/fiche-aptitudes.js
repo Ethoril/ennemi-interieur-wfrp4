@@ -23,11 +23,11 @@ function makeGroup(documentRef) {
 /**
  * Onglet Aptitudes : bascule Compétences · Talents · Sorts. Toucher une compétence ou un talent appelle
  * onOpenSkill(ligne, bouton) / onOpenTalent(nom, bouton) (volet d'achat) ; un sort ou une prière possédé s'ouvre en consultation,
- * « Apprendre un sort / un miracle » appelle onLearn('sort' | 'miracle', bouton).
+ * « Apprendre un sort / un miracle » appelle onLearn('sort' | 'miracle', bouton), « Apprendre une compétence » onLearnSkill(bouton).
  * La requête, les filtres et la bascule vivent dans la fermeture : ils survivent aux mises à jour et aux changements d'onglet.
  * Les lignes sont mises à jour sur place (même bouton) : le focus de la recherche et le bouton déclencheur du volet restent valides.
  */
-export function createAptitudesPanel({ documentRef, onOpenSkill = () => {}, onOpenTalent = () => {}, onLearn = () => {} }) {
+export function createAptitudesPanel({ documentRef, onOpenSkill = () => {}, onOpenTalent = () => {}, onLearn = () => {}, onLearnSkill = () => {} }) {
     const root = make(documentRef, 'div', '', 'm-aptitudes');
     let mode = 'competences';
     const filters = { query: '', career: false, trained: false, carac: '' };
@@ -81,7 +81,10 @@ export function createAptitudesPanel({ documentRef, onOpenSkill = () => {}, onOp
     clear.type = 'button';
     empty.append(make(documentRef, 'p', 'Aucune compétence ne correspond.'), clear);
     const legend = make(documentRef, 'p', 'Point doré : compétence de la carrière actuelle.', 'm-principal-note');
-    skillsPane.append(tools, trainedGroup.root, untrainedGroup.root, empty, legend);
+    const learnSkill = make(documentRef, 'button', 'Apprendre une compétence', 'm-button');
+    learnSkill.type = 'button';
+    learnSkill.addEventListener('click', () => onLearnSkill(learnSkill));
+    skillsPane.append(tools, learnSkill, trainedGroup.root, untrainedGroup.root, empty, legend);
 
     search.addEventListener('input', () => { filters.query = search.value; renderSkills(); });
     clear.addEventListener('click', () => {

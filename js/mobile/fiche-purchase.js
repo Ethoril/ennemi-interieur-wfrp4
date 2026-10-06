@@ -149,7 +149,7 @@ export function purchaseTarget(data, engine, careers, spec) {
 const groupOf = nom => nom.match(/^(.+?)\s+\(/u)?.[1] || nom;
 
 // Les spécialités (non de base) publiées d'un groupe : de quoi ajouter une ligne avancée au même groupe.
-function groupSpecialty(resolver, group) {
+export function groupSpecialty(resolver, group) {
     const options = publishedSkillRows(resolver).filter(item => item.group === group && item.spec && !item.basic)
         .map(({ nom, spec }) => ({ nom, spec }));
     return options.length ? { kind: 'group', group, options } : null;

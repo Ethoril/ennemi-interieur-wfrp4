@@ -16,23 +16,24 @@ const SPEC_ERRORS = {
  * - { kind: 'basic' } : champ « Spécialité » d'une compétence de base, enregistré par un patch `basicSpecs.<ligne>` ;
  * - { kind: 'group' } : « Ajouter une spécialité » du groupe, qui appelle onChoose(nom) pour ouvrir l'achat de la nouvelle ligne
  *   (onChoose renvoie false si le nom n'est pas une compétence avancée valable).
+ * `idPrefix` : préfixe des identifiants (deux sections peuvent coexister) ; `expanded` : sélecteur de groupe toujours ouvert (sans bouton d'ouverture).
  * `getContext()` → { state, engine, controller }. Construit une fois ; update(target) ne réécrit que les textes.
  */
-export function createSpecialtySection({ documentRef, getContext, onChoose, announce = () => {} }) {
+export function createSpecialtySection({ documentRef, getContext, onChoose, announce = () => {}, idPrefix = 'm-spec', expanded = false }) {
     const root = make(documentRef, 'div', '', 'm-spec');
 
     const basic = make(documentRef, 'div', '', 'm-spec-block');
     const label = make(documentRef, 'label', 'Spécialité', 'm-spec-label');
-    label.setAttribute('for', 'm-spec-input');
+    label.setAttribute('for', `${idPrefix}-input`);
     const field = make(documentRef, 'div', '', 'm-spec-field');
     const input = make(documentRef, 'input', '', 'm-search-input');
-    input.id = 'm-spec-input';
+    input.id = `${idPrefix}-input`;
     input.type = 'text';
     input.autocomplete = 'off';
-    input.setAttribute('list', 'm-spec-options');
+    input.setAttribute('list', `${idPrefix}-options`);
     input.setAttribute('maxlength', '200');
     const datalist = make(documentRef, 'datalist');
-    datalist.id = 'm-spec-options';
+    datalist.id = `${idPrefix}-options`;
     const save = make(documentRef, 'button', 'Enregistrer', 'm-button');
     save.type = 'button';
     field.append(input, save);
@@ -43,15 +44,16 @@ export function createSpecialtySection({ documentRef, getContext, onChoose, anno
     const group = make(documentRef, 'div', '', 'm-spec-block');
     const toggle = make(documentRef, 'button', 'Ajouter une spécialité', 'm-button');
     toggle.type = 'button';
-    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-expanded', String(expanded));
+    toggle.hidden = expanded;
     const picker = make(documentRef, 'div', '', 'm-spec-picker');
-    picker.hidden = true;
+    picker.hidden = !expanded;
     const choices = make(documentRef, 'div', '', 'm-spec-choices');
     const freeLabel = make(documentRef, 'label', 'Autre spécialité', 'm-spec-label');
-    freeLabel.setAttribute('for', 'm-spec-free');
+    freeLabel.setAttribute('for', `${idPrefix}-free`);
     const freeField = make(documentRef, 'div', '', 'm-spec-field');
     const free = make(documentRef, 'input', '', 'm-search-input');
-    free.id = 'm-spec-free';
+    free.id = `${idPrefix}-free`;
     free.type = 'text';
     free.autocomplete = 'off';
     free.setAttribute('maxlength', '200');

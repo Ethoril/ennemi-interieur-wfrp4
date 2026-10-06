@@ -211,5 +211,5 @@ portée par la seule couleur (cadre doré doublé d'un texte), annonces des acha
 
 - **Import JSON réservé au MJ** (le cahier le prévoyait pour tous) : l'import écrase la fiche, il reste donc dans le menu ⋯ du MJ seulement.
 - **Annulation d'achat** : le MJ peut annuler seulement le dernier achat sur mobile ; les autres annulations se font sur le bureau.
-- **Nouvelle compétence avancée** : impossible de démarrer, sur mobile, une compétence avancée hors d'un groupe déjà possédé (spécialité d'un groupe existant : oui). À traiter dans un lot suivant.
+- **Nouvelle compétence avancée** : le bouton « Apprendre une compétence » (Aptitudes, segment Compétences) ouvre une recherche dans les compétences avancées publiées (formes reliées masquées, compétences possédées exclues) ; un groupe (« Langue (au choix) ») mène au choix de spécialité, puces publiées ou saisie libre, avant le volet d'achat (v2.32.1).
 - **Lien « Ancienne fiche »** conservé dans le menu ⋯ pendant quelques versions, puis à retirer.

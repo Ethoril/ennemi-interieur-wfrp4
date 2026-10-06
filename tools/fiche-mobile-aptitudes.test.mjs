@@ -11,9 +11,11 @@ import {
 } from '../js/mobile/fiche-aptitudes-model.js';
 import { loadFicheCatalogue } from '../js/mobile/fiche-catalogue.js';
 import { skillRows } from '../js/mobile/fiche-model.js';
+import { learnSkillRows } from '../js/mobile/fiche-skill-learn-model.js';
 import { purchasePayload, purchasePreview, purchaseTarget } from '../js/mobile/fiche-purchase.js';
 import { createAptitudesPanel } from '../js/mobile/views/fiche-aptitudes.js';
 import { createPurchaseSheet } from '../js/mobile/views/fiche-purchase-sheet.js';
+import { createSkillLearnSheet } from '../js/mobile/views/fiche-skill-learn.js';
 import { createSpellLearnSheet } from '../js/mobile/views/fiche-spell-learn.js';
 import { createSpecialtySection } from '../js/mobile/views/fiche-specialty.js';
 
@@ -713,5 +715,82 @@ test('volet « Apprendre » : recherche, puces de type, connus absents, choix pu
     assert.equal(purchase.element.byClass('m-purchase-nature').textContent, 'Miracle');
     assert.equal(purchase.element.byClass('m-purchase-cost').textContent, '100 XP');
     purchase.destroy();
+    learn.destroy();
+});
+
+test('apprendre une compétence : recherche, exclusions, groupes, coût égal à celui du moteur', () => {
+    const d = data({ skillsAdvanced: [{ id: 'l1', nom: 'Langue (Reikspiel)', carac: 'int', adv: 3 }] });
+    const rows = learnSkillRows(d, engine, careers);
+    const names = rows.map(row => row.nom);
+    assert.ok(names.includes('Langue (au choix)') && names.includes('Focalisation'));
+    assert.ok(!names.some(nom => /^(Art|Charme|Esquive)/u.test(nom)), 'les compétences de base sont absentes');
+    assert.ok(!names.includes('Langue (Tiléen)'), 'les spécialités passent par leur groupe');
+    const { aliases } = read('js/catalogue/referentiel-public.json').skills;
+    const alias = aliases.find(({ label }) => resolver.resolve(label).status === 'resolved' && !resolver.resolve(label).entry.basic
+        && resolver.resolve(label).entry.nom !== label);
+    assert.ok(alias && !names.includes(alias.label), 'une forme reliée est masquée');
+    // Possédée (y compris par une forme reliée) : exclue.
+    const principal = resolver.resolve(alias.label).entry;
+    const linked = data({ skillsAdvanced: [{ id: 'k1', nom: alias.label, carac: 'int', adv: 1 }] });
+    assert.ok(!learnSkillRows(linked, engine, careers).some(row => row.nom === principal.nom));
+    // Recherche sans accents ni casse, chaque mot ; une spécialité retrouve son groupe.
+    assert.deepEqual(learnSkillRows(d, engine, careers, 'LANGUE choix').map(row => row.nom), ['Langue (au choix)']);
+    assert.ok(learnSkillRows(d, engine, careers, 'tileen').some(row => row.nom === 'Langue (au choix)'));
+    assert.deepEqual(learnSkillRows(d, engine, careers, 'zzzz'), []);
+    const group = byNom(rows, 'Langue (au choix)');
+    assert.equal(group.cost, undefined);
+    assert.ok(group.specialty.options.some(({ nom }) => nom === 'Langue (Tiléen)'));
+    // Coût : compétence de carrière (Agitateur), hors carrière, spécialité de groupe, forme reliée.
+    const alchimiste = data({ carriere: 'Alchimiste (Collège Doré)' });
+    const agitateur = learnSkillRows(alchimiste, engine, careers).filter(row => row.cost !== undefined);
+    const career = agitateur.find(row => row.inCareer);
+    const other = agitateur.find(row => !row.inCareer);
+    assert.ok(career && other);
+    for (const row of [career, other]) {
+        const { target } = assertAccepted(alchimiste, { kind: 'skill', newName: row.nom });
+        assert.equal(target.inCareer, row.inCareer);
+        assert.equal(purchasePreview(target, 1, 5000).cost, row.cost);
+    }
+    assert.equal(assertAccepted(data(), { kind: 'skill', newName: 'Langue (Tiléen)' }).target.adv, 0);
+    assert.equal(assertAccepted(data(), { kind: 'skill', newName: alias.label }).target.title, principal.nom);
+});
+
+test('volet « Apprendre une compétence » : recherche, compétence unique, groupe puis spécialité libre', () => {
+    const documentRef = fakeDocument();
+    const state = { phase: 'ready', pendingOperationId: null, data: data() };
+    const chosen = [];
+    const learn = createSkillLearnSheet({
+        documentRef, getContext: () => ({ state, engine, careers }), onChoose: (spec, trigger) => chosen.push([spec, trigger]),
+    });
+    const trigger = documentRef.createElement('button');
+    learn.open(trigger);
+    const names = () => learn.element.allByClass('m-apt-name').map(node => node.textContent);
+    const search = learn.element.all().find(node => node.tagName === 'input');
+    search.value = 'evaluation';
+    search.dispatch('input');
+    assert.deepEqual(names(), ['Évaluation']);
+    learn.element.allByClass('m-apt-row')[0].click();
+    assert.deepEqual(chosen, [[{ kind: 'skill', newName: 'Évaluation' }, trigger]]);
+    assert.equal(learn.element.open, false);
+
+    learn.open(trigger);
+    const find = learn.element.all().find(node => node.tagName === 'input');
+    find.value = 'langue';
+    find.dispatch('input');
+    learn.element.allByClass('m-apt-row')[0].click();
+    assert.equal(learn.element.byClass('m-purchase-title').textContent, 'Langue');
+    const chip = learn.element.allByClass('m-chip').find(node => node.textContent === 'Tiléen');
+    chip.click();
+    assert.deepEqual(chosen.at(-1)[0], { kind: 'skill', newName: 'Langue (Tiléen)' });
+
+    learn.open(trigger);
+    const again = learn.element.all().find(node => node.tagName === 'input');
+    again.value = 'langue';
+    again.dispatch('input');
+    learn.element.allByClass('m-apt-row')[0].click();
+    const free = learn.element.all().find(node => node.id === 'm-skill-learn-spec-free');
+    free.value = 'Gobelin';
+    learn.element.allByClass('m-button').find(node => node.textContent === 'Choisir').click();
+    assert.deepEqual(chosen.at(-1)[0], { kind: 'skill', newName: 'Langue (Gobelin)' });
     learn.destroy();
 });
