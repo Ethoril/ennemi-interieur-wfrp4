@@ -122,6 +122,17 @@ export function topSkills(data, engine, n) {
     return [...trained, ...untrained].slice(0, n);
 }
 
+// Libellé lisible d'un achat récent (nom principal de la compétence, nom complet de la caractéristique) ; sinon celui du serveur.
+function purchaseLabel(entry, engine) {
+    const advances = Math.floor(+entry.avances);
+    if (entry.kind === 'purchase' && entry.targetNom && advances > 0) {
+        if (entry.type === 'Compétence') return `${primarySkillLabel(engine?.skillResolver, entry.targetNom)} +${advances}`;
+        const carac = entry.type === 'Caractéristique' && CARACS.find(({ key }) => key === entry.targetNom);
+        if (carac) return `${carac.nom} +${advances}`;
+    }
+    return String(entry.achat || entry.targetNom || '');
+}
+
 /**
  * Lignes du journal d'XP, la plus récente d'abord : { key, label, nature, amount (signé : gain +, dépense −), cancelled, purchaseId }.
  * `purchaseId` n'est renseigné que sur le dernier achat annulable de `uid` (même règle que le serveur : son dernier achat
@@ -129,6 +140,7 @@ export function topSkills(data, engine, n) {
  * Les entrées historiques sans `kind` sont des achats.
  */
 export function xpLogRows(data, engine, uid) {
+    // ponytail: le MJ n'annule ici que son propre dernier achat ; les plus anciens s'annulent depuis le bureau.
     const log = Array.isArray(data?.xpLog) ? data.xpLog : [];
     const latest = log.findLast(entry => entry?.kind === 'purchase' && entry.origin === 'command'
         && entry.actorUid === uid && !entry.cancelledByOperationId);
@@ -143,10 +155,9 @@ export function xpLogRows(data, engine, uid) {
             });
             return;
         }
-        const skill = entry.type === 'Compétence' && !entry.achat && entry.targetNom;
         const correction = entry.kind === 'correction';
         rows.push({
-            key, label: String(entry.achat || (skill ? primarySkillLabel(engine?.skillResolver, entry.targetNom) : entry.targetNom) || ''),
+            key, label: purchaseLabel(entry, engine),
             nature: correction ? 'Correction MJ' : `Achat · ${entry.type || 'Autre'}`,
             amount: -(+entry.cout || 0) || 0, cancelled: !!entry.cancelledByOperationId,
             purchaseId: entry === latest && typeof entry.purchaseId === 'string' && Array.isArray(entry.effects) ? entry.purchaseId : '',

@@ -109,7 +109,7 @@ export function createFicheDetailView({
             if (!data) return;
             const exportedAt = new Date().toISOString();
             downloadJson(documentRef, ficheExportFilename(charId, exportedAt), JSON.stringify(
-                buildFicheExport(data, { charId, appVersion: 'mobile', exportedAt }), null, 2));
+                buildFicheExport(data, { charId, appVersion: documentRef.querySelector?.('meta[name="app-version"]')?.getAttribute('content') || 'mobile', exportedAt }), null, 2));
             note.textContent = 'Fiche exportée.';
         });
         importButton.addEventListener('click', () => { note.textContent = ''; fileInput.value = ''; fileInput.click(); });
@@ -153,7 +153,10 @@ export function createFicheDetailView({
     });
 
     const ficheContext = () => ({ state: controllerState, engine: catalogue?.getEngine(), online, controller, charId });
-    const cancel = createCancelSheet({ documentRef, announce, getContext: ficheContext });
+    // Le déclencheur disparaît quand l'historique change : le focus revient à un élément stable du journal.
+    const cancel = createCancelSheet({
+        documentRef, getContext: ficheContext, announce: message => { announce(message); journal.refocus(); },
+    });
     const importSheet = createImportSheet({ documentRef, announce, getContext: ficheContext });
     // Un seul panneau pour toute la vie de la vue : la saisie des notes survit aux reconstructions de la coque.
     const journal = createJournalPanel({

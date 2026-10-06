@@ -52,6 +52,8 @@ export function createJournalPanel({ documentRef, getContext, onCancel = () => {
     const spent = figure('Dépensée');
     const free = figure('Libre', 'm-purchase-cost');
     const heading = make(documentRef, 'h3', 'Historique', 'm-apt-title');
+    heading.tabIndex = -1;
+    let cancelButton = null;
     const list = make(documentRef, 'ol', '', 'm-apt-list m-journal-list');
     const empty = make(documentRef, 'p', 'Aucune entrée enregistrée.', 'm-fiche-soon');
     xpPane.append(figures, heading, list, empty);
@@ -65,13 +67,17 @@ export function createJournalPanel({ documentRef, getContext, onCancel = () => {
     area.maxLength = 20000;
     area.setAttribute('placeholder', 'Équipement, argent, objets notables…');
     const status = make(documentRef, 'p', '', 'm-form-status');
-    status.setAttribute('role', 'status');
+    // Annonce vocale : seulement les changements d'état, pas chaque frappe.
+    const spoken = make(documentRef, 'p', '', 'visually-hidden');
+    spoken.setAttribute('role', 'status');
+    let spokenState = 'Enregistré';
+    const serverText = make(documentRef, 'p', '', 'm-journal-server');
     const conflict = make(documentRef, 'div', '', 'm-journal-conflict');
     const keepMine = make(documentRef, 'button', 'Garder ma version', 'm-button');
     const takeServer = make(documentRef, 'button', 'Prendre celle du serveur', 'm-button');
     for (const button of [keepMine, takeServer]) button.type = 'button';
     conflict.append(keepMine, takeServer);
-    notesPane.append(label, area, status, conflict);
+    notesPane.append(label, area, status, spoken, serverText, conflict);
     root.append(switcher, xpPane, notesPane);
 
     const render = () => {
@@ -90,10 +96,17 @@ export function createJournalPanel({ documentRef, getContext, onCancel = () => {
         const value = String(data[PATH] ?? '');
         if (documentRef.activeElement !== area && area.value !== value) area.value = value;
         area.readOnly = state.phase === 'legacy-readonly';
-        const inConflict = (state.conflicts || []).some(item => item.path === PATH);
-        conflict.hidden = !inConflict;
-        status.textContent = inConflict ? 'Conflit : cette note a aussi changé sur le serveur.'
-            : failure || (staged() ? (online ? 'Enregistrement…' : 'Modification en attente de connexion') : 'Enregistré');
+        const clash = (state.conflicts || []).find(item => item.path === PATH);
+        conflict.hidden = !clash;
+        serverText.hidden = !clash;
+        serverText.textContent = clash ? 'Version du serveur : ' + String(clash.server ?? '') : '';
+        const pending = staged();
+        status.textContent = clash ? 'Conflit : cette note a aussi changé sur le serveur.'
+            : failure || (pending ? (online ? 'Enregistrement…' : 'Modification en attente de connexion') : 'Enregistré');
+        // Seuls Enregistré, attente de connexion et conflit sont annoncés (et une seule fois).
+        const state3 = clash || !pending || !online ? status.textContent : '';
+        if (state3 && !failure && state3 !== spokenState) spoken.textContent = state3;
+        if (state3 && !failure) spokenState = state3;
     }
 
     async function save() {
@@ -101,6 +114,7 @@ export function createJournalPanel({ documentRef, getContext, onCancel = () => {
         timer = null;
         if (saving) { again = true; return; }
         saving = true;
+        let passes = 0;
         try {
             do {
                 again = false;
@@ -108,10 +122,14 @@ export function createJournalPanel({ documentRef, getContext, onCancel = () => {
                 if (!controller?.getState().hasDraft || !online) break;
                 // Un envoi déjà parti (réponse incertaine) est rejoué à l'identique, pas recréé.
                 let result = await controller.submitPatch();
-                if (result?.status === 'retry-required') result = await controller.retryPendingPatch();
+                if (result?.status === 'retry-required') {
+                    result = await controller.retryPendingPatch();
+                    // Le rejeu reprend l'ancien envoi : ce qui a été tapé depuis reste à envoyer.
+                    if (controller.getState().hasDraft) again = true;
+                }
                 failure = result?.status === 'blocked' && result.reason !== 'offline' && result.reason !== 'conflict'
                     ? 'Enregistrement en attente.' : '';
-            } while (again);
+            } while (again && ++passes < 3);
         } catch {
             failure = 'Enregistrement impossible pour le moment. Nouvel essai à la prochaine modification.';
         } finally {
@@ -153,6 +171,7 @@ export function createJournalPanel({ documentRef, getContext, onCancel = () => {
         const key = JSON.stringify(rows);
         if (key === shownRows) return;
         shownRows = key;
+        cancelButton = null;
         list.replaceChildren(...rows.map(row => {
             const item = make(documentRef, 'li', '', `m-journal-row${row.cancelled ? ' m-journal-cancelled' : ''}`);
             const text = make(documentRef, 'span', '', 'm-journal-text');
@@ -163,9 +182,10 @@ export function createJournalPanel({ documentRef, getContext, onCancel = () => {
             if (row.purchaseId) {
                 const cancel = make(documentRef, 'button', 'Annuler cet achat', 'm-journal-cancel');
                 cancel.type = 'button';
-                cancel.setAttribute('aria-label', `Annuler l’achat ${row.label}`);
+                cancel.setAttribute('aria-label', `Annuler cet achat : ${row.label}`);
                 cancel.addEventListener('click', () => onCancel(row.purchaseId, cancel));
                 item.append(cancel);
+                cancelButton = cancel;
             }
             return item;
         }));
@@ -179,6 +199,8 @@ export function createJournalPanel({ documentRef, getContext, onCancel = () => {
             refreshXp();
             refreshNotes();
         },
+        // Après une annulation, le déclencheur n'existe plus : le nouveau bouton éligible, sinon le titre de l'historique.
+        refocus() { (cancelButton || heading).focus(); },
         // Envoie tout de suite ce qui est en brouillon (retour du réseau, démontage).
         save,
         destroy() { clearTimeout(timer); timer = null; },

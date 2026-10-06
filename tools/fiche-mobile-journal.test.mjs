@@ -38,8 +38,8 @@ test('journal : soldes, ordre antéchronologique, libellés, natures et achat an
     data = buy(data, 'int', 3, 'op-2');
     let rows = xpLogRows(data, engine, 'u1');
     assert.deepEqual(rows.map(row => [row.label, row.nature, row.amount]), [
-        ['int +3', 'Achat · Caractéristique', -80],
-        ['soc +2', 'Achat · Caractéristique', -50],
+        ['Intelligence +3', 'Achat · Caractéristique', -80],
+        ['Sociabilité +2', 'Achat · Caractéristique', -50],
         ['Création', 'Gain', 500],
     ]);
     assert.deepEqual(xpBalance(data), { gagne: 500, depense: 130, libre: 370 });
@@ -52,8 +52,8 @@ test('journal : soldes, ordre antéchronologique, libellés, natures et achat an
     rows = xpLogRows(cancelled, engine, 'u1');
     assert.deepEqual(rows.map(row => [row.label, row.nature, row.amount, row.cancelled]), [
         ['Annulation de int +3', 'Annulation', 80, false],
-        ['int +3', 'Achat · Caractéristique', -80, true],
-        ['soc +2', 'Achat · Caractéristique', -50, false],
+        ['Intelligence +3', 'Achat · Caractéristique', -80, true],
+        ['Sociabilité +2', 'Achat · Caractéristique', -50, false],
         ['Création', 'Gain', 500, false],
     ], 'l’entrée technique « cancel » n’a pas de ligne');
     assert.deepEqual(xpBalance(cancelled), { gagne: 580, depense: 130, libre: 450 });
@@ -65,7 +65,7 @@ test('journal : entrées historiques sans kind, corrections MJ, achat sans libel
         xpLog: [
             { id: 'a', kind: 'gain', raison: 'Séance 1', montant: 150 },
             { id: 'b', type: 'Talent', achat: 'Sociable', cout: 100, note: 'ancien' },
-            { id: 'c', kind: 'purchase', type: 'Compétence', targetNom: 'Charme', cout: 20, origin: 'command', actorUid: 'mj', purchaseId: 'p', effects: [] },
+            { id: 'c', kind: 'purchase', type: 'Compétence', targetNom: 'Charme', avances: 4, achat: 'charme +4', cout: 20, origin: 'command', actorUid: 'mj', purchaseId: 'p', effects: [] },
             { id: 'd', kind: 'correction', type: 'Autre', achat: 'Erreur de saisie', cout: 10, applied: false },
             { id: 'e', kind: 'gain', raison: 'Rattrapage', montant: 10, correction: true },
             { id: 'f', kind: 'cancel', cancelledPurchaseId: 'zz' },
@@ -77,7 +77,7 @@ test('journal : entrées historiques sans kind, corrections MJ, achat sans libel
         ['', 'Achat · Autre', -5],
         ['Rattrapage', 'Correction MJ', 10],
         ['Erreur de saisie', 'Correction MJ', -10],
-        ['Charme', 'Achat · Compétence', -20],
+        ['Charme +4', 'Achat · Compétence', -20],
         ['Sociable', 'Achat · Talent', -100],
         ['Séance 1', 'Gain', 150],
     ]);
@@ -281,7 +281,7 @@ test('journal : bascule Expérience / Possessions et notes avec aria-pressed, hi
     context.state = { ...context.state, data: undone };
     panel.update();
     const rows = panel.element.all().filter(node => node.tagName === 'li');
-    assert.equal(rows[1].byClass('m-journal-label').textContent, 'soc +2 (annulé)');
+    assert.equal(rows[1].byClass('m-journal-label').textContent, 'Sociabilité +2 (annulé)');
     assert.ok(rows[1].className.includes('m-journal-cancelled'));
     assert.equal(panel.element.all().filter(node => node.className === 'm-journal-cancel').length, 0);
     panel.destroy();
@@ -310,7 +310,7 @@ test('annulation : confirmation dans un volet, commande cancel avec l’identifi
     const setup = cancelSetup({ execute: async (type, payload) => { sent.push([type, payload]); return { status: 'confirmed' }; } });
     setup.sheet.open(setup.purchaseId, setup.trigger);
     assert.ok(setup.el.open);
-    assert.equal(setup.el.byClass('m-purchase-nature').textContent, 'soc +2');
+    assert.equal(setup.el.byClass('m-purchase-nature').textContent, 'Sociabilité +2');
     assert.match(setup.el.byClass('m-purchase-formula').textContent, /remboursement de 50 XP/u);
     assert.equal(sent.length, 0, 'ouvrir n’annule rien');
     setup.confirm().dispatch('click');
@@ -318,7 +318,7 @@ test('annulation : confirmation dans un volet, commande cancel avec l’identifi
     await sleep(0);
     assert.deepEqual(sent, [['cancel', { purchaseId: setup.purchaseId }]]);
     assert.ok(!setup.el.open);
-    assert.deepEqual(setup.announces, ['soc +2 : achat annulé']);
+    assert.deepEqual(setup.announces, ['Sociabilité +2 : achat annulé']);
     assert.equal(setup.documentRef.activeElement, setup.trigger);
 });
 
@@ -411,4 +411,76 @@ test('téléchargement : Blob, lien temporaire avec le nom de fichier, adresse r
     } finally {
         [URL.createObjectURL, URL.revokeObjectURL] = original;
     }
+});
+
+test('journal : libellés lisibles (compétence au nom principal, caractéristique complète), repli sur achat', () => {
+    const entry = (extra) => ({ kind: 'purchase', cout: 10, ...extra });
+    const rows = xpLogRows({ xpLog: [
+        entry({ id: '1', type: 'Compétence', targetNom: 'Charme', avances: 2, achat: 'charme +2' }),
+        entry({ id: '2', type: 'Caractéristique', targetNom: 'fm', avances: 1, achat: 'fm +1' }),
+        entry({ id: '3', type: 'Talent', targetNom: 'Sociable', achat: 'Sociable' }),
+        entry({ id: '4', type: 'Caractéristique', targetNom: 'zz', avances: 1, achat: 'zz +1' }),
+        { id: '5', type: 'Compétence', achat: 'Ancien libellé', cout: 5 },
+    ] }, engine, 'u1');
+    assert.deepEqual(rows.map(row => row.label).reverse(), ['Charme +2', 'Force Mentale +1', 'Sociable', 'zz +1', 'Ancien libellé']);
+});
+
+test('possessions : texte tapé pendant un rejeu incertain, envoyé ensuite ; annonce vocale limitée aux états', async () => {
+    const documentRef = fakeDocument();
+    const calls = [];
+    let draft = { possessions: 'ancien' };
+    let pendingOld = true;
+    const context = {
+        online: true, state: { phase: 'ready', data: { possessions: 'x' }, conflicts: [] },
+        controller: {
+            getState: () => ({ hasDraft: !!draft }),
+            getDraftPaths: () => (draft ? ['possessions'] : []),
+            stagePatch: () => ({ ok: true }),
+            submitPatch: async () => {
+                calls.push('submit');
+                if (pendingOld) return { status: 'retry-required' };
+                draft = null;
+                return { status: 'saved' };
+            },
+            retryPendingPatch: async () => { calls.push('retry'); pendingOld = false; return { status: 'saved' }; },
+        },
+    };
+    const panel = createJournalPanel({ documentRef, getContext: () => context, saveDelay: 10 });
+    await panel.save();
+    assert.deepEqual(calls, ['submit', 'retry', 'submit'], 'le rejeu est suivi d’un envoi du texte restant');
+    assert.equal(draft, null);
+    panel.destroy();
+
+    const setup = journalSetup();
+    const spoken = setup.panel.element.all().find(node => node.getAttribute('role') === 'status');
+    assert.ok(spoken && spoken.className === 'visually-hidden');
+    assert.equal(setup.status.getAttribute('role'), null, 'le texte visible n’est pas la zone vocale');
+    setup.area.value = 'a';
+    setup.area.dispatch('input');
+    setup.area.value = 'ab';
+    setup.area.dispatch('input');
+    assert.notEqual(spoken.textContent, 'Enregistrement…');
+    setup.panel.destroy();
+});
+
+test('journal : conflit affiche la version du serveur, bouton d’annulation nommé avec son texte, refocus stable', () => {
+    const setup = journalSetup({ conflicts: [{ path: 'possessions', server: 'Texte <b>serveur</b>' }] });
+    assert.equal(setup.panel.element.byClass('m-journal-server').textContent, 'Version du serveur : Texte <b>serveur</b>');
+
+    const data = buy(sheet(), 'soc', 2, 'op-1');
+    const documentRef = fakeDocument();
+    const context = { online: true, state: { phase: 'ready', uid: 'u1', data, conflicts: [] }, engine, controller: { getDraftPaths: () => [] } };
+    const panel = createJournalPanel({ documentRef, getContext: () => context });
+    panel.update();
+    const cancel = panel.element.byClass('m-journal-cancel');
+    assert.equal(cancel.getAttribute('aria-label'), 'Annuler cet achat : Sociabilité +2');
+    assert.ok(cancel.getAttribute('aria-label').includes(cancel.textContent));
+    panel.refocus();
+    assert.equal(documentRef.activeElement, cancel, 'le bouton éligible reçoit le focus');
+    context.state = { ...context.state, data: sheet() };
+    panel.update();
+    panel.refocus();
+    assert.equal(documentRef.activeElement.textContent, 'Historique', 'sans achat annulable, le titre de l’historique');
+    panel.destroy();
+    setup.panel.destroy();
 });
