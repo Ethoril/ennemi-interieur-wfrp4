@@ -31,16 +31,23 @@ export function talentChoices(careers, data, nom) {
     if (!isOpenTalentSlot(nom)) return null;
     const base = nom.split('(')[0].trim();
     if (!isOpenCareerSlot(nom)) return { base, free: false, specs: expandChoiceSkill(nom, name => name).map(specOf) };
-    const specs = new Set();
+    // Une graphie par spécialité (sans casse ni accents) : la plus fréquente, à égalité celle qui commence par une majuscule.
+    const spellings = new Map();
     for (const career of careers || []) {
         for (const rank of career.rangs || []) {
             for (const talent of rank.talents || []) {
-                if (!isOpenTalentSlot(talent) && fold(talent.split('(')[0]).trim() === fold(base) && specOf(talent)) specs.add(specOf(talent));
+                if (isOpenTalentSlot(talent) || fold(talent.split('(')[0]).trim() !== fold(base) || !specOf(talent)) continue;
+                const counts = spellings.get(fold(specOf(talent))) || new Map();
+                counts.set(specOf(talent), (counts.get(specOf(talent)) || 0) + 1);
+                spellings.set(fold(specOf(talent)), counts);
             }
         }
     }
-    const known = [...specs].sort((a, b) => a.localeCompare(b, 'fr'));
-    return { base, free: true, specs: [...new Set([...known, ...(data?.customTalents?.[base] || [])])] };
+    const capital = spec => spec !== spec.toLowerCase() && spec[0] === spec[0].toUpperCase();
+    const known = [...spellings.values()].map(counts => [...counts].sort(([a, x], [b, y]) => y - x || capital(b) - capital(a))[0][0])
+        .sort((a, b) => a.localeCompare(b, 'fr'));
+    const extra = (data?.customTalents?.[base] || []).filter(spec => !spellings.has(fold(spec)));
+    return { base, free: true, specs: [...new Set([...known, ...extra])] };
 }
 
 // Un modèle de spécialisation (« Maîtrise (Épées) ») partage l'entrée publiée de son talent : on le distingue par son libellé.

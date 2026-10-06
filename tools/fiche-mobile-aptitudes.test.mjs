@@ -448,9 +448,15 @@ test('talentChoices : spécialités connues pour « au choix », alternatives li
     assert.equal(talentChoices(careers, data(), 'Sociable'), null);
     const open = talentChoices(careers, data({ customTalents: { 'Savoir-vivre': ['Cour elfique'] } }), 'Savoir-vivre (au choix)');
     assert.deepEqual([open.base, open.free], ['Savoir-vivre', true]);
-    assert.ok(open.specs.includes('Guilde') && open.specs.at(-1) === 'Cour elfique');
+    assert.ok(open.specs.includes('guilde') && open.specs.at(-1) === 'Cour elfique');
     const known = open.specs.slice(0, -1);
     assert.deepEqual(known, [...known].sort((a, b) => a.localeCompare(b, 'fr')));
+    // Graphies qui ne diffèrent que par la casse ou les accents : une seule puce, la graphie la plus fréquente des carrières (« guilde » : 9 contre 2) ; « Guildes » reste distinct.
+    assert.ok(open.specs.includes('guilde') && !open.specs.includes('Guilde') && open.specs.includes('Guildes'));
+    const folded = open.specs.map(spec => spec.normalize('NFD').replace(/[̀-ͯ]/gu, '').toLowerCase());
+    assert.equal(new Set(folded).size, folded.length);
+    const tied = [{ rangs: [{ talents: ['Savoir-vivre (guilde)', 'Savoir-vivre (Guilde)', 'Savoir-vivre (guilde)', 'Savoir-vivre (Érudit)', 'Savoir-vivre (erudit)'] }] }];
+    assert.deepEqual(talentChoices(tied, data({ customTalents: { 'Savoir-vivre': ['GUILDE', 'Nobles'] } }), 'Savoir-vivre (au choix)').specs, ['Érudit', 'guilde', 'Nobles']);
     assert.ok(open.specs.every(spec => !/choix|sous/iu.test(spec)));
     assert.deepEqual(talentChoices(careers, data(), 'Sens aiguisé (Goût ou Toucher)'), { base: 'Sens aiguisé', free: false, specs: ['Goût', 'Toucher'] });
     assert.deepEqual(talentChoices(careers, data(), 'Artisan (Forgeron, Orfèvre ou Ingénieur)').specs, ['Forgeron', 'Orfèvre', 'Ingénieur']);
@@ -472,14 +478,14 @@ test('volet d’achat : talent à choisir, achat bloqué tant que la spécialit�
     assert.equal(buy().disabled, true);
     assert.equal(reason().textContent, 'Choisissez une spécialité');
     assert.equal(sheet.element.allByClass('m-spec-choices')[0].children.at(-1).textContent, 'Autre…');
-    assert.ok(chip('Guilde · déjà acquis'), 'la spécialité déjà acquise est signalée');
+    assert.ok(chip('guilde · déjà acquis'), 'la spécialité déjà acquise est signalée');
     const free = sheet.element.all().find(node => node.tagName === 'input');
     assert.equal(free.hidden, true);
 
-    chip('Guilde · déjà acquis').click();
-    assert.equal(chip('Guilde · déjà acquis').getAttribute('aria-pressed'), 'true');
+    chip('guilde · déjà acquis').click();
+    assert.equal(chip('guilde · déjà acquis').getAttribute('aria-pressed'), 'true');
     assert.equal(buy().disabled, false);
-    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Savoir-vivre (Guilde)');
+    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Savoir-vivre (guilde)');
     assert.equal(sheet.element.byClass('m-purchase-taken').textContent, 'Prises : 1');
 
     // Texte libre : « Autre… » affiche le champ, vide = pas de choix, parenthèses retirées.

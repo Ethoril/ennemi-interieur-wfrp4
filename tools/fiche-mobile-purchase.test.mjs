@@ -115,7 +115,7 @@ test('talent à spécialité : nom composé, coût prévu égal au coût accept�
     const slot = 'Savoir-vivre (au choix)';
     const unpicked = purchaseTarget(agitateur, engine, careers, { kind: 'talent', nom: slot });
     assert.equal(unpicked.needsChoice, true);
-    assert.ok(unpicked.choice.free && unpicked.choice.specs.includes('Guilde'));
+    assert.ok(unpicked.choice.free && unpicked.choice.specs.includes('guilde'));
     assert.throws(() => purchasePayload(unpicked, 1, engine), /Spécialité du talent à choisir/u);
 
     for (const [pick, label] of [['Guilde', 'liste'], ['  Nains (Karaz) ', 'texte libre']]) {
@@ -128,7 +128,7 @@ test('talent à spécialité : nom composé, coût prévu égal au coût accept�
     const twice = data('Agitateur', { rang: '4', talentsAcq: [{ id: 't1', nom: 'Savoir-vivre (Guilde)' }] });
     const again = assertAgrees('savoir-vivre repris', twice, { kind: 'talent', nom: slot, pick: 'Guilde' }, 1, true);
     assert.equal(again.taken, 1);
-    assert.equal(again.choice.options.find(({ spec }) => spec === 'Guilde').taken, 1);
+    assert.equal(again.choice.options.find(({ spec }) => spec === 'guilde').taken, 1);
     assert.equal(twice.talentsAcq.length, 1);
 });
 
