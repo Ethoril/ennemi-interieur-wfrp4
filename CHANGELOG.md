@@ -4,6 +4,10 @@
 - **Compétences épinglées (mobile)** : l’onglet Principal affiche cinq emplacements que le joueur remplit lui-même (« Choisir une compétence »), au lieu des cinq compétences les plus hautes. Toucher une compétence épinglée permet de la changer ou de la retirer. Le choix est enregistré dans la fiche et suit le joueur d’un appareil à l’autre ; une compétence qui n’existe plus laisse simplement l’emplacement vide. Côté serveur, les fonctions de la fiche acceptent désormais ce nouveau champ : elles doivent être redéployées avec cette version.
 - **« Toutes » (mobile)** : le lien « Toutes » de l’onglet Principal ouvre toujours la liste complète des compétences, même après un passage par Talents ou Sorts, une recherche ou un filtre.
 
+## [2.32.3] - 2026-10-06
+
+- **Listes dans les volets (mobile)** : les listes longues des volets « Apprendre un miracle », « Apprendre un sort », « Apprendre une compétence » et « Changer de carrière » étaient coupées à mi-hauteur et ne défilaient pas ; elles défilent désormais jusqu’au dernier élément.
+
 ## [2.32.2] - 2026-10-06
 
 - **Destin et Résilience (mobile)** : sur l’onglet Principal de la fiche, « Destin » et « Résilience » passent au premier plan, chacun avec ses points (un point plein par point de valeur, plus un point vide pour en ajouter) ; Chance et Détermination restent affichées en nombres, en dessous. Toucher un point plein brûle les points jusqu’à lui, toucher le point vide en ajoute un, après une confirmation qui rappelle que brûler un point est définitif et qu’ajouter un point est normalement accordé par le MJ. Si la Chance (ou la Détermination) dépasse alors le nouveau maximum, elle y est ramenée. La modification est gardée en brouillon hors connexion et envoyée au retour du réseau ; les points sont désactivés sur une fiche en lecture seule.
@@ -16,7 +20,7 @@
 - **Talents à alternatives** : choisir une option d’un talent de carrière du type « Sens aiguisé (Goût ou Toucher) » compte désormais comme talent de carrière, sur le bureau comme sur mobile : il coûte 100 XP au lieu de 200 et valide le talent du rang.
 - **Sorts et miracles (mobile)** : l’onglet Sorts de la fiche s’affiche aussi quand les sections Sorts ou Prières sont activées sur le bureau, même sans en posséder. Les boutons « Apprendre un sort » et « Apprendre un miracle » ouvrent une recherche dans le catalogue (sans accents, avec des puces de type pour les sorts) ; le choix mène au volet d’achat, avec la description et le coût du palier, comme sur le bureau.
 - **Nouvelles compétences (mobile)** : le bouton « Apprendre une compétence » de l’onglet Aptitudes permet d’acheter une première compétence avancée, même sans en posséder le groupe (une première Langue, par exemple). La recherche (sans accents) porte sur les compétences du référentiel publié ; les compétences de la carrière actuelle sont signalées et les groupes mènent au choix de la spécialité, ou à une saisie libre.
-- **En-tête mobile** : à très grande taille de texte (200 % sur un écran de 320 px), le nom du personnage passe à la ligne au lieu d’être tronqué et le bouton ⋯ ne chevauche plus le surtitre . Les boutons Retour et ⋯ font désormais 44 px sur tous les écrans, et les titres longs passent à la ligne au lieu d’être coupés.
+- **En-tête mobile** : à très grande taille de texte (200 % sur un écran de 320 px), le nom du personnage passe à la ligne au lieu d’être tronqué et le bouton ⋯ ne chevauche plus le surtitre. Les boutons Retour et ⋯ font désormais 44 px sur tous les écrans, et les titres longs passent à la ligne au lieu d’être coupés.
 
 ## [2.32.0] - 2026-10-06
 
