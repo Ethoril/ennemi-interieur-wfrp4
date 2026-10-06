@@ -1,0 +1,16 @@
+/* Recette locale uniquement : panneau de contrôle hors de la coque mobile. */
+.fiche-mobile-qa {
+  position: fixed;
+  z-index: 40;
+  top: 0;
+  right: 0;
+  max-width: 100%;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+}
+
+.fiche-mobile-qa #qa-controls { display: flex; flex-wrap: wrap; gap: 0.25rem; padding-top: 0.25rem; }
+.fiche-mobile-qa button { min-height: 2.75rem; }

@@ -10,9 +10,12 @@ const ROUTE_NAMES = Object.freeze({
     ENQUETE_NEW: 'enquete-new',
     ENQUETE_EDIT: 'enquete-edit',
     FICHES: 'fiches',
+    FICHE: 'fiche-detail',
     REGLAGES: 'reglages',
     UNKNOWN: 'unknown',
 });
+
+const FICHE_TABS = Object.freeze(['principal', 'aptitudes', 'carriere', 'journal']);
 
 function decodeSegment(segment) {
     if (!segment || segment.includes('/') || segment.includes('\\')) return null;
@@ -55,9 +58,16 @@ export function parseRoute(hash = '') {
     }
     if (section === 'reglages' && segments.length === 1) return Object.freeze({ name: ROUTE_NAMES.REGLAGES });
     if (section === 'fiches' && segments.length === 1) return Object.freeze({ name: ROUTE_NAMES.FICHES });
+    if (section === 'fiches') {
+        const id = decodeSegment(segments[1]);
+        const tab = segments.length === 3 ? segments[2] : 'principal';
+        if (!id || !FICHE_TABS.includes(tab)) return Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
+        return Object.freeze({ name: ROUTE_NAMES.FICHE, id, tab });
+    }
     return Object.freeze({ name: ROUTE_NAMES.UNKNOWN });
 }
 
+// L'onglet d'une fiche n'entre pas dans la clé : en changer ne remonte pas la vue (pas de réabonnement Firestore).
 export function routeKey(route) {
     if (!route || typeof route.name !== 'string') return ROUTE_NAMES.UNKNOWN;
     return route.id ? `${route.name}:${route.id}` : route.name;
@@ -74,6 +84,7 @@ export function documentTitleForRoute(route) {
         case ROUTE_NAMES.ENQUETE_NEW: return 'Nouvelle enquête — L\'Ennemi Intérieur';
         case ROUTE_NAMES.ENQUETE_EDIT: return 'Modifier une enquête — L\'Ennemi Intérieur';
         case ROUTE_NAMES.FICHES: return 'Mes fiches — L\'Ennemi Intérieur';
+        case ROUTE_NAMES.FICHE: return 'Fiche — L\'Ennemi Intérieur';
         case ROUTE_NAMES.REGLAGES: return 'Réglages — L\'Ennemi Intérieur';
         default: return 'Écran introuvable — L\'Ennemi Intérieur';
     }
@@ -90,6 +101,11 @@ export function routeToHash(route) {
         case ROUTE_NAMES.ENQUETE_NEW: return '#/enquetes/nouveau';
         case ROUTE_NAMES.ENQUETE_EDIT: return ROUTE_ID.test(route.id) ? `#/enquetes/${encodeURIComponent(route.id)}/modifier` : '#/enquetes';
         case ROUTE_NAMES.FICHES: return '#/fiches';
+        case ROUTE_NAMES.FICHE: {
+            if (!ROUTE_ID.test(route.id)) return '#/fiches';
+            const base = `#/fiches/${encodeURIComponent(route.id)}`;
+            return FICHE_TABS.includes(route.tab) && route.tab !== 'principal' ? `${base}/${route.tab}` : base;
+        }
         case ROUTE_NAMES.REGLAGES: return '#/reglages';
         default: return '#/pnjs';
     }
@@ -220,10 +236,13 @@ export function createRouter({ windowRef = globalThis, mountRoute, onRoute, anno
         if (currentRoute?.name === ROUTE_NAMES.PNJ || currentRoute?.name === ROUTE_NAMES.ENQUETE) {
             return navigate({ name: currentRoute.name === ROUTE_NAMES.PNJ ? ROUTE_NAMES.PNJS : ROUTE_NAMES.ENQUETES }, { replace: true, skipGuard });
         }
+        if (currentRoute?.name === ROUTE_NAMES.FICHE) {
+            return navigate({ name: ROUTE_NAMES.FICHES }, { replace: true, skipGuard });
+        }
         return navigate({ name: ROUTE_NAMES.PNJS }, { replace: true, skipGuard });
     };
 
     return Object.freeze({ start, stop, navigate, back, render, refresh: ({ skipGuard = true } = {}) => render(windowRef.location?.hash ?? '', { force: true, skipGuard }), canLeaveCurrent: () => canLeave(false), getRoute: () => currentRoute, getScrollPositions: () => new Map(scrollPositions) });
 }
 
-export { ROUTE_NAMES };
+export { FICHE_TABS, ROUTE_NAMES };

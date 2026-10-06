@@ -260,7 +260,9 @@ function isSkillInCareer(nom) {
     if (!career) return false;
     const sets = _memo(_careerCache.skills, _careerKey(career.id, getActiveRang()),
                        () => _buildCareerSkillSets(career, getActiveRang()));
-    const canon = canonicalSkillNom(nom);
+    // Résolution par le référentiel, comme le serveur : une forme fusionnée par le MJ vaut son nom principal.
+    const resolved = getLocalCommandEngine()?.skillResolver.resolve(nom);
+    const canon = resolved?.status === 'resolved' ? resolved.entry.nom : canonicalSkillNom(nom);
     if (sets.exact.has(canon.toLowerCase())) return true;
     return sets.openBases.has(skillBaseNom(canon));
 }
@@ -2776,7 +2778,7 @@ export function setFicheRole(role, { allowImport = false } = {}) {
     }
     controls.forEach(control => { control.disabled = true; });
     content?.querySelectorAll(
-        '#nom, #race, #blessures-act, #resilience, #determination, #chance, #destin, #corruption, #possessions, '
+        '#blessures-act, #resilience, #determination, #chance, #destin, #corruption, #possessions, '
         + '.career-note, .career-variant-sel, .skill-note, .talent-note, .sort-note, .priere-note, '
         + '.btn-toggle-opt, .btn-close-section, #btn-export-fiche, #btn-add-xp, .btn-rm[data-type="xp-cancel"], '
         + '.career-viewer-control select, .career-viewer-check input, .career-viewer-open, .career-viewer-talent, .career-viewer-modal button, .career-viewer-modal select'

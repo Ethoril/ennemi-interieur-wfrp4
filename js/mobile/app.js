@@ -11,6 +11,7 @@ import { createEnquetesMjListView, clearEnquetesMjListMemory } from './views/enq
 import { createEnqueteEditView } from './views/enquete-edit.js';
 import { createPnjEditView } from './views/pnj-edit.js';
 import { createFicheAccessView } from './views/fiche-access.js';
+import { createFicheDetailView } from './views/fiche-detail.js';
 import { getContributionClient, logoutContributionAccount, signInContribution } from './contribution-runtime.js';
 import { createAdminRouteController } from './admin-route-controller.js';
 import { createPublicDraftStore } from './drafts-store.js';
@@ -41,7 +42,7 @@ function placeholderView({ container, title, message, actionLabel = '', onAction
 function sectionForRoute(route) {
     if (route?.name?.startsWith('enquete')) return 'enquetes';
     if (route?.name === ROUTE_NAMES.REGLAGES) return 'reglages';
-    if (route?.name === ROUTE_NAMES.FICHES) return 'fiches';
+    if (route?.name === ROUTE_NAMES.FICHES || route?.name === ROUTE_NAMES.FICHE) return 'fiches';
     return 'pnjs';
 }
 
@@ -228,7 +229,9 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     const session = createDefaultPublicSession({ navigatorRef: windowRef.navigator });
     const draftStore = createPublicDraftStore({ storage: (() => { try { return windowRef.localStorage; } catch { return null; } })() });
     const enqueteDraftStore = createEnquetesDraftStore({ storage: (() => { try { return windowRef.localStorage; } catch { return null; } })() });
+    const bottomNav = documentRef.querySelector('.m-bottom-nav');
     let router;
+    let currentView = null;
     let pendingInitialRoute = null;
     const mjSession = createDefaultMjSession({
         windowRef,
@@ -339,11 +342,18 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             container, documentRef,
             getClient: getContributionClient,
             signIn: signInContribution,
-            onOpenFiche: id => {
-                const target = `../fiche.html?char=${encodeURIComponent(id)}&return=mobile`;
-                if (typeof windowRef.location?.assign === 'function') windowRef.location.assign(target);
-                else windowRef.location.href = target;
-            },
+            onOpenFiche: id => router.navigate({ name: ROUTE_NAMES.FICHE, id }),
+            announce: message => announce(routeStatus, message),
+        }),
+        [ROUTE_NAMES.FICHE]: route => createFicheDetailView({
+            container, documentRef, windowRef, route,
+            getClient: getContributionClient,
+            signIn: signInContribution,
+            // Modules chargés à la demande : les SDK de données restent hors de la coque.
+            loadRuntime: () => import('./fiche-runtime.js'),
+            loadCatalogue: () => import('./fiche-catalogue.js').then(module => module.loadFicheCatalogue()),
+            setTitle: text => { title.textContent = text; },
+            navigate: target => router.navigate(target, { replace: true }),
             announce: message => announce(routeStatus, message),
         }),
         [ROUTE_NAMES.PNJ_EDIT]: route => {
@@ -386,12 +396,17 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             if (section !== 'pnjs') forgetOpenedPnjCard();
             documentRef.title = documentTitleForRoute(route);
             title.textContent = section === 'pnjs' ? 'PNJs' : section === 'enquetes' ? 'Enquêtes'
-                : section === 'fiches' ? 'Fiches' : 'Réglages';
+                : route.name === ROUTE_NAMES.FICHE ? 'Fiche' : section === 'fiches' ? 'Fiches' : 'Réglages';
             // La vue désigne son point d'entrée (nom de la fiche, carte d'où l'on revient) ; sinon le h1.
             (view?.focusTarget?.() || title).focus?.({ preventScroll: true });
             back.hidden = !(route.name === ROUTE_NAMES.PNJ || route.name === ROUTE_NAMES.PNJ_NEW || route.name === ROUTE_NAMES.PNJ_EDIT
-                || route.name === ROUTE_NAMES.ENQUETE || route.name === ROUTE_NAMES.ENQUETE_NEW || route.name === ROUTE_NAMES.ENQUETE_EDIT || route.name === ROUTE_NAMES.UNKNOWN);
-            headerAction.hidden = route.name !== ROUTE_NAMES.REGLAGES;
+                || route.name === ROUTE_NAMES.ENQUETE || route.name === ROUTE_NAMES.ENQUETE_NEW || route.name === ROUTE_NAMES.ENQUETE_EDIT || route.name === ROUTE_NAMES.FICHE || route.name === ROUTE_NAMES.UNKNOWN);
+            // La fiche remplace la barre basse par ses propres onglets et a son propre menu ⋯.
+            const onFiche = route.name === ROUTE_NAMES.FICHE;
+            currentView = view;
+            if (bottomNav) bottomNav.hidden = onFiche;
+            headerAction.setAttribute('aria-label', onFiche ? 'Menu de la fiche' : 'Actions');
+            headerAction.hidden = !(onFiche || route.name === ROUTE_NAMES.REGLAGES);
             documentRef.querySelectorAll('.m-bottom-nav a[data-route]').forEach(link => {
                 if (link.dataset.route === section) link.setAttribute('aria-current', 'page');
                 else link.removeAttribute('aria-current');
@@ -418,7 +433,10 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     }
 
     const onBack = () => router.back();
-    const onHeaderAction = event => dialog.show(event.currentTarget);
+    const onHeaderAction = event => {
+        if (router.getRoute()?.name === ROUTE_NAMES.FICHE) currentView?.openMenu?.(event.currentTarget);
+        else dialog.show(event.currentTarget);
+    };
     const onDialogClose = () => dialog.close();
     const onDialogCancel = event => { event.preventDefault(); dialog.close(); };
     const onThemeToggle = () => {

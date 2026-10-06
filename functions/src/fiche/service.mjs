@@ -302,6 +302,11 @@ export async function executeFicheCommand(rawCommand, request, deps) {
         ]);
         const role = ensureAuthorized(user, command, snapshotData(accessSnapshot));
         validatePrivilegedPayload(command);
+        if (command.type === 'patch' && role !== 'mj') {
+            // Refus en bloc, avant le rejeu d’un reçu : nom et race sont des valeurs de base du MJ.
+            const path = Object.keys(command.payload.changes).find(key => key === 'nom' || key === 'race');
+            if (path) fail('champ réservé au MJ', 'permission-denied', { kind: 'field-forbidden', path });
+        }
 
         const priorReceipt = snapshotData(operationSnapshot);
         if (priorReceipt) {

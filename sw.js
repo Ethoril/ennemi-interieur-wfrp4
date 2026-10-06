@@ -1,6 +1,6 @@
 // sw.js, en tête. Doit rester identique à APP_VERSION de js/layout.js :
 // la CI le vérifie (.github/workflows/validate.yml).
-const APP_VERSION = 'v2.31.1';
+const APP_VERSION = 'v2.32.0';
 const CACHE_NAME  = 'wfrp-cache-' + APP_VERSION;
 
 const ASSETS_LOCAUX = [
@@ -71,6 +71,8 @@ const ASSETS_LOCAUX = [
   './js/fiche/basic-skills.js',
   './js/fiche/skill-names.js',
   './js/fiche/xp.js',
+  './js/fiche/derived.js',
+  './js/fiche/export-import.js',
   './js/fiche/published-catalogue-engine.js',
   './js/fiche/career-viewer.js',
   './js/fiche/commands.js',
@@ -139,9 +141,26 @@ const ASSETS_LOCAUX = [
   './fonts/crimson-text-latin-600.woff2',
   './fonts/crimson-text-latin-400-italic.woff2',
   './css/mobile-app.css',
+  './css/mobile-fiche.css',
   './js/mobile/admin-route-controller.js',
   './js/mobile/app.js',
   './js/mobile/views/fiche-access.js',
+  './js/mobile/views/fiche-detail.js',
+  './js/mobile/views/fiche-principal.js',
+  './js/mobile/views/fiche-aptitudes.js',
+  './js/mobile/views/fiche-purchase-sheet.js',
+  './js/mobile/views/fiche-carriere.js',
+  './js/mobile/views/fiche-career-change.js',
+  './js/mobile/views/fiche-specialty.js',
+  './js/mobile/views/fiche-journal.js',
+  './js/mobile/views/fiche-cancel-sheet.js',
+  './js/mobile/views/fiche-transfer.js',
+  './js/mobile/fiche-runtime.js',
+  './js/mobile/fiche-catalogue.js',
+  './js/mobile/fiche-aptitudes-model.js',
+  './js/mobile/fiche-career-model.js',
+  './js/mobile/fiche-model.js',
+  './js/mobile/fiche-purchase.js',
   './js/mobile/contribution-runtime.js',
   './js/mobile/drafts-store.js',
   './js/mobile/enquete-admin-list-model.js',
@@ -161,6 +180,7 @@ const ASSETS_LOCAUX = [
   './js/mobile/ui.js',
   './js/mobile/pwa.js',
   './js/mobile/pwa-banner.js',
+  './js/mobile/components/bottom-sheet.js',
   './js/mobile/components/filter-sheet.js',
   './js/mobile/components/indice-image.js',
   './js/mobile/components/pnj-picker.js',

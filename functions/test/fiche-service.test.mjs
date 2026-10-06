@@ -139,8 +139,8 @@ test('les champs simples fusionnent quand deux clients changent des champs disti
     const first = command('patch', { changes: { nom: 'Bhelgi Main-de-Fer' }, baseValues: { nom: 'Bhelgi' } }, { operationId: 'patch-a' });
     const second = command('patch', { changes: { race: 'Nain des Montagnes' }, baseValues: { race: 'Nain' } }, { operationId: 'patch-b' });
     const [left, right] = await Promise.all([
-        executeFicheCommand(first, PLAYER, services),
-        executeFicheCommand(second, PLAYER, services),
+        executeFicheCommand(first, MJ, services),
+        executeFicheCommand(second, MJ, services),
     ]);
     assert.equal(left.revision, 1);
     assert.equal(right.revision, 2);
@@ -149,6 +149,30 @@ test('les champs simples fusionnent quand deux clients changent des champs disti
         nom: 'Bhelgi Main-de-Fer',
         race: 'Nain des Montagnes',
     });
+});
+
+test('nom et race sont réservés au MJ : refus joueur en bloc, sans écriture', async () => {
+    const store = createStore(seed());
+    const services = deps(store);
+    await rejectCode(executeFicheCommand(command('patch', { changes: { nom: 'x' }, baseValues: { nom: 'Bhelgi' } }), PLAYER, services), 'permission-denied', 'field-forbidden');
+    await rejectCode(executeFicheCommand(command('patch', { changes: { race: 'x' }, baseValues: { race: 'Nain' } }), PLAYER, services), 'permission-denied', 'field-forbidden');
+    await rejectCode(executeFicheCommand(command('patch', {
+        changes: { nom: 'x', possessions: 'épée' }, baseValues: { nom: 'Bhelgi', possessions: 'hache' },
+    }), PLAYER, services), 'permission-denied', 'field-forbidden');
+    assert.deepEqual(store.documents.get('fiches/bhelgi').data, INITIAL.data);
+    assert.equal(store.documents.get('fiches/bhelgi').revision, 0);
+});
+
+test('le MJ modifie nom et race, le joueur modifie encore possessions', async () => {
+    const store = createStore(seed());
+    const services = deps(store);
+    await executeFicheCommand(command('patch', {
+        changes: { nom: 'Nouveau', race: 'Humain' }, baseValues: { nom: 'Bhelgi', race: 'Nain' },
+    }, { operationId: 'mj-1' }), MJ, services);
+    await executeFicheCommand(command('patch', {
+        changes: { possessions: 'épée' }, baseValues: { possessions: 'hache' },
+    }, { operationId: 'player-1', baseRevision: 1 }), PLAYER, services);
+    assert.deepEqual(store.documents.get('fiches/bhelgi').data, { ...INITIAL.data, nom: 'Nouveau', race: 'Humain', possessions: 'épée' });
 });
 
 test('les cases d’affichage fusionnent séparément au sein de optVisible', async () => {
@@ -195,7 +219,7 @@ test('un patch sur un champ absent de fiche legacy utilise null comme base et jo
         changes: { nom: 'Bhelgi', 'optVisible.section-sorts': true },
         baseValues: { nom: null, 'optVisible.section-sorts': null },
     });
-    await executeFicheCommand(request, PLAYER, deps(store));
+    await executeFicheCommand(request, MJ, deps(store));
     assert.deepEqual(store.documents.get('fiches/bhelgi').data, { nom: 'Bhelgi', optVisible: { 'section-sorts': true } });
     assert.deepEqual(store.documents.get('fiches/bhelgi/history/operation-1').changes, {
         nom: { before: null, beforeExists: false, after: 'Bhelgi' },
@@ -255,7 +279,7 @@ test('un changement concurrent du même champ bloque sans exposer la fiche', asy
         command('patch', { changes: { nom: 'Bhelgi A' }, baseValues: { nom: 'Bhelgi' } }, { operationId: 'same-a' }),
         command('patch', { changes: { nom: 'Bhelgi B' }, baseValues: { nom: 'Bhelgi' } }, { operationId: 'same-b' }),
     ];
-    const results = await Promise.allSettled(requests.map(item => executeFicheCommand(item, PLAYER, services)));
+    const results = await Promise.allSettled(requests.map(item => executeFicheCommand(item, MJ, services)));
     assert.equal(results.filter(item => item.status === 'fulfilled').length, 1);
     const rejected = results.find(item => item.status === 'rejected').reason;
     assert.equal(rejected.code, 'aborted');
@@ -372,7 +396,7 @@ test('reset préserve les métadonnées de migration et de catalogue', async () 
 
 test('les fiches héritées ne sont jamais initialisées à l’aveugle', async () => {
     const store = createStore({ 'campagne/acces': { bhelgi: ['player@example.test'] }, 'fiches/bhelgi': { data: { nom: 'Bhelgi' } } });
-    await rejectCode(executeFicheCommand(command('patch', { changes: { nom: 'Nouveau' }, baseValues: { nom: 'Bhelgi' } }), PLAYER, deps(store)), 'failed-precondition', 'migration-needed');
+    await rejectCode(executeFicheCommand(command('patch', { changes: { nom: 'Nouveau' }, baseValues: { nom: 'Bhelgi' } }), MJ, deps(store)), 'failed-precondition', 'migration-needed');
     assert.equal(store.documents.get('fiches/bhelgi').data.nom, 'Bhelgi');
 });
 

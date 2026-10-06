@@ -1,3 +1,10 @@
+## [2.32.0] - 2026-10-06
+
+- **Fiche de personnage sur téléphone** : la fiche s’ouvre désormais dans l’application, avec quatre onglets (Principal, Aptitudes, Carrière, Journal). On y consulte ses caractéristiques et ses compétences, on cherche une aptitude, on achète des avances de caractéristique, de compétence ou de talent, on prend un rang ou on change de carrière, puis on suit son expérience et ses notes dans le journal. L’export de la fiche est dans le menu ⋯. Les achats demandent d’être en ligne.
+- **Nom et race** : seul le MJ peut désormais les modifier. Les champs sont grisés pour les joueurs sur la fiche du bureau, et le serveur refuse aussi la modification.
+- **Fiche du bureau** : une forme de compétence regroupée dans Référentiels compte maintenant comme compétence de carrière, et l’achat n’est plus refusé pour un prix qui aurait changé.
+- **Ancienne fiche** : le lien reste disponible dans le menu ⋯ pendant quelques versions, le temps de s’habituer à la nouvelle.
+
 ## [2.31.1] - 2026-10-05
 
 ### Référentiels
