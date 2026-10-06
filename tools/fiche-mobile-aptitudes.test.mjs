@@ -592,8 +592,11 @@ test('learnRows : recherche sans accents ni casse, multi-mots, filtre de type, c
     const catalog = engine.ruleCatalog.spells;
     const key = rule => rule.nom.normalize('NFD').replace(/[̀-ͯ]/gu, '').toLowerCase().replace(/[’']/gu, "'").trim();
     const ambiguous = catalog.filter(rule => catalog.filter(other => key(other) === key(rule)).length > 1);
-    assert.ok(ambiguous.length > 0 && all.length === catalog.length - ambiguous.length);
+    assert.equal(all.length, catalog.length - ambiguous.length);
     assert.ok(all.every(row => ambiguous.every(rule => rule.nom !== row.nom)));
+    // Un nom en double dans le catalogue (le serveur le refuse) est écarté des deux côtés.
+    const doubled = { ...engine, ruleCatalog: { ...engine.ruleCatalog, spells: [...catalog, { ...catalog[0] }] } };
+    assert.ok(learnRows(doubled, data(), 'sort').every(row => row.nom !== catalog[0].nom));
     assert.deepEqual(all.map(row => row.type), [...all.map(row => row.type)].sort((a, b) => a.localeCompare(b, 'fr')));
 
     const flames = learnRows(engine, data(), 'sort', { query: 'COURONNE flammes' });

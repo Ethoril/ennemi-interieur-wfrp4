@@ -30,12 +30,23 @@ export const CARACS = Object.freeze([
 ]);
 
 // Les ressources sont des chaînes numériques : absent ou non numérique vaut 0.
-const count = value => Math.max(0, Math.floor(+value) || 0);
+export const count = value => Math.max(0, Math.floor(+value) || 0);
 
 /** Jetons d'une ressource : `max` emplacements dont `current` (borné à `max`) sont pleins. */
 export function resourceTokens(data, maxKey, currentKey) {
     const max = count(data?.[maxKey]);
     return { max, current: Math.min(max, count(data?.[currentKey])) };
+}
+
+/** Valeur proposée par un point : le point plein d'indice i ramène la ressource à i, le point vide final ajoute 1. */
+export const dotTarget = (value, index) => (index < value ? index : value + 1);
+
+/** Patch d'une ressource passée à `value` ; Chance (resp. Détermination) est ramenée au nouveau maximum, `lowered` = son ancienne valeur. */
+export function resourceChange(data, maxKey, currentKey, value) {
+    const current = count(data?.[currentKey]);
+    const changes = { [maxKey]: String(value) };
+    if (current > value) changes[currentKey] = String(value);
+    return { changes, lowered: current > value ? current : null };
 }
 
 /** Les dix caractéristiques dans l'ordre de la fiche, avec le marqueur « de carrière ». */

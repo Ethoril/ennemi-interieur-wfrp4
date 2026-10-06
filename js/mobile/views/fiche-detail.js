@@ -10,6 +10,8 @@ import { createCareerChangeSheet } from './fiche-career-change.js';
 import { createCareerPanel } from './fiche-carriere.js';
 import { createJournalPanel } from './fiche-journal.js';
 import { createPrincipalPanel } from './fiche-principal.js';
+import { createConflictNotice } from './fiche-conflicts.js';
+import { createResourceSheet } from './fiche-resource-sheet.js';
 import { createPurchaseSheet } from './fiche-purchase-sheet.js';
 import { createSkillLearnSheet } from './fiche-skill-learn.js';
 import { createSpellLearnSheet } from './fiche-spell-learn.js';
@@ -173,6 +175,10 @@ export function createFicheDetailView({
     const cancel = createCancelSheet({
         documentRef, getContext: ficheContext, announce: message => { announce(message); journal.refocus(); },
     });
+    // Brûler ou ajouter un point de Destin / Résilience : confirmation, puis brouillon protégé et envoi.
+    const resource = createResourceSheet({
+        documentRef, getContext: ficheContext, announce, onDone: key => shell?.principal.focusResource(key),
+    });
     const importSheet = createImportSheet({ documentRef, announce, getContext: ficheContext });
     // Un seul panneau pour toute la vie de la vue : la saisie des notes survit aux reconstructions de la coque.
     const journal = createJournalPanel({
@@ -223,13 +229,14 @@ export function createFicheDetailView({
             spellLearn.close();
             skillLearn.close();
             cancel.close();
+            resource.close();
             importSheet.close();
             closeCareerViewer();
             aptitudes.closeDetail();
             shownKey = key;
             shell = null;
             build();
-            container.append(menuDialog, purchase.element, aptitudes.detailElement, careerChange.element, spellLearn.element, skillLearn.element, cancel.element,
+            container.append(menuDialog, purchase.element, aptitudes.detailElement, careerChange.element, spellLearn.element, skillLearn.element, cancel.element, resource.element,
                 importSheet.element, viewerHost);
         }
     };
@@ -248,6 +255,7 @@ export function createFicheDetailView({
         shell.notice.textContent = legacy ? 'Fiche à migrer par le MJ depuis le bureau : lecture seule.'
             : online ? '' : 'Hors connexion.';
         shell.notice.hidden = !shell.notice.textContent;
+        shell.conflicts.update();
         updatePrincipal();
         updateAptitudes();
         updateCareer();
@@ -262,7 +270,7 @@ export function createFicheDetailView({
 
     const updatePrincipal = () => {
         if (!shell || !controllerState?.data) return;
-        shell.principal.update({ data: controllerState.data, careers: catalogue?.careers, engine: catalogue?.getEngine() });
+        shell.principal.update({ data: controllerState.data, careers: catalogue?.careers, engine: catalogue?.getEngine(), readonly: controllerState?.phase === 'legacy-readonly' });
     };
 
     // Calculé seulement quand l'onglet est visible : les compétences de carrière coûtent plus qu'un simple rendu.
@@ -316,6 +324,7 @@ export function createFicheDetailView({
         const principal = createPrincipalPanel({
             documentRef, aptitudesHref: tabHref('aptitudes'),
             onOpenCarac: (key, trigger) => purchase.open({ kind: 'carac', key }, trigger),
+            onChangeResource: (spec, trigger) => resource.open(spec, trigger),
         });
         const career = createCareerPanel({
             documentRef,
@@ -334,9 +343,10 @@ export function createFicheDetailView({
             links.set(item.key, link);
             nav.append(link);
         }
-        root.append(strip, notice, panel, nav);
+        const conflicts = createConflictNotice({ documentRef, getContext: ficheContext, announce });
+        root.append(strip, notice, conflicts.element, panel, nav);
         container.append(root);
-        shell = { identity: identityLine, xp, xpValue, notice, panelTitle, principal, career, links };
+        shell = { identity: identityLine, xp, xpValue, notice, conflicts, panelTitle, principal, career, links };
         updateShell();
         updatePanel();
     };
@@ -513,6 +523,7 @@ export function createFicheDetailView({
         spellLearn.close();
         skillLearn.close();
         cancel.close();
+        resource.close();
         importSheet.close();
         closeCareerViewer();
         aptitudes.closeDetail();
