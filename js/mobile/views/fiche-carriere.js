@@ -63,7 +63,7 @@ export function createCareerPanel({ documentRef, onBuyRank = () => {}, onChangeC
 
     const history = make(documentRef, 'section', '', 'm-career-history');
     const historyList = make(documentRef, 'ul', '', 'm-career-history-list');
-    history.append(make(documentRef, 'h4', 'Historique', 'm-principal-title'), historyList);
+    history.append(make(documentRef, 'h3', 'Historique', 'm-principal-title'), historyList);
     root.append(missing, card, preview, actions, history);
 
     const variantBlock = variant => {

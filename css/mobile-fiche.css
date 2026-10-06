@@ -1,5 +1,22 @@
 /* Fiche de personnage mobile : classes m-fiche-*, couleurs par jetons de base.css uniquement. */
+
+/* Jetons de lisibilité. Sombre : l'or de base.css passe déjà 4,5:1 sur tous les fonds. Parchemin : --gold-bright
+   (2,5 à 3,4:1) et --gold (3,8 à 5,1:1) échouent en texte ; --gold-dim donne 5,9 à 7,9:1. Les cadres des
+   commandes (cases, bascule, pas d'achat, champs) passent à 3:1 : --border-strong sombre, --text-muted parchemin. */
+.m-app {
+  --m-accent: var(--gold-bright);
+  --m-gold-text: var(--gold);
+  --m-control-border: var(--border-strong);
+  --m-danger-text: var(--statut-ennemi);
+}
+
+[data-theme="parchment"] .m-app {
+  --m-accent: var(--gold-dim);
+  --m-gold-text: var(--gold-dim);
+  --m-control-border: var(--text-muted);
+}
 .m-fiche {
+  grid-template-columns: minmax(0, 1fr);
   display: grid;
   gap: var(--space-md);
   font-size: 1.0625rem;
@@ -7,6 +24,7 @@
 
 .m-fiche-identity {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
@@ -14,6 +32,7 @@
 }
 
 .m-fiche-identity-line {
+  flex: 1 1 10rem;
   min-width: 0;
   margin: 0;
   color: var(--text-secondary);
@@ -27,9 +46,9 @@
   min-width: var(--m-touch-target);
   min-height: var(--m-touch-target);
   padding: var(--space-xs) var(--space-sm);
-  color: var(--gold-bright);
+  color: var(--m-accent);
   text-decoration: none;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--m-control-border);
   border-radius: var(--radius-md);
 }
 
@@ -46,7 +65,7 @@
 }
 
 .m-fiche-xp:focus-visible,
-.m-fiche-tab:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+.m-fiche-tab:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
 
 .m-fiche-notice {
   margin: 0;
@@ -93,7 +112,8 @@
   text-decoration: none;
 }
 
-.m-fiche-tab[aria-current="page"] { color: var(--gold-bright); }
+/* L'onglet actif se lit par la couleur, le gras et le filet du haut (jamais la couleur seule). */
+.m-fiche-tab[aria-current="page"] { color: var(--m-accent); font-weight: 700; box-shadow: inset 0 3px 0 var(--m-accent); }
 
 .m-fiche-tab-icon {
   width: 1.375rem;
@@ -114,7 +134,8 @@
 
 .m-principal-resources {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* Deux colonnes à taille normale ; une seule quand le texte agrandi ne tient plus. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
   gap: var(--space-sm);
 }
 
@@ -125,12 +146,12 @@
   border-radius: var(--radius-md);
 }
 
-.m-principal-card { padding: var(--space-sm) var(--space-md); }
+.m-principal-card { min-width: 0; padding: var(--space-sm) var(--space-md); overflow-wrap: anywhere; }
 .m-principal-card p { margin: 0; }
 .m-principal-max { color: var(--text-secondary); }
 .m-principal-label,
 .m-principal-title {
-  color: var(--gold);
+  color: var(--m-gold-text);
   font-family: var(--font-heading);
   font-size: 0.8rem;
   letter-spacing: 0.1em;
@@ -170,28 +191,28 @@
   color: var(--text-primary);
   line-height: 1.15;
   background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--m-control-border);
   border-radius: var(--radius-md);
 }
 
 .m-principal-carac.is-career { border: 2px solid var(--gold); }
 .m-principal-carac:focus-visible,
-.m-principal-all:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+.m-principal-all:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
 .m-principal-carac-abbr { color: var(--text-secondary); font-size: 0.875rem; }
 .m-principal-carac-total { color: var(--text-heading); font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; }
-.m-principal-carac-bonus { color: var(--gold); font-size: 0.8125rem; }
+.m-principal-carac-bonus { color: var(--m-gold-text); font-size: 0.8125rem; }
 .m-principal-note { margin: var(--space-xs) 0 0; color: var(--text-secondary); font-size: 0.875rem; }
 
 .m-principal-head { display: flex; align-items: baseline; justify-content: space-between; }
 .m-principal-head .m-principal-title { margin: 0; }
-.m-principal-all { display: inline-flex; align-items: center; min-height: var(--m-touch-target); color: var(--gold-bright); }
+.m-principal-all { display: inline-flex; align-items: center; min-height: var(--m-touch-target); color: var(--m-accent); }
 
 .m-principal-skill-list { margin: 0; padding: 0; list-style: none; }
 .m-principal-skill { display: flex; align-items: center; gap: var(--space-sm); min-height: 2.6rem; padding: 0 var(--space-md); }
 .m-principal-skill + .m-principal-skill { border-top: 1px solid var(--border-subtle); }
 .m-principal-skill-name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .m-principal-skill-carac { color: var(--text-secondary); font-size: 0.875rem; }
-.m-principal-skill-total { min-width: 1.75rem; color: var(--gold-bright); font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; text-align: right; }
+.m-principal-skill-total { min-width: 1.75rem; color: var(--m-accent); font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; text-align: right; }
 
 /* Volet bas (components/bottom-sheet.js) : collé en bas, glissé vers le bas pour fermer. */
 .m-bottom-sheet {
@@ -243,7 +264,7 @@
 .m-purchase-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-md); touch-action: none; }
 .m-purchase-title { margin: 0; color: var(--text-heading); font-family: var(--font-heading); font-size: 1.35rem; overflow-wrap: anywhere; }
 .m-purchase-nature { margin: 0; color: var(--text-secondary); }
-.m-purchase-total { margin: 0; color: var(--gold-bright); font-family: var(--font-heading); font-size: 2.5rem; font-weight: 700; line-height: 1; }
+.m-purchase-total { margin: 0; color: var(--m-accent); font-family: var(--font-heading); font-size: 2.5rem; font-weight: 700; line-height: 1; }
 .m-purchase-formula { margin: 0; padding: var(--space-sm) var(--space-md); background: var(--bg-surface); border-radius: var(--radius-md); }
 .m-purchase-stepper { display: flex; align-items: center; gap: var(--space-md); }
 .m-purchase-step-label { flex: 1; }
@@ -253,7 +274,7 @@
   color: var(--text-primary);
   font-size: 1.5rem;
   background: var(--bg-surface);
-  border: 1px solid var(--border-gold);
+  border: 1px solid var(--m-control-border);
   border-radius: var(--radius-md);
 }
 .m-purchase-count { min-width: 2rem; color: var(--text-heading); font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; text-align: center; }
@@ -261,15 +282,15 @@
 .m-purchase-figures div { padding: var(--space-xs); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
 .m-purchase-figures dt { color: var(--text-secondary); font-size: 0.875rem; }
 .m-purchase-figures dd { margin: 0; color: var(--text-heading); font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; }
-.m-purchase-figures .m-purchase-cost { color: var(--gold-bright); }
-.m-purchase-figures .m-purchase-short { color: var(--blood-bright); }
+.m-purchase-figures .m-purchase-cost { color: var(--m-accent); }
+.m-purchase-figures .m-purchase-short { color: var(--m-danger-text); }
 .m-purchase-note,
 .m-purchase-reason,
 .m-purchase-error { margin: 0; font-size: 0.9375rem; }
 .m-purchase-note { color: var(--text-secondary); }
 .m-purchase-reason { color: var(--text-primary); }
-.m-purchase-error { color: var(--blood-bright); font-weight: 600; }
-.m-purchase-step:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+.m-purchase-error { color: var(--m-danger-text); font-weight: 600; }
+.m-purchase-step:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
 .m-purchase-step:disabled,
 .m-sheet-body .m-button:disabled { opacity: 0.55; }
 .m-sheet-body .m-button { min-height: var(--m-touch-target); }
@@ -284,7 +305,7 @@
   display: flex;
   padding: 3px;
   background: var(--bg-card);
-  border: 1px solid var(--border-gold);
+  border: 1px solid var(--m-control-border);
   border-radius: var(--radius-md);
 }
 
@@ -298,9 +319,9 @@
   border-radius: var(--radius-sm);
 }
 
-.m-apt-switch-button[aria-pressed="true"] { color: var(--gold-bright); background: var(--bg-surface); }
+.m-apt-switch-button[aria-pressed="true"] { color: var(--m-accent); font-weight: 700; background: var(--bg-surface); }
 .m-apt-switch-button:focus-visible,
-.m-apt-row:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: -2px; }
+.m-apt-row:focus-visible { outline: 2px solid var(--m-accent); outline-offset: -2px; }
 
 /* Recherche et puces restent visibles pendant le défilement : le collage se fait sous le padding haut de .m-main,
    qu'on rend en padding de la barre pour que rien ne défile au-dessus. */
@@ -317,7 +338,7 @@
 .m-apt-tools .m-result-count { text-align: left; }
 .m-apt-title {
   margin: var(--space-xs) 0 0;
-  color: var(--gold);
+  color: var(--m-gold-text);
   font-family: var(--font-heading);
   font-size: 0.8rem;
   letter-spacing: 0.1em;
@@ -346,8 +367,8 @@
 .m-apt-name { overflow-wrap: anywhere; }
 .m-apt-detail { color: var(--text-secondary); font-size: 0.875rem; }
 .m-apt-total { min-width: 1.9rem; color: var(--text-primary); font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; text-align: right; }
-.m-apt-total.is-trained { color: var(--gold-bright); }
-.m-apt-side { flex: none; color: var(--gold-bright); font-size: 0.9rem; }
+.m-apt-total.is-trained { color: var(--m-accent); }
+.m-apt-side { flex: none; color: var(--m-accent); font-size: 0.9rem; }
 .m-apt-empty { display: grid; justify-items: start; gap: var(--space-sm); }
 .m-apt-empty p { margin: 0; color: var(--text-secondary); }
 .m-apt-facts { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); margin: 0; }
@@ -365,7 +386,7 @@
 .m-spec-field input { flex: 1; min-width: 0; }
 .m-spec-note { margin: 0; color: var(--text-secondary); font-size: 0.9rem; }
 .m-spec-choices { display: flex; flex-wrap: wrap; gap: var(--space-xs); max-height: 11rem; overflow-y: auto; }
-.m-purchase-taken { margin: 0; color: var(--gold-bright); }
+.m-purchase-taken { margin: 0; color: var(--m-accent); }
 .m-purchase-description p { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
 
 /* Onglet Carrière. */
@@ -384,7 +405,7 @@
 .m-career-line { margin: 0; color: var(--text-secondary); }
 .m-career-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-md); }
 .m-career-title { margin: 0; color: var(--text-heading); font-family: var(--font-heading); font-size: 1.35rem; overflow-wrap: anywhere; }
-.m-career-rank { flex: none; color: var(--gold-bright); font-family: var(--font-heading); }
+.m-career-rank { flex: none; color: var(--m-accent); font-family: var(--font-heading); }
 .m-career-card .m-principal-title { margin: var(--space-xs) 0 0; }
 
 .m-career-gauges { display: grid; gap: var(--space-sm); margin: 0; padding: 0; list-style: none; }
@@ -392,13 +413,13 @@
 .m-career-bar { height: 0.375rem; margin-top: var(--space-xs); background: var(--bg-surface); border-radius: 0.1875rem; overflow: hidden; }
 .m-career-fill { width: calc(var(--gauge, 0) * 1%); height: 100%; background: var(--gold); border-radius: inherit; }
 .m-career-detail { margin: var(--space-xs) 0 0; color: var(--text-secondary); font-size: 0.875rem; overflow-wrap: anywhere; }
-.m-career-max { margin: 0; color: var(--gold-bright); font-family: var(--font-heading); text-align: center; }
+.m-career-max { margin: 0; color: var(--m-accent); font-family: var(--font-heading); text-align: center; }
 .m-career-card .m-button { min-height: 3rem; }
 .m-career-card .m-principal-note { margin: 0; }
 
 .m-career-preview[open] { padding-bottom: var(--space-md); }
 .m-career-summary { display: flex; align-items: center; min-height: 3rem; padding: 0 var(--space-md); color: var(--text-heading); font-family: var(--font-heading); cursor: pointer; }
-.m-career-summary:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: -2px; }
+.m-career-summary:focus-visible { outline: 2px solid var(--m-accent); outline-offset: -2px; }
 .m-career-preview-body { display: grid; gap: var(--space-md); padding: 0 var(--space-md); }
 .m-career-variant { display: grid; gap: var(--space-xs); }
 .m-career-variant h5 { margin: 0; color: var(--text-heading); font-size: 1rem; }
@@ -473,5 +494,71 @@
   border: 0;
 }
 
-.m-journal-cancel:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: -2px; }
+.m-journal-cancel:focus-visible { outline: 2px solid var(--m-accent); outline-offset: -2px; }
 .m-journal-conflict { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }
+
+/* Finitions : lisibilité (les deux thèmes), focus, animations, tablette. Tout reste sous .m-app:has(.m-fiche),
+   les autres écrans de l'application ne bougent pas. */
+.m-app:has(.m-fiche) :is(a, button, input, textarea, select, summary):focus-visible {
+  outline: 2px solid var(--m-accent);
+  outline-offset: 2px;
+}
+
+.m-app:has(.m-fiche) .m-icon-button { color: var(--m-accent); }
+
+.m-app:has(.m-fiche) .m-search input,
+.m-app:has(.m-fiche) .m-chip,
+.m-app:has(.m-fiche) .m-journal-pane textarea,
+.m-app:has(.m-fiche) .m-spec-field input { border-color: var(--m-control-border); }
+
+.m-app:has(.m-fiche) .m-button:not(.m-button-primary):not(.m-button-danger) { border-color: var(--m-control-border); }
+
+.m-app:has(.m-fiche) .m-result-count { color: var(--text-secondary); }
+
+/* Visionneuse de carrières : le statut reprend le texte secondaire de la fiche. */
+.m-app .career-viewer-modal .career-viewer-mode,
+.m-app .career-viewer-modal .career-viewer-status { color: var(--text-secondary); }
+
+/* Parchemin : theme-parchment.css colore tous les h2/h3 en or (2,5 à 3,4:1) avec une spécificité que les classes
+   seules n'égalent pas. Titres de section en or foncé, les autres en brun de titre. */
+[data-theme="parchment"] .m-app:has(.m-fiche) :is(h2, h3, h4, h5) { color: var(--text-heading); }
+[data-theme="parchment"] .m-app:has(.m-fiche) :is(.m-principal-title, .m-apt-title) { color: var(--m-gold-text); }
+
+/* Texte agrandi : les libellés d'onglet passent à la ligne plutôt que d'être rognés, la barre grandit avec eux. */
+.m-fiche-tab span { max-width: 100%; overflow-wrap: anywhere; hyphens: auto; text-align: center; }
+
+/* Animations sobres : fondu court d'onglet (le panneau affiché rejoue l'animation quand [hidden] tombe). */
+@keyframes m-tab-in { from { opacity: 0; } }
+
+.m-principal:not([hidden]),
+.m-aptitudes:not([hidden]),
+.m-career:not([hidden]),
+.m-journal:not([hidden]) { animation: m-tab-in 0.16s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .m-principal:not([hidden]),
+  .m-aptitudes:not([hidden]),
+  .m-career:not([hidden]),
+  .m-journal:not([hidden]) { animation: none; }
+}
+
+/* Texte agrandi sur 320 px : les grilles à piste automatique grandissent avec leur contenu, on les borne. */
+.m-principal,
+.m-aptitudes,
+.m-apt-pane,
+.m-apt-group,
+.m-career,
+.m-career-card,
+.m-career-history,
+.m-journal,
+.m-journal-pane { grid-template-columns: minmax(0, 1fr); }
+
+.m-career-head { flex-wrap: wrap; }
+.m-purchase-figures dt,
+.m-purchase-figures dd { overflow-wrap: anywhere; }
+.m-principal-head { flex-wrap: wrap; gap: 0 var(--space-md); }
+.m-career-gauges { grid-template-columns: minmax(0, 1fr); }
+.m-career-gauge-head { flex-wrap: wrap; }
+.m-apt-switch-button { min-width: 0; padding: var(--space-xs); overflow-wrap: anywhere; }
+/* Cinq colonnes à taille normale (390 et 320 px comme 640 px) ; moins quand le texte agrandi ne tient plus dans une case. */
+.m-principal-caracs { grid-template-columns: repeat(auto-fill, minmax(max(3.2rem, 18%), 1fr)); }

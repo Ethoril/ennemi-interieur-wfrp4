@@ -177,3 +177,29 @@ portée par la seule couleur (cadre doré doublé d'un texte), annonces des acha
 - ~~O1 — Chance et Détermination~~ : tranché, lecture seule (§ 5.1).
 - ~~O2 — Stats dérivées~~ : tranché, ligne discrète sous la grille (§ 5.1).
 - ~~O3 — Valeurs de base réservées au MJ~~ : tranché, verrouillage serveur partout (§ 6).
+
+## 12. Livraison v2.32.0 (6 octobre 2026)
+
+### Livré
+
+- [x] Route `#/fiches/<id>[/<onglet>]`, coque, quatre onglets, menu ⋯ (§§ 3, 4).
+- [x] Principal : ressources, caractéristiques, stats dérivées, meilleures compétences, sans défilement à 390 px (§ 5.1).
+- [x] Aptitudes : compétences (recherche sans accents, filtres), talents, sorts en consultation, spécialités (§ 5.2).
+- [x] Carrière : jauges, achat de rang, changement de carrière, aperçu du rang suivant, visionneuse plein écran, historique (§ 5.3).
+- [x] Journal : expérience, possessions et notes avec enregistrement automatique et gestion de conflit, annulation du dernier achat (§ 5.4).
+- [x] Volet d'achat unique : caractéristique, compétence, talent, rang ; hors ligne désactivé avec sa raison (§ 5.5).
+- [x] Nom et race réservés au MJ : serveur (`validatePatchPayload`), champs du bureau désactivés pour un joueur, aucun contrôle sur mobile (§ 6).
+- [x] Export JSON dans le menu ⋯ (§ 6).
+- [x] Thèmes sombre et parchemin avec contrastes vérifiés (texte ≥ 4,5:1, cadres des commandes ≥ 3:1), focus visible, titres hiérarchisés par onglet, annonces d'onglet, d'achat et d'erreur, volets modaux, 320 px sans défilement horizontal, texte à 200 % (§§ 7, 8).
+- [x] Animations sobres (volets glissants, fondu d'onglet) désactivées par `prefers-reduced-motion` ; colonne centrée en tablette et en paysage (§ 7).
+- [x] Version `v2.32.0`, entrée de CHANGELOG, précache du service worker (§ 9).
+- [x] Correctif bureau livré avec le lot : une forme de compétence regroupée dans Référentiels compte comme compétence de carrière (`isSkillInCareer`).
+
+### Écarts avec le cahier des charges
+
+- **Import JSON réservé au MJ** (le cahier le prévoyait pour tous) : l'import écrase la fiche, il reste donc dans le menu ⋯ du MJ seulement.
+- **Emplacements de talent ouverts non achetables sur mobile** : un talent à emplacement libre se prend depuis le bureau.
+- **Sorts et miracles en consultation seulement** : ni achat ni édition sur mobile.
+- **Annulation d'achat** : le MJ peut annuler seulement le dernier achat sur mobile ; les autres annulations se font sur le bureau.
+- **Nouvelle compétence avancée** : impossible de démarrer, sur mobile, une compétence avancée hors d'un groupe déjà possédé (spécialité d'un groupe existant : oui). À traiter dans un lot suivant.
+- **Lien « Ancienne fiche »** conservé dans le menu ⋯ pendant quelques versions, puis à retirer.
