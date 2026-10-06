@@ -1,3 +1,6 @@
+import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { createEnqueteHandlers } from './enquetes/handler.mjs';
+import { maintainEnquetes } from './enquetes/service.mjs';
 import { initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
@@ -77,3 +80,10 @@ const catalogueService = createCatalogueService({
   careers,
 });
 export const manageFicheCatalogue = onCall({ enforceAppCheck: true }, createCatalogueCommandHandler(catalogueService));
+const enquetesDependencies = () => ({ db: getFirestore(), bucket: getStorage().bucket(), timestamp: () => FieldValue.serverTimestamp(), arrayUnion: (...items) => FieldValue.arrayUnion(...items), deleteField: () => FieldValue.delete() });
+const enquetesHandlers = createEnqueteHandlers(enquetesDependencies);
+export const getEnqueteSession = onCall({ enforceAppCheck: true }, enquetesHandlers.session);
+export const executeEnqueteCommand = onCall({ enforceAppCheck: true }, enquetesHandlers.command);
+export const readEnqueteContent = onCall({ enforceAppCheck: true }, enquetesHandlers.read);
+export const finalizeEnqueteFile = onCall({ enforceAppCheck: true }, enquetesHandlers.file);
+export const maintainEnqueteContent = onSchedule({ schedule: 'every 5 minutes', timeZone: 'Europe/Paris' }, () => maintainEnquetes(enquetesDependencies()));

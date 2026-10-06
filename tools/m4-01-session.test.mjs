@@ -428,7 +428,7 @@ test('runtime public et runtime MJ restent séparés et les actions privées son
     assert.doesNotMatch(firestoreImport, /\bdeleteApp\b/u);
     assert.match(read('js/mobile/mj-composition.js'), /deleteApplicationOnClose:\s*false/u);
     assert.match(read('js/mobile/mj-composition.js'), /signOutOnClose:\s*false/u);
-    assert.match(read('app/index.html'), /frame-src\s+https:\/\/campagne-wrpg\.firebaseapp\.com/u);
+    assert.match(read('app/index.html'), /frame-src\s+(?:blob:\s+)?https:\/\/campagne-wrpg\.firebaseapp\.com/u);
     assert.match(read('js/mobile/app.js'), /ROUTE_NAMES\.PNJ_EDIT/u);
 });
 
@@ -476,3 +476,4 @@ test('refresh remonte une route identique après checking puis replace une édit
     assert.equal(router.getRoute().name, ROUTE_NAMES.PNJ);
     router.stop();
 });
+

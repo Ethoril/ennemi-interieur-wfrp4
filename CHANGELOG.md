@@ -1,3 +1,10 @@
+## [2.34.0] - 2026-10-06
+
+- Remplacement de l’espace Enquêtes par les documents, dossiers d’enquête et carnet personnel partagés entre bureau et mobile.
+- Liens PNJ, pièces dans plusieurs affaires, relations, chronologie, graphe personnel, annotations d’images et export ZIP.
+- Audiences séparées, conflits de révision, brouillons, fichiers versionnés, corbeille et cascades reprenables.
+- Import rejouable des anciens indices, sauvegarde protégée et activation unique.
+
 ## [2.33.0] - 2026-10-06
 
 - **Fiche bureau** : nouvelle disposition en trois colonnes, caractéristiques avec bonus doré, liste fusionnée des compétences, talents, sorts et miracles. Le journal s’aligne sous les deux premières colonnes ; l’inspecteur reste visible au défilement.

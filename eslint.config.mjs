@@ -39,7 +39,7 @@ const regles = {
 };
 
 export default [
-    { ignores: ['node_modules/**', 'tiles/**', 'docs/**'] },
+    { ignores: ['node_modules/**', 'tiles/**', 'docs/**', 'js/vendor/enquetes-*.js'] },
     {
         files: ['js/**/*.js'],
         languageOptions: {
@@ -63,3 +63,4 @@ export default [
         rules: regles,
     },
 ];
+

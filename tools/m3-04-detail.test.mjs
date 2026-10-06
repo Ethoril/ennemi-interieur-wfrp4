@@ -154,7 +154,7 @@ test('la vue rend des liens publics sûrs et ne remplace que la section liée qu
     assert.equal(store.listenerCount(), 1);
     assert.equal(container.querySelectorAll('.m-detail-name')[0].textContent, '<Agnès>');
     assert.equal(sectionBody(container, 'description').children[0].textContent, '<script>privé</script>');
-    assert.deepEqual(container.querySelectorAll('a').map(link => link.href), ['#/pnjs/b', '#/enquetes/indice_1']);
+    assert.deepEqual(container.querySelectorAll('a').map(link => link.href), ['#/pnjs/b', '#/enquetes/a']);
     assert.equal(sectionBody(container, 'identity'), undefined, 'l’identification vit désormais dans le bandeau');
     const descriptionContent = sectionBody(container, 'description').children[0];
     const relationContent = sectionBody(container, 'relations').children[0];
@@ -171,7 +171,7 @@ test('la vue rend des liens publics sûrs et ne remplace que la section liée qu
     assert.notEqual(container.querySelectorAll('.m-portrait-frame')[0], firstPortrait);
     assert.equal(container.querySelectorAll('.m-portrait-placeholder')[0].textContent, 'AR');
     assert.deepEqual(container.querySelectorAll('a').map(link => link.href),
-        ['#/pnjs/b', '#/pnjs/c', '#/enquetes/indice_1']);
+        ['#/pnjs/b', '#/pnjs/c', '#/enquetes/a']);
     container.querySelectorAll('button').at(-1).dispatch('click');
     assert.equal(backCalls, 1);
     view.unmount();
@@ -193,7 +193,7 @@ test('une dépublication ferme immédiatement la fiche, ses liens et son portrai
     const view = createPnjDetailView({ container, id: 'a', store,
         getImageService: () => ({ loadObjectUrl: () => loading }) });
     view.mount();
-    assert.equal(container.querySelectorAll('a').length, 1);
+    assert.equal(container.querySelectorAll('a').length, 2);
     store.emit(baseState([{ id: 'a', nom: 'A', visibleJoueurs: false }]));
     assert.equal(container.querySelectorAll('a').length, 0);
     assert.equal(container.querySelectorAll('h2')[0].textContent, 'PNJ indisponible');
@@ -218,7 +218,7 @@ test('la fiche en cache reste lisible pendant le chargement des données liées'
     assert.equal(container.querySelectorAll('.m-sync-badge').length, 0,
         'la fiche PNJ ne duplique pas le statut global de synchronisation');
     assert.equal(sectionBody(container, 'relations').children[0].textContent, 'Chargement des relations visibles…');
-    assert.equal(sectionBody(container, 'indices').children[0].textContent, 'Chargement des indices découverts…');
+    assert.equal(sectionBody(container, 'indices').children[0].textContent, 'Consulter les documents liés et mon carnet');
     view.unmount();
 });
 
@@ -243,3 +243,4 @@ test('trois cycles libèrent le portrait asynchrone et empêchent son retour', a
     assert.equal(releases, 3);
     assert.equal(container.children.length, 0);
 });
+

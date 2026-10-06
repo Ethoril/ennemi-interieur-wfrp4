@@ -1,5 +1,5 @@
 import { createPublicMobileClient } from '../data/firebase-clients.js';
-import { createPublicIndicesRepository } from '../data/indices-repository.js';
+// Les anciennes pièces quittent les abonnements anonymes avec le remplacement V2.
 import { createPublicImagesRepository } from '../data/images-repository.js';
 import { createPublicPnjRepository } from '../data/pnjs-repository.js';
 import { createPublicRelationsRepository } from '../data/relations-repository.js';
@@ -9,7 +9,7 @@ const DEFAULT_BUILDERS = Object.freeze({
     client: createPublicMobileClient,
     pnjs: createPublicPnjRepository,
     relations: createPublicRelationsRepository,
-    indices: createPublicIndicesRepository,
+    indices: () => ({ subscribeDiscovered(onData) { onData([], { fromCache: false, hasPendingWrites: false }); return () => {}; } }),
     images: createPublicImagesRepository,
 });
 
@@ -50,3 +50,4 @@ export function createPublicSessionComposition({
     };
     return createPublicMobileSession({ ...options, clientFactory, repositoryFactories });
 }
+

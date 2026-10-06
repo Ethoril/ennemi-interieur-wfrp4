@@ -1,3 +1,4 @@
+import { createEnqueteWorkspaceView } from '../enquetes-workspace.js';
 import { createAppLifecycle } from './lifecycle.js';
 import { createRouter, documentTitleForRoute, parseRoute, ROUTE_NAMES } from './router.js';
 import { createDefaultPublicSession } from './public-runtime.js';
@@ -383,6 +384,9 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             onAction: () => router.back(),
         }),
     };
+    for (const routeName of [ROUTE_NAMES.ENQUETES, ROUTE_NAMES.ENQUETE, ROUTE_NAMES.ENQUETE_NEW, ROUTE_NAMES.ENQUETE_EDIT]) {
+      views[routeName] = route => createEnqueteWorkspaceView({container,id:route.id,initialAction:routeName.endsWith('-new')?'new':routeName.endsWith('-edit')?'edit':null,onOpen:id=>router.navigate({name:ROUTE_NAMES.ENQUETE,id}),onOpenPnj:id=>router.navigate({name:ROUTE_NAMES.PNJ,id})});
+    }
     views[ROUTE_NAMES.REGLAGES] = () => createSettingsView({ container, publicSession: session, mjSession, documentRef, draftStore, draftStores: [enqueteDraftStore], pwa, announce: message => announce(routeStatus, message) });
     router = createRouter({
         windowRef,
@@ -506,3 +510,4 @@ if (typeof document !== 'undefined' && typeof window !== 'undefined') {
 }
 
 export { boot };
+

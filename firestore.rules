@@ -416,7 +416,7 @@ service cloud.firestore {
           && !request.resource.data.keys().hasAny(['imageUrl'])
           && hasWriteTimestamps(request.resource.data)
           && serverCreatedAndUpdated(request.resource.data);
-      allow update: if !managedPnj(id) && isGM() && !resource.data.get('suppressionEnCours', false)
+      allow update: if !managedPnj(id) && (!acces().get('enqEnabled', false) || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['visibleJoueurs', 'suppressionEnCours'])) && isGM() && !resource.data.get('suppressionEnCours', false)
           && validPnj(request.resource.data)
           && validImagePath(request.resource.data, id, 'portraits')
           && validDeletionMarker(request.resource.data)
@@ -438,7 +438,7 @@ service cloud.firestore {
             || (request.resource.data.get('suppressionEnCours', false) != true
               && !deletionLockActive())
           );
-      allow delete: if !managedPnj(id) && isGM()
+      allow delete: if !acces().get('enqEnabled', false) && !managedPnj(id) && isGM()
           && resource.data.get('suppressionEnCours', false) == true
           && deletionLockActive()
           && get(deletionLockRef()).data.get('pnjId', '') == id;
@@ -528,15 +528,15 @@ service cloud.firestore {
     // Note : cette règle impose que les requêtes en liste portent la contrainte
     // `where('decouvert', '==', true)` pour les utilisateurs non-MJ.
     match /indices/{id} {
-      allow read:  if isGM() || resource.data.decouvert == true;
-      allow create: if !managedIndice(id) && isGM() && validIndice(request.resource.data)
+      allow read:  if isGM() || (!acces().get('enqEnabled', false) && resource.data.decouvert == true);
+      allow create: if !acces().get('enqEnabled', false) && !managedIndice(id) && isGM() && validIndice(request.resource.data)
           && validImagePath(request.resource.data, id, 'indices')
           && !deletionLockActive()
           && !imageLockActive('indices', id)
           && !request.resource.data.keys().hasAny(['imageUrl'])
           && hasWriteTimestamps(request.resource.data)
           && serverCreatedAndUpdated(request.resource.data);
-      allow update: if !managedIndice(id) && isGM() && validIndice(request.resource.data)
+      allow update: if !acces().get('enqEnabled', false) && !managedIndice(id) && isGM() && validIndice(request.resource.data)
           && validImagePath(request.resource.data, id, 'indices')
           && (!deletionLockActive() || cascadeIndiceUpdate(resource.data, request.resource.data))
           && validUpdate(resource.data, request.resource.data,
@@ -548,7 +548,7 @@ service cloud.firestore {
           && serverUpdated(request.resource.data)
           && (!changesImage(resource.data, request.resource.data)
               || !imageLockActive('indices', id));
-      allow delete: if !managedIndice(id) && isGM();
+      allow delete: if !acces().get('enqEnabled', false) && !managedIndice(id) && isGM();
     }
 
     // ── Sondage : le vote reste anonyme, par choix de conception.
@@ -599,5 +599,74 @@ service cloud.firestore {
         && request.resource.data.message.subject.size() <= 200
         && request.resource.data.message.html.size() <= 2000;
     }
+
+    // Documents and investigations V2. Shared mutations are server-only.
+    function enqMember() {
+      return isGM() || (request.auth != null && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && (request.auth.token.email.lower() in acces().get('bhelgi', [])
+        || request.auth.token.email.lower() in acces().get('caelel', [])
+        || request.auth.token.email.lower() in acces().get('elysia', [])
+        || request.auth.token.email.lower() in acces().get('hellaya', [])
+        || request.auth.token.email.lower() in acces().get('wren', [])));
+    }
+    function enqOpen() { return acces().get('enqEnabled', false) == true && acces().get('enqMaintenance', null) == null; }
+    function ownEnq(uid) { return request.auth != null && request.auth.uid == uid && request.auth.token.email_verified == true && exists(/databases/$(database)/documents/enq_accounts/$(uid)); }
+    function validEnqNote(uid, id, data) {
+      return ownEnq(uid) && data.keys().hasOnly(['id','type','authorUid','titre','texte','etiquettes','revision','operationId','createdAt','updatedAt'])
+        && data.id == id && data.type == 'notes' && data.authorUid == uid
+        && data.texte is string && data.texte.size() > 0 && data.texte.size() <= 100000
+        && validText(data,'titre',200) && data.etiquettes is list && data.etiquettes.size() <= 30
+        && data.revision is int && data.revision >= 1
+        && data.operationId is string && validOwnerId(data.operationId)
+        && getAfter(/databases/$(database)/documents/enq_users/$(uid)/receipts/$(data.operationId)).data.id == id
+        && getAfter(/databases/$(database)/documents/enq_users/$(uid)/receipts/$(data.operationId)).data.revision == data.revision
+        && getAfter(/databases/$(database)/documents/enq_registry/$(id)).data.zone == 'user:' + uid
+        && getAfter(/databases/$(database)/documents/enq_registry/$(id)).data.revision == data.revision
+        && !exists(/databases/$(database)/documents/pnjs/$(id))
+        && data.updatedAt == request.time && data.createdAt is timestamp;
+    }
+    match /enq_control/public { allow read: if request.auth != null; allow write: if false; }
+    match /enq_commun/data/{kind}/{id} { allow read: if enqMember() && enqOpen(); allow write: if false; }
+    match /enq_mj/data/{kind}/{id} { allow read: if isGM() && enqOpen(); allow write: if false; }
+    match /enq_users/{uid}/{kind}/{id} {
+      allow read: if ownEnq(uid);
+      allow create: if kind == 'notes' && validEnqNote(uid,id,request.resource.data)
+        && request.resource.data.revision == 1 && request.resource.data.createdAt == request.time;
+      allow update: if kind == 'notes' && validEnqNote(uid,id,request.resource.data)
+        && resource.data.authorUid == uid && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.revision == resource.data.revision + 1
+        && get(/databases/$(database)/documents/enq_registry/$(id)).data.state == 'active';
+      allow delete: if false;
+    }
+    match /enq_users/{uid}/receipts/{operationId} {
+      allow read: if ownEnq(uid);
+      allow create: if ownEnq(uid) && request.resource.data.keys().hasOnly(['id','revision','hash','createdAt'])
+        && request.resource.data.id is string && request.resource.data.hash is string
+        && request.resource.data.revision == getAfter(/databases/$(database)/documents/enq_users/$(uid)/notes/$(request.resource.data.id)).data.revision
+        && request.resource.data.createdAt == request.time
+        && getAfter(/databases/$(database)/documents/enq_users/$(uid)/notes/$(request.resource.data.id)).data.operationId == operationId;
+      allow update, delete: if false;
+    }
+    match /enq_registry/{id} {
+      allow read: if request.auth != null && ownEnq(request.auth.uid) && resource.data.zone == 'user:' + request.auth.uid && resource.data.type == 'notes';
+      allow create, update: if request.auth != null && ownEnq(request.auth.uid)
+        && request.resource.data.keys().hasOnly(['id','type','zone','authorUid','state','revision','refs','createdAt'])
+        && (!exists(/databases/$(database)/documents/enq_registry/$(id)) || (resource.data.type == 'notes' && resource.data.zone == 'user:' + request.auth.uid && resource.data.state == 'active'))
+        && request.resource.data.id == id && request.resource.data.type == 'notes'
+        && request.resource.data.zone == 'user:' + request.auth.uid
+        && request.resource.data.authorUid == request.auth.uid && request.resource.data.state == 'active'
+        && request.resource.data.refs == []
+        && request.resource.data.revision == getAfter(/databases/$(database)/documents/enq_users/$(request.auth.uid)/notes/$(id)).data.revision
+        && request.resource.data.createdAt == getAfter(/databases/$(database)/documents/enq_users/$(request.auth.uid)/notes/$(id)).data.createdAt;
+      allow delete: if false;
+    }
   }
 }
+
+
+
+
+
+
+

@@ -1899,6 +1899,8 @@ function updateVisibility() {
 
 // ── Detail panel ───────────────────────────────────────────────
 function readLinkedIndices(pnjId) {
+    // Les associations V2 se consultent dans l’espace authentifié.
+    if (pnjId) return Promise.resolve([]);
     if (!bureauData?.indices?.subscribeLinked) return Promise.resolve([]);
     const capturedData = bureauData;
     const capturedAuth = authSessionKey;
@@ -2069,7 +2071,7 @@ async function openPanel(d, { origin = false, addRelation = false } = {}) {
                 </div>
             </div>
             <div class="pnj-dossier-body">
-                ${editActions}${metaHtml}${descHtml}${relHtml}${cluesHtml}
+                ${editActions}${metaHtml}${descHtml}${relHtml}<div class="pnj-detail-section"><h3>Documents et enquêtes</h3><a class="pnj-clue-badge" href="enquetes.html?id=${encodeURIComponent(d.id)}">Consulter les pièces liées et mon carnet</a></div>${cluesHtml}
             </div>`;
 
         const panel = document.getElementById('pnj-detail');
@@ -2563,3 +2565,4 @@ document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('clic
 document.querySelectorAll('.colorby-btn').forEach(btn => btn.addEventListener('click', () => applyColorBy(btn.dataset.dim)));
 
 loadData({ init: true });
+

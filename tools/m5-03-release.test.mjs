@@ -41,11 +41,11 @@ test('M5-03 aligne version, cache, méta et documentation de clôture', () => {
     const changelog = read('CHANGELOG.md');
     const layoutVersion = layout.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
     const swVersion = sw.match(/APP_VERSION\s*=\s*['"]([^'"]+)['"]/u)?.[1];
-    assert.equal(layoutVersion, 'v2.33.0');
+    assert.equal(layoutVersion, 'v2.34.0');
     assert.equal(swVersion, layoutVersion);
     assert.match(sw, /CACHE_NAME\s*=\s*['"]wfrp-cache-['"]\s*\+\s*APP_VERSION/u);
-    assert.match(html, /app-version"\s+content="v2.32.4"/u);
-    assert.match(changelog, /^## \[2.33.0\] - 2026-10-06\r?\n/u);
+    assert.match(html, /app-version"\s+content="v2.34.0"/u);
+    assert.match(changelog, /^## \[2.34.0\] - 2026-10-06\r?\n/u);
     assert.ok(fs.existsSync(path.join(root, 'docs/mobile/M5-03-cloture-enquetes.md')));
 });
 
@@ -100,3 +100,5 @@ test('la CSP mobile couvre les services utilisés sans exposer de données au pr
     assert.equal(manifest.start_url, './app/index.html');
     assert.equal(manifest.scope, './');
 });
+
+

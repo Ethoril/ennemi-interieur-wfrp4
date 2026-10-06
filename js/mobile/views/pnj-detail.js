@@ -97,31 +97,13 @@ function renderRelations(documentRef, body, model) {
 
 function renderIndices(documentRef, body, model) {
     body.replaceChildren();
-    if (!model.indices.length) {
-        const message = model.indicesStatus === 'loading'
-            ? 'Chargement des indices découverts…'
-            : model.indicesStatus === 'error'
-                ? 'Les indices découverts sont momentanément indisponibles.'
-                : 'Aucun indice découvert lié à ce PNJ.';
-        appendText(documentRef, body, 'p', 'm-detail-empty', message);
-        return;
-    }
-    const list = documentRef.createElement('ul');
-    list.className = 'm-detail-links';
-    for (const indice of model.indices) {
-        const item = documentRef.createElement('li');
-        const link = documentRef.createElement('a');
-        link.href = `#/enquetes/${encodeURIComponent(indice.id)}`;
-        const title = documentRef.createElement('strong');
-        title.textContent = indice.title;
-        link.append(title);
-        if (indice.description) appendText(documentRef, link, 'span', '', indice.description);
-        item.append(link);
-        list.append(item);
-    }
-    body.append(list);
+    const link = documentRef.createElement('a');
+    link.className = 'm-button';
+    link.href = `#/enquetes/${encodeURIComponent(model.item.id)}`;
+    link.textContent = 'Consulter les documents liés et mon carnet';
+    body.append(link);
+    appendText(documentRef, body, 'p', 'm-detail-empty', 'Les pièces et les notes se consultent dans l’espace authentifié.');
 }
-
 function renderMetadata(documentRef, metadata, model) {
     metadata.replaceChildren();
     if (model.warning) {
@@ -156,7 +138,7 @@ function renderReady({ documentRef, target, model, portrait, portraitSignature, 
         target.append(hero);
         const description = makeSection(documentRef, 'Description publique', 'description');
         const relations = makeSection(documentRef, 'Relations visibles', 'relations');
-        const indices = makeSection(documentRef, 'Indices découverts', 'indices');
+        const indices = makeSection(documentRef, 'Documents et enquêtes', 'indices');
         const metadata = documentRef.createElement('div');
         metadata.className = 'm-detail-metadata';
         metadata.dataset.detailMetadata = 'true';
@@ -202,7 +184,7 @@ function renderReady({ documentRef, target, model, portrait, portraitSignature, 
         renderRelations(documentRef, refs.relations, model);
         refs.signatures.relations = relationsSignature;
     }
-    const indicesSignature = JSON.stringify([model.indices, model.indicesStatus]);
+    const indicesSignature = JSON.stringify([model.item.id]);
     if (refs.signatures.indices !== indicesSignature) {
         renderIndices(documentRef, refs.indices, model);
         refs.signatures.indices = indicesSignature;
@@ -339,3 +321,5 @@ export function createPnjDetailView({ container, id, store, onBack = () => {},
         routeAnnouncement: () => (enteredAtMount() ? `Fiche de ${entryName}` : null),
     });
 }
+
+

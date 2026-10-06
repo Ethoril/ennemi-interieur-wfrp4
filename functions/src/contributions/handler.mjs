@@ -1,3 +1,4 @@
+import { guardPnjVisibility } from '../enquetes/service.mjs';
 import { HttpsError } from 'firebase-functions/v2/https';
 import {
     ContributionError,
@@ -42,6 +43,16 @@ function wrap(action, dependencies) {
     };
 }
 
+function legacyEnqueteWrite(action){
+    return async (request,deps)=>{
+        if(request?.data?.kind==='indice'){
+            const access=await deps.db.doc('campagne/acces').get();
+            if(access.exists&&access.data().enqEnabled===true)throw new HttpsError('failed-precondition','Utiliser le nouvel espace Documents et enquêtes.');
+        }
+        return action(request,deps);
+    };
+}
+
 /** Create callable handlers; index.js remains the sole place that sets App Check options. */
 export function createContributionHandlers(dependencies) {
     return {
@@ -49,14 +60,17 @@ export function createContributionHandlers(dependencies) {
         getContentEditContext: wrap(getContentEditContext, dependencies),
         getContentHistory: wrap(getContentHistory, dependencies),
         getContentPnjChoices: wrap(getContentPnjChoices, dependencies),
-        mutatePublicContent: wrap((request, deps) => mutatePublicContent(request?.data, request, deps), dependencies),
-        mutateMjContent: wrap((request, deps) => mutateMjContent(request?.data, request, deps), dependencies),
+        mutatePublicContent: wrap(legacyEnqueteWrite((request, deps) => mutatePublicContent(request?.data, request, deps)), dependencies),
+        mutateMjContent: wrap(legacyEnqueteWrite((request, deps) => guardPnjVisibility(request?.data, request, deps, mutateMjContent)), dependencies),
         listContentTrash: wrap(listContentTrash, dependencies),
         listPendingPurgeCleanups: wrap(listPendingPurgeCleanups, dependencies),
-        trashPublicContent: wrap((request, deps) => trashPublicContent(request?.data, request, deps), dependencies),
-        restorePublicContent: wrap((request, deps) => restorePublicContent(request?.data, request, deps), dependencies),
-        purgePublicContent: wrap((request, deps) => purgePublicContent(request?.data, request, deps), dependencies),
-        setTrashVisibility: wrap((request, deps) => setTrashVisibility(request?.data, request, deps), dependencies),
-        uploadContributionImage: wrap(uploadContributionImage, dependencies),
+        trashPublicContent: wrap(legacyEnqueteWrite((request, deps) => guardPnjVisibility(request?.data, request, deps, trashPublicContent, 'trash')), dependencies),
+        restorePublicContent: wrap(legacyEnqueteWrite((request, deps) => guardPnjVisibility(request?.data, request, deps, restorePublicContent, 'restore')), dependencies),
+        purgePublicContent: wrap(legacyEnqueteWrite((request, deps) => purgePublicContent(request?.data, request, deps)), dependencies),
+        setTrashVisibility: wrap(legacyEnqueteWrite((request, deps) => setTrashVisibility(request?.data, request, deps)), dependencies),
+        uploadContributionImage: wrap(legacyEnqueteWrite(uploadContributionImage), dependencies),
     };
 }
+
+
+

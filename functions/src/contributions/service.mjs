@@ -608,7 +608,9 @@ export async function mutateMjContent(rawCommand, request, deps) {
                 transaction.get(campaignRef(deps.db)), transaction.get(opRef), transaction.get(deletionLockRef(deps.db)),
                 transaction.get(docRef), transaction.get(docMetaRef),
             ]);
-            const role = requireContributor(user, dataOf(accessSnap) ?? {});
+            const enqAccess = dataOf(accessSnap) ?? {};
+            if (enqAccess.enqMaintenance && enqAccess.enqMaintenance !== deps.enqueteJobId) fail('réorganisation des enquêtes en cours', 'failed-precondition');
+            const role = requireContributor(user, enqAccess);
             if (role !== 'mj') fail('modification réservée au MJ', 'permission-denied');
             const replay = verifyReceipt(receiptSnap, operationHash);
             if (replay) return replay;
@@ -821,7 +823,9 @@ export async function mutatePublicContent(rawCommand, request, deps) {
     try {
         return await deps.db.runTransaction(async transaction => {
             const [accessSnap, receiptSnap] = await Promise.all([transaction.get(accessRef), transaction.get(opRef)]);
-            const role = requireContributor(user, dataOf(accessSnap) ?? {});
+            const enqAccess = dataOf(accessSnap) ?? {};
+            if (enqAccess.enqMaintenance && enqAccess.enqMaintenance !== deps.enqueteJobId) fail('réorganisation des enquêtes en cours', 'failed-precondition');
+            const role = requireContributor(user, enqAccess);
             const replay = verifyReceipt(receiptSnap, operationHash);
             if (replay) return replay;
             const lockSnap = await transaction.get(lockRef);
@@ -1085,7 +1089,9 @@ export async function getContentHistory(request, deps) {
     const limit = request.data.limit ?? 25;
     if (!Number.isInteger(limit) || limit < 1 || limit > 50) fail('limite invalide');
     const [accessSnap, contentSnap] = await Promise.all([campaignRef(deps.db).get(), contentRef(deps.db, kind, id).get()]);
-    const role = requireContributor(user, dataOf(accessSnap) ?? {});
+    const enqAccess = dataOf(accessSnap) ?? {};
+            if (enqAccess.enqMaintenance && enqAccess.enqMaintenance !== deps.enqueteJobId) fail('réorganisation des enquêtes en cours', 'failed-precondition');
+            const role = requireContributor(user, enqAccess);
     if (role !== 'mj') assertCurrentPublic(kind, dataOf(contentSnap));
     else if (!dataOf(contentSnap)) fail('contenu introuvable', 'not-found');
     let query = deps.db.collection(`content_history/${kind}_${id}/events`).orderBy('revision', 'desc').limit(limit);
@@ -1187,7 +1193,9 @@ export async function trashPublicContent(rawCommand, request, deps) {
                 transaction.get(campaignRef(deps.db)), transaction.get(opRef), transaction.get(deletionLockRef(deps.db)),
                 transaction.get(mainRef), transaction.get(metaRef), transaction.get(trashDocumentRef),
             ]);
-            const role = requireContributor(user, dataOf(accessSnap) ?? {});
+            const enqAccess = dataOf(accessSnap) ?? {};
+            if (enqAccess.enqMaintenance && enqAccess.enqMaintenance !== deps.enqueteJobId) fail('réorganisation des enquêtes en cours', 'failed-precondition');
+            const role = requireContributor(user, enqAccess);
             const replay = verifyReceipt(receiptSnap, operationHash);
             if (replay) return replay;
             if (exists(lockSnap)) fail('modifications temporairement suspendues', 'failed-precondition', { kind: 'content-lock' });
@@ -1308,7 +1316,9 @@ export async function restorePublicContent(rawCommand, request, deps) {
                 transaction.get(campaignRef(deps.db)), transaction.get(opRef), transaction.get(deletionLockRef(deps.db)),
                 transaction.get(mainRef), transaction.get(metaRef), transaction.get(trashDocumentRef),
             ]);
-            const role = requireContributor(user, dataOf(accessSnap) ?? {});
+            const enqAccess = dataOf(accessSnap) ?? {};
+            if (enqAccess.enqMaintenance && enqAccess.enqMaintenance !== deps.enqueteJobId) fail('réorganisation des enquêtes en cours', 'failed-precondition');
+            const role = requireContributor(user, enqAccess);
             const replay = verifyReceipt(receiptSnap, operationHash);
             if (replay) return replay;
             if (exists(lockSnap)) fail('modifications temporairement suspendues', 'failed-precondition', { kind: 'content-lock' });
@@ -1465,7 +1475,9 @@ async function runPurgeImageCleanup(operationId, request, deps) {
         const [accessSnap, auditSnap] = await Promise.all([
             transaction.get(campaignRef(deps.db)), transaction.get(auditRef),
         ]);
-        const role = requireContributor(user, dataOf(accessSnap) ?? {});
+        const enqAccess = dataOf(accessSnap) ?? {};
+            if (enqAccess.enqMaintenance && enqAccess.enqMaintenance !== deps.enqueteJobId) fail('réorganisation des enquêtes en cours', 'failed-precondition');
+            const role = requireContributor(user, enqAccess);
         if (role !== 'mj') fail('nettoyage Storage réservé au MJ', 'permission-denied');
         const audit = dataOf(auditSnap);
         if (!audit) return { audit: null, toDelete: [] };
@@ -1580,7 +1592,9 @@ export async function purgePublicContent(rawCommand, request, deps) {
                 transaction.get(campaignRef(deps.db)), transaction.get(opRef), transaction.get(deletionLockRef(deps.db)),
                 transaction.get(trashDocumentRef), transaction.get(metadataRef(deps.db, command.kind, command.id)),
             ]);
-            const role = requireContributor(user, dataOf(accessSnap) ?? {});
+            const enqAccess = dataOf(accessSnap) ?? {};
+            if (enqAccess.enqMaintenance && enqAccess.enqMaintenance !== deps.enqueteJobId) fail('réorganisation des enquêtes en cours', 'failed-precondition');
+            const role = requireContributor(user, enqAccess);
             if (role !== 'mj') fail('purge réservé au MJ', 'permission-denied');
             const replay = verifyReceipt(receiptSnap, operationHash);
             if (replay) return replay;
@@ -1659,7 +1673,9 @@ export async function setTrashVisibility(rawCommand, request, deps) {
             const [accessSnap, receiptSnap, trashSnap] = await Promise.all([
                 transaction.get(campaignRef(deps.db)), transaction.get(opRef), transaction.get(trashDocumentRef),
             ]);
-            const role = requireContributor(user, dataOf(accessSnap) ?? {});
+            const enqAccess = dataOf(accessSnap) ?? {};
+            if (enqAccess.enqMaintenance && enqAccess.enqMaintenance !== deps.enqueteJobId) fail('réorganisation des enquêtes en cours', 'failed-precondition');
+            const role = requireContributor(user, enqAccess);
             if (role !== 'mj') fail('action réservée au MJ', 'permission-denied');
             const replay = verifyReceipt(receiptSnap, operationHash);
             if (replay) return replay;

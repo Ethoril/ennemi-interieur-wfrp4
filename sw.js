@@ -1,6 +1,6 @@
 // sw.js, en tête. Doit rester identique à APP_VERSION de js/layout.js :
 // la CI le vérifie (.github/workflows/validate.yml).
-const APP_VERSION = 'v2.33.0';
+const APP_VERSION = 'v2.34.0';
 const CACHE_NAME  = 'wfrp-cache-' + APP_VERSION;
 
 const ASSETS_LOCAUX = [
@@ -49,6 +49,14 @@ const ASSETS_LOCAUX = [
   './js/data/repository-utils.js',
   './js/doodle.js',
   './js/enquetes.js',
+  './js/enquetes-workspace.js',
+  './js/vendor/enquetes-d3.js',
+  './js/vendor/enquetes-zip.js',
+  './js/enquetes-workspace-bureau.js',
+  './js/data/enquetes-domain.js',
+  './js/data/enquetes-export.js',
+  './js/enquetes-runtime.js',
+  './css/enquetes-workspace.css',
   './js/firebase-config.js',
   './js/fiche-cloud.js',
   './js/fiche.js',
@@ -211,7 +219,6 @@ const ASSETS_LOCAUX = [
 
 const ASSETS_CDN = [
   'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js',
-  'https://cdn.jsdelivr.net/npm/d3@7/+esm',
   'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.esm.js',
   'https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',

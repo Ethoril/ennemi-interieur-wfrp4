@@ -40,5 +40,42 @@ service firebase.storage {
     match /indices/{legacyFile} {
       allow read, delete: if isGM();
     }
+
+    function enqAccess() { return firestore.get(/databases/(default)/documents/campagne/acces).data; }
+    function enqMember(access) {
+      return isGM() || (request.auth != null && request.auth.token.email_verified == true
+        && (request.auth.token.email.lower() in access.get('bhelgi', [])
+        || request.auth.token.email.lower() in access.get('caelel', [])
+        || request.auth.token.email.lower() in access.get('elysia', [])
+        || request.auth.token.email.lower() in access.get('hellaya', [])
+        || request.auth.token.email.lower() in access.get('wren', [])));
+    }
+    function enqFileReadable(docId,fileId,version) {
+      let descriptor = firestore.get(/databases/(default)/documents/enq_file_access/$(fileId)).data;
+      let access = enqAccess();
+      return request.auth != null && descriptor.docId == docId && descriptor.active == true
+        && access.get('enqMaintenance', null) == null
+        && ((descriptor.zone == 'user:' + request.auth.uid && descriptor.ownerUid == request.auth.uid)
+          || (enqMember(access) && access.get('enqEnabled', false) == true
+            && (descriptor.zone == 'commun' || (descriptor.zone == 'mj' && isGM()))))
+        && (descriptor.get('current', false) == true || descriptor.get('sharedAnnotation', false) == true
+          || descriptor.ownerUid == request.auth.uid || isGM() && descriptor.zone != 'user:' + descriptor.ownerUid
+          || request.auth.uid in descriptor.get('annotationReaders', []))
+        && (version == 'thumb' || version == string(descriptor.version));
+    }
+    match /staging/{uid}/{uploadId} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid && request.auth.token.email_verified == true;
+      allow create, update: if request.auth != null && request.auth.uid == uid && request.auth.token.email_verified == true
+        && firestore.exists(/databases/(default)/documents/enq_accounts/$(uid))
+        && request.resource.size > 0 && request.resource.size <= 10 * 1024 * 1024
+        && request.resource.contentType in ['image/jpeg','image/png','image/webp','application/pdf','text/plain','text/markdown']
+        && !request.resource.metadata.keys().hasAny(['firebaseStorageDownloadTokens']);
+    }
+    match /documents/{docId}/{fileId}/{version} {
+      allow read: if enqFileReadable(docId,fileId,version);
+      allow write: if false;
+    }
   }
 }
+
+
