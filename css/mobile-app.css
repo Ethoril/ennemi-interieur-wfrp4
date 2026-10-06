@@ -56,10 +56,11 @@ body {
 .m-header {
   min-height: var(--m-header-height);
   display: grid;
-  grid-template-columns: var(--m-touch-target) 1fr var(--m-touch-target);
+  /* Boutons, marges et écarts plafonnés en px : à 200 % de texte, des valeurs en rem laissaient 48 px au titre. */
+  grid-template-columns: 44px 1fr 44px;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
+  gap: min(var(--space-sm), 8px);
+  padding: var(--space-sm) min(var(--space-md), 16px);
   background: var(--bg-dark);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -68,6 +69,7 @@ body {
 #m-back { grid-column: 1; }
 .m-header-copy { grid-column: 2; min-width: 0; }
 #m-header-action { grid-column: 3; }
+.m-header .m-icon-button { min-width: 44px; min-height: 44px; }
 .m-eyebrow {
   margin: 0;
   color: var(--text-muted);
@@ -75,18 +77,17 @@ body {
   font-size: 0.68rem;
   letter-spacing: 0.12em;
   line-height: 1.2;
+  overflow-wrap: anywhere;
   text-transform: uppercase;
 }
 
 .m-header h1 {
-  overflow: hidden;
   margin: 0;
   color: var(--text-heading);
   font-family: var(--font-heading);
   font-size: clamp(1.15rem, 5vw, 1.55rem);
   line-height: 1.25;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .m-icon-button,
