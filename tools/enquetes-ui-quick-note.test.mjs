@@ -26,3 +26,18 @@ test('typing while quick save is pending preserves the newer text',async()=>{
     const f=await fixture();let finish;f.hook(()=>new Promise(resolve=>{finish=resolve;}));const form=f.container.querySelector('.enq-quick-form'),text=form.querySelector('textarea');text.value='Version envoyée';text.dispatch('input');form.dispatch('submit');await flush();text.value='Version suivante';text.dispatch('input');finish();f.hook(null);await flush();
     assert.equal([...f.drafts.values()][0].body.texte,'Version suivante');assert.equal([...f.drafts.values()][0].baseRevision,1);f.view.unmount();
 });
+test('desktop quick note on a note follows a link added after opening it',async()=>{
+    const f=await fixture({id:'nonclassee'});f.records.push({id:'lx',type:'liens',zone:'user:a',a:'nonclassee',b:'affaire',role:'',revision:1,authorUid:'a'});f.emit();await flush();
+    const form=f.container.querySelector('.enq-quick-form');form.querySelector('textarea').value='Liée après coup';form.dispatch('submit');await flush();
+    assert.deepEqual(f.calls.filter(c=>c.type==='liens').map(c=>c.body.b),['affaire']);f.view.unmount();
+});
+test('mobile notebook picks up the draft left in the quick sheet',async()=>{
+    const f=await fixture({layout:'mobile'});f.button('✎ Note rapide').click();const dialog=f.container.querySelector('.enq-quick-sheet');
+    dialog.querySelector('textarea').value='Brouillon de la feuille';dialog.querySelector('textarea').dispatch('input');dialog.querySelectorAll('button').find(b=>b.textContent==='Fermer').click();await flush();
+    f.container.querySelectorAll('button').find(b=>b.textContent.startsWith('Mes notes')).click();await flush();
+    assert.equal(f.container.querySelector('.enq-quick-form').querySelector('textarea').value,'Brouillon de la feuille');f.view.unmount();
+});
+test('mobile list scrolls back to the top when the space changes',async()=>{
+    const f=await fixture({layout:'mobile',id:null});f.container.scrollTop=300;f.emit();await flush();assert.equal(f.container.scrollTop,300);
+    f.container.querySelectorAll('button').find(b=>b.textContent.startsWith('Pièces')).click();await flush();assert.equal(f.container.scrollTop,0);f.view.unmount();
+});

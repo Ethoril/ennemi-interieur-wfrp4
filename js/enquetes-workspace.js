@@ -68,7 +68,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     if(layout!=='mobile')return;
     fab.hidden=!state.session||!!editor;
     if((selected||editor)&&section!=='trash'){if(panes.firstChild!==detail)panes.replaceChildren(detail);}else if(panes.firstChild!==list)panes.replaceChildren(list);
-    const screenId=section==='trash'?'trash':selected||null;
+    const screenId=section==='trash'?'trash':selected||(editor?'editor:'+editor.type+':'+editor.id:'list:'+section);
     if(renderedMobileId!==screenId){container.scrollTop=0;renderedMobileId=screenId;}
   }
   function rememberMobile(){if(layout==='mobile'&&!selected&&state.session)mobileSpace={uid:state.session?.uid,section,filter,category,search,scope};}
@@ -113,7 +113,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     const resumed=client.listDrafts(uid).find(v=>v.quick&&v.quickContext===contextKey);let id=resumed?.id||client.newId();
     let revision=resumed?.baseRevision||0,operationId=resumed?.operationId||client.newId(),pending=resumed?.pending||null;
     const allowed=new Set(all().filter(v=>['enquetes','documents','pnjs'].includes(v.type)).map(v=>v.id));
-    const targets=new Set((resumed?.links||targetIds).filter(id=>allowed.has(id))),form=node('form','','enq-quick-form'),text=node('textarea');text.rows=3;text.value=resumed?.body?.texte||'';text.placeholder='Une idée, un nom entendu…';text.setAttribute('aria-label',current()?'Note rapide sur '+(current().type==='documents'?'cette pièce':'ce dossier'):'Note rapide dans mon carnet');
+    const targets=new Set((sheet&&resumed?.links||targetIds).filter(id=>allowed.has(id))),form=node('form','','enq-quick-form'),text=node('textarea');text.rows=3;text.value=resumed?.body?.texte||'';text.placeholder='Une idée, un nom entendu…';text.setAttribute('aria-label',current()?'Note rapide sur '+(current().type==='documents'?'cette pièce':'ce dossier'):'Note rapide dans mon carnet');
     const message=node('p','Brouillon gardé sur cet appareil','enq-save-status');message.setAttribute('role','status');
     const persist=()=>client.saveDraft(uid,id,{type:'notes',body:{titre:'',texte:text.value,etiquettes:[]},zone:'user:'+uid,baseRevision:revision,operationId,pending,quick:true,quickContext:contextKey,links:[...targets],context:targets.size?{id:[...targets][0],type:all().find(r=>r.id===[...targets][0])?.type}:null});
     text.addEventListener('input',()=>{message.textContent=persist()?'Brouillon gardé sur cet appareil':'Brouillon local indisponible ; garde cette saisie ouverte';});
@@ -142,10 +142,13 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   }
   function renderNotebook(){
     if(!state.session||!client){notebookKey=null;notebook.replaceChildren();return;}
-    const key=state.session.uid+':'+(current()?.id||'unclassified');
+    // Le formulaire suit les cibles courantes : un lien ajouté à la note ouverte s'applique à la note rapide.
+    const key=state.session.uid+':'+(current()?.id||'unclassified')+':'+quickTargets().join(',');
     if(key!==notebookKey||!notebookNotes||!notebook.contains(notebookNotes)){
+      const previous=notebook.querySelector('textarea'),focused=previous&&d.activeElement===previous,selection=focused?[previous.selectionStart,previous.selectionEnd]:null;
       notebookKey=key;notebook.replaceChildren(node('h2','Mon carnet','enq-section-title'));notebook.firstChild.id='enq-notebook-title';
-      notebook.firstChild.prepend(icon('lock'));notebookNotes=node('div','','enq-notebook-notes');notebook.append(node('small','Privé'),quickForm(quickTargets()).form,button('Nouvelle note',()=>openEditor(null,'notes',current()),'quiet'),notebookNotes);
+      notebook.firstChild.prepend(icon('lock'));notebookNotes=node('div','','enq-notebook-notes');const quick=quickForm(quickTargets());notebook.append(node('small','Privé'),quick.form,button('Nouvelle note',()=>openEditor(null,'notes',current()),'quiet'),notebookNotes);
+      if(focused){quick.text.focus();quick.text.setSelectionRange?.(...selection);}
     }
     notebookNotes.replaceChildren();
     for(const note of [...linkedNotes(current(),state.records,linksIndex)].reverse()){
@@ -162,7 +165,8 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     if(!state.session||editor)return;
     const anchor=d.activeElement||fab,dialog=node('dialog','','enq-quick-sheet');dialog.setAttribute('aria-label','Note rapide · mon carnet');
     const quick=quickForm(quickTargets(),()=>dialog.close(),true);const heading=node('h2','Note rapide · mon carnet');heading.prepend(icon('lock'));dialog.append(heading,button('Fermer',()=>dialog.close()),quick.form);
-    dialog.addEventListener('close',()=>{dialog.remove();restoreFocus(anchor);},{once:true});root.append(dialog);dialog.showModal();quick.text.focus();
+    // Le carnet relit ensuite le brouillon partagé avec la feuille au lieu de garder une saisie périmée.
+    dialog.addEventListener('close',()=>{dialog.remove();notebookKey=null;if(mounted)renderNotebook();restoreFocus(anchor);},{once:true});root.append(dialog);dialog.showModal();quick.text.focus();
   }
   function selectLinkedTarget(onSelect){
     const anchor=d.activeElement,dialog=node('dialog'),select=node('select');dialog.setAttribute('aria-label','Objet à relier');select.setAttribute('aria-label','Objet à relier');
