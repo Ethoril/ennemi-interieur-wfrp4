@@ -47,8 +47,8 @@ test('le coût prévu égale le coût accepté par le moteur', () => {
     assertAgrees('base hors carrière', agitateur, rowOf(agitateur, 'Esquive'), 2, false);
     const escrime = rowOf(noble, 'Corps à corps (Escrime)');
     assert.equal(escrime.row, 'Corps à corps (Base)');
-    // Le serveur adresse cette ligne par « Groupe (Base) (Spé) », nom que le référentiel ne résout pas : tarif hors carrière,
-    // même pour Escrime chez un Noble. L'aperçu doit suivre le serveur, pas l'intuition.
+    // Corps à corps (Base) et Corps à corps (Escrime) sont deux compétences distinctes : avancer la ligne de base,
+    // même avec la spécialité Escrime, reste hors carrière pour un Noble. L'aperçu suit le serveur.
     assertAgrees('base avec spécialité', noble, escrime, 2, false);
     const savoir = data('Agitateur', { skillsAdvanced: [
         { id: 'a1', nom: 'Savoir (Politique)', carac: 'int', adv: 4 }, { id: 'a2', nom: 'Savoir (Loi)', carac: 'int', adv: 4 },
