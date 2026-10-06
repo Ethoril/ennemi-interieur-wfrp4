@@ -6,26 +6,13 @@ import { createEnqueteWorkspaceView } from '../js/enquetes-workspace.js';
 import { buildSearch } from '../js/data/enquetes-domain.js';
 import { selectEnqueteExport } from '../js/data/enquetes-export.js';
 import { convertLegacyIndice,legacyStoragePath } from './lib/enquetes-import-model.mjs';
-class Element {
-  constructor(d,tag){this.ownerDocument=d;this.tagName=tag;this.children=[];this.listeners=new Map();this.attributes={};this.className='';this.textContent='';this.value='';this.selectionStart=0;this.selectionEnd=0;this.classList={add:value=>{this.className+=' '+value;}};}
-  get firstChild(){return this.children[0];}get options(){return this.children;}get selectedOptions(){return this.options.filter(v=>v.selected);}
-  append(...children){for(const c of children){c.remove?.();c.parentNode=this;this.children.push(c);}}
-  replaceChildren(...children){for(const c of this.children)c.parentNode=null;this.children=[];this.append(...children);}
-  remove(){if(this.parentNode){this.parentNode.children=this.parentNode.children.filter(c=>c!==this);this.parentNode=null;}}
-  setAttribute(k,v){this.attributes[k]=String(v);}getAttribute(k){return this.attributes[k]??null;}
-  addEventListener(k,fn){if(!this.listeners.has(k))this.listeners.set(k,[]);this.listeners.get(k).push(fn);}
-  dispatch(type){for(const fn of this.listeners.get(type)||[])fn({target:this,preventDefault(){}});}
-  focus(){this.ownerDocument.activeElement=this;}
-  querySelectorAll(selector){const result=[],selectors=selector.split(',');const walk=n=>{for(const c of n.children||[]){if(selectors.some(s=>s.startsWith('.')?c.className?.split(' ').includes(s.slice(1)):c.tagName===s))result.push(c);walk(c);}};walk(this);return result;}
-  querySelector(s){return this.querySelectorAll(s)[0]||null;}
-  setSelectionRange(a,b){this.selectionStart=a;this.selectionEnd=b;}
-}
+import { Element, createDocument } from './lib/enquetes-test-dom.mjs';
 const flush=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
 async function fixture({role='joueur',id=null}={}){
   let counter=0,onChange,saveHook=null;
   const records=[{id:'e',type:'enquetes',titre:'Affaire',zone:'commun',authorUid:'gm',revision:1,ordre:[]},{id:'n',type:'notes',texte:'Mon texte',titre:'Note',zone:'user:a',authorUid:'a',revision:1,etiquettes:[]}];
   const drafts=new Map(),receipts=new Map(),calls=[],session={uid:'a',active:true,role,maintenance:false};
-  const d={activeElement:null,createElement:tag=>new Element(d,tag),createTextNode:text=>Object.assign(new Element(d,'text'),{textContent:text})};
+  const d=createDocument();
   const container=new Element(d,'main'),emit=()=>onChange({session,records:[...records],pnjs:[]});
   const runtime={newEnqueteId:()=> 'new'+(++counter),saveEnqueteDraft:(uid,id,v)=>{drafts.set(id,{...globalThis.structuredClone(v),uid});return true;},readEnqueteDraft:(uid,id)=>drafts.get(id),removeEnqueteDraft:(uid,id)=>drafts.delete(id),listEnqueteDrafts:uid=>[...drafts].filter(([,v])=>v.uid===uid).map(([id,v])=>({id,...v})),createEnqueteClient(options){onChange=options.onChange;globalThis.queueMicrotask(emit);return{
     async save(c){calls.push(globalThis.structuredClone(c));if(saveHook)await saveHook(c);if(receipts.has(c.operationId))return receipts.get(c.operationId);const current=records.find(r=>r.id===c.id);if((current?.revision||0)!==(c.baseRevision||0)){const error=new Error('La note a changé');error.code='aborted';error.current=current;throw error;}const value={...c.body,id:c.id||runtime.newEnqueteId(),type:c.type,zone:c.zone||'user:a',authorUid:'a',revision:(current?.revision||0)+1};if(current)records.splice(records.indexOf(current),1);records.push(value);const result={id:value.id,zone:value.zone,revision:value.revision};if(c.operationId)receipts.set(c.operationId,result);emit();return result;},

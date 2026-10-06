@@ -50,6 +50,8 @@ const ASSETS_LOCAUX = [
   './js/doodle.js',
   './js/enquetes.js',
   './js/enquetes-workspace.js',
+  './js/enquetes-view-model.js',
+  './js/enquetes-menu.js',
   './js/vendor/enquetes-d3.js',
   './js/vendor/enquetes-zip.js',
   './js/enquetes-workspace-bureau.js',

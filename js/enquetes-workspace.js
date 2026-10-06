@@ -1,3 +1,4 @@
+import { buildLinksIndex, dossierPieces, linkedNotes } from './enquetes-view-model.js';
 import { selectEnqueteExport } from './data/enquetes-export.js';
 import { recordTitle, buildSearch, fold } from './data/enquetes-domain.js';
 export function createEnqueteWorkspaceView({container,id=null,initialAction=null,loadRuntime=()=>import('./enquetes-runtime.js'),onOpen=()=>{},onOpenPnj=()=>{}}={}) {
@@ -5,7 +6,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   let initialOpened=false,legacyResolved=false,detailSignature='',linksIndex=new Map();
   let client=null,state={session:null,records:[],pnjs:[]},mounted=false,token=0,section='enquetes',selected=id,search='',scope='',filter='',editor=null,timer=null,graph=null,handles=[],busy=false;
   const node=(tag,text='',className='')=>{const e=d.createElement(tag);e.textContent=text;e.className=className;return e;};
-  const button=(label,action)=>{const b=node('button',label,'enq-button');b.type='button';b.addEventListener('click',()=>Promise.resolve(action()).catch(showError));return b;};
+  const button=(label,action,variant='')=>{const b=node('button',label,'enq-button'+(variant?' enq-button--'+variant:''));b.type='button';b.addEventListener('click',()=>Promise.resolve(action()).catch(showError));return b;};
   let root,toolbar,list,detail,status,searchInput;
   const current=()=>state.records.find(r=>r.id===selected)||state.pnjs.find(r=>r.id===selected);
   const all=()=>[...state.records,...state.pnjs];
@@ -70,7 +71,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     list.replaceChildren();
     if(section==='trash'){renderTrash();return;}
     const heading=node('div','','enq-list-heading');heading.append(node('h3',section==='notes'?'Mon carnet':section==='documents'?'Bibliothèque':'Dossiers d’enquête'));
-    if(section!=='enquetes'||isGm())heading.append(button(section==='notes'?'Nouvelle note':section==='documents'?'Nouveau document':'Nouvelle enquête',()=>openEditor(null,section)));
+    if(section!=='enquetes'||isGm())heading.append(button(section==='notes'?'Nouvelle note':section==='documents'?'Nouveau document':'Nouvelle enquête',()=>openEditor(null,section),'primary'));
     list.append(heading);
     const controls=node('div','','enq-filters');
     searchInput=node('input');searchInput.type='search';searchInput.placeholder='Rechercher';searchInput.value=search;searchInput.setAttribute('aria-label','Rechercher dans cet espace');
@@ -130,7 +131,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     if(r.type==='pnjs'){detail.append(node('h3',r.nom),button('Ajouter une note',()=>openEditor(null,'notes',r)),button('Ajouter un document lié',()=>openEditor(null,'documents',r)));renderLinks(r);return;}
     detail.append(node('h3',recordTitle(r)));
     const actions=node('div','','enq-actions');
-    if(canEdit(r))actions.append(button('Modifier',()=>openEditor(r,r.type)),button('Mettre en corbeille',()=>performAction(r,'trash')));
+    if(canEdit(r))actions.append(button('Modifier',()=>openEditor(r,r.type)),button('Mettre en corbeille',()=>performAction(r,'trash'),'danger'));
     actions.append(button('Ajouter une note',()=>openEditor(null,'notes',r)),button('Exporter',()=>exportSpace(r)));
     if(r.type==='notes')actions.append(button('Partager une copie',()=>openEditor(null,'documents',r,{titre:recordTitle(r),texte:r.texte,origine:'contribution',shareNote:r,zone:'commun'})));
     if(canEdit(r)&&r.type==='documents'){
@@ -185,17 +186,16 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   function renderLinks(r){
     const box=node('section','','enq-links');box.append(node('h4','Liens'));
     const links=state.records.filter(l=>l.type==='liens'&&(l.a===r.id||l.b===r.id));
-    for(const l of links){const target=all().find(a=>a.id===(l.a===r.id?l.b:l.a)),row=node('div');row.append(target?button(target.nom||recordTitle(target),()=>openObject(target)):node('span','Pièce indisponible'));if(l.role)row.append(node('small',l.role));if(canEdit(l))row.append(button('Retirer le lien',()=>performAction(l,'trash')));box.append(row);}
+    for(const l of links){const target=all().find(a=>a.id===(l.a===r.id?l.b:l.a)),row=node('div');row.append(target?button(target.nom||recordTitle(target),()=>openObject(target)):node('span','Pièce indisponible'));if(l.role)row.append(node('small',l.role));if(canEdit(l))row.append(button('Retirer le lien',()=>performAction(l,'trash'),'danger'));box.append(row);}
     box.append(button('Ajouter un lien',()=>openLinkEditor(r)));
     detail.append(box);
   }
   function renderRelated(r){
-    const ids=linkedIds(r.id),docs=state.records.filter(v=>v.type==='documents'&&ids.has(v.id));
-    docs.sort((a,b)=>{const order=r.ordre||[];return (order.includes(a.id)?order.indexOf(a.id):10000)-(order.includes(b.id)?order.indexOf(b.id):10000);});
+    const ids=linkedIds(r.id),docs=dossierPieces(r,state.records,linksIndex).map(p=>p.record);
     const box=node('section');box.append(node('h4','Pièces du dossier'));
     for(const doc of docs)box.append(button(recordTitle(doc),()=>openObject(doc)));
     if(!docs.length)box.append(node('p','Aucune pièce liée.'));box.append(button('Ajouter un document au dossier',()=>openEditor(null,'documents',r)));detail.append(box);
-    const notes=state.records.filter(v=>v.type==='notes'&&ids.has(v.id)),privateBox=node('section');privateBox.append(node('h4','Mes notes'));
+    const notes=linkedNotes(r,state.records,linksIndex),privateBox=node('section');privateBox.append(node('h4','Mes notes'));
     for(const note of notes)privateBox.append(button(recordTitle(note),()=>openObject(note)));detail.append(privateBox);
     const relations=state.records.filter(v=>v.type==='relations'&&ids.has(v.a)&&ids.has(v.b));const relationBox=node('section');relationBox.append(node('h4','Relations entre pièces'));
     for(const relation of relations){const a=all().find(v=>v.id===relation.a),b=all().find(v=>v.id===relation.b);relationBox.append(node('p',`${a?recordTitle(a):'Pièce indisponible'} — ${relation.nature} — ${b?recordTitle(b):'Pièce indisponible'} : ${relation.texte||''}`));if(canEdit(relation))relationBox.append(button('Modifier la relation',()=>openEditor(relation,'relations')));}
@@ -311,7 +311,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
       }
     };
     form.addEventListener('input',()=>{persist();if(timer)globalThis.clearTimeout(timer);if(type==='notes')timer=globalThis.setTimeout(()=>{if(globalThis.navigator.onLine!==false&&!busy)save({automatic:true});},700);});
-    const submit=node('button','Enregistrer','enq-button');submit.type='submit';form.append(submit,button('Fermer en conservant le brouillon',()=>{persist();closeEditor();}));
+    const submit=node('button','Enregistrer','enq-button enq-button--primary');submit.type='submit';form.append(submit,button('Fermer en conservant le brouillon',()=>{persist();closeEditor();}));
     form.addEventListener('submit',e=>{e.preventDefault();save();});detail.append(form);form.querySelector('input,textarea,select')?.focus();
   }
   async function addLink(a,b,zone,role=''){
@@ -336,7 +336,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   async function renderTrash(){
     const targetToken=token;list.append(node('h3','Corbeille'));
     try{const result=await client.read('trash');if(!mounted||section!=='trash'||targetToken!==token)return;
-      for(const r of result.items){const row=node('article',r.titre);row.append(button('Restaurer sans publier',async()=>{await client.action(r,'restore');render();}));if(isGm()||r.zone===`user:${state.session.uid}`)row.append(button('Purger définitivement',async()=>{if(globalThis.confirm('Supprimer définitivement ce contenu ?')){await client.action(r,'purge',r.zone);render();}}));list.append(row);}if(!result.items.length)list.append(node('p','Corbeille vide.'));
+      for(const r of result.items){const row=node('article',r.titre);row.append(button('Restaurer sans publier',async()=>{await client.action(r,'restore');render();}));if(isGm()||r.zone===`user:${state.session.uid}`)row.append(button('Purger définitivement',async()=>{if(globalThis.confirm('Supprimer définitivement ce contenu ?')){await client.action(r,'purge',r.zone);render();}},'danger'));list.append(row);}if(!result.items.length)list.append(node('p','Corbeille vide.'));
     }catch(error){showError(error);}
   }
   async function orderDocuments(r){
@@ -351,7 +351,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     const links=state.records.filter(v=>['liens','relations'].includes(v.type)&&ids.has(v.a)&&ids.has(v.b)).map(v=>({source:v.a,target:v.b}));
     const layout=state.records.find(v=>v.type==='dispositions'&&v.enquete===r.id);for(const n of nodes){const pos=layout?.positions?.[n.id];if(pos){n.x=pos[0];n.y=pos[1];}}
     const svg=select(host).append('svg').attr('viewBox','0 0 800 500').attr('role','img').attr('aria-label','Graphe personnel des pièces et personnages');const lines=svg.append('g').selectAll('line').data(links).join('line').attr('stroke','currentColor');
-    const dots=svg.append('g').selectAll('g').data(nodes).join('g');dots.append('circle').attr('r',12).attr('fill','#946d37');dots.append('text').attr('x',16).attr('fill','currentColor').text(n=>n.label.slice(0,30));
+    const dots=svg.append('g').selectAll('g').data(nodes).join('g');dots.append('circle').attr('r',12).attr('fill','var(--enq-accent)');dots.append('text').attr('x',16).attr('fill','currentColor').text(n=>n.label.slice(0,30));
     graph=forceSimulation(nodes).force('link',forceLink(links).id(n=>n.id).distance(140)).force('charge',forceManyBody().strength(-500)).force('center',forceCenter(400,250));
     dots.call(drag().on('start',(event,n)=>{n.fx=n.x;n.fy=n.y;}).on('drag',(event,n)=>{n.fx=event.x;n.fy=event.y;graph.alpha(.3).restart();}).on('end',()=>{})).on('click',(_,n)=>openObject(all().find(v=>v.id===n.id)));
     graph.on('tick',()=>{lines.attr('x1',l=>l.source.x).attr('y1',l=>l.source.y).attr('x2',l=>l.target.x).attr('y2',l=>l.target.y);dots.attr('transform',n=>`translate(${n.x},${n.y})`);});
@@ -373,7 +373,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     async mount({signal}={}){
       if(mounted||signal?.aborted)return;mounted=true;build();
       const runtime=await loadRuntime();if(!mounted||signal?.aborted)return;
-      client=runtime.createEnqueteClient({onChange:next=>{if(editor&&(!next.session||next.session.uid!==editor.uid||!editor.zone.startsWith('user:')&&(!next.session.active||next.session.maintenance&&!busy||next.session.role==='ancien'))){editor=null;if(timer)globalThis.clearTimeout(timer);timer=null;detailSignature='';}if(!next.session||next.session.maintenance)for(const dialog of root.querySelectorAll('dialog'))if(dialog.open){dialog.close();dialog.remove();}state=next;linksIndex=new Map();for(const l of next.records.filter(r=>r.type==='liens')){for(const [a,b]of [[l.a,l.b],[l.b,l.a]]){if(!linksIndex.has(a))linksIndex.set(a,new Set());linksIndex.get(a).add(b);}}if(selected&&!legacyResolved&&next.session?.active&&client){legacyResolved=true;client.read('resolveLegacy',selected).then(result=>{if(mounted&&result.id){selected=result.id;render();}}).catch(()=>{});}if(selected&&!editor){const found=next.records.find(r=>r.id===selected);if(found&&['documents','enquetes','notes'].includes(found.type))section=found.type;}render();if(!initialOpened&&initialAction&&next.session?.active&&(initialAction==='new'||current())){initialOpened=true;openEditor(initialAction==='edit'?current():null,current()?.type||'enquetes');}},onError:showError});
+      client=runtime.createEnqueteClient({onChange:next=>{if(editor&&(!next.session||next.session.uid!==editor.uid||!editor.zone.startsWith('user:')&&(!next.session.active||next.session.maintenance&&!busy||next.session.role==='ancien'))){editor=null;if(timer)globalThis.clearTimeout(timer);timer=null;detailSignature='';}if(!next.session||next.session.maintenance)for(const dialog of root.querySelectorAll('dialog'))if(dialog.open){dialog.close();dialog.remove();}state=next;linksIndex=buildLinksIndex(next.records);if(selected&&!legacyResolved&&next.session?.active&&client){legacyResolved=true;client.read('resolveLegacy',selected).then(result=>{if(mounted&&result.id){selected=result.id;render();}}).catch(()=>{});}if(selected&&!editor){const found=next.records.find(r=>r.id===selected);if(found&&['documents','enquetes','notes'].includes(found.type))section=found.type;}render();if(!initialOpened&&initialAction&&next.session?.active&&(initialAction==='new'||current())){initialOpened=true;openEditor(initialAction==='edit'?current():null,current()?.type||'enquetes');}},onError:showError});
       Object.assign(client,{newId:runtime.newEnqueteId,saveDraft:runtime.saveEnqueteDraft,readDraft:runtime.readEnqueteDraft,removeDraft:runtime.removeEnqueteDraft,listDrafts:runtime.listEnqueteDrafts});
       signal?.addEventListener('abort',()=>this.unmount(),{once:true});
     },

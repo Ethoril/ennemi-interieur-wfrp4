@@ -1,15 +1,9 @@
+import { records as seedRecords, pnjs as seedPnjs } from './enquetes-qa-data.js';
 import { createEnqueteWorkspaceView } from '../../js/enquetes-workspace.js';
 const clone=v=>structuredClone(v);
-let records=[
-  {id:'affaire',type:'enquetes',zone:'commun',titre:'Qui finance la secte ?',question:'Suivre la piste du marchand et de son correspondant.',etat:'Ouverte',ordre:['lettre'],revision:1,authorUid:'gm'},
-  {id:'lettre',type:'documents',zone:'commun',titre:'Lettre retrouvée chez le marchand',texte:'Le conseiller attend votre réponse.\n\n# Observation\n- Le sceau porte un soleil noir.',origine:'piece',categorie:'Lettre',files:['qa_image'],revision:1,authorUid:'gm'},
-  {id:'hypothese',type:'notes',zone:'user:a',texte:'Le sceau ressemble à celui aperçu chez le conseiller.',etiquettes:['sceau'],revision:1,authorUid:'a'},
-  {id:'l1',type:'liens',zone:'commun',a:'affaire',b:'lettre',role:'',revision:1,authorUid:'gm'},
-  {id:'l2',type:'liens',zone:'user:a',a:'affaire',b:'hypothese',role:'',revision:1,authorUid:'a'},
-  {id:'l3',type:'liens',zone:'commun',a:'affaire',b:'marchand',role:'Suspect',revision:1,authorUid:'gm'},
-  {id:'evenement',type:'evenements',zone:'commun',enquete:'affaire',titre:'Découverte de la lettre',repere:'Avant le carnaval',ordre:1,texte:'La pièce a été remise au groupe.',revision:1,authorUid:'gm'}
-];
-const pnjs=[{id:'marchand',type:'pnjs',zone:'commun',nom:'Friedrich le marchand'}];
+let records=clone(seedRecords);
+const pnjs=clone(seedPnjs);
+const params=new URLSearchParams(location.search),role=params.get('role')==='joueur'?'joueur':'mj';
 const fileMetadata=new Map([['qa_image',{id:'qa_image',docId:'lettre',name:'Illustration de recette.png',version:1,contentType:'image/png',path:'../../icons/icon-192.png'}]]),fileBlobs=new Map();
 const drafts=new Map();let callback;let count=0;
 const runtime={
@@ -17,7 +11,7 @@ const runtime={
   saveEnqueteDraft:(uid,id,value)=>{drafts.set(id,clone(value));return true;},
   readEnqueteDraft:(uid,id)=>clone(drafts.get(id)||null),removeEnqueteDraft:(uid,id)=>drafts.delete(id),listEnqueteDrafts:()=>[...drafts].map(([id,value])=>({id,...value})),
   createEnqueteClient({onChange}){
-    callback=onChange;const emit=()=>callback({session:{uid:'a',role:'mj',active:true,maintenance:false},records:clone(records),pnjs:clone(pnjs)});
+    callback=onChange;const emit=()=>callback({session:{uid:'a',role,active:true,maintenance:false},records:clone(records.filter(r=>role==='mj'||r.zone!=='mj')),pnjs:clone(pnjs)});
     queueMicrotask(emit);
     return {
       signIn:async()=>{},signOut:async()=>{},
@@ -36,7 +30,7 @@ const runtime={
     };
   }
 };
-const view=createEnqueteWorkspaceView({container:document.getElementById('qa'),id:'affaire',loadRuntime:async()=>runtime});
+const view=createEnqueteWorkspaceView({container:document.getElementById('qa'),id:params.has('id')?(params.get('id')||null):'affaire',layout:params.get('layout')||'desktop',loadRuntime:async()=>runtime});
 view.mount();
 window.addEventListener('pagehide',()=>view.unmount());
 
