@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390">
+<title>Mobile — liste des dossiers</title>
+<!-- Maquette statique de référence (390×844). Couleurs en dur : le code réel utilise les variables de css/base.css (voir ../README.md, § Jetons). -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=Crimson+Text:ital,wght@0,400;0,600;1,400&amp;display=swap">
+<style>
+body{margin:0;background:#07070d}
+.chip{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px;border-radius:17px;border:1px solid rgba(201,168,76,.28);background:transparent;color:#cbbfa8;font:500 15px 'Crimson Text',serif}
+.chip.on{background:rgba(201,168,76,.16);border-color:#c9a84c;color:#f0e6d3}
+.navi{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#8f846f;text-decoration:none;font-size:12px}
+</style>
+</head>
+<body>
+<div style="width:390px;height:844px;box-sizing:border-box;display:flex;flex-direction:column;background:#07070d;color:#e8dcc8;font-family:'Crimson Text',Georgia,serif;position:relative;overflow:hidden">
+  <header style="height:60px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 16px;background:#0e0e18;border-bottom:1px solid rgba(201,168,76,.2)">
+    <span style="display:flex;flex-direction:column">
+      <span style="font:600 10px Cinzel,serif;letter-spacing:.14em;color:#8f846f">L’ENNEMI INTÉRIEUR</span>
+      <span style="font:700 20px Cinzel,serif;color:#f0e6d3">Enquêtes</span>
+    </span>
+    <button aria-label="Rechercher" style="margin-left:auto;width:44px;height:44px;border-radius:8px;border:0;background:transparent;color:#c9a84c">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+    </button>
+  </header>
+
+  <div style="flex:1;min-height:0;overflow:hidden;padding:14px 16px 0;display:flex;flex-direction:column;gap:12px">
+    <div role="tablist" aria-label="Espace" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:4px;border-radius:10px;background:#141422;border:1px solid rgba(201,168,76,.16)">
+      <button role="tab" aria-selected="true" style="height:40px;border:0;border-radius:7px;background:#2a2440;color:#f0e6d3;font:600 15px 'Crimson Text',serif">Dossiers</button>
+      <button role="tab" aria-selected="false" style="height:40px;border:0;border-radius:7px;background:transparent;color:#a89b84;font:600 15px 'Crimson Text',serif">Pièces</button>
+      <button role="tab" aria-selected="false" style="height:40px;border:0;border-radius:7px;background:transparent;color:#a89b84;font:600 15px 'Crimson Text',serif">Carnet</button>
+    </div>
+    <div style="display:flex;gap:6px;overflow:hidden;margin-right:-16px" aria-label="Filtrer par état">
+      <button class="chip on"><span style="width:8px;height:8px;border-radius:50%;background:#c9a84c"></span>Ouvertes</button>
+      <button class="chip"><span style="width:8px;height:8px;border-radius:50%;background:#8a8a9a"></span>En pause</button>
+      <button class="chip"><span style="width:8px;height:8px;border-radius:50%;background:#4caf7d"></span>Résolues</button>
+      <button class="chip">Archivées</button>
+    </div>
+
+    <a href="04-mobile-dossier.html" style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:12px;background:#141422;border:1px solid rgba(201,168,76,.3);text-decoration:none;color:#e8dcc8">
+      <span style="display:flex;align-items:center;gap:8px">
+        <span style="width:10px;height:10px;border-radius:50%;background:#c9a84c;box-shadow:0 0 0 3px rgba(201,168,76,.2)"></span>
+        <span style="font:600 11px Cinzel,serif;letter-spacing:.12em;color:#c9a84c">OUVERTE</span>
+        <span style="margin-left:auto;font-size:13px;color:#8f846f">session 13</span>
+      </span>
+      <span style="font:700 19px/1.2 Cinzel,serif;color:#f0e6d3">Qui finance la Main Pourpre ?</span>
+      <span style="font:italic 16px/1.4 'Crimson Text',serif;color:#cbbfa8">Suivre la piste du marchand Teugen et de son correspondant au conseil.</span>
+      <span style="display:flex;align-items:center;gap:6px">
+        <span style="display:flex">
+          <span style="width:26px;height:32px;background:#e6d7b5;border-radius:2px;transform:rotate(-6deg);box-shadow:0 2px 4px rgba(0,0,0,.5)"></span>
+          <span style="width:26px;height:32px;background:#ddcca6;border-radius:2px;margin-left:-14px;transform:rotate(3deg);box-shadow:0 2px 4px rgba(0,0,0,.5)"></span>
+          <span style="width:26px;height:32px;background:#e6d7b5;border-radius:2px;margin-left:-14px;transform:rotate(-1deg);box-shadow:0 2px 4px rgba(0,0,0,.5)"></span>
+        </span>
+        <span style="font-size:14px;color:#a89b84;margin-left:6px">3 pièces · 2 PNJ · 1 note</span>
+      </span>
+    </a>
+
+    <a href="#" style="display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:12px;background:#11111d;border:1px solid rgba(201,168,76,.12);text-decoration:none;color:#e8dcc8">
+      <span style="display:flex;align-items:center;gap:8px">
+        <span style="width:10px;height:10px;border-radius:50%;background:#8a8a9a"></span>
+        <span style="font:600 11px Cinzel,serif;letter-spacing:.12em;color:#a8a8b8">EN PAUSE</span>
+      </span>
+      <span style="font:700 18px/1.2 Cinzel,serif;color:#d9cdb6">L’héritage de Kastor Lieberung</span>
+      <span style="font:italic 15px/1.4 'Crimson Text',serif;color:#a89b84">Qui était vraiment Kastor, et qui le cherche encore ?</span>
+    </a>
+
+    <a href="#" style="display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:12px;background:#11111d;border:1px solid rgba(201,168,76,.12);text-decoration:none;color:#e8dcc8">
+      <span style="display:flex;align-items:center;gap:8px">
+        <span style="width:10px;height:10px;border-radius:50%;background:#4caf7d"></span>
+        <span style="font:600 11px Cinzel,serif;letter-spacing:.12em;color:#6fc79a">RÉSOLUE</span>
+      </span>
+      <span style="font:700 18px/1.2 Cinzel,serif;color:#d9cdb6">Ce qui rampe sous Bögenhafen</span>
+    </a>
+  </div>
+
+  <a href="06-mobile-note-rapide.html" aria-label="Note rapide" style="position:absolute;right:16px;bottom:92px;display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 20px;border-radius:26px;background:#c9a84c;color:#1a1408;text-decoration:none;font:700 16px 'Crimson Text',serif;box-shadow:0 8px 20px rgba(0,0,0,.6)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"></path></svg>Note rapide
+  </a>
+
+  <nav aria-label="Navigation principale" style="height:72px;flex-shrink:0;display:flex;align-items:center;background:#0e0e18;border-top:1px solid rgba(201,168,76,.2);padding:0 8px">
+    <a href="#" class="navi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M5 21a7 7 0 0 1 14 0"></path></svg>PNJs</a>
+    <a href="#" class="navi" aria-current="page" style="color:#e4c76b"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4h10l6 6v10H4z"></path><path d="M14 4v6h6"></path></svg>Enquêtes</a>
+    <a href="#" class="navi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h5"></path></svg>Fiches</a>
+    <a href="#" class="navi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>Réglages</a>
+  </nav>
+</div>
+</body>
+</html>
