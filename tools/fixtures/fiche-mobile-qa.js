@@ -194,6 +194,11 @@ document.getElementById('qa-spells').addEventListener('click', event => {
     current = { ...current, revision: current.revision + 1, data: { ...current.data, ...(on ? SPELLS : { sorts: [], prieres: [] }) } };
     publishSnapshot();
 });
+// Rang 4 d'Agitateur : liste « Savoir-vivre (au choix) » parmi les talents disponibles.
+document.getElementById('qa-rank4').addEventListener('click', () => {
+    current = { ...current, revision: current.revision + 1, data: { ...current.data, rang: '4' } };
+    publishSnapshot();
+});
 document.getElementById('qa-reset').addEventListener('click', () => {
     current = { ...current, revision: current.revision + 1, data: testData() };
     operations.clear();

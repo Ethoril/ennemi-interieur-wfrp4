@@ -206,12 +206,10 @@ export function createAptitudesPanel({ documentRef, onOpenSkill = () => {}, onOp
         for (const node of nodes) {
             const { row } = node;
             const plural = row.count > 1 ? 's' : '';
-            node.button.disabled = row.open;
             fillSide(node, {
                 name: row.label,
-                sub: row.open ? 'Spécialité à choisir sur le bureau' : '',
-                side: row.open ? '' : row.acquired ? `×${row.count}` : `${row.cost} XP`,
-                spoken: row.open ? '' : row.acquired ? `, ${row.count} prise${plural}` : `, ${row.cost} XP`,
+                side: row.acquired ? `×${row.count}` : `${row.cost} XP`,
+                spoken: row.acquired ? `, ${row.count} prise${plural}` : `, ${row.cost} XP`,
             });
         }
         fill(acquiredGroup, 'Acquis', nodes.filter(node => node.row.acquired));

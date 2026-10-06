@@ -1,5 +1,5 @@
 import { activeCareerRank, findCareerByName, getEffectiveTalents, getVariantsToConsider } from '../fiche/career-model.js';
-import { isOpenCareerSlot } from '../fiche/skill-names.js';
+import { expandChoiceSkill, isOpenCareerSlot } from '../fiche/skill-names.js';
 import { talentXpCost } from '../fiche/xp.js';
 import { stripAccents } from '../utils.js';
 
@@ -18,9 +18,30 @@ export function sortSkills(rows) {
     return [...rows.filter(row => row.adv > 0).sort(byName), ...rows.filter(row => row.adv === 0).sort(byName)];
 }
 
-// Emplacement ouvert (« (au choix) », « (Goût ou Toucher) ») : le serveur stockerait le libellé tel quel, l'achat reste au bureau.
+// Emplacement à spécialité (« (au choix) », « (Goût ou Toucher) ») : le serveur stockerait le libellé tel quel, il faut composer `Base (Choix)`.
 const isOpenTalentSlot = nom => isOpenCareerSlot(nom) || /\([^)]*\sou\s[^)]*\)/iu.test(nom);
-const talentGroup = nom => fold(nom.split('(')[0]).trim();
+const specOf = nom => nom.match(/\(([^)]+)\)$/u)?.[1].trim();
+
+/**
+ * Choix d'un emplacement à spécialité, ou null si `nom` n'en est pas un. { base, free, specs } :
+ * - « au choix » (`free`) : spécialités fermées connues de toutes les carrières (comme le bureau) + data.customTalents[base], saisie libre permise ;
+ * - « A ou B » : exactement les alternatives listées.
+ */
+export function talentChoices(careers, data, nom) {
+    if (!isOpenTalentSlot(nom)) return null;
+    const base = nom.split('(')[0].trim();
+    if (!isOpenCareerSlot(nom)) return { base, free: false, specs: expandChoiceSkill(nom, name => name).map(specOf) };
+    const specs = new Set();
+    for (const career of careers || []) {
+        for (const rank of career.rangs || []) {
+            for (const talent of rank.talents || []) {
+                if (!isOpenTalentSlot(talent) && fold(talent.split('(')[0]).trim() === fold(base) && specOf(talent)) specs.add(specOf(talent));
+            }
+        }
+    }
+    const known = [...specs].sort((a, b) => a.localeCompare(b, 'fr'));
+    return { base, free: true, specs: [...new Set([...known, ...(data?.customTalents?.[base] || [])])] };
+}
 
 // Un modèle de spécialisation (« Maîtrise (Épées) ») partage l'entrée publiée de son talent : on le distingue par son libellé.
 function talentKey(engine, nom) {
@@ -36,8 +57,8 @@ export function talentTaken(data, engine, nom) {
 
 /**
  * Talents acquis (nom affiché, nombre de prises) puis ceux de la carrière courante pas encore acquis (coût de carrière).
- * Ligne : { nom (nom à envoyer au serveur), label, count, acquired, cost?, open }. Un emplacement ouvert (`open`) reste
- * listé mais n'est pas achetable ; il disparaît quand son groupe a déjà un talent acquis (Savoir-vivre (Guilde) → Savoir-vivre (au choix)).
+ * Ligne : { nom (talent ou emplacement), label, count, acquired, cost?, open }. Un emplacement à spécialité (`open`) reste
+ * listé même quand son groupe a déjà une prise : le serveur accepte plusieurs prises, le volet fait choisir la spécialité.
  */
 export function talentRows(data, engine, careers = []) {
     const acquired = new Map();
@@ -48,7 +69,6 @@ export function talentRows(data, engine, careers = []) {
         if (known) known.count += 1;
         else acquired.set(key, { nom, label: engine?.resolveTalent?.(nom)?.displayedName || nom, count: 1, acquired: true, open: false });
     }
-    const acquiredGroups = new Set([...acquired.values()].map(row => talentGroup(row.nom)));
     const career = findCareerByName(careers, String(data?.carriere ?? ''));
     const available = new Map();
     if (career) {
@@ -57,9 +77,11 @@ export function talentRows(data, engine, careers = []) {
             for (const variant of getVariantsToConsider(career, current, data?.chosenVariants || {})) {
                 for (const nom of getEffectiveTalents(career, current, variant, data?.careerOverrides || {})) {
                     const key = talentKey(engine, nom);
-                    const open = isOpenTalentSlot(nom);
-                    if (!acquired.has(key) && !available.has(key) && !(open && acquiredGroups.has(talentGroup(nom)))) {
-                        available.set(key, { nom, label: engine?.resolveTalent?.(nom)?.displayedName || nom, count: 0, acquired: false, cost: talentXpCost(true), open });
+                    if (!acquired.has(key) && !available.has(key)) {
+                        available.set(key, {
+                            nom, label: engine?.resolveTalent?.(nom)?.displayedName || nom, count: 0, acquired: false, cost: talentXpCost(true),
+                            open: isOpenTalentSlot(nom),
+                        });
                     }
                 }
             }

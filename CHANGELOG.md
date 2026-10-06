@@ -1,3 +1,7 @@
+## [2.32.1] - 2026-10-06
+
+- **Talents à choisir (mobile)** : les talents de carrière « au choix » (Savoir-vivre, Haine…) et ceux à alternatives (Sens aiguisé (Goût ou Toucher)) s’achètent désormais depuis la fiche sur téléphone. On choisit la spécialité dans le volet d’achat, ou on en saisit une autre pour les talents « au choix ». Les spécialités déjà acquises sont signalées.
+
 ## [2.32.0] - 2026-10-06
 
 - **Fiche de personnage sur téléphone** : la fiche s’ouvre désormais dans l’application, avec quatre onglets (Principal, Aptitudes, Carrière, Journal). On y consulte ses caractéristiques et ses compétences, on cherche une aptitude, on achète des avances de caractéristique, de compétence ou de talent, on prend un rang ou on change de carrière, puis on suit son expérience et ses notes dans le journal. L’export de la fiche est dans le menu ⋯. Les achats demandent d’être en ligne.

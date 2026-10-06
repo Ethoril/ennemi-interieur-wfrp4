@@ -87,7 +87,9 @@ Consultation, sans saisie.
   compétence parente.
 - **Talents** : acquis (avec le nombre de prises) puis disponibles dans la carrière, avec leur
   coût. Toucher un talent ouvre son volet : description (référentiel local prioritaire, puis
-  base Sheets, comme aujourd'hui), rang, achat.
+  base Sheets, comme aujourd'hui), rang, achat. Un talent « au choix » ou « A ou B » s'achète en
+  choisissant sa spécialité dans le volet (puces ; « Autre… » en saisie libre pour « au choix » seulement) ; le nom
+  acheté est `Base (Choix)`, tarifé par le serveur sur ce nom ; une spécialité déjà acquise reste achetable.
 
 ### 5.3 Carrière
 
@@ -198,7 +200,6 @@ portée par la seule couleur (cadre doré doublé d'un texte), annonces des acha
 ### Écarts avec le cahier des charges
 
 - **Import JSON réservé au MJ** (le cahier le prévoyait pour tous) : l'import écrase la fiche, il reste donc dans le menu ⋯ du MJ seulement.
-- **Emplacements de talent ouverts non achetables sur mobile** : un talent à emplacement libre se prend depuis le bureau.
 - **Sorts et miracles en consultation seulement** : ni achat ni édition sur mobile.
 - **Annulation d'achat** : le MJ peut annuler seulement le dernier achat sur mobile ; les autres annulations se font sur le bureau.
 - **Nouvelle compétence avancée** : impossible de démarrer, sur mobile, une compétence avancée hors d'un groupe déjà possédé (spécialité d'un groupe existant : oui). À traiter dans un lot suivant.

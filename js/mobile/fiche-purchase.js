@@ -6,7 +6,7 @@ import {
 import { caracTotal } from '../fiche/derived.js';
 import { canonicalSkillNom, sameSkill } from '../fiche/skill-names.js';
 import { CARAC_XP_BANDS, careerRankXpCost, SKILL_XP_BANDS, talentXpCost, xpBandCost } from '../fiche/xp.js';
-import { talentTaken } from './fiche-aptitudes-model.js';
+import { talentChoices, talentTaken } from './fiche-aptitudes-model.js';
 import { careerChangeBlock } from './fiche-career-model.js';
 import { basicLabel, basicSpecOptions, CARACS } from './fiche-model.js';
 
@@ -15,7 +15,7 @@ export const MAX_ADVANCES = 10;
 /**
  * Description affichable d'une cible d'achat, ou null si la ligne n'existe plus.
  * `careers` : js/data/careers.json ; `spec` : { kind: 'carac', key } | { kind: 'skill', ...ligne de skillRows }
- * | { kind: 'skill', newName } (compétence avancée choisie par son nom) | { kind: 'talent', nom } | { kind: 'rank', rankMode: 'advanceRank' }
+ * | { kind: 'skill', newName } (compétence avancée choisie par son nom) | { kind: 'talent', nom, pick? } (`pick` : spécialité choisie d'un emplacement « au choix » ou « A ou B ») | { kind: 'rank', rankMode: 'advanceRank' }
  * | { kind: 'rank', rankMode: 'changeCareer', careerId, targetRank }. Le nom et `targetId` suivent ce que le serveur adresse (jamais le libellé affiché).
  * ponytail: le « de carrière » rejoue les règles de commands.js ; le test d'accord avec le moteur
  * (tools/fiche-mobile-purchase.test.mjs) échoue si elles divergent.
@@ -94,11 +94,19 @@ export function purchaseTarget(data, engine, careers, spec) {
     }
 
     if (spec.kind === 'talent') {
-        const inCareer = career ? isTalentInCareer(career, rank, spec.nom, chosen, overrides, engine?.talentResolver) : false;
-        const described = engine?.resolveTalent?.(spec.nom);
+        // Emplacement à spécialité : le nom acheté est `Base (Choix)`, tarifé comme le serveur sur ce nom composé.
+        const slot = talentChoices(careers, data, spec.nom);
+        const pick = String(spec.pick ?? '').replace(/[()]/gu, '').trim();
+        const choice = slot && {
+            ...slot, pick, options: slot.specs.map(name => ({ spec: name, taken: talentTaken(data, engine, `${slot.base} (${name})`) })),
+        };
+        const needsChoice = !!slot && !(slot.free ? pick : slot.specs.includes(pick));
+        const name = slot && !needsChoice ? `${slot.base} (${pick})` : spec.nom;
+        const inCareer = career ? isTalentInCareer(career, rank, name, chosen, overrides, engine?.talentResolver) : false;
+        const described = engine?.resolveTalent?.(name);
         return {
-            kind: 'talent', title: spec.nom, nature: 'Talent', name: spec.nom, inCareer, maxCount: 1,
-            taken: talentTaken(data, engine, spec.nom),
+            kind: 'talent', title: slot ? described?.displayedName || name : spec.nom, nature: 'Talent', name, inCareer, maxCount: 1,
+            choice, needsChoice, taken: talentTaken(data, engine, name),
             // Texte publié localement (aucun réseau) ; une ligne vide n'est pas un paragraphe.
             description: String(described?.description ?? '').split('\n').map(line => line.trim()).filter(Boolean),
         };
@@ -156,6 +164,7 @@ export function purchasePayload(target, count, engine) {
             targetRank: target.targetRank, count: 1, expectedCost: costOf(target, 1), catalogVersion: engine.catalogVersion,
         };
     }
+    if (target.needsChoice) throw new Error('Spécialité du talent à choisir avant l’achat');
     const talent = target.kind === 'talent';
     return {
         kind: target.kind, name: target.name,

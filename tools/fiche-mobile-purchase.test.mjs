@@ -109,3 +109,38 @@ test('messages d’erreur', () => {
     assert.match(purchaseErrorMessage(error('unavailable')), /Réessayer/u);
     assert.match(purchaseErrorMessage(new Error('?')), /Achat impossible/u);
 });
+
+test('talent à spécialité : nom composé, coût prévu égal au coût accepté par le moteur', () => {
+    const agitateur = data('Agitateur', { rang: '4' });
+    const slot = 'Savoir-vivre (au choix)';
+    const unpicked = purchaseTarget(agitateur, engine, careers, { kind: 'talent', nom: slot });
+    assert.equal(unpicked.needsChoice, true);
+    assert.ok(unpicked.choice.free && unpicked.choice.specs.includes('Guilde'));
+    assert.throws(() => purchasePayload(unpicked, 1, engine), /Spécialité du talent à choisir/u);
+
+    for (const [pick, label] of [['Guilde', 'liste'], ['  Nains (Karaz) ', 'texte libre']]) {
+        const target = assertAgrees(`savoir-vivre ${label}`, agitateur, { kind: 'talent', nom: slot, pick }, 1, true);
+        assert.equal(target.needsChoice, false);
+        assert.equal(target.name, `Savoir-vivre (${pick.replace(/[()]/gu, '').trim()})`);
+        assert.equal(purchasePayload(target, 1, engine).name, target.name);
+    }
+    // Une spécialité déjà acquise reste achetable (le serveur accepte plusieurs prises) et est signalée.
+    const twice = data('Agitateur', { rang: '4', talentsAcq: [{ id: 't1', nom: 'Savoir-vivre (Guilde)' }] });
+    const again = assertAgrees('savoir-vivre repris', twice, { kind: 'talent', nom: slot, pick: 'Guilde' }, 1, true);
+    assert.equal(again.taken, 1);
+    assert.equal(again.choice.options.find(({ spec }) => spec === 'Guilde').taken, 1);
+    assert.equal(twice.talentsAcq.length, 1);
+});
+
+test('talent « A ou B » : seuls les choix listés sont acceptés, tarif identique au serveur', () => {
+    const artisan = data('Artisan', { rang: '4' });
+    const slot = 'Sens aiguisé (Goût ou Toucher)';
+    const target = purchaseTarget(artisan, engine, careers, { kind: 'talent', nom: slot });
+    assert.deepEqual([target.choice.free, target.choice.specs, target.needsChoice], [false, ['Goût', 'Toucher'], true]);
+    // Une saisie hors liste n'est pas un choix.
+    assert.equal(purchaseTarget(artisan, engine, careers, { kind: 'talent', nom: slot, pick: 'Odorat' }).needsChoice, true);
+    const picked = purchaseTarget(artisan, engine, careers, { kind: 'talent', nom: slot, pick: 'Toucher' });
+    assert.equal(picked.name, 'Sens aiguisé (Toucher)');
+    // Le serveur tarife le nom composé : même résultat que l'aperçu, quel que soit le rattachement à la carrière.
+    assertAgrees('sens aiguisé', artisan, { kind: 'talent', nom: slot, pick: 'Toucher' }, 1, picked.inCareer);
+});

@@ -381,7 +381,7 @@
 .m-spec-picker,
 .m-purchase-talent,
 .m-purchase-description { display: grid; gap: var(--space-sm); }
-.m-spec-label { color: var(--text-secondary); }
+.m-spec-label { margin: 0; color: var(--text-secondary); }
 .m-spec-field { display: flex; gap: var(--space-sm); }
 .m-spec-field input { flex: 1; min-width: 0; }
 .m-spec-note { margin: 0; color: var(--text-secondary); font-size: 0.9rem; }

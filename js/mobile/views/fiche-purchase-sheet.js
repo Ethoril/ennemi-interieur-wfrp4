@@ -28,6 +28,8 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
     let info = '';
     let nodes = null;
     let shownDescription = '';
+    let customPick = false;
+    let chipsFor = '';
 
     const build = body => {
         const head = make(documentRef, 'div', '', 'm-purchase-head');
@@ -42,6 +44,19 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         head.append(titles, total);
         const formula = make(documentRef, 'p', '', 'm-purchase-formula');
         const specialty = createSpecialtySection({ documentRef, getContext, announce, onChoose: choose });
+        // Spécialité d'un talent « au choix » ou « A ou B » : puces des choix, plus « Autre… » (saisie libre) pour les emplacements ouverts.
+        const picker = make(documentRef, 'div', '', 'm-spec-block');
+        const pickLabel = make(documentRef, 'p', 'Spécialité', 'm-spec-label');
+        const pickChoices = make(documentRef, 'div', '', 'm-spec-choices');
+        pickChoices.setAttribute('role', 'group');
+        pickChoices.setAttribute('aria-label', 'Spécialité du talent');
+        const pickFree = make(documentRef, 'input', '', 'm-search-input');
+        pickFree.type = 'text';
+        pickFree.autocomplete = 'off';
+        pickFree.setAttribute('maxlength', '200');
+        pickFree.setAttribute('aria-label', 'Autre spécialité');
+        picker.append(pickLabel, pickChoices, pickFree);
+        pickFree.addEventListener('input', () => pickSpecialty(pickFree.value, true));
         const talent = make(documentRef, 'div', '', 'm-purchase-talent');
         const taken = make(documentRef, 'p', '', 'm-purchase-taken');
         const description = make(documentRef, 'div', '', 'm-purchase-description');
@@ -86,9 +101,9 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
             'purchase', purchasePayload(target(context), count, context.engine)), true));
         retry.addEventListener('click', () => run(context => context.controller.retryPendingCommand(), false));
 
-        body.replaceChildren(head, formula, specialty.element, talent, stepper, figures, tariff, reason, failure, buy, retry);
+        body.replaceChildren(head, formula, specialty.element, picker, talent, stepper, figures, tariff, reason, failure, buy, retry);
         shownDescription = '';
-        nodes = { title, nature, total, formula, specialty, talent, taken, description, stepper, less, value, more, newTotal, cost, after, tariff, reason, failure, buy, retry };
+        nodes = { title, nature, total, formula, specialty, picker, pickChoices, pickFree, talent, taken, description, stepper, less, value, more, newTotal, cost, after, tariff, reason, failure, buy, retry };
     };
 
     // Re-cible le volet sur une nouvelle ligne avancée du groupe ; faux si le nom ne peut pas être acheté ainsi.
@@ -102,6 +117,42 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         refresh();
         nodes.title.focus();
         return true;
+    }
+
+    function pickSpecialty(pick, custom) {
+        spec = { ...spec, pick };
+        customPick = custom;
+        error = '';
+        refresh();
+    }
+
+    // Les puces sont créées une fois par emplacement, puis seulement mises à jour (le focus reste sur la puce touchée).
+    function updateChoices(choice) {
+        nodes.picker.hidden = !choice;
+        if (!choice) return;
+        const chip = (label, onClick) => {
+            const button = make(documentRef, 'button', label, 'm-chip');
+            button.type = 'button';
+            button.addEventListener('click', onClick);
+            return button;
+        };
+        if (chipsFor !== choice.base) {
+            chipsFor = choice.base;
+            nodes.pickChoices.replaceChildren(...choice.options.map(({ spec: name }) => chip(name, () => {
+                nodes.pickFree.value = '';
+                pickSpecialty(name, false);
+            })), ...(choice.free ? [chip('Autre…', () => {
+                pickSpecialty(nodes.pickFree.value, true);
+                nodes.pickFree.focus();
+            })] : []));
+        }
+        choice.options.forEach(({ spec: name, taken }, index) => {
+            const button = nodes.pickChoices.children[index];
+            button.textContent = taken ? `${name} · déjà acquis` : name;
+            button.setAttribute('aria-pressed', String(!customPick && choice.pick === name));
+        });
+        if (choice.free) nodes.pickChoices.children[choice.options.length].setAttribute('aria-pressed', String(customPick));
+        nodes.pickFree.hidden = !(choice.free && customPick);
     }
 
     const target = context => purchaseTarget(context.state?.data, context.engine, context.careers, spec);
@@ -143,8 +194,9 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         nodes.stepper.hidden = !counted;
         nodes.specialty.update(current);
         nodes.talent.hidden = !talent;
+        updateChoices(current.choice);
         if (talent) {
-            nodes.taken.textContent = current.taken ? `Prises : ${current.taken}` : 'Pas encore acquis';
+            nodes.taken.textContent = current.needsChoice ? '' : current.taken ? `Prises : ${current.taken}` : 'Pas encore acquis';
             const key = JSON.stringify(current.description);
             if (shownDescription !== key) {
                 shownDescription = key;
@@ -166,6 +218,7 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         const reason = !context.online ? 'Achat possible une fois en ligne'
             : phase === 'legacy-readonly' ? 'Fiche en lecture seule : achat impossible'
             : !pending && !busy && phase !== 'ready' ? 'Fiche en cours de mise à jour…'
+            : current.needsChoice ? 'Choisissez une spécialité'
             : !pending && !preview.affordable ? `XP insuffisants : il manque ${-preview.after} XP` : info;
         nodes.reason.textContent = reason;
         nodes.reason.hidden = !reason;
@@ -225,6 +278,8 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
             spec = next;
             if (!target(getContext())) return;
             count = 1;
+            customPick = false;
+            chipsFor = '';
             busy = false;
             error = '';
             sheet.open({ trigger, render: body => { build(body); refresh(); } });

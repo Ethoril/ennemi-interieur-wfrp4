@@ -7,7 +7,7 @@ import { createFicheController } from '../js/fiche-controller.js';
 import { createFicheDraftStore } from '../js/fiche-draft-store.js';
 import { BASIC_SKILLS } from '../js/fiche/basic-skills.js';
 import {
-    filterSkills, hasSpells, sortSkills, spellRows, talentRows, talentTaken,
+    filterSkills, hasSpells, sortSkills, spellRows, talentChoices, talentRows, talentTaken,
 } from '../js/mobile/fiche-aptitudes-model.js';
 import { loadFicheCatalogue } from '../js/mobile/fiche-catalogue.js';
 import { skillRows } from '../js/mobile/fiche-model.js';
@@ -420,7 +420,7 @@ test('volet d’achat : description et prises d’un talent, spécialité choisi
     sheet.destroy();
 });
 
-test('talents : emplacements ouverts listés mais non achetables, masqués si leur groupe est acquis', () => {
+test('talents : emplacements à spécialité listés et ouvrables, même si leur groupe est déjà acquis', () => {
     const talents = ['Sociable', 'Savoir-vivre (au choix)', 'Sens aiguisé (Goût ou Toucher)', 'Artisan (Forgeron, Orfèvre ou Ingénieur)'];
     const custom = [{ id: 'c1', nom: 'Test', rangs: [{ rang: 1, titre: 'T', statut: '', skills: [], talents }] }];
     const rows = talentRows(data({ carriere: 'Test' }), engine, custom);
@@ -428,17 +428,85 @@ test('talents : emplacements ouverts listés mais non achetables, masqués si le
         ['Sociable', false], ['Savoir-vivre (au choix)', true], ['Sens aiguisé (Goût ou Toucher)', true],
         ['Artisan (Forgeron, Orfèvre ou Ingénieur)', true],
     ]);
-    // Un talent acquis du même groupe (ici une spécialité choisie) retire l'emplacement ouvert, pas les talents fermés.
+    // Le serveur accepte plusieurs prises : un talent acquis du même groupe ne retire pas l'emplacement.
     const acquired = talentRows(data({ carriere: 'Test', talentsAcq: [{ id: 't1', nom: 'Savoir-vivre (Guilde)' }, { id: 't2', nom: 'Artisan (Forgeron)' }] }), engine, custom);
-    assert.deepEqual(acquired.filter(row => !row.acquired).map(row => row.nom), ['Sociable', 'Sens aiguisé (Goût ou Toucher)']);
+    assert.deepEqual(acquired.filter(row => !row.acquired).map(row => row.nom), talents);
     assert.deepEqual(acquired.filter(row => row.acquired).map(row => row.open), [false, false]);
 
-    const panel = createAptitudesPanel({ documentRef: fakeDocument(), onOpenTalent: () => { throw new Error('ouverture interdite'); } });
+    const opened = [];
+    const panel = createAptitudesPanel({ documentRef: fakeDocument(), onOpenTalent: nom => opened.push(nom) });
     panel.update({ data: data({ carriere: 'Test' }), careers: custom, engine });
     press(panel, 'Talents').click();
     const rowsOf = pane(panel, 1).allByClass('m-apt-row');
-    assert.deepEqual(rowsOf.map(row => row.disabled), [false, true, true, true]);
-    assert.equal(pane(panel, 1).allByClass('m-apt-detail').filter(node => !node.hidden).map(node => node.textContent)[0], 'Spécialité à choisir sur le bureau');
+    assert.deepEqual(rowsOf.map(row => row.disabled), [false, false, false, false]);
+    assert.deepEqual(pane(panel, 1).allByClass('m-apt-detail').filter(node => !node.hidden), []);
+    rowsOf[1].click();
+    assert.deepEqual(opened, ['Savoir-vivre (au choix)']);
+});
+
+test('talentChoices : spécialités connues pour « au choix », alternatives listées pour « A ou B »', () => {
+    assert.equal(talentChoices(careers, data(), 'Sociable'), null);
+    const open = talentChoices(careers, data({ customTalents: { 'Savoir-vivre': ['Cour elfique'] } }), 'Savoir-vivre (au choix)');
+    assert.deepEqual([open.base, open.free], ['Savoir-vivre', true]);
+    assert.ok(open.specs.includes('Guilde') && open.specs.at(-1) === 'Cour elfique');
+    const known = open.specs.slice(0, -1);
+    assert.deepEqual(known, [...known].sort((a, b) => a.localeCompare(b, 'fr')));
+    assert.ok(open.specs.every(spec => !/choix|sous/iu.test(spec)));
+    assert.deepEqual(talentChoices(careers, data(), 'Sens aiguisé (Goût ou Toucher)'), { base: 'Sens aiguisé', free: false, specs: ['Goût', 'Toucher'] });
+    assert.deepEqual(talentChoices(careers, data(), 'Artisan (Forgeron, Orfèvre ou Ingénieur)').specs, ['Forgeron', 'Orfèvre', 'Ingénieur']);
+});
+
+test('volet d’achat : talent à choisir, achat bloqué tant que la spécialité manque, liste puis texte libre', async () => {
+    const documentRef = fakeDocument();
+    const state = { phase: 'ready', data: data({ carriere: 'Agitateur', rang: '4', talentsAcq: [{ id: 't1', nom: 'Savoir-vivre (Guilde)' }] }) };
+    const sent = [];
+    const controller = { executeOnlineCommand: async (type, payload) => { sent.push([type, payload]); return { status: 'confirmed' }; } };
+    const sheet = createPurchaseSheet({ documentRef, getContext: () => ({ state, careers, engine, online: true, controller }) });
+    const trigger = documentRef.createElement('button');
+    const buy = () => sheet.element.all().find(node => node.tagName === 'button' && /^Acheter/u.test(node.textContent));
+    const chip = label => sheet.element.byClass('m-spec-choices').children.find(node => node.textContent === label);
+    const reason = () => sheet.element.byClass('m-purchase-reason');
+
+    sheet.open({ kind: 'talent', nom: 'Savoir-vivre (au choix)' }, trigger);
+    assert.equal(sheet.element.byClass('m-spec-block').hidden, false);
+    assert.equal(buy().disabled, true);
+    assert.equal(reason().textContent, 'Choisissez une spécialité');
+    assert.equal(sheet.element.allByClass('m-spec-choices')[0].children.at(-1).textContent, 'Autre…');
+    assert.ok(chip('Guilde · déjà acquis'), 'la spécialité déjà acquise est signalée');
+    const free = sheet.element.all().find(node => node.tagName === 'input');
+    assert.equal(free.hidden, true);
+
+    chip('Guilde · déjà acquis').click();
+    assert.equal(chip('Guilde · déjà acquis').getAttribute('aria-pressed'), 'true');
+    assert.equal(buy().disabled, false);
+    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Savoir-vivre (Guilde)');
+    assert.equal(sheet.element.byClass('m-purchase-taken').textContent, 'Prises : 1');
+
+    // Texte libre : « Autre… » affiche le champ, vide = pas de choix, parenthèses retirées.
+    sheet.element.allByClass('m-spec-choices')[0].children.at(-1).click();
+    assert.equal(free.hidden, false);
+    assert.equal(buy().disabled, true);
+    free.value = 'Cour (elfique)';
+    free.dispatch('input');
+    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Savoir-vivre (Cour elfique)');
+    assert.equal(buy().disabled, false);
+    buy().click();
+    await sleep(0);
+    assert.deepEqual(sent.map(([type, payload]) => [type, payload.kind, payload.name, payload.count]), [['purchase', 'talent', 'Savoir-vivre (Cour elfique)', 1]]);
+    assert.equal(sent[0][1].expectedCost, 100);
+    sheet.destroy();
+});
+
+test('volet d’achat : « A ou B » sans saisie libre', () => {
+    const documentRef = fakeDocument();
+    const state = { phase: 'ready', data: data({ carriere: 'Artisan', rang: '4' }) };
+    const sheet = createPurchaseSheet({ documentRef, getContext: () => ({ state, careers, engine, online: true, controller: {} }) });
+    sheet.open({ kind: 'talent', nom: 'Sens aiguisé (Goût ou Toucher)' }, documentRef.createElement('button'));
+    assert.deepEqual(sheet.element.byClass('m-spec-choices').children.map(node => node.textContent), ['Goût', 'Toucher']);
+    assert.equal(sheet.element.all().find(node => node.tagName === 'input').hidden, true);
+    sheet.element.byClass('m-spec-choices').children[1].click();
+    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Sens aiguisé (Toucher)');
+    sheet.destroy();
 });
 
 test('spécialité de base : seuls « saved » et « awaiting-snapshot » annoncent un enregistrement', async () => {
