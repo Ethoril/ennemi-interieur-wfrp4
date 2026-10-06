@@ -84,7 +84,7 @@ export function createPinSkillSheet({ documentRef, getContext, announce = () => 
         title.setAttribute('data-sheet-drag', '');
         const menu = make(documentRef, 'div', '', 'm-apt-pane');
         const change = make(documentRef, 'button', 'Changer', 'm-button');
-        const remove = make(documentRef, 'button', 'Retirer', 'm-button m-button-danger');
+        const remove = make(documentRef, 'button', 'Retirer', 'm-button');
         const cancel = make(documentRef, 'button', 'Annuler', 'm-button');
         for (const button of [change, remove, cancel]) button.type = 'button';
         change.addEventListener('click', showList);

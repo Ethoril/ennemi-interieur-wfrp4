@@ -8,12 +8,15 @@
   --m-gold-text: var(--gold);
   --m-control-border: var(--border-strong);
   --m-danger-text: var(--statut-ennemi);
+  --m-tens: var(--m-gold-text);
 }
 
 [data-theme="parchment"] .m-app {
   --m-accent: var(--gold-dim);
   --m-gold-text: var(--gold-dim);
   --m-control-border: var(--text-muted);
+  /* Dizaines des caractéristiques : or plus clair que --gold-dim pour se distinguer des unités brun foncé (4,7:1). */
+  --m-tens: #866012;
 }
 .m-fiche {
   grid-template-columns: minmax(0, 1fr);
@@ -222,9 +225,9 @@
 .m-principal-carac.is-career { border: 2px solid var(--gold); }
 .m-principal-carac:focus-visible,
 .m-principal-all:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
-.m-principal-carac-abbr { color: var(--text-heading); font-size: 1.05rem; font-weight: 700; }
+.m-principal-carac-abbr { color: var(--text-heading); font-family: var(--font-heading); font-size: 1.05rem; font-weight: 700; }
 .m-principal-carac-total { color: var(--text-heading); font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; }
-.m-principal-carac-tens { color: var(--m-gold-text); }
+.m-principal-carac-tens { color: var(--m-tens); }
 .m-principal-note { margin: var(--space-xs) 0 0; color: var(--text-secondary); font-size: 0.875rem; }
 
 .m-principal-head { display: flex; align-items: baseline; justify-content: space-between; }
