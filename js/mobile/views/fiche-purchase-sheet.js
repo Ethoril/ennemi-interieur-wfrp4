@@ -13,7 +13,8 @@ function make(documentRef, tag, text = '', className = '') {
 /**
  * Volet d'achat d'avances (caractéristique, compétence) ou de talent.
  * `getContext()` → { state (contrôleur), careers, engine, online, controller }.
- * open(spec, trigger) : spec = { kind: 'carac', key } | { kind: 'skill', ...ligne de skillRows } | { kind: 'talent', nom }.
+ * open(spec, trigger) : spec = { kind: 'carac', key } | { kind: 'skill', ...ligne de skillRows } | { kind: 'talent', nom }
+ * | { kind: 'rank', rankMode, careerId?, targetRank? } (rang suivant ou changement de carrière : une seule avance, sans stepper).
  * Une compétence à spécialités ajoute son bloc (champ de base, ou « Ajouter une spécialité » qui re-cible le volet) ;
  * un talent ajoute sa description publiée et son nombre de prises.
  * Le contenu est construit une fois par ouverture puis mis à jour sur place (le focus reste sur +/−).
@@ -108,27 +109,38 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
     const refresh = () => {
         const context = getContext();
         const current = target(context);
-        if (!current) { sheet.close(); return; }
-        const talent = current.kind === 'talent';
-        count = Math.min(count, current.maxCount);
-        const balance = xpBalance(context.state.data).libre;
-        const preview = purchasePreview(current, count, balance);
         const pending = !!context.state.pendingOperationId && !busy;
         if (info && !context.state.pendingOperationId && !busy) {
-            // Le snapshot attendu est arrivé : l'achat est confirmé.
+            // Le snapshot attendu est arrivé : l'achat est confirmé (un rang acheté invalide déjà sa cible).
             info = '';
             sheet.close();
             announce('Achat confirmé');
             return;
         }
+        // Pendant l'envoi, un snapshot déjà arrivé peut périmer la cible : run() ferme et annonce au retour.
+        if (!current) {
+            if (busy) return;
+            const confirmed = info;
+            info = '';
+            sheet.close();
+            if (confirmed) announce('Achat confirmé');
+            return;
+        }
+        const talent = current.kind === 'talent';
+        const rank = current.kind === 'rank';
+        const counted = !talent && !rank;
+        count = Math.min(count, current.maxCount);
+        const balance = xpBalance(context.state.data).libre;
+        const preview = purchasePreview(current, count, balance);
 
         nodes.title.textContent = current.title;
         nodes.nature.textContent = `${current.nature}${current.inCareer ? ' · de carrière' : ''}`;
-        nodes.total.textContent = talent ? '' : String(current.total);
-        nodes.total.hidden = talent;
-        nodes.formula.textContent = talent ? '' : `${current.baseLabel} ${current.baseValue} + ${current.adv} avances = ${current.total}`;
+        nodes.total.textContent = counted ? String(current.total) : '';
+        nodes.total.hidden = !counted;
+        nodes.formula.textContent = rank ? current.summary
+            : talent ? '' : `${current.baseLabel} ${current.baseValue} + ${current.adv} avances = ${current.total}`;
         nodes.formula.hidden = talent;
-        nodes.stepper.hidden = talent;
+        nodes.stepper.hidden = !counted;
         nodes.specialty.update(current);
         nodes.talent.hidden = !talent;
         if (talent) {
@@ -143,11 +155,12 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         nodes.value.textContent = String(count);
         nodes.less.disabled = busy || count <= 1;
         nodes.more.disabled = busy || count >= current.maxCount;
-        nodes.newTotal.textContent = talent ? 'Acquis' : String(preview.newTotal);
+        nodes.newTotal.textContent = rank ? `Rang ${current.targetRank}` : talent ? 'Acquis' : String(preview.newTotal);
         nodes.cost.textContent = `${preview.cost} XP`;
         nodes.after.textContent = `${preview.after} XP`;
         nodes.after.className = preview.affordable ? '' : 'm-purchase-short';
-        nodes.tariff.textContent = current.inCareer ? 'Tarif carrière' : 'Hors carrière : coût doublé';
+        nodes.tariff.textContent = rank ? (current.complete ? 'Rang achevé : 100 XP' : 'Rang non achevé : 200 XP')
+            : current.inCareer ? 'Tarif carrière' : 'Hors carrière : coût doublé';
 
         const phase = context.state.phase;
         const reason = !context.online ? 'Achat possible une fois en ligne'
@@ -179,6 +192,7 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         const current = target(context);
         if (busy || !current) return;
         const message = current.kind === 'talent' ? `${current.title} : talent acheté`
+            : current.kind === 'rank' ? `${current.summary} : achat enregistré`
             : `${current.title} : +${count} avance${count > 1 ? 's' : ''} achetée${count > 1 ? 's' : ''}`;
         busy = true;
         error = '';

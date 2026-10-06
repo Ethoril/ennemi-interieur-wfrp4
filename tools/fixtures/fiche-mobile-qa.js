@@ -181,6 +181,12 @@ document.getElementById('qa-theme').addEventListener('click', event => {
     document.documentElement.dataset.theme = parchment ? 'parchment' : 'dark';
     event.currentTarget.textContent = parchment ? 'Thème sombre' : 'Thème parchemin';
 });
+// Un gain du MJ, pour pouvoir tester les achats chers (rang, changement de carrière).
+document.getElementById('qa-xp').addEventListener('click', () => {
+    const data = { ...current.data, xpLog: [...current.data.xpLog, { id: `qa-gain-${current.revision}`, kind: 'gain', raison: 'Recette', montant: 500 }] };
+    current = { ...current, revision: current.revision + 1, data };
+    publishSnapshot();
+});
 document.getElementById('qa-spells').addEventListener('click', event => {
     const on = event.currentTarget.dataset.on !== 'true';
     event.currentTarget.dataset.on = String(on);

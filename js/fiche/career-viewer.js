@@ -122,7 +122,9 @@ function careerOptionLabel(career) {
     return career.source ? `${career.nom} · ${career.source}` : career.nom;
 }
 
-export function createCareerViewer({ container, getContext, onTalent = null }) {
+// modalOnly : le conteneur ne reçoit que la modale (ouverte par openModal()), sans la section d'aperçu ;
+// onModalClose est appelé à sa fermeture pour rendre le focus à l'appelant. Sans ces options, rien ne change.
+export function createCareerViewer({ container, getContext, onTalent = null, modalOnly = false, onModalClose = null }) {
     if (!container || typeof getContext !== 'function') throw new TypeError('container et getContext sont requis');
     let state = { rank: null, careerId: null, modalCareerId: null, showCumulative: false, adapted: true, modalOpen: false, variantTitles: {} };
     let previousContextKey = null;
@@ -216,7 +218,7 @@ export function createCareerViewer({ container, getContext, onTalent = null }) {
             modal = renderCareerModal(careers, modalCareer, context, state, update, onTalent);
             root.append(modal);
         }
-        container.replaceChildren(root);
+        container.replaceChildren(...(modalOnly ? (modal ? [modal] : []) : [root]));
         currentModal = modal;
         if (state.modalOpen && modal) {
             modal.scrollTop = modalScrollTop;
@@ -225,7 +227,8 @@ export function createCareerViewer({ container, getContext, onTalent = null }) {
         }
         if (state.restoreFocus) {
             state.restoreFocus = false;
-            openModal.focus?.();
+            if (modalOnly) onModalClose?.();
+            else openModal.focus?.();
         }
     };
 
@@ -236,7 +239,9 @@ export function createCareerViewer({ container, getContext, onTalent = null }) {
     };
 
     update();
-    return { update, destroy };
+    const open = () => { state.modalOpen = true; update(); };
+
+    return { update, destroy, openModal: open };
 }
 
 function findByTestId(root, id) {

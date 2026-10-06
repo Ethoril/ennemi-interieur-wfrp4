@@ -1,8 +1,11 @@
 import { createFicheController } from '../../fiche-controller.js';
 import { createFicheDraftStore } from '../../fiche-draft-store.js';
 import { xpBalance } from '../../fiche/derived.js';
+import { createCareerViewer } from '../../fiche/career-viewer.js';
 import { ficheIdentity } from '../fiche-model.js';
 import { createAptitudesPanel } from './fiche-aptitudes.js';
+import { createCareerChangeSheet } from './fiche-career-change.js';
+import { createCareerPanel } from './fiche-carriere.js';
 import { createPrincipalPanel } from './fiche-principal.js';
 import { createPurchaseSheet } from './fiche-purchase-sheet.js';
 import { parseRoute, routeToHash, ROUTE_NAMES } from '../router.js';
@@ -112,6 +115,35 @@ export function createFicheDetailView({
         }),
     });
 
+    // Choisir une carrière referme ce volet et ouvre la confirmation d'achat (mêmes règles hors ligne, XP, erreurs, reprise).
+    const careerChange = createCareerChangeSheet({
+        documentRef,
+        getContext: () => ({ state: controllerState, careers: catalogue?.careers, engine: catalogue?.getEngine() }),
+        onChoose: (spec, trigger) => purchase.open(spec, trigger),
+    });
+
+    // La visionneuse de carrière existante, réduite à sa modale plein écran ; créée à la première ouverture.
+    const viewerHost = make(documentRef, 'div', '', 'm-career-viewer-host');
+    let viewer = null;
+    let viewerTrigger = null;
+    const openCareerViewer = trigger => {
+        viewerTrigger = trigger;
+        viewer ??= createCareerViewer({
+            container: viewerHost, modalOnly: true, onModalClose: () => viewerTrigger?.focus?.(),
+            getContext: () => {
+                const engine = catalogue?.getEngine();
+                const data = controllerState?.data;
+                return {
+                    careers: catalogue?.careers, careerName: data?.carriere, rank: data?.rang, chosenVariants: data?.chosenVariants,
+                    careerOverrides: data?.careerOverrides, skillResolver: engine?.skillResolver,
+                    resolveSkill: engine?.resolveSkill, resolveTalent: engine?.resolveTalent,
+                };
+            },
+        });
+        viewer.openModal();
+    };
+    const closeCareerViewer = () => { viewer?.destroy(); viewer = null; };
+
     // Un seul panneau pour toute la vie de la vue : la recherche et les filtres survivent aux changements d'écran et d'onglet.
     const aptitudes = createAptitudesPanel({
         documentRef,
@@ -128,11 +160,13 @@ export function createFicheDetailView({
         if (key !== shownKey) {
             menu.close();
             purchase.close();
+            careerChange.close();
+            closeCareerViewer();
             aptitudes.closeDetail();
             shownKey = key;
             shell = null;
             build();
-            container.append(menuDialog, purchase.element, aptitudes.detailElement);
+            container.append(menuDialog, purchase.element, aptitudes.detailElement, careerChange.element, viewerHost);
         }
     };
     const showState = (key, options) => present(`state:${key}`, () => renderState(container, options));
@@ -152,6 +186,8 @@ export function createFicheDetailView({
         shell.notice.hidden = !shell.notice.textContent;
         updatePrincipal();
         updateAptitudes();
+        updateCareer();
+        careerChange.update();
         purchase.update();
     };
 
@@ -166,18 +202,25 @@ export function createFicheDetailView({
         aptitudes.update({ data: controllerState.data, careers: catalogue?.careers, engine: catalogue?.getEngine() });
     };
 
+    const updateCareer = () => {
+        if (!shell || tab !== 'carriere' || !controllerState?.data) return;
+        shell.career.update({ data: controllerState.data, careers: catalogue?.careers, engine: catalogue?.getEngine() });
+    };
+
     const updatePanel = () => {
         if (!shell) return;
         shell.panelTitle.textContent = tabLabel(tab);
         shell.panelTitle.className = tab === 'principal' ? 'visually-hidden' : '';
         shell.principal.element.hidden = tab !== 'principal';
         aptitudes.element.hidden = tab !== 'aptitudes';
-        shell.soon.hidden = tab === 'principal' || tab === 'aptitudes';
+        shell.career.element.hidden = tab !== 'carriere';
+        shell.soon.hidden = tab !== 'journal';
         for (const [key, link] of shell.links) {
             if (key === tab) link.setAttribute('aria-current', 'page');
             else link.removeAttribute('aria-current');
         }
         updateAptitudes();
+        updateCareer();
     };
 
     const buildShell = () => {
@@ -200,7 +243,13 @@ export function createFicheDetailView({
             documentRef, aptitudesHref: tabHref('aptitudes'),
             onOpenCarac: (key, trigger) => purchase.open({ kind: 'carac', key }, trigger),
         });
-        panel.append(panelTitle, principal.element, aptitudes.element, soon);
+        const career = createCareerPanel({
+            documentRef,
+            onBuyRank: trigger => purchase.open({ kind: 'rank', rankMode: 'advanceRank' }, trigger),
+            onChangeCareer: trigger => careerChange.open(trigger),
+            onOpenAll: openCareerViewer,
+        });
+        panel.append(panelTitle, principal.element, aptitudes.element, career.element, soon);
         const nav = make(documentRef, 'nav', '', 'm-fiche-tabs');
         nav.setAttribute('aria-label', 'Sections de la fiche');
         const links = new Map();
@@ -213,7 +262,7 @@ export function createFicheDetailView({
         }
         root.append(strip, notice, panel, nav);
         container.append(root);
-        shell = { identity: identityLine, xp, xpValue, notice, panelTitle, principal, soon, links };
+        shell = { identity: identityLine, xp, xpValue, notice, panelTitle, principal, career, soon, links };
         updateShell();
         updatePanel();
     };
@@ -283,7 +332,9 @@ export function createFicheDetailView({
                 onChange: next => { controllerState = next; render(); },
             });
             stopCatalogue = service.watch(runtime.repository);
-            stopEngine = service.subscribe(() => { updatePrincipal(); updateAptitudes(); purchase.update(); });
+            stopEngine = service.subscribe(() => {
+                updatePrincipal(); updateAptitudes(); updateCareer(); careerChange.update(); purchase.update();
+            });
         }, error => { backend = null; throw error; });
         return backend;
     };
@@ -383,6 +434,8 @@ export function createFicheDetailView({
         stopEngine = null;
         menu.close();
         purchase.close();
+        careerChange.close();
+        closeCareerViewer();
         aptitudes.closeDetail();
         controller?.close();
         abortSignal?.removeEventListener?.('abort', unmount);

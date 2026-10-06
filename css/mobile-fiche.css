@@ -367,3 +367,73 @@
 .m-spec-choices { display: flex; flex-wrap: wrap; gap: var(--space-xs); max-height: 11rem; overflow-y: auto; }
 .m-purchase-taken { margin: 0; color: var(--gold-bright); }
 .m-purchase-description p { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+
+/* Onglet Carrière. */
+.m-career { display: grid; gap: var(--space-md); }
+.m-career[hidden] { display: none; }
+
+.m-career-card,
+.m-career-preview,
+.m-career-history-list {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.m-career-card { display: grid; gap: var(--space-sm); padding: var(--space-md); border-color: var(--border-gold); }
+.m-career-line { margin: 0; color: var(--text-secondary); }
+.m-career-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-md); }
+.m-career-title { margin: 0; color: var(--text-heading); font-family: var(--font-heading); font-size: 1.35rem; overflow-wrap: anywhere; }
+.m-career-rank { flex: none; color: var(--gold-bright); font-family: var(--font-heading); }
+.m-career-card .m-principal-title { margin: var(--space-xs) 0 0; }
+
+.m-career-gauges { display: grid; gap: var(--space-sm); margin: 0; padding: 0; list-style: none; }
+.m-career-gauge-head { display: flex; justify-content: space-between; gap: var(--space-md); }
+.m-career-bar { height: 0.375rem; margin-top: var(--space-xs); background: var(--bg-surface); border-radius: 0.1875rem; overflow: hidden; }
+.m-career-fill { width: calc(var(--gauge, 0) * 1%); height: 100%; background: var(--gold); border-radius: inherit; }
+.m-career-detail { margin: var(--space-xs) 0 0; color: var(--text-secondary); font-size: 0.875rem; overflow-wrap: anywhere; }
+.m-career-max { margin: 0; color: var(--gold-bright); font-family: var(--font-heading); text-align: center; }
+.m-career-card .m-button { min-height: 3rem; }
+.m-career-card .m-principal-note { margin: 0; }
+
+.m-career-preview[open] { padding-bottom: var(--space-md); }
+.m-career-summary { display: flex; align-items: center; min-height: 3rem; padding: 0 var(--space-md); color: var(--text-heading); font-family: var(--font-heading); cursor: pointer; }
+.m-career-summary:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: -2px; }
+.m-career-preview-body { display: grid; gap: var(--space-md); padding: 0 var(--space-md); }
+.m-career-variant { display: grid; gap: var(--space-xs); }
+.m-career-variant h5 { margin: 0; color: var(--text-heading); font-size: 1rem; }
+.m-career-variant .m-apt-facts { display: grid; gap: var(--space-xs); }
+
+.m-career-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }
+.m-career-actions .m-button { min-height: var(--m-touch-target); }
+.m-career-history { display: grid; gap: var(--space-xs); }
+.m-career-history .m-principal-title { margin: 0; }
+.m-career-history-list { margin: 0; padding: 0; list-style: none; }
+.m-career-history-list li { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); min-height: 3rem; padding: 0 var(--space-md); }
+.m-career-history-list li + li { border-top: 1px solid var(--border-subtle); }
+.m-career-history-rank { color: var(--text-secondary); font-size: 0.9375rem; }
+
+/* Volet « Changer de carrière » : même liste que les aptitudes, lignes désactivées si le prérequis manque. */
+.m-career-list { margin: 0; padding: 0; list-style: none; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); overflow: hidden; }
+.m-career-list li + li { border-top: 1px solid var(--border-subtle); }
+.m-career-row:disabled { opacity: 0.6; }
+.m-career-row:disabled .m-apt-name { color: var(--text-secondary); }
+
+/* Visionneuse de toutes les carrières : plein écran sur le téléphone (la feuille basse de career-viewer.css ne convient pas ici). */
+/* Les jetons --cv-* sont posés par .career-viewer, absent ici (la modale est montée seule) : on les repose sur la modale. */
+.m-app .career-viewer-modal {
+  --cv-border: var(--border-subtle);
+  --cv-surface: var(--bg-card);
+  --cv-text: var(--text-primary);
+  box-sizing: border-box;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  padding-top: calc(var(--space-md) + var(--m-safe-top, 0px));
+  padding-bottom: calc(var(--space-md) + var(--m-safe-bottom, 0px));
+}

@@ -1,12 +1,13 @@
 import { primarySkillLabel, publishedSkillRows } from '../catalogue/skill-forms.js';
 import { basicSkillNom, BASIC_SKILLS } from '../fiche/basic-skills.js';
 import {
-    activeCareerRank, findCareerByName, isCaracInCareer, isSkillInCareer, isTalentInCareer,
+    activeCareerRank, findCareerByName, getActiveVariantForRang, getRangVariants, isCaracInCareer, isSkillInCareer, isTalentInCareer,
 } from '../fiche/career-model.js';
 import { caracTotal } from '../fiche/derived.js';
 import { canonicalSkillNom, sameSkill } from '../fiche/skill-names.js';
-import { CARAC_XP_BANDS, SKILL_XP_BANDS, talentXpCost, xpBandCost } from '../fiche/xp.js';
+import { CARAC_XP_BANDS, careerRankXpCost, SKILL_XP_BANDS, talentXpCost, xpBandCost } from '../fiche/xp.js';
 import { talentTaken } from './fiche-aptitudes-model.js';
+import { careerChangeBlock } from './fiche-career-model.js';
 import { basicLabel, basicSpecOptions, CARACS } from './fiche-model.js';
 
 export const MAX_ADVANCES = 10;
@@ -14,7 +15,8 @@ export const MAX_ADVANCES = 10;
 /**
  * Description affichable d'une cible d'achat, ou null si la ligne n'existe plus.
  * `careers` : js/data/careers.json ; `spec` : { kind: 'carac', key } | { kind: 'skill', ...ligne de skillRows }
- * | { kind: 'skill', newName } (compétence avancée choisie par son nom) | { kind: 'talent', nom }. Le nom et `targetId` suivent ce que le serveur adresse (jamais le libellé affiché).
+ * | { kind: 'skill', newName } (compétence avancée choisie par son nom) | { kind: 'talent', nom } | { kind: 'rank', rankMode: 'advanceRank' }
+ * | { kind: 'rank', rankMode: 'changeCareer', careerId, targetRank }. Le nom et `targetId` suivent ce que le serveur adresse (jamais le libellé affiché).
  * ponytail: le « de carrière » rejoue les règles de commands.js ; le test d'accord avec le moteur
  * (tools/fiche-mobile-purchase.test.mjs) échoue si elles divergent.
  */
@@ -101,6 +103,23 @@ export function purchaseTarget(data, engine, careers, spec) {
             description: String(described?.description ?? '').split('\n').map(line => line.trim()).filter(Boolean),
         };
     }
+
+    if (spec.kind === 'rank') {
+        const change = spec.rankMode === 'changeCareer';
+        const target = change ? (careers || []).find(({ id }) => id === spec.careerId) : career;
+        const targetRank = change ? spec.targetRank : rank + 1;
+        // Le coût dépend de l'achèvement de la carrière actuelle ; sans carrière, le serveur refuse aussi.
+        if (!career || !target || !engine?.evaluateCareerCompletion || !['advanceRank', 'changeCareer'].includes(spec.rankMode)
+            || (change ? careerChangeBlock(data, career, rank, target, targetRank) : !getRangVariants(career, targetRank).length)) return null;
+        const variant = getActiveVariantForRang(target, targetRank, change ? {} : chosen);
+        const complete = engine.evaluateCareerCompletion(data, career, rank).complete;
+        return {
+            kind: 'rank', rankMode: spec.rankMode, careerId: change ? target.id : undefined, targetRank, complete, maxCount: 1,
+            title: change ? 'Changer de carrière' : `Passer au rang ${targetRank}`,
+            nature: change ? `${target.nom} · rang ${targetRank}` : career.nom,
+            summary: `${career.nom} (rang ${rank}) → ${target.nom} (rang ${targetRank}${variant?.titre ? ` · ${variant.titre}` : ''})`,
+        };
+    }
     return null;
 }
 
@@ -114,6 +133,7 @@ function groupSpecialty(resolver, group) {
 }
 
 function costOf(target, count) {
+    if (target.kind === 'rank') return careerRankXpCost(target.complete);
     return target.kind === 'talent'
         ? talentXpCost(target.inCareer)
         : xpBandCost(target.bands, target.adv, count, target.inCareer);
@@ -123,13 +143,19 @@ function costOf(target, count) {
 export function purchasePreview(target, count, balance) {
     const cost = costOf(target, count);
     return {
-        cost, newTotal: target.kind === 'talent' ? null : target.total + count,
+        cost, newTotal: target.kind === 'talent' || target.kind === 'rank' ? null : target.total + count,
         after: balance - cost, affordable: balance >= cost,
     };
 }
 
 /** Payload `purchase` exact, à passer à controller.executeOnlineCommand('purchase', …). */
 export function purchasePayload(target, count, engine) {
+    if (target.kind === 'rank') {
+        return {
+            kind: 'rank', rankMode: target.rankMode, ...(target.careerId === undefined ? {} : { careerId: target.careerId }),
+            targetRank: target.targetRank, count: 1, expectedCost: costOf(target, 1), catalogVersion: engine.catalogVersion,
+        };
+    }
     const talent = target.kind === 'talent';
     return {
         kind: target.kind, name: target.name,
@@ -148,6 +174,8 @@ export function purchaseErrorMessage(error) {
         return `Le coût a changé : ${error.details.currentCost} XP. Vérifiez et réessayez.`;
     case 'catalog-version-unsupported':
         return 'Les règles ont été mises à jour. Rechargez la fiche puis réessayez.';
+    case 'career-prerequisite':
+        return 'Prérequis de la carrière non atteint.';
     case 'conflict': case 'aborted':
         return 'La fiche a changé entre-temps. Vérifiez-la et réessayez.';
     case 'permission-denied':

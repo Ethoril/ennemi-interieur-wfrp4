@@ -173,3 +173,37 @@ test('destroy retire la vue et désactive les rendus suivants', () => {
         assert.deepEqual(container.children, []);
     } finally { restore(); }
 });
+
+test('openModal ouvre la modale seule (mobile) et rend la main à la fermeture ; sans option le bureau garde son aperçu', () => {
+    const restore = installDocument();
+    try {
+        const container = new FakeElement('div');
+        let closed = 0;
+        const viewer = createCareerViewer({
+            container, modalOnly: true, onModalClose: () => { closed += 1; },
+            getContext: () => ({ careers, careerName: 'Chasseur', rank: 1 }),
+        });
+        assert.deepEqual(container.children, []);
+        viewer.openModal();
+        assert.equal(container.children.length, 1);
+        const dialog = container.children[0];
+        assert.equal(dialog.tagName, 'DIALOG');
+        assert.equal(dialog.open, true);
+        assert.ok(walk(dialog).some(node => node.textContent === 'Rang 3 · Traqueur'));
+        byTestId(dialog, 'close-modal').dispatch('click');
+        assert.equal(closed, 1);
+        assert.deepEqual(container.children, []);
+        viewer.openModal();
+        assert.equal(container.children[0].open, true);
+
+        // Bureau : openModal ouvre la modale dans la section habituelle, le focus revient au bouton d'ouverture.
+        const desktop = new FakeElement('div');
+        const classic = createCareerViewer({ container: desktop, getContext: () => ({ careers, careerName: 'Chasseur', rank: 1 }) });
+        assert.equal(desktop.children[0].className, 'career-viewer');
+        classic.openModal();
+        const modal = walk(desktop.children[0]).find(node => node.tagName === 'DIALOG');
+        assert.equal(modal.open, true);
+        byTestId(modal, 'close-modal').dispatch('click');
+        assert.equal(globalThis.document.activeElement, byTestId(desktop.children[0], 'open-modal'));
+    } finally { restore(); }
+});
