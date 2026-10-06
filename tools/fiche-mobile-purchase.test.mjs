@@ -210,9 +210,10 @@ test('miracle : coût prévu = coût accepté, les bénédictions ne comptent pa
 
 test('sort ou miracle : introuvable, ambigu ou déjà connu = pas de cible', () => {
     const d = data('Agitateur');
-    const ambiguous = spells.find(rule => spells.filter(other => other.nom === rule.nom).length > 1);
-    assert.ok(ambiguous);
-    assert.equal(purchaseTarget(d, engine, careers, { kind: 'sort', nom: ambiguous.nom }), null);
+    // Le catalogue réel n'a plus de doublon : on en fabrique un, que le serveur refuserait.
+    const doubled = { ...engine, ruleCatalog: { ...engine.ruleCatalog, spells: [...spells, { ...spells[0] }] } };
+    assert.ok(purchaseTarget(d, engine, careers, { kind: 'sort', nom: spells[0].nom }));
+    assert.equal(purchaseTarget(d, doubled, careers, { kind: 'sort', nom: spells[0].nom }), null);
     assert.equal(purchaseTarget(d, engine, careers, { kind: 'sort', nom: 'Inconnu' }), null);
     assert.equal(purchaseTarget(d, engine, careers, { kind: 'miracle', nom: petty.nom }), null);
     const owned = data('Agitateur', { sorts: [asKnown(petty)] });

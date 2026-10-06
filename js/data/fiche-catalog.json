@@ -1,6 +1,6 @@
 {
-  "catalogVersion": "sha256:8a138cb2a2a40ddc35640ea9b55d92733079f0aba178e2cb012403e92e896e96",
-  "fetchedAt": "2026-10-04",
+  "catalogVersion": "sha256:eb56e58f1f8de758a1a9d93d9df157b0494bc813af039d077a22a6c10624ebf7",
+  "fetchedAt": "2026-10-06",
   "sources": {
     "spells": "https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&sheet=Magie",
     "miracles": "https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&sheet=Miracles"
@@ -423,14 +423,6 @@
       "desc": "Vous tissez les vents de Chamon dans un objet non magique constitué de métal, modifiant fondamentalement sa nature alchimique. Pour la durée du Sort, tout le métal de l’objet devient de l’or. Ce n’est pas une illusion : il s’est réellement transformé en or. Quand le Sort prend fin, l’objet revient à son métal d’origine. Ce Sort peut ruiner de bonnes armes, rendre les armures trop lourdes à porter, et changer les pièces de plomb en quelque chose de plus attrayant. Les effets découlant de ce Sort sont à l’entière préférence du MJ."
     },
     {
-      "nom": "Métal changeant",
-      "type": "Chamon - Jaune - Domaine du Métal",
-      "cn": 5,
-      "portee": "Contact",
-      "duree": "(Bonus de Force Mentale) Rounds",
-      "desc": "Vous touchez un objet non magique composé de métal qui devient instantanément chaud au toucher lorsque vous y faites entrer Chamon. Vous pouvez plier et tordre l’objet avec un Test de Force Accessible (+20). Si vous voulez effectuer une modification plus complexe, vous pouvez faire un Test de Métier (Forgeron ou similaire) Accessible (+20) à la place."
-    },
-    {
       "nom": "Inscription",
       "type": "Chamon - Jaune - Domaine du Métal",
       "cn": 2,
@@ -757,14 +749,6 @@
       "portee": "Vous",
       "duree": "(Bonus de Force Mentale) Rounds",
       "desc": "Vous faites appel à la puissance sauvage de Ghur pour vous imprégner, vous abandonnant à ses délicieuses saveurs. Gagnez les Traits de créature suivants (voir page 338) : Arboricole, Arme (Bonus de Force +2), Armure 2, Belliqueux, Grand, Magique, Murmures (Bonus de Force +1), Peur 1, Rage. Tant que le Sort est actif, vous ne pouvez utiliser toutes vos Compétences Langue ou Savoir."
-    },
-    {
-      "nom": "Serres d’ambre",
-      "type": "Ghur - Ambre - Domaine de la Bête",
-      "cn": 6,
-      "portee": "Vous",
-      "duree": "(Bonus de Force Mentale) Rounds",
-      "desc": "Vos ongles se transforment en serres acérées de cristal ambre. Les attaques à mains nues effectuées en utilisant Corps à corps (Bagarre) sont considérées comme magiques, possèdent une valeur de Dégâts égale à votre Bonus de Force Mentale et infligent +1 État Hémorragique chaque fois qu’elles entraînent la perte des Blessures."
     },
     {
       "nom": "Vol du Destin",
@@ -1199,28 +1183,12 @@
       "desc": "Vous invoquez un souffle de Hysh qui traverse la frontière entre le Royaume du Chaos et le monde matériel. Le Test d’Incantation est opposé par la cible effectuant un Test de Force Mentale. Si vous l’emportez, vous annihilez une cible possédant le Trait de créature Démoniaque grâce à une lumière blanche aveuglante, la renvoyant d’où elle venait. Si le Sort bannit avec succès un démon, quiconque regardait en direction de la cible, à moins qu’il possède le Talent Magie des Arcanes (Lumière), reçoit +DR État Aveuglé."
     },
     {
-      "nom": "Filet d’Amyntok",
-      "type": "Hysh - Blanc - Domaine de la Lumière",
-      "cn": 8,
-      "portee": "(Bonus d’Intelligence) mètres",
-      "duree": "(Bonus d’Intelligence de la cible) Rounds",
-      "desc": "Vous lancez un délicat filet tissé à partir de fins brins de Hysh sur vos cibles, dont les esprits sont alors submergés par des énigmes et paralysés par l’indécision. Les cibles gagnent +1 État Sonné, qui ne peut être retiré tant que le Sort est actif. En se remettant de cet État, les cibles effectuent un Test d’Intelligence au lieu d’un Test de Résistance. Les cibles possédant le Trait de créature Bestial sont immunisées contre ce Sort."
-    },
-    {
       "nom": "Pensée rapide",
       "type": "Hysh - Blanc - Domaine de la Lumière",
       "cn": 8,
       "portee": "Vous",
       "duree": "(Bonus de Force Mentale) Rounds",
       "desc": "Un voile de Hysh recouvre votre esprit, permettant une accélération de vos pensées. Vous gagnez un Bonus de +20 en Initiative et en Intelligence."
-    },
-    {
-      "nom": "Protection de Phâ",
-      "type": "Hysh - Blanc - Domaine de la Lumière",
-      "cn": 10,
-      "portee": "Vous",
-      "duree": "(Bonus de Force Mentale) Rounds",
-      "desc": "Vous invoquez une aura protectrice de pure lumière sacrée. Les créatures profanes – celles ayant les Traits de créature Mort-vivant ou Démoniaque, des mutations ou celles ayant plus de Corruption que leurs Bonus de Force Mentale et Bonus d’Endurance combinés – ne peuvent pas entrer dans la Zone d’Effet. Toutes celles déjà à l’intérieur de la Zone gagnent l’État Brisé jusqu’à ce qu’elles la quittent. Les créatures à l’intérieur de la Zone ne peuvent pas gagner de Points de Corruption tant que le Sort est actif."
     },
     {
       "nom": "Piège d'Abulla",
@@ -1501,14 +1469,6 @@
       "portee": "Vous",
       "duree": "Bonus de Volonté rounds",
       "desc": "Vous rendez la magie visible dans la zone. \n - Les objets et créatures magiques brillent, même s’ils sont cachés. \n - Les magiciens ne sont pas détectés, sauf s’ils sont sous l’effet d’un sort."
-    },
-    {
-      "nom": "Caresse de Laniph",
-      "type": "Shyish - Pourpre - Domaine de la Mort",
-      "cn": 7,
-      "portee": "Contact",
-      "duree": "Instantané",
-      "desc": "Alors que vous tendez les mains, elles semblent desséchées, même squelettiques, drainant Shyish du corps de votre cible. C’est considéré comme un Projectile magique avec Dégâts +6 qui ignore le Bonus d’Endurance et les PA. Pour chaque tranche de 2 Points de Blessure infligés, vous pouvez récupérer 1 Point de Blessure."
     },
     {
       "nom": "La Faux de Shyish",
@@ -2071,14 +2031,6 @@
       "desc": "Tu projètes ta voix vers un point situé à une distance en mètres égale à ta Force Mentale, sans tenir compte de la Ligne de vue. Ta voix résonne depuis ce point, et tous ceux à portée de voix l’entendront."
     },
     {
-      "nom": "Drain",
-      "type": "Sort Mineur",
-      "cn": 0,
-      "portee": "Contact",
-      "duree": "Instantané",
-      "desc": "Vous touchez vos cibles, drainant leur vie. Ce Sort est considéré comme un Projectile magique avec Dégât +0 qui ignore les PA. Puis vous guérissez 1 Point de Blessure."
-    },
-    {
       "nom": "Tendre l'oreille",
       "type": "Sort Mineur",
       "cn": 0,
@@ -2101,14 +2053,6 @@
       "portee": "ZdE (Force Mentale) mètres",
       "duree": "(Bonus de Force Mentale) Rounds",
       "desc": "Vous invoquez un violon sans cordes qui force vos ennemis à danser de manière incontrôlable, perdant toute notion d’urgence. \n • Les cibles peuvent tenter un Test de Force Mentale pour résister. \n • Les ennemis affectés ne peuvent ni se déplacer ni agir, sauf s’ils réussissent un Test d’Athlétisme Difficile (-20) ou un Test de Représentation (Danse) Intermédiaire (+0). \n • À l’expiration du sort, les cibles affectées gagnent +1 État Exténué. \n • Les alliés et personnages neutres ne sont pas affectés par le sort."
-    },
-    {
-      "nom": "Linceul d’Invisibilité",
-      "type": "Uglu - Gris - Domaine de l'Ombre",
-      "cn": 8,
-      "portee": "Contact",
-      "duree": "(Bonus de Force Mentale) Rounds",
-      "desc": "Vous enroulez votre cible dans un linceul d’Ulgu. Elle devient alors invisible et ne peut pas être perçue par les sens ordinaires. Le Sort trompe automatiquement quiconque ne possède pas le Talent Seconde vue. Ceux qui le possèdent doivent réussir un Test de Perception Intermédiaire (+0) pour remarquer que quelqu’un est à proximité, bien qu’ils ne soient pas capables de discerner l’emplacement exact. Pour ce faire, ils doivent dissiper le Linceul d’Invisibilité. La cible est toujours perceptible par les autres sens, et le Sort prend fin si elle attire l’attention sur elle en faisant des bruits forts ou en attaquant quelqu’un."
     },
     {
       "nom": "Portail d’Ombre",
