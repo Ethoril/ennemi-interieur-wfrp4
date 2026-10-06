@@ -65,6 +65,12 @@ test('jauges d’un rang achevé : coût 100, objectifs atteints', () => {
     assert.ok(result.next[0].skills.includes('Calme'));
 });
 
+test('emplacements tous remplis mais moins de huit compétences : texte de repli au lieu de « Manquent : » vide', () => {
+    const few = [{ ...agitateur, rangs: [{ ...agitateur.rangs[0], skills: agitateur.rangs[0].skills.slice(0, 3) }] }];
+    const d = complete({ skillsAdvanced: agitateur.rangs[0].skills.slice(0, 3).map((nom, index) => ({ id: `s${index}`, nom, carac: 'int', adv: 5 })) });
+    assert.equal(progress(d, few).gauges[1].detail, '5 compétences de carrière supplémentaires à +5');
+});
+
 test('talent du rang manquant : liste des talents à acquérir', () => {
     const result = progress(complete({ talentsAcq: [] }));
     assert.equal(result.complete, false);

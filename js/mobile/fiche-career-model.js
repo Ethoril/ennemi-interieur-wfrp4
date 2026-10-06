@@ -107,7 +107,9 @@ export function careerProgress(data, engine, careers = []) {
     const skillsDone = Math.min(skillTotal, completion.qualifiedSkills.length);
     const skillGauge = {
         label: `Compétences à +${threshold}`, done: skillsDone, total: skillTotal,
-        detail: skillsDone >= skillTotal ? 'Objectif atteint' : `Manquent : ${missing.join(' · ')}`,
+        // Une carrière à moins de huit emplacements, tous remplis : rien à lister, mais il en manque encore.
+        detail: skillsDone >= skillTotal ? 'Objectif atteint' : missing.length ? `Manquent : ${missing.join(' · ')}`
+            : `${skillTotal - skillsDone} compétence${skillTotal - skillsDone > 1 ? 's' : ''} de carrière supplémentaire${skillTotal - skillsDone > 1 ? 's' : ''} à +${threshold}`,
     };
 
     const rankTalents = { id: 'talents', rangs: [{ rang: 1, talents: completion.currentRankTalents }] };
