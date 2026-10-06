@@ -1,11 +1,13 @@
 import test from 'node:test';
+import { setTimeout as sleep } from 'node:timers/promises';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { basicRowFor } from '../js/fiche/basic-skills.js';
 import { loadFicheCatalogue } from '../js/mobile/fiche-catalogue.js';
-import { ficheCaracs, resourceTokens, topSkills } from '../js/mobile/fiche-model.js';
+import { dotTarget, ficheCaracs, resourceChange, resourceTokens, topSkills } from '../js/mobile/fiche-model.js';
 import { createPrincipalPanel } from '../js/mobile/views/fiche-principal.js';
+import { createResourceSheet } from '../js/mobile/views/fiche-resource-sheet.js';
 
 const read = path => JSON.parse(readFileSync(fileURLToPath(new URL(`../${path}`, import.meta.url)), 'utf8'));
 const catalogue = await loadFicheCatalogue({ load: url => read(`js/${url.replace('../', '')}`) });
@@ -76,26 +78,138 @@ test('jetons : valeurs absentes ou non numériques valent 0, la valeur courante 
     assert.deepEqual(resourceTokens({ destin: '1', chance: '3' }, 'destin', 'chance'), { max: 1, current: 1 });
 });
 
-test('panneau : jetons en lecture seule (span), caractéristiques en boutons, focus conservé', () => {
-    const documentRef = { createElement: tag => ({ tagName: tag, children: [], attrs: {}, listeners: {}, className: '', textContent: '',
-        setAttribute(k, v) { this.attrs[k] = v; }, append(...n) { this.children.push(...n); }, replaceChildren(...n) { this.children = n; },
-        addEventListener(t, l) { this.listeners[t] = l; } }) };
+class FakeElement {
+    constructor(documentRef, tagName) {
+        Object.assign(this, { ownerDocument: documentRef, tagName, children: [], parentNode: null, attributes: new Map(), listeners: new Map(),
+            className: '', textContent: '', hidden: false, disabled: false, open: false, style: {}, id: '' });
+    }
+    setAttribute(name, value) { this.attributes.set(name, String(value)); }
+    getAttribute(name) { return this.attributes.get(name) ?? null; }
+    focus() { this.ownerDocument.activeElement = this; }
+    append(...nodes) { for (const node of nodes) { node.parentNode?.removeChild(node); node.parentNode = this; this.children.push(node); } }
+    replaceChildren(...nodes) { this.children.forEach(child => { child.parentNode = null; }); this.children = []; this.append(...nodes); }
+    removeChild(node) { const index = this.children.indexOf(node); if (index >= 0) this.children.splice(index, 1); node.parentNode = null; }
+    remove() { this.parentNode?.removeChild(this); }
+    addEventListener(type, listener) { this.listeners.set(type, [...(this.listeners.get(type) || []), listener]); }
+    click() { for (const listener of this.listeners.get('click') || []) listener({ target: this }); }
+    all() { return this.children.flatMap(child => [child, ...child.all()]); }
+    querySelectorAll() { return this.all().filter(node => node.tagName === 'button' && !node.disabled); }
+    showModal() { this.open = true; }
+    close() { this.open = false; }
+    byText(text) { return this.all().find(node => node.textContent === text); }
+}
+const fakeDocument = () => {
+    const documentRef = { activeElement: null, defaultView: null, body: { classList: { add() {}, remove() {} } },
+        createElement: tag => new FakeElement(documentRef, tag), addEventListener() {}, removeEventListener() {} };
+    return documentRef;
+};
+const dotsOf = panel => panel.element.all().filter(node => node.className.startsWith('m-principal-dot'));
+
+test('points : un point vide final, la valeur proposée et le patch avec Chance ramenée au maximum', () => {
+    assert.deepEqual([0, 1, 2].map(index => dotTarget(2, index)), [0, 1, 3]);
+    assert.equal(dotTarget(0, 0), 1);
+    assert.deepEqual(resourceChange({ destin: '3', chance: '1' }, 'destin', 'chance', 2), { changes: { destin: '2' }, lowered: null });
+    assert.deepEqual(resourceChange({ destin: '3', chance: '3' }, 'destin', 'chance', 1), { changes: { destin: '1', chance: '1' }, lowered: 3 });
+    assert.deepEqual(resourceChange({ resilience: '1', determination: '0' }, 'resilience', 'determination', 0), { changes: { resilience: '0' }, lowered: null });
+});
+
+test('panneau : Destin et Résilience en points boutons, Chance et Détermination en nombres, focus conservé', () => {
+    const documentRef = fakeDocument();
+    const asked = [];
     const opened = [];
-    const panel = createPrincipalPanel({ documentRef, aptitudesHref: '#/x', onOpenCarac: key => opened.push(key) });
-    const d = data({ carriere: 'Agitateur', rang: '1', destin: '2', chance: '1', corruption: '3' });
+    const panel = createPrincipalPanel({ documentRef, aptitudesHref: '#/x', onOpenCarac: key => opened.push(key),
+        onChangeResource: spec => asked.push([spec.maxKey, spec.value]) });
+    const d = data({ carriere: 'Agitateur', rang: '1', destin: '2', chance: '1', resilience: '0', determination: '0', corruption: '3' });
     panel.update({ data: d, careers: read('js/data/careers.json'), engine });
-    const walk = (node, out = []) => { out.push(node); node.children.forEach(c => walk(c, out)); return out; };
-    const nodes = walk(panel.element);
-    const tokens = nodes.filter(n => n.tagName === 'span' && n.className.startsWith('m-principal-token'));
-    assert.deepEqual(tokens.map(n => [n.tagName, n.className.includes('is-full')]), [['span', true], ['span', false]]);
-    assert.equal(nodes.find(n => n.attrs.role === 'group').attrs['aria-label'], 'Chance : 1 sur 2');
-    const buttons = nodes.filter(n => n.tagName === 'button');
-    assert.equal(buttons.length, 10);
-    assert.match(buttons[1].attrs['aria-label'], /, de carrière$/u);
-    assert.doesNotMatch(buttons[0].attrs['aria-label'], /carrière/u);
+    const nodes = panel.element.all();
+    assert.deepEqual(nodes.filter(n => n.className === 'm-principal-max').map(n => n.textContent), ['Destin', 'Résilience']);
+    assert.deepEqual(nodes.filter(n => n.className === 'm-principal-label').map(n => n.textContent), ['Chance 1', 'Détermination 0']);
+    const groups = nodes.filter(n => n.getAttribute('role') === 'group');
+    assert.deepEqual(groups.map(n => n.getAttribute('aria-label')), ['Destin', 'Résilience']);
+    const dots = dotsOf(panel);
+    assert.deepEqual(dots.map(n => [n.tagName, n.className.includes('is-full'), n.getAttribute('aria-label')]), [
+        ['button', true, "Destin : 2. Brûler jusqu'à 0"], ['button', true, "Destin : 2. Brûler jusqu'à 1"],
+        ['button', false, 'Ajouter un point de Destin'], ['button', false, 'Ajouter un point de Résilience']]);
+    dots.forEach(dot => dot.click());
+    assert.deepEqual(asked, [['destin', 0], ['destin', 1], ['destin', 3], ['resilience', 1]]);
+    dots[1].focus();
     panel.update({ data: d, careers: [], engine });
-    assert.equal(walk(panel.element).filter(n => n.tagName === 'button')[0], buttons[0]);
-    buttons[3].listeners.click();
+    assert.equal(dotsOf(panel)[1], dots[1]);
+    assert.equal(documentRef.activeElement, dots[1]);
+    panel.update({ data: { ...d, destin: '3' }, careers: [], engine });
+    assert.equal(dotsOf(panel).length, 5, 'quatre points de Destin (3 pleins + 1 vide) et un de Résilience');
+    panel.update({ data: d, careers: [], engine, readonly: true });
+    assert.ok(dotsOf(panel).every(dot => dot.disabled));
+    panel.update({ data: d, careers: read('js/data/careers.json'), engine });
+    const buttons = nodes.filter(n => n.tagName === 'button' && n.className.startsWith('m-principal-carac'));
+    assert.equal(buttons.length, 10);
+    assert.match(buttons[1].getAttribute('aria-label'), /, de carrière$/u);
+    buttons[3].click();
     assert.deepEqual(opened, ['e']);
     assert.match(nodes.find(n => /^Mouvement/u.test(n.textContent)).textContent, /Corruption 3$/u);
+});
+
+function sheetSetup({ online = true, data = { destin: '3', chance: '3' } } = {}) {
+    const documentRef = fakeDocument();
+    const calls = [];
+    const announces = [];
+    const done = [];
+    const context = { online, state: { phase: 'ready', data }, controller: {
+        stagePatch: changes => { calls.push(['stage', changes]); return { ok: true }; },
+        submitPatch: async () => { calls.push(['submit']); return { status: 'saved' }; },
+        retryPendingPatch: async () => ({ status: 'saved' }),
+    } };
+    const sheet = createResourceSheet({ documentRef, getContext: () => context, announce: m => announces.push(m), onDone: key => done.push(key) });
+    const trigger = documentRef.createElement('button');
+    const open = value => sheet.open({ maxKey: 'destin', currentKey: 'chance', maxLabel: 'Destin', label: 'Chance', value }, trigger);
+    const title = () => sheet.element.all().find(n => n.tagName === 'h2').textContent;
+    return { documentRef, calls, announces, done, trigger, open, title, el: sheet.element, context };
+}
+
+test('confirmation : rien n’est écrit à l’ouverture ni à l’annulation, le focus revient au point', () => {
+    const setup = sheetSetup();
+    setup.open(1);
+    assert.ok(setup.el.open);
+    assert.equal(setup.title(), 'Brûler 2 points de Destin ?');
+    assert.ok(setup.el.byText("Ce n'est pas anodin : les points sont perdus définitivement."));
+    assert.equal(setup.el.all().find(n => n.className === 'm-purchase-formula').textContent, 'La Chance sera aussi ramenée de 3 à 1.');
+    setup.el.byText('Annuler').click();
+    assert.deepEqual(setup.calls, []);
+    assert.ok(!setup.el.open);
+    assert.equal(setup.documentRef.activeElement, setup.trigger);
+});
+
+test('confirmation : stagePatch avec Chance ramenée puis envoi, annonce et focus rendu ; ajout sans Chance', async () => {
+    const setup = sheetSetup();
+    setup.open(2);
+    assert.equal(setup.title(), 'Brûler 1 point de Destin ?');
+    setup.el.byText('Confirmer').click();
+    await sleep(0);
+    assert.deepEqual(setup.calls, [['stage', { destin: '2', chance: '2' }], ['submit']]);
+    assert.deepEqual(setup.announces, ['Destin : 2']);
+    assert.deepEqual(setup.done, ['destin']);
+    setup.open(4);
+    assert.equal(setup.title(), 'Ajouter 1 point de Destin ?');
+    assert.ok(setup.el.byText('(normalement accordé par le MJ)'));
+    setup.el.byText('Confirmer').click();
+    await sleep(0);
+    assert.deepEqual(setup.calls.at(-2), ['stage', { destin: '4' }]);
+});
+
+test('confirmation : hors ligne le brouillon est protégé sans envoi, et l’état est annoncé', async () => {
+    const setup = sheetSetup({ online: false, data: { destin: '1', chance: '0' } });
+    setup.open(0);
+    setup.el.byText('Confirmer').click();
+    await sleep(0);
+    assert.deepEqual(setup.calls, [['stage', { destin: '0' }]]);
+    assert.deepEqual(setup.announces, ['Destin : 0, en attente de connexion']);
+});
+
+test('confirmation : un envoi en conflit est annoncé', async () => {
+    const setup = sheetSetup();
+    setup.context.controller.submitPatch = async () => ({ status: 'blocked', reason: 'conflict' });
+    setup.open(2);
+    setup.el.byText('Confirmer').click();
+    await sleep(0);
+    assert.match(setup.announces[0], /^Conflit sur Destin/u);
 });

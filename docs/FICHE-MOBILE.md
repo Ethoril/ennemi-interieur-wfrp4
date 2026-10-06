@@ -59,10 +59,16 @@ pas de suivi des blessures ni de dépense de points en direct.
 
 ### 5.1 Principal
 
-Consultation, sans saisie.
+Consultation, sauf Destin et Résilience.
 
-- **Destin et Chance**, **Résilience et Détermination** : jetons pleins ou vides **en lecture
-  seule** ; leur modification reste sur le bureau.
+- **Destin** et **Résilience** : titres en grand, chacun avec ses points (autant de points pleins que
+  de valeur, plus un point vide final), boutons de 44 px. Toucher un point plein k ramène la valeur à
+  k − 1 (brûler), toucher le point vide ajoute 1 ; chaque changement passe par un volet de confirmation
+  (« Ce n'est pas anodin : le point est perdu définitivement », « normalement accordé par le MJ »).
+  Si **Chance** (resp. **Détermination**) dépasse le nouveau maximum, elle y est ramenée dans le même
+  patch et le volet le dit. Brouillon protégé hors connexion (`stagePatch`, annonce « en attente de
+  connexion »), désactivé en lecture seule. Chance et Détermination s'affichent en nombres, plus petits,
+  en lecture seule.
 - **Caractéristiques** : grille 5 × 2 ; chaque case montre l'abréviation, le total et le
   bonus. Les caractéristiques de la carrière actuelle ont un cadre doré, doublé d'un libellé
   pour les lecteurs d'écran. Toucher une case ouvre son **volet** (§ 5.5).

@@ -1,3 +1,7 @@
+## [2.32.2] - 2026-10-06
+
+- **Destin et Résilience (mobile)** : sur l’onglet Principal de la fiche, « Destin » et « Résilience » passent au premier plan, chacun avec ses points (un point plein par point de valeur, plus un point vide pour en ajouter) ; Chance et Détermination restent affichées en nombres, en dessous. Toucher un point plein brûle les points jusqu’à lui, toucher le point vide en ajoute un, après une confirmation qui rappelle que brûler un point est définitif et qu’ajouter un point est normalement accordé par le MJ. Si la Chance (ou la Détermination) dépasse alors le nouveau maximum, elle y est ramenée. La modification est gardée en brouillon hors connexion et envoyée au retour du réseau ; les points sont désactivés sur une fiche en lecture seule.
+
 ## [2.32.1] - 2026-10-06
 
 - **Talents à choisir (mobile)** : les talents de carrière « au choix » (Savoir-vivre, Haine…) et ceux à alternatives (Sens aiguisé (Goût ou Toucher)) s’achètent désormais depuis la fiche sur téléphone. On choisit la spécialité dans le volet d’achat, ou on en saisit une autre pour les talents « au choix ». Les spécialités déjà acquises sont signalées.

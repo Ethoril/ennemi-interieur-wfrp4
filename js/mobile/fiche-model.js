@@ -38,6 +38,17 @@ export function resourceTokens(data, maxKey, currentKey) {
     return { max, current: Math.min(max, count(data?.[currentKey])) };
 }
 
+/** Valeur proposée par un point : le point plein d'indice i ramène la ressource à i, le point vide final ajoute 1. */
+export const dotTarget = (value, index) => (index < value ? index : value + 1);
+
+/** Patch d'une ressource passée à `value` ; Chance (resp. Détermination) est ramenée au nouveau maximum, `lowered` = son ancienne valeur. */
+export function resourceChange(data, maxKey, currentKey, value) {
+    const current = count(data?.[currentKey]);
+    const changes = { [maxKey]: String(value) };
+    if (current > value) changes[currentKey] = String(value);
+    return { changes, lowered: current > value ? current : null };
+}
+
 /** Les dix caractéristiques dans l'ordre de la fiche, avec le marqueur « de carrière ». */
 export function ficheCaracs(data, careers = []) {
     const career = findCareerByName(careers, String(data?.carriere ?? ''));

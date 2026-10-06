@@ -1,5 +1,5 @@
 import { blessuresMax, mouvement } from '../../fiche/derived.js';
-import { CARACS, ficheCaracs, resourceTokens, topSkills } from '../fiche-model.js';
+import { CARACS, dotTarget, ficheCaracs, resourceTokens, topSkills } from '../fiche-model.js';
 
 const TOP_SKILLS = 5;
 
@@ -11,23 +11,24 @@ function make(documentRef, tag, text = '', className = '') {
 }
 
 /**
- * Onglet Principal ; toucher une caractéristique appelle onOpenCarac(clé, bouton). La structure est construite une fois ; update() ne réécrit
- * que les textes et les jetons, donc le bouton de caractéristique focalisé garde le focus.
+ * Onglet Principal ; toucher une caractéristique appelle onOpenCarac(clé, bouton). Toucher un point de Destin ou de Résilience
+ * appelle onChangeResource({ maxKey, currentKey, maxLabel, label, value }, bouton) avec la valeur proposée. La structure est construite
+ * une fois ; update() ne réécrit que les textes et les points (réutilisés par rang), donc le bouton focalisé garde le focus.
  */
-export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac = () => {} }) {
+export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac = () => {}, onChangeResource = () => {} }) {
     const root = make(documentRef, 'div', '', 'm-principal');
 
     const resources = make(documentRef, 'div', '', 'm-principal-resources');
     const cards = [['Destin', 'Chance', 'destin', 'chance'], ['Résilience', 'Détermination', 'resilience', 'determination']]
         .map(([maxLabel, label, maxKey, currentKey]) => {
             const card = make(documentRef, 'div', '', 'm-principal-card');
-            const max = make(documentRef, 'p', '', 'm-principal-max');
-            const name = make(documentRef, 'p', label, 'm-principal-label');
+            const max = make(documentRef, 'p', maxLabel, 'm-principal-max');
+            const current = make(documentRef, 'p', '', 'm-principal-label');
             const tokens = make(documentRef, 'div', '', 'm-principal-tokens');
             tokens.setAttribute('role', 'group');
-            card.append(max, name, tokens);
+            card.append(max, tokens, current);
             resources.append(card);
-            return { maxLabel, label, maxKey, currentKey, max, tokens };
+            return { maxLabel, label, maxKey, currentKey, current, tokens, dots: [], value: 0 };
         });
 
     const caracsSection = make(documentRef, 'section', '', 'm-principal-section');
@@ -64,15 +65,29 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
 
     root.append(resources, caracsSection, skillsSection);
 
-    function update({ data, careers, engine }) {
+    function update({ data, careers, engine, readonly = false }) {
         for (const card of cards) {
             const { max, current } = resourceTokens(data, card.maxKey, card.currentKey);
-            card.max.textContent = `${card.maxLabel} ${max}`;
-            card.tokens.setAttribute('aria-label', `${card.label} : ${current} sur ${max}`);
-            card.tokens.replaceChildren(...Array.from({ length: max }, (_, index) => {
-                const token = make(documentRef, 'span', '', index < current ? 'm-principal-token is-full' : 'm-principal-token');
-                return token;
-            }));
+            card.current.textContent = `${card.label} ${current}`;
+            card.tokens.setAttribute('aria-label', card.maxLabel);
+            // `max` points pleins et un point vide final (+1) ; les boutons existants sont réutilisés pour garder le focus.
+            while (card.dots.length < max + 1) {
+                const dot = make(documentRef, 'button', '', 'm-principal-dot');
+                dot.type = 'button';
+                const index = card.dots.length;
+                dot.addEventListener('click', () => onChangeResource({ maxKey: card.maxKey, currentKey: card.currentKey, maxLabel: card.maxLabel, label: card.label, value: dotTarget(card.value, index) }, dot));
+                card.dots.push(dot);
+            }
+            card.dots.length = max + 1;
+            card.value = max;
+            card.dots.forEach((dot, index) => {
+                dot.className = index < max ? 'm-principal-dot is-full' : 'm-principal-dot';
+                dot.disabled = readonly;
+                dot.setAttribute('aria-label', index < max
+                    ? `${card.maxLabel} : ${max}. Brûler jusqu'à ${index}`
+                    : `Ajouter un point de ${card.maxLabel}`);
+            });
+            card.tokens.replaceChildren(...card.dots);
         }
         ficheCaracs(data, careers).forEach((carac, index) => {
             const cell = cells[index];
@@ -93,5 +108,8 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
         }));
     }
 
-    return Object.freeze({ element: root, update });
+    // Le point touché peut avoir disparu (brûlé) : le focus revient au dernier point de la ressource.
+    const focusResource = maxKey => cards.find(card => card.maxKey === maxKey)?.dots.at(-1)?.focus?.();
+
+    return Object.freeze({ element: root, update, focusResource });
 }
