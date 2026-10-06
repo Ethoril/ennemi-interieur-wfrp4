@@ -86,8 +86,9 @@ export function talentRows(data, engine, careers = []) {
                     const key = talentKey(engine, nom);
                     if (!acquired.has(key) && !available.has(key)) {
                         available.set(key, {
-                            nom, label: engine?.resolveTalent?.(nom)?.displayedName || nom, count: 0, acquired: false, cost: talentXpCost(true),
-                            open: isOpenTalentSlot(nom),
+                            nom, label: engine?.resolveTalent?.(nom)?.displayedName || nom, count: 0, acquired: false, open: isOpenTalentSlot(nom),
+                            // Un emplacement à spécialité n'a pas de coût propre : il dépend du nom composé choisi (volet d'achat).
+                            cost: isOpenTalentSlot(nom) ? undefined : talentXpCost(true),
                         });
                     }
                 }

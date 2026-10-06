@@ -4,7 +4,7 @@
 - **Talents à alternatives** : choisir une option d’un talent de carrière du type « Sens aiguisé (Goût ou Toucher) » compte désormais comme talent de carrière, sur le bureau comme sur mobile : il coûte 100 XP au lieu de 200 et valide le talent du rang.
 - **Sorts et miracles (mobile)** : l’onglet Sorts de la fiche s’affiche aussi quand les sections Sorts ou Prières sont activées sur le bureau, même sans en posséder. Les boutons « Apprendre un sort » et « Apprendre un miracle » ouvrent une recherche dans le catalogue (sans accents, avec des puces de type pour les sorts) ; le choix mène au volet d’achat, avec la description et le coût du palier, comme sur le bureau.
 - **Nouvelles compétences (mobile)** : le bouton « Apprendre une compétence » de l’onglet Aptitudes permet d’acheter une première compétence avancée, même sans en posséder le groupe (une première Langue, par exemple). La recherche (sans accents) porte sur les compétences du référentiel publié ; les compétences de la carrière actuelle sont signalées et les groupes mènent au choix de la spécialité, ou à une saisie libre.
-- **En-tête mobile** : à très grande taille de texte (200 % sur un écran de 320 px), le nom du personnage passe à la ligne au lieu d’être tronqué et le bouton ⋯ ne chevauche plus le surtitre ; les boutons Retour et ⋯ restent de 44 px.
+- **En-tête mobile** : à très grande taille de texte (200 % sur un écran de 320 px), le nom du personnage passe à la ligne au lieu d’être tronqué et le bouton ⋯ ne chevauche plus le surtitre . Les boutons Retour et ⋯ font désormais 44 px sur tous les écrans, et les titres longs passent à la ligne au lieu d’être coupés.
 
 ## [2.32.0] - 2026-10-06
 

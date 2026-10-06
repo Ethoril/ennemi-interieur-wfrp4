@@ -98,7 +98,7 @@ test('talentRows : acquis avec prises, puis disponibles de la carrière non acqu
     const available = rows.filter(row => !row.acquired);
     const rank1 = careers.find(career => career.nom === 'Agitateur').rangs[0].talents;
     assert.ok(available.length > 0);
-    assert.ok(available.every(row => row.cost === 100 && row.count === 0));
+    assert.ok(available.every(row => row.cost === (row.open ? undefined : 100) && row.count === 0));
     assert.ok(available.every(row => rank1.includes(row.nom)) && !available.some(row => row.nom === 'Sociable'));
     assert.deepEqual(rows.map(row => row.acquired), [...rows.map(row => row.acquired)].sort((a, b) => b - a));
     assert.equal(talentTaken(d, engine, 'Sociable'), 2);
@@ -793,4 +793,36 @@ test('volet « Apprendre une compétence » : recherche, compétence unique, gro
     learn.element.allByClass('m-button').find(node => node.textContent === 'Choisir').click();
     assert.deepEqual(chosen.at(-1)[0], { kind: 'skill', newName: 'Langue (Gobelin)' });
     learn.destroy();
+});
+
+test('emplacements à spécialité : pas de coût en liste, mention « Spécialité à choisir »', () => {
+    const custom = [{ id: 'c1', nom: 'Test', rangs: [{ rang: 1, titre: 'T', statut: '', skills: [], talents: ['Sociable', 'Savant (Région)', 'Savoir-vivre (au choix)'] }] }];
+    const rows = talentRows(data({ carriere: 'Test' }), engine, custom);
+    assert.deepEqual(rows.map(row => [row.nom, row.cost]), [['Sociable', 100], ['Savant (Région)', undefined], ['Savoir-vivre (au choix)', undefined]]);
+    const panel = createAptitudesPanel({ documentRef: fakeDocument() });
+    panel.update({ data: data({ carriere: 'Test' }), careers: custom, engine });
+    panel.element.all().find(node => node.textContent === 'Talents' && node.tagName === 'button').click();
+    const sides = panel.element.allByClass('m-apt-side').map(node => node.children[0].textContent);
+    assert.deepEqual(sides, ['100 XP', 'Spécialité à choisir', 'Spécialité à choisir']);
+});
+
+test('spécialité libre bornée pour que « Base (spé) » tienne en 200 caractères ; choix gelés pendant une reprise', () => {
+    const documentRef = fakeDocument();
+    const state = { phase: 'ready', pendingOperationId: null, data: data({ carriere: 'Agitateur', rang: '4' }) };
+    const sheet = createPurchaseSheet({ documentRef, getContext: () => ({ state, careers, engine, online: true, controller: {} }) });
+    sheet.open({ kind: 'talent', nom: 'Savoir-vivre (au choix)' }, documentRef.createElement('button'));
+    const free = sheet.element.all().find(node => node.tagName === 'input');
+    assert.equal(free.getAttribute('maxlength'), String(200 - 'Savoir-vivre'.length - 3));
+    const chips = () => sheet.element.byClass('m-spec-choices').children;
+    assert.ok(chips().every(node => !node.disabled) && !free.disabled);
+    state.pendingOperationId = 'op-1';
+    sheet.update();
+    assert.ok(chips().every(node => node.disabled) && free.disabled);
+    sheet.destroy();
+
+    const setup = specialtySetup();
+    setup.section.update({ specialty: { kind: 'group', group: 'Langue', options: [{ nom: 'Langue (Tiléen)', spec: 'Tiléen' }] } });
+    assert.equal(setup.section.element.all().find(node => node.id === 'm-spec-free').getAttribute('maxlength'), String(200 - 'Langue'.length - 3));
+    setup.section.update({ specialty: { kind: 'group', group: 'Langue', options: [{ nom: 'Langue (Tiléen)', spec: 'Tiléen' }] } }, true);
+    assert.ok(setup.section.element.all().filter(node => node.tagName === 'button').every(node => node.disabled));
 });

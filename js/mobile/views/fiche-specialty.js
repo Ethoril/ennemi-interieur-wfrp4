@@ -127,7 +127,7 @@ export function createSpecialtySection({ documentRef, getContext, onChoose, anno
     save.addEventListener('click', () => { void saveBasic(); });
     input.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); void saveBasic(); } });
 
-    function update(target) {
+    function update(target, locked = false) {
         specialty = target?.specialty || null;
         root.hidden = !specialty;
         // Le bloc inactif quitte le DOM : un bouton caché ne doit pas compter dans le piège de focus du volet.
@@ -154,6 +154,7 @@ export function createSpecialtySection({ documentRef, getContext, onChoose, anno
         } else if (builtFor !== specialty.group) {
             builtFor = specialty.group;
             groupNote.textContent = '';
+            free.setAttribute('maxlength', String(Math.max(0, 200 - specialty.group.length - 3)));
             choices.replaceChildren(...specialty.options.map(({ nom, spec }) => {
                 const button = make(documentRef, 'button', spec, 'm-chip');
                 button.type = 'button';
@@ -161,6 +162,10 @@ export function createSpecialtySection({ documentRef, getContext, onChoose, anno
                 button.addEventListener('click', () => choose(nom));
                 return button;
             }));
+        }
+        if (specialty.kind === 'group') {
+            // Achat en attente de reprise : la commande est rejouée telle quelle, le choix ne peut plus changer.
+            for (const control of [toggle, free, freeGo, ...choices.children]) control.disabled = locked;
         }
     }
 

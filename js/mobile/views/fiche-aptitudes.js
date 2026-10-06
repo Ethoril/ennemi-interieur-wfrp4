@@ -221,8 +221,8 @@ export function createAptitudesPanel({ documentRef, onOpenSkill = () => {}, onOp
             const plural = row.count > 1 ? 's' : '';
             fillSide(node, {
                 name: row.label,
-                side: row.acquired ? `×${row.count}` : `${row.cost} XP`,
-                spoken: row.acquired ? `, ${row.count} prise${plural}` : `, ${row.cost} XP`,
+                side: row.acquired ? `×${row.count}` : row.open ? 'Spécialité à choisir' : `${row.cost} XP`,
+                spoken: row.acquired ? `, ${row.count} prise${plural}` : row.open ? ', spécialité à choisir' : `, ${row.cost} XP`,
             });
         }
         fill(acquiredGroup, 'Acquis', nodes.filter(node => node.row.acquired));

@@ -127,7 +127,7 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
     }
 
     // Les puces sont créées une fois par emplacement, puis seulement mises à jour (le focus reste sur la puce touchée).
-    function updateChoices(choice) {
+    function updateChoices(choice, locked = false) {
         nodes.picker.hidden = !choice;
         if (!choice) return;
         const chip = (label, onClick) => {
@@ -153,6 +153,11 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         });
         if (choice.free) nodes.pickChoices.children[choice.options.length].setAttribute('aria-pressed', String(customPick));
         nodes.pickFree.hidden = !(choice.free && customPick);
+        // `Base (spec)` doit tenir dans la limite du serveur (200 caractères).
+        nodes.pickFree.setAttribute('maxlength', String(Math.max(0, 200 - choice.base.length - 3)));
+        // Un achat en attente de reprise rejoue la commande telle quelle : l'aperçu ne doit plus pouvoir diverger.
+        nodes.pickFree.disabled = locked;
+        for (const button of nodes.pickChoices.children) button.disabled = locked;
     }
 
     const target = context => purchaseTarget(context.state?.data, context.engine, context.careers, spec);
@@ -194,9 +199,9 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
             : talent ? '' : `${current.baseLabel} ${current.baseValue} + ${current.adv} avances = ${current.total}`;
         nodes.formula.hidden = talent || magic;
         nodes.stepper.hidden = !counted;
-        nodes.specialty.update(current);
+        nodes.specialty.update(current, pending);
         nodes.talent.hidden = !talent && !magic;
-        updateChoices(current.choice);
+        updateChoices(current.choice, pending);
         if (talent || magic) {
             nodes.taken.textContent = magic || current.needsChoice ? '' : current.taken ? `Prises : ${current.taken}` : 'Pas encore acquis';
             const key = JSON.stringify(current.description);
