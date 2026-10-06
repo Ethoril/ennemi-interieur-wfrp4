@@ -1,6 +1,7 @@
 ## [2.32.1] - 2026-10-06
 
 - **Talents à choisir (mobile)** : les talents de carrière « au choix » (Savoir-vivre, Haine…) et ceux à alternatives (Sens aiguisé (Goût ou Toucher)) s’achètent désormais depuis la fiche sur téléphone. On choisit la spécialité dans le volet d’achat, ou on en saisit une autre pour les talents « au choix ». Les spécialités déjà acquises sont signalées.
+- **Sorts et miracles (mobile)** : l’onglet Sorts de la fiche s’affiche aussi quand les sections Sorts ou Prières sont activées sur le bureau, même sans en posséder. Les boutons « Apprendre un sort » et « Apprendre un miracle » ouvrent une recherche dans le catalogue (sans accents, avec des puces de type pour les sorts) ; le choix mène au volet d’achat, avec la description et le coût du palier, comme sur le bureau.
 
 ## [2.32.0] - 2026-10-06
 

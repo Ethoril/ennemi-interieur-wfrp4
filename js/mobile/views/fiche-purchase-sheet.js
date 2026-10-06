@@ -13,10 +13,10 @@ function make(documentRef, tag, text = '', className = '') {
 /**
  * Volet d'achat d'avances (caractéristique, compétence) ou de talent.
  * `getContext()` → { state (contrôleur), careers, engine, online, controller }.
- * open(spec, trigger) : spec = { kind: 'carac', key } | { kind: 'skill', ...ligne de skillRows } | { kind: 'talent', nom }
+ * open(spec, trigger) : spec = { kind: 'carac', key } | { kind: 'skill', ...ligne de skillRows } | { kind: 'talent', nom } | { kind: 'sort' | 'miracle', nom }
  * | { kind: 'rank', rankMode, careerId?, targetRank? } (rang suivant ou changement de carrière : une seule avance, sans stepper).
  * Une compétence à spécialités ajoute son bloc (champ de base, ou « Ajouter une spécialité » qui re-cible le volet) ;
- * un talent ajoute sa description publiée et son nombre de prises.
+ * un talent ajoute sa description publiée et son nombre de prises ; un sort ou un miracle sa description publiée et son palier de coût.
  * Le contenu est construit une fois par ouverture puis mis à jour sur place (le focus reste sur +/−).
  */
 export function createPurchaseSheet({ documentRef, getContext, announce = () => {} }) {
@@ -179,7 +179,9 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         }
         const talent = current.kind === 'talent';
         const rank = current.kind === 'rank';
-        const counted = !talent && !rank;
+        // Sort ou miracle : une seule prise, décrite comme un talent (paragraphes publiés), sans stepper.
+        const magic = current.kind === 'sort' || current.kind === 'miracle';
+        const counted = !talent && !rank && !magic;
         count = Math.min(count, current.maxCount);
         const balance = xpBalance(context.state.data).libre;
         const preview = purchasePreview(current, count, balance);
@@ -190,13 +192,13 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         nodes.total.hidden = !counted;
         nodes.formula.textContent = rank ? current.summary
             : talent ? '' : `${current.baseLabel} ${current.baseValue} + ${current.adv} avances = ${current.total}`;
-        nodes.formula.hidden = talent;
+        nodes.formula.hidden = talent || magic;
         nodes.stepper.hidden = !counted;
         nodes.specialty.update(current);
-        nodes.talent.hidden = !talent;
+        nodes.talent.hidden = !talent && !magic;
         updateChoices(current.choice);
-        if (talent) {
-            nodes.taken.textContent = current.needsChoice ? '' : current.taken ? `Prises : ${current.taken}` : 'Pas encore acquis';
+        if (talent || magic) {
+            nodes.taken.textContent = magic || current.needsChoice ? '' : current.taken ? `Prises : ${current.taken}` : 'Pas encore acquis';
             const key = JSON.stringify(current.description);
             if (shownDescription !== key) {
                 shownDescription = key;
@@ -207,11 +209,11 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         nodes.value.textContent = String(count);
         nodes.less.disabled = busy || count <= 1;
         nodes.more.disabled = busy || count >= current.maxCount;
-        nodes.newTotal.textContent = rank ? `Rang ${current.targetRank}` : talent ? 'Acquis' : String(preview.newTotal);
+        nodes.newTotal.textContent = rank ? `Rang ${current.targetRank}` : talent || magic ? 'Acquis' : String(preview.newTotal);
         nodes.cost.textContent = `${preview.cost} XP`;
         nodes.after.textContent = `${preview.after} XP`;
         nodes.after.className = preview.affordable ? '' : 'm-purchase-short';
-        nodes.tariff.textContent = rank ? (current.complete ? 'Rang achevé : 100 XP' : 'Rang non achevé : 200 XP')
+        nodes.tariff.textContent = magic ? current.tariff : rank ? (current.complete ? 'Rang achevé : 100 XP' : 'Rang non achevé : 200 XP')
             : current.inCareer ? 'Tarif carrière' : 'Hors carrière : coût doublé';
 
         const phase = context.state.phase;
@@ -246,6 +248,8 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         if (busy || !current) return;
         const message = current.kind === 'talent' ? `${current.title} : talent acheté`
             : current.kind === 'rank' ? `${current.summary} : achat enregistré`
+            : current.kind === 'sort' ? `${current.title} : sort appris`
+            : current.kind === 'miracle' ? `${current.title} : miracle appris`
             : `${current.title} : +${count} avance${count > 1 ? 's' : ''} achetée${count > 1 ? 's' : ''}`;
         busy = true;
         error = '';

@@ -1,6 +1,6 @@
 import { activeCareerRank, findCareerByName, getEffectiveTalents, getVariantsToConsider } from '../fiche/career-model.js';
 import { expandChoiceSkill, isOpenCareerSlot } from '../fiche/skill-names.js';
-import { talentXpCost } from '../fiche/xp.js';
+import { miracleXpCost, spellCategory, spellXpCost, talentXpCost } from '../fiche/xp.js';
 import { stripAccents } from '../utils.js';
 
 const fold = text => stripAccents(String(text ?? '')).toLowerCase();
@@ -97,7 +97,7 @@ export function talentRows(data, engine, careers = []) {
     return [...acquired.values(), ...available.values()];
 }
 
-/** Sorts puis miracles et prières possédés ; la ligne porte de quoi les consulter (aucun achat sur mobile). */
+/** Sorts puis miracles et prières possédés ; la ligne porte de quoi les consulter (l'apprentissage passe par learnRows). */
 export function spellRows(data) {
     const text = value => (value === undefined || value === null ? '' : String(value));
     const spells = (data?.sorts || []).map(row => ({
@@ -113,4 +113,52 @@ export function spellRows(data) {
     return { spells, prayers };
 }
 
-export const hasSpells = data => (data?.sorts?.length || 0) + (data?.prieres?.length || 0) > 0;
+/** Sections affichées : possédées, ou activées (mêmes réglages optVisible que les sections facultatives du bureau). */
+export const spellSections = data => ({
+    spells: (data?.sorts?.length || 0) > 0 || data?.optVisible?.['section-sorts'] === true,
+    prayers: (data?.prieres?.length || 0) > 0 || data?.optVisible?.['section-prieres'] === true,
+});
+
+export const hasSpells = data => Object.values(spellSections(data)).some(Boolean);
+
+// Même clé que le serveur (commands.js spellKey) : sans accents ni casse, apostrophes unifiées.
+const ruleKey = text => fold(text).replace(/[’']/gu, "'").trim();
+const shortType = type => String(type ?? '').split(/\s[-–]\s/u)[0].trim();
+
+/**
+ * Entrée du catalogue (engine.ruleCatalog) pour un sort ou un miracle, avec son coût d'achat calculé comme le serveur
+ * et le nombre de connus du même palier, ou null si le nom est absent, ambigu (le serveur refuse) ou déjà connu.
+ */
+export function learnable(engine, data, kind, nom) {
+    const prayer = kind === 'miracle';
+    const rules = engine?.ruleCatalog?.[prayer ? 'miracles' : 'spells'] || [];
+    const known = (prayer ? data?.prieres : data?.sorts) || [];
+    const matches = rules.filter(rule => ruleKey(rule?.nom) === ruleKey(nom));
+    if (matches.length !== 1 || known.some(row => ruleKey(row?.nom) === ruleKey(nom))) return null;
+    const [rule] = matches;
+    if (prayer) return { rule, cost: miracleXpCost(known), known: known.filter(row => row.type === 'Miracle' && row.nom?.trim()).length };
+    const owned = known.map(row => rules.find(item => ruleKey(item?.nom) === ruleKey(row.nom))).filter(Boolean);
+    const category = spellCategory(rule);
+    return { rule, cost: spellXpCost(rule, owned), known: owned.filter(item => spellCategory(item) === category).length };
+}
+
+/** Types de sorts du catalogue (libellé court), pour les puces de filtre. */
+export function spellTypes(engine) {
+    return [...new Set((engine?.ruleCatalog?.spells || []).map(rule => shortType(rule.type)))].sort((a, b) => a.localeCompare(b, 'fr'));
+}
+
+/**
+ * Sorts (ou miracles) du catalogue à apprendre, triés par type puis nom : recherche (chaque mot, sans accents ni casse, sur le nom
+ * et le type) et filtre `type` (libellé court). Ligne : { nom, type, ni, cost }.
+ */
+export function learnRows(engine, data, kind, { query = '', type = '' } = {}) {
+    const words = fold(query).split(/\s+/u).filter(Boolean);
+    const rules = engine?.ruleCatalog?.[kind === 'miracle' ? 'miracles' : 'spells'] || [];
+    return rules
+        .filter(rule => !type || shortType(rule.type) === type)
+        .filter(rule => words.every(word => fold(`${rule.nom} ${rule.type ?? ''}`).includes(word)))
+        .map(rule => ({ rule, found: learnable(engine, data, kind, rule.nom) }))
+        .filter(({ rule, found }) => found?.rule === rule)
+        .map(({ rule, found }) => ({ nom: rule.nom, type: rule.type ?? '', ni: Number(rule.cn ?? rule.ni), cost: found.cost }))
+        .sort((a, b) => a.type.localeCompare(b.type, 'fr') || a.nom.localeCompare(b.nom, 'fr'));
+}

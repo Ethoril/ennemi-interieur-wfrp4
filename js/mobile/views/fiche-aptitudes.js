@@ -1,5 +1,5 @@
 import { createBottomSheet } from '../components/bottom-sheet.js';
-import { filterSkills, hasSpells, sortSkills, spellRows, talentRows } from '../fiche-aptitudes-model.js';
+import { filterSkills, hasSpells, sortSkills, spellRows, spellSections, talentRows } from '../fiche-aptitudes-model.js';
 import { CARACS, skillRows } from '../fiche-model.js';
 
 const MODES = Object.freeze([['competences', 'Compétences'], ['talents', 'Talents'], ['sorts', 'Sorts']]);
@@ -22,11 +22,12 @@ function makeGroup(documentRef) {
 
 /**
  * Onglet Aptitudes : bascule Compétences · Talents · Sorts. Toucher une compétence ou un talent appelle
- * onOpenSkill(ligne, bouton) / onOpenTalent(nom, bouton) (volet d'achat) ; un sort ou une prière s'ouvre en consultation.
+ * onOpenSkill(ligne, bouton) / onOpenTalent(nom, bouton) (volet d'achat) ; un sort ou une prière possédé s'ouvre en consultation,
+ * « Apprendre un sort / un miracle » appelle onLearn('sort' | 'miracle', bouton).
  * La requête, les filtres et la bascule vivent dans la fermeture : ils survivent aux mises à jour et aux changements d'onglet.
  * Les lignes sont mises à jour sur place (même bouton) : le focus de la recherche et le bouton déclencheur du volet restent valides.
  */
-export function createAptitudesPanel({ documentRef, onOpenSkill = () => {}, onOpenTalent = () => {} }) {
+export function createAptitudesPanel({ documentRef, onOpenSkill = () => {}, onOpenTalent = () => {}, onLearn = () => {} }) {
     const root = make(documentRef, 'div', '', 'm-aptitudes');
     let mode = 'competences';
     const filters = { query: '', career: false, trained: false, carac: '' };
@@ -97,10 +98,19 @@ export function createAptitudesPanel({ documentRef, onOpenSkill = () => {}, onOp
     const noTalent = make(documentRef, 'p', 'Aucun talent acquis ni disponible dans la carrière.', 'm-principal-note');
     talentsPane.append(acquiredGroup.root, availableGroup.root, noTalent);
 
-    // Sorts et miracles : consultation seulement.
+    // Sorts et miracles : consultation des possédés, apprentissage par le volet de choix.
     const spellsPane = make(documentRef, 'div', '', 'm-apt-pane');
-    const spellGroup = makeGroup(documentRef);
-    const prayerGroup = makeGroup(documentRef);
+    const learnSection = (kind, noneText, learnText) => {
+        const group = makeGroup(documentRef);
+        const none = make(documentRef, 'p', noneText, 'm-principal-note');
+        const learn = make(documentRef, 'button', learnText, 'm-button');
+        learn.type = 'button';
+        learn.addEventListener('click', () => onLearn(kind, learn));
+        group.root.append(none, learn);
+        return { ...group, none };
+    };
+    const spellGroup = learnSection('sort', 'Aucun sort appris.', 'Apprendre un sort');
+    const prayerGroup = learnSection('miracle', 'Aucun miracle appris.', 'Apprendre un miracle');
     spellsPane.append(spellGroup.root, prayerGroup.root);
     const detail = createBottomSheet({ documentRef, labelledBy: 'm-apt-detail-title' });
 
@@ -246,8 +256,13 @@ export function createAptitudesPanel({ documentRef, onOpenSkill = () => {}, onOp
                 name: row.nom, sub: row.type, side: row.ni ? `NI ${row.ni}` : '', spoken: row.ni ? `, niveau d’incantation ${row.ni}` : '',
             });
         }
-        fill(spellGroup, 'Sorts', nodes.filter(node => !node.row.prayer));
-        fill(prayerGroup, 'Miracles et prières', nodes.filter(node => node.row.prayer));
+        const shown = spellSections(context.data);
+        for (const [group, title, on, own] of [[spellGroup, 'Sorts', shown.spells, nodes.filter(node => !node.row.prayer)],
+            [prayerGroup, 'Prières et miracles', shown.prayers, nodes.filter(node => node.row.prayer)]]) {
+            fill(group, title, own);
+            group.root.hidden = !on;
+            group.none.hidden = own.length > 0;
+        }
     }
 
     function render() {

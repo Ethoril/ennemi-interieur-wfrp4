@@ -6,7 +6,7 @@ import {
 import { caracTotal } from '../fiche/derived.js';
 import { canonicalSkillNom, sameSkill } from '../fiche/skill-names.js';
 import { CARAC_XP_BANDS, careerRankXpCost, SKILL_XP_BANDS, talentXpCost, xpBandCost } from '../fiche/xp.js';
-import { talentChoices, talentTaken } from './fiche-aptitudes-model.js';
+import { learnable, talentChoices, talentTaken } from './fiche-aptitudes-model.js';
 import { careerChangeBlock } from './fiche-career-model.js';
 import { basicLabel, basicSpecOptions, CARACS } from './fiche-model.js';
 
@@ -16,7 +16,7 @@ export const MAX_ADVANCES = 10;
  * Description affichable d'une cible d'achat, ou null si la ligne n'existe plus.
  * `careers` : js/data/careers.json ; `spec` : { kind: 'carac', key } | { kind: 'skill', ...ligne de skillRows }
  * | { kind: 'skill', newName } (compétence avancée choisie par son nom) | { kind: 'talent', nom, pick? } (`pick` : spécialité choisie d'un emplacement « au choix » ou « A ou B ») | { kind: 'rank', rankMode: 'advanceRank' }
- * | { kind: 'rank', rankMode: 'changeCareer', careerId, targetRank }. Le nom et `targetId` suivent ce que le serveur adresse (jamais le libellé affiché).
+ * | { kind: 'rank', rankMode: 'changeCareer', careerId, targetRank } | { kind: 'sort' | 'miracle', nom } (du catalogue, pas encore connu). Le nom et `targetId` suivent ce que le serveur adresse (jamais le libellé affiché).
  * ponytail: le « de carrière » rejoue les règles de commands.js ; le test d'accord avec le moteur
  * (tools/fiche-mobile-purchase.test.mjs) échoue si elles divergent.
  */
@@ -112,6 +112,21 @@ export function purchaseTarget(data, engine, careers, spec) {
         };
     }
 
+    if (spec.kind === 'sort' || spec.kind === 'miracle') {
+        // `cost` fixe (palier calculé comme le serveur) : pas de stepper, une seule prise.
+        const found = learnable(engine, data, spec.kind, spec.nom);
+        if (!found) return null;
+        const { rule } = found;
+        const prayer = spec.kind === 'miracle';
+        const facts = [prayer ? '' : `NI ${rule.cn ?? rule.ni}`, ...[['Portée', rule.portee], ['Cible', rule.cible], ['Durée', rule.duree]]
+            .filter(([, value]) => value).map(([label, value]) => `${label} : ${value}`)].filter(Boolean).join(' · ');
+        return {
+            kind: spec.kind, title: rule.nom, nature: prayer ? 'Miracle' : `Sort · ${rule.type}`, name: rule.nom, maxCount: 1, cost: found.cost,
+            tariff: prayer ? `Miracles déjà connus : ${found.known}` : `Sorts déjà connus de ce palier : ${found.known}`,
+            description: [facts, ...String((prayer ? rule.effet : rule.desc) ?? '').split('\n')].map(line => line.trim()).filter(Boolean),
+        };
+    }
+
     if (spec.kind === 'rank') {
         const change = spec.rankMode === 'changeCareer';
         const target = change ? (careers || []).find(({ id }) => id === spec.careerId) : career;
@@ -142,6 +157,7 @@ function groupSpecialty(resolver, group) {
 
 function costOf(target, count) {
     if (target.kind === 'rank') return careerRankXpCost(target.complete);
+    if (target.cost !== undefined) return target.cost;
     return target.kind === 'talent'
         ? talentXpCost(target.inCareer)
         : xpBandCost(target.bands, target.adv, count, target.inCareer);
@@ -151,7 +167,7 @@ function costOf(target, count) {
 export function purchasePreview(target, count, balance) {
     const cost = costOf(target, count);
     return {
-        cost, newTotal: target.kind === 'talent' || target.kind === 'rank' ? null : target.total + count,
+        cost, newTotal: target.total === undefined ? null : target.total + count,
         after: balance - cost, affordable: balance >= cost,
     };
 }
@@ -165,11 +181,11 @@ export function purchasePayload(target, count, engine) {
         };
     }
     if (target.needsChoice) throw new Error('Spécialité du talent à choisir avant l’achat');
-    const talent = target.kind === 'talent';
+    const single = target.kind === 'talent' || target.cost !== undefined;
     return {
         kind: target.kind, name: target.name,
         ...(target.targetId === undefined ? {} : { targetId: target.targetId }),
-        count: talent ? 1 : count, expectedCost: costOf(target, count), catalogVersion: engine.catalogVersion,
+        count: single ? 1 : count, expectedCost: costOf(target, count), catalogVersion: engine.catalogVersion,
     };
 }
 

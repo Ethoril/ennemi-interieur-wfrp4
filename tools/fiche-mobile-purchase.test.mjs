@@ -144,3 +144,63 @@ test('talent « A ou B » : seuls les choix listés sont acceptés, tarif identi
     // Le serveur tarife le nom composé : même résultat que l'aperçu, quel que soit le rattachement à la carrière.
     assertAgrees('sens aiguisé', artisan, { kind: 'talent', nom: slot, pick: 'Toucher' }, 1, picked.inCareer);
 });
+
+// Sorts (mineur, domaine avec palier) et miracle : l'aperçu égale le coût accepté par le moteur, le payload est exact.
+const unique = (rules, ok) => rules.filter(rule => ok(rule) && rules.filter(other => other.nom === rule.nom).length === 1);
+const spells = engine.ruleCatalog.spells;
+const petty = unique(spells, rule => /mineur|petite magie/iu.test(rule.type))[0];
+const aqshy = unique(spells, rule => rule.type.startsWith('Aqshy'));
+const asKnown = rule => ({ id: `k-${rule.nom}`, nom: rule.nom, vent: 'Aqshy', cn: rule.cn });
+
+test('sort mineur : coût 50 prévu = coût accepté, payload exact', () => {
+    const d = data('Agitateur');
+    const target = purchaseTarget(d, engine, careers, { kind: 'sort', nom: petty.nom });
+    assert.deepEqual([target.kind, target.name, target.maxCount, target.newTotal], ['sort', petty.nom, 1, undefined]);
+    assert.equal(purchasePreview(target, 1, 5000).newTotal, null);
+    const payload = purchasePayload(target, 1, engine);
+    assert.deepEqual(payload, { kind: 'sort', name: petty.nom, count: 1, expectedCost: 50, catalogVersion: engine.catalogVersion });
+    const applied = engine.applyCommand(globalThis.structuredClone(d), { type: 'purchase', operationId: 'op-petty', payload }, { uid: 'u', role: 'joueur' });
+    assert.equal(applied.result.cost, 50);
+    assert.equal(applied.data.sorts.at(-1).nom, petty.nom);
+    assert.equal(target.description[0].startsWith('NI '), true);
+});
+
+test('sort de domaine : palier selon les sorts connus du même domaine, mineurs exclus du décompte', () => {
+    const known = aqshy.slice(0, 6).map(asKnown);
+    for (const [label, sorts, expected] of [['aucun connu', [], 100], ['six connus', known, 200], ['six connus + un mineur', [...known, asKnown(petty)], 200]]) {
+        const d = data('Agitateur', { sorts });
+        const target = purchaseTarget(d, engine, careers, { kind: 'sort', nom: aqshy[6].nom });
+        assert.equal(target.cost, expected, label);
+        const payload = purchasePayload(target, 1, engine);
+        const applied = engine.applyCommand(globalThis.structuredClone(d), { type: 'purchase', operationId: `op-${label.length}`, payload }, { uid: 'u', role: 'joueur' });
+        assert.equal(applied.result.cost, purchasePreview(target, 1, 5000).cost, label);
+        assert.equal(applied.result.cost, expected, label);
+    }
+});
+
+test('miracle : coût prévu = coût accepté, les bénédictions ne comptent pas', () => {
+    const [miracle, second] = engine.ruleCatalog.miracles;
+    const prieres = Array.from({ length: 6 }, (_, index) => ({ id: `m${index}`, nom: `Miracle ${index}`, type: 'Miracle' }));
+    for (const [label, extra, expected] of [['aucun', [], 100], ['six miracles', prieres, 200],
+        ['six miracles + bénédictions', [...prieres, ...Array.from({ length: 5 }, (_, index) => ({ id: `b${index}`, nom: `Bénédiction ${index}`, type: 'Bénédiction' }))], 200]]) {
+        const d = data('Agitateur', { prieres: extra });
+        const target = purchaseTarget(d, engine, careers, { kind: 'miracle', nom: miracle.nom });
+        const payload = purchasePayload(target, 1, engine);
+        assert.deepEqual(payload, { kind: 'miracle', name: miracle.nom, count: 1, expectedCost: expected, catalogVersion: engine.catalogVersion });
+        const applied = engine.applyCommand(globalThis.structuredClone(d), { type: 'purchase', operationId: `op-m${expected}${extra.length}`, payload }, { uid: 'u', role: 'joueur' });
+        assert.equal(applied.result.cost, purchasePreview(target, 1, 5000).cost, label);
+        assert.equal(applied.result.cost, expected, label);
+    }
+    assert.ok(second);
+});
+
+test('sort ou miracle : introuvable, ambigu ou déjà connu = pas de cible', () => {
+    const d = data('Agitateur');
+    const ambiguous = spells.find(rule => spells.filter(other => other.nom === rule.nom).length > 1);
+    assert.ok(ambiguous);
+    assert.equal(purchaseTarget(d, engine, careers, { kind: 'sort', nom: ambiguous.nom }), null);
+    assert.equal(purchaseTarget(d, engine, careers, { kind: 'sort', nom: 'Inconnu' }), null);
+    assert.equal(purchaseTarget(d, engine, careers, { kind: 'miracle', nom: petty.nom }), null);
+    const owned = data('Agitateur', { sorts: [asKnown(petty)] });
+    assert.equal(purchaseTarget(owned, engine, careers, { kind: 'sort', nom: petty.nom.toUpperCase() }), null);
+});
