@@ -186,3 +186,19 @@ export function purchaseErrorMessage(error) {
         return 'Achat impossible pour le moment. Réessayez.';
     }
 }
+
+/** Message français pour une erreur d'annulation (mêmes codes que purchaseErrorMessage, plus la règle du dernier achat). */
+export function cancelErrorMessage(error) {
+    switch (error?.details?.kind || error?.code) {
+    case 'purchase-not-reversible':
+        return 'Cet achat ne peut plus être annulé.';
+    case 'permission-denied':
+        return 'Vous ne pouvez annuler que votre dernier achat.';
+    case 'unavailable': case 'deadline-exceeded': case 'internal': case 'unknown':
+        return 'Réponse du serveur incertaine : l’annulation n’est peut-être pas enregistrée. Utilisez Réessayer.';
+    case 'conflict': case 'aborted':
+        return purchaseErrorMessage(error);
+    default:
+        return 'Annulation impossible pour le moment. Réessayez.';
+    }
+}

@@ -437,3 +437,41 @@
   padding-top: calc(var(--space-md) + var(--m-safe-top, 0px));
   padding-bottom: calc(var(--space-md) + var(--m-safe-bottom, 0px));
 }
+
+/* Onglet Journal : expérience et possessions. La bascule et les chiffres réutilisent .m-apt-switch et .m-purchase-figures. */
+.m-journal,
+.m-journal-pane { display: grid; gap: var(--space-sm); }
+.m-journal-pane[hidden],
+.m-journal-conflict[hidden] { display: none; }
+
+.m-journal-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space-md);
+  min-height: 3.5rem;
+  padding: var(--space-xs) var(--space-md);
+}
+
+.m-journal-text { flex: 1 1 0; min-width: 0; display: grid; }
+.m-journal-label { overflow-wrap: anywhere; }
+.m-journal-nature { color: var(--text-secondary); font-size: 0.875rem; }
+.m-journal-amount { color: var(--text-primary); font-family: var(--font-heading); font-size: 1.125rem; font-weight: 700; }
+.m-journal-amount.m-journal-gain { color: var(--statut-allie); }
+.m-journal-cancelled .m-journal-label,
+.m-journal-cancelled .m-journal-amount { color: var(--text-secondary); text-decoration: line-through; }
+
+.m-journal-cancel {
+  flex: 1 0 100%;
+  min-height: var(--m-touch-target);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.9375rem;
+  text-align: right;
+  text-decoration: underline;
+  background: transparent;
+  border: 0;
+}
+
+.m-journal-cancel:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: -2px; }
+.m-journal-conflict { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }

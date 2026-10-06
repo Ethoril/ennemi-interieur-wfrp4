@@ -2,12 +2,16 @@ import { createFicheController } from '../../fiche-controller.js';
 import { createFicheDraftStore } from '../../fiche-draft-store.js';
 import { xpBalance } from '../../fiche/derived.js';
 import { createCareerViewer } from '../../fiche/career-viewer.js';
+import { buildFicheExport, ficheExportFilename, parseFicheImport } from '../../fiche/export-import.js';
 import { ficheIdentity } from '../fiche-model.js';
 import { createAptitudesPanel } from './fiche-aptitudes.js';
+import { createCancelSheet } from './fiche-cancel-sheet.js';
 import { createCareerChangeSheet } from './fiche-career-change.js';
 import { createCareerPanel } from './fiche-carriere.js';
+import { createJournalPanel } from './fiche-journal.js';
 import { createPrincipalPanel } from './fiche-principal.js';
 import { createPurchaseSheet } from './fiche-purchase-sheet.js';
+import { createImportSheet, downloadJson } from './fiche-transfer.js';
 import { parseRoute, routeToHash, ROUTE_NAMES } from '../router.js';
 import { createDialogController, renderState } from '../ui.js';
 
@@ -92,15 +96,41 @@ export function createFicheDetailView({
         close.addEventListener('click', () => menu.close());
         heading.append(title, close);
         const exportButton = make(documentRef, 'button', 'Exporter la fiche', 'm-button');
-        const note = make(documentRef, 'p', 'L’export et l’import arrivent bientôt.', 'm-fiche-menu-note');
-        for (const button of [exportButton, importButton]) {
-            button.type = 'button';
-            button.disabled = true;
-        }
+        const note = make(documentRef, 'p', '', 'm-fiche-menu-note');
+        note.setAttribute('role', 'status');
+        const fileInput = make(documentRef, 'input');
+        fileInput.type = 'file';
+        fileInput.accept = '.json,application/json';
+        fileInput.hidden = true;
+        for (const button of [exportButton, importButton]) button.type = 'button';
         importButton.hidden = true;
+        exportButton.addEventListener('click', () => {
+            const data = controllerState?.data;
+            if (!data) return;
+            const exportedAt = new Date().toISOString();
+            downloadJson(documentRef, ficheExportFilename(charId, exportedAt), JSON.stringify(
+                buildFicheExport(data, { charId, appVersion: 'mobile', exportedAt }), null, 2));
+            note.textContent = 'Fiche exportée.';
+        });
+        importButton.addEventListener('click', () => { note.textContent = ''; fileInput.value = ''; fileInput.click(); });
+        fileInput.addEventListener('change', async () => {
+            const chosen = fileInput.files?.[0];
+            if (!chosen) return;
+            let text = '';
+            try { text = await chosen.text(); } catch { /* lecture impossible : traité comme un fichier illisible */ }
+            const parsed = parseFicheImport(text);
+            if (parsed.error) {
+                note.textContent = parsed.error === 'format'
+                    ? 'Ce fichier n’est pas un export de fiche de personnage.'
+                    : 'Fichier illisible : ce n’est pas un JSON valide.';
+                return;
+            }
+            menu.close();
+            importSheet.open({ fileName: chosen.name, data: parsed.data }, importButton);
+        });
         const legacy = make(documentRef, 'a', 'Ancienne fiche', 'm-button');
         legacy.href = `../fiche.html?char=${encodeURIComponent(charId)}&return=mobile`;
-        card.append(heading, exportButton, importButton, note, legacy);
+        card.append(heading, exportButton, importButton, fileInput, note, legacy);
         menuDialog.append(card);
         menuDialog.addEventListener('cancel', event => { event.preventDefault(); menu.close(); });
         // Un clic sur le fond (le <dialog> lui-même) ferme, comme les autres feuilles de l'application.
@@ -120,6 +150,14 @@ export function createFicheDetailView({
         documentRef,
         getContext: () => ({ state: controllerState, careers: catalogue?.careers, engine: catalogue?.getEngine() }),
         onChoose: (spec, trigger) => purchase.open(spec, trigger),
+    });
+
+    const ficheContext = () => ({ state: controllerState, engine: catalogue?.getEngine(), online, controller, charId });
+    const cancel = createCancelSheet({ documentRef, announce, getContext: ficheContext });
+    const importSheet = createImportSheet({ documentRef, announce, getContext: ficheContext });
+    // Un seul panneau pour toute la vie de la vue : la saisie des notes survit aux reconstructions de la coque.
+    const journal = createJournalPanel({
+        documentRef, getContext: ficheContext, onCancel: (purchaseId, trigger) => cancel.open(purchaseId, trigger),
     });
 
     // La visionneuse de carrière existante, réduite à sa modale plein écran ; créée à la première ouverture.
@@ -161,12 +199,15 @@ export function createFicheDetailView({
             menu.close();
             purchase.close();
             careerChange.close();
+            cancel.close();
+            importSheet.close();
             closeCareerViewer();
             aptitudes.closeDetail();
             shownKey = key;
             shell = null;
             build();
-            container.append(menuDialog, purchase.element, aptitudes.detailElement, careerChange.element, viewerHost);
+            container.append(menuDialog, purchase.element, aptitudes.detailElement, careerChange.element, cancel.element,
+                importSheet.element, viewerHost);
         }
     };
     const showState = (key, options) => present(`state:${key}`, () => renderState(container, options));
@@ -187,8 +228,11 @@ export function createFicheDetailView({
         updatePrincipal();
         updateAptitudes();
         updateCareer();
+        updateJournal();
         careerChange.update();
         purchase.update();
+        cancel.update();
+        importSheet.update();
     };
 
     const updatePrincipal = () => {
@@ -207,6 +251,11 @@ export function createFicheDetailView({
         shell.career.update({ data: controllerState.data, careers: catalogue?.careers, engine: catalogue?.getEngine() });
     };
 
+    const updateJournal = () => {
+        if (!shell || tab !== 'journal' || !controllerState?.data) return;
+        journal.update();
+    };
+
     const updatePanel = () => {
         if (!shell) return;
         shell.panelTitle.textContent = tabLabel(tab);
@@ -214,13 +263,14 @@ export function createFicheDetailView({
         shell.principal.element.hidden = tab !== 'principal';
         aptitudes.element.hidden = tab !== 'aptitudes';
         shell.career.element.hidden = tab !== 'carriere';
-        shell.soon.hidden = tab !== 'journal';
+        journal.element.hidden = tab !== 'journal';
         for (const [key, link] of shell.links) {
             if (key === tab) link.setAttribute('aria-current', 'page');
             else link.removeAttribute('aria-current');
         }
         updateAptitudes();
         updateCareer();
+        updateJournal();
     };
 
     const buildShell = () => {
@@ -238,7 +288,6 @@ export function createFicheDetailView({
         notice.hidden = true;
         const panel = make(documentRef, 'section', '', 'm-fiche-panel');
         const panelTitle = make(documentRef, 'h2');
-        const soon = make(documentRef, 'p', 'Bientôt disponible.', 'm-fiche-soon');
         const principal = createPrincipalPanel({
             documentRef, aptitudesHref: tabHref('aptitudes'),
             onOpenCarac: (key, trigger) => purchase.open({ kind: 'carac', key }, trigger),
@@ -249,7 +298,7 @@ export function createFicheDetailView({
             onChangeCareer: trigger => careerChange.open(trigger),
             onOpenAll: openCareerViewer,
         });
-        panel.append(panelTitle, principal.element, aptitudes.element, career.element, soon);
+        panel.append(panelTitle, principal.element, aptitudes.element, career.element, journal.element);
         const nav = make(documentRef, 'nav', '', 'm-fiche-tabs');
         nav.setAttribute('aria-label', 'Sections de la fiche');
         const links = new Map();
@@ -262,7 +311,7 @@ export function createFicheDetailView({
         }
         root.append(strip, notice, panel, nav);
         container.append(root);
-        shell = { identity: identityLine, xp, xpValue, notice, panelTitle, principal, career, soon, links };
+        shell = { identity: identityLine, xp, xpValue, notice, panelTitle, principal, career, links };
         updateShell();
         updatePanel();
     };
@@ -415,7 +464,8 @@ export function createFicheDetailView({
     const onOnline = () => {
         online = true;
         updateShell();
-        if (controller?.getState().hasDraft) void Promise.resolve(controller.submitPatch()).catch(() => {});
+        // Les notes saisies hors ligne partent au retour du réseau ; un envoi resté incertain est rejoué.
+        if (controller?.getState().hasDraft) void journal.save();
     };
     const onOffline = () => { online = false; updateShell(); };
 
@@ -435,8 +485,13 @@ export function createFicheDetailView({
         menu.close();
         purchase.close();
         careerChange.close();
+        cancel.close();
+        importSheet.close();
         closeCareerViewer();
         aptitudes.closeDetail();
+        // Une note encore en attente de la pause de saisie est envoyée avant de fermer la session.
+        void journal.save();
+        journal.destroy();
         controller?.close();
         abortSignal?.removeEventListener?.('abort', unmount);
         abortSignal = null;

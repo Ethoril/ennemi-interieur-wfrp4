@@ -121,3 +121,36 @@ export function topSkills(data, engine, n) {
     const untrained = rows.filter(row => row.adv === 0).sort(byTotal);
     return [...trained, ...untrained].slice(0, n);
 }
+
+/**
+ * Lignes du journal d'XP, la plus récente d'abord : { key, label, nature, amount (signé : gain +, dépense −), cancelled, purchaseId }.
+ * `purchaseId` n'est renseigné que sur le dernier achat annulable de `uid` (même règle que le serveur : son dernier achat
+ * non annulé). L'entrée technique `cancel` n'a pas de ligne : le remboursement (nature « Annulation ») porte l'information.
+ * Les entrées historiques sans `kind` sont des achats.
+ */
+export function xpLogRows(data, engine, uid) {
+    const log = Array.isArray(data?.xpLog) ? data.xpLog : [];
+    const latest = log.findLast(entry => entry?.kind === 'purchase' && entry.origin === 'command'
+        && entry.actorUid === uid && !entry.cancelledByOperationId);
+    const rows = [];
+    log.forEach((entry, index) => {
+        if (!entry || entry.kind === 'cancel') return;
+        const key = String(entry.id ?? `log-${index}`);
+        if (entry.kind === 'gain') {
+            rows.push({
+                key, label: String(entry.raison ?? ''), amount: +entry.montant || 0, cancelled: false, purchaseId: '',
+                nature: entry.cancelledPurchaseId ? 'Annulation' : entry.correction ? 'Correction MJ' : 'Gain',
+            });
+            return;
+        }
+        const skill = entry.type === 'Compétence' && !entry.achat && entry.targetNom;
+        const correction = entry.kind === 'correction';
+        rows.push({
+            key, label: String(entry.achat || (skill ? primarySkillLabel(engine?.skillResolver, entry.targetNom) : entry.targetNom) || ''),
+            nature: correction ? 'Correction MJ' : `Achat · ${entry.type || 'Autre'}`,
+            amount: -(+entry.cout || 0) || 0, cancelled: !!entry.cancelledByOperationId,
+            purchaseId: entry === latest && typeof entry.purchaseId === 'string' && Array.isArray(entry.effects) ? entry.purchaseId : '',
+        });
+    });
+    return rows.reverse();
+}
