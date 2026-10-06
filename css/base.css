@@ -6,6 +6,11 @@
 /* ── CSS Variables ─────────────────────────────── */
 :root {
   /* Colors */
+  --document-paper: #e6d7b5;
+  --document-ink: #2a2116;
+  --document-ink-muted: #6b5a3e;
+  --viewer-ground: #07070d;
+  --viewer-text: #e8dcc8;
   --bg-darkest: #07070d;
   --bg-dark: #0e0e18;
   --bg-card: #141422;

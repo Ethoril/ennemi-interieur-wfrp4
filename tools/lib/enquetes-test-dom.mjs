@@ -2,6 +2,7 @@ export class Element {
   constructor(d,tag){this.ownerDocument=d;this.tagName=tag;this.children=[];this.listeners=new Map();this.attributes={};this.className='';this.textContent='';this.value='';this.style={};this.selectionStart=0;this.selectionEnd=0;this.classList={add:value=>{this.className+=' '+value;}};}
   get firstChild(){return this.children[0];}get options(){return this.children;}get selectedOptions(){return this.options.filter(v=>v.selected);}
   append(...children){for(const c of children){c.remove?.();c.parentNode=this;this.children.push(c);}}
+  prepend(...children){this.children.unshift(...children);for(const c of children)c.parentNode=this;}
   replaceChildren(...children){for(const c of this.children)c.parentNode=null;this.children=[];this.append(...children);}
   remove(){if(this.parentNode){this.parentNode.children=this.parentNode.children.filter(c=>c!==this);this.parentNode=null;}}
   setAttribute(k,v){this.attributes[k]=String(v);}getAttribute(k){return this.attributes[k]??null;}

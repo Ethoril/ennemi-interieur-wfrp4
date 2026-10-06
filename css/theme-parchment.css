@@ -5,6 +5,11 @@
 
 [data-theme="parchment"] {
   /* Fonds — palette parchemin/papier vieilli */
+  --document-paper: #e6d7b5;
+  --document-ink: #2a2116;
+  --document-ink-muted: #6b5a3e;
+  --viewer-ground: #07070d;
+  --viewer-text: #e8dcc8;
   --bg-darkest:    #D4C9AB;
   --bg-dark:       #E7DAC1;
   --bg-card:       #f2e8d5;

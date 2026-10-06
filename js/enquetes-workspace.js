@@ -1,4 +1,5 @@
-import { buildLinksIndex, countSpaces, countStates, dossierSummary, dossierPieces, linkedNotes } from './enquetes-view-model.js';
+import { createActionMenu } from './enquetes-menu.js';
+import { buildLinksIndex, countSpaces, countStates, dossierSummary, dossierPieces, dossierPnjs, dossierTimeline, linkedNotes } from './enquetes-view-model.js';
 import { selectEnqueteExport } from './data/enquetes-export.js';
 import { recordTitle, buildSearch, fold } from './data/enquetes-domain.js';
 export function createEnqueteWorkspaceView({container,id=null,initialAction=null,loadRuntime=()=>import('./enquetes-runtime.js'),onOpen=()=>{},onOpenPnj=()=>{},layout='desktop'}={}) {
@@ -8,12 +9,13 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   const node=(tag,text='',className='')=>{const e=d.createElement(tag);e.textContent=text;e.className=className;return e;};
   const button=(label,action,variant='')=>{const b=node('button',label,'enq-button'+(variant?' enq-button--'+variant:''));b.type='button';b.addEventListener('click',()=>Promise.resolve(action()).catch(showError));return b;};
   let root,toolbar,list,detail,status,searchInput,notebook;
+  let dossierTab='dossier',menus=[];
   const current=()=>state.records.find(r=>r.id===selected)||state.pnjs.find(r=>r.id===selected);
   const all=()=>[...state.records,...state.pnjs];
   const isGm=()=>state.session?.role==='mj';
   const canEdit=r=>r.authorUid===state.session?.uid||isGm()&&!r.zone?.startsWith('user:');
   const showError=error=>{if(mounted)status.textContent=error?.message||'Opération impossible';};
-  const release=()=>{handles.splice(0).forEach(h=>h.release());graph?.stop?.();graph=null;};
+  const release=()=>{menus.splice(0).forEach(menu=>menu.close(false));handles.splice(0).forEach(h=>h.release());graph?.stop?.();graph=null;};
   const linkedIds=target=>new Set([target,...(linksIndex.get(target)||[])]);
   function textView(text){
     const box=node('div','','enq-text');let list=null;
@@ -146,6 +148,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     if(section==='trash'){return;}
     if(!r){detail.append(node('h3','Choisis un dossier ou une pièce'),node('p','Les documents peuvent appartenir à plusieurs enquêtes. Les notes restent dans ton carnet.'));return;}
     if(r.type==='pnjs'){detail.append(node('h3',r.nom),button('Ajouter une note',()=>openEditor(null,'notes',r)),button('Ajouter un document lié',()=>openEditor(null,'documents',r)));renderLinks(r);return;}
+    if(r.type==='enquetes'){renderDossier(r,viewToken);return;}
     detail.append(node('h3',recordTitle(r)));
     const actions=node('div','','enq-actions');
     if(canEdit(r))actions.append(button('Modifier',()=>openEditor(r,r.type)),button('Mettre en corbeille',()=>performAction(r,'trash'),'danger'));
@@ -193,11 +196,6 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
         }
       }catch(error){if(viewToken===token)gallery.append(node('p',error.message));}
     }
-    if(r.type==='enquetes'){
-      renderRelated(r);renderTimeline(r);
-      const graphHost=node('div','','enq-graph');detail.append(button('Afficher le graphe personnel',()=>showGraph(r,graphHost)),graphHost);
-      if(isGm())detail.append(button('Ordonner les documents',()=>orderDocuments(r)));
-    }
     if(canEdit(r)&&!r.zone.startsWith('user:'))detail.append(button('Voir l’historique',async()=>{const history=await client.read('history',r.id);if(viewToken!==token)return;const h=node('div');for(const event of history.items)h.append(node('p',event.action+' · révision '+event.revision));detail.append(h);}));
   }
   function renderLinks(r){
@@ -207,23 +205,64 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     box.append(button('Ajouter un lien',()=>openLinkEditor(r)));
     detail.append(box);
   }
-  function renderRelated(r){
-    const ids=linkedIds(r.id),docs=dossierPieces(r,state.records,linksIndex).map(p=>p.record);
-    const box=node('section');box.append(node('h4','Pièces du dossier'));
-    for(const doc of docs)box.append(button(recordTitle(doc),()=>openObject(doc)));
-    if(!docs.length)box.append(node('p','Aucune pièce liée.'));box.append(button('Ajouter un document au dossier',()=>openEditor(null,'documents',r)));detail.append(box);
-    const notes=linkedNotes(r,state.records,linksIndex),privateBox=node('section');privateBox.append(node('h4','Mes notes'));
-    for(const note of notes)privateBox.append(button(recordTitle(note),()=>openObject(note)));detail.append(privateBox);
-    const relations=state.records.filter(v=>v.type==='relations'&&ids.has(v.a)&&ids.has(v.b));const relationBox=node('section');relationBox.append(node('h4','Relations entre pièces'));
-    for(const relation of relations){const a=all().find(v=>v.id===relation.a),b=all().find(v=>v.id===relation.b);relationBox.append(node('p',`${a?recordTitle(a):'Pièce indisponible'} — ${relation.nature} — ${b?recordTitle(b):'Pièce indisponible'} : ${relation.texte||''}`));if(canEdit(relation))relationBox.append(button('Modifier la relation',()=>openEditor(relation,'relations')));}
-    relationBox.append(button('Ajouter une relation',()=>openEditor(null,'relations',r)));detail.append(relationBox);
+  function actionMenu(label,items){
+    const menu=createActionMenu({documentRef:d,label,items:items.map(item=>({...item,action:()=>Promise.resolve().then(item.action).catch(showError)}))});menus.push(menu);return menu;
+  }
+  function audienceLabel(r){return r.zone==='mj'?'secret MJ':r.zone?.startsWith('user:')?'personnel':'visible du groupe';}
+  function objectActions(r,viewToken){
+    const items=[{label:'Modifier',hidden:!canEdit(r),action:()=>openEditor(r,r.type)},
+      {label:'Relier un objet',action:()=>openLinkEditor(r)}, {label:'Exporter',action:()=>exportSpace(r)},
+      {label:'Voir l’historique',hidden:!canEdit(r)||r.zone.startsWith('user:'),action:async()=>{const history=await client.read('history',r.id);if(viewToken!==token)return;const dialog=node('dialog');dialog.setAttribute('aria-label','Historique');for(const event of history.items)dialog.append(node('p',event.action+' · révision '+event.revision));dialog.append(button('Fermer',()=>{dialog.close();dialog.remove();}));root.append(dialog);dialog.showModal();}},
+      {label:'Mettre en corbeille',hidden:!canEdit(r),variant:'danger',action:()=>performAction(r,'trash')}];
+    if(canEdit(r)&&r.type==='documents'){
+      if(r.zone.startsWith('user:'))items.push({label:'Publier dans le groupe',action:()=>performAction(r,'visibility','commun')});
+      if(isGm()&&!r.zone.startsWith('user:'))items.push({label:r.zone==='commun'?'Rendre secret':'Publier',action:()=>performAction(r,'visibility',r.zone==='commun'?'mj':'commun')});
+      if(isGm()&&r.zone==='commun'&&r.authorUid!==state.session.uid)items.push({label:'Masquer chez son auteur',action:()=>performAction(r,'visibility','user:'+r.authorUid)});
+    }
+    if(r.type==='enquetes'){
+      items.push({label:'Ajouter une relation',action:()=>openEditor(null,'relations',r)});
+      if(isGm())items.push({label:'Ordonner les pièces',action:()=>orderDocuments(r)},{label:r.zone==='commun'?'Rendre secret':'Publier',action:()=>performAction(r,'visibility',r.zone==='commun'?'mj':'commun')});
+    }
+    if(r.type==='notes')items.push({label:'Partager une copie',action:()=>openEditor(null,'documents',r,{titre:recordTitle(r),texte:r.texte,origine:'contribution',shareNote:r,zone:'commun'})});return items;
+  }
+  function renderDossier(r,viewToken){
+    const header=node('header','','enq-dossier-header'),seal=node('div','','enq-seal enq-seal--'+({'En pause':'paused','Résolue':'solved'}[r.etat]||'open'));
+    seal.setAttribute('role','img');seal.setAttribute('aria-label','État : '+(r.etat||'Ouverte'));seal.append(node('span',(r.etat||'Ouverte').toUpperCase()));
+    const title=node('div');title.append(node('p','Dossier d’enquête · '+audienceLabel(r)+(r.archive?' · Archivée':''),'enq-eyebrow'),node('h3',recordTitle(r)));
+    if(r.question)title.append(node('p','« '+r.question+' »','enq-question'));if(r.description)title.append(node('p',r.description));const tags=node('div');for(const tag of r.etiquettes||[])tags.append(node('span','#'+tag,'enq-badge'));title.append(tags);header.append(seal,title);detail.append(header);
+    const actions=node('div','','enq-actions');actions.append(tabs([['dossier','Dossier'],['graph','Tableau des liens']],dossierTab,value=>{dossierTab=value;renderDetail();},'Vue du dossier'),button('Ajouter une pièce',()=>openEditor(null,'documents',r),'primary'),actionMenu('Actions du dossier',objectActions(r,viewToken)).element);detail.append(actions);
+    if(dossierTab==='graph'){const host=node('div','','enq-graph');detail.append(host);showGraph(r,host).catch(showError);return;}
+    if(r.etat==='Résolue'&&r.conclusion){const conclusion=node('section','','enq-conclusion');conclusion.append(node('h4','Conclusion'),textView(r.conclusion));detail.append(conclusion);}
+    detail.append(renderPieces(r,viewToken));const lower=node('div','','enq-dossier-lower');lower.append(renderCast(r),renderTimeline(r));detail.append(lower);
+    const others=state.records.filter(v=>v.type==='enquetes'&&v.id!==r.id&&linkedIds(r.id).has(v.id));if(others.length){const box=node('div','Dossiers liés : ');for(const other of others)box.append(button(recordTitle(other),()=>openObject(other),'quiet'));detail.append(box);}
+  }
+  function renderPieces(r,viewToken){
+    const box=node('section','','enq-pieces');box.append(node('h4','Pièces du dossier','enq-section-title'));if(r.ordre?.length)box.append(node('small','Ordre fixé par le MJ'));const grid=node('div','','enq-slips');
+    for(const {record:doc,numero,relations} of dossierPieces(r,state.records,linksIndex)){
+      const slip=button('',()=>openObject(doc));slip.className='enq-slip enq-slip--'+(numero%3);const top=node('span','','enq-slip-top');top.append(node('span','PIÈCE N° '+numero,'enq-slip-number'),node('span',doc.categorie||''));slip.append(top,node('strong',recordTitle(doc),'enq-slip-title'),node('span',doc.description||doc.texte||'','enq-slip-excerpt'));
+      const annotations=state.records.filter(a=>a.type==='annotations'&&a.document===doc.id).length;slip.append(node('small',(doc.files?.length||0)+' fichier(s) · '+annotations+' annotation(s)'));if(doc.origine==='contribution')slip.append(node('small','Contribution'+(doc.authorName?' · '+doc.authorName:'')));
+      for(const relation of relations)slip.append(node('span',relation.nature+' la pièce n° '+relation.autreNumero,'enq-relation enq-relation--'+({'Appuie':'supports','Contredit':'opposes'}[relation.nature]||'neutral')));if(doc.zone!==r.zone)slip.append(node('span',audienceLabel(doc),'enq-badge'));grid.append(slip);if(doc.files?.length)loadSlipImage(doc,slip,viewToken).catch(showError);
+    }
+    const add=button('Verser une pièce',()=>openEditor(null,'documents',r));add.className='enq-slip-add';grid.append(add);box.append(grid);return box;
+  }
+  async function loadSlipImage(doc,slip,viewToken){
+    const files=await client.read('files',doc.id);if(viewToken!==token||!mounted)return;const first=files.items.find(f=>f.id===doc.files[0]);if(!first?.contentType.startsWith('image/'))return;
+    const h=await client.objectUrl(first);if(viewToken!==token||!mounted){h.release();return;}handles.push(h);const image=node('img');image.src=h.url;image.alt='';image.loading='lazy';image.className='enq-slip-thumbnail';slip.append(image);
+  }
+  function renderCast(r){
+    const box=node('section','','enq-cast');box.append(node('h4','Personnages','enq-section-title'));
+    for(const {pnj,role,lien}of dossierPnjs(r,state.records,state.pnjs)){
+      const row=node('div','','enq-cast-card'),open=button('',()=>onOpenPnj(pnj.id),'quiet'),portrait=node('span',pnj.nom.split(/\s+/u).map(v=>v[0]).slice(0,2).join(''),'enq-medallion');
+      if(pnj.imageUrl?.startsWith('https://')){const image=node('img');image.src=pnj.imageUrl;image.alt='';portrait.replaceChildren(image);}const text=node('span');text.append(node('strong',pnj.nom),node('span',role,role==='Suspect'?'enq-suspect':'enq-secondary'));open.append(portrait,text);row.append(open);
+      if(canEdit(lien))row.append(actionMenu('Actions du lien avec '+pnj.nom,[{label:'Retirer le lien',variant:'danger',action:()=>performAction(lien,'trash')}]).element);box.append(row);
+    }
+    box.append(button('Relier un personnage',()=>openLinkEditor(r,'pnjs'),'quiet'));return box;
   }
   function renderTimeline(r){
-    const box=node('section');box.append(node('h4','Chronologie'));
-    const events=state.records.filter(e=>e.type==='evenements'&&e.enquete===r.id).sort((a,b)=>(a.ordre||0)-(b.ordre||0));
-    for(const e of events){const row=node('article');row.append(node('h5',e.titre||e.repere),node('p',[e.repere,e.dateSession,e.dateUnivers].filter(Boolean).join(' · ')),textView(e.texte));
-      if(e.zone.startsWith('user:'))row.append(node('small','Événement privé'));if(canEdit(e))row.append(button('Modifier',()=>openEditor(e,'evenements')),button('Retirer',()=>performAction(e,'trash')));box.append(row);}
-    box.append(button('Ajouter un événement',()=>openEditor(null,'evenements',r)));detail.append(box);
+    const box=node('section','','enq-timeline');box.append(node('h4','Chronologie','enq-section-title'));const list=node('ol');for(const e of dossierTimeline(r,state.records)){
+      const row=node('li');row.append(node('p',[e.repere,e.dateSession?'Session '+e.dateSession:'',e.dateUnivers].filter(Boolean).join(' · '),'enq-eyebrow'),node('h5',e.titre||e.repere),textView(e.texte));if(e.zone.startsWith('user:'))row.append(node('small','Événement privé'));
+      if(canEdit(e))row.append(actionMenu('Actions de l’événement '+(e.titre||e.repere),[{label:'Modifier',action:()=>openEditor(e,'evenements')},{label:'Retirer',variant:'danger',action:()=>performAction(e,'trash')}]).element);list.append(row);
+    }box.append(list,button('Ajouter un événement',()=>openEditor(null,'evenements',r),'quiet'));return box;
   }
   async function showFile(f,r,host,viewToken){
     const h=await client.objectUrl(f);if(!mounted||viewToken!==token){h.release();return;}handles.push(h);
@@ -336,10 +375,10 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     if(existing)return existing;
     try{return await client.save({type:'liens',body:{a,b,role},zone});}catch(error){if(error.code?.includes('already-exists'))return {exists:true};throw error;}
   }
-  function openLinkEditor(r){
+  function openLinkEditor(r,onlyType=null){
     const dialog=node('dialog'),form=node('form'),select=node('select');select.setAttribute('aria-label','Objet à relier');
     const compatible={documents:['enquetes','pnjs','notes'],enquetes:['documents','pnjs','notes'],notes:['documents','enquetes','pnjs'],pnjs:['documents','enquetes','notes']}[r.type]||[];
-    for(const target of all().filter(t=>t.id!==r.id&&compatible.includes(t.type))){const o=node('option',target.nom||recordTitle(target));o.value=target.id;select.append(o);}
+    for(const target of all().filter(t=>t.id!==r.id&&compatible.includes(t.type)&&(!onlyType||t.type===onlyType))){const o=node('option',target.nom||recordTitle(target));o.value=target.id;select.append(o);}
     const role=node('input');role.placeholder='Rôle dans l’affaire, si utile';role.setAttribute('aria-label','Rôle');form.append(node('h3','Ajouter un lien'),select,role);
     const submit=node('button','Relier');submit.type='submit';form.append(submit,button('Annuler',()=>{dialog.close();dialog.remove();}));
     form.addEventListener('submit',async e=>{e.preventDefault();try{const target=all().find(t=>t.id===select.value);if(!target)return;const zones=[r.zone,target.zone];
@@ -364,15 +403,15 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   }
   async function showGraph(r,host){
     const viewToken=token,{select,forceSimulation,forceLink,forceManyBody,forceCenter,drag}=await import('./vendor/enquetes-d3.js');if(viewToken!==token||!mounted)return;
-    graph?.stop();host.replaceChildren();const ids=linkedIds(r.id),nodes=all().filter(v=>ids.has(v.id)&&['documents','pnjs','notes','enquetes'].includes(v.type)).map(v=>({id:v.id,label:v.nom||recordTitle(v)}));
+    graph?.stop();host.replaceChildren();const ids=linkedIds(r.id),nodes=all().filter(v=>ids.has(v.id)&&['documents','pnjs','notes','enquetes'].includes(v.type)).map(v=>({id:v.id,label:v.nom||recordTitle(v),type:v.type}));
     const links=state.records.filter(v=>['liens','relations'].includes(v.type)&&ids.has(v.a)&&ids.has(v.b)).map(v=>({source:v.a,target:v.b}));
     const layout=state.records.find(v=>v.type==='dispositions'&&v.enquete===r.id);for(const n of nodes){const pos=layout?.positions?.[n.id];if(pos){n.x=pos[0];n.y=pos[1];}}
     const svg=select(host).append('svg').attr('viewBox','0 0 800 500').attr('role','img').attr('aria-label','Graphe personnel des pièces et personnages');const lines=svg.append('g').selectAll('line').data(links).join('line').attr('stroke','currentColor');
-    const dots=svg.append('g').selectAll('g').data(nodes).join('g');dots.append('circle').attr('r',12).attr('fill','var(--enq-accent)');dots.append('text').attr('x',16).attr('fill','currentColor').text(n=>n.label.slice(0,30));
+    const dots=svg.append('g').selectAll('g').data(nodes).join('g');dots.append('circle').attr('r',12).attr('fill',n=>'var('+({documents:'--enq-paper',pnjs:'--enq-accent',notes:'--enq-state-paused',enquetes:'--enq-wax'}[n.type]||'--enq-accent')+')');dots.append('text').attr('x',16).attr('fill','currentColor').text(n=>n.label.slice(0,30));
     graph=forceSimulation(nodes).force('link',forceLink(links).id(n=>n.id).distance(140)).force('charge',forceManyBody().strength(-500)).force('center',forceCenter(400,250));
     dots.call(drag().on('start',(event,n)=>{n.fx=n.x;n.fy=n.y;}).on('drag',(event,n)=>{n.fx=event.x;n.fy=event.y;graph.alpha(.3).restart();}).on('end',()=>{})).on('click',(_,n)=>openObject(all().find(v=>v.id===n.id)));
     graph.on('tick',()=>{lines.attr('x1',l=>l.source.x).attr('y1',l=>l.source.y).attr('x2',l=>l.target.x).attr('y2',l=>l.target.y);dots.attr('transform',n=>`translate(${n.x},${n.y})`);});
-    host.append(button('Enregistrer ma disposition',async()=>{const positions=Object.fromEntries(nodes.map(n=>[n.id,[n.x,n.y]]));await client.save({type:'dispositions',id:layout?.id,zone:`user:${state.session.uid}`,baseRevision:layout?.revision||0,body:{enquete:r.id,positions}});status.textContent='Disposition personnelle enregistrée.';}));
+    host.prepend(button('Enregistrer ma disposition',async()=>{const positions=Object.fromEntries(nodes.map(n=>[n.id,[n.x,n.y]]));await client.save({type:'dispositions',id:layout?.id,zone:`user:${state.session.uid}`,baseRevision:layout?.revision||0,body:{enquete:r.id,positions}});status.textContent='Disposition personnelle enregistrée.';}));
   }
   async function exportSpace(r=null){
     const {default:JSZip}=await import('./vendor/enquetes-zip.js');const zip=new JSZip();
