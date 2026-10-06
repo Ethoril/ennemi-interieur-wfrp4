@@ -1,3 +1,9 @@
+## [2.32.4] - 2026-10-06
+
+- **Caractéristiques (mobile)** : sur l’onglet Principal, la ligne de bonus (« B3 ») disparaît. L’abréviation est plus grande et en clair, et le total met le bonus en valeur : pour « 34 », le « 3 » est doré et le « 4 » reste blanc. Le lecteur d’écran annonce toujours le bonus.
+- **Compétences épinglées (mobile)** : l’onglet Principal affiche cinq emplacements que le joueur remplit lui-même (« Choisir une compétence »), au lieu des cinq compétences les plus hautes. Toucher une compétence épinglée permet de la changer ou de la retirer. Le choix est enregistré dans la fiche et suit le joueur d’un appareil à l’autre ; une compétence qui n’existe plus laisse simplement l’emplacement vide. Côté serveur, les fonctions de la fiche acceptent désormais ce nouveau champ : elles doivent être redéployées avec cette version.
+- **« Toutes » (mobile)** : le lien « Toutes » de l’onglet Principal ouvre toujours la liste complète des compétences, même après un passage par Talents ou Sorts, une recherche ou un filtre.
+
 ## [2.32.2] - 2026-10-06
 
 - **Destin et Résilience (mobile)** : sur l’onglet Principal de la fiche, « Destin » et « Résilience » passent au premier plan, chacun avec ses points (un point plein par point de valeur, plus un point vide pour en ajouter) ; Chance et Détermination restent affichées en nombres, en dessous. Toucher un point plein brûle les points jusqu’à lui, toucher le point vide en ajoute un, après une confirmation qui rappelle que brûler un point est définitif et qu’ajouter un point est normalement accordé par le MJ. Si la Chance (ou la Détermination) dépasse alors le nouveau maximum, elle y est ramenée. La modification est gardée en brouillon hors connexion et envoyée au retour du réseau ; les points sont désactivés sur une fiche en lecture seule.
