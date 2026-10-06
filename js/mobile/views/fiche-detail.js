@@ -9,6 +9,7 @@ import { createCancelSheet } from './fiche-cancel-sheet.js';
 import { createCareerChangeSheet } from './fiche-career-change.js';
 import { createCareerPanel } from './fiche-carriere.js';
 import { createJournalPanel } from './fiche-journal.js';
+import { createPinSkillSheet } from './fiche-pin-skill.js';
 import { createPrincipalPanel } from './fiche-principal.js';
 import { createConflictNotice } from './fiche-conflicts.js';
 import { createResourceSheet } from './fiche-resource-sheet.js';
@@ -179,6 +180,11 @@ export function createFicheDetailView({
     const resource = createResourceSheet({
         documentRef, getContext: ficheContext, announce, onDone: key => shell?.principal.focusResource(key),
     });
+    // Épingler, changer ou retirer une des cinq compétences de Principal : choix dans la fiche, brouillon protégé et envoi.
+    const pinSkill = createPinSkillSheet({
+        documentRef, announce, onDone: slot => shell?.principal.focusSlot(slot),
+        getContext: () => ({ state: controllerState, engine: catalogue?.getEngine(), careers: catalogue?.careers, online, controller }),
+    });
     const importSheet = createImportSheet({ documentRef, announce, getContext: ficheContext });
     // Un seul panneau pour toute la vie de la vue : la saisie des notes survit aux reconstructions de la coque.
     const journal = createJournalPanel({
@@ -230,6 +236,7 @@ export function createFicheDetailView({
             skillLearn.close();
             cancel.close();
             resource.close();
+            pinSkill.close();
             importSheet.close();
             closeCareerViewer();
             aptitudes.closeDetail();
@@ -237,7 +244,7 @@ export function createFicheDetailView({
             shell = null;
             build();
             container.append(menuDialog, purchase.element, aptitudes.detailElement, careerChange.element, spellLearn.element, skillLearn.element, cancel.element, resource.element,
-                importSheet.element, viewerHost);
+                pinSkill.element, importSheet.element, viewerHost);
         }
     };
     const showState = (key, options) => present(`state:${key}`, () => renderState(container, options));
@@ -265,6 +272,7 @@ export function createFicheDetailView({
         skillLearn.update();
         purchase.update();
         cancel.update();
+        pinSkill.update();
         importSheet.update();
     };
 
@@ -325,6 +333,8 @@ export function createFicheDetailView({
             documentRef, aptitudesHref: tabHref('aptitudes'),
             onOpenCarac: (key, trigger) => purchase.open({ kind: 'carac', key }, trigger),
             onChangeResource: (spec, trigger) => resource.open(spec, trigger),
+            onOpenSlot: (slot, trigger) => pinSkill.open(slot, trigger),
+            onShowAllSkills: () => aptitudes.showAllSkills(),
         });
         const career = createCareerPanel({
             documentRef,
@@ -524,6 +534,7 @@ export function createFicheDetailView({
         skillLearn.close();
         cancel.close();
         resource.close();
+        pinSkill.close();
         importSheet.close();
         closeCareerViewer();
         aptitudes.closeDetail();

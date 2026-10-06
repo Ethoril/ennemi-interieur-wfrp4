@@ -59,6 +59,7 @@ const applyPatch = (data, changes) => {
     const next = { ...data };
     for (const [path, value] of Object.entries(changes)) {
         const [root, key] = path.split('.').map(decodeURIComponent);
+        if (root === 'favoriteSkills') { next.favoriteSkills = { ...next.favoriteSkills, [key]: value }; continue; }
         if (root !== 'basicSpecs' || !key) { next[path] = value; continue; }
         const specs = { ...next.basicSpecs, [key]: value };
         if (value === '') delete specs[key];

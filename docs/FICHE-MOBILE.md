@@ -59,7 +59,7 @@ pas de suivi des blessures ni de dépense de points en direct.
 
 ### 5.1 Principal
 
-Consultation, sauf Destin et Résilience.
+Consultation, sauf Destin, Résilience et les compétences épinglées.
 
 - **Destin** et **Résilience** : titres en grand, chacun avec ses points (autant de points pleins que
   de valeur, plus un point vide final), boutons de 44 px. Toucher un point plein k ramène la valeur à
@@ -69,13 +69,20 @@ Consultation, sauf Destin et Résilience.
   patch et le volet le dit. Brouillon protégé hors connexion (`stagePatch`, annonce « en attente de
   connexion »), désactivé en lecture seule. Chance et Détermination s'affichent en nombres, plus petits,
   en lecture seule.
-- **Caractéristiques** : grille 5 × 2 ; chaque case montre l'abréviation, le total et le
-  bonus. Les caractéristiques de la carrière actuelle ont un cadre doré, doublé d'un libellé
+- **Caractéristiques** : grille 5 × 2 ; chaque case montre l'abréviation (grande, en clair) et le
+  total, dont les dizaines (le bonus) sont en or : « 34 » → « 3 » doré, « 4 » normal ; pas de ligne de
+  bonus, mais le nom accessible l'annonce (« Capacité de Tir 34, bonus 3, de carrière »). Les caractéristiques de la carrière actuelle ont un cadre doré, doublé d'un libellé
   pour les lecteurs d'écran. Toucher une case ouvre son **volet** (§ 5.5).
 - **Stats dérivées** : une ligne discrète sous la grille, « Mouvement 4 · Blessures max 11 ·
   Corruption 0 », pour vérifier l'effet d'un achat (Endurance, talent).
-- **Compétences** : les plus hautes, automatiquement (4 à 5 lignes : nom, caractéristique,
-  total), avec un lien « Toutes » vers Aptitudes.
+- **Compétences** : cinq emplacements choisis par le joueur (nom, caractéristique, total). Un
+  emplacement vide propose « Choisir une compétence » ; un rempli ouvre « Changer » / « Retirer ». Le
+  choix passe par un volet de recherche qui exclut les compétences déjà épinglées. Stocké dans la
+  fiche : `favoriteSkills.<1-5>` = `basic:<ligne BASIC_SKILLS>` ou `adv:<id>` (vide = libre), patch
+  autorisé au joueur (serveur : `validatePatchPayload`), brouillon protégé hors connexion, conflit
+  libellé « Compétence affichée n ». Un identifiant périmé s'affiche comme un emplacement vide. Absent
+  de l'export JSON (liste `EXPORT_KEYS`) : préférence d'affichage, non exportée. Le lien « Toutes »
+  ouvre Aptitudes sur la liste complète (segment Compétences, recherche et filtres remis à zéro).
 
 ### 5.2 Aptitudes
 

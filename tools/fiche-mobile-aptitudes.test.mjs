@@ -829,3 +829,21 @@ test('spécialité libre bornée pour que « Base (spé) » tienne en 200 caract
     setup.section.update({ specialty: { kind: 'group', group: 'Langue', options: [{ nom: 'Langue (Tiléen)', spec: 'Tiléen' }] } }, true);
     assert.ok(setup.section.element.all().filter(node => node.tagName === 'button').every(node => node.disabled));
 });
+
+test('showAllSkills : segment Compétences, recherche vidée et filtres éteints, même après Talents ou un filtrage', () => {
+    const panel = createAptitudesPanel({ documentRef: fakeDocument() });
+    panel.update({ data: data({ skillsBasic: { Charme: 5 } }), careers, engine });
+    const search = panel.element.all().find(node => node.tagName === 'input');
+    search.value = 'charme';
+    search.dispatch('input');
+    press(panel, 'Soc').click();
+    press(panel, 'Entraînées').click();
+    press(panel, 'Talents').click();
+    assert.equal(press(panel, 'Compétences').getAttribute('aria-pressed'), 'false');
+    panel.showAllSkills();
+    assert.equal(press(panel, 'Compétences').getAttribute('aria-pressed'), 'true');
+    assert.equal(search.value, '');
+    assert.deepEqual(panel.element.allByClass('m-chip').filter(chip => chip.getAttribute('aria-pressed') === 'true'), []);
+    assert.equal(names(panel).length, BASIC_SKILLS.length);
+    assert.equal(pane(panel, 0).hidden, false);
+});

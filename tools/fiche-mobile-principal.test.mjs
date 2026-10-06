@@ -5,10 +5,11 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import { basicRowFor } from '../js/fiche/basic-skills.js';
 import { loadFicheCatalogue } from '../js/mobile/fiche-catalogue.js';
-import { dotTarget, ficheCaracs, resourceChange, resourceTokens, topSkills } from '../js/mobile/fiche-model.js';
+import { dotTarget, favoriteSlots, ficheCaracs, resourceChange, resourceTokens, skillPinId, skillRows, topSkills } from '../js/mobile/fiche-model.js';
 import { createPrincipalPanel } from '../js/mobile/views/fiche-principal.js';
 import { submitDraft } from '../js/mobile/fiche-autosave.js';
 import { createConflictNotice } from '../js/mobile/views/fiche-conflicts.js';
+import { createPinSkillSheet } from '../js/mobile/views/fiche-pin-skill.js';
 import { createResourceSheet } from '../js/mobile/views/fiche-resource-sheet.js';
 
 const read = path => JSON.parse(readFileSync(fileURLToPath(new URL(`../${path}`, import.meta.url)), 'utf8'));
@@ -146,6 +147,14 @@ test('panneau : Destin et Résilience en points boutons, Chance et Déterminatio
     const buttons = nodes.filter(n => n.tagName === 'button' && n.className.startsWith('m-principal-carac'));
     assert.equal(buttons.length, 10);
     assert.match(buttons[1].getAttribute('aria-label'), /, de carrière$/u);
+    assert.equal(buttons[1].getAttribute('aria-label'), 'Capacité de Tir 30, bonus 3, de carrière');
+    const split = panel.element.all().filter(n => n.className === 'm-principal-carac-total').map(n => n.children.map(c => c.textContent));
+    assert.deepEqual(split[0], ['3', '0'], 'dizaines en or, unité normale');
+    assert.ok(!panel.element.all().some(n => /^B\d/u.test(n.textContent)), 'plus de ligne de bonus');
+    panel.update({ data: { ...d, carac: { ...d.carac, cc: { base: 105, adv: 4 }, ct: { base: 7, adv: 0 } } }, careers: [], engine });
+    const big = panel.element.all().filter(n => n.className === 'm-principal-carac-total').map(n => n.children.map(c => c.textContent));
+    assert.deepEqual([big[0], big[1]], [['10', '9'], ['', '7']], 'tout sauf le dernier chiffre en or');
+    panel.update({ data: d, careers: read('js/data/careers.json'), engine });
     buttons[3].click();
     assert.deepEqual(opened, ['e']);
     assert.match(nodes.find(n => /^Mouvement/u.test(n.textContent)).textContent, /Corruption 3$/u);
@@ -295,4 +304,110 @@ test('conflits : liste lisible, Garder la mienne renvoie, Prendre celle du serve
     context.state = { conflicts: [] };
     notice.update();
     assert.ok(notice.element.hidden);
+});
+
+const careersData = read('js/data/careers.json');
+const pinData = extra => data({ skillsBasic: { Esquive: 2 }, skillsAdvanced: [{ id: 'a1', nom: 'Savoir (Politique)', carac: 'int', adv: 9 }], ...extra });
+
+test('épinglées : identifiants basic:/adv:, emplacement vide, identifiant périmé ou inconnu vaut vide', () => {
+    const rows = skillRows(pinData(), engine);
+    assert.equal(skillPinId(rows.find(r => r.nom === 'Esquive')), 'basic:Esquive');
+    assert.equal(skillPinId(rows.find(r => r.targetId === 'a1')), 'adv:a1');
+    const slots = favoriteSlots(pinData({ favoriteSkills: { 1: 'basic:Esquive', 2: 'adv:a1', 3: 'adv:disparu', 4: '', 5: 'basic:Inconnue' } }), engine);
+    assert.deepEqual(slots.map(s => s.row?.nom ?? null), ['Esquive', 'Savoir (Politique)', null, null, null]);
+    assert.deepEqual(favoriteSlots(pinData(), engine).map(s => s.row), [null, null, null, null, null]);
+});
+
+test('panneau : cinq emplacements, « Choisir une compétence » ou la compétence épinglée, bouton réutilisé', () => {
+    const documentRef = fakeDocument();
+    const opened = [];
+    const panel = createPrincipalPanel({ documentRef, aptitudesHref: '#/x', onOpenSlot: (slot, button) => opened.push([slot, button]) });
+    panel.update({ data: pinData({ favoriteSkills: { 2: 'adv:a1', 3: 'adv:disparu' } }), careers: careersData, engine });
+    const buttons = panel.element.all().filter(n => n.className === 'm-principal-skill-button');
+    assert.equal(buttons.length, 5);
+    assert.deepEqual(buttons.map(b => b.children.map(c => c.textContent)), [
+        ['Choisir une compétence'], ['Savoir (Politique)', 'Int', '39'], ['Choisir une compétence'], ['Choisir une compétence'], ['Choisir une compétence']]);
+    buttons[1].click();
+    assert.deepEqual(opened.map(o => o[0]), [2]);
+    panel.update({ data: pinData({ favoriteSkills: { 2: 'adv:a1' } }), careers: careersData, engine });
+    assert.equal(panel.element.all().filter(n => n.className === 'm-principal-skill-button')[1], buttons[1]);
+    panel.focusSlot(2);
+    assert.equal(documentRef.activeElement, buttons[1]);
+});
+
+function pinSetup({ online = true, favoriteSkills = {} } = {}) {
+    const documentRef = fakeDocument();
+    const calls = [];
+    const announces = [];
+    const done = [];
+    const state = { phase: 'ready', data: pinData({ favoriteSkills }) };
+    let draft = false;
+    const controller = {
+        getState: () => ({ hasDraft: draft }),
+        stagePatch: changes => { calls.push(['stage', changes]); draft = true; return { ok: true }; },
+        submitPatch: async () => { calls.push(['submit']); draft = false; return { status: 'saved' }; },
+        retryPendingPatch: async () => ({ status: 'saved' }),
+    };
+    const sheet = createPinSkillSheet({ documentRef, announce: m => announces.push(m), onDone: slot => done.push(slot),
+        getContext: () => ({ state, engine, careers: careersData, online, controller }) });
+    const trigger = documentRef.createElement('button');
+    const names = () => sheet.element.all().filter(n => n.className === 'm-apt-name').map(n => n.textContent);
+    const rowButton = nom => sheet.element.all().find(n => n.className === 'm-apt-row' && n.children[0].children[0].textContent === nom);
+    return { calls, announces, done, sheet, trigger, names, rowButton, el: sheet.element };
+}
+
+test('épingler : emplacement vide ouvre la liste, exclut les compétences d’autres emplacements, écrit favoriteSkills.n puis envoie', async () => {
+    const s = pinSetup({ favoriteSkills: { 2: 'adv:a1' } });
+    s.sheet.open(1, s.trigger);
+    assert.ok(s.el.open);
+    assert.ok(!s.names().includes('Savoir (Politique)'), 'déjà dans l’emplacement 2');
+    assert.ok(s.names().includes('Esquive'));
+    s.rowButton('Esquive').click();
+    await sleep(0);
+    assert.deepEqual(s.calls, [['stage', { 'favoriteSkills.1': 'basic:Esquive' }], ['submit']]);
+    assert.deepEqual(s.done, [1]);
+    assert.ok(!s.el.open);
+    assert.equal(s.announces[0], 'Esquive affichée');
+});
+
+test('épingler : emplacement rempli propose Changer (liste, sa propre compétence incluse) et Retirer (chaîne vide)', async () => {
+    const s = pinSetup({ favoriteSkills: { 2: 'adv:a1' } });
+    s.sheet.open(2, s.trigger);
+    assert.deepEqual(s.el.all().filter(n => n.tagName === 'button' && n.className.startsWith('m-button')).map(n => n.textContent), ['Changer', 'Retirer', 'Annuler']);
+    s.el.byText('Changer').click();
+    assert.ok(s.names().includes('Savoir (Politique)'));
+    s.sheet.close();
+    s.sheet.open(2, s.trigger);
+    s.el.byText('Retirer').click();
+    await sleep(0);
+    assert.deepEqual(s.calls, [['stage', { 'favoriteSkills.2': '' }], ['submit']]);
+});
+
+test('épingler : hors ligne le brouillon est protégé sans envoi ; identifiant périmé = emplacement vide (liste directe)', async () => {
+    const s = pinSetup({ online: false, favoriteSkills: { 3: 'adv:disparu' } });
+    s.sheet.open(3, s.trigger);
+    assert.ok(s.el.byText('Retirer').parentNode.hidden, 'menu masqué : liste directe');
+    assert.ok(s.names().length > 0);
+    s.el.all().find(n => n.className === 'm-apt-row').click();
+    await sleep(0);
+    assert.deepEqual(s.calls.map(c => c[0]), ['stage']);
+    assert.match(s.announces[0], /en attente de connexion$/u);
+});
+
+test('conflits : un emplacement épinglé est nommé et ses valeurs montrent les noms de compétence', () => {
+    const documentRef = fakeDocument();
+    const context = { state: { data: pinData(), conflicts: [{ path: 'favoriteSkills.2', server: 'adv:a1', local: '' }] }, controller: {}, engine };
+    const notice = createConflictNotice({ documentRef, getContext: () => context });
+    notice.update();
+    assert.equal(notice.element.all().find(n => n.tagName === 'p').textContent,
+        'Conflit sur Compétence affichée 2 : le serveur a Savoir (Politique), vous avez aucune.');
+});
+
+test('panneau : le lien « Toutes » reste un vrai lien et prévient avant de naviguer', () => {
+    const asked = [];
+    const panel = createPrincipalPanel({ documentRef: fakeDocument(), aptitudesHref: '#/fiches/x/aptitudes', onShowAllSkills: () => asked.push('all') });
+    const link = panel.element.all().find(node => node.className === 'm-principal-all');
+    assert.deepEqual([link.tagName, link.href], ['a', '#/fiches/x/aptitudes']);
+    link.click();
+    assert.deepEqual(asked, ['all']);
 });

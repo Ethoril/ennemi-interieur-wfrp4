@@ -56,6 +56,7 @@ function defaultEditablePath(path) {
     return !extra && /^(?:careers|skillsAdvanced|talentsAcq|talentsAvail|sorts|prieres)$/u.test(root)
         && typeof id === 'string' && id.length > 0 && field === 'note'
         || root === 'basicSpecs' && typeof id === 'string' && id.length > 0 && !field
+        || root === 'favoriteSkills' && /^[1-5]$/u.test(id || '') && !field
         || root === 'chosenVariants' && typeof id === 'string' && id.length > 0 && /^[1-5]$/u.test(field || '') && !extra;
 }
 
