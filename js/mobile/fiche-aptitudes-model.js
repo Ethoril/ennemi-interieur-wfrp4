@@ -31,7 +31,7 @@ export function talentChoices(careers, data, nom) {
     if (!isOpenTalentSlot(nom)) return null;
     const base = nom.split('(')[0].trim();
     if (!isOpenCareerSlot(nom)) return { base, free: false, specs: expandChoiceSkill(nom, name => name).map(specOf) };
-    // Une graphie par spécialité (sans casse ni accents) : la plus fréquente, à égalité celle qui commence par une majuscule.
+    // Une graphie par spécialité (sans casse ni accents) : de préférence celle qui commence par une majuscule, puis la plus fréquente.
     const spellings = new Map();
     for (const career of careers || []) {
         for (const rank of career.rangs || []) {
@@ -44,7 +44,7 @@ export function talentChoices(careers, data, nom) {
         }
     }
     const capital = spec => spec !== spec.toLowerCase() && spec[0] === spec[0].toUpperCase();
-    const known = [...spellings.values()].map(counts => [...counts].sort(([a, x], [b, y]) => y - x || capital(b) - capital(a))[0][0])
+    const known = [...spellings.values()].map(counts => [...counts].sort(([a, x], [b, y]) => capital(b) - capital(a) || y - x)[0][0])
         .sort((a, b) => a.localeCompare(b, 'fr'));
     const extra = (data?.customTalents?.[base] || []).filter(spec => !spellings.has(fold(spec)));
     return { base, free: true, specs: [...new Set([...known, ...extra])] };
