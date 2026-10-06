@@ -14,14 +14,16 @@ export function createActionMenu({ documentRef: d, label, items }) {
     menu.setAttribute('aria-label', label);
     menu.hidden = true;
     const buttons = [];
-    const outside = event => { if (!element.contains(event.target)) close(false); };
+    let focusTarget = trigger;
+    const outside = event => { if (!element.contains(event.target) && !focusTarget?.contains(event.target)) close(false); };
     function close(restore = true) {
         menu.hidden = true;
         trigger.setAttribute('aria-expanded', 'false');
         d.removeEventListener('click', outside);
-        if (restore) trigger.focus();
+        if (restore) focusTarget?.focus();
     }
-    function open() {
+    function open(anchor = trigger) {
+        focusTarget = anchor;
         menu.hidden = false;
         trigger.setAttribute('aria-expanded', 'true');
         buttons[0]?.focus();
