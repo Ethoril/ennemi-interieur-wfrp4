@@ -41,11 +41,14 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
         button.type = 'button';
         const abbr = make(documentRef, 'span', '', 'm-principal-carac-abbr');
         const total = make(documentRef, 'span', '', 'm-principal-carac-total');
-        const bonus = make(documentRef, 'span', '', 'm-principal-carac-bonus');
-        button.append(abbr, total, bonus);
+        // Les dizaines (le bonus) en or, l'unité en couleur normale ; le nom accessible du bouton porte le bonus en toutes lettres.
+        const tens = make(documentRef, 'span', '', 'm-principal-carac-tens');
+        const units = make(documentRef, 'span');
+        total.append(tens, units);
+        button.append(abbr, total);
         button.addEventListener('click', () => onOpenCarac(key, button));
         grid.append(button);
-        return { button, abbr, total, bonus };
+        return { button, abbr, tens, units };
     });
     const legend = make(documentRef, 'p', 'Cadre doré : caractéristique de la carrière.', 'm-principal-note');
     const derived = make(documentRef, 'p', '', 'm-principal-note');
@@ -92,8 +95,9 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
         ficheCaracs(data, careers).forEach((carac, index) => {
             const cell = cells[index];
             cell.abbr.textContent = carac.abbr;
-            cell.total.textContent = String(carac.total);
-            cell.bonus.textContent = `B${carac.bonus}`;
+            const digits = String(carac.total);
+            cell.tens.textContent = digits.slice(0, -1);
+            cell.units.textContent = digits.slice(-1);
             cell.button.className = carac.career ? 'm-principal-carac is-career' : 'm-principal-carac';
             cell.button.setAttribute('aria-label',
                 `${carac.nom} ${carac.total}, bonus ${carac.bonus}${carac.career ? ', de carrière' : ''}`);

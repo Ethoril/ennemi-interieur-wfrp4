@@ -146,6 +146,14 @@ test('panneau : Destin et Résilience en points boutons, Chance et Déterminatio
     const buttons = nodes.filter(n => n.tagName === 'button' && n.className.startsWith('m-principal-carac'));
     assert.equal(buttons.length, 10);
     assert.match(buttons[1].getAttribute('aria-label'), /, de carrière$/u);
+    assert.equal(buttons[1].getAttribute('aria-label'), 'Capacité de Tir 30, bonus 3, de carrière');
+    const split = panel.element.all().filter(n => n.className === 'm-principal-carac-total').map(n => n.children.map(c => c.textContent));
+    assert.deepEqual(split[0], ['3', '0'], 'dizaines en or, unité normale');
+    assert.ok(!panel.element.all().some(n => /^B\d/u.test(n.textContent)), 'plus de ligne de bonus');
+    panel.update({ data: { ...d, carac: { ...d.carac, cc: { base: 105, adv: 4 }, ct: { base: 7, adv: 0 } } }, careers: [], engine });
+    const big = panel.element.all().filter(n => n.className === 'm-principal-carac-total').map(n => n.children.map(c => c.textContent));
+    assert.deepEqual([big[0], big[1]], [['10', '9'], ['', '7']], 'tout sauf le dernier chiffre en or');
+    panel.update({ data: d, careers: read('js/data/careers.json'), engine });
     buttons[3].click();
     assert.deepEqual(opened, ['e']);
     assert.match(nodes.find(n => /^Mouvement/u.test(n.textContent)).textContent, /Corruption 3$/u);
