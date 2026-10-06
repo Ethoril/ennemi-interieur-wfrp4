@@ -106,5 +106,24 @@ La vérification mobile est une émulation de largeur dans un navigateur, sans e
 
 ## Résultat de production
 
-À compléter après la fin du déploiement et la vérification publique.
+Mise en production achevée le **6 octobre 2026**, version **2.34.0**.
 
+- Livraison fonctionnelle : commit `5045b7a`, suivi de la correction limitée du verrouillage npm `535a28b`.
+- Firebase : déploiement terminé ; les cinq fonctions Enquêtes sont `ACTIVE` en `europe-west1`.
+- Index `status / payloadCleaned` : `READY`.
+- Cloud Scheduler : `ENABLED`, toutes les cinq minutes, fuseau `Europe/Paris`.
+- CI corrigée : [Validate data — réussite](https://github.com/Ethoril/ennemi-interieur-wfrp4/actions/runs/37492192159).
+- Publication : [GitHub Pages — job deploy terminé avec succès](https://github.com/Ethoril/ennemi-interieur-wfrp4/actions/runs/37492191045).
+- Contrôle global local : **973 exécutions de tests réussies**, réparties en 9 tests de vue, 99 tests serveur, 269 tests fiche/catalogue/contributions et 596 tests transversaux.
+- Recette Enquêtes sur émulateurs : **22 tests réussis**.
+- Import appliqué : aucun indice présent, aucune anomalie.
+- Activation relue sur la base réelle : session MJ active, protocole 1, maintenance désactivée ; les deux marqueurs d’activation concordent.
+- Appel HTTPS sans authentification/App Check : refus HTTP 401.
+- Contrôle HTTP public : version 2.34.0 concordante dans le layout, le service worker et la méta mobile.
+- Contrôle navigateur public : nouvelle entrée Documents et enquêtes et version 2.34.0 affichées, connexion demandée avant lecture.
+
+Le navigateur de vérification ne dispose pas d’une session Google de campagne : le parcours complet connecté avec App Check en production n’a pas été reproduit. La vérification de l’identité MJ et de l’état des données a utilisé le client administrateur autorisé ; elle ne remplace pas un essai du navigateur d’un joueur. Les règles et les parcours ont été vérifiés avec les émulateurs et les données fictives, sans créer de pièces de test dans la campagne réelle.
+
+Les utilisateurs ayant une PWA déjà ouverte doivent accepter sa mise à jour ; sur le bureau, fermer les anciens onglets du site puis rouvrir l’entrée permet d’activer le nouveau cache.
+
+Site : [Documents et enquêtes](https://ethoril.github.io/ennemi-interieur-wfrp4/enquetes.html).
