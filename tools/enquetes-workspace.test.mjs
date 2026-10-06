@@ -30,7 +30,7 @@ test('player entry points keep enquiries read-only and notes private',async()=>{
 });
 test('unsaved new draft remains discoverable after leaving the editor',async()=>{
   const f=await fixture();f.button('Mon carnet').dispatch('click');f.button('Nouvelle note').dispatch('click');
-  f.field('Titre').value='À reprendre';f.field('Texte').value='Une piste';f.container.querySelector('form').dispatch('input');
+  f.field('Titre').value='À reprendre';f.field('Texte').value='Une piste';f.container.querySelector('.enq-editor').dispatch('input');
   f.button('Fermer en conservant le brouillon').dispatch('click');assert.ok(f.button('Reprendre le brouillon : À reprendre'));f.view.unmount();
 });
 test('trash async response renders despite the detail pane refresh',async()=>{
@@ -40,17 +40,17 @@ test('trash async response renders despite the detail pane refresh',async()=>{
 test('editing during an outstanding save keeps the newer body and the updated revision',async()=>{
   const f=await fixture({id:'n'});f.button('Modifier').dispatch('click');
   let resolve;f.hook(()=>new Promise(r=>{resolve=r;}));
-  f.field('Texte').value='Première version';f.container.querySelector('form').dispatch('input');f.container.querySelector('form').dispatch('submit');await flush();
-  f.field('Texte').value='Version plus récente';f.container.querySelector('form').dispatch('input');resolve();await flush();
+  f.field('Texte').value='Première version';f.container.querySelector('.enq-editor').dispatch('input');f.container.querySelector('.enq-editor').dispatch('submit');await flush();
+  f.field('Texte').value='Version plus récente';f.container.querySelector('.enq-editor').dispatch('input');resolve();await flush();
   assert.equal(f.records.find(r=>r.id==='n').texte,'Première version');
   const draft=f.drafts.get('n');assert.equal(draft.body.texte,'Version plus récente');assert.equal(draft.baseRevision,2);assert.equal(draft.pending,null);
-  f.hook(null);f.container.querySelector('form').dispatch('submit');await flush();
+  f.hook(null);f.container.querySelector('.enq-editor').dispatch('submit');await flush();
   assert.equal(f.records.find(r=>r.id==='n').texte,'Version plus récente');assert.equal(f.records.find(r=>r.id==='n').revision,3);f.view.unmount();
 });
 test('conflict preserves the local text until explicit comparison choice',async()=>{
-  const f=await fixture({id:'n'});f.button('Modifier').dispatch('click');f.field('Texte').value='Mon brouillon';f.container.querySelector('form').dispatch('input');
+  const f=await fixture({id:'n'});f.button('Modifier').dispatch('click');f.field('Texte').value='Mon brouillon';f.container.querySelector('.enq-editor').dispatch('input');
   f.records.find(r=>r.id==='n').revision=2;f.records.find(r=>r.id==='n').texte='Autre appareil';f.emit();
-  f.container.querySelector('form').dispatch('submit');await flush();
+  f.container.querySelector('.enq-editor').dispatch('submit');await flush();
   assert.equal(f.drafts.get('n').body.texte,'Mon brouillon');assert.ok(f.button('Garder mon texte après comparaison'));assert.equal(f.records.find(r=>r.id==='n').texte,'Autre appareil');f.view.unmount();
 });
 test('an enquiry export includes authorized evidence and timeline, with private content only by choice',()=>{
@@ -72,9 +72,9 @@ test('search handles the reference campaign volume, case and accents in under 20
 
 
 test('switching accounts closes the private editor and preserves its draft only for the original owner',async()=>{
-  const f=await fixture({id:'n'});f.button('Modifier').dispatch('click');f.field('Texte').value='Confidentiel A';f.container.querySelector('form').dispatch('input');
+  const f=await fixture({id:'n'});f.button('Modifier').dispatch('click');f.field('Texte').value='Confidentiel A';f.container.querySelector('.enq-editor').dispatch('input');
   f.session.uid='b';f.records.splice(0);f.emit();
-  assert.equal(f.container.querySelector('form'),null);assert.equal(f.button('Reprendre le brouillon : Note'),undefined);
+  assert.equal(f.container.querySelector('.enq-editor'),null);assert.equal(f.button('Reprendre le brouillon : Note'),undefined);
   assert.equal(f.drafts.get('n').body.texte,'Confidentiel A');f.view.unmount();
 });
 

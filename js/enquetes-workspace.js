@@ -1,5 +1,5 @@
 import { createActionMenu } from './enquetes-menu.js';
-import { buildLinksIndex, countSpaces, countStates, dossierSummary, dossierPieces, dossierPnjs, dossierTimeline, pieceContext, linkedNotes } from './enquetes-view-model.js';
+import { buildLinksIndex, countSpaces, countStates, dossierSummary, dossierPieces, dossierPnjs, dossierTimeline, pieceContext, linkedNotes, isUnclassified } from './enquetes-view-model.js';
 import { selectEnqueteExport } from './data/enquetes-export.js';
 import { recordTitle, buildSearch, fold } from './data/enquetes-domain.js';
 let mobileSpace={uid:null,section:'enquetes',filter:'',category:'',search:'',scope:''};
@@ -10,7 +10,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   let client=null,state={session:null,records:[],pnjs:[]},mounted=false,token=0,section='enquetes',selected=id,search='',scope='',filter='',category='',editor=null,timer=null,graph=null,handles=[],busy=false;
   const node=(tag,text='',className='')=>{const e=d.createElement(tag);e.textContent=text;e.className=className;return e;};
   const button=(label,action,variant='')=>{const b=node('button',label,'enq-button'+(variant?' enq-button--'+variant:''));b.type='button';b.addEventListener('click',()=>Promise.resolve(action()).catch(showError));return b;};
-  let root,toolbar,list,detail,status,searchInput,notebook,panes;
+  let root,toolbar,list,detail,status,searchInput,notebook,panes,fab;
   let mobileSearchOpen=false;
   let dossierTab='dossier',menus=[],contextDossier=layout==='mobile'?mobileContexts.get(id)||null:null,activeFileId=null,annotationMode=false,notebookOpen=false;
   let annotationRows=new Map(),annotationMarkers=new Map();
@@ -50,18 +50,19 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
   function build(){
     root=node('section','','enq-workspace enq-workspace--'+layout);toolbar=node('div','','enq-toolbar');status=node('p','','enq-status');status.setAttribute('role','status');
     root.append(toolbar,status);
-    panes=node('div','','enq-panes');list=node('div','','enq-list');detail=node('article','','enq-detail');notebook=node('aside','','enq-notebook');notebook.setAttribute('aria-labelledby','enq-notebook-title');if(layout==='desktop')panes.append(list,detail,notebook);root.append(panes);container.replaceChildren(root);
+    panes=node('div','','enq-panes');list=node('div','','enq-list');detail=node('article','','enq-detail');notebook=node('aside','','enq-notebook');notebook.setAttribute('aria-labelledby','enq-notebook-title');if(layout==='desktop')panes.append(list,detail,notebook);root.append(panes);fab=button('✎ Note rapide',()=>openQuickSheet());fab.className='enq-quick-fab';fab.setAttribute('aria-label','Note rapide');fab.hidden=true;root.append(fab);container.replaceChildren(root);
     render();
   }
   function syncMobileScreen(){
     if(layout!=='mobile')return;
+    fab.hidden=!state.session||!!editor;
     if((selected||editor)&&section!=='trash'){if(panes.firstChild!==detail)panes.replaceChildren(detail);}else if(panes.firstChild!==list)panes.replaceChildren(list);
     container.scrollTop=0;
   }
   function rememberMobile(){if(layout==='mobile'&&!selected&&state.session)mobileSpace={uid:state.session?.uid,section,filter,category,search,scope};}
   function render(){
     if(!mounted)return;
-    syncMobileScreen();rememberMobile();
+    syncMobileScreen();rememberMobile();fab.hidden=layout!=='mobile'||!state.session||!!editor;
     toolbar.replaceChildren();
     if(!state.session){
       toolbar.append(node('h2','Documents et enquêtes'),button('Se connecter avec Google',()=>client?.signIn()));
@@ -85,12 +86,67 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     buttons.forEach((b,i)=>b.addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const n=event.key==='Home'?0:event.key==='End'?buttons.length-1:(i+(event.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;change(choices[n][0]);const bars=root.querySelectorAll('.enq-tabs');const fresh=bars.find?.(v=>v.getAttribute('aria-label')===label)||Array.from(bars).find(v=>v.getAttribute('aria-label')===label);fresh?.querySelectorAll('button')[n]?.focus();}}));
     bar.append(...buttons);return bar;
   }
+  function quickTargets(){
+    const ids=[];if(current())ids.push(current().id);if(current()?.type==='documents'&&contextDossier)ids.push(contextDossier);return ids;
+  }
+  async function saveNote({id,uid,body,baseRevision,operationId}){
+    return client.save({type:'notes',id,zone:'user:'+uid,body,baseRevision,operationId});
+  }
+  function quickForm(targetIds,onSuccess=()=>{},sheet=false){
+    const uid=state.session.uid,contextKey=current()?.id||'unclassified';
+    const resumed=client.listDrafts(uid).find(v=>v.quick&&v.quickContext===contextKey),id=resumed?.id||client.newId();
+    let revision=resumed?.baseRevision||0,operationId=resumed?.operationId||client.newId(),pending=resumed?.pending||null;
+    const targets=new Set(resumed?.links||targetIds),form=node('form','','enq-quick-form'),text=node('textarea');text.rows=3;text.value=resumed?.body?.texte||'';text.placeholder='Une idée, un nom entendu…';text.setAttribute('aria-label','Note rapide sur '+(current()?.type==='documents'?'cette pièce':'ce dossier'));
+    const message=node('p','Brouillon gardé sur cet appareil','enq-save-status');message.setAttribute('role','status');
+    const persist=()=>client.saveDraft(uid,id,{type:'notes',body:{titre:'',texte:text.value,etiquettes:[]},zone:'user:'+uid,baseRevision:revision,operationId,pending,quick:true,quickContext:contextKey,links:[...targets],context:targets.size?{id:[...targets][0],type:all().find(r=>r.id===[...targets][0])?.type}:null});
+    text.addEventListener('input',()=>{message.textContent=persist()?'Brouillon gardé sur cet appareil':'Brouillon local indisponible ; garde cette saisie ouverte';});
+    form.append(text);
+    if(sheet){
+      const choices=node('div','','enq-quick-targets');choices.append(node('h4','Relier à'));
+      const candidates=all().filter(r=>targetIds.includes(r.id)||targets.has(r.id)||r.type==='pnjs'&&dossierPnjs(state.records.find(v=>v.id===contextDossier)||current()||{},state.records,state.pnjs).some(v=>v.pnj.id===r.id));
+      const drawTarget=r=>{const chip=button(r.nom||recordTitle(r),()=>{if(targets.has(r.id))targets.delete(r.id);else targets.add(r.id);chip.setAttribute('aria-pressed',String(targets.has(r.id)));persist();},'quiet');chip.setAttribute('aria-pressed',String(targets.has(r.id)));choices.append(chip);};candidates.forEach(drawTarget);
+      choices.append(button('Autre…',()=>selectLinkedTarget(target=>{if(!candidates.some(v=>v.id===target.id)){candidates.push(target);targets.add(target.id);drawTarget(target);}persist();}),'quiet'));form.append(choices);
+    }else form.append(node('small',targets.size?'Reliée à '+(current()?.type==='documents'?'cette pièce':'ce dossier'):'Note non classée'));
+    const submit=node('button','Noter','enq-button'+(sheet?' enq-button--primary':''));submit.type='submit';form.append(message,submit);
+    const save=async()=>{
+      if(busy||!text.value.trim()||state.session?.uid!==uid)return;
+      if(!persist()){message.textContent='Brouillon local indisponible ; garde cette saisie ouverte';return;}
+      if(state.session.offline||globalThis.navigator.onLine===false){message.textContent='Hors connexion : note gardée sur cet appareil, envoi à la reconnexion via Reprendre le brouillon.';return;}
+      pending||={body:{titre:'',texte:text.value,etiquettes:[]},baseRevision:revision,operationId,zone:'user:'+uid};persist();busy=true;
+      try{
+        const sentText=pending.body.texte,result=await saveNote({id,uid,...pending}),latest=client.readDraft(uid,id),newer=latest?.body?.texte!==sentText;revision=result.revision;pending=null;operationId=client.newId();
+        if(newer)client.saveDraft(uid,id,{...latest,baseRevision:revision,operationId,pending:null});else persist();
+        for(const target of targets){if(state.session?.uid!==uid)break;await addLink(id,target,'user:'+uid);}
+        if(newer){message.textContent='Notée ; brouillon plus récent conservé.';}else{client.removeDraft(uid,id);text.value='';message.textContent='Notée';}
+        busy=false;if(mounted&&state.session?.uid===uid){render();status.textContent=newer?'Notée ; brouillon plus récent conservé.':'Notée';onSuccess();}
+      }catch(error){busy=false;persist();message.textContent='Échec : '+error.message+' — ton brouillon est conservé.';if(mounted)status.textContent=message.textContent;}
+    };
+    form.addEventListener('submit',event=>{event.preventDefault();save();});text.addEventListener('keydown',event=>{if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();save();}});
+    return {form,text};
+  }
   function renderNotebook(){
-    notebook.replaceChildren(node('h3','Mon carnet','enq-section-title'));notebook.firstChild.id='enq-notebook-title';
-    if(!state.session)return;
-    notebook.append(node('small','Privé'),button('Nouvelle note',()=>openEditor(null,'notes',current()),'quiet'));
-    for(const note of linkedNotes(current(),state.records,linksIndex))notebook.append(button(recordTitle(note),()=>openObject(note),'quiet'),textView(note.texte));
+    notebook.replaceChildren(node('h3','Mon carnet','enq-section-title'));notebook.firstChild.id='enq-notebook-title';if(!state.session||!client)return;
+    const lock=node('span','⚿');lock.setAttribute('aria-hidden','true');notebook.append(lock,node('small','Privé'),quickForm(quickTargets()).form,button('Nouvelle note',()=>openEditor(null,'notes',current()),'quiet'));
+    for(const note of [...linkedNotes(current(),state.records,linksIndex)].reverse()){
+      const row=node('article','','enq-notebook-note');row.append(button(recordTitle(note),()=>openObject(note),'quiet'));
+      const excerpt=textView(note.texte);excerpt.className+=' enq-note-excerpt';row.append(excerpt,button('Lire la suite',()=>openObject(note),'quiet'));
+      const date=note.updatedAt?.seconds?new Date(note.updatedAt.seconds*1000).toLocaleDateString('fr'):'';if(date)row.append(node('small',date));
+      const lien=state.records.find(l=>l.type==='liens'&&(l.a===note.id&&l.b===current()?.id||l.b===note.id&&l.a===current()?.id));if(lien&&canEdit(lien))row.append(actionMenu('Actions du lien de cette note',[{label:'Retirer le lien',variant:'danger',action:()=>performAction(lien,'trash')}]).element);notebook.append(row);
+    }
+    const suggestions=state.records.filter(r=>r.type==='notes'&&isUnclassified(r,state.records)).slice(0,3);
+    if(suggestions.length){notebook.append(node('h4','Non classées'));for(const note of suggestions){const row=node('article','','enq-notebook-note');row.append(button(recordTitle(note),()=>openObject(note),'quiet'));if(current())row.append(button('Relier à '+(current().type==='documents'?'cette pièce':'ce dossier'),()=>addLink(note.id,current().id,'user:'+state.session.uid),'quiet'));notebook.append(row);}}
     notebook.append(node('p','Carnet privé dans l’application. L’administrateur de l’infrastructure Firebase conserve un accès technique.','enq-privacy'));
+  }
+  function openQuickSheet(){
+    if(!state.session||editor)return;
+    const anchor=d.activeElement||fab,dialog=node('dialog','','enq-quick-sheet');dialog.setAttribute('aria-label','Note rapide · mon carnet');
+    const quick=quickForm(quickTargets(),()=>dialog.close(),true);dialog.append(node('h3','Note rapide · mon carnet'),button('Fermer',()=>dialog.close()),quick.form);
+    dialog.addEventListener('close',()=>{dialog.remove();anchor?.focus();},{once:true});root.append(dialog);dialog.showModal();quick.text.focus();
+  }
+  function selectLinkedTarget(onSelect){
+    const anchor=d.activeElement,dialog=node('dialog'),select=node('select');dialog.setAttribute('aria-label','Objet à relier');select.setAttribute('aria-label','Objet à relier');
+    for(const target of all().filter(r=>['enquetes','documents','pnjs'].includes(r.type))){const option=node('option',target.nom||recordTitle(target));option.value=target.id;select.append(option);}
+    dialog.append(select,button('Relier',()=>{const target=all().find(r=>r.id===select.value);if(target)onSelect(target);dialog.close();}),button('Annuler',()=>dialog.close()));dialog.addEventListener('close',()=>{dialog.remove();anchor?.focus();},{once:true});root.append(dialog);dialog.showModal();
   }
   function renderList(){
     rememberMobile();
@@ -182,7 +238,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     if(r.description)sheet.append(node('p',r.description,'enq-piece-description'));if(r.provenance)sheet.append(node('p','Provenance : '+r.provenance,'enq-piece-description'));if(r.texte)sheet.append(textView(r.texte));
     const annotations=node('section','','enq-annotations');annotations.append(node('h4','Annotations'));sheet.append(annotations);
     const linked=node('section','','enq-piece-links');linked.append(node('h4','Liée à'));sheet.append(linked);renderPieceLinks(r,linked,context);
-    const actions=node('div','','enq-piece-actions');actions.append(button(layout==='mobile'?'Noter':'Noter dans mon carnet',()=>openEditor(null,'notes',r),'primary'));if(canEdit(r))actions.append(button('Modifier',()=>openEditor(r,r.type)));if(layout==='mobile')actions.append(button('Annoter',()=>{annotationMode=true;renderDetail();detail.querySelector('.enq-viewer')?.scrollIntoView?.({block:'start'});}));else actions.append(actionMenu('Actions de la pièce',objectActions(r,viewToken).filter(item=>item.label!=='Modifier')).element);sheet.append(actions);
+    const actions=node('div','','enq-piece-actions');actions.append(button(layout==='mobile'?'Noter':'Noter dans mon carnet',()=>{if(layout==='mobile')openQuickSheet();else{notebookOpen=true;renderDetail();renderNotebook();notebook.querySelector('textarea')?.focus();}},'primary'));if(canEdit(r))actions.append(button('Modifier',()=>openEditor(r,r.type)));if(layout==='mobile')actions.append(button('Annoter',()=>{annotationMode=true;renderDetail();detail.querySelector('.enq-viewer')?.scrollIntoView?.({block:'start'});}));else actions.append(actionMenu('Actions de la pièce',objectActions(r,viewToken).filter(item=>item.label!=='Modifier')).element);sheet.append(actions);
     try{
       const response=await client.read('files',r.id);if(!mounted||viewToken!==token||editor)return;
       const files=response.items.filter(f=>(r.files||[]).includes(f.id)),file=files.find(f=>f.id===activeFileId)||files[0];activeFileId=file?.id||null;
@@ -385,10 +441,11 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
         // Documents are prepared privately; publication is a separate complete operation.
         const publish=zone==='commun'&&!record&&type==='documents';
         if(publish)zone=`user:${uid}`;
-        const result=await client.save({type,id:recordId,zone,body:next,baseRevision:pending.baseRevision,operationId:pending.operationId});
+        const result=type==='notes'?await saveNote({id:recordId,uid,body:next,baseRevision:pending.baseRevision,operationId:pending.operationId}):await client.save({type,id:recordId,zone,body:next,baseRevision:pending.baseRevision,operationId:pending.operationId});
         captured.revision=result.revision;captured.operationId=client.newId();captured.pending=null;persist();
         if(publish)await client.action({id:recordId,type,revision:result.revision},'visibility','commun');
         if(linkedContext&&!captured.linked){await addLink(recordId,linkedContext.id,type==='notes'?`user:${uid}`:publish?'commun':zone);captured.linked=true;}
+        if(type==='notes')for(const target of resumed?.links||[])if(all().some(r=>r.id===target))await addLink(recordId,target,'user:'+uid);
         if(preset.shareNote&&!record&&publish){for(const l of state.records.filter(l=>l.type==='liens'&&(l.a===preset.shareNote.id||l.b===preset.shareNote.id))){const other=l.a===preset.shareNote.id?l.b:l.a;if(all().some(r=>r.id===other&&r.zone==='commun'))await addLink(recordId,other,'commun');}}
         const changed=editor===captured&&JSON.stringify(collect())!==JSON.stringify(next);
         if(changed)persist();else client.removeDraft(uid,recordId);if(mounted&&editor===captured)message.textContent=changed?'Brouillon plus récent — synchronisation à suivre':'Sauvegardée';
@@ -467,7 +524,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     async mount({signal}={}){
       if(mounted||signal?.aborted)return;mounted=true;build();d.addEventListener('keydown',searchShortcut);
       const runtime=await loadRuntime();if(!mounted||signal?.aborted)return;
-      client=runtime.createEnqueteClient({onChange:next=>{if(editor&&(!next.session||next.session.uid!==editor.uid||!editor.zone.startsWith('user:')&&(!next.session.active||next.session.maintenance&&!busy||next.session.role==='ancien'))){editor=null;if(timer)globalThis.clearTimeout(timer);timer=null;detailSignature='';}if(!next.session||next.session.maintenance)for(const dialog of root.querySelectorAll('dialog'))if(dialog.open){dialog.close();dialog.remove();}if(layout==='mobile'&&next.session?.uid!==state.session?.uid){if(mobileSpace.uid===next.session?.uid){({section,filter,category,search,scope}=mobileSpace);}else{mobileSpace={uid:next.session?.uid,section:'enquetes',filter:'',category:'',search:'',scope:''};mobileTabs.clear();mobileContexts.clear();contextDossier=null;}}state=next;linksIndex=buildLinksIndex(next.records);if(selected&&!legacyResolved&&next.session?.active&&client){legacyResolved=true;client.read('resolveLegacy',selected).then(result=>{if(mounted&&result.id){selected=result.id;render();}}).catch(()=>{});}if(selected&&!editor){const found=next.records.find(r=>r.id===selected);if(found&&['documents','enquetes','notes'].includes(found.type))section=found.type;}render();if(!initialOpened&&initialAction&&next.session?.active&&(initialAction==='new'||current())){initialOpened=true;openEditor(initialAction==='edit'?current():null,current()?.type||'enquetes');}},onError:showError});
+      client=runtime.createEnqueteClient({onChange:next=>{if(editor&&(!next.session||next.session.uid!==editor.uid||!editor.zone.startsWith('user:')&&(!next.session.active||next.session.maintenance&&!busy||next.session.role==='ancien'))){editor=null;if(timer)globalThis.clearTimeout(timer);timer=null;detailSignature='';}if(!next.session||next.session.uid!==state.session?.uid||next.session.maintenance)for(const dialog of root.querySelectorAll('dialog'))if(dialog.open&&(!next.session||next.session.uid!==state.session?.uid||!dialog.className.includes('enq-quick-sheet'))){dialog.close();dialog.remove();}if(layout==='mobile'&&next.session?.uid!==state.session?.uid){if(mobileSpace.uid===next.session?.uid){({section,filter,category,search,scope}=mobileSpace);}else{mobileSpace={uid:next.session?.uid,section:'enquetes',filter:'',category:'',search:'',scope:''};mobileTabs.clear();mobileContexts.clear();contextDossier=null;}}state=next;linksIndex=buildLinksIndex(next.records);if(selected&&!legacyResolved&&next.session?.active&&client){legacyResolved=true;client.read('resolveLegacy',selected).then(result=>{if(mounted&&result.id){selected=result.id;render();}}).catch(()=>{});}if(selected&&!editor){const found=next.records.find(r=>r.id===selected);if(found&&['documents','enquetes','notes'].includes(found.type))section=found.type;}render();if(!initialOpened&&initialAction&&next.session?.active&&(initialAction==='new'||current())){initialOpened=true;openEditor(initialAction==='edit'?current():null,current()?.type||'enquetes');}},onError:showError});
       Object.assign(client,{newId:runtime.newEnqueteId,saveDraft:runtime.saveEnqueteDraft,readDraft:runtime.readEnqueteDraft,removeDraft:runtime.removeEnqueteDraft,listDrafts:runtime.listEnqueteDrafts});
       signal?.addEventListener('abort',()=>this.unmount(),{once:true});
     },

@@ -5,7 +5,7 @@ import { flush } from './lib/enquetes-test-dom.mjs';
 test('image click enlarges by default and annotates only in explicit mode',async()=>{
     const f=await fixture({id:'lettre'});const image=f.container.querySelector('.enq-image-box').querySelector('img');
     image.getBoundingClientRect=()=>({left:10,top:20,width:200,height:100});image.dispatch('click',{clientX:60,clientY:70});await flush();
-    assert.equal(f.container.querySelector('form'),null);assert.ok(f.container.querySelector('.enq-zoom'));
+    assert.equal(f.container.querySelector('.enq-editor'),null);assert.ok(f.container.querySelector('.enq-zoom'));
     f.button('Fermer').click();assert.equal(f.d.activeElement,f.button('Agrandir'));
     f.button('Mode annotation').click();image.dispatch('click',{clientX:60,clientY:70});
     const fields=f.container.querySelectorAll('label');assert.equal(fields.find(l=>l.textContent.startsWith('Position horizontale')).firstChild.value,.25);assert.equal(fields.find(l=>l.textContent.startsWith('Position verticale')).firstChild.value,.5);f.view.unmount();
