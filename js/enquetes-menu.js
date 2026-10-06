@@ -45,7 +45,7 @@ export function createActionMenu({ documentRef: d, label, items }) {
     }
     trigger.addEventListener('click', () => { if (menu.hidden) open(); else close(); });
     trigger.addEventListener('keydown', event => {
-        if (['Enter', ' ', 'ArrowDown'].includes(event.key)) { event.preventDefault(); open(); }
+        if (['Enter', ' ', 'ArrowDown'].includes(event.key)) { event.preventDefault(); event.stopPropagation(); open(); }
     });
     element.addEventListener('keydown', event => {
         if (event.key === 'Escape') { event.preventDefault(); close(); }

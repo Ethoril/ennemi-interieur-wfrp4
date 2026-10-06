@@ -411,6 +411,13 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             if (bottomNav) bottomNav.hidden = onFiche;
             headerAction.setAttribute('aria-label', onFiche ? 'Menu de la fiche' : route.name === ROUTE_NAMES.ENQUETE ? (view?.menuLabel?.() || 'Actions du dossier') : 'Actions');
             headerAction.hidden = !(onFiche || route.name === ROUTE_NAMES.ENQUETE || route.name === ROUTE_NAMES.REGLAGES);
+            if (onFiche || route.name === ROUTE_NAMES.ENQUETE) {
+                headerAction.setAttribute('aria-haspopup', 'menu');
+                headerAction.setAttribute('aria-expanded', 'false');
+            } else {
+                headerAction.removeAttribute('aria-haspopup');
+                headerAction.removeAttribute('aria-expanded');
+            }
             documentRef.querySelectorAll('.m-bottom-nav a[data-route]').forEach(link => {
                 if (link.dataset.route === section) link.setAttribute('aria-current', 'page');
                 else link.removeAttribute('aria-current');

@@ -9,6 +9,8 @@
   --document-paper: #e6d7b5;
   --document-ink: #2a2116;
   --document-ink-muted: #6b5a3e;
+  --document-control-border: rgba(42,33,22,.35);
+  --document-control-hover: rgba(42,33,22,.08);
   --annotation-gold: #c9a84c;
   --annotation-private: #8a8a9a;
   --viewer-overlay: rgba(7, 7, 13, .85);

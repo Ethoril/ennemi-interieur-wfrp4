@@ -39,7 +39,7 @@ const runtime={
 };
 let view;
 document.documentElement.dataset.theme=params.get('theme')||'dark';
-document.body.className=params.get('layout')==='mobile'?'qa--mobile':'';
+document.body.className=(params.get('layout')==='mobile'?'qa--mobile':'')+(params.has('scroll')?' qa--scroll':'');
 const action=document.getElementById('m-header-action');
 function mount(id){
   view?.unmount();
@@ -52,3 +52,12 @@ action.addEventListener('click',()=>view.openMenu(action));
 window.addEventListener('popstate',()=>{const next=new URLSearchParams(location.search);params.set('id',next.get('id')||'');mount(next.get('id')||null);});
 mount(params.has('id')?(params.get('id')||null):'affaire');
 window.addEventListener('pagehide',()=>view.unmount());
+// Recette des mises à jour reçues pendant la lecture ou la saisie, sans données réelles.
+if(params.has('updates')){
+  let updates=0;const interval=setInterval(()=>{
+    records.find(r=>r.id==='affaire').revision++;
+    document.getElementById('qa').setAttribute('data-qa-updates',String(++updates));
+    callback?.({session:{uid:'a',role,active:true,maintenance:false,offline:params.has('offline')},records:clone(records.filter(r=>role==='mj'||r.zone!=='mj')),pnjs:clone(pnjs)});
+  },1000);
+  window.addEventListener('pagehide',()=>clearInterval(interval),{once:true});
+}

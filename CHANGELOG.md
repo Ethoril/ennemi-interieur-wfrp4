@@ -7,6 +7,7 @@
 - Écrans mobiles distincts, onglets de dossier et menus accessibles au clavier.
 - Note rapide privée dans le carnet ou la feuille mobile, brouillons conservés en cas d’erreur ou hors connexion.
 - Thèmes sombre et parchemin, focus et mouvement réduit vérifiés ; aucun changement de services, de schéma ou de données.
+- Correctifs de recette : lecture mobile et curseur préservés lors des mises à jour, cibles valides de note rapide, boutons lisibles sur papier, audience des épingles, titres structurés, menus et historique accessibles, zoom conservé et miniatures mises en cache.
 
 ## [2.34.0] - 2026-10-06
 

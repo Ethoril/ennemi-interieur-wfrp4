@@ -138,4 +138,8 @@ L’image s’agrandit au clic hors mode annotation. En mode annotation, le clic
 
 La note rapide et l’éditeur complet passent par le même `saveNote`, puis par `addLink` en zone personnelle. Un brouillon est associé au compte et à l’identifiant de note, jamais enregistré dans les données de campagne avant l’envoi. Hors connexion, reprendre le brouillon après reconnexion pour l’envoyer ; aucune nouvelle file d’attente n’est créée.
 
+Les mises à jour du même objet ne remettent plus la lecture mobile en haut. La saisie rapide conserve son formulaire par compte et contexte ; seule la liste du carnet est reconstruite. Depuis une note, ses cibles sont les enquêtes, documents et PNJ liés, sans lien entre notes. Si le stockage local est indisponible, la saisie reste ouverte et l'envoi en ligne demeure possible.
+
+Les métadonnées de fichiers sont mises en cache dans la vue jusqu'au changement de la liste `document.files`, avec invalidation au changement de compte et au démontage. Les vignettes utilisent `objectUrl(file, { thumbnail: true })`. Le zoom possède son propre cycle de libération d'URL, indépendant des re-rendus du détail, jusqu'à sa fermeture ou au démontage.
+
 Recette locale : `tools/fixtures/enquetes-qa.html` ; paramètres `role=joueur`, `layout=mobile`, `id=` (liste), `id=affaire` (dossier), `id=lettre` (pièce), `theme=parchment`. Le rapport de recette et les captures sont dans `docs/briefs/enquetes-ui/recette/`. La fusion et le push sur master nécessitent une demande explicite.

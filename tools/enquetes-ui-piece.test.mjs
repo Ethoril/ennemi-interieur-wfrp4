@@ -23,7 +23,7 @@ test('image click enlarges by default and annotates only in explicit mode',async
 });
 test('pins are numbered in file order and linked to focusable annotation rows',async()=>{
     const f=await fixture({id:'lettre'});const markers=f.container.querySelectorAll('.enq-marker');
-    assert.deepEqual(markers.map(m=>m.textContent),['1','2']);assert.equal(markers[1].getAttribute('aria-label'),'Annotation 2 : Cette signature semble familière.');
+    assert.deepEqual(markers.map(m=>m.textContent),['1','2']);assert.equal(markers[1].getAttribute('aria-label'),'Annotation 2 (privée) : Cette signature semble familière.');
     markers[1].click();assert.equal(f.d.activeElement,f.container.querySelectorAll('.enq-annotation-row')[1]);assert.equal(markers[1].getAttribute('data-highlight'),'true');
     assert.equal(f.button('Pièce suivante'),undefined);f.view.unmount();
 });

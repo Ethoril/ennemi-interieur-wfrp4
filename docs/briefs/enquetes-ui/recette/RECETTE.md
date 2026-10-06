@@ -2,6 +2,31 @@
 
 Date : 6 octobre 2026. Branche : `feat/enquetes-ui`. Lot E-01 à E-07.
 
+## Correctifs E-08 — recette complémentaire
+
+Les points A1 à A9 et B10 à B16 du brief E-08 sont corrigés, sans changement de version ni de services. Les éléments différés de la section C ne font pas partie de cette correction.
+
+- [x] Défilement mobile remis en haut uniquement au changement d'objet ; restauration après le rendu asynchrone d'une pièce. Test d'émissions de métadonnées et de contenu.
+- [x] Formulaire rapide conservé par compte/contexte, avec focus et sélection préservés sur bureau et dans Mes notes mobile. Dans le navigateur, 12 snapshots successifs ont laissé le texte et le curseur à la position 27 inchangés. Le raccourci `/` ignore les champs de saisie et `contenteditable`.
+- [x] Note rapide depuis une note : cibles pré-cochées parmi ses objets liés (enquête, document, PNJ), aucune note cible ; enregistrement confirmé dans la fixture. Bouton de liaison des notes non classées retiré lorsque l'objet courant est une note.
+- [x] Boutons secondaires sur papier : fond transparent, encre et bordure adaptées. Mesure des contrastes dans les deux thèmes : aucun texte sous 4,5:1 sur la pièce inspectée.
+- [x] Espace inférieur réservé au bouton flottant, à la navigation et à la zone sûre. En fin de fiche à 390 px, le bas de la barre d'actions est à 664 px et le haut du bouton flottant à 708 px.
+- [x] Épingles privées : audience dans le nom accessible et bordure en pointillés.
+- [x] Titres remontés d'un niveau (h2, h3, h4) et Markdown adapté ; focus de repli sur h2. Région live globale du bureau retirée.
+- [x] Bouton d'en-tête mobile : état de menu initial sur ENQUETE/FICHE, attributs retirés sur les autres routes.
+- [x] Conclusion affichée même sur une enquête ouverte, avant les sections ; également disponible sur le dossier mobile.
+- [x] Recherche restaurée non vide rendue visible sur mobile.
+- [x] Métadonnées de fichiers réutilisées tant que `document.files` ne change pas ; miniatures demandées avec `thumbnail: true` et cache vidé lors d'un changement de compte.
+- [x] Échec de stockage local signalé sans empêcher l'envoi en ligne. Deux saisies successives produisent deux notes distinctes.
+- [x] Flèche bas sur le déclencheur du menu : premier élément actif, confirmé dans le navigateur et par un test avec propagation d'événement.
+- [x] Zoom indépendant du cycle de rendu ; toujours ouvert après 30 snapshots dans le navigateur. Tests de libération à la fermeture et au démontage.
+- [x] Historique : titre visible et association accessible ; fermeture native retirant le dialogue et restituant le focus, testées.
+- [x] Fixture `?layout=mobile&id=lettre&updates=1&scroll=1` : défilement à 358 px conservé pendant 23 snapshots. `updates=1` simule des snapshots périodiques sur données fictives ; `scroll=1` donne au conteneur de la fixture un défilement semblable à la coque mobile.
+- [x] Captures `02-*` et `05-*` refaites dans les deux thèmes, avec deux captures `05-mobile-piece-actions*` supplémentaires pour inspecter la fin de fiche.
+- [x] `npm run check`, `npm run lint`, `npm run test:enquetes` verts ; 51 tests Enquêtes réussis.
+
+Cette recette utilise toujours la fixture locale ; les réserves de vérification réelle ci-dessous restent ouvertes. Aucun push, aucune fusion dans `master`, aucun déploiement.
+
 ## Périmètre et environnement
 
 Refonte du rendu bureau/mobile, sans modification du domaine, des services Firebase ni des règles. Toutes les interactions de cette recette utilisent les données fictives de `tools/fixtures/enquetes-qa.html`. Aucun accès aux données de campagne ni déploiement.

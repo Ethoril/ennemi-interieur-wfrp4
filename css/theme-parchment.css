@@ -439,6 +439,6 @@
   --enq-suspect:var(--statut-ennemi);
   --enq-paper-shadow:var(--shadow-sm);
 }
-[data-theme="parchment"] .enq-workspace h3 { color:var(--text-heading); }
+[data-theme="parchment"] .enq-workspace h2 { color:var(--text-heading); }
 [data-theme="parchment"] .enq-workspace .enq-section-title { color:var(--enq-accent); }
 [data-theme="parchment"] .enq-workspace .enq-button--primary:hover { background:var(--enq-accent); }

@@ -9,7 +9,7 @@ export class Element {
   addEventListener(k,fn){if(!this.listeners.has(k))this.listeners.set(k,[]);this.listeners.get(k).push(fn);}
   removeEventListener(k,fn){this.listeners.set(k,(this.listeners.get(k)||[]).filter(v=>v!==fn));}
   contains(target){return this===target||this.children.some(c=>c.contains?.(target));}
-  dispatch(type,properties={}){const event={target:this,currentTarget:this,preventDefault(){},...properties};let n=this;do{event.currentTarget=n;for(const fn of n.listeners?.get(type)||[])fn(event);n=n.parentNode;}while(n);}
+  dispatch(type,properties={}){let stopped=false;const event={target:this,currentTarget:this,preventDefault(){},stopPropagation(){stopped=true;},...properties};let n=this;do{event.currentTarget=n;for(const fn of n.listeners?.get(type)||[])fn(event);n=n.parentNode;}while(n&&!stopped);}
   showModal(){this.open=true;this.querySelector('textarea,button,input')?.focus();}
   close(){this.open=false;this.dispatch('close');}
   click(){this.dispatch('click');}
