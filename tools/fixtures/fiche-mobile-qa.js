@@ -194,12 +194,28 @@ document.getElementById('qa-spells').addEventListener('click', event => {
     current = { ...current, revision: current.revision + 1, data: { ...current.data, ...(on ? SPELLS : { sorts: [], prieres: [] }) } };
     publishSnapshot();
 });
+// Sections facultatives du bureau (optVisible) : sorts et prières affichés sans en posséder, pour apprendre depuis la fiche.
+document.getElementById('qa-sections').addEventListener('click', event => {
+    const on = event.currentTarget.dataset.on !== 'true';
+    event.currentTarget.dataset.on = String(on);
+    event.currentTarget.textContent = on ? 'Désactiver sorts et miracles' : 'Activer sorts et miracles';
+    const optVisible = { 'section-sorts': on, 'section-prieres': on };
+    current = { ...current, revision: current.revision + 1, data: { ...current.data, optVisible } };
+    publishSnapshot();
+});
+// Rang 4 d'Agitateur : liste « Savoir-vivre (au choix) » parmi les talents disponibles.
+document.getElementById('qa-rank4').addEventListener('click', () => {
+    current = { ...current, revision: current.revision + 1, data: { ...current.data, rang: '4' } };
+    publishSnapshot();
+});
 document.getElementById('qa-reset').addEventListener('click', () => {
     current = { ...current, revision: current.revision + 1, data: testData() };
     operations.clear();
     publishSnapshot();
     document.getElementById('qa-spells').dataset.on = 'false';
     document.getElementById('qa-spells').textContent = 'Ajouter des sorts';
+    document.getElementById('qa-sections').dataset.on = 'false';
+    document.getElementById('qa-sections').textContent = 'Activer sorts et miracles';
     stateEl.textContent = 'Fiche fictive réinitialisée.';
 });
 

@@ -7,13 +7,16 @@ import { createFicheController } from '../js/fiche-controller.js';
 import { createFicheDraftStore } from '../js/fiche-draft-store.js';
 import { BASIC_SKILLS } from '../js/fiche/basic-skills.js';
 import {
-    filterSkills, hasSpells, sortSkills, spellRows, talentRows, talentTaken,
+    filterSkills, hasSpells, learnRows, sortSkills, spellRows, spellSections, spellTypes, talentChoices, talentRows, talentTaken,
 } from '../js/mobile/fiche-aptitudes-model.js';
 import { loadFicheCatalogue } from '../js/mobile/fiche-catalogue.js';
 import { skillRows } from '../js/mobile/fiche-model.js';
+import { learnSkillRows } from '../js/mobile/fiche-skill-learn-model.js';
 import { purchasePayload, purchasePreview, purchaseTarget } from '../js/mobile/fiche-purchase.js';
 import { createAptitudesPanel } from '../js/mobile/views/fiche-aptitudes.js';
 import { createPurchaseSheet } from '../js/mobile/views/fiche-purchase-sheet.js';
+import { createSkillLearnSheet } from '../js/mobile/views/fiche-skill-learn.js';
+import { createSpellLearnSheet } from '../js/mobile/views/fiche-spell-learn.js';
 import { createSpecialtySection } from '../js/mobile/views/fiche-specialty.js';
 
 const read = path => JSON.parse(readFileSync(fileURLToPath(new URL(`../${path}`, import.meta.url)), 'utf8'));
@@ -95,7 +98,7 @@ test('talentRows : acquis avec prises, puis disponibles de la carrière non acqu
     const available = rows.filter(row => !row.acquired);
     const rank1 = careers.find(career => career.nom === 'Agitateur').rangs[0].talents;
     assert.ok(available.length > 0);
-    assert.ok(available.every(row => row.cost === 100 && row.count === 0));
+    assert.ok(available.every(row => row.cost === (row.open ? undefined : 100) && row.count === 0));
     assert.ok(available.every(row => rank1.includes(row.nom)) && !available.some(row => row.nom === 'Sociable'));
     assert.deepEqual(rows.map(row => row.acquired), [...rows.map(row => row.acquired)].sort((a, b) => b - a));
     assert.equal(talentTaken(d, engine, 'Sociable'), 2);
@@ -420,7 +423,7 @@ test('volet d’achat : description et prises d’un talent, spécialité choisi
     sheet.destroy();
 });
 
-test('talents : emplacements ouverts listés mais non achetables, masqués si leur groupe est acquis', () => {
+test('talents : emplacements à spécialité listés et ouvrables, même si leur groupe est déjà acquis', () => {
     const talents = ['Sociable', 'Savoir-vivre (au choix)', 'Sens aiguisé (Goût ou Toucher)', 'Artisan (Forgeron, Orfèvre ou Ingénieur)'];
     const custom = [{ id: 'c1', nom: 'Test', rangs: [{ rang: 1, titre: 'T', statut: '', skills: [], talents }] }];
     const rows = talentRows(data({ carriere: 'Test' }), engine, custom);
@@ -428,17 +431,91 @@ test('talents : emplacements ouverts listés mais non achetables, masqués si le
         ['Sociable', false], ['Savoir-vivre (au choix)', true], ['Sens aiguisé (Goût ou Toucher)', true],
         ['Artisan (Forgeron, Orfèvre ou Ingénieur)', true],
     ]);
-    // Un talent acquis du même groupe (ici une spécialité choisie) retire l'emplacement ouvert, pas les talents fermés.
+    // Le serveur accepte plusieurs prises : un talent acquis du même groupe ne retire pas l'emplacement.
     const acquired = talentRows(data({ carriere: 'Test', talentsAcq: [{ id: 't1', nom: 'Savoir-vivre (Guilde)' }, { id: 't2', nom: 'Artisan (Forgeron)' }] }), engine, custom);
-    assert.deepEqual(acquired.filter(row => !row.acquired).map(row => row.nom), ['Sociable', 'Sens aiguisé (Goût ou Toucher)']);
+    assert.deepEqual(acquired.filter(row => !row.acquired).map(row => row.nom), talents);
     assert.deepEqual(acquired.filter(row => row.acquired).map(row => row.open), [false, false]);
 
-    const panel = createAptitudesPanel({ documentRef: fakeDocument(), onOpenTalent: () => { throw new Error('ouverture interdite'); } });
+    const opened = [];
+    const panel = createAptitudesPanel({ documentRef: fakeDocument(), onOpenTalent: nom => opened.push(nom) });
     panel.update({ data: data({ carriere: 'Test' }), careers: custom, engine });
     press(panel, 'Talents').click();
     const rowsOf = pane(panel, 1).allByClass('m-apt-row');
-    assert.deepEqual(rowsOf.map(row => row.disabled), [false, true, true, true]);
-    assert.equal(pane(panel, 1).allByClass('m-apt-detail').filter(node => !node.hidden).map(node => node.textContent)[0], 'Spécialité à choisir sur le bureau');
+    assert.deepEqual(rowsOf.map(row => row.disabled), [false, false, false, false]);
+    assert.deepEqual(pane(panel, 1).allByClass('m-apt-detail').filter(node => !node.hidden), []);
+    rowsOf[1].click();
+    assert.deepEqual(opened, ['Savoir-vivre (au choix)']);
+});
+
+test('talentChoices : spécialités connues pour « au choix », alternatives listées pour « A ou B »', () => {
+    assert.equal(talentChoices(careers, data(), 'Sociable'), null);
+    const open = talentChoices(careers, data({ customTalents: { 'Savoir-vivre': ['Cour elfique'] } }), 'Savoir-vivre (au choix)');
+    assert.deepEqual([open.base, open.free], ['Savoir-vivre', true]);
+    assert.ok(open.specs.includes('Guilde') && open.specs.at(-1) === 'Cour elfique');
+    const known = open.specs.slice(0, -1);
+    assert.deepEqual(known, [...known].sort((a, b) => a.localeCompare(b, 'fr')));
+    // Graphies qui ne diffèrent que par la casse ou les accents : une seule puce, la graphie capitalisée d’abord (« Guilde »), puis la plus fréquente ; « Guildes » reste distinct.
+    assert.ok(open.specs.includes('Guilde') && !open.specs.includes('guilde') && open.specs.includes('Guildes'));
+    const folded = open.specs.map(spec => spec.normalize('NFD').replace(/[̀-ͯ]/gu, '').toLowerCase());
+    assert.equal(new Set(folded).size, folded.length);
+    const tied = [{ rangs: [{ talents: ['Savoir-vivre (guilde)', 'Savoir-vivre (Guilde)', 'Savoir-vivre (guilde)', 'Savoir-vivre (Érudit)', 'Savoir-vivre (erudit)'] }] }];
+    assert.deepEqual(talentChoices(tied, data({ customTalents: { 'Savoir-vivre': ['GUILDE', 'Nobles'] } }), 'Savoir-vivre (au choix)').specs, ['Érudit', 'Guilde', 'Nobles']);
+    assert.ok(open.specs.every(spec => !/choix|sous/iu.test(spec)));
+    assert.deepEqual(talentChoices(careers, data(), 'Sens aiguisé (Goût ou Toucher)'), { base: 'Sens aiguisé', free: false, specs: ['Goût', 'Toucher'] });
+    assert.deepEqual(talentChoices(careers, data(), 'Artisan (Forgeron, Orfèvre ou Ingénieur)').specs, ['Forgeron', 'Orfèvre', 'Ingénieur']);
+});
+
+test('volet d’achat : talent à choisir, achat bloqué tant que la spécialité manque, liste puis texte libre', async () => {
+    const documentRef = fakeDocument();
+    const state = { phase: 'ready', data: data({ carriere: 'Agitateur', rang: '4', talentsAcq: [{ id: 't1', nom: 'Savoir-vivre (Guilde)' }] }) };
+    const sent = [];
+    const controller = { executeOnlineCommand: async (type, payload) => { sent.push([type, payload]); return { status: 'confirmed' }; } };
+    const sheet = createPurchaseSheet({ documentRef, getContext: () => ({ state, careers, engine, online: true, controller }) });
+    const trigger = documentRef.createElement('button');
+    const buy = () => sheet.element.all().find(node => node.tagName === 'button' && /^Acheter/u.test(node.textContent));
+    const chip = label => sheet.element.byClass('m-spec-choices').children.find(node => node.textContent === label);
+    const reason = () => sheet.element.byClass('m-purchase-reason');
+
+    sheet.open({ kind: 'talent', nom: 'Savoir-vivre (au choix)' }, trigger);
+    assert.equal(sheet.element.byClass('m-spec-block').hidden, false);
+    assert.equal(buy().disabled, true);
+    assert.equal(reason().textContent, 'Choisissez une spécialité');
+    assert.equal(sheet.element.allByClass('m-spec-choices')[0].children.at(-1).textContent, 'Autre…');
+    assert.ok(chip('Guilde · déjà acquis'), 'la spécialité déjà acquise est signalée');
+    const free = sheet.element.all().find(node => node.tagName === 'input');
+    assert.equal(free.hidden, true);
+
+    chip('Guilde · déjà acquis').click();
+    assert.equal(chip('Guilde · déjà acquis').getAttribute('aria-pressed'), 'true');
+    assert.equal(buy().disabled, false);
+    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Savoir-vivre (Guilde)');
+    assert.equal(sheet.element.byClass('m-purchase-taken').textContent, 'Prises : 1');
+
+    // Texte libre : « Autre… » affiche le champ, vide = pas de choix, parenthèses retirées.
+    sheet.element.allByClass('m-spec-choices')[0].children.at(-1).click();
+    assert.equal(free.hidden, false);
+    assert.equal(buy().disabled, true);
+    free.value = 'Cour (elfique)';
+    free.dispatch('input');
+    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Savoir-vivre (Cour elfique)');
+    assert.equal(buy().disabled, false);
+    buy().click();
+    await sleep(0);
+    assert.deepEqual(sent.map(([type, payload]) => [type, payload.kind, payload.name, payload.count]), [['purchase', 'talent', 'Savoir-vivre (Cour elfique)', 1]]);
+    assert.equal(sent[0][1].expectedCost, 100);
+    sheet.destroy();
+});
+
+test('volet d’achat : « A ou B » sans saisie libre', () => {
+    const documentRef = fakeDocument();
+    const state = { phase: 'ready', data: data({ carriere: 'Artisan', rang: '4' }) };
+    const sheet = createPurchaseSheet({ documentRef, getContext: () => ({ state, careers, engine, online: true, controller: {} }) });
+    sheet.open({ kind: 'talent', nom: 'Sens aiguisé (Goût ou Toucher)' }, documentRef.createElement('button'));
+    assert.deepEqual(sheet.element.byClass('m-spec-choices').children.map(node => node.textContent), ['Goût', 'Toucher']);
+    assert.equal(sheet.element.all().find(node => node.tagName === 'input').hidden, true);
+    sheet.element.byClass('m-spec-choices').children[1].click();
+    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Sens aiguisé (Toucher)');
+    sheet.destroy();
 });
 
 test('spécialité de base : seuls « saved » et « awaiting-snapshot » annoncent un enregistrement', async () => {
@@ -491,4 +568,261 @@ test('spécialité de base : un refus serveur sans spécialité préalable ne la
     assert.equal(values.size, 0, 'aucun brouillon persistant');
     assert.match(section.element.all().filter(node => node.className === 'm-spec-note').map(node => node.textContent).join(''), /après des avances/u);
     controller.close();
+});
+
+// ── Apprendre des sorts et miracles ───────────────────────────────
+
+const OWNED_SPELL = { id: 's1', nom: 'Couronne de Flammes', vent: 'Aqshy', cn: 8, portee: 'Vous', duree: 'Rounds', resume: 'Feu.' };
+
+test('sections Sorts et Prières : visibles si possédées ou activées (optVisible), onglet si l’une l’est', () => {
+    const sections = extra => Object.values(spellSections(data(extra)));
+    assert.deepEqual(sections(), [false, false]);
+    assert.deepEqual(spellSections(null), { spells: false, prayers: false });
+    assert.deepEqual(sections({ optVisible: { 'section-sorts': true, 'section-prieres': false } }), [true, false]);
+    assert.deepEqual(sections({ optVisible: { 'section-prieres': true } }), [false, true]);
+    assert.deepEqual(sections({ sorts: [OWNED_SPELL] }), [true, false]);
+    assert.deepEqual(sections({ prieres: [{ id: 'p1', nom: 'Appel' }], optVisible: { 'section-sorts': true } }), [true, true]);
+    assert.deepEqual(sections({ sorts: [OWNED_SPELL], optVisible: { 'section-sorts': false } }), [true, false]);
+    assert.equal(hasSpells(data({ optVisible: { 'section-prieres': true } })), true);
+    assert.equal(hasSpells(data({ optVisible: { 'section-sorts': false, 'section-prieres': false } })), false);
+});
+
+test('learnRows : recherche sans accents ni casse, multi-mots, filtre de type, connus exclus, ambigus écartés', () => {
+    const all = learnRows(engine, data(), 'sort');
+    const catalog = engine.ruleCatalog.spells;
+    const key = rule => rule.nom.normalize('NFD').replace(/[̀-ͯ]/gu, '').toLowerCase().replace(/[’']/gu, "'").trim();
+    const ambiguous = catalog.filter(rule => catalog.filter(other => key(other) === key(rule)).length > 1);
+    assert.ok(ambiguous.length > 0 && all.length === catalog.length - ambiguous.length);
+    assert.ok(all.every(row => ambiguous.every(rule => rule.nom !== row.nom)));
+    assert.deepEqual(all.map(row => row.type), [...all.map(row => row.type)].sort((a, b) => a.localeCompare(b, 'fr')));
+
+    const flames = learnRows(engine, data(), 'sort', { query: 'COURONNE flammes' });
+    assert.deepEqual(flames.map(row => row.nom), ['Couronne de Flammes']);
+    assert.deepEqual([flames[0].ni, flames[0].cost], [8, 100]);
+    assert.equal(learnRows(engine, data(), 'sort', { query: 'couronne zzz' }).length, 0);
+    // Les mots portent aussi sur le type (« aqshy feu »), pas seulement sur le nom.
+    assert.ok(learnRows(engine, data(), 'sort', { query: 'aqshy feu' }).length > 10);
+    assert.deepEqual(learnRows(engine, data(), 'sort', { query: 'fleche benie' }).map(row => row.nom), ['Flèche Bénie']);
+
+    const types = spellTypes(engine);
+    assert.ok(types.includes('Sort Mineur') && types.includes('Aqshy') && types.includes('Sort d\'Arcane'));
+    const minor = learnRows(engine, data(), 'sort', { type: 'Sort Mineur' });
+    assert.ok(minor.length > 0 && minor.every(row => row.type === 'Sort Mineur' && row.cost === 50));
+
+    // Un sort connu (graphie différente) disparaît de la liste ; le palier des autres monte avec le nombre de connus du domaine.
+    assert.deepEqual(learnRows(engine, data({ sorts: [{ ...OWNED_SPELL, nom: 'couronne de FLAMMES' }] }), 'sort', { query: 'couronne de flammes' }), []);
+    const loreKnown = all.filter(row => row.type.startsWith('Aqshy')).slice(0, 5).map(row => ({ id: row.nom, nom: row.nom }));
+    const next = learnRows(engine, data({ sorts: loreKnown }), 'sort', { type: 'Aqshy' });
+    assert.ok(next.length > 0 && next.every(row => row.cost === 100));
+    assert.ok(learnRows(engine, data({ sorts: [...loreKnown, { id: 'x', nom: next[0].nom }] }), 'sort', { type: 'Aqshy' }).every(row => row.cost === 200));
+});
+
+test('learnRows : miracles du catalogue, connus exclus', () => {
+    const catalog = engine.ruleCatalog.miracles;
+    assert.equal(learnRows(engine, data(), 'miracle').length, catalog.length);
+    const known = learnRows(engine, data({ prieres: [{ id: 'p1', nom: catalog[0].nom, type: 'Miracle' }] }), 'miracle');
+    assert.equal(known.length, catalog.length - 1);
+    assert.ok(known.every(row => row.nom !== catalog[0].nom && row.cost === 100));
+    assert.equal(learnRows(engine, data(), 'miracle', { query: catalog[1].nom.toUpperCase() })[0].nom, catalog[1].nom);
+});
+
+test('panneau : sections activées sans possession, boutons « Apprendre », consultation des possédés conservée', () => {
+    const documentRef = fakeDocument();
+    const learned = [];
+    const panel = createAptitudesPanel({ documentRef, onLearn: (kind, trigger) => learned.push([kind, trigger]) });
+    const button = label => panel.element.all().find(node => node.tagName === 'button' && node.textContent === label);
+    const groups = () => pane(panel, 2).allByClass('m-apt-group').map(group => [group.children[0].textContent, group.hidden]);
+    const notes = () => pane(panel, 2).allByClass('m-principal-note');
+    panel.update({ data: data(), careers, engine });
+    assert.equal(press(panel, 'Sorts').hidden, true);
+
+    panel.update({ data: data({ optVisible: { 'section-sorts': true } }), careers, engine });
+    assert.equal(press(panel, 'Sorts').hidden, false);
+    press(panel, 'Sorts').click();
+    assert.deepEqual(groups(), [['Sorts', false], ['Prières et miracles', true]]);
+    assert.equal(notes()[0].textContent, 'Aucun sort appris.');
+    button('Apprendre un sort').click();
+    assert.deepEqual(learned, [['sort', button('Apprendre un sort')]]);
+
+    panel.update({ data: data({ sorts: [OWNED_SPELL], optVisible: { 'section-prieres': true } }), careers, engine });
+    assert.deepEqual(groups(), [['Sorts', false], ['Prières et miracles', false]]);
+    assert.deepEqual([notes()[0].hidden, notes()[1].hidden], [true, false]);
+    button('Apprendre un miracle').click();
+    assert.equal(learned.at(-1)[0], 'miracle');
+    pane(panel, 2).allByClass('m-apt-row')[0].click();
+    assert.equal(panel.detailElement.byClass('m-purchase-title').textContent, 'Couronne de Flammes');
+});
+
+test('volet « Apprendre » : recherche, puces de type, connus absents, choix puis volet d’achat avec coût et description', async () => {
+    const documentRef = fakeDocument();
+    const state = { phase: 'ready', pendingOperationId: null, data: data({ sorts: [OWNED_SPELL], optVisible: { 'section-sorts': true } }) };
+    const chosen = [];
+    const sent = [];
+    const controller = { executeOnlineCommand: async (type, payload) => { sent.push([type, payload]); return { status: 'confirmed' }; } };
+    const announces = [];
+    const purchase = createPurchaseSheet({
+        documentRef, announce: message => announces.push(message), getContext: () => ({ state, careers, engine, online: true, controller }),
+    });
+    const learn = createSpellLearnSheet({
+        documentRef, getContext: () => ({ state, engine }), onChoose: (spec, trigger) => { chosen.push(spec); purchase.open(spec, trigger); },
+    });
+    const trigger = documentRef.createElement('button');
+    learn.open('sort', trigger);
+    const rowNames = () => learn.element.allByClass('m-apt-name').map(node => node.textContent);
+    const count = () => learn.element.byClass('m-result-count').textContent;
+    assert.match(count(), /précisez la recherche/u);
+    const chip = label => learn.element.allByClass('m-chip').find(node => node.textContent === label);
+    chip('Sort Mineur').click();
+    assert.equal(chip('Sort Mineur').getAttribute('aria-pressed'), 'true');
+    assert.ok(learn.element.allByClass('m-apt-detail').every(node => node.textContent === 'Sort Mineur'));
+    chip('Sort Mineur').click();
+    assert.equal(chip('Sort Mineur').getAttribute('aria-pressed'), 'false');
+    const search = learn.element.all().find(node => node.tagName === 'input');
+    search.value = 'couronne de flammes';
+    search.dispatch('input');
+    assert.deepEqual(rowNames(), [], 'un sort connu n’est pas listé');
+    search.value = 'zzzz';
+    search.dispatch('input');
+    assert.equal(count(), '0 sort');
+    search.value = 'fleche BENIE';
+    search.dispatch('input');
+    assert.deepEqual(rowNames(), ['Flèche Bénie']);
+    assert.equal(count(), '1 sort');
+
+    learn.element.allByClass('m-apt-row')[0].click();
+    assert.deepEqual(chosen, [{ kind: 'sort', nom: 'Flèche Bénie' }]);
+    assert.equal(learn.element.open, false);
+    assert.equal(purchase.element.open, true);
+    assert.equal(purchase.element.byClass('m-purchase-title').textContent, 'Flèche Bénie');
+    assert.equal(purchase.element.byClass('m-purchase-nature').textContent, 'Sort · Petite Magie Elfique');
+    const paragraphs = purchase.element.byClass('m-purchase-description').children;
+    assert.ok(paragraphs.length > 1 && paragraphs.every(node => node.tagName === 'p'));
+    assert.match(paragraphs[0].textContent, /^NI 0 · Portée : Contact/u);
+    assert.equal(purchase.element.byClass('m-purchase-cost').textContent, '50 XP');
+    assert.equal(purchase.element.byClass('m-purchase-stepper').hidden, true);
+    assert.equal(purchase.element.byClass('m-purchase-note').textContent, 'Sorts déjà connus de ce palier : 0');
+    purchase.element.all().find(node => node.textContent === 'Acheter pour 50 XP').click();
+    await sleep(0);
+    assert.deepEqual(sent, [['purchase', { kind: 'sort', name: 'Flèche Bénie', count: 1, expectedCost: 50, catalogVersion: engine.catalogVersion }]]);
+    assert.deepEqual(announces, ['Flèche Bénie : sort appris']);
+
+    // Miracle : pas de puces de type, même flux.
+    learn.open('miracle', trigger);
+    assert.equal(learn.element.byClass('m-quick-filters').hidden, true);
+    assert.equal(learn.element.allByClass('m-apt-name').length, engine.ruleCatalog.miracles.length);
+    learn.element.allByClass('m-apt-row')[0].click();
+    assert.equal(chosen.at(-1).kind, 'miracle');
+    assert.equal(purchase.element.byClass('m-purchase-nature').textContent, 'Miracle');
+    assert.equal(purchase.element.byClass('m-purchase-cost').textContent, '100 XP');
+    purchase.destroy();
+    learn.destroy();
+});
+
+test('apprendre une compétence : recherche, exclusions, groupes, coût égal à celui du moteur', () => {
+    const d = data({ skillsAdvanced: [{ id: 'l1', nom: 'Langue (Reikspiel)', carac: 'int', adv: 3 }] });
+    const rows = learnSkillRows(d, engine, careers);
+    const names = rows.map(row => row.nom);
+    assert.ok(names.includes('Langue (au choix)') && names.includes('Focalisation'));
+    assert.ok(!names.some(nom => /^(Art|Charme|Esquive)/u.test(nom)), 'les compétences de base sont absentes');
+    assert.ok(!names.includes('Langue (Tiléen)'), 'les spécialités passent par leur groupe');
+    const { aliases } = read('js/catalogue/referentiel-public.json').skills;
+    const alias = aliases.find(({ label }) => resolver.resolve(label).status === 'resolved' && !resolver.resolve(label).entry.basic
+        && resolver.resolve(label).entry.nom !== label);
+    assert.ok(alias && !names.includes(alias.label), 'une forme reliée est masquée');
+    // Possédée (y compris par une forme reliée) : exclue.
+    const principal = resolver.resolve(alias.label).entry;
+    const linked = data({ skillsAdvanced: [{ id: 'k1', nom: alias.label, carac: 'int', adv: 1 }] });
+    assert.ok(!learnSkillRows(linked, engine, careers).some(row => row.nom === principal.nom));
+    // Recherche sans accents ni casse, chaque mot ; une spécialité retrouve son groupe.
+    assert.deepEqual(learnSkillRows(d, engine, careers, 'LANGUE choix').map(row => row.nom), ['Langue (au choix)']);
+    assert.ok(learnSkillRows(d, engine, careers, 'tileen').some(row => row.nom === 'Langue (au choix)'));
+    assert.deepEqual(learnSkillRows(d, engine, careers, 'zzzz'), []);
+    const group = byNom(rows, 'Langue (au choix)');
+    assert.equal(group.cost, undefined);
+    assert.ok(group.specialty.options.some(({ nom }) => nom === 'Langue (Tiléen)'));
+    // Coût : compétence de carrière (Agitateur), hors carrière, spécialité de groupe, forme reliée.
+    const alchimiste = data({ carriere: 'Alchimiste (Collège Doré)' });
+    const agitateur = learnSkillRows(alchimiste, engine, careers).filter(row => row.cost !== undefined);
+    const career = agitateur.find(row => row.inCareer);
+    const other = agitateur.find(row => !row.inCareer);
+    assert.ok(career && other);
+    for (const row of [career, other]) {
+        const { target } = assertAccepted(alchimiste, { kind: 'skill', newName: row.nom });
+        assert.equal(target.inCareer, row.inCareer);
+        assert.equal(purchasePreview(target, 1, 5000).cost, row.cost);
+    }
+    assert.equal(assertAccepted(data(), { kind: 'skill', newName: 'Langue (Tiléen)' }).target.adv, 0);
+    assert.equal(assertAccepted(data(), { kind: 'skill', newName: alias.label }).target.title, principal.nom);
+});
+
+test('volet « Apprendre une compétence » : recherche, compétence unique, groupe puis spécialité libre', () => {
+    const documentRef = fakeDocument();
+    const state = { phase: 'ready', pendingOperationId: null, data: data() };
+    const chosen = [];
+    const learn = createSkillLearnSheet({
+        documentRef, getContext: () => ({ state, engine, careers }), onChoose: (spec, trigger) => chosen.push([spec, trigger]),
+    });
+    const trigger = documentRef.createElement('button');
+    learn.open(trigger);
+    const names = () => learn.element.allByClass('m-apt-name').map(node => node.textContent);
+    const search = learn.element.all().find(node => node.tagName === 'input');
+    search.value = 'evaluation';
+    search.dispatch('input');
+    assert.deepEqual(names(), ['Évaluation']);
+    learn.element.allByClass('m-apt-row')[0].click();
+    assert.deepEqual(chosen, [[{ kind: 'skill', newName: 'Évaluation' }, trigger]]);
+    assert.equal(learn.element.open, false);
+
+    learn.open(trigger);
+    const find = learn.element.all().find(node => node.tagName === 'input');
+    find.value = 'langue';
+    find.dispatch('input');
+    learn.element.allByClass('m-apt-row')[0].click();
+    assert.equal(learn.element.byClass('m-purchase-title').textContent, 'Langue');
+    const chip = learn.element.allByClass('m-chip').find(node => node.textContent === 'Tiléen');
+    chip.click();
+    assert.deepEqual(chosen.at(-1)[0], { kind: 'skill', newName: 'Langue (Tiléen)' });
+
+    learn.open(trigger);
+    const again = learn.element.all().find(node => node.tagName === 'input');
+    again.value = 'langue';
+    again.dispatch('input');
+    learn.element.allByClass('m-apt-row')[0].click();
+    const free = learn.element.all().find(node => node.id === 'm-skill-learn-spec-free');
+    free.value = 'Gobelin';
+    learn.element.allByClass('m-button').find(node => node.textContent === 'Choisir').click();
+    assert.deepEqual(chosen.at(-1)[0], { kind: 'skill', newName: 'Langue (Gobelin)' });
+    learn.destroy();
+});
+
+test('emplacements à spécialité : pas de coût en liste, mention « Spécialité à choisir »', () => {
+    const custom = [{ id: 'c1', nom: 'Test', rangs: [{ rang: 1, titre: 'T', statut: '', skills: [], talents: ['Sociable', 'Savant (Région)', 'Savoir-vivre (au choix)'] }] }];
+    const rows = talentRows(data({ carriere: 'Test' }), engine, custom);
+    assert.deepEqual(rows.map(row => [row.nom, row.cost]), [['Sociable', 100], ['Savant (Région)', undefined], ['Savoir-vivre (au choix)', undefined]]);
+    const panel = createAptitudesPanel({ documentRef: fakeDocument() });
+    panel.update({ data: data({ carriere: 'Test' }), careers: custom, engine });
+    panel.element.all().find(node => node.textContent === 'Talents' && node.tagName === 'button').click();
+    const sides = panel.element.allByClass('m-apt-side').map(node => node.children[0].textContent);
+    assert.deepEqual(sides, ['100 XP', 'Spécialité à choisir', 'Spécialité à choisir']);
+});
+
+test('spécialité libre bornée pour que « Base (spé) » tienne en 200 caractères ; choix gelés pendant une reprise', () => {
+    const documentRef = fakeDocument();
+    const state = { phase: 'ready', pendingOperationId: null, data: data({ carriere: 'Agitateur', rang: '4' }) };
+    const sheet = createPurchaseSheet({ documentRef, getContext: () => ({ state, careers, engine, online: true, controller: {} }) });
+    sheet.open({ kind: 'talent', nom: 'Savoir-vivre (au choix)' }, documentRef.createElement('button'));
+    const free = sheet.element.all().find(node => node.tagName === 'input');
+    assert.equal(free.getAttribute('maxlength'), String(200 - 'Savoir-vivre'.length - 3));
+    const chips = () => sheet.element.byClass('m-spec-choices').children;
+    assert.ok(chips().every(node => !node.disabled) && !free.disabled);
+    state.pendingOperationId = 'op-1';
+    sheet.update();
+    assert.ok(chips().every(node => node.disabled) && free.disabled);
+    sheet.destroy();
+
+    const setup = specialtySetup();
+    setup.section.update({ specialty: { kind: 'group', group: 'Langue', options: [{ nom: 'Langue (Tiléen)', spec: 'Tiléen' }] } });
+    assert.equal(setup.section.element.all().find(node => node.id === 'm-spec-free').getAttribute('maxlength'), String(200 - 'Langue'.length - 3));
+    setup.section.update({ specialty: { kind: 'group', group: 'Langue', options: [{ nom: 'Langue (Tiléen)', spec: 'Tiléen' }] } }, true);
+    assert.ok(setup.section.element.all().filter(node => node.tagName === 'button').every(node => node.disabled));
 });

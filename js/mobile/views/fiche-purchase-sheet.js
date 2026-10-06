@@ -13,10 +13,10 @@ function make(documentRef, tag, text = '', className = '') {
 /**
  * Volet d'achat d'avances (caractéristique, compétence) ou de talent.
  * `getContext()` → { state (contrôleur), careers, engine, online, controller }.
- * open(spec, trigger) : spec = { kind: 'carac', key } | { kind: 'skill', ...ligne de skillRows } | { kind: 'talent', nom }
+ * open(spec, trigger) : spec = { kind: 'carac', key } | { kind: 'skill', ...ligne de skillRows } | { kind: 'talent', nom } | { kind: 'sort' | 'miracle', nom }
  * | { kind: 'rank', rankMode, careerId?, targetRank? } (rang suivant ou changement de carrière : une seule avance, sans stepper).
  * Une compétence à spécialités ajoute son bloc (champ de base, ou « Ajouter une spécialité » qui re-cible le volet) ;
- * un talent ajoute sa description publiée et son nombre de prises.
+ * un talent ajoute sa description publiée et son nombre de prises ; un sort ou un miracle sa description publiée et son palier de coût.
  * Le contenu est construit une fois par ouverture puis mis à jour sur place (le focus reste sur +/−).
  */
 export function createPurchaseSheet({ documentRef, getContext, announce = () => {} }) {
@@ -28,6 +28,8 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
     let info = '';
     let nodes = null;
     let shownDescription = '';
+    let customPick = false;
+    let chipsFor = '';
 
     const build = body => {
         const head = make(documentRef, 'div', '', 'm-purchase-head');
@@ -42,6 +44,19 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         head.append(titles, total);
         const formula = make(documentRef, 'p', '', 'm-purchase-formula');
         const specialty = createSpecialtySection({ documentRef, getContext, announce, onChoose: choose });
+        // Spécialité d'un talent « au choix » ou « A ou B » : puces des choix, plus « Autre… » (saisie libre) pour les emplacements ouverts.
+        const picker = make(documentRef, 'div', '', 'm-spec-block');
+        const pickLabel = make(documentRef, 'p', 'Spécialité', 'm-spec-label');
+        const pickChoices = make(documentRef, 'div', '', 'm-spec-choices');
+        pickChoices.setAttribute('role', 'group');
+        pickChoices.setAttribute('aria-label', 'Spécialité du talent');
+        const pickFree = make(documentRef, 'input', '', 'm-search-input');
+        pickFree.type = 'text';
+        pickFree.autocomplete = 'off';
+        pickFree.setAttribute('maxlength', '200');
+        pickFree.setAttribute('aria-label', 'Autre spécialité');
+        picker.append(pickLabel, pickChoices, pickFree);
+        pickFree.addEventListener('input', () => pickSpecialty(pickFree.value, true));
         const talent = make(documentRef, 'div', '', 'm-purchase-talent');
         const taken = make(documentRef, 'p', '', 'm-purchase-taken');
         const description = make(documentRef, 'div', '', 'm-purchase-description');
@@ -86,9 +101,9 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
             'purchase', purchasePayload(target(context), count, context.engine)), true));
         retry.addEventListener('click', () => run(context => context.controller.retryPendingCommand(), false));
 
-        body.replaceChildren(head, formula, specialty.element, talent, stepper, figures, tariff, reason, failure, buy, retry);
+        body.replaceChildren(head, formula, specialty.element, picker, talent, stepper, figures, tariff, reason, failure, buy, retry);
         shownDescription = '';
-        nodes = { title, nature, total, formula, specialty, talent, taken, description, stepper, less, value, more, newTotal, cost, after, tariff, reason, failure, buy, retry };
+        nodes = { title, nature, total, formula, specialty, picker, pickChoices, pickFree, talent, taken, description, stepper, less, value, more, newTotal, cost, after, tariff, reason, failure, buy, retry };
     };
 
     // Re-cible le volet sur une nouvelle ligne avancée du groupe ; faux si le nom ne peut pas être acheté ainsi.
@@ -102,6 +117,47 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         refresh();
         nodes.title.focus();
         return true;
+    }
+
+    function pickSpecialty(pick, custom) {
+        spec = { ...spec, pick };
+        customPick = custom;
+        error = '';
+        refresh();
+    }
+
+    // Les puces sont créées une fois par emplacement, puis seulement mises à jour (le focus reste sur la puce touchée).
+    function updateChoices(choice, locked = false) {
+        nodes.picker.hidden = !choice;
+        if (!choice) return;
+        const chip = (label, onClick) => {
+            const button = make(documentRef, 'button', label, 'm-chip');
+            button.type = 'button';
+            button.addEventListener('click', onClick);
+            return button;
+        };
+        if (chipsFor !== choice.base) {
+            chipsFor = choice.base;
+            nodes.pickChoices.replaceChildren(...choice.options.map(({ spec: name }) => chip(name, () => {
+                nodes.pickFree.value = '';
+                pickSpecialty(name, false);
+            })), ...(choice.free ? [chip('Autre…', () => {
+                pickSpecialty(nodes.pickFree.value, true);
+                nodes.pickFree.focus();
+            })] : []));
+        }
+        choice.options.forEach(({ spec: name, taken }, index) => {
+            const button = nodes.pickChoices.children[index];
+            button.textContent = taken ? `${name} · déjà acquis` : name;
+            button.setAttribute('aria-pressed', String(!customPick && choice.pick === name));
+        });
+        if (choice.free) nodes.pickChoices.children[choice.options.length].setAttribute('aria-pressed', String(customPick));
+        nodes.pickFree.hidden = !(choice.free && customPick);
+        // `Base (spec)` doit tenir dans la limite du serveur (200 caractères).
+        nodes.pickFree.setAttribute('maxlength', String(Math.max(0, 200 - choice.base.length - 3)));
+        // Un achat en attente de reprise rejoue la commande telle quelle : l'aperçu ne doit plus pouvoir diverger.
+        nodes.pickFree.disabled = locked;
+        for (const button of nodes.pickChoices.children) button.disabled = locked;
     }
 
     const target = context => purchaseTarget(context.state?.data, context.engine, context.careers, spec);
@@ -128,7 +184,9 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         }
         const talent = current.kind === 'talent';
         const rank = current.kind === 'rank';
-        const counted = !talent && !rank;
+        // Sort ou miracle : une seule prise, décrite comme un talent (paragraphes publiés), sans stepper.
+        const magic = current.kind === 'sort' || current.kind === 'miracle';
+        const counted = !talent && !rank && !magic;
         count = Math.min(count, current.maxCount);
         const balance = xpBalance(context.state.data).libre;
         const preview = purchasePreview(current, count, balance);
@@ -139,12 +197,13 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         nodes.total.hidden = !counted;
         nodes.formula.textContent = rank ? current.summary
             : talent ? '' : `${current.baseLabel} ${current.baseValue} + ${current.adv} avances = ${current.total}`;
-        nodes.formula.hidden = talent;
+        nodes.formula.hidden = talent || magic;
         nodes.stepper.hidden = !counted;
-        nodes.specialty.update(current);
-        nodes.talent.hidden = !talent;
-        if (talent) {
-            nodes.taken.textContent = current.taken ? `Prises : ${current.taken}` : 'Pas encore acquis';
+        nodes.specialty.update(current, pending);
+        nodes.talent.hidden = !talent && !magic;
+        updateChoices(current.choice, pending);
+        if (talent || magic) {
+            nodes.taken.textContent = magic || current.needsChoice ? '' : current.taken ? `Prises : ${current.taken}` : 'Pas encore acquis';
             const key = JSON.stringify(current.description);
             if (shownDescription !== key) {
                 shownDescription = key;
@@ -155,17 +214,18 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         nodes.value.textContent = String(count);
         nodes.less.disabled = busy || count <= 1;
         nodes.more.disabled = busy || count >= current.maxCount;
-        nodes.newTotal.textContent = rank ? `Rang ${current.targetRank}` : talent ? 'Acquis' : String(preview.newTotal);
+        nodes.newTotal.textContent = rank ? `Rang ${current.targetRank}` : talent || magic ? 'Acquis' : String(preview.newTotal);
         nodes.cost.textContent = `${preview.cost} XP`;
         nodes.after.textContent = `${preview.after} XP`;
         nodes.after.className = preview.affordable ? '' : 'm-purchase-short';
-        nodes.tariff.textContent = rank ? (current.complete ? 'Rang achevé : 100 XP' : 'Rang non achevé : 200 XP')
+        nodes.tariff.textContent = magic ? current.tariff : rank ? (current.complete ? 'Rang achevé : 100 XP' : 'Rang non achevé : 200 XP')
             : current.inCareer ? 'Tarif carrière' : 'Hors carrière : coût doublé';
 
         const phase = context.state.phase;
         const reason = !context.online ? 'Achat possible une fois en ligne'
             : phase === 'legacy-readonly' ? 'Fiche en lecture seule : achat impossible'
             : !pending && !busy && phase !== 'ready' ? 'Fiche en cours de mise à jour…'
+            : current.needsChoice ? 'Choisissez une spécialité'
             : !pending && !preview.affordable ? `XP insuffisants : il manque ${-preview.after} XP` : info;
         nodes.reason.textContent = reason;
         nodes.reason.hidden = !reason;
@@ -193,6 +253,8 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         if (busy || !current) return;
         const message = current.kind === 'talent' ? `${current.title} : talent acheté`
             : current.kind === 'rank' ? `${current.summary} : achat enregistré`
+            : current.kind === 'sort' ? `${current.title} : sort appris`
+            : current.kind === 'miracle' ? `${current.title} : miracle appris`
             : `${current.title} : +${count} avance${count > 1 ? 's' : ''} achetée${count > 1 ? 's' : ''}`;
         busy = true;
         error = '';
@@ -225,6 +287,8 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
             spec = next;
             if (!target(getContext())) return;
             count = 1;
+            customPick = false;
+            chipsFor = '';
             busy = false;
             error = '';
             sheet.open({ trigger, render: body => { build(body); refresh(); } });

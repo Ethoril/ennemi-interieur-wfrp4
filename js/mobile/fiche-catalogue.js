@@ -23,8 +23,10 @@ export async function loadFicheCatalogue({ load = url => fetchJson(new URL(url, 
         Object.values(DATA_FILES).map(load),
     );
     const listeners = new Set();
-    const build = catalogue => createPublishedCatalogueEngine({
-        catalogue, careers, skills, spells: rules, talentSheetSnapshot,
+    // ruleCatalog : sorts et miracles publiés, pour lister ce qui peut s'apprendre (le moteur ne les expose pas).
+    const build = catalogue => ({
+        ...createPublishedCatalogueEngine({ catalogue, careers, skills, spells: rules, talentSheetSnapshot }),
+        ruleCatalog: { spells: rules.spells, miracles: rules.miracles },
     });
     let engine = build(staticCatalogue);
 

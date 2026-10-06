@@ -11,6 +11,8 @@ import { createCareerPanel } from './fiche-carriere.js';
 import { createJournalPanel } from './fiche-journal.js';
 import { createPrincipalPanel } from './fiche-principal.js';
 import { createPurchaseSheet } from './fiche-purchase-sheet.js';
+import { createSkillLearnSheet } from './fiche-skill-learn.js';
+import { createSpellLearnSheet } from './fiche-spell-learn.js';
 import { createImportSheet, downloadJson } from './fiche-transfer.js';
 import { parseRoute, routeToHash, ROUTE_NAMES } from '../router.js';
 import { createDialogController, renderState } from '../ui.js';
@@ -152,6 +154,20 @@ export function createFicheDetailView({
         onChoose: (spec, trigger) => purchase.open(spec, trigger),
     });
 
+    // Choisir un sort ou un miracle referme ce volet et ouvre la confirmation d'achat.
+    const spellLearn = createSpellLearnSheet({
+        documentRef,
+        getContext: () => ({ state: controllerState, engine: catalogue?.getEngine() }),
+        onChoose: (spec, trigger) => purchase.open(spec, trigger),
+    });
+
+    // Choisir une compétence (ou une spécialité de groupe) referme ce volet et ouvre l'achat d'une nouvelle ligne avancée.
+    const skillLearn = createSkillLearnSheet({
+        documentRef,
+        getContext: () => ({ state: controllerState, careers: catalogue?.careers, engine: catalogue?.getEngine(), controller }),
+        onChoose: (spec, trigger) => purchase.open(spec, trigger),
+    });
+
     const ficheContext = () => ({ state: controllerState, engine: catalogue?.getEngine(), online, controller, charId });
     // Le déclencheur disparaît quand l'historique change : le focus revient à un élément stable du journal.
     const cancel = createCancelSheet({
@@ -190,6 +206,8 @@ export function createFicheDetailView({
         documentRef,
         onOpenSkill: (row, trigger) => purchase.open({ kind: 'skill', ...row }, trigger),
         onOpenTalent: (nom, trigger) => purchase.open({ kind: 'talent', nom }, trigger),
+        onLearn: (kind, trigger) => spellLearn.open(kind, trigger),
+        onLearnSkill: trigger => skillLearn.open(trigger),
     });
 
     const tabHref = key => routeToHash({ name: ROUTE_NAMES.FICHE, id: charId, tab: key });
@@ -202,6 +220,8 @@ export function createFicheDetailView({
             menu.close();
             purchase.close();
             careerChange.close();
+            spellLearn.close();
+            skillLearn.close();
             cancel.close();
             importSheet.close();
             closeCareerViewer();
@@ -209,7 +229,7 @@ export function createFicheDetailView({
             shownKey = key;
             shell = null;
             build();
-            container.append(menuDialog, purchase.element, aptitudes.detailElement, careerChange.element, cancel.element,
+            container.append(menuDialog, purchase.element, aptitudes.detailElement, careerChange.element, spellLearn.element, skillLearn.element, cancel.element,
                 importSheet.element, viewerHost);
         }
     };
@@ -233,6 +253,8 @@ export function createFicheDetailView({
         updateCareer();
         updateJournal();
         careerChange.update();
+        spellLearn.update();
+        skillLearn.update();
         purchase.update();
         cancel.update();
         importSheet.update();
@@ -385,7 +407,7 @@ export function createFicheDetailView({
             });
             stopCatalogue = service.watch(runtime.repository);
             stopEngine = service.subscribe(() => {
-                updatePrincipal(); updateAptitudes(); updateCareer(); careerChange.update(); purchase.update();
+                updatePrincipal(); updateAptitudes(); updateCareer(); careerChange.update(); spellLearn.update(); skillLearn.update(); purchase.update();
             });
         }, error => { backend = null; throw error; });
         return backend;
@@ -488,6 +510,8 @@ export function createFicheDetailView({
         menu.close();
         purchase.close();
         careerChange.close();
+        spellLearn.close();
+        skillLearn.close();
         cancel.close();
         importSheet.close();
         closeCareerViewer();
