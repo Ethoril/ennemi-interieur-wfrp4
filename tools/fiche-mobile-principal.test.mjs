@@ -7,6 +7,8 @@ import { basicRowFor } from '../js/fiche/basic-skills.js';
 import { loadFicheCatalogue } from '../js/mobile/fiche-catalogue.js';
 import { dotTarget, ficheCaracs, resourceChange, resourceTokens, topSkills } from '../js/mobile/fiche-model.js';
 import { createPrincipalPanel } from '../js/mobile/views/fiche-principal.js';
+import { submitDraft } from '../js/mobile/fiche-autosave.js';
+import { createConflictNotice } from '../js/mobile/views/fiche-conflicts.js';
 import { createResourceSheet } from '../js/mobile/views/fiche-resource-sheet.js';
 
 const read = path => JSON.parse(readFileSync(fileURLToPath(new URL(`../${path}`, import.meta.url)), 'utf8'));
@@ -154,22 +156,25 @@ function sheetSetup({ online = true, data = { destin: '3', chance: '3' } } = {})
     const calls = [];
     const announces = [];
     const done = [];
+    let draft = false;
     const context = { online, state: { phase: 'ready', data }, controller: {
-        stagePatch: changes => { calls.push(['stage', changes]); return { ok: true }; },
-        submitPatch: async () => { calls.push(['submit']); return { status: 'saved' }; },
+        getState: () => ({ hasDraft: draft }),
+        stagePatch: changes => { calls.push(['stage', changes]); draft = true; return { ok: true }; },
+        submitPatch: async () => { calls.push(['submit']); draft = false; return { status: 'saved' }; },
         retryPendingPatch: async () => ({ status: 'saved' }),
     } };
     const sheet = createResourceSheet({ documentRef, getContext: () => context, announce: m => announces.push(m), onDone: key => done.push(key) });
     const trigger = documentRef.createElement('button');
     const open = value => sheet.open({ maxKey: 'destin', currentKey: 'chance', maxLabel: 'Destin', label: 'Chance', value }, trigger);
     const title = () => sheet.element.all().find(n => n.tagName === 'h2').textContent;
-    return { documentRef, calls, announces, done, trigger, open, title, el: sheet.element, context };
+    return { documentRef, calls, announces, done, trigger, open, title, el: sheet.element, context, setDraft: value => { draft = value; } };
 }
 
-test('confirmation : rien n’est écrit à l’ouverture ni à l’annulation, le focus revient au point', () => {
+test('confirmation : rien n’est écrit à l’ouverture ni à l’annulation, focus initial sur Annuler puis retour au point', () => {
     const setup = sheetSetup();
     setup.open(1);
     assert.ok(setup.el.open);
+    assert.equal(setup.documentRef.activeElement, setup.el.byText('Annuler'));
     assert.equal(setup.title(), 'Brûler 2 points de Destin ?');
     assert.ok(setup.el.byText("Ce n'est pas anodin : les points sont perdus définitivement."));
     assert.equal(setup.el.all().find(n => n.className === 'm-purchase-formula').textContent, 'La Chance sera aussi ramenée de 3 à 1.');
@@ -179,15 +184,15 @@ test('confirmation : rien n’est écrit à l’ouverture ni à l’annulation, 
     assert.equal(setup.documentRef.activeElement, setup.trigger);
 });
 
-test('confirmation : stagePatch avec Chance ramenée puis envoi, annonce et focus rendu ; ajout sans Chance', async () => {
+test('confirmation : stagePatch avec Chance ramenée puis envoi, focus rendu avant l’envoi ; ajout sans Chance', async () => {
     const setup = sheetSetup();
     setup.open(2);
     assert.equal(setup.title(), 'Brûler 1 point de Destin ?');
     setup.el.byText('Confirmer').click();
+    assert.deepEqual(setup.done, ['destin'], 'le focus est rendu avant l’attente réseau');
     await sleep(0);
     assert.deepEqual(setup.calls, [['stage', { destin: '2', chance: '2' }], ['submit']]);
     assert.deepEqual(setup.announces, ['Destin : 2']);
-    assert.deepEqual(setup.done, ['destin']);
     setup.open(4);
     assert.equal(setup.title(), 'Ajouter 1 point de Destin ?');
     assert.ok(setup.el.byText('(normalement accordé par le MJ)'));
@@ -205,11 +210,89 @@ test('confirmation : hors ligne le brouillon est protégé sans envoi, et l’é
     assert.deepEqual(setup.announces, ['Destin : 0, en attente de connexion']);
 });
 
-test('confirmation : un envoi en conflit est annoncé', async () => {
+test('confirmation : conflit signalé par le résultat ou par une erreur du serveur', async () => {
     const setup = sheetSetup();
     setup.context.controller.submitPatch = async () => ({ status: 'blocked', reason: 'conflict' });
     setup.open(2);
     setup.el.byText('Confirmer').click();
     await sleep(0);
     assert.match(setup.announces[0], /^Conflit sur Destin/u);
+    setup.context.controller.submitPatch = async () => { throw Object.assign(new Error('x'), { code: 'aborted' }); };
+    setup.open(2);
+    setup.el.byText('Confirmer').click();
+    await sleep(0);
+    assert.equal(setup.announces[1], 'Conflit : la valeur a changé ailleurs');
+});
+
+test('confirmation : la fiche a changé depuis l’ouverture, le texte est mis à jour et un second toucher est demandé', async () => {
+    const setup = sheetSetup();
+    setup.open(2);
+    setup.context.state = { phase: 'ready', data: { destin: '4', chance: '1' } };
+    setup.el.byText('Confirmer').click();
+    await sleep(0);
+    assert.deepEqual(setup.calls, [], 'rien d’envoyé');
+    assert.ok(setup.el.open);
+    assert.equal(setup.title(), 'Brûler 2 points de Destin ?');
+    setup.el.byText('Confirmer').click();
+    await sleep(0);
+    assert.deepEqual(setup.calls[0], ['stage', { destin: '2' }]);
+});
+
+test('envois : un second envoi pendant le premier rejoue l’ancien puis envoie le nouveau brouillon, en file', async () => {
+    const log = [];
+    let pending = false;
+    let draft = true;
+    let calls = 0;
+    const controller = {
+        getState: () => ({ hasDraft: draft }),
+        submitPatch: async () => {
+            log.push('submit');
+            if (pending) return { status: 'retry-required' };
+            calls += 1;
+            await sleep(5);
+            // Le premier envoi laisse une modification faite pendant son vol.
+            draft = calls === 1;
+            return { status: 'saved' };
+        },
+        retryPendingPatch: async () => { log.push('retry'); pending = false; return { status: 'saved' }; },
+    };
+    const first = submitDraft(controller);
+    await sleep(0);
+    pending = true;
+    const second = submitDraft(controller);
+    assert.equal((await first).status, 'saved');
+    await second;
+    assert.deepEqual(log, ['submit', 'submit', 'retry', 'submit']);
+    assert.equal(draft, false);
+    assert.equal(await submitDraft({ getState: () => ({ hasDraft: false }) }), undefined);
+});
+
+test('conflits : liste lisible, Garder la mienne renvoie, Prendre celle du serveur résout, possessions exclues', async () => {
+    const documentRef = fakeDocument();
+    const calls = [];
+    const announces = [];
+    const context = { state: { conflicts: [
+        { path: 'destin', server: '1', local: '2' }, { path: 'possessions', server: 'a', local: 'b' }, { path: 'chance', server: '0', local: '1' },
+    ] }, controller: {
+        getState: () => ({ hasDraft: calls.every(call => call[0] !== 'submit') }),
+        resolveConflict: (path, choice) => { calls.push(['resolve', path, choice]); return true; },
+        submitPatch: async () => { calls.push(['submit']); return { status: 'saved' }; },
+    } };
+    const notice = createConflictNotice({ documentRef, getContext: () => context, announce: m => announces.push(m) });
+    assert.ok(notice.element.hidden);
+    notice.update();
+    assert.ok(!notice.element.hidden);
+    const texts = notice.element.all().filter(n => n.tagName === 'p').map(n => n.textContent);
+    assert.deepEqual(texts, ['Conflit sur Destin : le serveur a 1, vous avez 2.', 'Conflit sur Chance : le serveur a 0, vous avez 1.']);
+    const buttons = notice.element.all().filter(n => n.tagName === 'button');
+    assert.equal(buttons.length, 4);
+    notice.update();
+    assert.equal(notice.element.all().filter(n => n.tagName === 'button')[0], buttons[0], 'pas de reconstruction sans changement');
+    buttons[0].click();
+    buttons[3].click();
+    await sleep(0);
+    assert.deepEqual(calls, [['resolve', 'destin', 'local'], ['resolve', 'chance', 'server'], ['submit']]);
+    context.state = { conflicts: [] };
+    notice.update();
+    assert.ok(notice.element.hidden);
 });

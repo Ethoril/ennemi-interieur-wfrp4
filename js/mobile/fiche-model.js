@@ -30,7 +30,7 @@ export const CARACS = Object.freeze([
 ]);
 
 // Les ressources sont des chaînes numériques : absent ou non numérique vaut 0.
-const count = value => Math.max(0, Math.floor(+value) || 0);
+export const count = value => Math.max(0, Math.floor(+value) || 0);
 
 /** Jetons d'une ressource : `max` emplacements dont `current` (borné à `max`) sont pleins. */
 export function resourceTokens(data, maxKey, currentKey) {

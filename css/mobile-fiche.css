@@ -67,6 +67,10 @@
 .m-fiche-xp:focus-visible,
 .m-fiche-tab:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
 
+.m-fiche-conflicts { display: grid; gap: var(--space-sm); }
+.m-fiche-conflict { display: grid; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); background: var(--bg-surface); border: 1px solid var(--blood-bright); border-radius: var(--radius-sm); }
+.m-fiche-conflict p { margin: 0; }
+
 .m-fiche-notice {
   margin: 0;
   padding: var(--space-sm) var(--space-md);

@@ -1,4 +1,5 @@
 import { xpBalance } from '../../fiche/derived.js';
+import { submitDraft } from '../fiche-autosave.js';
 import { xpLogRows } from '../fiche-model.js';
 
 const SAVE_DELAY_MS = 800;
@@ -120,13 +121,7 @@ export function createJournalPanel({ documentRef, getContext, onCancel = () => {
                 again = false;
                 const { controller, online } = getContext();
                 if (!controller?.getState().hasDraft || !online) break;
-                // Un envoi déjà parti (réponse incertaine) est rejoué à l'identique, pas recréé.
-                let result = await controller.submitPatch();
-                if (result?.status === 'retry-required') {
-                    result = await controller.retryPendingPatch();
-                    // Le rejeu reprend l'ancien envoi : ce qui a été tapé depuis reste à envoyer.
-                    if (controller.getState().hasDraft) again = true;
-                }
+                const result = await submitDraft(controller);
                 failure = result?.status === 'blocked' && result.reason !== 'offline' && result.reason !== 'conflict'
                     ? 'Enregistrement en attente.' : '';
             } while (again && ++passes < 3);

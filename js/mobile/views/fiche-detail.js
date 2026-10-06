@@ -10,6 +10,7 @@ import { createCareerChangeSheet } from './fiche-career-change.js';
 import { createCareerPanel } from './fiche-carriere.js';
 import { createJournalPanel } from './fiche-journal.js';
 import { createPrincipalPanel } from './fiche-principal.js';
+import { createConflictNotice } from './fiche-conflicts.js';
 import { createResourceSheet } from './fiche-resource-sheet.js';
 import { createPurchaseSheet } from './fiche-purchase-sheet.js';
 import { createSkillLearnSheet } from './fiche-skill-learn.js';
@@ -254,6 +255,7 @@ export function createFicheDetailView({
         shell.notice.textContent = legacy ? 'Fiche à migrer par le MJ depuis le bureau : lecture seule.'
             : online ? '' : 'Hors connexion.';
         shell.notice.hidden = !shell.notice.textContent;
+        shell.conflicts.update();
         updatePrincipal();
         updateAptitudes();
         updateCareer();
@@ -341,9 +343,10 @@ export function createFicheDetailView({
             links.set(item.key, link);
             nav.append(link);
         }
-        root.append(strip, notice, panel, nav);
+        const conflicts = createConflictNotice({ documentRef, getContext: ficheContext, announce });
+        root.append(strip, notice, conflicts.element, panel, nav);
         container.append(root);
-        shell = { identity: identityLine, xp, xpValue, notice, panelTitle, principal, career, links };
+        shell = { identity: identityLine, xp, xpValue, notice, conflicts, panelTitle, principal, career, links };
         updateShell();
         updatePanel();
     };

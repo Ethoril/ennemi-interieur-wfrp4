@@ -157,6 +157,8 @@ const ASSETS_LOCAUX = [
   './js/mobile/views/fiche-journal.js',
   './js/mobile/views/fiche-cancel-sheet.js',
   './js/mobile/views/fiche-resource-sheet.js',
+  './js/mobile/views/fiche-conflicts.js',
+  './js/mobile/fiche-autosave.js',
   './js/mobile/views/fiche-transfer.js',
   './js/mobile/fiche-runtime.js',
   './js/mobile/fiche-catalogue.js',
