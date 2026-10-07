@@ -1,0 +1,554 @@
+{
+  "legacyAliases": [
+    {
+      "label": "Acharné",
+      "englishName": "Relentless",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Ancestral Grudge*",
+      "englishName": "Ancestral Grudge",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Arcane Magick",
+      "englishName": "Arcane Magic",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Argumentateur",
+      "englishName": "Argumentative",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Artisan",
+      "englishName": "Craftsman",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Béni (Isha)",
+      "englishName": "Blessed by Isha",
+      "provenance": "ancien-mage-haut-elfe-rang-3-vers-source-isha"
+    },
+    {
+      "label": "Béni [Isha]",
+      "englishName": "Blessed by Isha",
+      "provenance": "ancien-mage-haut-elfe-rang-3-vers-source-isha"
+    },
+    {
+      "label": "Bludgeoner*",
+      "englishName": "Bludgeoner",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Cat Fall",
+      "englishName": "Catfall",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Chute de chat",
+      "englishName": "Catfall",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Combat \nMaster",
+      "englishName": "Combat Master",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Combat en espace clos",
+      "englishName": "Enclosed Fighter",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Combattant en espaces clos",
+      "englishName": "Enclosed Fighter",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Cool-headed",
+      "englishName": "Coolheaded",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Coup tournoyant de la mort",
+      "englishName": "Whirlwind of Death",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Crew Commander*",
+      "englishName": "Crew Commander",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Défi à la magie",
+      "englishName": "Magic Defiance",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Défi magique",
+      "englishName": "Magic Defiance",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Demolisher*",
+      "englishName": "Demolisher",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Detect Artifact",
+      "englishName": "Detect Artefact",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Détection d'artéfacts",
+      "englishName": "Detect Artefact",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Détournement de fonds",
+      "englishName": "Embezzle",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Diceman",
+      "englishName": "Dicer",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Dos puissant",
+      "englishName": "Strong Back",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Dragon Belcher*",
+      "englishName": "Dragon Belcher",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Entraîné",
+      "englishName": "Drilled",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Entrenchment*",
+      "englishName": "Entrenchment",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Exercé",
+      "englishName": "Drilled",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Fêtard",
+      "englishName": "Carouser",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Fin de gloire",
+      "englishName": "Glorious Demise",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Fleet Footed",
+      "englishName": "Fleet-footed",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Forgefire*",
+      "englishName": "Forgefire",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Franc-tireur",
+      "englishName": "Sharpshooter",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Garde royale",
+      "englishName": "Kingsguard",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Glorious \nDemise*",
+      "englishName": "Glorious Demise",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Glorious Demise*",
+      "englishName": "Glorious Demise",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Grimpeur de muraille",
+      "englishName": "Scale Sheer Surface",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Haine sainte",
+      "englishName": "Holy Hatred",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Harpooner*",
+      "englishName": "Harpooner",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Intrépide",
+      "englishName": "Fearless",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Kingsguard*",
+      "englishName": "Kingsguard",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "L'esprit sur la matière",
+      "englishName": "Mind over Body",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "L'œil du cyclone",
+      "englishName": "Eye of the Storm",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Langue de vipère",
+      "englishName": "Cat-tongued",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Liquid Fortification*",
+      "englishName": "Liquid Fortification",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Lire/ Écrire",
+      "englishName": "Read/Write",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Long Memory*",
+      "englishName": "Long Memory",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Magic Defiance*",
+      "englishName": "Magic Defiance",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Maître de la Magie des Runes",
+      "englishName": "Master Rune Magic",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Maîtrise de la Magie des Runes",
+      "englishName": "Master Rune Magic",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Maverick*",
+      "englishName": "Maverick",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Mort glorieuse",
+      "englishName": "Glorious Demise",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Nimble Fingered",
+      "englishName": "Nimble-fingered",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Nimblefingered",
+      "englishName": "Nimble-fingered",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Non-conformiste",
+      "englishName": "Maverick",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Ombre",
+      "englishName": "Shadow",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Petty Magick",
+      "englishName": "Petty Magic",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Public Speaking",
+      "englishName": "Public Speaker",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Rage de bataille",
+      "englishName": "Frenzy",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Randonneur",
+      "englishName": "Rover",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Read/ Write",
+      "englishName": "Read/Write",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Rough Rider",
+      "englishName": "Roughrider",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Sang-froid",
+      "englishName": "Coolheaded",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Savoirvivre",
+      "englishName": "Etiquette",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Seasoned \nTraveller",
+      "englishName": "Seasoned Traveller",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Secret Identy",
+      "englishName": "Secret Identity",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Short Fuse*",
+      "englishName": "Short Fuse",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Solidaire",
+      "englishName": "Supportive",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Soutien",
+      "englishName": "Supportive",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Spécialiste du bouclier",
+      "englishName": "Shieldsman",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Stouthearted",
+      "englishName": "Stout-hearted",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Strider",
+      "englishName": "Striding Gait",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Strike to Injure.",
+      "englishName": "Strike to Injure",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Strong Minded",
+      "englishName": "Strong-minded",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Strongminded",
+      "englishName": "Strong-minded",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Tireless*",
+      "englishName": "Tireless",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Tranchant",
+      "englishName": "Sharp",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Trick Riding",
+      "englishName": "Trick Rider",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Trick-Riding",
+      "englishName": "Trick Rider",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Tunnel Rat",
+      "englishName": "Tunnel Fighter",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Underminer*",
+      "englishName": "Underminer",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Unshakable",
+      "englishName": "Unshakeable",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Vigilance au combat",
+      "englishName": "Combat Aware",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Vision sacrée",
+      "englishName": "Holy Visions",
+      "provenance": "arbitrage-MJ-2026-10-07"
+    },
+    {
+      "label": "Visions saintes",
+      "englishName": "Holy Visions",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Warleader",
+      "englishName": "War Leader",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Wellprepared",
+      "englishName": "Well-prepared",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Whirlwind of Death*",
+      "englishName": "Whirlwind of Death",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Witch! SPELL FAMILIAR",
+      "englishName": "Witch!",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Zèle passionné",
+      "englishName": "Impassioned Zeal",
+      "provenance": "audit-carrieres-2026-10-07"
+    }
+  ],
+  "specializationTranslations": {
+    "Coastal": "Littoral",
+    "Marshes": "Marécages",
+    "Rocky": "Rocailleux",
+    "Woodlands": "Régions boisées",
+    "Any": "au choix",
+    "Outlaws": "Hors-laloi",
+    "Heretics": "Hérétiques",
+    "Heavens": "Cieux",
+    "Any Lore": "Domaine au choix",
+    "Hedgecraft": "Magie naturelle",
+    "Witchcraft": "Sorcellerie",
+    "Apothecary": "Apothicaire",
+    "Boatbuilder": "Constructeur de bateaux",
+    "Explosives": "Explosifs",
+    "Herbalist": "Herboriste",
+    "Engineer": "Ingénieur",
+    "Disease": "Maladie",
+    "Poison": "Poison",
+    "Animals": "Animaux",
+    "Criminals": "Criminels",
+    "Trespassers": "Intrus",
+    "Watchmen": "Miliciens",
+    "Monsters": "Monstres",
+    "Undead": "Morts-vivants",
+    "Wreckers": "Naufrageurs",
+    "Riverwardens": "Patrouilleurs fluviaux",
+    "Roadwardens": "Patrouilleurs routiers",
+    "Bounties": "Primes",
+    "Rats": "Rats",
+    "Skaven": "Skaven",
+    "Witches": "Sorcières",
+    "Everything": "Tout",
+    "Beastmen": "hommes-bêtes",
+    "Herbs": "Herbes",
+    "Engineering": "Ingénierie",
+    "Law": "Loi",
+    "Medicine": "Médecine",
+    "Local Area": "Région",
+    "Theology": "Théologie",
+    "Waterways": "Voies fluviales",
+    "Cultists": "Fidèles",
+    "Nobles": "Nobles",
+    "Servants": "Serviteurs",
+    "Soldiers": "Soldats",
+    "Guilders": "Guilde",
+    "Scholars": "Érudits",
+    "Taste or Touch": "Goût ou Toucher",
+    "Taste": "Goût",
+    "Sight": "Vue",
+    "Empoisonneur": "Empoisonneur",
+    "Any One": "au choix",
+    "Any one": "au choix",
+    "Hearing": "Ouïe",
+    "Smell": "Odorat",
+    "Touch": "Toucher",
+    "Sight or Touch": "Vue ou Toucher",
+    "All": "Tous",
+    "Art Form": "au choix",
+    "Trade": "au choix",
+    "Lore": "au choix",
+    "Enemy": "au choix",
+    "God": "au choix",
+    "Terrain": "au choix",
+    "Sense": "au choix",
+    "Threat": "au choix",
+    "Alchemist": "Alchimiste",
+    "Alchemy": "Alchimie",
+    "All Forms": "Toutes les formes",
+    "Armour Runes and Engineering Runes": "Runes d’armure et runes d’ingénierie",
+    "Blacksmith, Goldsmith, or Engineer": "Forgeron ou Orfèvre ou Ingénieur",
+    "Brewer": "Brasseur",
+    "Cartography": "Cartographie",
+    "Cavalry": "Cavalerie",
+    "Cook": "Cuisinier",
+    "Dark Elves": "Elfes noirs",
+    "Guilder": "Guilde",
+    "Intruders": "Intrus",
+    "Large Beasts": "Grandes bêtes",
+    "Magic": "Magie",
+    "Magic Users": "Lanceurs de sorts",
+    "Mercenaries": "Mercenaires",
+    "Moot terrain": "Terrain du Moot",
+    "Mountains": "Montagnes",
+    "Oceans": "Océans",
+    "Poison or Disease": "Poison ou Maladie",
+    "Poisoner": "Empoisonneur",
+    "Protection Runes": "Runes de protection",
+    "Protection Runes and Talismanic Runes": "Runes de protection et runes talismaniques",
+    "Protective Runes": "Runes de protection",
+    "Rune of Striking": "Rune de frappe",
+    "Sea Monsters": "Monstres marins",
+    "Smith": "Forgeron",
+    "Talismanic Runes": "Runes talismaniques",
+    "The Deceiver": "Le Trompeur",
+    "The Gamester": "Le Joueur",
+    "The Night Prowler": "Le Rôdeur nocturne",
+    "The Protector": "Le Protecteur",
+    "Weapon Runes": "Runes d’armes"
+  }
+}

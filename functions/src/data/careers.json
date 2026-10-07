@@ -3,14 +3,6 @@
     "id": "agitateur",
     "nom": "Agitateur",
     "source": "Livre de base",
-    "carac": [
-      "ct",
-      "int",
-      "soc",
-      "ag",
-      "cc",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -56,7 +48,7 @@
         "talents": [
           "Chat de gouttière",
           "Ergoteur",
-          "Ferveur ardente",
+          "Ferveur ardente (au choix)",
           "Orateur"
         ]
       },
@@ -98,20 +90,20 @@
           "Savoir-vivre (au choix)"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "int",
+      "soc",
+      "ag",
+      "cc",
+      "i"
     ]
   },
   {
     "id": "alchimiste-college-dore",
     "nom": "Alchimiste (Collège Doré)",
     "source": "Winds of Magic",
-    "carac": [
-      "e",
-      "int",
-      "fm",
-      "dex",
-      "i",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -157,7 +149,7 @@
           "Métier (Forgeron, Orfèvre ou Ingénieur)"
         ],
         "talents": [
-          "Magie des Arcanes (Métal)",
+          "Magie des Arcanes (Chamon)",
           "Ergoteur",
           "Détection d'artefact",
           "Sixième sens"
@@ -178,9 +170,9 @@
         ],
         "talents": [
           "Studieux",
-          "Artisan (Forgeron, Orfèvre ou Ingénieur)",
+          "Maître artisan (Forgeron ou Orfèvre ou Ingénieur)",
           "Diction instinctive",
-          "Perception de la magie"
+          "Perception de la Magie"
         ]
       },
       {
@@ -201,20 +193,20 @@
           "Nanti"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "int",
+      "fm",
+      "dex",
+      "i",
+      "soc"
     ]
   },
   {
     "id": "alchimiste-profane",
     "nom": "Alchimiste Profane",
     "source": "Winds of Magic",
-    "carac": [
-      "e",
-      "dex",
-      "int",
-      "i",
-      "fm",
-      "ag"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -239,7 +231,7 @@
         ],
         "talents": [
           "Concocter",
-          "Artisan (Alchimiste)",
+          "Maître artisan (Alchimiste)",
           "Lire/Écrire",
           "Perspicace"
         ]
@@ -281,7 +273,7 @@
         ],
         "talents": [
           "Détection d'artefact",
-          "Maître artisan (Alchimiste)",
+          "Travailleur qualifié (Alchimiste)",
           "Magie mineure",
           "Seconde vue"
         ]
@@ -298,26 +290,26 @@
           "Chevaucher (Cheval)"
         ],
         "talents": [
-          "Magie des Arcanes (Métal)",
-          "Maître artisan (Empoisonneur)",
+          "Magie des Arcanes (Chamon)",
+          "Travailleur qualifié (Empoisonneur)",
           "Résistance (Poison)",
           "Savant (Alchimie)"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "dex",
+      "int",
+      "i",
+      "fm",
+      "ag"
     ]
   },
   {
     "id": "apothicaire",
     "nom": "Apothicaire",
     "source": "Livre de base",
-    "carac": [
-      "e",
-      "dex",
-      "int",
-      "soc",
-      "i",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -405,20 +397,20 @@
           "Travailleur qualifié (Empoisonneur)"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "dex",
+      "int",
+      "soc",
+      "i",
+      "fm"
     ]
   },
   {
     "id": "archer",
     "nom": "Archer",
     "source": "Up in Arms",
-    "carac": [
-      "ct",
-      "i",
-      "ag",
-      "f",
-      "e",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -442,10 +434,10 @@
           "Résistance à l'alcool"
         ],
         "talents": [
-          "Costaud",
-          "Guerrier né",
           "Tir précis",
-          "Tir rapide"
+          "Tir rapide",
+          "Infatigable",
+          "Guerrier né"
         ]
       },
       {
@@ -484,10 +476,10 @@
           "Orientation"
         ],
         "talents": [
-          "Inébranlable",
+          "Vigilance",
           "Tireur d'élite",
           "Tireur embusqué",
-          "Vigilance"
+          "Inébranlable"
         ]
       },
       {
@@ -502,26 +494,26 @@
           "Signes secrets (Éclaireur)"
         ],
         "talents": [
-          "Cœur vaillant",
           "Exaltant",
-          "Seigneur de guerre",
-          "Voyageur aguerri"
+          "Voyageur aguerri",
+          "Cœur vaillant",
+          "Seigneur de guerre"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "i",
+      "ag",
+      "f",
+      "e",
+      "int"
     ]
   },
   {
     "id": "arpenteur-fantome-es",
     "nom": "Arpenteur Fantôme (ES)",
     "source": "Archives 1",
-    "carac": [
-      "ct",
-      "ag",
-      "int",
-      "dex",
-      "cc",
-      "f"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -543,10 +535,10 @@
           "Survie en extérieur"
         ],
         "talents": [
-          "Bon marcheur (Bois)",
-          "Ombre",
+          "Tir précis",
           "Véloce",
-          "Tir précis"
+          "Discret",
+          "Bon marcheur (Régions boisées)"
         ]
       },
       {
@@ -567,9 +559,9 @@
         ],
         "talents": [
           "Affinité avec les animaux",
-          "Grimpeur",
+          "Tir rapide",
           "Sens de l'orientation",
-          "Tir rapide"
+          "Grimpeur"
         ]
       },
       {
@@ -586,10 +578,10 @@
           "Résistance"
         ],
         "talents": [
+          "Souplesse féline",
+          "Vigilance",
           "Coup puissant",
-          "Franc-tireur",
-          "Chute de chat",
-          "Combat instinctif"
+          "Tireur d'élite"
         ]
       },
       {
@@ -604,26 +596,26 @@
           "Langue (au choix)"
         ],
         "talents": [
-          "Frappe blessante",
-          "Haine (au choix)",
           "Tir mortel",
-          "Tireur embusqué"
+          "Haine (au choix)",
+          "Tireur embusqué",
+          "Frappe blessante"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "ag",
+      "int",
+      "dex",
+      "cc",
+      "f"
     ]
   },
   {
     "id": "arquebusier",
     "nom": "Arquebusier",
     "source": "Up in Arms",
-    "carac": [
-      "ct",
-      "ag",
-      "dex",
-      "i",
-      "int",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -647,10 +639,10 @@
           "Résistance à l'alcool"
         ],
         "talents": [
+          "Tir précis",
           "Artilleur",
           "Tireur de précision",
-          "Tireur embusqué",
-          "Tir précis"
+          "Tireur embusqué"
         ]
       },
       {
@@ -670,9 +662,9 @@
         ],
         "talents": [
           "Coude-à-coude",
-          "Rechargement rapide",
           "Savoir-vivre (Soldats)",
-          "Tir rapide"
+          "Tir rapide",
+          "Rechargement rapide"
         ]
       },
       {
@@ -689,10 +681,10 @@
           "Projectiles (Ingénierie)"
         ],
         "talents": [
-          "Inébranlable",
+          "Vigilance",
           "Tireur d'élite",
           "Tir sûr",
-          "Vigilance"
+          "Inébranlable"
         ]
       },
       {
@@ -707,26 +699,26 @@
           "Savoir (Guerre)"
         ],
         "talents": [
-          "Cœur vaillant",
           "Exaltant",
-          "Seigneur de guerre",
-          "Voyageur aguerri"
+          "Voyageur aguerri",
+          "Cœur vaillant",
+          "Seigneur de guerre"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "ag",
+      "dex",
+      "i",
+      "int",
+      "fm"
     ]
   },
   {
     "id": "artilleur",
     "nom": "Artilleur",
     "source": "Up in Arms",
-    "carac": [
-      "ct",
-      "i",
-      "int",
-      "e",
-      "fm",
-      "ag"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -750,10 +742,10 @@
           "Soin aux animaux"
         ],
         "talents": [
-          "Costaud",
-          "Guerrier né",
+          "Tireur de précision",
           "Rechargement rapide",
-          "Tireur de précision"
+          "Infatigable",
+          "Guerrier né"
         ]
       },
       {
@@ -772,7 +764,7 @@
           "Survie en extérieur"
         ],
         "talents": [
-          "Commandant d'équipage",
+          "Commandant d'Équipage",
           "Savoir-vivre (Soldats)",
           "Sens de l'orientation",
           "Tireur embusqué"
@@ -792,10 +784,10 @@
           "Savoir (Artillerie)"
         ],
         "talents": [
-          "Bricoleur",
-          "Inébranlable",
+          "Vigilance",
           "Lire/Écrire",
-          "Vigilance"
+          "Bricoleur",
+          "Inébranlable"
         ]
       },
       {
@@ -810,27 +802,26 @@
           "Savoir (Guerre)"
         ],
         "talents": [
-          "Cœur vaillant",
           "Exaltant",
           "Orateur",
-          "Voyageur aguerri"
+          "Voyageur aguerri",
+          "Cœur vaillant"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "i",
+      "int",
+      "e",
+      "fm",
+      "ag"
     ]
   },
   {
     "id": "artisan",
     "nom": "Artisan",
     "source": "Livre de base",
-    "carac": [
-      "f",
-      "e",
-      "dex",
-      "soc",
-      "i",
-      "fm",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -852,7 +843,7 @@
           "Résistance à l'alcool"
         ],
         "talents": [
-          "Artiste",
+          "Artiste (au choix)",
           "Infatigable",
           "Maître artisan (au choix)",
           "Très fort"
@@ -935,25 +926,26 @@
         ],
         "talents": [
           "Intrigant",
-          "Magnum Opus",
+          "Magnum opus",
           "Orateur",
           "Suborneur"
         ]
       }
+    ],
+    "carac": [
+      "f",
+      "e",
+      "dex",
+      "soc",
+      "i",
+      "fm",
+      "int"
     ]
   },
   {
     "id": "artiste",
     "nom": "Artiste",
     "source": "Livre de base",
-    "carac": [
-      "f",
-      "i",
-      "dex",
-      "soc",
-      "fm",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -975,7 +967,7 @@
           "Résistance à l'alcool"
         ],
         "talents": [
-          "Artiste",
+          "Artiste (au choix)",
           "Infatigable",
           "Persévérant",
           "Vivacité"
@@ -1038,23 +1030,23 @@
           "Ambidextre",
           "Caïd",
           "Lire/Écrire",
-          "Magnum Opus"
+          "Magnum opus"
         ]
       }
+    ],
+    "carac": [
+      "f",
+      "i",
+      "dex",
+      "soc",
+      "fm",
+      "int"
     ]
   },
   {
     "id": "astromancien-college-celeste",
     "nom": "Astromancien (Collège Céleste)",
     "source": "Winds of Magic",
-    "carac": [
-      "cc",
-      "int",
-      "fm",
-      "ag",
-      "i",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -1100,7 +1092,7 @@
           "Recherche"
         ],
         "talents": [
-          "Magie des Arcanes (Cieux)",
+          "Magie des Arcanes (Azyr)",
           "Détection d'artefact",
           "Sens de l'orientation",
           "Sixième sens"
@@ -1121,7 +1113,7 @@
         ],
         "talents": [
           "Diction instinctive",
-          "Perception de la magie",
+          "Perception de la Magie",
           "Voyageur aguerri",
           "Prévoyant"
         ]
@@ -1144,20 +1136,20 @@
           "Mage de guerre"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "int",
+      "fm",
+      "ag",
+      "i",
+      "soc"
     ]
   },
   {
     "id": "bailli",
     "nom": "Bailli",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "i",
-      "fm",
-      "soc",
-      "ag",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -1245,20 +1237,20 @@
           "Volonté de fer"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "i",
+      "fm",
+      "soc",
+      "ag",
+      "int"
     ]
   },
   {
     "id": "batelier",
     "nom": "Batelier",
     "source": "Livre de base",
-    "carac": [
-      "f",
-      "e",
-      "ag",
-      "i",
-      "dex",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -1346,20 +1338,20 @@
           "Sens de l'orientation"
         ]
       }
+    ],
+    "carac": [
+      "f",
+      "e",
+      "ag",
+      "i",
+      "dex",
+      "int"
     ]
   },
   {
     "id": "bedeau",
     "nom": "Bedeau",
     "source": "Winds of Magic",
-    "carac": [
-      "cc",
-      "int",
-      "fm",
-      "ag",
-      "i",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -1405,7 +1397,7 @@
           "Projectiles (Poudre noire)"
         ],
         "talents": [
-          "Fêtard",
+          "Noctambule",
           "Savoir-vivre (Érudits)",
           "Renversement",
           "Coup puissant"
@@ -1445,24 +1437,24 @@
         "talents": [
           "Effrayant",
           "Orateur",
-          "Attirant",
+          "Affable",
           "Inébranlable"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "int",
+      "fm",
+      "ag",
+      "i",
+      "soc"
     ]
   },
   {
     "id": "boucher-o",
     "nom": "Boucher (O)",
     "source": "Archives 2",
-    "carac": [
-      "cc",
-      "e",
-      "fm",
-      "f",
-      "soc",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -1486,10 +1478,10 @@
           "Survie en extérieur"
         ],
         "talents": [
-          "Implacable",
+          "Endurci",
           "Magie mineure",
           "Sixième sens",
-          "Costaud"
+          "Infatigable"
         ]
       },
       {
@@ -1509,7 +1501,7 @@
         ],
         "talents": [
           "Sens aiguisé (Goût)",
-          "Magie des Arcanes (Domaine de la Grande Gueule)",
+          "Magie des Arcanes (Grande Gueule)",
           "Harmonisation aethyrique",
           "Visions sacrées"
         ]
@@ -1546,24 +1538,24 @@
           "Langue (Au choix)"
         ],
         "talents": [
-          "Détection d'artéfacts",
-          "Zèle passionné"
+          "Détection d'artefact",
+          "Ferveur ardente (au choix)"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "fm",
+      "f",
+      "soc",
+      "i"
     ]
   },
   {
     "id": "bourgeois",
     "nom": "Bourgeois",
     "source": "Livre de base",
-    "carac": [
-      "ag",
-      "int",
-      "soc",
-      "i",
-      "dex",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -1650,20 +1642,20 @@
           "Présence imposante"
         ]
       }
+    ],
+    "carac": [
+      "ag",
+      "int",
+      "soc",
+      "i",
+      "dex",
+      "fm"
     ]
   },
   {
     "id": "braconnier",
     "nom": "Braconnier",
     "source": "Deft Steps",
-    "carac": [
-      "ct",
-      "ag",
-      "dex",
-      "int",
-      "cc",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -1687,9 +1679,9 @@
           "Survie en extérieur"
         ],
         "talents": [
-          "Bon marcheur (au choix)",
-          "Fuite !",
           "Pêcheur",
+          "Fuite !",
+          "Bon marcheur (au choix)",
           "Trappeur"
         ]
       },
@@ -1709,10 +1701,10 @@
           "Projectiles (Arc)"
         ],
         "talents": [
-          "Nomade",
           "Œil du chasseur",
           "Tireur de précision",
-          "Tireur embusqué"
+          "Nomade",
+          "Tireur d'élite"
         ]
       },
       {
@@ -1729,9 +1721,9 @@
           "Soin aux animaux"
         ],
         "talents": [
-          "Criminel",
-          "Sens aiguisé (au choix)",
           "Tir précis",
+          "Sens aiguisé (au choix)",
+          "Criminel",
           "Tir rapide"
         ]
       },
@@ -1747,26 +1739,26 @@
           "Savoir (Loi)"
         ],
         "talents": [
-          "Caïd",
-          "Menaçant",
+          "Suborneur",
           "Négociateur",
-          "Suborneur"
+          "Caïd",
+          "Menaçant"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "ag",
+      "dex",
+      "int",
+      "cc",
+      "i"
     ]
   },
   {
     "id": "brasseur-n",
     "nom": "Brasseur (N)",
     "source": "Dwarf Player Guide",
-    "carac": [
-      "e",
-      "i",
-      "dex",
-      "soc",
-      "int",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -1790,9 +1782,9 @@
           "Métier (Brasseur)"
         ],
         "talents": [
-          "Vivant",
-          "Artisan (Brasseur)",
-          "Dos puissant",
+          "Noctambule",
+          "Maître artisan (Brasseur)",
+          "Infatigable",
           "Très fort"
         ]
       },
@@ -1815,7 +1807,7 @@
           "Négociateur",
           "Sociable",
           "Fortification liquide",
-          "Robuste"
+          "Costaud"
         ]
       },
       {
@@ -1834,8 +1826,8 @@
         "talents": [
           "Sens aiguisé (Goût)",
           "Concocter",
-          "Imperturbable",
-          "Maître artisan (Brasseur)"
+          "Cœur vaillant",
+          "Travailleur qualifié (Brasseur)"
         ]
       },
       {
@@ -1851,25 +1843,25 @@
         ],
         "talents": [
           "Sens aiguisé (Odorat)",
-          "Maître artisan (Cuisinier)",
-          "Magnum Opus",
+          "Travailleur qualifié (Cuisinier)",
+          "Magnum opus",
           "Résistance (Poison)"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "i",
+      "dex",
+      "soc",
+      "int",
+      "fm"
     ]
   },
   {
     "id": "brise-fer-n",
     "nom": "Brise-Fer (N)",
     "source": "Dwarf Player Guide",
-    "carac": [
-      "cc",
-      "e",
-      "fm",
-      "f",
-      "ct",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -1893,9 +1885,9 @@
           "Discrétion (Souterrains)"
         ],
         "talents": [
-          "Orientation",
+          "Sens de l'orientation",
           "Bon marcheur (Rocailleux)",
-          "Costaud",
+          "Infatigable",
           "Guerrier né"
         ]
       },
@@ -1915,10 +1907,10 @@
           "Signes secrets (Mineur)"
         ],
         "talents": [
-          "Exercé",
+          "Coude-à-coude",
           "Combattant en espace clos",
-          "Porte-Bouclier",
-          "Infatigable"
+          "Porte-bouclier",
+          "Inlassable"
         ]
       },
       {
@@ -1938,7 +1930,7 @@
           "Cracheur de dragon",
           "Vision nocturne",
           "Sapeur",
-          "Imperturbable"
+          "Inébranlable"
         ]
       },
       {
@@ -1953,26 +1945,26 @@
           "Savoir (Guerre)"
         ],
         "talents": [
-          "Vigilance au combat",
-          "Implacable",
+          "Vigilance",
+          "Endurci",
           "Mèche courte",
           "Seigneur de guerre"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "fm",
+      "f",
+      "ct",
+      "i"
     ]
   },
   {
     "id": "cartographe",
     "nom": "Cartographe",
     "source": "Up in Arms",
-    "carac": [
-      "i",
-      "dex",
-      "int",
-      "ag",
-      "cc",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -1996,10 +1988,10 @@
           "Survie en extérieur"
         ],
         "talents": [
-          "Artiste",
+          "Artiste (au choix)",
+          "Sens de l'orientation",
           "Lire/Écrire",
-          "Nomade",
-          "Sens de l'orientation"
+          "Nomade"
         ]
       },
       {
@@ -2018,10 +2010,10 @@
           "Savoir (Héraldique)"
         ],
         "talents": [
-          "Bon marcheur (au choix)",
+          "Imperturbable",
           "Fuite !",
-          "Sang-froid",
-          "Voyageur aguerri"
+          "Voyageur aguerri",
+          "Bon marcheur (au choix)"
         ]
       },
       {
@@ -2038,10 +2030,10 @@
           "Signes secrets (Guilde)"
         ],
         "talents": [
+          "Studieux",
+          "Savoir-vivre (Guilde)",
           "Doigts de fée",
-          "Inébranlable",
-          "Savoir-vivre (Guildes)",
-          "Studieux"
+          "Inébranlable"
         ]
       },
       {
@@ -2056,26 +2048,26 @@
           "Savoir (au choix)"
         ],
         "talents": [
+          "Négociateur",
           "Cœur vaillant",
-          "Magnum Opus",
-          "Maître artisan (Cartographie)",
-          "Négociateur"
+          "Travailleur qualifié (Cartographie)",
+          "Magnum opus"
         ]
       }
+    ],
+    "carac": [
+      "i",
+      "dex",
+      "int",
+      "ag",
+      "cc",
+      "fm"
     ]
   },
   {
     "id": "cavalier",
     "nom": "Cavalier",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "f",
-      "ag",
-      "ct",
-      "i",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -2163,20 +2155,20 @@
           "Tir précis"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "ag",
+      "ct",
+      "i",
+      "soc"
     ]
   },
   {
     "id": "cavalier-leger",
     "nom": "Cavalier Léger",
     "source": "Up in Arms",
-    "carac": [
-      "cc",
-      "e",
-      "ag",
-      "ct",
-      "soc",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -2200,10 +2192,10 @@
           "Chevaucher (Cheval)"
         ],
         "talents": [
-          "Costaud",
-          "Fuite !",
+          "Savoir-vivre (Mercenaires)",
           "Pansement de fortune",
-          "Savoir-vivre (Mercenaires)"
+          "Fuite !",
+          "Infatigable"
         ]
       },
       {
@@ -2222,10 +2214,10 @@
           "Résistance à l'alcool"
         ],
         "talents": [
-          "Acrobaties équestres",
-          "Nomade",
+          "Vigilance",
           "Sens de l'orientation",
-          "Vigilance"
+          "Nomade",
+          "Cavalier émérite"
         ]
       },
       {
@@ -2242,8 +2234,8 @@
           "Savoir (Guerre)"
         ],
         "talents": [
+          "Combat instinctif",
           "Rechargement rapide",
-          "Réflexes foudroyants",
           "Voyageur aguerri",
           "Acrobaties équestres"
         ]
@@ -2260,26 +2252,26 @@
           "Savoir (Loi ou Héraldique)"
         ],
         "talents": [
-          "Exaltant",
-          "Négociateur",
           "Présence imposante",
+          "Négociateur",
+          "Exaltant",
           "Seigneur de guerre"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "ag",
+      "ct",
+      "soc",
+      "int"
     ]
   },
   {
     "id": "cavalier-sur-blaireau-hf",
     "nom": "Cavalier sur Blaireau (HF)",
     "source": "Archives 1",
-    "carac": [
-      "ct",
-      "ag",
-      "int",
-      "cc",
-      "f",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -2362,26 +2354,26 @@
           "Commandement"
         ],
         "talents": [
-          "Fêtard",
+          "Noctambule",
           "Effrayant",
           "Exaltant",
           "Frappe blessante"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "ag",
+      "int",
+      "cc",
+      "f",
+      "soc"
     ]
   },
   {
     "id": "chaman-college-d-ambre",
     "nom": "Chaman (Collège d'Ambre)",
     "source": "Winds of Magic",
-    "carac": [
-      "cc",
-      "int",
-      "fm",
-      "ag",
-      "i",
-      "e"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -2427,7 +2419,7 @@
           "Pistage"
         ],
         "talents": [
-          "Magie des Arcanes (Bêtes)",
+          "Magie des Arcanes (Ghur)",
           "Imperturbable",
           "Mains agiles",
           "Sixième sens"
@@ -2449,7 +2441,7 @@
         "talents": [
           "Affinité avec les animaux",
           "Diction instinctive",
-          "Perception de la magie",
+          "Perception de la Magie",
           "Menaçant"
         ]
       },
@@ -2471,20 +2463,20 @@
           "Mage de guerre"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "int",
+      "fm",
+      "ag",
+      "i",
+      "e"
     ]
   },
   {
     "id": "charlatan",
     "nom": "Charlatan",
     "source": "Livre de base",
-    "carac": [
-      "i",
-      "dex",
-      "soc",
-      "fm",
-      "ag",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -2572,20 +2564,20 @@
           "Sociable"
         ]
       }
+    ],
+    "carac": [
+      "i",
+      "dex",
+      "soc",
+      "fm",
+      "ag",
+      "int"
     ]
   },
   {
     "id": "chasseur",
     "nom": "Chasseur",
     "source": "Livre de base",
-    "carac": [
-      "f",
-      "e",
-      "dex",
-      "ct",
-      "i",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -2673,20 +2665,20 @@
           "Tireur embusqué"
         ]
       }
+    ],
+    "carac": [
+      "f",
+      "e",
+      "dex",
+      "ct",
+      "i",
+      "int"
     ]
   },
   {
     "id": "chasseur-de-primes",
     "nom": "Chasseur de primes",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "e",
-      "ag",
-      "ct",
-      "f",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -2774,20 +2766,20 @@
           "Tir sûr"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "ag",
+      "ct",
+      "f",
+      "int"
     ]
   },
   {
     "id": "chevalier",
     "nom": "Chevalier",
     "source": "Livre de base",
-    "carac": [
-      "f",
-      "i",
-      "ag",
-      "cc",
-      "fm",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -2833,7 +2825,7 @@
         "talents": [
           "Coup puissant",
           "Menaçant",
-          "Porte-Bouclier",
+          "Porte-bouclier",
           "Voyageur aguerri"
         ]
       },
@@ -2875,20 +2867,20 @@
           "Volonté de fer"
         ]
       }
+    ],
+    "carac": [
+      "f",
+      "i",
+      "ag",
+      "cc",
+      "fm",
+      "soc"
     ]
   },
   {
     "id": "chevalier-du-loup-blanc-d-ulric",
     "nom": "Chevalier du Loup Blanc d'Ulric",
     "source": "Up in Arms",
-    "carac": [
-      "cc",
-      "f",
-      "i",
-      "ag",
-      "fm",
-      "e"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -2914,8 +2906,8 @@
         "talents": [
           "Cavalier émérite",
           "Costaud",
-          "Dur à cuire",
-          "Guerrier né"
+          "Guerrier né",
+          "Dur à cuire"
         ]
       },
       {
@@ -2934,10 +2926,10 @@
           "Langue (Bataille)"
         ],
         "talents": [
-          "Coup puissant",
-          "Frappe blessante",
           "Menaçant",
-          "Voyageur aguerri"
+          "Voyageur aguerri",
+          "Coup puissant",
+          "Frappe blessante"
         ]
       },
       {
@@ -2972,26 +2964,26 @@
           "Signes secrets (Ulric)"
         ],
         "talents": [
+          "Volonté de fer",
           "Exaltant",
-          "Impitoyable",
-          "Sang-froid",
-          "Volonté de fer"
+          "Imperturbable",
+          "Endurci"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "i",
+      "ag",
+      "fm",
+      "e"
     ]
   },
   {
     "id": "chevalier-du-soleil-flamboyant-de-myrmidia",
     "nom": "Chevalier du Soleil Flamboyant de Myrmidia",
     "source": "Up in Arms",
-    "carac": [
-      "cc",
-      "f",
-      "i",
-      "int",
-      "ag",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -3015,10 +3007,10 @@
           "Soin aux animaux"
         ],
         "talents": [
-          "Cavalier émérite",
-          "Guerrier né",
+          "Savoir-vivre (au choix)",
           "Lire/Écrire",
-          "Savoir-vivre (au choix)"
+          "Cavalier émérite",
+          "Guerrier né"
         ]
       },
       {
@@ -3038,10 +3030,10 @@
           "Savoir (Guerre)"
         ],
         "talents": [
-          "Frappe blessante",
+          "Voyageur aguerri",
           "Perspicace",
-          "Porte-Bouclier",
-          "Voyageur aguerri"
+          "Porte-bouclier",
+          "Frappe blessante"
         ]
       },
       {
@@ -3058,10 +3050,10 @@
           "Recherche"
         ],
         "talents": [
-          "Désarmer",
-          "Inébranlable",
           "Sans peur (au choix)",
-          "Seigneur de guerre"
+          "Seigneur de guerre",
+          "Désarmer",
+          "Inébranlable"
         ]
       },
       {
@@ -3076,26 +3068,26 @@
           "Signes secrets (Soleil Flamboyant)"
         ],
         "talents": [
-          "Coup puissant",
           "Exaltant",
+          "Cœur vaillant",
           "Nanti",
-          "Cœur vaillant"
+          "Coup puissant"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "i",
+      "int",
+      "ag",
+      "soc"
     ]
   },
   {
     "id": "chevalier-franc",
     "nom": "Chevalier Franc",
     "source": "Up in Arms",
-    "carac": [
-      "f",
-      "i",
-      "ag",
-      "cc",
-      "fm",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -3142,10 +3134,10 @@
           "Intuition"
         ],
         "talents": [
-          "Brouet",
-          "Coup puissant",
           "Savoir-vivre (au choix)",
-          "Voyageur aguerri"
+          "Voyageur aguerri",
+          "Coup puissant",
+          "Brouet"
         ]
       },
       {
@@ -3162,9 +3154,9 @@
           "Savoir (Guerre)"
         ],
         "talents": [
+          "Maîtrise du combat",
           "Cœur vaillant",
           "Inébranlable",
-          "Maîtrise du combat",
           "Seigneur de guerre"
         ]
       },
@@ -3182,24 +3174,24 @@
         "talents": [
           "Chanceux",
           "Désarmer",
-          "Exaltant",
-          "Volonté de fer"
+          "Volonté de fer",
+          "Exaltant"
         ]
       }
+    ],
+    "carac": [
+      "f",
+      "i",
+      "ag",
+      "cc",
+      "fm",
+      "soc"
     ]
   },
   {
     "id": "chevalier-panthere",
     "nom": "Chevalier Panthère",
     "source": "Up in Arms",
-    "carac": [
-      "cc",
-      "f",
-      "i",
-      "ag",
-      "fm",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -3223,10 +3215,10 @@
           "Soin aux animaux"
         ],
         "talents": [
+          "Savoir-vivre (au choix)",
           "Cavalier émérite",
           "Costaud",
-          "Guerrier né",
-          "Savoir-vivre (au choix)"
+          "Guerrier né"
         ]
       },
       {
@@ -3245,10 +3237,10 @@
           "Langue (Bataille)"
         ],
         "talents": [
-          "Coup puissant",
           "Menaçant",
-          "Porte-Bouclier",
-          "Sang-froid"
+          "Porte-bouclier",
+          "Coup puissant",
+          "Imperturbable"
         ]
       },
       {
@@ -3265,9 +3257,9 @@
           "Savoir (Guerre)"
         ],
         "talents": [
+          "Sans peur (Chaos)",
           "Cœur vaillant",
           "Inébranlable",
-          "Sans peur (Chaos)",
           "Seigneur de guerre"
         ]
       },
@@ -3285,24 +3277,24 @@
         "talents": [
           "Désarmer",
           "Exaltant",
-          "Frappe blessante",
-          "Volonté de fer"
+          "Volonté de fer",
+          "Frappe blessante"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "i",
+      "ag",
+      "fm",
+      "soc"
     ]
   },
   {
     "id": "cocher",
     "nom": "Cocher",
     "source": "Livre de base",
-    "carac": [
-      "ct",
-      "e",
-      "fm",
-      "ag",
-      "cc",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -3390,20 +3382,20 @@
           "Tireur de précision"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "e",
+      "fm",
+      "ag",
+      "cc",
+      "i"
     ]
   },
   {
     "id": "colporteur",
     "nom": "Colporteur",
     "source": "Livre de base",
-    "carac": [
-      "e",
-      "dex",
-      "fm",
-      "soc",
-      "i",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -3491,20 +3483,20 @@
           "Persévérant"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "dex",
+      "fm",
+      "soc",
+      "i",
+      "int"
     ]
   },
   {
     "id": "conseiller",
     "nom": "Conseiller",
     "source": "Livre de base",
-    "carac": [
-      "e",
-      "i",
-      "ag",
-      "soc",
-      "int",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -3592,20 +3584,20 @@
           "Présence imposante"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "i",
+      "ag",
+      "soc",
+      "int",
+      "fm"
     ]
   },
   {
     "id": "contrebandier",
     "nom": "Contrebandier",
     "source": "Livre de base",
-    "carac": [
-      "ag",
-      "dex",
-      "fm",
-      "i",
-      "int",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -3693,20 +3685,20 @@
           "Pied marin"
         ]
       }
+    ],
+    "carac": [
+      "ag",
+      "dex",
+      "fm",
+      "i",
+      "int",
+      "soc"
     ]
   },
   {
     "id": "debardeur",
     "nom": "Débardeur",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "e",
-      "i",
-      "f",
-      "fm",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -3794,20 +3786,20 @@
           "Numismate"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "i",
+      "f",
+      "fm",
+      "int"
     ]
   },
   {
     "id": "devin",
     "nom": "Devin",
     "source": "Winds of Magic",
-    "carac": [
-      "int",
-      "fm",
-      "soc",
-      "i",
-      "ag",
-      "dex"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -3893,24 +3885,24 @@
         "talents": [
           "Présence imposante",
           "Effrayant",
-          "Perception de la magie",
-          "Volonté de fer"
+          "Perception de la Magie",
+          "Obstiné"
         ]
       }
+    ],
+    "carac": [
+      "int",
+      "fm",
+      "soc",
+      "i",
+      "ag",
+      "dex"
     ]
   },
   {
     "id": "druide-college-de-jade",
     "nom": "Druide (Collège de Jade)",
     "source": "Winds of Magic",
-    "carac": [
-      "ag",
-      "int",
-      "fm",
-      "i",
-      "soc",
-      "cc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -3956,7 +3948,7 @@
           "Recherche"
         ],
         "talents": [
-          "Magie des Arcanes (Vie)",
+          "Magie des Arcanes (Ghyran)",
           "Détection d'artefact",
           "Mains agiles",
           "Sixième sens"
@@ -3977,7 +3969,7 @@
         ],
         "talents": [
           "Diction instinctive",
-          "Perception de la magie",
+          "Perception de la Magie",
           "Menaçant",
           "Nomade"
         ]
@@ -3994,26 +3986,26 @@
           "Savoir (au choix)"
         ],
         "talents": [
-          "Maîtrise du combat",
+          "Vigilance",
           "Effrayant",
           "Volonté de fer",
           "Mage de guerre"
         ]
       }
+    ],
+    "carac": [
+      "ag",
+      "int",
+      "fm",
+      "i",
+      "soc",
+      "cc"
     ]
   },
   {
     "id": "duelliste",
     "nom": "Duelliste",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "i",
-      "ag",
-      "ct",
-      "f",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -4101,20 +4093,20 @@
           "Menaçant"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "i",
+      "ag",
+      "ct",
+      "f",
+      "fm"
     ]
   },
   {
     "id": "eclaireur",
     "nom": "Éclaireur",
     "source": "Livre de base",
-    "carac": [
-      "e",
-      "i",
-      "ag",
-      "ct",
-      "int",
-      "dex"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -4202,20 +4194,20 @@
           "Savant (Région)"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "i",
+      "ag",
+      "ct",
+      "int",
+      "dex"
     ]
   },
   {
     "id": "emissaire",
     "nom": "Émissaire",
     "source": "Livre de base",
-    "carac": [
-      "e",
-      "ag",
-      "soc",
-      "int",
-      "i",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -4303,20 +4295,20 @@
           "Suborneur"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "ag",
+      "soc",
+      "int",
+      "i",
+      "fm"
     ]
   },
   {
     "id": "enqueteur",
     "nom": "Enquêteur",
     "source": "Livre de base",
-    "carac": [
-      "i",
-      "ag",
-      "int",
-      "soc",
-      "dex",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -4404,20 +4396,20 @@
           "Tour des souvenirs"
         ]
       }
+    ],
+    "carac": [
+      "i",
+      "ag",
+      "int",
+      "soc",
+      "dex",
+      "fm"
     ]
   },
   {
     "id": "entremetteur",
     "nom": "Entremetteur",
     "source": "Livre de base",
-    "carac": [
-      "ag",
-      "dex",
-      "soc",
-      "i",
-      "fm",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -4505,20 +4497,20 @@
           "Suborneur"
         ]
       }
+    ],
+    "carac": [
+      "ag",
+      "dex",
+      "soc",
+      "i",
+      "fm",
+      "int"
     ]
   },
   {
     "id": "erudit",
     "nom": "Érudit",
     "source": "Livre de base",
-    "carac": [
-      "e",
-      "int",
-      "fm",
-      "i",
-      "soc",
-      "dex"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -4601,25 +4593,25 @@
         ],
         "talents": [
           "Grand orateur",
-          "Magnum Opus",
+          "Magnum opus",
           "Savant (au choix)",
           "Vivacité"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "int",
+      "fm",
+      "i",
+      "soc",
+      "dex"
     ]
   },
   {
     "id": "espion",
     "nom": "Espion",
     "source": "Livre de base",
-    "carac": [
-      "ag",
-      "fm",
-      "soc",
-      "cc",
-      "i",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -4707,20 +4699,20 @@
           "Tour des souvenirs"
         ]
       }
+    ],
+    "carac": [
+      "ag",
+      "fm",
+      "soc",
+      "cc",
+      "i",
+      "int"
     ]
   },
   {
     "id": "esthete-he",
     "nom": "Esthète (HE)",
     "source": "High Elf Player Guide",
-    "carac": [
-      "ag",
-      "int",
-      "soc",
-      "i",
-      "dex",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -4744,10 +4736,10 @@
           "Calme"
         ],
         "talents": [
+          "Sens aiguisé (au choix)",
           "Artiste (au choix)",
-          "Attirant",
           "Seconde vue",
-          "Sens aiguisé (au choix)"
+          "Affable"
         ]
       },
       {
@@ -4766,10 +4758,10 @@
           "Savoir (Magie)"
         ],
         "talents": [
-          "Artisan (au choix)",
-          "Doigts de fée",
-          "Sang-froid",
-          "Savoir-vivre (Nobles)"
+          "Imperturbable",
+          "Maître artisan (au choix)",
+          "Savoir-vivre (Nobles)",
+          "Doigts de fée"
         ]
       },
       {
@@ -4786,10 +4778,10 @@
           "Subornation"
         ],
         "talents": [
+          "Noctambule",
           "Détection d'artefact",
-          "Fêtard",
-          "Maître artisan (au choix)",
-          "Sociable"
+          "Sociable",
+          "Travailleur qualifié (au choix)"
         ]
       },
       {
@@ -4804,30 +4796,31 @@
           "Guérison"
         ],
         "talents": [
-          "Âme pure",
           "Ergoteur",
-          "Magnum Opus",
-          "Visions sacrées"
+          "Visions sacrées",
+          "Magnum opus",
+          "Âme pure"
         ]
       }
+    ],
+    "carac": [
+      "ag",
+      "int",
+      "soc",
+      "i",
+      "dex",
+      "fm"
     ]
   },
   {
     "id": "familier-animal",
     "nom": "Familier Animal",
     "source": "Archives 3",
-    "carac": [
-      "int",
-      "fm",
-      "soc",
-      "ag",
-      "i",
-      "cc"
-    ],
     "rangs": [
       {
         "rang": 1,
         "titre": "Nouvellement Lié",
+        "statut": "",
         "caracs": [
           "int",
           "fm",
@@ -4845,15 +4838,15 @@
         ],
         "talents": [
           "Assistant animal",
-          "Sang-froid",
-          "Bon sens",
-          "Seconde vue",
-          "Compagnon"
+          "Imperturbable",
+          "Perspicace",
+          "Seconde vue"
         ]
       },
       {
         "rang": 2,
         "titre": "Familier Animal",
+        "statut": "",
         "caracs": [
           "ag"
         ],
@@ -4862,14 +4855,13 @@
           "Orientation"
         ],
         "talents": [
-          "Sixième sens",
-          "Télépathie animale",
-          "Messager"
+          "Sixième sens"
         ]
       },
       {
         "rang": 3,
         "titre": "Compagnon Spirituel",
+        "statut": "",
         "caracs": [
           "i"
         ],
@@ -4878,13 +4870,13 @@
           "Savoir (Magie)"
         ],
         "talents": [
-          "Affinité avec les animaux",
-          "Partage sensoriel"
+          "Affinité avec les animaux"
         ]
       },
       {
         "rang": 4,
         "titre": "Sorcelin",
+        "statut": "",
         "caracs": [
           "cc"
         ],
@@ -4893,28 +4885,28 @@
           "Commandement"
         ],
         "talents": [
-          "Fuite !",
-          "Invisibilité"
+          "Fuite !"
         ]
       }
+    ],
+    "carac": [
+      "int",
+      "fm",
+      "soc",
+      "ag",
+      "i",
+      "cc"
     ]
   },
   {
     "id": "familier-de-combat",
     "nom": "Familier de Combat",
     "source": "Winds of Magic",
-    "carac": [
-      "cc",
-      "f",
-      "i",
-      "ag",
-      "dex",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
         "titre": "Nouvellement Fabriqué",
+        "statut": "",
         "caracs": [
           "cc",
           "f",
@@ -4941,6 +4933,7 @@
       {
         "rang": 2,
         "titre": "Familier de Combat",
+        "statut": "",
         "caracs": [
           "ag"
         ],
@@ -4953,7 +4946,7 @@
         ],
         "talents": [
           "Combat instinctif",
-          "Implacable",
+          "Endurci",
           "Riposte",
           "Très fort"
         ]
@@ -4961,6 +4954,7 @@
       {
         "rang": 3,
         "titre": "Miton blindé",
+        "statut": "",
         "caracs": [
           "dex"
         ],
@@ -4974,12 +4968,13 @@
           "Maniement de deux armes",
           "Frénésie",
           "Assaut féroce",
-          "Acharné"
+          "Impitoyable"
         ]
       },
       {
         "rang": 4,
         "titre": "Lutin de fer",
+        "statut": "",
         "caracs": [
           "soc"
         ],
@@ -4994,24 +4989,25 @@
           "Frappe assommante"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "i",
+      "ag",
+      "dex",
+      "soc"
     ]
   },
   {
     "id": "familier-lanceur-de-sorts",
     "nom": "Familier Lanceur de Sorts",
     "source": "Winds of Magic",
-    "carac": [
-      "dex",
-      "int",
-      "fm",
-      "i",
-      "ag",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
         "titre": "Nouvellement Invoqué",
+        "statut": "",
         "caracs": [
           "dex",
           "int",
@@ -5032,13 +5028,14 @@
         "talents": [
           "Harmonisation aethyrique",
           "Imperturbable",
-          "Perception de la magie",
+          "Perception de la Magie",
           "Perspicace"
         ]
       },
       {
         "rang": 2,
         "titre": "Familier",
+        "statut": "",
         "caracs": [
           "i"
         ],
@@ -5051,7 +5048,7 @@
           "Chevaucher (Cheval)"
         ],
         "talents": [
-          "Magie des Arcanes (Vent au choix)",
+          "Magie des Arcanes (au choix)",
           "Diction instinctive",
           "Chanceux",
           "Sixième sens"
@@ -5060,6 +5057,7 @@
       {
         "rang": 3,
         "titre": "Diablotin Mystérieux",
+        "statut": "",
         "caracs": [
           "ag"
         ],
@@ -5079,6 +5077,7 @@
       {
         "rang": 4,
         "titre": "Apprenti Sorcier",
+        "statut": "",
         "caracs": [
           "soc"
         ],
@@ -5093,20 +5092,20 @@
           "Sorcier !"
         ]
       }
+    ],
+    "carac": [
+      "dex",
+      "int",
+      "fm",
+      "i",
+      "ag",
+      "soc"
     ]
   },
   {
     "id": "faussaire",
     "nom": "Faussaire",
     "source": "Deft Steps",
-    "carac": [
-      "e",
-      "i",
-      "dex",
-      "int",
-      "fm",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -5130,10 +5129,10 @@
           "Résistance à l'alcool"
         ],
         "talents": [
-          "Artiste",
+          "Artiste (au choix)",
+          "Maître artisan (au choix)",
           "Criminel",
-          "Numismate",
-          "Travailleur qualifié (Métier)"
+          "Numismate"
         ]
       },
       {
@@ -5152,10 +5151,10 @@
           "Subornation"
         ],
         "talents": [
-          "Bricoleur",
+          "Suborneur",
           "Doigts de fée",
           "Lire/Écrire",
-          "Suborneur"
+          "Bricoleur"
         ]
       },
       {
@@ -5172,10 +5171,10 @@
           "Savoir (Héraldique)"
         ],
         "talents": [
-          "Doué en calcul",
+          "Sens aiguisé (au choix)",
           "Négociateur",
           "Perspicace",
-          "Sens aiguisé (au choix)"
+          "Doué en calcul"
         ]
       },
       {
@@ -5191,25 +5190,25 @@
         ],
         "talents": [
           "Caïd",
-          "Intrigant",
-          "Magnum Opus",
-          "Maître artisan (au choix)"
+          "Magnum opus",
+          "Travailleur qualifié (au choix)",
+          "Intrigant"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "i",
+      "dex",
+      "int",
+      "fm",
+      "soc"
     ]
   },
   {
     "id": "femme-du-fleuve",
     "nom": "Femme du fleuve",
     "source": "Livre de base",
-    "carac": [
-      "e",
-      "ag",
-      "dex",
-      "cc",
-      "i",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -5297,20 +5296,20 @@
           "Vivacité"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "ag",
+      "dex",
+      "cc",
+      "i",
+      "soc"
     ]
   },
   {
     "id": "flagellant",
     "nom": "Flagellant",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "f",
-      "e",
-      "fm",
-      "i",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -5393,25 +5392,25 @@
         ],
         "talents": [
           "Effrayant",
-          "Ferveur ardente",
+          "Ferveur ardente (au choix)",
           "Contrôle de la Frénésie",
           "Sans peur (Hérétiques)"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "e",
+      "fm",
+      "i",
+      "soc"
     ]
   },
   {
     "id": "forgeron-de-runes-n",
     "nom": "Forgeron de Runes (N)",
     "source": "Dwarf Player Guide",
-    "carac": [
-      "dex",
-      "int",
-      "fm",
-      "cc",
-      "e",
-      "f"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -5436,9 +5435,9 @@
         ],
         "talents": [
           "Détection d'artefact",
-          "Résistance à la magie",
-          "Magie des Runes (Rune de Frappe)",
-          "Costaud"
+          "Résistance à la Magie",
+          "Magie des runes (Rune de frappe)",
+          "Infatigable"
         ]
       },
       {
@@ -5458,9 +5457,9 @@
         ],
         "talents": [
           "Feu de forge",
-          "Défi à la magie",
-          "Perception de la magie",
-          "Magie des Runes (Toutes les formes)"
+          "Défiance magique",
+          "Perception de la Magie",
+          "Magie des runes (Toutes les formes)"
         ]
       },
       {
@@ -5479,8 +5478,8 @@
         "talents": [
           "Sens aiguisé (Toucher)",
           "Longue mémoire",
-          "Maître de la Magie des Runes (Toutes les formes)",
-          "Obstiné"
+          "Magie des Runes de Maître (Toutes les formes)",
+          "Inlassable"
         ]
       },
       {
@@ -5495,26 +5494,26 @@
           "Savoir (Au choix)"
         ],
         "talents": [
-          "Rancune ancestrale",
+          "Rancune Ancestrale (au choix)",
           "Volonté de fer",
-          "Présence imposante",
+          "Menaçant",
           "Âme pure"
         ]
       }
+    ],
+    "carac": [
+      "dex",
+      "int",
+      "fm",
+      "cc",
+      "e",
+      "f"
     ]
   },
   {
     "id": "garde",
     "nom": "Garde",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "e",
-      "ag",
-      "i",
-      "f",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -5560,7 +5559,7 @@
         "talents": [
           "Coup puissant",
           "Impitoyable",
-          "Porte-Bouclier",
+          "Porte-bouclier",
           "Renversement"
         ]
       },
@@ -5602,20 +5601,20 @@
           "Volonté de fer"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "ag",
+      "i",
+      "f",
+      "int"
     ]
   },
   {
     "id": "garde-champetre-hf",
     "nom": "Garde Champêtre (HF)",
     "source": "Archives 1",
-    "carac": [
-      "ct",
-      "ag",
-      "fm",
-      "int",
-      "cc",
-      "e"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -5680,7 +5679,7 @@
         ],
         "talents": [
           "Véloce",
-          "Robuste",
+          "Dur à cuire",
           "Vision nocturne",
           "Nomade"
         ]
@@ -5697,27 +5696,27 @@
           "Savoir (Guerre)"
         ],
         "talents": [
-          "Sans peur (Tout)",
+          "Sans peur (au choix)",
           "Haine (Morts-vivants)",
           "Exaltant",
-          "Très résistant",
-          "Savant (Terrain du Mootland)"
+          "Robuste",
+          "Savant (Terrain du Moot)"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "ag",
+      "fm",
+      "int",
+      "cc",
+      "e"
     ]
   },
   {
     "id": "garde-maritime-he",
     "nom": "Garde Maritime (HE)",
     "source": "High Elf Player Guide",
-    "carac": [
-      "cc",
-      "ct",
-      "ag",
-      "i",
-      "f",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -5741,10 +5740,10 @@
           "Voile (au choix)"
         ],
         "talents": [
-          "Exercé",
-          "Guerrier né",
+          "Coude-à-coude",
           "Pêcheur",
-          "Robuste"
+          "Dur à cuire",
+          "Guerrier né"
         ]
       },
       {
@@ -5764,9 +5763,9 @@
         ],
         "talents": [
           "Combattant en espace clos",
-          "Pied marin",
-          "Porte-Bouclier",
-          "Réflexes foudroyants"
+          "Réflexes foudroyants",
+          "Porte-bouclier",
+          "Nageur endurant"
         ]
       },
       {
@@ -5784,9 +5783,9 @@
         ],
         "talents": [
           "Exaltant",
-          "Frappe blessante",
           "Loup de mer",
-          "Savant (Océans)"
+          "Savant (Océans)",
+          "Frappe blessante"
         ]
       },
       {
@@ -5801,26 +5800,26 @@
           "Intimidation"
         ],
         "talents": [
-          "Bon marcheur (Côtier)",
+          "Vigilance",
+          "Sens de l'orientation",
           "Cœur vaillant",
-          "Maîtrise du combat",
-          "Nageur endurant"
+          "Bon marcheur (Littoral)"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "ct",
+      "ag",
+      "i",
+      "f",
+      "fm"
     ]
   },
   {
     "id": "garde-chasse",
     "nom": "Garde-chasse",
     "source": "Deft Steps",
-    "carac": [
-      "ct",
-      "i",
-      "int",
-      "cc",
-      "ag",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -5844,9 +5843,9 @@
           "Survie en extérieur"
         ],
         "talents": [
-          "Bon marcheur (au choix)",
-          "Nomade",
           "Tireur de précision",
+          "Nomade",
+          "Bon marcheur (au choix)",
           "Trappeur"
         ]
       },
@@ -5866,10 +5865,10 @@
           "Savoir (Local)"
         ],
         "talents": [
-          "Frappe assommante",
-          "Menaçant",
           "Œil du chasseur",
-          "Tireur embusqué"
+          "Menaçant",
+          "Tireur d'élite",
+          "Frappe assommante"
         ]
       },
       {
@@ -5886,9 +5885,9 @@
           "Projectiles (Poudre noire)"
         ],
         "talents": [
+          "Tir précis",
           "Sens aiguisé (au choix)",
           "Sens de l'orientation",
-          "Tir précis",
           "Tir rapide"
         ]
       },
@@ -5904,26 +5903,26 @@
           "Savoir (Loi)"
         ],
         "talents": [
-          "Lire/Écrire",
           "Négociateur",
           "Présence imposante",
-          "Savoir-vivre (Serviteurs)"
+          "Savoir-vivre (Serviteurs)",
+          "Lire/Écrire"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "i",
+      "int",
+      "cc",
+      "ag",
+      "fm"
     ]
   },
   {
     "id": "gardien-de-rhinox-o",
     "nom": "Gardien de Rhinox (O)",
     "source": "Archives 2",
-    "carac": [
-      "ct",
-      "f",
-      "e",
-      "soc",
-      "cc",
-      "ag"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -6007,26 +6006,26 @@
           "Commandement"
         ],
         "talents": [
-          "Fêtard",
+          "Noctambule",
           "Effrayant",
           "Exaltant",
           "Frappe blessante"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "f",
+      "e",
+      "soc",
+      "cc",
+      "ag"
     ]
   },
   {
     "id": "gladiateur",
     "nom": "Gladiateur",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "f",
-      "e",
-      "i",
-      "ag",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -6073,7 +6072,7 @@
           "Ambidextre",
           "Combat instinctif",
           "Maniement de deux armes",
-          "Porte-Bouclier"
+          "Porte-bouclier"
         ]
       },
       {
@@ -6114,20 +6113,20 @@
           "Frappe réactive"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "e",
+      "i",
+      "ag",
+      "soc"
     ]
   },
   {
     "id": "guerrier-fantome-he",
     "nom": "Guerrier Fantôme (HE)",
     "source": "High Elf Player Guide",
-    "carac": [
-      "cc",
-      "ct",
-      "ag",
-      "f",
-      "int",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -6151,10 +6150,10 @@
           "Discrétion (Rurale)"
         ],
         "talents": [
-          "Bon marcheur (Bois)",
-          "Grimpeur",
+          "Tir mortel",
           "Nomade",
-          "Tireur de précision"
+          "Grimpeur",
+          "Bon marcheur (Régions boisées)"
         ]
       },
       {
@@ -6173,10 +6172,10 @@
           "Signes secrets (Guerriers Fantômes)"
         ],
         "talents": [
+          "Imperturbable",
+          "Sans peur (Elfes noirs)",
           "Menaçant",
-          "Ombre",
-          "Sang-froid",
-          "Sans peur (Elfes Noirs)"
+          "Discret"
         ]
       },
       {
@@ -6193,10 +6192,10 @@
           "Ragot"
         ],
         "talents": [
-          "Frappe blessante",
-          "Identité secrète",
+          "Tir précis",
           "Maniement de deux armes",
-          "Tir précis"
+          "Identité secrète",
+          "Frappe blessante"
         ]
       },
       {
@@ -6211,26 +6210,26 @@
           "Discrétion (Urbaine)"
         ],
         "talents": [
-          "Chute de chat",
-          "Prévoyant",
-          "Tireur embusqué",
-          "Voyageur aguerri"
+          "Souplesse féline",
+          "Voyageur aguerri",
+          "Tireur d'élite",
+          "Prévoyant"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "ct",
+      "ag",
+      "f",
+      "int",
+      "fm"
     ]
   },
   {
     "id": "hallebardier",
     "nom": "Hallebardier",
     "source": "Up in Arms",
-    "carac": [
-      "cc",
-      "e",
-      "ag",
-      "f",
-      "i",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -6254,10 +6253,10 @@
           "Résistance à l'alcool"
         ],
         "talents": [
-          "Costaud",
+          "Maîtrise des dés",
           "Coude-à-coude",
-          "Guerrier né",
-          "Maîtrise des dés"
+          "Infatigable",
+          "Guerrier né"
         ]
       },
       {
@@ -6277,9 +6276,9 @@
         ],
         "talents": [
           "Combattant en espace clos",
-          "Coup puissant",
+          "Savoir-vivre (Soldats)",
           "Sans peur (au choix)",
-          "Savoir-vivre (Soldats)"
+          "Coup puissant"
         ]
       },
       {
@@ -6296,10 +6295,10 @@
           "Orientation"
         ],
         "talents": [
-          "Cœur vaillant",
+          "Vigilance",
           "Inébranlable",
-          "Seigneur de guerre",
-          "Vigilance"
+          "Cœur vaillant",
+          "Seigneur de guerre"
         ]
       },
       {
@@ -6316,24 +6315,24 @@
         "talents": [
           "Exaltant",
           "Orateur",
-          "Présence imposante",
-          "Voyageur aguerri"
+          "Voyageur aguerri",
+          "Présence imposante"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "ag",
+      "f",
+      "i",
+      "int"
     ]
   },
   {
     "id": "herboriste",
     "nom": "Herboriste",
     "source": "Livre de base",
-    "carac": [
-      "e",
-      "i",
-      "ag",
-      "dex",
-      "soc",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -6421,20 +6420,20 @@
           "Travailleur qualifié (Herboriste)"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "i",
+      "ag",
+      "dex",
+      "soc",
+      "int"
     ]
   },
   {
     "id": "hierophante-college-lumineux",
     "nom": "Hiérophante (Collège Lumineux)",
     "source": "Winds of Magic",
-    "carac": [
-      "i",
-      "int",
-      "fm",
-      "ag",
-      "cc",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -6480,7 +6479,7 @@
           "Savoir (Guerre)"
         ],
         "talents": [
-          "Magie des Arcanes (Lumière)",
+          "Magie des Arcanes (Hysh)",
           "Détection d'artefact",
           "Perspicace",
           "Sixième sens"
@@ -6500,9 +6499,9 @@
           "Chevaucher (Cheval)"
         ],
         "talents": [
-          "Ambidextre",
+          "Maniement de deux armes",
           "Diction instinctive",
-          "Perception de la magie",
+          "Perception de la Magie",
           "Tour des souvenirs"
         ]
       },
@@ -6518,26 +6517,26 @@
           "Savoir (au choix)"
         ],
         "talents": [
-          "Maîtrise du combat",
+          "Vigilance",
           "Volonté de fer",
           "Menaçant",
           "Résistance (Chaos)"
         ]
       }
+    ],
+    "carac": [
+      "i",
+      "int",
+      "fm",
+      "ag",
+      "cc",
+      "soc"
     ]
   },
   {
     "id": "hors-la-loi",
     "nom": "Hors-la-loi",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "f",
-      "e",
-      "ct",
-      "i",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -6625,22 +6624,20 @@
           "Volonté de fer"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "e",
+      "ct",
+      "i",
+      "soc"
     ]
   },
   {
     "id": "ingenieur",
     "nom": "Ingénieur",
     "source": "Livre de base",
-    "carac": [
-      "ct",
-      "dex",
-      "int",
-      "i",
-      "e",
-      "ag",
-      "soc",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -6662,7 +6659,7 @@
           "Savoir (Ingénierie)"
         ],
         "talents": [
-          "Artiste",
+          "Artiste (au choix)",
           "Artilleur",
           "Lire/Écrire",
           "Bricoleur"
@@ -6706,7 +6703,7 @@
           "Recherche"
         ],
         "talents": [
-          "Commandant d'équipage",
+          "Commandant d'Équipage",
           "Retranchement",
           "Sens de l'orientation",
           "Travailleur qualifié (Ingénieur)"
@@ -6747,7 +6744,7 @@
         ],
         "talents": [
           "Sens aiguisé (Vue)",
-          "Non-conformiste",
+          "Tête brûlée",
           "Voyageur aguerri",
           "Mèche courte"
         ]
@@ -6766,7 +6763,7 @@
           "Subornation"
         ],
         "talents": [
-          "Argumentateur",
+          "Ergoteur",
           "Cracheur de dragon",
           "Maître artisan (Ingénieur)",
           "Tireur embusqué"
@@ -6785,25 +6782,27 @@
         ],
         "talents": [
           "Inébranlable",
-          "Magnum Opus",
+          "Magnum opus",
           "Rechargement rapide",
           "Savant (Ingénierie)"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "dex",
+      "int",
+      "i",
+      "e",
+      "ag",
+      "soc",
+      "fm"
     ]
   },
   {
     "id": "intendant",
     "nom": "Intendant",
     "source": "Livre de base",
-    "carac": [
-      "f",
-      "e",
-      "fm",
-      "cc",
-      "soc",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -6891,20 +6890,123 @@
           "Savoir-vivre (au choix)"
         ]
       }
+    ],
+    "carac": [
+      "f",
+      "e",
+      "fm",
+      "cc",
+      "soc",
+      "int"
+    ]
+  },
+  {
+    "id": "interpreter",
+    "nom": "Interpreter",
+    "source": "Lustria EN",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Translator",
+        "statut": "Brass 4",
+        "caracs": [
+          "e",
+          "int",
+          "soc"
+        ],
+        "skills": [
+          "Subornation",
+          "Charme",
+          "Esquive",
+          "Ragot",
+          "Marchandage",
+          "Langue (au choix)",
+          "Corps à corps (Base)",
+          "Perception",
+          "Recherche",
+          "Signes secrets (au choix)"
+        ],
+        "talents": [
+          "Linguistique",
+          "Lire sur les lèvres",
+          "Lire/Écrire",
+          "Lecture rapide"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Interpreter",
+        "statut": "Silver 1",
+        "caracs": [
+          "fm"
+        ],
+        "skills": [
+          "Emprise sur les animaux",
+          "Résistance à l'alcool",
+          "Calme",
+          "Évaluation",
+          "Langue (au choix)",
+          "Orientation"
+        ],
+        "talents": [
+          "Suborneur",
+          "Négociateur",
+          "Savoir-vivre (au choix)",
+          "Coopératif"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Polyglot",
+        "statut": "Silver 3",
+        "caracs": [
+          "i"
+        ],
+        "skills": [
+          "Art (au choix)",
+          "Intimidation",
+          "Langue (au choix)",
+          "Survie en extérieur"
+        ],
+        "talents": [
+          "Sens aiguisé (Ouïe)",
+          "Baratiner",
+          "Studieux",
+          "Imitation"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Polymath",
+        "statut": "Silver 5",
+        "caracs": [
+          "dex"
+        ],
+        "skills": [
+          "Langue (au choix)",
+          "Savoir (au choix)"
+        ],
+        "talents": [
+          "Ferveur ardente (au choix)",
+          "Numismate",
+          "Oreille absolue",
+          "Tour des souvenirs"
+        ]
+      }
+    ],
+    "carac": [
+      "e",
+      "int",
+      "soc",
+      "fm",
+      "i",
+      "dex"
     ]
   },
   {
     "id": "joueur-d-epee",
     "nom": "Joueur d'Epée",
     "source": "Up in Arms",
-    "carac": [
-      "cc",
-      "f",
-      "fm",
-      "i",
-      "e",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -6928,10 +7030,10 @@
           "Résistance à l'alcool"
         ],
         "talents": [
-          "Costaud",
+          "Imperturbable",
           "Coude-à-coude",
-          "Guerrier né",
-          "Sang-froid"
+          "Infatigable",
+          "Guerrier né"
         ]
       },
       {
@@ -6950,10 +7052,10 @@
           "Survie en extérieur"
         ],
         "talents": [
-          "Coup puissant",
-          "Réflexes foudroyants",
+          "Combat instinctif",
+          "Savoir-vivre (Soldats)",
           "Sans peur (au choix)",
-          "Savoir-vivre (Soldats)"
+          "Coup puissant"
         ]
       },
       {
@@ -6970,10 +7072,10 @@
           "Orientation"
         ],
         "talents": [
+          "Vigilance",
           "Combattant en espace clos",
           "Inébranlable",
-          "Seigneur de guerre",
-          "Vigilance"
+          "Seigneur de guerre"
         ]
       },
       {
@@ -6988,26 +7090,26 @@
           "Savoir (Guerre)"
         ],
         "talents": [
-          "Cœur vaillant",
+          "Présence imposante",
           "Exaltant",
           "Orateur",
-          "Présence imposante"
+          "Cœur vaillant"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "fm",
+      "i",
+      "e",
+      "int"
     ]
   },
   {
     "id": "juriste",
     "nom": "Juriste",
     "source": "Livre de base",
-    "carac": [
-      "i",
-      "dex",
-      "int",
-      "soc",
-      "fm",
-      "e"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -7093,7 +7195,7 @@
           "Savoir (au choix)"
         ],
         "talents": [
-          "Ferveur ardente",
+          "Ferveur ardente (au choix)",
           "Menteur",
           "Perspicace",
           "Studieux"
@@ -7113,10 +7215,10 @@
           "Signes secrets (Guilde)"
         ],
         "talents": [
-          "Rancune ancestrale",
+          "Rancune Ancestrale (au choix)",
           "Studieux",
           "Longue mémoire",
-          "Soutien"
+          "Coopératif"
         ]
       },
       {
@@ -7137,21 +7239,20 @@
           "Savant (Loi)"
         ]
       }
+    ],
+    "carac": [
+      "i",
+      "dex",
+      "int",
+      "soc",
+      "fm",
+      "e"
     ]
   },
   {
     "id": "mage-he",
     "nom": "Mage (HE)",
     "source": "High Elf Player Guide",
-    "carac": [
-      "int",
-      "fm",
-      "soc",
-      "dex",
-      "cc",
-      "ag",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -7175,8 +7276,8 @@
           "Savoir (Théologie)"
         ],
         "talents": [
-          "Détection d'artefact",
           "Harmonisation aethyrique",
+          "Détection d'artefact",
           "Magie mineure",
           "Seconde vue"
         ]
@@ -7197,10 +7298,10 @@
           "Savoir (au choix)"
         ],
         "talents": [
+          "Magie des Arcanes (au choix)",
+          "Imperturbable",
           "Diction instinctive",
-          "Magie des Arcanes (Domaine au choix)",
-          "Perspicace",
-          "Sang-froid"
+          "Perspicace"
         ]
       },
       {
@@ -7217,10 +7318,10 @@
           "Focalisation (Qhaysh / Haute Magie)"
         ],
         "talents": [
-          "Béni (Isha)",
-          "Bénédiction de Lileath",
+          "Béni par Isha",
+          "Maniement de deux armes",
           "Haute Magie",
-          "Maniement de deux armes"
+          "Bénédiction de Lileath"
         ]
       },
       {
@@ -7236,9 +7337,9 @@
         ],
         "talents": [
           "Mains agiles",
-          "Menaçant",
-          "Perception de la magie",
-          "Volonté de fer"
+          "Volonté de fer",
+          "Perception de la Magie",
+          "Menaçant"
         ]
       },
       {
@@ -7252,26 +7353,27 @@
           "Langue (au choix)"
         ],
         "talents": [
-          "Mage de guerre",
-          "Maîtrise du combat",
+          "Vigilance",
           "Savant (Magie)",
-          "Sixième sens"
+          "Sixième sens",
+          "Mage de guerre"
         ]
       }
+    ],
+    "carac": [
+      "int",
+      "fm",
+      "soc",
+      "dex",
+      "cc",
+      "ag",
+      "i"
     ]
   },
   {
     "id": "magister-vigilant",
     "nom": "Magister Vigilant",
     "source": "Winds of Magic",
-    "carac": [
-      "cc",
-      "int",
-      "fm",
-      "ag",
-      "i",
-      "f"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -7295,7 +7397,7 @@
           "Perception"
         ],
         "talents": [
-          "Perception de la magie",
+          "Perception de la Magie",
           "Magie mineure",
           "Lire/Écrire",
           "Seconde vue"
@@ -7339,7 +7441,7 @@
         "talents": [
           "Effraction",
           "Perspicace",
-          "Ombre",
+          "Discret",
           "Sixième sens"
         ]
       },
@@ -7361,20 +7463,20 @@
           "Flairer les ennuis"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "int",
+      "fm",
+      "ag",
+      "i",
+      "f"
     ]
   },
   {
     "id": "maitre-des-epees-he",
     "nom": "Maître des Epées (HE)",
     "source": "High Elf Player Guide",
-    "carac": [
-      "cc",
-      "f",
-      "i",
-      "fm",
-      "int",
-      "ag"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -7398,10 +7500,10 @@
           "Savoir (au choix)"
         ],
         "talents": [
-          "Arts Martiaux",
-          "Désarmer",
+          "Sens aiguisé (au choix)",
           "Frappe précise",
-          "Sens aiguisé (au choix)"
+          "Désarmer",
+          "Arts martiaux"
         ]
       },
       {
@@ -7421,9 +7523,9 @@
         ],
         "talents": [
           "Battement",
-          "Danse des Épées",
+          "Renversement",
           "Frappe blessante",
-          "Riposte"
+          "Danse des épées"
         ]
       },
       {
@@ -7440,10 +7542,10 @@
           "Projectiles (Arc)"
         ],
         "talents": [
-          "Coup puissant",
-          "Frappe réactive",
           "Maîtrise du combat",
-          "Seconde vue"
+          "Frappe réactive",
+          "Seconde vue",
+          "Coup puissant"
         ]
       },
       {
@@ -7458,31 +7560,26 @@
           "Savoir (au choix)"
         ],
         "talents": [
-          "Âme pure",
           "Présence imposante",
-          "Seigneur de guerre",
-          "Voyageur aguerri"
+          "Âme pure",
+          "Voyageur aguerri",
+          "Seigneur de guerre"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "i",
+      "fm",
+      "int",
+      "ag"
     ]
   },
   {
     "id": "maitre-du-savoir-de-hoeth-he",
     "nom": "Maître du Savoir de Hoeth (HE)",
     "source": "High Elf Player Guide",
-    "carac": [
-      "cc",
-      "dex",
-      "int",
-      "fm",
-      "soc",
-      "ag",
-      "i"
-    ],
-    "prereq": {
-      "career": "Mage (HE)",
-      "minRang": 2
-    },
     "rangs": [
       {
         "rang": 3,
@@ -7504,10 +7601,10 @@
           "Savoir (au choix)"
         ],
         "talents": [
-          "Haute Magie",
+          "Béni par Isha",
           "Méditation Cadai",
-          "Sanctuaire de l'Esprit",
-          "Studieux"
+          "Haute Magie",
+          "Sanctuaire de l’esprit"
         ]
       },
       {
@@ -7522,9 +7619,9 @@
           "Savoir (au choix)"
         ],
         "talents": [
-          "Diction instinctive",
-          "Lecture rapide",
+          "Studieux",
           "Linguistique",
+          "Lecture rapide",
           "Tour des souvenirs"
         ]
       },
@@ -7539,26 +7636,31 @@
           "Savoir (au choix)"
         ],
         "talents": [
-          "Âme pure",
-          "Maîtrise du combat",
-          "Perception de la magie",
-          "Visions sacrées"
+          "Vigilance",
+          "Perception de la Magie",
+          "Visions sacrées",
+          "Âme pure"
         ]
       }
-    ]
+    ],
+    "carac": [
+      "cc",
+      "dex",
+      "int",
+      "fm",
+      "soc",
+      "ag",
+      "i"
+    ],
+    "prereq": {
+      "career": "Mage (HE)",
+      "minRang": 2
+    }
   },
   {
     "id": "mangeur-d-hommes-o",
     "nom": "Mangeur d'Hommes (O)",
     "source": "Archives 2",
-    "carac": [
-      "cc",
-      "f",
-      "e",
-      "ct",
-      "fm",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -7583,9 +7685,9 @@
         ],
         "talents": [
           "Combat déloyal",
-          "Présence imposante",
-          "Robuste",
-          "Dos puissant"
+          "Menaçant",
+          "Costaud",
+          "Infatigable"
         ]
       },
       {
@@ -7604,7 +7706,7 @@
         ],
         "talents": [
           "Coup puissant",
-          "Savoir-vivre (Bas-fonds)",
+          "Savoir-vivre (Slims)",
           "Voyageur aguerri",
           "Rechargement rapide"
         ]
@@ -7624,7 +7726,7 @@
         "talents": [
           "Tir précis",
           "Combat instinctif",
-          "Robuste",
+          "Dur à cuire",
           "Effrayant"
         ]
       },
@@ -7646,20 +7748,20 @@
           "Frappe réactive"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "e",
+      "ct",
+      "fm",
+      "soc"
     ]
   },
   {
     "id": "marchand",
     "nom": "Marchand",
     "source": "Livre de base",
-    "carac": [
-      "ag",
-      "fm",
-      "soc",
-      "int",
-      "i",
-      "cc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -7747,20 +7849,20 @@
           "Volonté de fer"
         ]
       }
+    ],
+    "carac": [
+      "ag",
+      "fm",
+      "soc",
+      "int",
+      "i",
+      "cc"
     ]
   },
   {
     "id": "marchand-aventurier-he",
     "nom": "Marchand Aventurier (HE)",
     "source": "High Elf Player Guide",
-    "carac": [
-      "cc",
-      "i",
-      "soc",
-      "ag",
-      "int",
-      "f"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -7784,10 +7886,10 @@
           "Voile (au choix)"
         ],
         "talents": [
-          "Chanceux",
-          "Nageur endurant",
           "Pêcheur",
-          "Sens de l'orientation"
+          "Chanceux",
+          "Sens de l'orientation",
+          "Nageur endurant"
         ]
       },
       {
@@ -7826,10 +7928,10 @@
           "Subornation"
         ],
         "talents": [
-          "Costaud",
+          "Imperturbable",
           "Détection d'artefact",
           "Mâchoires d'acier",
-          "Pied marin"
+          "Costaud"
         ]
       },
       {
@@ -7850,20 +7952,20 @@
           "Très résistant"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "i",
+      "soc",
+      "ag",
+      "int",
+      "f"
     ]
   },
   {
     "id": "marin",
     "nom": "Marin",
     "source": "Livre de base",
-    "carac": [
-      "ag",
-      "dex",
-      "soc",
-      "cc",
-      "i",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -7951,20 +8053,20 @@
           "Sens de l'orientation"
         ]
       }
+    ],
+    "carac": [
+      "ag",
+      "dex",
+      "soc",
+      "cc",
+      "i",
+      "int"
     ]
   },
   {
     "id": "martelier-n",
     "nom": "Martelier (N)",
     "source": "Dwarf Player Guide",
-    "carac": [
-      "cc",
-      "f",
-      "fm",
-      "int",
-      "e",
-      "ag"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -7989,8 +8091,8 @@
         ],
         "talents": [
           "Matraqueur",
-          "Vigilance au combat",
-          "Dos puissant",
+          "Vigilance",
+          "Infatigable",
           "Guerrier né"
         ]
       },
@@ -8010,10 +8112,10 @@
           "Savoir (Héraldique)"
         ],
         "talents": [
-          "Entraîné",
-          "Garde royale",
+          "Coude-à-coude",
+          "Garde royal",
           "Frappe assommante",
-          "Obstiné"
+          "Inlassable"
         ]
       },
       {
@@ -8031,7 +8133,7 @@
         ],
         "talents": [
           "Combattant en espace clos",
-          "Imperturbable",
+          "Inébranlable",
           "Très fort",
           "Seigneur de guerre"
         ]
@@ -8054,20 +8156,20 @@
           "Persévérant"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "fm",
+      "int",
+      "e",
+      "ag"
     ]
   },
   {
     "id": "medecin",
     "nom": "Médecin",
     "source": "Livre de base",
-    "carac": [
-      "dex",
-      "int",
-      "fm",
-      "soc",
-      "i",
-      "ag"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -8155,20 +8257,20 @@
           "Savoir-vivre (Nobles)"
         ]
       }
+    ],
+    "carac": [
+      "dex",
+      "int",
+      "fm",
+      "soc",
+      "i",
+      "ag"
     ]
   },
   {
     "id": "mendiant",
     "nom": "Mendiant",
     "source": "Livre de base",
-    "carac": [
-      "e",
-      "ag",
-      "soc",
-      "fm",
-      "cc",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -8256,20 +8358,20 @@
           "Sans peur (Miliciens)"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "ag",
+      "soc",
+      "fm",
+      "cc",
+      "i"
     ]
   },
   {
     "id": "messager",
     "nom": "Messager",
     "source": "Livre de base",
-    "carac": [
-      "e",
-      "i",
-      "ag",
-      "cc",
-      "fm",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -8337,7 +8439,7 @@
         "talents": [
           "Infatigable",
           "Bon marcheur (Rocheux)",
-          "Randonneur",
+          "Nomade",
           "Sens de l'orientation"
         ]
       },
@@ -8379,20 +8481,20 @@
           "Très résistant"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "i",
+      "ag",
+      "cc",
+      "fm",
+      "soc"
     ]
   },
   {
     "id": "milicien",
     "nom": "Milicien",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "f",
-      "soc",
-      "fm",
-      "i",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -8480,19 +8582,20 @@
           "Robuste"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "soc",
+      "fm",
+      "i",
+      "int"
     ]
   },
   {
     "id": "mineur",
     "nom": "Mineur",
     "source": "Livre de base",
-    "carac": [
-      "f",
-      "e",
-      "fm",
-      "cc",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -8622,20 +8725,19 @@
           "Obstiné"
         ]
       }
+    ],
+    "carac": [
+      "f",
+      "e",
+      "fm",
+      "cc",
+      "i"
     ]
   },
   {
     "id": "muletier",
     "nom": "Muletier",
     "source": "Deft Steps",
-    "carac": [
-      "ct",
-      "ag",
-      "fm",
-      "int",
-      "i",
-      "e"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -8661,8 +8763,8 @@
         "talents": [
           "Affinité avec les animaux",
           "Claquer le fouet",
-          "Persévérant",
-          "Sens de l'orientation"
+          "Sens de l'orientation",
+          "Persévérant"
         ]
       },
       {
@@ -8681,10 +8783,10 @@
           "Survie en extérieur"
         ],
         "talents": [
-          "Bon marcheur (au choix)",
           "Imperturbable",
+          "Voyageur aguerri",
           "Sans peur (au choix)",
-          "Voyageur aguerri"
+          "Bon marcheur (au choix)"
         ]
       },
       {
@@ -8701,10 +8803,10 @@
           "Métier (Charpentier)"
         ],
         "talents": [
-          "Acrobaties équestres",
-          "Cœur vaillant",
+          "Savoir-vivre (Guilde)",
           "Flairer les ennuis",
-          "Savoir-vivre (Guilde)"
+          "Cœur vaillant",
+          "Acrobaties équestres"
         ]
       },
       {
@@ -8719,26 +8821,26 @@
           "Marchandage"
         ],
         "talents": [
-          "Exaltant",
-          "Lire/Écrire",
           "Négociateur",
-          "Numismate"
+          "Exaltant",
+          "Numismate",
+          "Lire/Écrire"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "ag",
+      "fm",
+      "int",
+      "i",
+      "e"
     ]
   },
   {
     "id": "mystique",
     "nom": "Mystique",
     "source": "Livre de base",
-    "carac": [
-      "i",
-      "dex",
-      "soc",
-      "fm",
-      "ag",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -8820,26 +8922,26 @@
           "Savoir (Prophétie)"
         ],
         "talents": [
-          "Magie des Arcanes (Cieux)",
+          "Magie des Arcanes (Azyr)",
           "Menaçant",
           "Obstiné",
-          "Perception de la magie"
+          "Perception de la Magie"
         ]
       }
+    ],
+    "carac": [
+      "i",
+      "dex",
+      "soc",
+      "fm",
+      "ag",
+      "int"
     ]
   },
   {
     "id": "naufrageur",
     "nom": "Naufrageur",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "f",
-      "i",
-      "fm",
-      "ct",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -8927,20 +9029,20 @@
           "Pilote"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "i",
+      "fm",
+      "ct",
+      "soc"
     ]
   },
   {
     "id": "nautonier",
     "nom": "Nautonier",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "e",
-      "i",
-      "fm",
-      "int",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -9028,20 +9130,20 @@
           "Vivacité"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "i",
+      "fm",
+      "int",
+      "soc"
     ]
   },
   {
     "id": "noble",
     "nom": "Noble",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "i",
-      "dex",
-      "soc",
-      "int",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -9129,20 +9231,20 @@
           "Volonté de fer"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "i",
+      "dex",
+      "soc",
+      "int",
+      "fm"
     ]
   },
   {
     "id": "nonne",
     "nom": "Nonne",
     "source": "Livre de base",
-    "carac": [
-      "dex",
-      "int",
-      "soc",
-      "fm",
-      "i",
-      "e"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -9230,20 +9332,20 @@
           "Volonté de fer"
         ]
       }
+    ],
+    "carac": [
+      "dex",
+      "int",
+      "soc",
+      "fm",
+      "i",
+      "e"
     ]
   },
   {
     "id": "ombremancien-college-gris",
     "nom": "Ombremancien (Collège Gris)",
     "source": "Winds of Magic",
-    "carac": [
-      "int",
-      "fm",
-      "soc",
-      "i",
-      "cc",
-      "ag"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -9289,7 +9391,7 @@
           "Langue (au choix)"
         ],
         "talents": [
-          "Magie des Arcanes (Ombres)",
+          "Magie des Arcanes (Ulgu)",
           "Détection d'artefact",
           "Mains agiles",
           "Sixième sens"
@@ -9311,7 +9413,7 @@
         "talents": [
           "Baratiner",
           "Diction instinctive",
-          "Perception de la magie",
+          "Perception de la Magie",
           "Imitation"
         ]
       },
@@ -9328,25 +9430,128 @@
         ],
         "talents": [
           "Identité secrète",
-          "Ombre",
+          "Discret",
           "Tour des souvenirs",
           "Mage de guerre"
         ]
       }
+    ],
+    "carac": [
+      "int",
+      "fm",
+      "soc",
+      "i",
+      "cc",
+      "ag"
+    ]
+  },
+  {
+    "id": "oracle",
+    "nom": "Oracle",
+    "source": "Lustria EN",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Visionary",
+        "statut": "Brass 2",
+        "caracs": [
+          "i",
+          "ag",
+          "fm"
+        ],
+        "skills": [
+          "Emprise sur les animaux",
+          "Esquive",
+          "Intuition",
+          "Orientation",
+          "Survie en extérieur",
+          "Perception",
+          "Projectiles (Lancer)",
+          "Chevaucher (au choix)",
+          "Signes secrets (Hommes-lézards)",
+          "Pistage"
+        ],
+        "talents": [
+          "Imperturbable",
+          "Détection d'artefact",
+          "Seconde vue",
+          "Sixième sens"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Oracle",
+        "statut": "Brass 5",
+        "caracs": [
+          "int"
+        ],
+        "skills": [
+          "Soin aux animaux",
+          "Dressage",
+          "Calme",
+          "Évaluation",
+          "Intimidation",
+          "Corps à corps (Armes d'hast)"
+        ],
+        "talents": [
+          "Perception de la Magie",
+          "Sens de l'orientation",
+          "Cavalier émérite",
+          "Tir sûr"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Priest of the Old Ones",
+        "statut": "Silver 2",
+        "caracs": [
+          "soc"
+        ],
+        "skills": [
+          "Guérison",
+          "Langue (Magick)",
+          "Commandement",
+          "Savoir (Magie)"
+        ],
+        "talents": [
+          "Magie des Arcanes (Ghur ou Azyr)",
+          "Magie mineure",
+          "Chanceux",
+          "Lire/Écrire"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Polymath",
+        "statut": "Silver 5",
+        "caracs": [
+          "e"
+        ],
+        "skills": [
+          "Focalisation (Azyr ou Ghur)",
+          "Savoir (Anciens)"
+        ],
+        "talents": [
+          "Harmonisation aethyrique",
+          "Diction instinctive",
+          "Âme pure",
+          "Mage de guerre"
+        ]
+      }
+    ],
+    "carac": [
+      "i",
+      "ag",
+      "fm",
+      "int",
+      "soc",
+      "e"
     ]
   },
   {
     "id": "parent-du-loup",
     "nom": "Parent du Loup",
     "source": "Middenheim",
-    "carac": [
-      "cc",
-      "f",
-      "e",
-      "fm",
-      "i",
-      "ag"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -9393,7 +9598,7 @@
         "talents": [
           "Sens aiguisé (au choix)",
           "Dur à cuire",
-          "Implacable",
+          "Endurci",
           "Bon marcheur (au choix)"
         ]
       },
@@ -9428,26 +9633,26 @@
           "Natation"
         ],
         "talents": [
-          "Rage de bataille",
-          "Intrépide (Hommes-bêtes)",
+          "Frénésie",
+          "Sans peur (Hommes-bêtes)",
           "Effrayant",
-          "Zèle passionné"
+          "Ferveur ardente (au choix)"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "e",
+      "fm",
+      "i",
+      "ag"
     ]
   },
   {
     "id": "patrouilleur-fluvial",
     "nom": "Patrouilleur fluvial",
     "source": "Livre de base",
-    "carac": [
-      "ct",
-      "f",
-      "soc",
-      "cc",
-      "i",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -9535,20 +9740,20 @@
           "Sens de l'orientation"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "f",
+      "soc",
+      "cc",
+      "i",
+      "int"
     ]
   },
   {
     "id": "patrouilleur-routier",
     "nom": "Patrouilleur routier",
     "source": "Livre de base",
-    "carac": [
-      "ct",
-      "e",
-      "i",
-      "cc",
-      "soc",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -9636,20 +9841,20 @@
           "Vigilance"
         ]
       }
+    ],
+    "carac": [
+      "ct",
+      "e",
+      "i",
+      "cc",
+      "soc",
+      "int"
     ]
   },
   {
     "id": "pilleur-de-tombes",
     "nom": "Pilleur de tombes",
     "source": "Livre de base",
-    "carac": [
-      "f",
-      "i",
-      "fm",
-      "cc",
-      "dex",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -9737,20 +9942,20 @@
           "Trappeur"
         ]
       }
+    ],
+    "carac": [
+      "f",
+      "i",
+      "fm",
+      "cc",
+      "dex",
+      "int"
     ]
   },
   {
     "id": "piquier",
     "nom": "Piquier",
     "source": "Up in Arms",
-    "carac": [
-      "cc",
-      "f",
-      "e",
-      "i",
-      "fm",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -9776,8 +9981,8 @@
         "talents": [
           "Coude-à-coude",
           "Frappe réactive",
-          "Guerrier né",
-          "Très fort"
+          "Très fort",
+          "Guerrier né"
         ]
       },
       {
@@ -9796,10 +10001,10 @@
           "Survie en extérieur"
         ],
         "talents": [
-          "Combattant en espace clos",
           "Maîtrise des dés",
-          "Sans peur (Cavalerie)",
-          "Savoir-vivre (Mercenaires)"
+          "Combattant en espace clos",
+          "Savoir-vivre (Mercenaires)",
+          "Sans peur (Cavalerie)"
         ]
       },
       {
@@ -9816,10 +10021,10 @@
           "Perception"
         ],
         "talents": [
+          "Vigilance",
+          "Combat instinctif",
           "Pansement de fortune",
-          "Réflexes foudroyants",
-          "Robuste",
-          "Vigilance"
+          "Robuste"
         ]
       },
       {
@@ -9836,24 +10041,24 @@
         "talents": [
           "Exaltant",
           "Inébranlable",
-          "Seigneur de guerre",
-          "Très résistant"
+          "Très résistant",
+          "Seigneur de guerre"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "e",
+      "i",
+      "fm",
+      "soc"
     ]
   },
   {
     "id": "pretre",
     "nom": "Prêtre",
     "source": "Livre de base",
-    "carac": [
-      "e",
-      "ag",
-      "fm",
-      "soc",
-      "int",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -9917,7 +10122,7 @@
           "Savoir (Héraldique)"
         ],
         "talents": [
-          "Ferveur ardente",
+          "Ferveur ardente (au choix)",
           "Haine (au choix)",
           "Obstiné",
           "Sens aiguisé (au choix)"
@@ -9941,19 +10146,20 @@
           "Savant (Théologie)"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "ag",
+      "fm",
+      "soc",
+      "int",
+      "i"
     ]
   },
   {
     "id": "pretre-de-handrich",
     "nom": "Prêtre de Handrich",
     "source": "Archives 3",
-    "carac": [
-      "e",
-      "int",
-      "soc",
-      "ag",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -9978,7 +10184,7 @@
         ],
         "talents": [
           "Béni (Handrich)",
-          "Détournement de fonds",
+          "Escroquer",
           "Numismate",
           "Lire/Écrire"
         ]
@@ -10000,7 +10206,7 @@
         ],
         "talents": [
           "Suborneur",
-          "Vivant",
+          "Noctambule",
           "Négociateur",
           "Invocation (Handrich)"
         ]
@@ -10020,7 +10226,7 @@
         ],
         "talents": [
           "Studieux",
-          "Langue de vipère",
+          "Menteur",
           "Robuste",
           "Doué en calcul"
         ]
@@ -10037,26 +10243,25 @@
           "Savoir (Au choix)"
         ],
         "talents": [
-          "Grand orateur",
+          "Orateur",
           "Intrigant",
-          "Volonté de fer",
+          "Obstiné",
           "Nanti"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "int",
+      "soc",
+      "ag",
+      "i"
     ]
   },
   {
     "id": "pretre-de-la-forge-n",
     "nom": "Prêtre de la Forge (N)",
     "source": "Dwarf Player Guide",
-    "carac": [
-      "e",
-      "dex",
-      "fm",
-      "f",
-      "int",
-      "cc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -10080,10 +10285,10 @@
           "Métier (au choix)"
         ],
         "talents": [
-          "Artisan (au choix)",
+          "Maître artisan (au choix)",
           "Combattant en espace clos",
           "Brouet",
-          "Costaud"
+          "Infatigable"
         ]
       },
       {
@@ -10102,10 +10307,10 @@
           "Signes secrets (Mineur ou Guilde)"
         ],
         "talents": [
-          "Coup puissant",
+          "Matraqueur",
           "Détection d'artefact",
-          "Magie des Runes (Runes de Protection)",
-          "Robuste"
+          "Magie des runes (Runes de protection)",
+          "Costaud"
         ]
       },
       {
@@ -10123,9 +10328,9 @@
         ],
         "talents": [
           "Feu de forge",
-          "Défi magique",
-          "Maître artisan (au choix)",
-          "Magie des Runes (Runes d'Armure et d'Ingénierie)"
+          "Défiance magique",
+          "Travailleur qualifié (au choix)",
+          "Magie des runes (Runes d’armure et runes d’ingénierie)"
         ]
       },
       {
@@ -10141,25 +10346,25 @@
         ],
         "talents": [
           "Volonté de fer",
-          "Maîtrise de la Magie des Runes (Toutes)",
+          "Magie des Runes de Maître (Toutes les formes)",
           "Âme pure",
-          "Magie des Runes (Toutes)"
+          "Magie des runes (Toutes les formes)"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "dex",
+      "fm",
+      "f",
+      "int",
+      "cc"
     ]
   },
   {
     "id": "pretre-de-myrmidia",
     "nom": "Prêtre de Myrmidia",
     "source": "Up in Arms",
-    "carac": [
-      "cc",
-      "int",
-      "soc",
-      "i",
-      "ag",
-      "f"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -10184,9 +10389,9 @@
         ],
         "talents": [
           "Béni (Myrmidia)",
-          "Lire/Écrire",
+          "Vigilance",
           "Savoir-vivre (Fidèles)",
-          "Vigilance"
+          "Lire/Écrire"
         ]
       },
       {
@@ -10208,7 +10413,7 @@
           "Coude-à-coude",
           "Exaltant",
           "Invocation (Myrmidia)",
-          "Porte-Bouclier"
+          "Porte-bouclier"
         ]
       },
       {
@@ -10225,10 +10430,10 @@
           "Savoir (au choix)"
         ],
         "talents": [
-          "Âme pure",
-          "Cœur vaillant",
           "Studieux",
-          "Visions sacrées"
+          "Visions sacrées",
+          "Âme pure",
+          "Cœur vaillant"
         ]
       },
       {
@@ -10244,24 +10449,25 @@
         ],
         "talents": [
           "Maîtrise du combat",
-          "Réflexes foudroyants",
+          "Combat instinctif",
           "Sans peur (au choix)",
           "Seigneur de guerre"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "int",
+      "soc",
+      "i",
+      "ag",
+      "f"
     ]
   },
   {
     "id": "pretre-de-solkan",
     "nom": "Prêtre de Solkan",
     "source": "Archives 3",
-    "carac": [
-      "e",
-      "i",
-      "soc",
-      "cc",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -10288,7 +10494,7 @@
           "Béni (Solkan)",
           "Visions sacrées",
           "Lire/Écrire",
-          "Volonté de fer"
+          "Obstiné"
         ]
       },
       {
@@ -10307,9 +10513,9 @@
           "Corps à corps (Base)"
         ],
         "talents": [
-          "Savoir-vivre (Cultistes)",
+          "Savoir-vivre (Fidèles)",
           "Haine (Chaos)",
-          "Ferveur ardente",
+          "Ferveur ardente (au choix)",
           "Invocation (Solkan)"
         ]
       },
@@ -10327,10 +10533,10 @@
           "Chevaucher (Cheval)"
         ],
         "talents": [
-          "Sens aiguisé (Au choix)",
-          "Haine sainte",
-          "Présence imposante",
-          "Volonté de fer"
+          "Sens aiguisé (au choix)",
+          "Haine sacrée",
+          "Menaçant",
+          "Obstiné"
         ]
       },
       {
@@ -10345,26 +10551,25 @@
           "Divertissement (Discours)"
         ],
         "talents": [
-          "Sans peur (Sorciers)",
+          "Sans peur (Lanceurs de sorts)",
           "Volonté de fer",
           "Âme pure",
-          "Résistance (Au choix)"
+          "Résistance (au choix)"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "i",
+      "soc",
+      "cc",
+      "int"
     ]
   },
   {
     "id": "pretre-du-destin-n",
     "nom": "Prêtre du Destin (N)",
     "source": "Dwarf Player Guide",
-    "carac": [
-      "cc",
-      "e",
-      "fm",
-      "dex",
-      "f",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -10388,10 +10593,10 @@
           "Musicien (Cor)"
         ],
         "talents": [
-          "Rancune ancestrale",
+          "Rancune Ancestrale (au choix)",
           "Démolisseur",
           "Frénésie",
-          "Persévérant"
+          "Obstiné"
         ]
       },
       {
@@ -10413,7 +10618,7 @@
           "Ambidextre",
           "Maniement de deux armes",
           "Exaltant",
-          "Magie des Runes (Runes de protection)"
+          "Magie des runes (Runes de protection)"
         ]
       },
       {
@@ -10430,9 +10635,9 @@
           "Signes secrets (Fraternité de Grimnir)"
         ],
         "talents": [
-          "Intrépide (Tous)",
-          "Défi à la magie",
-          "Magie des Runes (Runes d'armes)",
+          "Sans peur (Tous)",
+          "Défiance magique",
+          "Magie des runes (Runes d’armes)",
           "Seigneur de guerre"
         ]
       },
@@ -10448,24 +10653,24 @@
           "Savoir (Chaos)"
         ],
         "talents": [
-          "Mort glorieuse",
-          "Maître de la Magie des Runes (Toutes les formes)"
+          "Fin glorieuse",
+          "Magie des Runes de Maître (Toutes les formes)"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "fm",
+      "dex",
+      "f",
+      "soc"
     ]
   },
   {
     "id": "pretre-du-foyer-n",
     "nom": "Prêtre du Foyer (N)",
     "source": "Dwarf Player Guide",
-    "carac": [
-      "dex",
-      "int",
-      "fm",
-      "e",
-      "soc",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -10489,7 +10694,7 @@
           "Métier (Brasseur ou Cuisinier)"
         ],
         "talents": [
-          "Fêtard",
+          "Noctambule",
           "Pansement de fortune",
           "Oreille absolue",
           "Prévoyant"
@@ -10512,8 +10717,8 @@
         ],
         "talents": [
           "Fortification liquide",
-          "Magie des Runes (Protection et Talismans)",
-          "Soutien",
+          "Magie des runes (Runes de protection et runes talismaniques)",
+          "Coopératif",
           "Chirurgie"
         ]
       },
@@ -10531,10 +10736,10 @@
           "Métier (au choix)"
         ],
         "talents": [
-          "Défi magique",
+          "Défiance magique",
           "Pharmacologie",
           "Résistance (au choix)",
-          "Maîtrise de la Magie des Runes (Protection)"
+          "Magie des Runes de Maître (Runes de protection)"
         ]
       },
       {
@@ -10549,26 +10754,26 @@
           "Savoir (au choix)"
         ],
         "talents": [
-          "Perception de la magie",
-          "Maîtrise de la Magie des Runes (Talismans)",
+          "Perception de la Magie",
+          "Magie des Runes de Maître (Runes talismaniques)",
           "Menaçant",
           "Âme pure"
         ]
       }
+    ],
+    "carac": [
+      "dex",
+      "int",
+      "fm",
+      "e",
+      "soc",
+      "i"
     ]
   },
   {
     "id": "pretre-guerrier",
     "nom": "Prêtre Guerrier",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "e",
-      "fm",
-      "f",
-      "i",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -10656,25 +10861,20 @@
           "Seigneur de guerre"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "fm",
+      "f",
+      "i",
+      "soc"
     ]
   },
   {
     "id": "pretre-forgeron-de-vaul-he",
     "nom": "Prêtre-Forgeron de Vaul (HE)",
     "source": "High Elf Player Guide",
-    "carac": [
-      "cc",
-      "dex",
-      "int",
-      "fm",
-      "soc",
-      "f",
-      "i"
-    ],
-    "prereq": {
-      "career": "Mage (HE)",
-      "minRang": 2
-    },
     "rangs": [
       {
         "rang": 3,
@@ -10694,10 +10894,10 @@
           "Métier (Forgeron)"
         ],
         "talents": [
-          "Artiste",
-          "Artisan (Forgeron)",
-          "Haute Magie",
-          "Méditation Cadai"
+          "Béni par Isha",
+          "Méditation Cadai",
+          "Maître artisan (Forgeron)",
+          "Haute Magie"
         ]
       },
       {
@@ -10712,10 +10912,10 @@
           "Marchandage"
         ],
         "talents": [
-          "L'esprit sur la matière",
-          "Maître artisan (Forgeron)",
-          "Persévérant",
-          "Très fort"
+          "Artiste (au choix)",
+          "Travailleur qualifié (Forgeron)",
+          "L’esprit sur le corps",
+          "Persévérant"
         ]
       },
       {
@@ -10729,26 +10929,31 @@
           "Commandement"
         ],
         "talents": [
-          "Magnum Opus",
-          "Obstiné",
+          "Visions sacrées",
+          "Magnum opus",
           "Sixième sens",
-          "Visions sacrées"
+          "Obstiné"
         ]
       }
-    ]
+    ],
+    "carac": [
+      "cc",
+      "dex",
+      "int",
+      "fm",
+      "soc",
+      "f",
+      "i"
+    ],
+    "prereq": {
+      "career": "Mage (HE)",
+      "minRang": 2
+    }
   },
   {
     "id": "pretre-joueur-de-ranald",
     "nom": "Prêtre-Joueur de Ranald",
     "source": "Deft Steps",
-    "carac": [
-      "i",
-      "dex",
-      "soc",
-      "fm",
-      "int",
-      "ag"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -10772,10 +10977,10 @@
           "Savoir (Ranald)"
         ],
         "talents": [
-          "Affable",
           "Béni (Ranald)",
           "Chanceux",
-          "Visions sacrées"
+          "Visions sacrées",
+          "Affable"
         ]
       },
       {
@@ -10794,10 +10999,10 @@
           "Marchandage"
         ],
         "talents": [
-          "Invocation (Le Joueur)",
+          "Tricheur",
           "Maîtrise des dés",
-          "Savoir-vivre (Ranaldiens)",
-          "Tricheur"
+          "Savoir-vivre (Ranaldans)",
+          "Invocation (Le Joueur)"
         ]
       },
       {
@@ -10814,10 +11019,10 @@
           "Subornation"
         ],
         "talents": [
-          "Doué en calcul",
-          "Lire/Écrire",
+          "Sens aiguisé (au choix)",
           "Mains agiles",
-          "Sens aiguisé (au choix)"
+          "Lire/Écrire",
+          "Doué en calcul"
         ]
       },
       {
@@ -10833,25 +11038,25 @@
         ],
         "talents": [
           "Flairer les ennuis",
-          "Identité secrète",
+          "Perspicace",
           "Intrigant",
-          "Perspicace"
+          "Identité secrète"
         ]
       }
+    ],
+    "carac": [
+      "i",
+      "dex",
+      "soc",
+      "fm",
+      "int",
+      "ag"
     ]
   },
   {
     "id": "pretre-liberateur-de-ranald",
     "nom": "Prêtre-Libérateur de Ranald",
     "source": "Deft Steps",
-    "carac": [
-      "ag",
-      "fm",
-      "soc",
-      "int",
-      "i",
-      "cc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -10875,10 +11080,10 @@
           "Subornation"
         ],
         "talents": [
-          "Béni (Ranald)",
-          "Chanceux",
           "Ergoteur",
-          "Visions sacrées"
+          "Béni (Ranald)",
+          "Visions sacrées",
+          "Chanceux"
         ]
       },
       {
@@ -10897,10 +11102,10 @@
           "Savoir (Local)"
         ],
         "talents": [
-          "Baratiner",
+          "Menteur",
+          "Savoir-vivre (Ranald)",
           "Invocation (Le Protecteur)",
-          "Lire/Écrire",
-          "Savoir-vivre (Ranald)"
+          "Lire/Écrire"
         ]
       },
       {
@@ -10917,10 +11122,10 @@
           "Langue (Voleur)"
         ],
         "talents": [
-          "Ferveur ardente",
-          "Identité secrète",
+          "Ferveur ardente (au choix)",
+          "Orateur",
           "Intrigant",
-          "Orateur"
+          "Identité secrète"
         ]
       },
       {
@@ -10935,26 +11140,26 @@
           "Langue (au choix)"
         ],
         "talents": [
-          "Âme pure",
           "Désarmer",
+          "Sociable",
           "Grand orateur",
-          "Sociable"
+          "Âme pure"
         ]
       }
+    ],
+    "carac": [
+      "ag",
+      "fm",
+      "soc",
+      "int",
+      "i",
+      "cc"
     ]
   },
   {
     "id": "pretre-ranger-de-taal",
     "nom": "Prêtre-Ranger de Taal",
     "source": "Deft Steps",
-    "carac": [
-      "e",
-      "ag",
-      "fm",
-      "soc",
-      "i",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -10979,9 +11184,9 @@
         ],
         "talents": [
           "Béni (Taal)",
-          "Nomade",
+          "Visions sacrées",
           "Sens de l'orientation",
-          "Visions sacrées"
+          "Nomade"
         ]
       },
       {
@@ -11000,10 +11205,10 @@
           "Pistage"
         ],
         "talents": [
-          "Bon marcheur (au choix)",
-          "Invocation (Taal)",
+          "Savoir-vivre (Taal)",
           "Œil du chasseur",
-          "Savoir-vivre (Taal)"
+          "Invocation (Taal)",
+          "Bon marcheur (au choix)"
         ]
       },
       {
@@ -11020,9 +11225,9 @@
           "Savoir (Bêtes)"
         ],
         "talents": [
+          "Dur à cuire",
           "Âme pure",
           "Résistance (au choix)",
-          "Robuste",
           "Tir sûr"
         ]
       },
@@ -11039,25 +11244,25 @@
         ],
         "talents": [
           "Désarmer",
+          "Sociable",
           "Grand orateur",
-          "Persévérant",
-          "Sociable"
+          "Persévérant"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "ag",
+      "fm",
+      "soc",
+      "i",
+      "int"
     ]
   },
   {
     "id": "pretre-trompeur-de-ranald",
     "nom": "Prêtre-Trompeur de Ranald",
     "source": "Deft Steps",
-    "carac": [
-      "i",
-      "fm",
-      "soc",
-      "dex",
-      "ag",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -11081,10 +11286,10 @@
           "Subornation"
         ],
         "talents": [
-          "Affable",
-          "Baratiner",
           "Béni (Ranald)",
-          "Chanceux"
+          "Menteur",
+          "Chanceux",
+          "Affable"
         ]
       },
       {
@@ -11103,10 +11308,10 @@
           "Langue (au choix)"
         ],
         "talents": [
-          "Identité secrète",
-          "Invocation (Le Trompeur)",
           "Savoir-vivre (Ranald)",
-          "Visions sacrées"
+          "Visions sacrées",
+          "Invocation (Le Trompeur)",
+          "Identité secrète"
         ]
       },
       {
@@ -11123,10 +11328,10 @@
           "Signes secrets (Voleur)"
         ],
         "talents": [
-          "Imitation",
+          "Baratiner",
           "Mains agiles",
           "Maître en déguisement",
-          "Menteur"
+          "Imitation"
         ]
       },
       {
@@ -11141,26 +11346,26 @@
           "Résistance à l'alcool"
         ],
         "talents": [
-          "Âme pure",
           "Flairer les ennuis",
           "Orateur",
+          "Âme pure",
           "Perspicace"
         ]
       }
+    ],
+    "carac": [
+      "i",
+      "fm",
+      "soc",
+      "dex",
+      "ag",
+      "int"
     ]
   },
   {
     "id": "pretre-voleur-de-ranald",
     "nom": "Prêtre-Voleur de Ranald",
     "source": "Deft Steps",
-    "carac": [
-      "i",
-      "ag",
-      "dex",
-      "soc",
-      "fm",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -11184,10 +11389,10 @@
           "Savoir (Ranald)"
         ],
         "talents": [
-          "Affable",
           "Béni (Ranald)",
           "Fuite !",
-          "Lire/Écrire"
+          "Lire/Écrire",
+          "Affable"
         ]
       },
       {
@@ -11206,10 +11411,10 @@
           "Signes Secrets (Voleur)"
         ],
         "talents": [
+          "Savoir-vivre (Ranaldans)",
+          "Invocation (Le Rôdeur nocturne)",
           "Chanceux",
-          "Identité secrète",
-          "Invocation (Le Rôdeur Nocturne)",
-          "Savoir-vivre (Ranaldiens)"
+          "Identité secrète"
         ]
       },
       {
@@ -11227,9 +11432,9 @@
         ],
         "talents": [
           "Chat de gouttière",
+          "Savoir-vivre (Criminels)",
           "Doigts de fée",
-          "Flairer les ennuis",
-          "Savoir-vivre (Criminels)"
+          "Flairer les ennuis"
         ]
       },
       {
@@ -11244,26 +11449,26 @@
           "Intimidation"
         ],
         "talents": [
-          "Âme pure",
           "Criminel",
-          "Ombre",
-          "Vision nocturne"
+          "Vision nocturne",
+          "Âme pure",
+          "Discret"
         ]
       }
+    ],
+    "carac": [
+      "i",
+      "ag",
+      "dex",
+      "soc",
+      "fm",
+      "int"
     ]
   },
   {
     "id": "pretresse-de-rhya",
     "nom": "Prêtresse de Rhya",
     "source": "Archives 3",
-    "carac": [
-      "e",
-      "fm",
-      "soc",
-      "int",
-      "dex",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -11290,7 +11495,7 @@
           "Béni (Rhya)",
           "Visions sacrées",
           "Sens de l'orientation",
-          "Attirant"
+          "Affable"
         ]
       },
       {
@@ -11309,8 +11514,8 @@
           "Savoir (Herbes)"
         ],
         "talents": [
-          "Savoir-vivre (Cultistes)",
-          "Affable",
+          "Savoir-vivre (Fidèles)",
+          "Sociable",
           "Invocation (Rhya)",
           "Lire/Écrire"
         ]
@@ -11329,10 +11534,10 @@
           "Discrétion (Rurale)"
         ],
         "talents": [
-          "Sang-froid",
-          "Zèle passionné",
+          "Imperturbable",
+          "Ferveur ardente (au choix)",
           "Âme pure",
-          "Volonté de fer"
+          "Obstiné"
         ]
       },
       {
@@ -11349,24 +11554,24 @@
         "talents": [
           "Présence imposante",
           "Pansement de fortune",
-          "Grand orateur",
-          "Obstiné"
+          "Orateur",
+          "Persévérant"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "fm",
+      "soc",
+      "int",
+      "dex",
+      "i"
     ]
   },
   {
     "id": "pyromancien-college-flamboyant",
     "nom": "Pyromancien (Collège Flamboyant)",
     "source": "Winds of Magic",
-    "carac": [
-      "cc",
-      "int",
-      "fm",
-      "ag",
-      "i",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -11412,7 +11617,7 @@
           "Savoir (Guerre)"
         ],
         "talents": [
-          "Magie des Arcanes (Feu)",
+          "Magie des Arcanes (Aqshy)",
           "Détection d'artefact",
           "Mains agiles",
           "Sixième sens"
@@ -11432,9 +11637,9 @@
           "Chevaucher (Cheval)"
         ],
         "talents": [
-          "Ambidextre",
+          "Maniement de deux armes",
           "Diction instinctive",
-          "Perception de la magie",
+          "Perception de la Magie",
           "Menaçant"
         ]
       },
@@ -11450,26 +11655,26 @@
           "Savoir (au choix)"
         ],
         "talents": [
-          "Maîtrise du combat",
+          "Vigilance",
           "Effrayant",
           "Volonté de fer",
           "Mage de guerre"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "int",
+      "fm",
+      "ag",
+      "i",
+      "soc"
     ]
   },
   {
     "id": "ranconneur",
     "nom": "Rançonneur",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "f",
-      "e",
-      "soc",
-      "fm",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -11557,20 +11762,20 @@
           "Présence imposante"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "e",
+      "soc",
+      "fm",
+      "int"
     ]
   },
   {
     "id": "ranger-de-karak-n",
     "nom": "Ranger de Karak (N)",
     "source": "Dwarf Player Guide",
-    "carac": [
-      "e",
-      "i",
-      "ag",
-      "ct",
-      "cc",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -11597,7 +11802,7 @@
           "Sens de l'orientation",
           "Brouet",
           "Bon marcheur (au choix)",
-          "Costaud"
+          "Infatigable"
         ]
       },
       {
@@ -11616,10 +11821,10 @@
           "Discrétion (au choix)"
         ],
         "talents": [
-          "Combat instinctif",
+          "Vigilance",
           "Démolisseur",
           "Nomade",
-          "Infatigable"
+          "Inlassable"
         ]
       },
       {
@@ -11654,26 +11859,26 @@
           "Piégeage"
         ],
         "talents": [
-          "Grimpeur de muraille",
-          "Obstiné",
+          "Grimpeur",
+          "Persévérant",
           "Trappeur",
           "Prévoyant"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "i",
+      "ag",
+      "ct",
+      "cc",
+      "soc"
     ]
   },
   {
     "id": "ratier",
     "nom": "Ratier",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "ct",
-      "fm",
-      "e",
-      "i",
-      "f"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -11761,20 +11966,20 @@
           "Sans peur (Skaven)"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "ct",
+      "fm",
+      "e",
+      "i",
+      "f"
     ]
   },
   {
     "id": "receleur",
     "nom": "Receleur",
     "source": "Livre de base",
-    "carac": [
-      "i",
-      "ag",
-      "soc",
-      "dex",
-      "int",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -11862,20 +12067,20 @@
           "Volonté de fer"
         ]
       }
+    ],
+    "carac": [
+      "i",
+      "ag",
+      "soc",
+      "dex",
+      "int",
+      "fm"
     ]
   },
   {
     "id": "repurgateur",
     "nom": "Répurgateur",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "e",
-      "fm",
-      "ct",
-      "soc",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -11959,24 +12164,24 @@
         "talents": [
           "Âme pure",
           "Effrayant",
-          "Perception de la magie",
+          "Perception de la Magie",
           "Volonté de fer"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "fm",
+      "ct",
+      "soc",
+      "int"
     ]
   },
   {
     "id": "saltimbanque",
     "nom": "Saltimbanque",
     "source": "Livre de base",
-    "carac": [
-      "ag",
-      "dex",
-      "soc",
-      "cc",
-      "ct",
-      "e"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -12064,20 +12269,20 @@
           "Voyageur aguerri"
         ]
       }
+    ],
+    "carac": [
+      "ag",
+      "dex",
+      "soc",
+      "cc",
+      "ct",
+      "e"
     ]
   },
   {
     "id": "scribe-des-runes-n",
     "nom": "Scribe des Runes (N)",
     "source": "Dwarf Player Guide",
-    "carac": [
-      "e",
-      "dex",
-      "int",
-      "fm",
-      "i",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -12104,7 +12309,7 @@
           "Lire/Écrire",
           "Lecture rapide",
           "Doué en calcul",
-          "Solidaire"
+          "Coopératif"
         ]
       },
       {
@@ -12143,7 +12348,7 @@
           "Pistage"
         ],
         "talents": [
-          "Rancune ancestrale",
+          "Rancune Ancestrale (au choix)",
           "Sociable",
           "Linguistique",
           "Savant (au choix)"
@@ -12164,23 +12369,23 @@
           "Baratiner",
           "Détection d'artefact",
           "Orateur",
-          "Infatigable"
+          "Inlassable"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "dex",
+      "int",
+      "fm",
+      "i",
+      "soc"
     ]
   },
   {
     "id": "serviteur",
     "nom": "Serviteur",
     "source": "Livre de base",
-    "carac": [
-      "f",
-      "e",
-      "ag",
-      "i",
-      "int",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -12268,20 +12473,20 @@
           "Savoir-vivre (au choix)"
         ]
       }
+    ],
+    "carac": [
+      "f",
+      "e",
+      "ag",
+      "i",
+      "int",
+      "soc"
     ]
   },
   {
     "id": "soldat",
     "nom": "Soldat",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "e",
-      "fm",
-      "ct",
-      "i",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -12326,7 +12531,7 @@
         ],
         "talents": [
           "Coude-à-coude",
-          "Porte-Bouclier",
+          "Porte-bouclier",
           "Rechargement rapide",
           "Savoir-vivre (Soldats)"
         ]
@@ -12348,9 +12553,9 @@
         ],
         "talents": [
           "Démolisseur",
-          "Entraîné",
+          "Coude-à-coude",
           "Infatigable",
-          "Spécialiste du bouclier"
+          "Porte-bouclier"
         ]
       },
       {
@@ -12369,7 +12574,7 @@
           "Survie en extérieur"
         ],
         "talents": [
-          "Entraîné",
+          "Coude-à-coude",
           "Harponneur",
           "Infatigable",
           "Rechargement rapide"
@@ -12392,7 +12597,7 @@
         ],
         "talents": [
           "Cracheur de dragon",
-          "Entraîné",
+          "Coude-à-coude",
           "Infatigable",
           "Inébranlable"
         ]
@@ -12435,20 +12640,20 @@
           "Voyageur aguerri"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "fm",
+      "ct",
+      "i",
+      "soc"
     ]
   },
   {
     "id": "sorcier",
     "nom": "Sorcier",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "int",
-      "fm",
-      "ag",
-      "i",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -12492,7 +12697,7 @@
           "Ragot"
         ],
         "talents": [
-          "Magie des Arcanes (Domaine au choix)",
+          "Magie des Arcanes (au choix)",
           "Détection d'artefact",
           "Mains agiles",
           "Sixième sens"
@@ -12515,7 +12720,7 @@
           "Diction instinctive",
           "Maniement de deux armes",
           "Menaçant",
-          "Perception de la magie"
+          "Perception de la Magie"
         ]
       },
       {
@@ -12536,20 +12741,20 @@
           "Volonté de fer"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "int",
+      "fm",
+      "ag",
+      "i",
+      "soc"
     ]
   },
   {
     "id": "sorcier-de-village",
     "nom": "Sorcier de village",
     "source": "Livre de base",
-    "carac": [
-      "e",
-      "i",
-      "dex",
-      "int",
-      "soc",
-      "fm"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -12615,7 +12820,7 @@
         "talents": [
           "Âme pure",
           "Maître artisan (Herboriste)",
-          "Perception de la magie",
+          "Perception de la Magie",
           "Résistance (Maladie)"
         ]
       },
@@ -12637,20 +12842,20 @@
           "Vision nocturne"
         ]
       }
+    ],
+    "carac": [
+      "e",
+      "i",
+      "dex",
+      "int",
+      "soc",
+      "fm"
     ]
   },
   {
     "id": "sorcier-dissident",
     "nom": "Sorcier dissident",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "e",
-      "fm",
-      "i",
-      "soc",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -12717,7 +12922,7 @@
           "Affinité avec les animaux",
           "Effrayant",
           "Mains agiles",
-          "Perception de la magie"
+          "Perception de la Magie"
         ]
       },
       {
@@ -12738,20 +12943,20 @@
           "Très résistant"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "fm",
+      "i",
+      "soc",
+      "int"
     ]
   },
   {
     "id": "spadassin",
     "nom": "Spadassin",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "e",
-      "ag",
-      "i",
-      "ct",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -12839,20 +13044,20 @@
           "Tir précis"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "ag",
+      "i",
+      "ct",
+      "soc"
     ]
   },
   {
     "id": "specialiste-de-siege",
     "nom": "Spécialiste de Siège",
     "source": "Up in Arms",
-    "carac": [
-      "cc",
-      "ct",
-      "f",
-      "ag",
-      "int",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -12876,10 +13081,10 @@
           "Survie en extérieur"
         ],
         "talents": [
-          "Costaud",
-          "Rechargement rapide",
           "Savoir-vivre (Mercenaires)",
-          "Tireur de précision"
+          "Tireur de précision",
+          "Rechargement rapide",
+          "Infatigable"
         ]
       },
       {
@@ -12900,8 +13105,8 @@
         "talents": [
           "Combattant en espace clos",
           "Dur à cuire",
-          "Rat d'égout",
-          "Sens de l'orientation"
+          "Sens de l'orientation",
+          "Rat d'égout"
         ]
       },
       {
@@ -12917,10 +13122,10 @@
           "Projectiles (Ingénierie ou Poudre noire)"
         ],
         "talents": [
-          "Artilleur",
-          "Inébranlable",
+          "Tir précis",
           "Maître artisan (Explosifs)",
-          "Tir précis"
+          "Artilleur",
+          "Inébranlable"
         ]
       },
       {
@@ -12936,26 +13141,26 @@
           "Savoir (Loi)"
         ],
         "talents": [
-          "Maître artisan (Ingénierie)",
+          "Vigilance",
+          "Travailleur qualifié (Ingénierie)",
           "Perspicace",
-          "Seigneur de guerre",
-          "Vigilance"
+          "Seigneur de guerre"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "ct",
+      "f",
+      "ag",
+      "int",
+      "soc"
     ]
   },
   {
     "id": "spirite-college-d-amethyste",
     "nom": "Spirite (Collège d'Améthyste)",
     "source": "Winds of Magic",
-    "carac": [
-      "dex",
-      "int",
-      "fm",
-      "ag",
-      "i",
-      "e"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -13001,7 +13206,7 @@
           "Recherche"
         ],
         "talents": [
-          "Magie des Arcanes (Mort)",
+          "Magie des Arcanes (Shyish)",
           "Détection d'artefact",
           "Mains agiles",
           "Sixième sens"
@@ -13022,7 +13227,7 @@
         ],
         "talents": [
           "Diction instinctive",
-          "Perception de la magie",
+          "Perception de la Magie",
           "Menaçant",
           "Résistance (Poison ou Maladie)"
         ]
@@ -13039,26 +13244,26 @@
           "Savoir (au choix)"
         ],
         "talents": [
-          "Maîtrise du combat",
+          "Vigilance",
           "Effrayant",
           "Volonté de fer",
           "Mage de guerre"
         ]
       }
+    ],
+    "carac": [
+      "dex",
+      "int",
+      "fm",
+      "ag",
+      "i",
+      "e"
     ]
   },
   {
     "id": "suiveur-de-camp",
     "nom": "Suiveur de camp",
     "source": "Up in Arms",
-    "carac": [
-      "cc",
-      "ag",
-      "soc",
-      "int",
-      "i",
-      "e"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -13083,9 +13288,9 @@
         ],
         "talents": [
           "Attirant",
+          "Insignifiant",
           "Baratiner",
-          "Combat déloyal",
-          "Insignifiant"
+          "Combat déloyal"
         ]
       },
       {
@@ -13104,10 +13309,10 @@
           "Subornation"
         ],
         "talents": [
-          "Brouet",
           "Maîtrise des dés",
+          "Savoir-vivre (Soldats)",
           "Nomade",
-          "Savoir-vivre (Soldats)"
+          "Brouet"
         ]
       },
       {
@@ -13124,10 +13329,10 @@
           "Langue (au choix)"
         ],
         "talents": [
+          "Voyageur aguerri",
           "Costaud",
           "Inébranlable",
-          "Très résistant",
-          "Voyageur aguerri"
+          "Très résistant"
         ]
       },
       {
@@ -13142,26 +13347,129 @@
           "Évaluation"
         ],
         "talents": [
-          "Cœur vaillant",
           "Exaltant",
           "Orateur",
-          "Volonté de fer"
+          "Cœur vaillant",
+          "Obstiné"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "ag",
+      "soc",
+      "int",
+      "i",
+      "e"
+    ]
+  },
+  {
+    "id": "survivalist",
+    "nom": "Survivalist",
+    "source": "Lustria EN",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Subsister",
+        "statut": "Brass 1",
+        "caracs": [
+          "e",
+          "int",
+          "fm"
+        ],
+        "skills": [
+          "Calme",
+          "Esquive",
+          "Résistance",
+          "Guérison",
+          "Intuition",
+          "Corps à corps (Base)",
+          "Survie en extérieur",
+          "Perception",
+          "Discrétion (Rurale)",
+          "Natation"
+        ],
+        "talents": [
+          "Dur à cuire",
+          "Sixième sens",
+          "Brouet",
+          "Persévérant"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Survivalist",
+        "statut": "Brass 4",
+        "caracs": [
+          "i"
+        ],
+        "skills": [
+          "Résistance à l'alcool",
+          "Intimidation",
+          "Savoir (Région)",
+          "Orientation",
+          "Projectiles (au choix)",
+          "Piégeage"
+        ],
+        "talents": [
+          "Pansement de fortune",
+          "Endurci",
+          "Mâchoires d'acier",
+          "Résistance (au choix)"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Wild Whisperer",
+        "statut": "Brass 5",
+        "caracs": [
+          "f"
+        ],
+        "skills": [
+          "Athlétisme",
+          "Emprise sur les animaux",
+          "Signes secrets (Ranger)",
+          "Pistage"
+        ],
+        "talents": [
+          "Œil du chasseur",
+          "Menaçant",
+          "Sens de l'orientation",
+          "Trappeur"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Wilderness Instructor",
+        "statut": "Silver 3",
+        "caracs": [
+          "ag"
+        ],
+        "skills": [
+          "Soin aux animaux",
+          "Commandement"
+        ],
+        "talents": [
+          "Sens aiguisé (Ouïe)",
+          "Frappe précise",
+          "Volonté de fer",
+          "Prévoyant"
+        ]
+      }
+    ],
+    "carac": [
+      "e",
+      "int",
+      "fm",
+      "i",
+      "f",
+      "ag"
     ]
   },
   {
     "id": "thane-n",
     "nom": "Thane (N)",
     "source": "Dwarf Player Guide",
-    "carac": [
-      "cc",
-      "fm",
-      "soc",
-      "e",
-      "f",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -13185,10 +13493,10 @@
           "Métier (au choix)"
         ],
         "talents": [
-          "Rancune ancestrale",
+          "Rancune Ancestrale (au choix)",
           "Noblesse",
           "Lire/Écrire",
-          "Costaud"
+          "Infatigable"
         ]
       },
       {
@@ -13208,7 +13516,7 @@
         ],
         "talents": [
           "Ergoteur",
-          "Fêtard",
+          "Noctambule",
           "Négociateur",
           "Orateur"
         ]
@@ -13228,7 +13536,7 @@
         ],
         "talents": [
           "Exaltant",
-          "Infatigable",
+          "Inlassable",
           "Inébranlable",
           "Seigneur de guerre"
         ]
@@ -13251,25 +13559,20 @@
           "Nanti"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "fm",
+      "soc",
+      "e",
+      "f",
+      "int"
     ]
   },
   {
     "id": "tisseur-de-tempetes-he",
     "nom": "Tisseur de Tempêtes (HE)",
     "source": "High Elf Player Guide",
-    "carac": [
-      "cc",
-      "dex",
-      "int",
-      "fm",
-      "soc",
-      "ag",
-      "i"
-    ],
-    "prereq": {
-      "career": "Mage (HE)",
-      "minRang": 2
-    },
     "rangs": [
       {
         "rang": 3,
@@ -13289,10 +13592,10 @@
           "Voile (au choix)"
         ],
         "talents": [
-          "Harmonisation aethyrique",
+          "Béni par Isha",
+          "Méditation Cadai",
           "Haute Magie",
-          "L'œil du cyclone",
-          "Méditation Cadai"
+          "Œil de la tempête"
         ]
       },
       {
@@ -13307,7 +13610,7 @@
           "Orientation"
         ],
         "talents": [
-          "Pied marin",
+          "Harmonisation aethyrique",
           "Sans peur (Monstres marins)",
           "Sens de l'orientation",
           "Nageur endurant"
@@ -13324,26 +13627,134 @@
           "Commandement"
         ],
         "talents": [
-          "Visions saintes",
+          "Visions sacrées",
           "Loup de mer",
           "Voyageur aguerri",
           "Mage de guerre"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "dex",
+      "int",
+      "fm",
+      "soc",
+      "ag",
+      "i"
+    ],
+    "prereq": {
+      "career": "Mage (HE)",
+      "minRang": 2
+    }
+  },
+  {
+    "id": "trailblazer",
+    "nom": "Trailblazer",
+    "source": "Lustria EN",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Pioneer",
+        "statut": "Brass 3",
+        "caracs": [
+          "i",
+          "ag",
+          "int"
+        ],
+        "skills": [
+          "Escalade",
+          "Calme",
+          "Résistance",
+          "Corps à corps (Base)",
+          "Orientation",
+          "Survie en extérieur",
+          "Perception",
+          "Ramer",
+          "Voile (au choix)",
+          "Natation"
+        ],
+        "talents": [
+          "Véloce",
+          "Sens de l'orientation",
+          "Bon marcheur (au choix)",
+          "Persévérant"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Trailblazer",
+        "statut": "Silver 1",
+        "caracs": [
+          "e"
+        ],
+        "skills": [
+          "Athlétisme",
+          "Ragot",
+          "Projectiles (Poudre noire)",
+          "Chevaucher (Cheval)",
+          "Discrétion (Rurale)",
+          "Métier (Cartographe)"
+        ],
+        "talents": [
+          "Sens aiguisé (Vue)",
+          "Saut carpé",
+          "Nomade",
+          "Grimpeur"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Pacesetter",
+        "statut": "Silver 2",
+        "caracs": [
+          "fm"
+        ],
+        "skills": [
+          "Subornation",
+          "Esquive",
+          "Conduite d'attelage",
+          "Recherche"
+        ],
+        "talents": [
+          "Fuite !",
+          "Dur à cuire",
+          "Voyageur aguerri",
+          "Sprinter"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Expedition Leader",
+        "statut": "Gold 1",
+        "caracs": [
+          "soc"
+        ],
+        "skills": [
+          "Évaluation",
+          "Commandement"
+        ],
+        "talents": [
+          "Négociateur",
+          "Savoir-vivre (Soldats)",
+          "Exaltant",
+          "Lire/Écrire"
+        ]
+      }
+    ],
+    "carac": [
+      "i",
+      "ag",
+      "int",
+      "e",
+      "fm",
+      "soc"
     ]
   },
   {
     "id": "tueur-n",
     "nom": "Tueur (N)",
     "source": "Livre de base",
-    "carac": [
-      "cc",
-      "f",
-      "fm",
-      "e",
-      "ag",
-      "i"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -13367,7 +13778,7 @@
         "talents": [
           "Frénésie",
           "Maniement de deux armes",
-          "Sans peur (Tout)",
+          "Sans peur (Tous)",
           "Tueur"
         ]
       },
@@ -13412,7 +13823,7 @@
           "Démolisseur",
           "Défiance magique",
           "Très fort",
-          "Tranchant"
+          "Vivacité"
         ]
       },
       {
@@ -13450,8 +13861,8 @@
         ],
         "talents": [
           "Ambidextre",
-          "Coup tournoyant de la mort",
-          "Fin de gloire",
+          "Tourbillon de mort",
+          "Fin glorieuse",
           "Maîtrise du combat"
         ]
       },
@@ -13487,24 +13898,24 @@
         "talents": [
           "Charge berserk",
           "Maîtrise du combat",
-          "Rancune ancestrale",
+          "Rancune Ancestrale (au choix)",
           "Seigneur de guerre"
         ]
       }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "fm",
+      "e",
+      "ag",
+      "i"
     ]
   },
   {
     "id": "villageois",
     "nom": "Villageois",
     "source": "Livre de base",
-    "carac": [
-      "f",
-      "e",
-      "ag",
-      "cc",
-      "soc",
-      "int"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -13592,20 +14003,20 @@
           "Travailleur qualifié (au choix)"
         ]
       }
+    ],
+    "carac": [
+      "f",
+      "e",
+      "ag",
+      "cc",
+      "soc",
+      "int"
     ]
   },
   {
     "id": "voleur",
     "nom": "Voleur",
     "source": "Livre de base",
-    "carac": [
-      "i",
-      "ag",
-      "fm",
-      "dex",
-      "f",
-      "soc"
-    ],
     "rangs": [
       {
         "rang": 1,
@@ -13721,6 +14132,14 @@
           "Souplesse féline"
         ]
       }
+    ],
+    "carac": [
+      "i",
+      "ag",
+      "fm",
+      "dex",
+      "f",
+      "soc"
     ]
   }
 ]

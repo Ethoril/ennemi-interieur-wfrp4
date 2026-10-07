@@ -18,7 +18,9 @@ const generated = [
     ['js/catalogue/skill-resolver.js', 'functions/src/catalogue/skill-resolver.mjs', source => source
         .replaceAll("'../fiche/skill-names.js'", "'../domain/fiche/skill-names.js'")
         .replaceAll("'../fiche/basic-skills.js'", "'../domain/fiche/basic-skills.js'")],
-    ['js/catalogue/talent-resolver.js', 'functions/src/catalogue/talent-resolver.mjs'],
+    ['js/catalogue/talent-resolver.js', 'functions/src/catalogue/talent-resolver.mjs', source => source
+        .replaceAll("'./talent-source.js'", "'./talent-source.mjs'")],
+    ['js/catalogue/talent-source.js', 'functions/src/catalogue/talent-source.mjs'],
     ['js/catalogue/referentiel-public.json', 'functions/src/catalogue/referentiel-public.json'],
     ['js/catalogue/talents-sheet-snapshot.json', 'functions/src/catalogue/talents-sheet-snapshot.json'],
     ['js/data/careers.json', 'functions/src/data/careers.json'],

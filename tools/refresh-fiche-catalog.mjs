@@ -67,14 +67,26 @@ for (const [kind, url] of Object.entries(sources)) {
     if (!response.ok) throw new Error(`Export public ${kind} indisponible (${response.status})`);
     exports[kind] = rowsToRecords(await response.text());
 }
+const previous = JSON.parse(await readFile(resolve(root, 'js/data/fiche-catalog.json'), 'utf8'));
 const spells = exports.spells.map(row => ({
     nom: row.nom,
     type: row.type || '',
     cn: Number(row.ni) || 0,
     portee: row.portee || '',
+    cible: row.cible || '',
     duree: row.duree || '',
     desc: row.description || '',
+    ...(row.nom === 'Epées Sanguines' ? { aliases: ['Sanguine Swords'] } : {}),
 }));
+const normalizeName = value => value.normalize('NFD').replace(/[\u0300-\u036f]/gu, '').replace(/[’']/gu, "'").toLowerCase().trim();
+for (const old of previous.spells) {
+    const current = spells.find(row => normalizeName(row.nom) === normalizeName(old.nom)
+        || (row.aliases || []).some(alias => normalizeName(alias) === normalizeName(old.nom)));
+    if (current) {
+        const aliases = [...new Set([...(current.aliases || []), ...(old.aliases || [])])];
+        if (aliases.length) current.aliases = aliases;
+    } else spells.push({ ...old, retired: true });
+}
 const miracles = exports.miracles.map(row => ({
     nom: row.nom,
     portee: row.portee || '',

@@ -2042,5 +2042,21 @@
     "nom": "Voile (Skycraft)",
     "carac": "ag",
     "basic": false
+  },
+  {
+    "nom": "Signes secrets (Hommes-lézards)",
+    "carac": "int",
+    "basic": false,
+    "group": "Signes secrets",
+    "spec": "Hommes-lézards",
+    "source": "Drive Carrières — Lustria"
+  },
+  {
+    "nom": "Savoir (Anciens)",
+    "carac": "int",
+    "basic": false,
+    "group": "Savoir",
+    "spec": "Anciens",
+    "source": "Drive Carrières — Lustria"
   }
 ]
