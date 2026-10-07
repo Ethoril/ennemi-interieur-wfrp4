@@ -126,7 +126,7 @@ export function careerProgress(data, engine, careers = []) {
         title: variant.titre, statut: variant.statut || '',
         caracs: getEffectiveCaracs(career, rank + 1, variant, overrides).map(abbr),
         skills: getEffectiveSkills(career, rank + 1, variant, overrides).map(item => primarySkillLabel(resolver, item, true)),
-        talents: getEffectiveTalents(career, rank + 1, variant, overrides).map(nom => talentLabel(engine, nom)),
+        talents: getEffectiveTalents(career, rank + 1, variant, overrides, engine.talentResolver).map(nom => talentLabel(engine, nom)),
     }));
     const archived = (Array.isArray(data.careers) ? data.careers : []).filter(row => typeof row?.nom === 'string')
         .map(row => ({ nom: row.nom, rang: Math.max(1, +row.rang || 1), current: false }));

@@ -50,6 +50,7 @@ export function inspectorModel(data, engine, careers, selection, state, online, 
     const reason = !online ? 'Achat possible une fois en ligne.'
         : !['mj', 'joueur'].includes(state.role) || ['legacy-readonly', 'tombstone', 'missing'].includes(state.phase) ? 'Fiche en lecture seule.'
             : state.phase !== 'ready' || state.pendingOperationId || state.hasDraft || state.conflicts?.length ? 'Attendez la synchronisation de la fiche.'
+                : target.disabledReason ? target.disabledReason
                 : target.needsChoice || (target.specialty?.kind === 'group' && engine.skillResolver.resolve(target.name)?.status !== 'resolved') ? 'Choisissez une spécialité.'
                     : !preview.affordable ? `Il manque ${-preview.after} XP.` : '';
     return { target, preview, reason, enabled: !reason };

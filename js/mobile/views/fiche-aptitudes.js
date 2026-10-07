@@ -221,6 +221,7 @@ export function createAptitudesPanel({ documentRef, onOpenSkill = () => {}, onOp
             const plural = row.count > 1 ? 's' : '';
             fillSide(node, {
                 name: row.label,
+                sub: row.issue || (row.limitStatus?.reached ? 'Limite atteinte' : ''),
                 side: row.acquired ? `×${row.count}` : row.open ? 'Spécialité à choisir' : `${row.cost} XP`,
                 spoken: row.acquired ? `, ${row.count} prise${plural}` : row.open ? ', spécialité à choisir' : `, ${row.cost} XP`,
             });
@@ -251,7 +252,7 @@ export function createAptitudesPanel({ documentRef, onOpenSkill = () => {}, onOp
 
     const buildSpell = buildSide(openSpell);
     function renderSpells() {
-        const { spells, prayers } = spellRows(context.data);
+        const { spells, prayers } = spellRows(context.data, context.engine);
         const nodes = rowsFor(caches.spells, [...spells, ...prayers], buildSpell);
         for (const node of nodes) {
             const { row } = node;

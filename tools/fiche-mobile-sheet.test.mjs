@@ -129,6 +129,38 @@ function purchaseSetup({ online = true, gain = 200, pendingOperationId = null, e
 
 const flush = () => sleep(0);
 
+test('une spécialité retirée pendant l’ouverture ne décale pas les actions des puces', async () => {
+    const sent = [];
+    const setup = purchaseSetup({ execute: async (_type, payload) => { sent.push(payload); return { status: 'confirmed' }; } });
+    setup.context.state.data.race = 'haut-elfe';
+    setup.sheet.open({ kind: 'talent', nom: 'Magie des Arcanes' }, setup.trigger);
+    setup.buttons().find(button => button.textContent === 'Chamon').focus();
+    setup.context.state.data.talentsAcq.push({ id: 'remote', nom: 'Magie des Arcanes (Aqshy)' });
+    setup.sheet.update();
+    assert.equal(setup.buttons().some(button => button.textContent === 'Aqshy'), false);
+    assert.equal(setup.documentRef.activeElement.textContent, 'Chamon');
+    setup.buttons().find(button => button.textContent === 'Chamon').dispatch('click');
+    setup.buy().dispatch('click');
+    await flush();
+    assert.equal(sent[0].name, 'Magie des Arcanes (Chamon)');
+});
+
+test('talent : prises actuelles et résultat après achat distincts, plafond conservé', () => {
+    const setup = purchaseSetup();
+    setup.sheet.open({ kind: 'talent', nom: 'Sociable' }, setup.trigger);
+    assert.equal(setup.text('m-purchase-taken'), 'Prises actuelles : 0 → Après cet achat : 1');
+    setup.context.state.data.talentsAcq = [{ id: 'old', nom: 'Sociable' }];
+    setup.sheet.update();
+    assert.equal(setup.text('m-purchase-taken'), 'Prises actuelles : 1');
+    assert.ok(setup.buy().hidden);
+    assert.ok(setup.sheet.element.byClass('m-purchase-figures').children.at(-1).hidden);
+    assert.match(setup.text('m-purchase-reason'), /Limite atteinte/u);
+    setup.sheet.close();
+    setup.context.state.data.talentsAcq = [{ id: 'lucky', nom: 'Chanceux' }];
+    setup.sheet.open({ kind: 'talent', nom: 'Chanceux' }, setup.trigger);
+    assert.equal(setup.text('m-purchase-taken'), 'Prises actuelles : 1 → Après cet achat : 2');
+});
+
 test('volet d’achat : coût affiché, achat envoyé avec le coût prévu, annonce et focus rendu', async () => {
     const sent = [];
     const setup = purchaseSetup({ execute: async (type, payload) => { sent.push([type, payload]); return { status: 'confirmed' }; } });

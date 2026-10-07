@@ -1,6 +1,7 @@
 {
-  "catalogVersion": "sha256:17f53a7224130e7058ad08e51cf580d03d5e64938c245c0039e6d88e29496032",
-  "fetchedAt": "2026-10-04",
+  "schemaVersion": 2,
+  "catalogVersion": "sha256:0e2a9ccf3059a936e9af670386aa2565f3069127558b77629c267f078b9a956e",
+  "fetchedAt": "2026-10-07",
   "source": {
     "kind": "google-sheets-public-snapshot",
     "spreadsheetId": "1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs",
@@ -9,879 +10,2625 @@
   },
   "entries": [
     {
+      "id": "talent-trick-rider",
       "nom": "Acrobaties équestres",
-      "description": "Vous pouvez utiliser vos compétences de Représentation et d'Esquive (non modifiée) à cheval. En selle, vous pouvez effectuer votre Mouvement au tout début du Round au lieu d'attendre votre Tour.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Trick Rider",
+      "sourceLabel": "Acrobaties équestres (Trick Rider)",
+      "description": "À cheval, vous pouvez utiliser toutes vos compétences de Représentation et votre compétence Esquive sans modification.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-suave",
       "nom": "Affable",
-      "description": "Octroie un bonus permanent de +5 en Sociabilité.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Suave",
+      "sourceLabel": "Affable (Suave)",
+      "description": "+5 en Sociabilité, sans compter comme Augmentations.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-animal-affinity",
+      "nom": "Affinité avec les animaux",
+      "englishName": "Animal Affinity",
+      "sourceLabel": "Affinité avec les animaux (Animal Affinity)",
+      "description": "Les animaux sauvages vous considèrent généralement comme un élément inoffensif de leur environnement et ne vous attaquent normalement pas tant que vous ne vous montrez pas agressif.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 114 ; achat : p. 191",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-ambidextrous",
+      "nom": "Ambidextre",
+      "englishName": "Ambidextrous",
+      "sourceLabel": "Ambidextre (Ambidextrous)",
+      "description": "Vous ignorez la pénalité de −2 DR aux Tests reposant uniquement sur votre main secondaire, y compris les attaques avec une arme tenue dans cette main.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 114 ; achat : p. 191",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-pure-soul",
       "nom": "Âme pure",
-      "description": "Vous pouvez subir un nombre de points de Corruption supplémentaires égal à votre niveau d'Âme pure avant de devoir effectuer un test de mutation.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Pure Soul",
+      "sourceLabel": "Âme pure (Pure Soul)",
+      "description": "Vous pouvez accumuler deux fois le nombre normal de Points de Corruption avant de devoir effectuer un Test pour résister à la mutation.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-gunner",
       "nom": "Artilleur",
-      "description": "Ajoute +1 DR (par niveau du talent) à tout Test étendu visant à recharger une arme à poudre noire.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Gunner",
+      "sourceLabel": "Artilleur (Gunner)",
+      "description": "Avec une arme à Poudre noire, d’Ingénierie ou Explosive, vous ignorez le Défaut Dangereuse.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 120 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-artistic",
       "nom": "Artiste",
-      "description": "Permet de réaliser des œuvres précises pour des commandes (avis de recherche, illustrations). Ajoute la compétence Art à n'importe quelle carrière (ou réduit son coût d'achat de 5 PX).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Artistic",
+      "sourceLabel": "Artiste [Forme d’art] (Artistic)",
+      "description": "Choisissez une forme d’art : vous pouvez toujours augmenter Art même hors carrière et bénéficiez d’Avantage V5 aux Tests d’Art dans cette forme. Répétable avec une nouvelle forme d’art à chaque acquisition ; une acquisition par choix.",
+      "limitText": "Sans limitation",
+      "source": "Livre de base V5, p. 115 ; achat : p. 191",
+      "specializationLabel": "Forme d’art",
+      "perSpecializationLimit": 1
     },
     {
+      "id": "talent-martial-arts",
+      "nom": "Arts martiaux",
+      "englishName": "Martial Arts",
+      "sourceLabel": "Arts martiaux (Martial Arts)",
+      "description": "Vos attaques à mains nues perdent Inoffensive. Chaque acquisition après la première donne accès à un Atout parmi Dévastatrice, Défensive, Perturbante, Rapide, Pénétrante, Précise et Assommante. Au début du combat ou de votre Tour, choisissez un Atout connu à utiliser jusqu’à votre prochain Tour.",
+      "limitText": "Bonus de Capacité de Combat",
+      "source": "High Elf Player’s Guide (V4), p. 68",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-furious-assault",
       "nom": "Assaut féroce",
-      "description": "Une fois par Round, si vous touchez un adversaire au corps à corps, vous pouvez immédiatement dépenser 1 Avantage ou votre Mouvement pour effectuer une attaque supplémentaire.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Furious Assault",
+      "sourceLabel": "Assaut féroce (Furious Assault)",
+      "description": "Une fois par Round, après avoir touché un adversaire au Corps à corps, vous pouvez immédiatement perdre votre Momentum pour effectuer une attaque supplémentaire.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 120 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Assistant Magique (Magical Assistant)",
-      "description": "Le familier accorde un bonus de +20 aux tests de Magie de son maître.",
-      "source": "Archives of the Empire 3, Winds of Magic"
+      "id": "talent-animal-assistant",
+      "nom": "Assistant animal",
+      "englishName": "Animal Assistant",
+      "sourceLabel": "Assistant animal (Animal Assistant)",
+      "description": "Réservé aux familiers de pouvoir animaux. Vous pouvez assister le lanceur de sorts lié à votre âme pour Focalisation, Langue (Magick), Survie en extérieur et les Tests de Perception de nature magique. Chaque assistant donne le bonus normal de +10, même sans connaître la Compétence.",
+      "limitText": "1",
+      "source": "Archives of the Empire 3 (V4), p. 81",
+      "specializationLabel": null
     },
     {
+      "id": "talent-magical-assistant",
+      "nom": "Assistant magique",
+      "englishName": "Magical Assistant",
+      "sourceLabel": "Assistant magique (Magical Assistant)",
+      "description": "Réservé aux Familiers de Pouvoir ; aucune autre espèce ne peut l’acquérir. Le familier aide son créateur aux Tests de Focalisation, Savoir (Magie), Langue (Magick), ainsi qu’aux Tests de Recherche portant sur une découverte ou innovation magique. Bonus d’assistance +20 au lieu de +10.",
+      "limitText": "1",
+      "source": "Winds of Magic (V4), p. 186",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-attractive",
       "nom": "Attirant",
-      "description": "Lors d'un test de Charme envers quelqu'un qui vous trouve attirant, vous pouvez utiliser comme résultat votre DR ou le chiffre des unités de votre dé (le meilleur des deux).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Attractive",
+      "sourceLabel": "Attirant (Attractive)",
+      "description": "Sur un Test de Charme réussi pour influencer une personne attirée par vous, choisissez entre les DR obtenus et le chiffre des unités de votre jet.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 115 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-blather",
       "nom": "Baratiner",
-      "description": "Action : Test opposé Charme/Intelligence. En cas de succès, la cible gagne 1 État Sonné (+1 par niveau du talent). Elle ne peut qu'écouter béatement. L'effet cesse si vous arrêtez de parler.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Blather",
+      "sourceLabel": "Baratiner (Blather)",
+      "description": "Pris en faute, effectuez un Test opposé Charme/Calme : un succès convainc la cible pendant un Tour ou une minute par DR, selon la situation. Si vos DR dépassent son Bonus de Force Mentale, elle reste convaincue jusqu’à ce qu’un tiers lui montre l’incohérence.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 115 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Battement (Beat Blade)",
-      "description": "Action de combat forçant l'adversaire à perdre ses Avantages.",
-      "source": "Up in Arms"
+      "id": "talent-beat-blade",
+      "nom": "Battement",
+      "englishName": "Beat Blade",
+      "sourceLabel": "Battement (Beat Blade)",
+      "description": "Après une attaque de Corps à corps réussie, renoncez aux Dégâts : jusqu’à la fin de votre prochain Tour, la cible ne peut plus opposer une Compétence de Corps à corps et les attaques de Corps à corps contre elle ont Avantage V5. Elle peut encore Esquiver. Inefficace contre une cible plus grande que vous.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 115 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Béni d'Isha (Blessed of Isha)",
-      "description": "Prérequis spirituel permettant d'apprendre la Haute Magie.",
-      "source": "High Elf Players Guide, Lustria"
+      "id": "talent-lileath-s-blessing",
+      "nom": "Bénédiction de Lileath",
+      "englishName": "Lileath's Blessing",
+      "sourceLabel": "Bénédiction de Lileath (Lileath's Blessing)",
+      "description": "+1 DR par acquisition aux Tests réussis de Focalisation (Qhaysh). Chaque acquisition permet d’ignorer une fois la limite qui réserve normalement le bénéfice au meilleur de plusieurs sorts donnant le même bonus : vous pouvez cumuler une source supplémentaire de ce bonus. S’applique aux sorts de Haute Magie et de magie de couleur.",
+      "limitText": "Bonus d’Initiative",
+      "source": "High Elf Player’s Guide (V4), p. 83",
+      "specializationLabel": null
     },
     {
-      "nom": "Bénédiction de Lileath (Blessing of Lileath)",
-      "description": "=+1 DR aux tests de Haute Magie et maintien de multiples auras.",
-      "source": "High Elf Players Guide"
+      "id": "talent-bless",
+      "nom": "Béni",
+      "englishName": "Bless",
+      "sourceLabel": "Béni [Savoir divin] (Bless)",
+      "description": "Vous connaissez toutes les Bénédictions de la divinité choisie ; une seule divinité normalement. Incompatible dans les deux sens avec Focalisation, Magie des Arcanes, Magie du Chaos, Résistance à la Magie, Magie mineure et Sorcier !. Désapprentissage : 100 PX, perte des Bénédictions et éventuelle défaveur divine décidée par le MJ.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 116 ; achat : p. 191",
+      "specializationLabel": "Savoir divin"
     },
     {
-      "nom": "Béni (Savoir divin)",
-      "description": "Permet d'apprendre et d'utiliser les Bénédictions (prières mineures) de votre divinité.",
-      "source": "Livre de base FR (2)"
+      "id": "talent-blessed-by-isha",
+      "nom": "Béni par Isha",
+      "englishName": "Blessed by Isha",
+      "sourceLabel": "Béni par Isha (Blessed by Isha)",
+      "description": "Réservé aux Elfes ayant reçu la bénédiction de l’Éternelle Reine à Ulthuan (Asur) ou d’Ariel à Athel Loren (Asrai), après leur noviciat d’Isha. Permet d’apprendre Haute Magie (High Magic).",
+      "limitText": "1",
+      "source": "High Elf Player’s Guide (V4), p. 83",
+      "specializationLabel": null
     },
     {
-      "nom": "Bon marcheur (Terrain)",
-      "description": "Ignore toutes les pénalités de Mouvement sur le type de terrain choisi.",
-      "source": "Livre de base FR (2)"
+      "id": "talent-striding-gait",
+      "nom": "Bon marcheur",
+      "englishName": "Striding Gait",
+      "sourceLabel": "Bon marcheur [Terrain] (Striding Gait)",
+      "description": "Ignorez toutes les pénalités de mouvement du terrain choisi. Dans ce terrain, +2 DR à tous les Tests de poursuite. Une acquisition par terrain ; chaque nouvel achat choisit un autre terrain (littoral, désert, rocheux, toundra, zones humides, forêt…).",
+      "limitText": "Sans limitation",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": "Terrain",
+      "perSpecializationLimit": 1
     },
     {
+      "id": "talent-strong-legs",
       "nom": "Bonnes jambes",
-      "description": "Ajoute votre niveau de talent au DR de tous vos tests d'Athlétisme impliquant un saut.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Strong Legs",
+      "sourceLabel": "Bonnes jambes (Strong Legs)",
+      "description": "Sur un Test d'Athlétisme réussi pour sprinter ou bondir, choisissez les DR obtenus ou la valeur du dé des unités.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-tinker",
       "nom": "Bricoleur",
-      "description": "Considère toutes les compétences de Métier non magiques comme \"de Base\" lorsqu'il s'agit de réparer des objets cassés.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Tinker",
+      "sourceLabel": "Bricoleur (Tinker)",
+      "description": "Toutes les compétences de Métier comptent comme Base pour réparer. Avec au moins 1 Augmentation dans le Métier approprié, vos réparations bénéficient d'Avantage V5 et prennent deux fois moins de temps.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-stone-soup",
       "nom": "Brouet",
-      "description": "Vous pouvez subsister avec la moitié de la nourriture nécessaire sans malus. Un test de faim n'est exigé que tous les 3 jours (au lieu de 2).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Stone Soup",
+      "sourceLabel": "Brouet (Stone Soup)",
+      "description": "Si un membre du groupe fait un Test de recherche de nourriture, il trouve toujours de quoi vous nourrir en plus des personnes normalement nourries par son résultat, même si le Test échoue.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 126 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-kingpin",
       "nom": "Caïd",
-      "description": "Permet d'ignorer la perte de Statut engendrée par le talent Criminel.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Kingpin",
+      "sourceLabel": "Caïd (Kingpin)",
+      "description": "Criminel ne fait plus naître les soupçons des représentants de la loi et ne vous interdit plus certaines Carrières. La plupart des autres criminels vous respectent, sauf ceux suffisamment préparés qui visent votre position.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 121 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-roughrider",
       "nom": "Cavalier émérite",
-      "description": "Vous pouvez directement demander à votre monture d'effectuer une Action (et pas seulement un Mouvement) pendant le combat sans nécessiter de test de Chevaucher.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Roughrider",
+      "sourceLabel": "Cavalier émérite (Roughrider)",
+      "description": "Avec la compétence Chevaucher, vous dirigez votre monture pour une Action et un Mouvement sans Test. Si un Test de Chevaucher est requis, vous le faites avec Avantage V5. En poursuite montée, +1 au Mouvement de l'animal.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-luck",
       "nom": "Chanceux",
-      "description": "Votre maximum de Points de Chance est égal à vos Points de Destin + votre niveau dans ce talent.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Luck",
+      "sourceLabel": "Chanceux (Luck)",
+      "description": "+1 au maximum de points de Chance par acquisition, jusqu’à +3 avec trois acquisitions.",
+      "limitText": "3",
+      "source": "Livre de base V5, p. 122 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-berserk-charge",
       "nom": "Charge berserk",
-      "description": "Ajoute +1 Dégât par niveau du talent à toutes vos attaques de corps à corps lors d'une action de Charge.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Berserk Charge",
+      "sourceLabel": "Charge berserk (Berserk Charge)",
+      "description": "Lorsque vous Chargez, ajoutez +2 Dégâts à votre frappe.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 115 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-alley-cat",
       "nom": "Chat de gouttière",
-      "description": "Permet d'inverser les dés d'un test de Discrétion (Urbaine) raté si cela le transforme en succès.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Alley Cat",
+      "sourceLabel": "Chat de gouttière (Alley Cat)",
+      "description": "Avantage V5 aux Tests de Discrétion (Urbaine). Dans une ville connue, vous déterminez sans Test le trajet le plus rapide ou le moins visible.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 114 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-surgery",
       "nom": "Chirurgie",
-      "description": "Permet de traiter les Blessures Critiques graves et d'opérer. Test étendu de Guérison (le patient subit 1d10 Blessures et 1 Saignement par test durant l'opération).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Surgery",
+      "sourceLabel": "Chirurgie (Surgery)",
+      "description": "Sur un Test de Guérison réussi hors combat, choisissez les DR obtenus ou la valeur du dé des unités. Vous pouvez traiter les Blessures critiques qui nécessitent Chirurgie, selon leurs effets pp. 172–179.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-crack-the-whip",
       "nom": "Claquer le fouet",
-      "description": "Si vous utilisez un fouet, la monture ou l'animal que vous contrôlez gagne +1 Mouvement s'il Fuit ou Court.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Crack the Whip",
+      "sourceLabel": "Claquer le fouet (Crack the Whip)",
+      "description": "Avec Conduite d’attelage, vous dirigez les animaux du véhicule pour une Action et un Mouvement sans Test. Si un Test de Conduite est requis, il bénéficie d’Avantage V5. En poursuite avec le véhicule, ajoutez +1 au Mouvement des animaux.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 117 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-stout-hearted",
       "nom": "Cœur vaillant",
-      "description": "Permet de tenter un test de Calme à la fin de votre Tour (en plus de la fin du Round global) pour retirer un État Brisé.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Stout-hearted",
+      "sourceLabel": "Cœur vaillant (Stout-hearted)",
+      "description": "La première fois d'une rencontre que vous recevez un ou plusieurs états Brisé, vous en recevez un de moins.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 126 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-dirty-fighting",
       "nom": "Combat déloyal",
-      "description": "Inflige +1 Dégât supplémentaire par niveau lors des attaques réussies à mains nues (Corps à corps (Bagarre)).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Dirty Fighting",
+      "sourceLabel": "Combat déloyal (Dirty Fighting)",
+      "description": "Après un Coup ciblé au Corps avec une frappe à mains nues qui inflige des Blessures, vous pouvez renoncer aux Dégâts normaux pour infliger la Blessure critique Low Blow ! (Coup bas), qui inflige 1 Blessure et 1 État Sonné (p. 175).",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 118 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-combat-reflexes",
       "nom": "Combat instinctif",
-      "description": "Augmente votre Initiative de base de +10 par niveau de talent pour déterminer l'ordre de combat.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Combat Reflexes",
+      "sourceLabel": "Combat instinctif (Combat Reflexes)",
+      "description": "Quand vous lancez les dés d’Initiative de combat, lancez deux fois et choisissez votre résultat.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 117 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-in-fighter",
       "nom": "Combattant au contact",
-      "description": "Aucune pénalité face à une arme plus longue. Si la règle optionnelle de Corps à corps au contact est utilisée, confère un bonus de +10 pour toucher.",
-      "source": "Livre de base FR (2)"
+      "englishName": "In-fighter",
+      "sourceLabel": "Combattant au contact (In-fighter)",
+      "description": "Les adversaires n’obtiennent aucun bonus pour vous défendre avec une arme plus longue. Pour votre Action, un Test opposé de Corps à corps permet d’imposer le combat au contact ; le vainqueur choisit de l’appliquer ou de conserver le combat normal. Au contact, toute arme plus longue que Courte compte comme arme improvisée. Au début de son Tour, l’adversaire peut perdre son Momentum pour mettre fin au contact.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 121 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-enclosed-fighter",
       "nom": "Combattant en espace clos",
-      "description": "Ignore les pénalités de corps à corps dues aux espaces confinés (tunnels, etc.) et permet d'utiliser l'Esquive même sans espace de recul.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Enclosed Fighter",
+      "sourceLabel": "Combattant en espace clos (Enclosed Fighter)",
+      "description": "Vous ignorez les pénalités de Corps à corps dues à un espace exigu (tunnel, première ligne, petite fosse, etc.). Vous pouvez aussi Esquiver même si le manque d’espace l’interdirait normalement.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 119 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Commandant d'Équipage (Crew Commander)",
-      "description": "L'équipage d'une machine de guerre peut utiliser votre Capacité de Tir à la place de la sienne.",
-      "source": "Up in Arms, Dwarf Players Guide"
+      "id": "talent-crew-commander",
+      "nom": "Commandant d'Équipage",
+      "englishName": "Crew Commander",
+      "sourceLabel": "Commandant d'Équipage (Crew Commander)",
+      "description": "Pour une arme à équipage à portée de voix, réussissez un Test de Commandement Intermédiaire (+0) : l’équipage utilise votre Compétence de Projectiles. Dwarf Player’s Guide : cela prend une Action et ne vaut que pour la prochaine attaque. Up in Arms : aucune durée n’est précisée et le texte emploie Crewed Quality là où la rubrique Tests dit Crewed Flaw. Ajoutez +1 DR par acquisition aux Tests de Projectiles réussis pour tirer avec une arme Crewed.",
+      "limitText": "Bonus d’Initiative",
+      "source": "Up in Arms (V4), p. 140 ; Dwarf Player’s Guide (V4), p. 79",
+      "specializationLabel": null
     },
     {
+      "id": "talent-concoct",
       "nom": "Concocter",
-      "description": "Vous pouvez effectuer une activité d'Artisanat pour utiliser Savoir (Apothicaire) (potions, philtres) sans avoir besoin d'un atelier.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Concoct",
+      "sourceLabel": "Concocter (Concoct)",
+      "description": "Une fois par séance, bénéficiez d’une Activité Artisanat gratuite pour Métier (Apothicaire, Herboriste ou Empoisonneur) sans Atelier ; outils et matières premières restent nécessaires. La création expire au début de la prochaine période de repos, même si elle n’a pas été achevée.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 117 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-contortionist",
       "nom": "Contorsionniste",
-      "description": "Permet de se faufiler dans des espaces improbables. Offre des Avantages en jeu (déterminés par le MJ) via un test d'Agilité.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Contortionist",
+      "sourceLabel": "Contorsionniste (Contortionist)",
+      "description": "Vous pouvez vous glisser dans des ouvertures normalement difficiles ou impossibles, à l’appréciation du MJ. Avantage V5 aux Tests d’Athlétisme pour vous libérer de liens.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 117 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-battle-rage",
       "nom": "Contrôle de la Frénésie",
-      "description": "Permet de tenter un test de Calme à la fin du round pour mettre fin à votre état de Frénésie.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Battle Rage",
+      "sourceLabel": "Contrôle de la Frénésie (Battle Rage)",
+      "description": "Si un autre effet vous permet d’entrer en Frénésie, vous le faites sans Test. Lorsque vous quittez la Frénésie, vous ne recevez pas d’État Exténué.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 115 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-supportive",
       "nom": "Coopératif",
-      "description": "Lors d'un test social réussi pour influencer un supérieur hiérarchique, vous pouvez utiliser votre DR ou le chiffre des unités de votre dé (le meilleur des deux).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Supportive",
+      "sourceLabel": "Coopératif (Supportive)",
+      "description": "Ignorez la pénalité de Charme envers un échelon de statut supérieur. Avantage V5 aux Tests de Charme pour vous attirer les bonnes grâces des personnes de statut supérieur.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Corruption Contrôlée (Controlled Corruption)",
-      "description": "Tire 2 fois la mutation et choisit le meilleur résultat.",
-      "source": "Power Behind the Throne Companion"
-    },
-    {
-      "nom": "Corruption Volontaire (Voluntary Corruption)",
-      "description": "Permet de relancer les dés d'une mutation (Tzeentch).",
-      "source": "Ennemi dans l'Ombre Companion"
-    },
-    {
+      "id": "talent-sturdy",
       "nom": "Costaud",
-      "description": "Augmente votre limite d'Encombrement maximale d'une valeur égale à (Niveau du talent x 2).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Sturdy",
+      "sourceLabel": "Costaud (Sturdy)",
+      "description": "Pour calculer votre capacité d'Encombrement, comptez votre Bonus de Force deux fois.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-drilled",
       "nom": "Coude-à-coude",
-      "description": "Si un ennemi vous fait perdre vos Avantages alors que vous êtes à côté d'un allié avec ce talent, vous conservez 1 Avantage par niveau de Coude-à-coude.",
-      "source": "Livre de base FR (2), Up in Arms"
+      "englishName": "Drilled",
+      "sourceLabel": "Coude-à-coude (Drilled)",
+      "description": "Les alliés peuvent se Désengager librement d’un adversaire avec lequel vous êtes aussi Engagé. Pendant votre Tour, vous pouvez perdre Momentum pour le donner à vos alliés placés au coude-à-coude avec vous et possédant aussi ce talent.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 119 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-strike-mighty-blow",
       "nom": "Coup puissant",
-      "description": "Ajoute +1 Dégât par niveau du talent à vos frappes réussies au corps à corps.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Strike Mighty Blow",
+      "sourceLabel": "Coup puissant (Strike Mighty Blow)",
+      "description": "+1 dégât avec les armes de corps à corps, ou +2 si l'attaque a été effectuée avec Avantage V5.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-dragon-belcher",
+      "nom": "Cracheur de dragon",
+      "englishName": "Dragon Belcher",
+      "sourceLabel": "Cracheur de dragon (Dragon Belcher)",
+      "description": "Quand vous tirez avec une arme dotée de l’Atout Poudre noire, les ennemis ciblés qui échouent à leur Test de Calme reçoivent un État Brisé supplémentaire par acquisition du talent.",
+      "limitText": "Bonus de Capacité de Tir",
+      "source": "Dwarf Player’s Guide (V4), p. 79",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-criminal",
       "nom": "Criminel",
-      "description": "Augmente l'argent gagné via les activités illégales selon votre Statut (Bronze/Argent/Or). L'usage visible peut faire baisser votre Statut social.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Criminal",
+      "sourceLabel": "Criminel (Criminal)",
+      "description": "Doublez les gains d’une Activité Revenus réussie issue d’une entreprise criminelle. Les forces de l’ordre se méfient de vous et les criminels vous reconnaissent. Vous ne pouvez entrer dans une carrière dont le parcours ne contient pas Criminel. Avec l’accord du MJ, 100 PX permettent de retirer ce talent.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 117 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-sword-dancing",
+      "nom": "Danse des épées",
+      "englishName": "Sword-dancing",
+      "sourceLabel": "Danse des épées (Sword-dancing)",
+      "description": "Apprenez Ritual of Cleansing. Chaque technique supplémentaire coûte 100 PX × nombre de techniques déjà connues. Pour une technique, faites un Test de Corps à corps (À deux mains) et atteignez son seuil de DR ; échec : perdez tous vos Avantages V4 ; échec stupéfiant : table Oops! en plus. Difficulté : Yenlui équilibré/lumineux, (+0) ; sombre, Très difficile (−30). Techniques : Cleansing (1 DR), rituel de plusieurs minutes pour déplacer Yenlui vers lumineux au lever du soleil ou sombre au coucher ; Phoenix (1), lancer de l'épée hors engagement à Bonus de Force + Bonus de Force Mentale yards, dégâts de l'arme et Pénétrante, +1 yard et +1 dégât par DR obtenu au Test ; Sun (1), +1 niveau de War Leader pendant Bonus de Force Mentale Rounds, chaque DR obtenu au Test ajoute un niveau ou un Round ; Frost (1), ignorez 1 PA pendant Bonus de Capacité de Combat Rounds, +10 aux jets de Blessure critique par DR obtenu au Test ; Storm (1), opposez les tirs avec Corps à corps (À deux mains) pendant Bonus d'Initiative Rounds, +1 Round par DR obtenu au Test ; Rain (2), +1 DR à Esquive pendant Bonus d'Agilité Rounds, chaque DR obtenu au Test ajoute +1 DR à Esquive et un Round ; Shadows of Loec (2), déplacement jusqu'à DR × Mouvement yards (minimum 5), terrain normal, ennemis auparavant engagés : Initiative (+0) ou Surpris ; Hawk (3), cible à une distance maximale de votre Bonus de Force Mentale en yards : Résistance (−10) ou 10 + DR dégâts ignorant PA mais pas Bonus d'Endurance et 2 états Assourdi, +1 yard et +1 cible par DR obtenu au Test ; Falling Water (3), une attaque contre chaque ennemi engagé à portée de l'arme, trois contre ceux avec Swarm ; Final Stroke (4), cible : Esquive Très difficile (−30) ou coup inévitable à +4 dégâts, +1 dégât par DR obtenu au Test.",
+      "limitText": "1",
+      "source": "High Elf Player’s Guide (V4), p. 68–69",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-magic-defiance",
+      "nom": "Défiance magique",
+      "englishName": "Magic Defiance",
+      "sourceLabel": "Défiance magique (Magic Defiance)",
+      "description": "Vous pouvez inverser les dés de tout Test exigé par les effets d’un sort. Une fois par aventure, dépenser 1 point de Chance annule les effets d’un sort lancé avec succès sur vous. +1 DR par acquisition aux Tests réussis de Force Mentale pour utiliser Résistance à la Magie selon les règles V4.",
+      "limitText": "1",
+      "source": "Dwarf Player’s Guide (V4), p. 80",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-demolisher",
+      "nom": "Démolisseur",
+      "englishName": "Demolisher",
+      "sourceLabel": "Démolisseur / Sapeur (Demolisher)",
+      "description": "Quand vous activez Hack, infligez +1 Dégât supplémentaire aux armures ou boucliers touchés par acquisition. Avec une arme Hack contre un ennemi à couvert : couvert lourd devient moyen, moyen devient léger, léger ne protège plus. Ajoutez +1 DR par acquisition aux Tests de Corps à corps réussis pour briser des objets avec cette arme.",
+      "limitText": "Bonus de Force",
+      "source": "Dwarf Player’s Guide (V4), p. 79",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-disarm",
+      "nom": "Désarmer",
+      "englishName": "Disarm",
+      "sourceLabel": "Désarmer (Disarm)",
+      "description": "Comme attaquant en Corps à corps, si vous obtenez au moins +4 DR, renoncez aux Dégâts pour désarmer : l’arme vole de 1d10 pieds dans une direction aléatoire. Vous pouvez perdre Momentum pour l’attraper au vol. Inefficace contre une cible désarmée, attachée à son arme ou plus grande que vous.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 118 ; achat : p. 191",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-doomed",
       "nom": "Destinée",
-      "description": "Vous avez reçu une prophétie (ex: \"La mort vient d'en haut\"). Vous gagnez une forme d'immunité narrative empêchant la mort tant que les circonstances de la prophétie ne sont pas réunies.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Doomed",
+      "sourceLabel": "Destinée (Doomed)",
+      "description": "Définissez votre Destinée avec le MJ. Si vous mourez de la manière prédite, tous les personnages alliés récupèrent immédiatement tous leurs Points de Chance et votre prochain personnage commence avec +1 Point de Destin.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 118 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-detect-artefact",
       "nom": "Détection d'artefact",
-      "description": "Test d'Intuition en touchant un objet. Succès = vous sentez qu'il est magique. Chaque DR révèle une règle spéciale liée à l'objet.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Detect Artefact",
+      "sourceLabel": "Détection d'artefact (Detect Artefact)",
+      "description": "En touchant un objet, vous savez automatiquement s’il contient de l’énergie magique. Avec Seconde vue, un Test d’Intuition réussi permet aussi de déterminer ses pouvoirs exacts, son activation et son nombre de charges.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 117 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-resolute",
       "nom": "Déterminé",
-      "description": "Ajoute le niveau du talent à votre Bonus de Force lors du calcul des dégâts d'une Charge.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Resolute",
+      "sourceLabel": "Déterminé (Resolute)",
+      "description": "Lorsque vous gagnez un état, un Test de Calme Intermédiaire (+0 DR) réussi permet de conserver votre Momentum.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-instinctive-diction",
       "nom": "Diction instinctive",
-      "description": "Vous ne subissez pas d'Incantation Imparfaite Mineure si vous obtenez un double réussi sur un test de Langue (Magick).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Instinctive Diction",
+      "sourceLabel": "Diction instinctive (Instinctive Diction)",
+      "description": "Si vous devez effectuer un jet sur la table des Incantations imparfaites mineures, vous pouvez réduire le résultat de 20 ; sous 01, aucun effet ne se produit. Aucun effet sur les Incantations imparfaites majeures.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 121 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Disciple du Changement (Disciple of Change)",
-      "description": "Relancez deux fois lors de l'obtention d'une mutation.",
-      "source": "Ennemi dans l'Ombre Companion"
-    },
-    {
+      "id": "talent-shadow",
       "nom": "Discret",
-      "description": "Vous pouvez utiliser les règles de Filature avec un simple Test de Perception ou de Discrétion (le plus haut) au lieu d'un Test Combiné complexe.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Shadow",
+      "sourceLabel": "Discret (Shadow)",
+      "description": "Si une personne que vous suivez réussit son Test de Perception pour vous repérer, choisissez : poursuivre et être repéré, ou perdre sa trace et rester inaperçu.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Distraire (Distract)",
-      "description": "Remplace votre Mouvement par un Test opposé Athlétisme/Calme. Si vous gagnez, l'adversaire ne gagne pas d'Avantage jusqu'à la fin du prochain round.",
-      "source": "Up in Arms"
+      "id": "talent-distract",
+      "nom": "Distraire",
+      "englishName": "Distract",
+      "sourceLabel": "Distraire (Distract)",
+      "description": "Utilisez votre Mouvement pour un Test opposé Athlétisme, Représentation ou Escamotage contre Perception, sur une cible à 2 yards maximum. Si vous gagnez, elle perd Momentum et ne peut ni le récupérer ni effectuer de Test avec Avantage V5 jusqu’à la fin de votre prochain Tour.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 118 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-nimble-fingered",
       "nom": "Doigts de fée",
-      "description": "Octroie un bonus permanent de +5 en Dextérité.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Nimble-fingered",
+      "sourceLabel": "Doigts de fée (Nimble-fingered)",
+      "description": "+5 en Dextérité, sans compter comme une Augmentation.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 123 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Double Vie (Double Life)",
-      "description": "Évolue dans deux Carrières simultanément pour maintenir une couverture parfaite.",
-      "source": "Ennemi dans l'Ombre Companion"
+      "id": "talent-gifts-of-khaine",
+      "nom": "Dons de Khaine",
+      "englishName": "Gifts of Khaine",
+      "sourceLabel": "Dons de Khaine [Don] (Gifts of Khaine)",
+      "description": "Un don choisi par acquisition. Après avoir causé des dégâts avec une Compétence de Corps à corps, Test de Capacité de Combat Intermédiaire (+0 DR) pour activer un don en Action gratuite ; +2 DR si le coup tue. Dons : Cri de guerre (5 DR), Terreur contre les adversaires à portée d’arme ; Danse funeste (2), +2 DR aux Tests d’Esquive jusqu’au prochain Tour ; Dague de Khaine (2), arme Dévastatrice, Magique et Précise jusqu’à la fin du prochain Tour de son porteur ; Tourment éternel (4, après un coup mortel), ni résurrection nécromantique ni contact magique avec l’âme, et +1 point de Chance ; Main de Khaine (2), Test opposé Représentation (Danse)/Calme, cible Surprise si victoire ; Lame cachée (3), attaque gratuite supplémentaire à la dague avec Corps à corps (Base) ; Dard final (3), l’arme inflige Empoisonné à chaque dégât pendant 6 Rounds ; Toucher de Khaine (3), +3 DR aux Tests de Corps à corps jusqu’à la fin du prochain Tour. Tout Haut Elfe utilisant un don passe automatiquement à l’état Yenlui Sombre.",
+      "limitText": "Sans limitation",
+      "source": "Temple of Spite (édition non nommée, compatible V5), p. 68",
+      "specializationLabel": "Don",
+      "perSpecializationLimit": 1
     },
     {
+      "id": "talent-super-numerate",
       "nom": "Doué en calcul",
-      "description": "Calcule mentalement avec aisance. (Le joueur est autorisé à utiliser une calculatrice à la table).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Super Numerate",
+      "sourceLabel": "Doué en calcul (Super Numerate)",
+      "description": "Avantage V5 aux Tests d'Évaluation. Vous calculez sans outil et mesurez précisément le temps écoulé tant que vous restez conscient.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-hardy",
       "nom": "Dur à cuire",
-      "description": "Vous gagnez un montant de Points de Blessure supplémentaires égal à votre Bonus d'Endurance.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Hardy",
+      "sourceLabel": "Dur à cuire (Hardy)",
+      "description": "Ajoutez une fois supplémentaire votre Bonus d’Endurance au calcul de votre maximum de Points de Blessure.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 120 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-break-and-enter",
       "nom": "Effraction",
-      "description": "Ajoute +1 Dégât par niveau pour briser des objets inanimés (portes, coffres, fenêtres).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Break and Enter",
+      "sourceLabel": "Effraction (Break and Enter)",
+      "description": "En observant un bâtiment, une pièce fermée ou un coffre-fort, vous repérez le trajet d’entrée apparemment le plus rapide et silencieux. Avantage V5 aux Tests de Crochetage et de Force pour enfoncer portes ou fenêtres.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 116 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-frightening",
       "nom": "Effrayant",
-      "description": "Donne un Indice de Peur de 1 (+1 par niveau additionnel) qui terrifie vos ennemis.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Frightening",
+      "sourceLabel": "Effrayant (Frightening)",
+      "description": "Vous causez Peur 1, ou Peur 2 si vous êtes de taille Grande. Chaque ennemi doit accumuler autant de réussites à un Test étendu de Psychologie que votre indice de Peur, avec un Test par Tour. Jusque-là, il ne peut gagner de Momentum et vos attaques de Corps à corps contre lui bénéficient d’Avantage V5.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 120 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-implacable",
       "nom": "Endurci",
-      "description": "Vous pouvez ignorer la perte d'1 Point de Blessure causée par un État Hémorragique, par niveau du talent.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Implacable",
+      "sourceLabel": "Endurci (Implacable)",
+      "description": "Chaque fois que vous devriez recevoir un ou plusieurs états Hémorragique, vous en recevez un de moins.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 121 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-argumentative",
       "nom": "Ergoteur",
-      "description": "Lors d'un test de Charme pour débattre, utilise le DR ou le chiffre des unités du dé (le meilleur des deux).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Argumentative",
+      "sourceLabel": "Ergoteur (Argumentative)",
+      "description": "Pour quitter votre débat, votre interlocuteur doit réussir un Test opposé Calme/Charme. Pendant la dispute, il subit −3 DR à la plupart des Tests sans rapport avec vous, jusqu’à l’intervention d’un problème plus important ou d’une attaque.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 115 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-embezzle",
       "nom": "Escroquer",
-      "description": "Test opposé d'Intelligence contre votre employeur lors d'un gain d'argent. Succès = vous détournez une somme d'argent variable sans vous faire prendre.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Embezzle",
+      "sourceLabel": "Escroquer (Embezzle)",
+      "description": "Pour Gagner de l’argent en jeu ou avec une Activité Revenus, utilisez Subornation ou Évaluation à la place de la Compétence de revenus normale : en cas de succès, doublez vos gains ; en cas d’échec, vos irrégularités sont découvertes et vous ne gagnez rien.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 119 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-inspiring",
       "nom": "Exaltant",
-      "description": "Démultiplie de façon massive le nombre de soldats influencés par vos tests de Commandement.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Inspiring",
+      "sourceLabel": "Exaltant (Inspiring)",
+      "description": "Avantage V5 aux Tests de Commandement effectués en combat.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 121 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-panhandle",
       "nom": "Faire la manche",
-      "description": "Permet d'effectuer un Test de Charme (Mendicité) toutes les demi-heures au lieu de toutes les heures.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Panhandle",
+      "sourceLabel": "Faire la manche (Panhandle)",
+      "description": "Avantage V5 aux Tests de Charme pour mendier, y compris pendant une Activité Revenu. Vous savez généralement où trouver un abri urbain sûr mais inconfortable pour dormir.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 123 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-feint",
       "nom": "Feinte",
-      "description": "Fausse attaque (Action) via un Test opposé de CàC (Escrime)/CàC. Si vous gagnez, le DR obtenu s'ajoute au résultat de votre prochaine vraie attaque contre cette cible.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Feint",
+      "sourceLabel": "Feinte (Feint)",
+      "description": "En attaquant en Corps à corps, si vous avez Momentum et que votre adversaire ne l’a pas, forcez-le à se défendre avec Intuition plutôt qu’une autre Compétence ou Caractéristique.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 119 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-impassioned-zeal",
       "nom": "Ferveur ardente",
-      "description": "Vous doublez votre Caractéristique de Sociabilité pour calculer le nombre de personnes ciblées par votre talent Orateur quand vous défendez votre cause.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Impassioned Zeal",
+      "sourceLabel": "Ferveur ardente [Cause] (Impassioned Zeal)",
+      "description": "Choisissez une cause politique, religieuse ou philosophique. Avantage V5 aux Tests de Charme lorsque vous la défendez ; Désavantage V5 lorsque vous mentez à son sujet ou la dénoncez.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 121 ; achat : p. 191",
+      "specializationLabel": "Cause"
     },
     {
+      "id": "talent-forgefire",
+      "nom": "Feu de forge",
+      "englishName": "Forgefire",
+      "sourceLabel": "Feu de forge (Forgefire)",
+      "description": "Tant que vous êtes Engagé, vos armes de Corps à corps et celles de vos alliés à Bonus de Force Mentale yards gagnent l’Atout Pénétrante. Si une arme l’est déjà, ses attaques ignorent 1 PA supplémentaire d’armure métallique.",
+      "limitText": "1",
+      "source": "Dwarf Player’s Guide (V4), p. 79",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-glorious-demise",
+      "nom": "Fin glorieuse",
+      "englishName": "Glorious Demise",
+      "sourceLabel": "Fin glorieuse (Glorious Demise)",
+      "description": "Lorsque vous gagnez Inconscient, vous pouvez interrompre l’ordre des Tours pour porter immédiatement une attaque gratuite de Corps à corps avant d’être mis hors de combat. Lorsque vous gagnez Sonné, dépenser 1 point de Chance permet la même attaque gratuite. Votre prochain Tour reste normal : aucune Action si vous êtes encore Sonné.",
+      "limitText": "1",
+      "source": "Dwarf Player’s Guide (V4), p. 79",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-flagellant",
       "nom": "Flagellant",
-      "description": "Oblige à passer 30 min/jour à se blesser en priant. Permet ensuite d'entrer en Frénésie instantanément sans test. (Si non fait, interdit d'utiliser Résilience/Détermination).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Flagellant",
+      "sourceLabel": "Flagellant (Flagellant)",
+      "description": "Vous ne ressentez pas la douleur et ignorez les pénalités des Blessures critiques, sauf celles des amputations. Si un autre effet vous donne accès à la Frénésie, vous pouvez y entrer sans Test chaque fois que vous subissez une Blessure.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 119 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-nose-for-trouble",
       "nom": "Flairer les ennuis",
-      "description": "Permet un Test d'Intuition (souvent secret du MJ) pour repérer une embuscade/des perturbateurs. En cas de succès, vous ignorez l'État Surpris.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Nose for Trouble",
+      "sourceLabel": "Flairer les ennuis (Nose for Trouble)",
+      "description": "Avantage V5 aux Tests d’Intuition ; vous savez généralement où trouver, dans une ville ou un village, de quoi parier, vous battre ou vous enivrer.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 123 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-liquid-fortification",
+      "nom": "Fortification liquide",
+      "englishName": "Liquid Fortification",
+      "sourceLabel": "Fortification liquide (Liquid Fortification)",
+      "description": "Après une boisson alcoolisée, +10 en Force et Endurance ; le bonus s’applique immédiatement au Test de Résistance à l’alcool de cette boisson et reste acquis que le Test réussisse ou échoue. Il dure jusqu’à une heure après la dernière boisson : boire à nouveau prolonge la durée sans dépasser +10. +1 DR par acquisition aux Tests réussis de Résistance à l’alcool.",
+      "limitText": "Bonus d’Endurance",
+      "source": "Dwarf Player’s Guide (V4), p. 80",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-strike-to-stun",
       "nom": "Frappe assommante",
-      "description": "Ignore le malus de -20 pour viser la Tête avec une arme Assommante. Les armes improvisées gagnent l'Atout Assommante pour vous.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Strike to Stun",
+      "sourceLabel": "Frappe assommante (Strike to Stun)",
+      "description": "Toutes vos armes improvisées ont la Qualité Assommante (Pummel). Avec une arme Assommante, ignorez la pénalité de coup ciblé pour une neutralisation silencieuse (p. 135).",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-strike-to-injure",
       "nom": "Frappe blessante",
-      "description": "Vous infligez un montant de Blessures supplémentaires égal au niveau de ce talent lorsque vous causez une Blessure Critique.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Strike to Injure",
+      "sourceLabel": "Frappe blessante (Strike to Injure)",
+      "description": "Sur la table des Blessures critiques, lancez deux fois et choisissez le résultat. Ignorez aussi la pénalité de tir/coup ciblé pour une neutralisation silencieuse (p. 135).",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-careful-strike",
       "nom": "Frappe précise",
-      "description": "Permet de modifier manuellement le jet inversé de Localisation d'une valeur de +/- 10 par niveau du talent (ex: changer un 34 en 14 ou 54).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Careful Strike",
+      "sourceLabel": "Frappe précise (Careful Strike)",
+      "description": "La pénalité d’un Coup ciblé avec une attaque de Corps à corps est réduite à −1 DR ; si l’attaque bénéficie d’Avantage V5, le Coup ciblé ne subit aucune pénalité.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 116 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-reaction-strike",
       "nom": "Frappe réactive",
-      "description": "Si vous êtes Chargé, Test d'Initiative (+0). Succès = vous gagnez 1 Attaque gratuite immédiate avant l'ordre de combat normal. Limité à (Niv du talent) fois par Round.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Reaction Strike",
+      "sourceLabel": "Frappe réactive (Reaction Strike)",
+      "description": "Lorsque vous êtes chargé, un Test d’Initiative Intermédiaire (+0 DR) permet une attaque gratuite immédiate contre le chargeur, hors ordre normal des Tours, avec l’arme de votre main directrice. Une seule attaque gratuite de cette manière par Round.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-frenzy",
       "nom": "Frénésie",
-      "description": "Permet d'entrer dans un état de rage meurtrière (cf. règles de Psychologie).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Frenzy",
+      "sourceLabel": "Frénésie (Frenzy)",
+      "description": "À votre Tour, réussir un Test de Force Mentale déclenche la Frénésie : immunité aux autres Psychologies, une attaque de Corps à corps gratuite supplémentaire par Round et +1 Dégât à toutes les attaques de Corps à corps. Obligation d’avancer vers l’ennemi le plus proche et de l’attaquer, sans autre emploi de l’Action ou du Mouvement. Fin lorsque tous les ennemis proches sont vaincus, ou si vous êtes Sonné ou Inconscient ; vous gagnez alors 1 état Exténué.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 120 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-flee",
       "nom": "Fuite !",
-      "description": "Augmente votre Mouvement de +1 lorsque vous fuyez.",
-      "source": "Livre de base FR (2), Up in Arms"
+      "englishName": "Flee!",
+      "sourceLabel": "Fuite ! (Flee!)",
+      "description": "Après vous être Désengagé, vous pouvez immédiatement effectuer un Mouvement supplémentaire pour vous éloigner en courant. Fuir en combat ne vous donne pas d’État Brisé. Comme proie d’une poursuite, vos Tests reçoivent +1 DR.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 120 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-kingsguard",
+      "nom": "Garde royal",
+      "englishName": "Kingsguard",
+      "sourceLabel": "Garde royal (Kingsguard)",
+      "description": "Les attaques ennemies contre un allié situé à 2 yards ou moins de vous subissent −10 par acquisition. Aucun effet sur les attaques contre vous-même ni lorsque vous souffrez d’un état.",
+      "limitText": "3",
+      "source": "Dwarf Player’s Guide (V4), p. 80",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-master-orator",
       "nom": "Grand orateur",
-      "description": "Gagnez +1 DR (par niveau) à n'importe quel Test de Charme quand vous parlez en public devant une foule.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Master Orator",
+      "sourceLabel": "Grand orateur (Master Orator)",
+      "description": "Avantage V5 aux Tests de Savoir (Loi) pour plaider devant un magistrat et aux Tests similaires de Savoir pour défendre un argument universitaire, théologique ou politique devant une assemblée.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 122 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-large",
+      "nom": "Grande taille",
+      "englishName": "Large",
+      "sourceLabel": "Grande taille (Large)",
+      "description": "Vous êtes de taille Grande. Règles V4 de Taille : Points de Blessure = 2×(Bonus de Force + 2×Bonus d’Endurance + Bonus de Force Mentale). Face à un adversaire plus petit : armes Dévastatrices ; Percutantes si écart d’au moins 2 catégories ; dégâts multipliés par l’écart de catégories, minimum ×1, après modificateurs ; Frappes Mortelles même si la cible survit. L’adversaire plus petit gagne +10 pour toucher et subit −2 DR par catégorie s’il pare avec CC. Vous quittez le Corps à corps sans désengagement. Tests opposés de Force : victoire automatique avec 2 catégories d’écart ; avec une seule, le plus petit doit obtenir un Critique pour comparer les DR. Si agressif : Peur si écart 1, Terreur si écart ≥2, indice égal à l’écart. Piétinement contre une cible plus petite : attaque gratuite de Corps à corps (Bagarre), dégâts Bonus de Force, coût 1 Avantage V4.",
+      "limitText": "1",
+      "source": "Archives of the Empire 2 (V4), p. 20",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-scale-sheer-surface",
       "nom": "Grimpeur",
-      "description": "Permet de grimper sur des surfaces impossibles (glace, murs lisses) sans subir les pénalités liées à la difficulté de la surface.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Scale Sheer Surface",
+      "sourceLabel": "Grimpeur (Scale Sheer Surface)",
+      "description": "Avantage V5 aux Tests d'Escalade. Vous pouvez tenter de grimper des surfaces apparemment impossibles (glace, parois lisses, poteaux graissés…), avec une difficulté imposée au maximum Très difficile (−3 DR).",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-warrior-born",
       "nom": "Guerrier né",
-      "description": "Octroie un bonus permanent de +5 en Capacité de Combat.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Warrior Born",
+      "sourceLabel": "Guerrier né (Warrior Born)",
+      "description": "+5 en Capacité de Combat, sans compter comme Augmentations.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-river-guide",
       "nom": "Guide fluvial",
-      "description": "Navigue sur eaux dangereuses sans test (jusqu'à une difficulté de -10). Avec Savoir (Région), la Orientation ne nécessite jamais de test.",
-      "source": "Livre de base FR (2)"
+      "englishName": "River Guide",
+      "sourceLabel": "Guide fluvial (River Guide)",
+      "description": "Aucun Test pour naviguer en eaux dangereuses, sauf difficulté Difficile (−1 DR) ou plus sévère. Avec la compétence Savoir (Région) appropriée, aucun Test n'est requis : vous connaissez une route sûre.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Haine (Groupe)",
-      "description": "Donne le trait psychologique Haine contre un type d'ennemis.",
-      "source": "Livre de base FR (2)"
+      "id": "talent-hatred",
+      "nom": "Haine",
+      "englishName": "Hatred",
+      "sourceLabel": "Haine [Groupe] (Hatred)",
+      "description": "Choisissez un groupe. À chaque rencontre, réussir un Test de Psychologie évite l’obligation de le détruire par le moyen le plus rapide et mortel ; nouvelle tentative à la fin de chaque Round après le premier pour vous retenir. Aucune interaction sociale normale avec ce groupe. Toujours +1 DR aux Tests de Corps à corps et de Projectiles contre lui et immunité à son Intimidation et sa Peur, mais pas sa Terreur, même si vous contrôlez votre Haine.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 120 ; achat : p. 191",
+      "specializationLabel": "Groupe"
     },
     {
+      "id": "talent-holy-hatred",
       "nom": "Haine sacrée",
-      "description": "Ajoute +1 Dégât par niveau à vos Prières offensives.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Holy Hatred",
+      "sourceLabel": "Haine sacrée (Holy Hatred)",
+      "description": "Lorsqu’un Miracle inflige des Blessures, vous pouvez infliger +2 Blessures.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 120 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-aethyric-attunement",
       "nom": "Harmonisation aethyrique",
-      "description": "Évite de subir une Incantation Imparfaite si vous obtenez un double réussi lors d'un test de Focalisation.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Aethyric Attunement",
+      "sourceLabel": "Harmonisation aethyrique (Aethyric Attunement)",
+      "description": "Sur la table des Incantations imparfaites mineures, lancez deux fois et choisissez le résultat. La seconde acquisition étend ce bénéfice à la table des Incantations imparfaites majeures.",
+      "limitText": "2",
+      "source": "Livre de base V5, p. 114 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Haute Magie (High Magic)",
-      "description": "Permet de canaliser Qhaysh et compenser l'absence de certains vents élémentaires.",
-      "source": "High Elf Players Guide, Lustria"
+      "id": "talent-harpooner",
+      "nom": "Harponneur",
+      "englishName": "Harpooner",
+      "sourceLabel": "Harponneur (Harpooner)",
+      "description": "Sur un Critique infligé avec une arbalète, vous pouvez ajouter +10 par acquisition au jet de la table des Critiques, maximum 00. Chaque carreau fiché dans la cible grâce à l’Atout Empaleuse réduit son Mouvement de 1, minimum 1.",
+      "limitText": "Bonus de Capacité de Tir",
+      "source": "Dwarf Player’s Guide (V4), p. 79",
+      "specializationLabel": null
     },
     {
+      "id": "talent-high-magic",
+      "nom": "Haute Magie",
+      "englishName": "High Magic",
+      "sourceLabel": "Haute Magie (High Magic)",
+      "description": "Nécessite Focalisation (Qhaysh) et Béni par Isha. L’absence d’accès à un Vent ne pénalise plus le lancement des sorts des Domaines des Bêtes, Mort, Feu, Cieux, Vie, Lumière, Métal et Ombres. Lorsqu’un sort est lancé avec succès, ajoutez votre niveau de Haute Magie aux DR utilisables pour la Surincantation des sorts de Haute Magie. Autorise leur mémorisation : coût par sort supplémentaire selon les sorts déjà connus, jusqu’à 1× le Bonus d’Intelligence : 200 PX ; jusqu’à 2× : 400 PX ; jusqu’à 3× : 600 PX ; jusqu’à 4× : 800 PX ; puis +200 PX par tranche supplémentaire.",
+      "limitText": "1",
+      "source": "High Elf Player’s Guide (V4), p. 83",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-secret-identity",
       "nom": "Identité secrète",
-      "description": "Vous adoptez le Statut Social d'une autre Carrière choisie. Ignore la perte liée au talent Criminel. Requiert des tests de Représentation en cas de soupçon.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Secret Identity",
+      "sourceLabel": "Identité secrète (Secret Identity)",
+      "description": "Adoptez une identité d'une carrière choisie pour une rencontre, une journée ou une aventure, sans Test pour maintenir la supercherie ; vous en avez la classe et le statut. Vous pouvez faire les Activités Banque ou Revenus sous cette identité. Pour Revenus : Test de revenu Intermédiaire (+0 DR), avec Divertissement (Interprétation) ou la compétence de revenu de l'identité. Avec Embezzle, Subornation ou Évaluation peuvent remplacer cette compétence en cas de détournement. Un échec révèle la ruse ; conséquences fixées par le MJ.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-mimic",
+      "nom": "Imitation",
+      "englishName": "Mimic",
+      "sourceLabel": "Imitation (Mimic)",
+      "description": "Avantage V5 aux Tests de Divertissement (Interprétation, Comédie) et de Représentation (Pitreries). Vous reproduisez un accent après au moins une journée d’exposition ; cela peut aider avec les habitants à l’appréciation du MJ. Un accent connu vous permet de détecter ceux qui le simulent ou le dissimulent, sauf s’ils possèdent aussi Imitation.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 122–123 ; achat : p. 191",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-coolheaded",
       "nom": "Imperturbable",
-      "description": "Octroie un bonus permanent de +5 en Force Mentale.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Coolheaded",
+      "sourceLabel": "Imperturbable (Coolheaded)",
+      "description": "Gagnez +5 Force Mentale ; ce bonus ne compte pas comme une Augmentation.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 117 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-relentless",
       "nom": "Impitoyable",
-      "description": "Lors d'un Désengagement, vous conservez 1 Avantage (par niv) et pouvez vous désengager même si vous possédez moins d'Avantages que vos adversaires.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Relentless",
+      "sourceLabel": "Impitoyable (Relentless)",
+      "description": "Après le Tour d’un adversaire qui s’est désengagé de vous, un Test d’Athlétisme, Conduite d’attelage ou Chevaucher Intermédiaire (+0 DR) réussi fournit un Mouvement supplémentaire pour le poursuivre et permet de vous désengager gratuitement de vos autres adversaires. +1 DR aux Tests de poursuivant pendant une Poursuite.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Imprégné de Magie (Imbued with Magic)",
-      "description": "=+1 DR à tous les sorts lancés dans un rayon autour de vous.",
-      "source": "Ennemi dans l'Ombre Companion"
+      "id": "talent-suffuse-with",
+      "nom": "Imprégné",
+      "englishName": "Suffuse With",
+      "sourceLabel": "Imprégné [Vent] (Suffuse With)",
+      "description": "Les sorts réussis du domaine associé au Vent, lancés à 8 yards ou moins de vous, gagnent +1 DR ; ce bonus ne se cumule pas avec d'autres porteurs du même Vent. Votre Focalisation de ce Vent remplace : Aqshy, Force Mentale pour entrer en Frénésie, dont vous pouvez bénéficier ; Azyr, Perception ; Chamon, Évaluation ; Ghur, Emprise sur les animaux et Savoir (Bêtes) ; Ghyran, Savoir (Plantes, Animaux, Herbes) et Soin aux animaux ; Hysh, Recherche ; Shyish, Intimidation ; Ulgu, Discrétion. Les personnes ayant Seconde vue perçoivent le Vent autour de vous.",
+      "limitText": "1",
+      "source": "Winds of Magic (V4), p. 186",
+      "specializationLabel": "Vent"
     },
     {
-      "nom": "Imprégné par le (Vent) (Imbued with [Wind])",
-      "description": "=+1 DR aux sorts de ce vent et octroie un effet aethyrique passif puissant.",
-      "source": "Winds of Magic"
-    },
-    {
+      "id": "talent-unshakeable",
       "nom": "Inébranlable",
-      "description": "Le test de Calme contre la panique des armes à poudre noire n'est requis que si vous êtes réellement blessé, pas simplement ciblé.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Unshakeable",
+      "sourceLabel": "Inébranlable (Unshakeable)",
+      "description": "Aucun Test pour résister à l'état Brisé lorsque vous êtes pris pour cible par une arme à poudre noire.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-strong-back",
       "nom": "Infatigable",
-      "description": "Ajoute +1 DR (par niv) à tous les Tests opposés de Force, et augmente votre Encombrement maximum de +1 par niveau.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Strong Back",
+      "sourceLabel": "Infatigable (Strong Back)",
+      "description": "Niveau 1 : +1 DR aux Tests opposés de Force et +1 point d'Encombrement transportable. Niveau 2 : ces bonus totaux deviennent +3 DR et +3 points d'Encombrement.",
+      "limitText": "2",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-tireless",
+      "nom": "Inlassable",
+      "englishName": "Tireless",
+      "sourceLabel": "Inlassable (Tireless)",
+      "description": "Pour appliquer les pénalités d'Exténué, ignorez 1 état, plus 1 état supplémentaire par niveau. Exemple : niveau 2 et 4 états, seules les pénalités d'un état s'appliquent (−10 à tous les Tests).",
+      "limitText": "Bonus d’Endurance",
+      "source": "Dwarf Player’s Guide (V4), p. 81",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-beneath-notice",
       "nom": "Insignifiant",
-      "description": "Les personnes de Statut supérieur vous ignorent. Les ennemis de Statut supérieur ne gagnent aucun Avantage s'ils vous battent au combat.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Beneath Notice",
+      "sourceLabel": "Insignifiant (Beneath Notice)",
+      "description": "Correctement vêtu et en faisant l’effort de vous fondre parmi vos supérieurs sociaux, vous passez pour quelqu’un qui doit être là ; une explication plausible suffit normalement aux gardes. Ce bénéfice cesse si vous attirez l’attention par un incident ou en brandissant une arme.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 115 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-schemer",
       "nom": "Intrigant",
-      "description": "1 fois par session, posez une question sur un complot au MJ. Le MJ fait un test d'Int secret et donne des indices selon le DR.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Schemer",
+      "sourceLabel": "Intrigant (Schemer)",
+      "description": "Sur un Test réussi de Ragot ou Savoir (Politique), choisissez les DR obtenus ou la valeur du dé des unités.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Invocation (Savoir)",
-      "description": "Apprend un Miracle de votre divinité (100 PX pour le premier, puis +100 cumulatif). Interdit d'apprendre la Magie Mineure ou Arcanique.",
-      "source": "Livre de base FR (2)"
+      "id": "talent-invoke",
+      "nom": "Invocation",
+      "englishName": "Invoke",
+      "sourceLabel": "Invocation [Savoir divin] (Invoke)",
+      "description": "Choisissez une divinité : un Miracle de son culte est appris immédiatement. Miracles supplémentaires : 100 PX si 0–5 sont déjà connus ; 200 PX pour 6–10 ; 300 PX pour 11–15 ; 400 PX pour 16–20 ; 500 PX à partir de 21. Normalement une seule divinité. Incompatible dans les deux sens avec Focalisation, Magie des arcanes, Magie du Chaos, Résistance à la Magie, Magie mineure et Sorcier !. Abandon pour 100 PX : perte de tous les Miracles et profond courroux divin, conséquences fixées par le MJ.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 121 ; achat : p. 191",
+      "specializationLabel": "Savoir divin"
     },
     {
+      "id": "talent-youngblood",
+      "nom": "Jeune sang",
+      "englishName": "Youngblood",
+      "sourceLabel": "Jeune sang (Youngblood)",
+      "description": "Votre statut est toujours inférieur à celui des autres Eonir, sauf s'ils ont aussi Youngblood. Les membres de deuxième génération peuvent perdre ce talent en réussissant une épreuve d'admission parmi les Forestborn. Tests sociaux réussis avec d'autres Eonir : +1 DR par niveau.",
+      "limitText": "1",
+      "source": "Archives of the Empire 1 (V4), p. 78",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-mind-over-body",
+      "nom": "L’esprit sur le corps",
+      "englishName": "Mind over Body",
+      "sourceLabel": "L’esprit sur le corps (Mind over Body)",
+      "description": "Méditation d’au moins 20 minutes puis Test de Prière Intermédiaire (+0). Si réussi, effets pendant 1d10 + DRd10 heures. Niveau 1 : Trait Insensible à la douleur et aucun état causé par la douleur. Niveau 2 : vision mentale des formes, sans couleurs, expressions ni fins détails sauf objets fabriqués ; Métier (Forgeron) sans malus de cécité et immunité à Aveuglé, même magique ou divine. Niveau 3 : permet de dépenser une Détermination pour ignorer les pénalités des Blessures Critiques lors des Tests étendus, notamment de fabrication.",
+      "limitText": "3",
+      "source": "High Elf Player’s Guide (V4), p. 101",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-speedreader",
       "nom": "Lecture rapide",
-      "description": "Inversez les dés d'un test de Recherche raté pour le réussir. En combat : lit un nb de pages/round = (DR + niveau du talent).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Speedreader",
+      "sourceLabel": "Lecture rapide (Speedreader)",
+      "description": "Lisez une page d'un coup d'œil et un long ouvrage en une journée. Sur un Test étendu de Recherche, doublez les DR ajoutés par chaque Test réussi.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 126 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-linguistics",
       "nom": "Linguistique",
-      "description": "Après 1 mois d'écoute, Test d'Intelligence. Succès = la Langue devient une compétence de Base. (Ne fonctionne pas avec le Magick).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Linguistics",
+      "sourceLabel": "Linguistique (Linguistics)",
+      "description": "Avantage V5 aux Tests de Langue. Chaque Augmentation d’une spécialisation de Langue coûte toujours 50 PX, quel que soit le nombre déjà acquis. Ne s’applique qu’aux langues servant à communiquer, jamais à Langue (Magick).",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 121 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-lip-reading",
       "nom": "Lire sur les lèvres",
-      "description": "Test de Perception pour comprendre ce que dit quelqu'un au loin s'il y a une ligne de vue dégagée sur sa bouche.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Lip Reading",
+      "sourceLabel": "Lire sur les lèvres (Lip Reading)",
+      "description": "Si vous voyez la bouche du locuteur sans obstruction, un Test d’Intuition Intermédiaire (+0 DR) permet de comprendre ses paroles.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 122 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-read-write",
       "nom": "Lire/Écrire",
-      "description": "Permet d'être lettré (lire et écrire les langues parlées).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Read/Write",
+      "sourceLabel": "Lire/Écrire (Read/Write)",
+      "description": "Vous pouvez lire et écrire toute langue que vous savez parler.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-long-memory",
+      "nom": "Longue mémoire",
+      "englishName": "Long Memory",
+      "sourceLabel": "Longue mémoire (Long Memory)",
+      "description": "Vous vous rappelez parfaitement l’heure, la date, le lieu, les visages visibles et les paroles ou engagements des personnes présentes lors d’événements significatifs vécus pendant la campagne. Pour un événement antérieur, un Test d’Intelligence peut être requis : difficulté selon ancienneté, de Très facile (+40) pour quelques mois à Difficile (−20) pour un siècle. +1 DR par acquisition aux Tests réussis d’Intelligence pour vous souvenir.",
+      "limitText": "Bonus d’Intelligence",
+      "source": "Dwarf Player’s Guide (V4), p. 80",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-old-salt",
       "nom": "Loup de mer",
-      "description": "Ignore tous les malus de roulis, de tempête ou de météo en pleine mer. Vous comptez comme deux marins pour l'équipage minimal requis.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Old Salt",
+      "sourceLabel": "Loup de mer (Old Salt)",
+      "description": "Lors d’un Test réussi de Ramer ou Voile sur l’océan, utilisez au choix les DR obtenus ou le chiffre du dé des unités. Vous comptez comme deux bateliers pour l’équipage minimum nécessaire à la conduite d’un navire océanique.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 123 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-iron-jaw",
       "nom": "Mâchoires d'acier",
-      "description": "Quand vous subissez un État Sonné, Test de Résistance (+0) immédiat. Chaque DR annule 1 État Sonné.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Iron Jaw",
+      "sourceLabel": "Mâchoires d'acier (Iron Jaw)",
+      "description": "La première fois de chaque rencontre que vous devriez gagner un ou plusieurs états Sonné, vous en gagnez un de moins.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 121 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-war-wizard",
       "nom": "Mage de guerre",
-      "description": "À votre Tour, permet de lancer un sort (NI 5 max) sans utiliser votre Action (gratuitement). Aucun autre sort ne peut être lancé ce tour.",
-      "source": "Livre de base FR (2)"
+      "englishName": "War Wizard",
+      "sourceLabel": "Mage de guerre (War Wizard)",
+      "description": "En Action gratuite, perdez Momentum pour tenter un sort de NI 5 ou moins. Aucun autre Test lié à l'incantation n'est permis ce Tour, y compris Focalisation.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-arcane-magic",
       "nom": "Magie des Arcanes",
-      "description": "Accès à un Domaine.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Arcane Magic",
+      "sourceLabel": "Magie des Arcanes [Domaine] (Arcane Magic)",
+      "description": "Choisissez un Domaine : vous gagnez un Sort et pouvez en mémoriser d’autres. Coût par nouveau Sort selon le nombre déjà connu : 0–5 =100 PX ; 6–10 =200 ; 11–15 =300 ; 16–20 =400 ; 21+ =500. Un seul Domaine normalement ; un Domaine sombre supplémentaire est possible avec l’accord du MJ selon votre formation. Désapprentissage : 100 PX et perte de tous les Sorts liés.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 115 ; achat : p. 191",
+      "specializationLabel": "Domaine"
     },
     {
-      "nom": "Magie des Runes",
-      "description": "Accès aux rituels pour forger des Runes sur l'équipement.",
-      "source": "Dwarf Players Guide"
+      "id": "talent-rune-magic",
+      "nom": "Magie des runes",
+      "englishName": "Rune Magic",
+      "sourceLabel": "Magie des runes [Rune] (Rune Magic)",
+      "description": "Chaque achat apprend une nouvelle rune des listes pp. 125–129, jamais une rune majeure. Respectez les formes ou la rune précise imposées par votre carrière. L'Activité Forge Rune permet de la graver sur un objet. Tests de fabrication de runes réussis : +1 DR par niveau.",
+      "limitText": "Bonus d’Intelligence + Bonus de Force Mentale",
+      "source": "Dwarf Player’s Guide (V4), p. 80",
+      "specializationLabel": "Rune"
     },
     {
+      "id": "talent-master-rune-magic",
       "nom": "Magie des Runes de Maître",
-      "description": "Permet d'inscrire les redoutables Runes Majeures.",
-      "source": "Dwarf Players Guide"
+      "englishName": "Master Rune Magic",
+      "sourceLabel": "Magie des Runes de Maître [Rune majeure] (Master Rune Magic)",
+      "description": "Chaque acquisition apprend une nouvelle rune majeure choisie p. 125–129, dans les formes de runes imposées par le talent lorsqu’elles sont précisées. Permet son inscription par l’Activité Forger une rune, selon les règles p. 119. La première acquisition apprend aussi les trois Runes du Destin p. 130. +1 DR par acquisition aux Tests réussis de Forge runique.",
+      "limitText": "Bonus de Force Mentale",
+      "source": "Dwarf Player’s Guide (V4), p. 80",
+      "specializationLabel": "Rune majeure"
     },
     {
+      "id": "talent-chaos-magic",
       "nom": "Magie du Chaos",
-      "description": "Permet d'apprendre les magies destructrices des Dieux Sombres.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Chaos Magic",
+      "sourceLabel": "Magie du Chaos [Domaine] (Chaos Magic)",
+      "description": "Choisissez un Domaine du Chaos : gagnez un Sort et +1 Corruption à chaque nouveau Sort obtenu. Coût par Sort supplémentaire selon le nombre déjà connu : 0–5 =100 PX ; 6–10 =200 ; 11–15 =300 ; 16–20 =400 ; 21+ =500. Un seul Domaine normalement. Ce talent ne peut jamais être désappris.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 116 ; achat : p. 191",
+      "specializationLabel": "Domaine"
     },
     {
+      "id": "talent-petty-magic",
       "nom": "Magie mineure",
-      "description": "Apprend (Bonus FM) Sorts Mineurs. Les suivants coûtent (Bonus FM x paliers) x 50 PX.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Petty Magic",
+      "sourceLabel": "Magie mineure (Petty Magic)",
+      "description": "Apprenez immédiatement trois sorts de Magie mineure au choix. Coût de chaque sort supplémentaire selon le nombre déjà connu : jusqu’à 5, 50 PX ; 6–10, 100 PX ; 11–15, 150 PX ; 16–20, 200 PX ; 21 ou plus, 250 PX. Abandonner ce talent coûte 100 PX et fait immédiatement perdre tous les sorts qui lui sont liés.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 123 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-magnum-opus",
       "nom": "Magnum opus",
-      "description": "Permet de créer un chef-d'œuvre avec une compétence de Métier. Donne des bonus sociaux majeurs et se vend 10x le prix normal.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Magnum Opus",
+      "sourceLabel": "Magnum opus (Magnum Opus)",
+      "description": "À chaque acquisition, créez un chef-d’œuvre extraordinaire avec une Compétence Art ou Métier. Il impressionne ses témoins et procure des bonus fixés par le MJ, généralement en Sociabilité. Sa vente rapporte au moins dix fois la valeur normale. Chaque nouvelle acquisition produit une nouvelle œuvre.",
+      "limitText": "Sans limitation",
+      "source": "Livre de base V5, p. 122 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-fast-hands",
       "nom": "Mains agiles",
-      "description": "Les passants n'ont pas de Test de Perception passif pour voir vos vols (Escamotage). +10 (par niv) pour juste toucher (sans blesser) qqn en Bagarre.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Fast Hands",
+      "sourceLabel": "Mains agiles (Fast Hands)",
+      "description": "Vous pouvez divertir avec Escamotage en faisant apparaître ou disparaître de petits objets. Avantage V5 aux Tests d’Escamotage et de Corps à corps (Bagarre) pour toucher un adversaire, notamment pour un Sort de contact.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 119 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Maître en Déguisement",
-      "description": "Tests concernés : Divertissement (Interprétation) lorsque vous êtes quelqu’un d’autre. Description : Vous excellez à prendre l’apparence et les manières des autres. Avec rien d’autre que des changements de posture, une torsion du visage et l’utilisation judicieuse de vêtements appropriés, vous parvenez à ne plus vous ressembler du tout sans même avoir besoin d’utiliser un nécessaire de déguisement. Ce talent est si efficace qu'il vous permet même de vous faire passer pour quelqu’un d'un sexe différent",
-      "source": ""
+      "id": "talent-craftsman",
+      "nom": "Maître artisan",
+      "englishName": "Craftsman",
+      "sourceLabel": "Maître artisan [Métier] (Craftsman)",
+      "description": "Choisissez une spécialisation de Métier : vous pouvez toujours l’augmenter, même hors carrière, et ses Tests bénéficient d’Avantage V5. Répétable avec une nouvelle spécialisation à chaque acquisition ; une acquisition par choix.",
+      "limitText": "Sans limitation",
+      "source": "Livre de base V5, p. 117 ; achat : p. 191",
+      "specializationLabel": "Métier",
+      "perSpecializationLimit": 1
     },
     {
+      "id": "talent-master-of-disguise",
+      "nom": "Maître en déguisement",
+      "englishName": "Master of Disguise",
+      "sourceLabel": "Maître en déguisement (Master of Disguise)",
+      "description": "Votre posture, vos expressions et des vêtements adaptés permettent de modifier votre apparence au point de ne plus vous ressembler. Lors d’un Test réussi de Divertissement (Interprétation), utilisez au choix les DR obtenus ou le chiffre du dé des unités.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 122 ; achat : p. 191",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-dicer",
       "nom": "Maîtrise des dés",
-      "description": "Vous permet d'utiliser le dé des unités ou le DR lors d'une partie de dés.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Dicer",
+      "sourceLabel": "Maîtrise des dés (Dicer)",
+      "description": "Avantage V5 à tous vos Tests de Pari.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 118 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-combat-master",
       "nom": "Maîtrise du combat",
-      "description": "Vous comptez pour un combattant supplémentaire face au surnombre.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Combat Master",
+      "sourceLabel": "Maîtrise du combat (Combat Master)",
+      "description": "Vous comptez comme deux personnes pour déterminer si vous êtes en supériorité numérique face à un adversaire ou si votre camp est dépassé en nombre.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 116 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Maniement de 2 armes",
-      "description": "Permet de lancer deux attaques distinctes avec la main secondaire (en ignorant certaines pénalités de main non-directrice).",
-      "source": "Livre de base FR (2)"
+      "id": "talent-dual-wielder",
+      "nom": "Maniement de deux armes",
+      "englishName": "Dual Wielder",
+      "sourceLabel": "Maniement de deux armes (Dual Wielder)",
+      "description": "En combattant avec deux armes, l’attaque gratuite de la seconde arme ne vous coûte pas Momentum. Pendant ce combat à deux armes, les dagues, couteaux et armes similaires que vous maniez gagnent l’Atout Parade.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 119 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-waterman",
       "nom": "Marinier",
-      "description": "Ignore les pénalités environnementales sur les navires fluviaux. Vous comptez comme deux bateliers dans l'équipage minimal.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Waterman",
+      "sourceLabel": "Marinier (Waterman)",
+      "description": "Sur un Test réussi de Ramer ou Voile sur rivière ou lac, choisissez les DR obtenus ou la valeur du dé des unités. Vous comptez comme deux membres d'équipage pour le minimum nécessaire à un bateau fluvial.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Matraqueur (Pummeller)",
-      "description": "Ajoute des états Sonné supplémentaires lorsque vous utilisez l'atout Assommante.",
-      "source": "Dwarf Players Guide"
+      "id": "talent-bludgeoner",
+      "nom": "Matraqueur",
+      "englishName": "Bludgeoner",
+      "sourceLabel": "Matraqueur (Bludgeoner)",
+      "description": "Lorsque vous remportez le Test opposé activant l’Atout Assommante (Pummel), infligez un État Sonné supplémentaire par acquisition de ce talent. Ajoutez +1 DR par acquisition aux Tests de Force réussis pour activer cet Atout.",
+      "limitText": "Bonus de Force",
+      "source": "Dwarf Player’s Guide (V4), p. 79",
+      "specializationLabel": null
     },
     {
+      "id": "talent-short-fuse",
+      "nom": "Mèche courte",
+      "englishName": "Short Fuse",
+      "sourceLabel": "Mèche courte (Short Fuse)",
+      "description": "Avec une arme explosive dotée de Blast, augmentez son indice de +1 par niveau.",
+      "limitText": "Bonus d’Intelligence",
+      "source": "Dwarf Player’s Guide (V4), p. 81",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-cadai-meditation",
+      "nom": "Méditation Cadai",
+      "englishName": "Cadai Meditation",
+      "sourceLabel": "Méditation Cadai (Cadai Meditation)",
+      "description": "Chaque jour, méditez au moins une heure puis effectuez un Test de Prière Accessible (+20). Si vous réussissez, vous pouvez passer à l’état Yenlui (Lumineux).",
+      "limitText": "1",
+      "source": "High Elf Player’s Guide (V4), p. 101",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-menacing",
       "nom": "Menaçant",
-      "description": "Ajoute le niveau du talent en DR à vos tests d'Intimidation.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Menacing",
+      "sourceLabel": "Menaçant (Menacing)",
+      "description": "Avantage V5 aux Tests d’Intimidation. Les voleurs, bandits et pickpockets raisonnables choisissent généralement une autre cible s’ils en disposent.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 122 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-cat-tongued",
       "nom": "Menteur",
-      "description": "Vos mensonges racontés avec Charme ne peuvent pas être détectés par un test d'Intuition passif de l'auditeur.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Cat-tongued",
+      "sourceLabel": "Menteur (Cat-tongued)",
+      "description": "Avantage V5 aux Tests de Charme effectués pour mentir de façon convaincante.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 116 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-strong-swimmer",
+      "nom": "Nageur endurant",
+      "englishName": "Strong Swimmer",
+      "sourceLabel": "Nageur endurant (Strong Swimmer)",
+      "description": "Avantage V5 aux Tests de Natation ; +2 DR aux poursuites à la nage.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-wealthy",
+      "nom": "Nanti",
+      "englishName": "Wealthy",
+      "sourceLabel": "Nanti (Wealthy)",
+      "description": "Quand vous obtenez de l'argent par votre carrière, en jeu ou via une Activité Revenus, recevez 1 couronne d'or supplémentaire. Au niveau 2, ce total devient 3 couronnes d'or supplémentaires.",
+      "limitText": "2",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-dealmaker",
       "nom": "Négociateur",
-      "description": "Modifie le prix de + ou - 10% lors d'un test de Marchandage réussi.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Dealmaker",
+      "sourceLabel": "Négociateur (Dealmaker)",
+      "description": "Avantage V5 aux Tests de Marchandage ; vous savez généralement quand une offre est vraiment définitive.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 117 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-noble-blood",
       "nom": "Noblesse",
-      "description": "Toujours considéré d'un Statut supérieur aux autres (sauf s'ils ont ce talent), à condition d'être habillé de manière appropriée.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Noble Blood",
+      "sourceLabel": "Noblesse (Noble Blood)",
+      "description": "Si vous êtes habillé convenablement, votre statut est toujours considéré comme supérieur d’au moins un Échelon à celui d’autrui, sauf s’il possède aussi Noblesse : comparaison normale. Vous pouvez entrer dans la Carrière Noble comme si elle appartenait à votre Classe actuelle.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 123 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-carouser",
       "nom": "Noctambule",
-      "description": "Inversez le résultat de n'importe quel Test de Résistance à l'alcool raté si cela entraîne un succès.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Carouser",
+      "sourceLabel": "Noctambule (Carouser)",
+      "description": "Une consommation modérée d’alcool n’a pas d’effet négatif ; un Test de Résistance à l’alcool n’est requis qu’en cas d’excès. Avantage V5 à ces Tests et aux Tests de Résistance contre le poison.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 116 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-rover",
       "nom": "Nomade",
-      "description": "Rôder en milieu sauvage ne déclenche pas de jets de Perception passifs chez les cibles non méfiantes.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Rover",
+      "sourceLabel": "Nomade (Rover)",
+      "description": "Avantage V5 aux Tests de Discrétion (Rurale). Vous pouvez généralement déterminer le trajet le plus facile et où trouver gibier, eau et abri.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-numismatics",
       "nom": "Numismate",
-      "description": "Juge la valeur exacte d'une pièce sans test. Repère les fausses pièces d'un simple test d'Évaluation (non opposé au faussaire).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Numismatics",
+      "sourceLabel": "Numismate (Numismatics)",
+      "description": "Avantage V5 aux Tests de Savoir (Héraldique) pour identifier l’origine d’une monnaie, médaille ou bannière. Lors d’un Test réussi d’Évaluation pour estimer un objet, utilisez au choix les DR obtenus ou le chiffre du dé des unités.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 123 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-strong-minded",
       "nom": "Obstiné",
-      "description": "Ajoute votre niveau de talent à votre limite maximale de Détermination.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Strong-minded",
+      "sourceLabel": "Obstiné (Strong-minded)",
+      "description": "Une fois par séance, avant un Test, vous pouvez choisir de le faire sans aucun modificateur négatif.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-eye-of-the-storm",
+      "nom": "Œil de la tempête",
+      "englishName": "Eye of the Storm",
+      "sourceLabel": "Œil de la tempête (Eye of the Storm)",
+      "description": "Après au moins 20 minutes de contemplation, réussissez un Test de Prière Intermédiaire (+0) : les effets durent 1d10 + DRd10 heures. Acquisition 1 : distractions incapables d’interrompre votre Focalisation. Acquisition 2 : récupération d’Exténué en moitié moins de temps et ses pénalités ignorées pour Focalisation et Incantation. Acquisition 3 : sur une table de météo, ajoutez ou retranchez 1 à chaque jet de dé.",
+      "limitText": "3",
+      "source": "High Elf Player’s Guide (V4), p. 105",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-hunter-s-eye",
       "nom": "Œil du chasseur",
-      "description": "Permet de nourrir automatiquement le groupe en chassant.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Hunter's Eye",
+      "sourceLabel": "Œil du chasseur (Hunter's Eye)",
+      "description": "En voyage dans des terres suffisamment giboyeuses, avec le temps et l’équipement nécessaires, vous chassez automatiquement de quoi nourrir votre personnage et un nombre d’autres personnes égal à votre Bonus d’Initiative. Les règles normales de recherche de nourriture permettent d’en obtenir davantage.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 120 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-public-speaker",
       "nom": "Orateur",
-      "description": "Démultiplie la taille de la foule influencée avec Charme.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Public Speaker",
+      "sourceLabel": "Orateur (Public Speaker)",
+      "description": "Vous rassemblez aisément une foule et pouvez généralement évaluer son humeur et ses motivations. Avantage V5 aux Tests de Charme pour influencer un groupe. Après l’avoir charmé ainsi, vous pouvez employer Commandement pour l’inciter à agir, retirer ses états Brisé ou l’influencer autrement.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-perfect-pitch",
       "nom": "Oreille absolue",
-      "description": "Reproduit les notes sans test. Ajoute Divertissement (Chant) à toute carrière (ou coûte 5 PX de moins).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Perfect Pitch",
+      "sourceLabel": "Oreille absolue (Perfect Pitch)",
+      "description": "Vous apprenez un morceau après une seule écoute. Avantage V5 aux Tests de Divertissement (Chant) et de Musicien (au choix).",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 123 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-soul-pact",
+      "nom": "Pacte de l’âme",
+      "englishName": "Soul Pact",
+      "sourceLabel": "Pacte de l’âme (Soul Pact)",
+      "description": "Réservé aux Elfes. Chaque achat conclut un autre pacte ; l'entité exige des sacrifices croissants pour protéger corps et âme du Dhar. Sur un sort de Magie noire qui inflige des dégâts avec des DR au-delà de son NI, dépensez 3 DR pour un effet de votre pacte, compatible avec les effets de surincantation : Hekarti, un coup supplémentaire au corps de dégâts égaux au NI de base ignorant les PA, ou ignorez Incantations imparfaites et gain de Corruption pendant 1d10 Tours ; Slaanesh, 3 cibles à une distance maximale de votre Bonus de Force Mentale en yards font un Test de Calme Difficile (−2 DR), puis celles qui échouent doivent le réussir avant toute action hostile contre vous pendant 2d10 Rounds, sinon elles deviennent Surprises ; Tzeentch, appliquez un résultat de Incantation imparfaite mineure à une autre créature à une distance maximale de votre Bonus de Force Mentale en yards ; démon non aligné, gagnez le Trait Daemonic 8+ jusqu'au Round suivant.",
+      "limitText": "4",
+      "source": "Temple of Spite (édition non nommée, compatible V5), p. 63–64",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-field-dressing",
       "nom": "Pansement de fortune",
-      "description": "Inverse les dés d'un test de Guérison raté (max +1 DR) si l'on agit dans l'urgence en plein combat.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Field Dressing",
+      "sourceLabel": "Pansement de fortune (Field Dressing)",
+      "description": "Avantage V5 aux Tests de Guérison. Vous fabriquez facilement des attelles ou bandages simples avec des matériaux ordinaires.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 119 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-step-aside",
       "nom": "Pas de côté",
-      "description": "Si vous remportez un Test d'Esquive face à une attaque au CàC, vous pouvez vous déplacer de 2m pour vous désengager sans attaque d'opportunité.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Step Aside",
+      "sourceLabel": "Pas de côté (Step Aside)",
+      "description": "Après une défense réussie avec Esquive, vous pouvez vous déplacer jusqu'à 2 yards et ne plus être engagé. Les adversaires n'obtiennent pas d'attaque gratuite.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 126 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-fisherman",
       "nom": "Pêcheur",
-      "description": "Avec 1h de pêche (minimum), nourrit automatiquement un nb de personnes égal à votre niveau de talent.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Fisherman",
+      "sourceLabel": "Pêcheur (Fisherman)",
+      "description": "Avec une étendue d’eau suffisante et l’équipement adapté, pêchez assez pour nourrir votre personnage et un nombre d’autres personnes égal à votre Bonus d’Initiative. Les règles ordinaires de recherche de nourriture permettent d’obtenir davantage.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 119 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-magical-sense",
       "nom": "Perception de la Magie",
-      "description": "Test d'Intuition (+20) face à un mage : Succès = identifié comme sorcier. Succès +6 DR = détecte sa spécialisation exacte.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Magical Sense",
+      "sourceLabel": "Perception de la Magie (Magical Sense)",
+      "description": "Vous détectez immédiatement tout lancement de sort à une distance en yards égale à votre Perception, avec seulement sa direction approximative, sans identifier la magie. Si vous avez Seconde vue ou percevez autrement les Vents, Avantage V5 aux Tests pour discerner leurs mouvements ou variations.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 122 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-tenacious",
       "nom": "Persévérant",
-      "description": "Double le temps de résistance aux privations ou conditions extrêmes sur un test réussi.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Tenacious",
+      "sourceLabel": "Persévérant (Tenacious)",
+      "description": "La première fois d'une rencontre que vous devriez recevoir un ou plusieurs états Exténué, vous en recevez un de moins.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-savvy",
       "nom": "Perspicace",
-      "description": "Octroie un bonus permanent de +5 en Intelligence.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Savvy",
+      "sourceLabel": "Perspicace (Savvy)",
+      "description": "+5 en Intelligence, sans compter comme Augmentations.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-small",
       "nom": "Petit",
-      "description": "Personnage de Taille Petite (modifie dégâts subis/infligés selon les règles de Taille du Bestiaire).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Small",
+      "sourceLabel": "Petit (Small)",
+      "description": "Vous êtes de taille Petite : Points de Blessure = 2×Bonus d’Endurance + Bonus de Force Mentale. Face à un adversaire plus grand, +10 pour le toucher et −2 DR par catégorie de différence si vous défendez avec Capacité de Combat. Ses armes sont Dévastatrices (écart 1) ou Percutantes (écart ≥2), ses dégâts sont multipliés par l’écart (minimum ×1), et ses coups réussis déclenchent les Frappes Mortelles même si vous survivez. Il peut quitter le combat sans désengagement. En Force opposée, avec un écart de 1, vous devez obtenir un Critique pour comparer les DR ; avec un écart ≥2, il gagne automatiquement. S’il est agressif, il cause Peur (écart 1) ou Terreur (écart ≥2), indice égal à l’écart, et peut vous Piétiner : attaque gratuite de Corps à corps (Bagarre), dégâts égaux à son Bonus de Force, coût 1 Avantage V4. Inversez les rapports lorsque votre adversaire est plus petit que vous.",
+      "limitText": "1",
+      "source": "Livre de base V4 (FR), p. 143",
+      "specializationLabel": null
     },
     {
+      "id": "talent-pharmacist",
       "nom": "Pharmacologie",
-      "description": "Vous pouvez inverser les dés de n'importe quel Test de Métier (Apothicaire) raté si cela permet d'obtenir un succès.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Pharmacist",
+      "sourceLabel": "Pharmacologie (Pharmacist)",
+      "description": "Lorsque vous fabriquez un remède alchimique, vous produisez une dose supplémentaire.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-sea-legs",
       "nom": "Pied marin",
-      "description": "Immunité totale aux pénalités et tests de mal de mer (sauf magie/tempêtes extrêmes).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Sea Legs",
+      "sourceLabel": "Pied marin (Sea Legs)",
+      "description": "Aucun Test de mal de mer dans les conditions normales. Si le MJ en exige un, vous bénéficiez d'Avantage V5.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-pilot",
       "nom": "Pilote",
-      "description": "Si vous ratez un test de Voile/Ramer en eaux dangereuses, vous pouvez inverser les dés (Max +1 DR) pour éviter le danger in extremis.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Pilot",
+      "sourceLabel": "Pilote (Pilot)",
+      "description": "Avantage V5 aux Tests de Ramer et de Voile.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-shieldsman",
       "nom": "Porte-bouclier",
-      "description": "Même si vous ratez une parade au bouclier, vous gagnez un nb d'Avantages égal à votre niveau de talent.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Shieldsman",
+      "sourceLabel": "Porte-bouclier (Shieldsman)",
+      "description": "Une fois par Round, avec un bouclier, perdez Momentum pour : donner le bonus de PA du bouclier à un allié adjacent sans bouclier ; ou, après avoir remporté un Test opposé de Corps à corps en attaque ou défense, renoncer aux dégâts pour repousser l'adversaire jusqu'à 2 yards directement et ne plus être engagé.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-commanding-presence",
       "nom": "Présence imposante",
-      "description": "Les personnes d'un Statut inférieur ne peuvent pas utiliser leur Force Mentale pour s'opposer à vos tests de Commandement.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Commanding Presence",
+      "sourceLabel": "Présence imposante (Commanding Presence)",
+      "description": "En l’absence d’autorité reconnue, les gens se tournent naturellement vers vous en cas de crise et suivent vos ordres raisonnables. Avantage V5 aux Tests de Commandement.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 117 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-well-prepared",
       "nom": "Prévoyant",
-      "description": "X fois par session (X = niveau), \"découvrez\" dans votre sac un objet utile non encombrant, payé rétroactivement.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Well-prepared",
+      "sourceLabel": "Prévoyant (Well-prepared)",
+      "description": "Une fois par séance, sortez de vos poches un équipement d'Encombrement 0 utile à la situation, raisonnablement achetable récemment et crédible. Payez son prix à chaque usage ; impossible sans argent. Dépensez des points de Chance pour des usages supplémentaires dans la séance.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Rancune Ancestrale (Ancestral Grudge)",
-      "description": "Obligation mortelle d'éradiquer Orcs, Gobelins et Skavens.",
-      "source": "Dwarf Players Guide"
+      "id": "talent-ancestral-grudge",
+      "nom": "Rancune Ancestrale",
+      "englishName": "Ancestral Grudge",
+      "sourceLabel": "Rancune Ancestrale [Culture ou faction] (Ancestral Grudge)",
+      "description": "Choisissez une culture ou faction et inscrivez-la dans votre Livre des Rancunes. Vous lui portez une Rancune de Sang impossible à satisfaire ; chaque victoire significative contre elle rapporte 50 PX (destruction de ses œuvres, récupération de biens volés, nombreux ennemis tués, etc.).",
+      "limitText": "Bonus de Force Mentale",
+      "source": "Dwarf Player’s Guide (V4), p. 78",
+      "specializationLabel": "Culture ou faction"
     },
     {
+      "id": "talent-tunnel-fighter",
       "nom": "Rat d'égout",
-      "description": "Rôder en souterrain ne déclenche pas de jets de Perception passifs chez les ennemis.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Tunnel Fighter",
+      "sourceLabel": "Rat d'égout (Tunnel Fighter)",
+      "description": "Avantage V5 aux Tests de Discrétion (Souterraine). Vous estimez facilement la distance parcourue sous terre et approximativement la profondeur sous la surface.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-rapid-reload",
       "nom": "Rechargement rapide",
-      "description": "Ajoute le niveau du talent en DR à tout Test étendu pour recharger une arme à distance.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Rapid Reload",
+      "sourceLabel": "Rechargement rapide (Rapid Reload)",
+      "description": "Avec une arme ayant le Défaut Rechargement, réduisez son indice de 1.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-lightning-reflexes",
       "nom": "Réflexes foudroyants",
-      "description": "Octroie un bonus permanent de +5 en Agilité.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Lightning Reflexes",
+      "sourceLabel": "Réflexes foudroyants (Lightning Reflexes)",
+      "description": "+5 en Agilité, sans compter comme une Augmentation.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 121 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-reversal",
       "nom": "Renversement",
-      "description": "Au lieu de gagner 1 Avantage en remportant un test opposé, vous volez tous les Avantages de la cible.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Reversal",
+      "sourceLabel": "Renversement (Reversal)",
+      "description": "Lors d’un Test opposé de Corps à corps, si vous êtes touché mais que votre propre Test a réussi, vous conservez votre Momentum.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Résistance (Menace)",
-      "description": "Réussit automatiquement le 1er test de la séance face à une menace (Poison/Maladie).",
-      "source": "Livre de base FR (2)"
+      "id": "talent-resistant",
+      "nom": "Résistance",
+      "englishName": "Resistant",
+      "sourceLabel": "Résistance [Menace] (Resistant)",
+      "description": "Choisissez une menace. Une fois par séance, avant de lancer un Test pour lui résister, vous pouvez le réussir automatiquement ; Avantage V5 à tous les autres Tests de résistance à cette menace. Répétable avec une nouvelle menace, une fois par choix.",
+      "limitText": "Sans limitation",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": "Menace",
+      "perSpecializationLimit": 1
     },
     {
+      "id": "talent-magic-resistance",
       "nom": "Résistance à la Magie",
-      "description": "Réduit passivement le DR de tous les sorts vous ciblant.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Magic Resistance",
+      "sourceLabel": "Résistance à la Magie (Magic Resistance)",
+      "description": "Réduisez de 3 les DR de tout sort qui devrait vous affecter. Incompatible dans les deux sens avec Focalisation, Magie des arcanes, Béni, Magie du Chaos, Invocation, Magie mineure et Sorcier !.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 122 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-entrenchment",
+      "nom": "Retranchement",
+      "englishName": "Entrenchment",
+      "sourceLabel": "Retranchement (Entrenchment)",
+      "description": "Quand vous êtes à couvert léger, les attaques contre vous subissent −20 au lieu de −10 ; à couvert moyen, −30 au lieu de −20. Ajoutez +1 DR par acquisition aux Tests de Métier réussis pour construire un couvert protecteur.",
+      "limitText": "Bonus d’Intelligence",
+      "source": "Dwarf Player’s Guide (V4), p. 79",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-riposte",
       "nom": "Riposte",
-      "description": "Si vous remportez un test de défense avec une arme Rapide, vous infligez directement des dégâts comme si c'était votre Action. Limité à (niv) fois par round.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Riposte",
+      "sourceLabel": "Riposte (Riposte)",
+      "description": "Si vous remportez un Test opposé en défendant au corps à corps, vous infligez des dégâts comme si vous étiez l'attaquant.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-robust",
       "nom": "Robuste",
-      "description": "Réduit tous les dégâts subis de 1 point par niveau du talent (pour un minimum de 1 dégât encaissé quoi qu'il arrive).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Robust",
+      "sourceLabel": "Robuste (Robust)",
+      "description": "Chaque fois que vous effectuez un Test pour récupérer des Blessures, vous pouvez récupérer 2 Blessures supplémentaires.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 124 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Sang d'Aenarion (Blood of Aenarion)",
-      "description": "Confère +1 Point de Destin et réduit le coût d'achat des sorts/talents.",
-      "source": "High Elf Players Guide"
+      "id": "talent-sanctuary-of-the-mind",
+      "nom": "Sanctuaire de l’esprit",
+      "englishName": "Sanctuary of the Mind",
+      "sourceLabel": "Sanctuaire de l’esprit (Sanctuary of the Mind)",
+      "description": "Après au moins 20 minutes de contemplation, réussissez un Test de Prière Intermédiaire (+0). Effets pendant 1d10 + DR d10 heures : niveau 1, immunité aux points de Corruption issus de l'incantation ; niveau 2, +1 DR aux Tests de Recherche ; niveau 3, ignorez les modificateurs négatifs des états Yenlui.",
+      "limitText": "3",
+      "source": "High Elf Player’s Guide (V4), p. 109",
+      "specializationLabel": null
     },
     {
-      "nom": "Sans peur (Ennemi spécifique)",
-      "description": "permet d'ignorer les effets d'Intimidation, de Peur ou de Terreur de l'ennemi spécifié en réussissant un simple Test de Calme Accessible (+20)",
-      "source": "Livre de base FR (2)"
+      "id": "talent-blood-of-aenarion",
+      "nom": "Sang d'Aenarion",
+      "englishName": "Blood of Aenarion",
+      "sourceLabel": "Sang d'Aenarion [Prodige magique ou martial] (Blood of Aenarion)",
+      "description": "À la création, gagnez +1 Destin et choisissez : prodige magique (coût des Sorts en PX divisé par deux) ou martial (coût divisé par deux de Combat instinctif, Véloce, Réflexes foudroyants, Tireur de précision, Vivacité, Très fort et Guerrier né). Chaque fin de semaine, réussissez un Test de Calme Accessible (+20) ou gagnez la Psychologie Yenlui (Sombre). À la création, tirez aussi la mutation mentale de la table dédiée : elle compte comme une Psychologie, pas comme une mutation pour les limites ou effets de règles. Table 1d100 : 01–20 Hollow Heart ; 21–40 Profane Urgency ; 41–60 Thrill Hunter ; 61–74 Tortured Visions ; 75–89 Unending Malice ; 90–00 Unholy Rage. Effets de ces Psychologies : livre de base V4, p. 185.",
+      "limitText": "1",
+      "source": "High Elf Player’s Guide (V4), p. 51",
+      "specializationLabel": "Prodige magique ou martial"
     },
     {
+      "id": "talent-fearless",
+      "nom": "Sans peur",
+      "englishName": "Fearless",
+      "sourceLabel": "Sans peur [Ennemi] (Fearless)",
+      "description": "Choisissez un groupe d’ennemis : vous êtes immunisé à la Peur causée par ce groupe. Répétable avec un nouveau groupe à chaque acquisition ; une acquisition par groupe.",
+      "limitText": "Sans limitation",
+      "source": "Livre de base V5, p. 119 ; achat : p. 191",
+      "specializationLabel": "Ennemi",
+      "perSpecializationLimit": 1
+    },
+    {
+      "id": "talent-underminer",
+      "nom": "Sapeur",
+      "englishName": "Underminer",
+      "sourceLabel": "Sapeur (Underminer)",
+      "description": "Aucune pénalité pour attaquer À terre ou sous votre cible ; les ennemis n'ont pas de bonus pour vous attaquer À terre. +20 supplémentaire pour toucher un ennemi Surpris en émergeant d'une position cachée sous lui (tunnel, fosse…). Tests de Corps à corps réussis : +1 DR par niveau.",
+      "limitText": "Bonus d’Agilité",
+      "source": "Dwarf Player’s Guide (V4), p. 81",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-jump-up",
       "nom": "Saut carpé",
-      "description": "Si mis À Terre, Test d'Athlétisme (+0) immédiat pour retomber sur ses pieds. Modifié de -10 par tranche de 10 points de Force du coup au-dessus de votre Endurance.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Jump Up",
+      "sourceLabel": "Saut carpé (Jump Up)",
+      "description": "Avantage V5 aux Tests de Représentation (Acrobaties) pour divertir ou vous déplacer rapidement hors combat. Chaque fois que vous subissez À terre, vous pouvez immédiatement réussir un Test d’Athlétisme ou de Représentation (Acrobaties) Intermédiaire (+0 DR) pour vous relever.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 121 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Savant (Savoir)",
-      "description": "Vous connaissez automatiquement, sans aucun test, un nb d'informations expertes exactes égal à votre niveau de talent sur le sujet de votre spécialisation.",
-      "source": "Livre de base FR (2)"
+      "id": "talent-savant",
+      "nom": "Savant",
+      "englishName": "Savant",
+      "sourceLabel": "Savant [Savoir] (Savant)",
+      "description": "Choisissez une spécialisation de Savoir que vous possédez : ses Tests bénéficient d'Avantage V5. Une seule acquisition par spécialisation ; chaque nouvel achat choisit une spécialisation différente.",
+      "limitText": "Sans limitation",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": "Savoir",
+      "perSpecializationLimit": 1
     },
     {
-      "nom": "Savoir-vivre (Groupe)",
-      "description": "Permet de s'intégrer socialement sans pénalité à une faction spécifique (Nobles, Criminels...).",
-      "source": "Livre de base FR (2)"
+      "id": "talent-etiquette",
+      "nom": "Savoir-vivre",
+      "englishName": "Etiquette",
+      "sourceLabel": "Savoir-vivre [Groupe social] (Etiquette)",
+      "description": "Avec la tenue et le comportement appropriés, vous vous intégrez au groupe social choisi. Le MJ peut vous avertir si vous adoptez un comportement que ce groupe jugerait déplacé.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 119 ; achat : p. 191",
+      "specializationLabel": "Groupe social"
     },
     {
+      "id": "talent-second-sight",
       "nom": "Seconde vue",
-      "description": "Octroie la capacité sensorielle de voir les Vents de la Magie, les auras et de suivre les traces magiques.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Second Sight",
+      "sourceLabel": "Seconde vue (Second Sight)",
+      "description": "Vous pouvez percevoir les Vents de Magie selon les règles de perception magique, p. 236.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-war-leader",
       "nom": "Seigneur de guerre",
-      "description": "Tous vos subordonnés capables de vous voir peuvent ajouter votre niveau de talent au DR d'un test de Force Mentale par round.",
-      "source": "Livre de base FR (2)"
+      "englishName": "War Leader",
+      "sourceLabel": "Seigneur de guerre (War Leader)",
+      "description": "Les alliés influencés par votre Commandement en bataille peuvent utiliser votre Commandement plutôt que leur Calme contre la Peur jusqu'à la fin de la bataille. L'effet cesse à votre mort ou pendant vos états Brisé, Inconscient ou Peur.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-acute-sense",
+      "nom": "Sens aiguisé",
+      "englishName": "Acute Sense",
+      "sourceLabel": "Sens aiguisé [Sens] (Acute Sense)",
+      "description": "Un de vos cinq sens est particulièrement développé : le MJ peut autoriser des Tests de Perception pour déceler des détails normalement imperceptibles avec ce sens. Répétable, avec un nouveau sens à chaque acquisition ; une acquisition par sens.",
+      "limitText": "Sans limitation",
+      "source": "Livre de base V5, p. 114 ; achat : p. 191",
+      "specializationLabel": "Sens",
+      "perSpecializationLimit": 1
+    },
+    {
+      "id": "talent-orientation",
+      "nom": "Sens de l'orientation",
+      "englishName": "Orientation",
+      "sourceLabel": "Sens de l'orientation (Orientation)",
+      "description": "Avantage V5 aux Tests d’Orientation. Vous connaissez automatiquement le nord à partir des étoiles, arbres ou autres signes familiers que vous apercevez.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 123 ; achat : p. 191",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-sixth-sense",
+      "nom": "Sixième sens",
+      "englishName": "Sixth Sense",
+      "sourceLabel": "Sixième sens (Sixth Sense)",
+      "description": "Au moment de déclencher un piège ou de subir un danger caché, un Test d'Intuition Intermédiaire (+0 DR) réussi permet de détecter ce danger à la dernière seconde.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 126 ; achat : p. 191",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-gregarious",
       "nom": "Sociable",
-      "description": "Inverse un test de Ragot raté pour le transformer en succès.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Gregarious",
+      "sourceLabel": "Sociable (Gregarious)",
+      "description": "Avantage V5 aux Tests de Ragot ; vous savez généralement où trouver les lieux d’échange de rumeurs dans une agglomération.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 120 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-witch",
       "nom": "Sorcier !",
-      "description": "Ajoute Langue (Magick) à toute carrière. Dépensez 1 point de Résilience pour lancer et mémoriser (0 PX) un sort de n'importe quel Domaine. Limité à (niv) utilisations.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Witch!",
+      "sourceLabel": "Sorcier ! (Witch!)",
+      "description": "Gagnez un sort d'un domaine de Couleur ou de Sorcellerie, sans devoir posséder le talent Arcane Magic correspondant ; sa Focalisation et Langue (Magick) deviennent des compétences de Base. Un sort supplémentaire coûte 200 PX, puis chaque suivant coûte 100 PX de plus (300, 400…). Risque d'attirer les répurgateurs et de compliquer l'entrée dans une tradition magique. Payez 100 PX pour perdre ce talent et tous ses sorts associés. Chaque sort supplémentaire rend aussi sa Focalisation et Langue (Magick) correspondantes accessibles comme compétences de Base.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Sort Supplémentaire (Additional Spell)",
-      "description": "Offre la possibilité d'utiliser un sort hors liste (Slaanesh).",
-      "source": "Power Behind the Throne Companion"
-    },
-    {
+      "id": "talent-catfall",
       "nom": "Souplesse féline",
-      "description": "Test d'Athlétisme en tombant : un succès réduit la distance de chute de 1m (+1m par DR). Si distance réduite à 0, vous ne prenez aucun dégât.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Catfall",
+      "sourceLabel": "Souplesse féline (Catfall)",
+      "description": "Toute chute compte comme volontaire : vous pouvez effectuer un Test d’Athlétisme pour réduire les Dégâts. Avantage V5 aux Tests d’Athlétisme effectués pendant la chute.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 116 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-sprinter",
       "nom": "Sprinter",
-      "description": "Votre attribut de Mouvement compte comme étant augmenté de +1 uniquement lorsque vous Courez.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Sprinter",
+      "sourceLabel": "Sprinter (Sprinter)",
+      "description": "Avantage V5 aux Tests d'Athlétisme pour courir et sauter.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 126 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-bookish",
       "nom": "Studieux",
-      "description": "Inverse les dés d'un test de Recherche raté pour le transformer en succès.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Bookish",
+      "sourceLabel": "Studieux (Bookish)",
+      "description": "Avantage V5 à tous vos Tests de Recherche.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 116 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-briber",
       "nom": "Suborneur",
-      "description": "Le MJ réduit le coût de base de tout pot-de-vin de 10% par niveau du talent (jusqu'à un minimum de 10% du coût initial).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Briber",
+      "sourceLabel": "Suborneur (Briber)",
+      "description": "Quelques mots suffisent pour savoir si quelqu’un accepte un pot-de-vin et quel montant exact est nécessaire pour fermer les yeux ou vous aider. Avantage V5 à tous vos Tests de Subornation.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 116 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Tête Brûlée",
-      "description": "Annule la pénalité de -20 pour les tirs à distance en vol.",
-      "source": "Dwarf Players Guide"
+      "id": "talent-maverick",
+      "nom": "Tête brûlée",
+      "englishName": "Maverick",
+      "sourceLabel": "Tête brûlée (Maverick)",
+      "description": "Vous ignorez la pénalité de −20 aux attaques à distance lorsque vous utilisez le Trait Vol. +1 DR par acquisition aux Tests réussis de Voile (Aéronef) pour voler vite et dangereusement.",
+      "limitText": "Bonus d’Agilité",
+      "source": "Dwarf Player’s Guide (V4), p. 80",
+      "specializationLabel": null
     },
     {
+      "id": "talent-deadeye-shot",
       "nom": "Tir mortel",
-      "description": "Choisissez vous-même la Localisation de votre tir à distance réussi (au lieu de devoir inverser votre dé).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Deadeye Shot",
+      "sourceLabel": "Tir mortel (Deadeye Shot)",
+      "description": "La pénalité d’un Coup ciblé avec une attaque à distance est réduite à −1 DR ; elle est supprimée si le tir est visé.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 117 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-accurate-shot",
       "nom": "Tir précis",
-      "description": "Votre niveau de talent s'ajoute aux Dégâts infligés par toutes vos armes à distance.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Accurate Shot",
+      "sourceLabel": "Tir précis (Accurate Shot)",
+      "description": "Vos attaques à distance réussies infligent +1 Dégât, ou +2 si vous avez pris le temps de viser.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 114 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-fast-shot",
       "nom": "Tir rapide",
-      "description": "Si votre arme est chargée, vous pouvez faire feu avant l'ordre d'Initiative au début du round suivant, mais cela consomme votre Mouvement et Action du tour à venir.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Fast Shot",
+      "sourceLabel": "Tir rapide (Fast Shot)",
+      "description": "Si vous n’êtes pas Engagé, tirez une fois avec une arme chargée ayant le Trait Pistol avant le premier Tour du Round. Cela utilise votre Action du Round : vous agissez normalement à votre Tour, sans autre attaque. Si plusieurs personnages utilisent ce talent, résolvez leurs tirs dans l’ordre d’Initiative de combat.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 119 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-sure-shot",
       "nom": "Tir sûr",
-      "description": "Vous ignorez un nombre de Points d'Armure (PA) de la cible égal à votre niveau de talent lors d'un tir réussi.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Sure Shot",
+      "sourceLabel": "Tir sûr (Sure Shot)",
+      "description": "Vos attaques à distance infligent +1 dégât et peuvent ignorer les armures dotées du Défaut Partial. Si l'arme a la Qualité Impale, ignorez aussi les armures dotées du Défaut Weakpoints.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 127 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-sharpshooter",
       "nom": "Tireur d'élite",
-      "description": "Ignore tous les modificateurs de difficulté liés à la Taille de votre cible.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Sharpshooter",
+      "sourceLabel": "Tireur d'élite (Sharpshooter)",
+      "description": "Vos Tests de tir ignorent les pénalités dues à une cible À terre ou à couvert. Les tirs de précision apparemment impossibles restent possibles, avec un Test de tir réussi dont le MJ fixe la difficulté.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-marksman",
       "nom": "Tireur de précision",
-      "description": "Octroie un bonus permanent de +5 en Capacité de Tir.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Marksman",
+      "sourceLabel": "Tireur de précision (Marksman)",
+      "description": "+5 en Capacité de Tir, sans compter comme une Augmentation.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 122 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-sniper",
       "nom": "Tireur embusqué",
-      "description": "Vous ne subissez aucune pénalité lors d'un tir à Longue distance, et divisez par deux les pénalités à Portée extrême.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Sniper",
+      "sourceLabel": "Tireur embusqué (Sniper)",
+      "description": "Aucune pénalité de tir à longue portée ; seulement −1 DR à portée extrême.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 126 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-tower-of-memories",
       "nom": "Tour des souvenirs",
-      "description": "Mémorise une longue suite d'événements égale à votre Int. Les suites supplémentaires demandent des tests d'Int (+20 à -30). Donne un gros bonus aux jeux de Paris (+20 à +60).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Tower of Memories",
+      "sourceLabel": "Tour des souvenirs (Tower of Memories)",
+      "description": "Sur un Test de Savoir réussi, choisissez les DR obtenus ou la valeur du dé des unités ; vous mémorisez parfaitement de nombreux faits.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-whirlwind-of-death",
+      "nom": "Tourbillon de mort",
+      "englishName": "Whirlwind of Death",
+      "sourceLabel": "Tourbillon de mort (Whirlwind of Death)",
+      "description": "En Action, dépensez 1 point de Chance pour une attaque de Corps à corps contre toutes les créatures engagées avec vous. Le MJ choisit l'ennemi qui oppose le Test. Réussite : mêmes dégâts normaux et même localisation pour toutes, alliés compris. Pas de critiques sur le jet d'attaque, mais Blessures critiques normales pour les ennemis réduits à 0 Blessure. Aucun autre choix d'attaque spéciale ; avec Dual Wielder et deux armes, vous pouvez inverser le jet de Corps à corps.",
+      "limitText": "1",
+      "source": "Dwarf Player’s Guide (V4), p. 81",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-trapper",
       "nom": "Trappeur",
-      "description": "Le MJ fait un test de Perception secret pour vous permettre de détecter automatiquement les pièges sans l'annoncer.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Trapper",
+      "sourceLabel": "Trappeur (Trapper)",
+      "description": "Avantage V5 aux Tests de Piégeage. Avec une heure de préparation, fabriquez un piège pour petit animal ou une fosse dissimulée (p. 136).",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-master-tradesman",
       "nom": "Travailleur qualifié",
-      "description": "Réduit de (votre niveau de talent) le total de DR exigés pour terminer un projet (Test étendu de Métier).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Master Tradesman",
+      "sourceLabel": "Travailleur qualifié [Métier] (Master Tradesman)",
+      "description": "Choisissez une spécialisation de Métier. Lors d’un Test réussi dans cette spécialisation, utilisez au choix les DR obtenus ou le chiffre du dé des unités. Répétable avec une nouvelle spécialisation, une fois par choix.",
+      "limitText": "Sans limitation",
+      "source": "Livre de base V5, p. 122 ; achat : p. 191",
+      "specializationLabel": "Métier",
+      "perSpecializationLimit": 1
     },
     {
+      "id": "talent-very-strong",
       "nom": "Très fort",
-      "description": "Octroie un bonus permanent de +5 en Force.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Very Strong",
+      "sourceLabel": "Très fort (Very Strong)",
+      "description": "+5 en Force, sans compter comme Augmentations.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-very-resilient",
       "nom": "Très résistant",
-      "description": "Octroie un bonus permanent de +5 en Endurance.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Very Resilient",
+      "sourceLabel": "Très résistant (Very Resilient)",
+      "description": "+5 en Endurance, sans compter comme Augmentations.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 128 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-cardsharp",
       "nom": "Tricheur",
-      "description": "Cartes (Pari/Escamotage) : utilisez le DR ou le dé des unités (le meilleur). Recevez +1 carte supp/niv à la donne, puis défaussez pour optimiser votre main.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Cardsharp",
+      "sourceLabel": "Tricheur (Cardsharp)",
+      "description": "Lors d’un Test opposé de Pari, si votre jet est un double, vous pouvez relancer le jet de l’adversaire ; cela annule également tout bénéfice qu’il aurait obtenu avec Escamotage.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 116 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-slayer",
       "nom": "Tueur",
-      "description": "Remplace votre Bonus de Force par l'Endurance ennemie si plus élevée. Sur un Critique contre un monstre plus grand, vos Dégâts de CàC sont multipliés par l'écart de catégories de Taille !",
-      "source": "Livre de base FR (2)"
+      "englishName": "Slayer",
+      "sourceLabel": "Tueur (Slayer)",
+      "description": "Si une créature de Taille supérieure à la vôtre vous Charge, vous gagnez automatiquement Momentum.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 126 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-uncouth-uranai",
+      "nom": "Uranai rustre",
+      "englishName": "Uncouth Uranai",
+      "sourceLabel": "Uranai rustre (Uncouth Uranai)",
+      "description": "Lors des interactions avec les Hauts Elfes de Caledor, Ellyrion, Avelorn ou Saphery, réduisez votre Standing de 1. Ceux des royaumes extérieurs et d'Eataine n'ont pas ce préjugé.",
+      "limitText": "1",
+      "source": "High Elf Player’s Guide (V4), p. 57",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-fleet-footed",
       "nom": "Véloce",
-      "description": "Octroie un bonus permanent de +1 à votre attribut de Mouvement.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Fleet-footed",
+      "sourceLabel": "Véloce (Fleet-footed)",
+      "description": "Gagnez +1 à votre Attribut de Mouvement.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 120 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-vice",
+      "nom": "Vice",
+      "englishName": "Vice",
+      "sourceLabel": "Vice [Cible] (Vice)",
+      "description": "Chaque achat vous donne un nouveau vice (alcool, nourriture, narcotiques, plaisir…). Face à sa cible, Test de Psychologie ; échec : vous vous y adonnez excessivement en abandonnant toute autre action, jusqu'à devenir insensible et gagner 1 état Exténué. À la fin de chaque Round suivant, un nouveau Test peut mettre fin à cet état. −20 aux Tests de Sociabilité envers les témoins. Chaque jour entier sans satisfaire le vice ajoute −20 cumulatif aux Tests de Psychologie jusqu'à satisfaction. Tests de Force Mentale réussis pour résister à la cible : +1 DR par niveau.",
+      "limitText": "Bonus de Force Mentale",
+      "source": "Archives of the Empire 2 (V4), p. 20",
+      "specializationLabel": "Cible"
+    },
+    {
+      "id": "talent-combat-aware",
       "nom": "Vigilance",
-      "description": "Test de Perception (+0) face au danger : Succès = vous ignorez totalement l'État Surpris.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Combat Aware",
+      "sourceLabel": "Vigilance (Combat Aware)",
+      "description": "Vous pouvez tenter un Test de Perception Intermédiaire (+0 DR) pour éviter l’État Surpris. Si le MJ aurait normalement autorisé un Test pour ignorer la Surprise dans cette situation, vous réussissez automatiquement.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 116 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-night-vision",
       "nom": "Vision nocturne",
-      "description": "Vous voyez parfaitement dans les ténèbres naturelles jusqu'à 20m par niveau de talent s'il y a un minimum de lumière ambiante.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Night Vision",
+      "sourceLabel": "Vision nocturne (Night Vision)",
+      "description": "Avec au moins une faible source de lumière naturelle ou équivalente, vous voyez clairement jusqu’à 20 yards ; augmentez aussi de 20 yards la portée effective d’éclairage de toute source lumineuse.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 123 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
-      "nom": "Vision sacrée",
-      "description": "Vous savez automatiquement quand vous entrez sur un sol sacré, et pouvez effectuer un Test d’Intuition pour recevoir des visions (souvent obscures et interprétées via le paradigme de votre culte ou de votre système individuel de croyance) concernant la localité si des événements importants ont eu lieu ici par le passé",
-      "source": "Livre de base FR (2)"
+      "id": "talent-holy-visions",
+      "nom": "Visions sacrées",
+      "englishName": "Holy Visions",
+      "sourceLabel": "Visions sacrées (Holy Visions)",
+      "description": "Vous reconnaissez automatiquement un lieu sacré en y entrant, percevez les Bénédictions, Miracles et sorts de Magie du Chaos lancés dans votre ligne de vue, et sentez le pouvoir divin d’un objet en le touchant.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 120 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-sharp",
       "nom": "Vivacité",
-      "description": "Octroie un bonus permanent de +5 en Initiative.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Sharp",
+      "sourceLabel": "Vivacité (Sharp)",
+      "description": "+5 en Initiative, sans compter comme Augmentations.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-iron-will",
       "nom": "Volonté de fer",
-      "description": "L'utilisation de l'Intimidation contre vous ne provoque pas la Peur et ne vous empêche pas de vous y opposer.",
-      "source": "Livre de base FR (2)"
+      "englishName": "Iron Will",
+      "sourceLabel": "Volonté de fer (Iron Will)",
+      "description": "Avantage V5 aux Tests de Calme pour résister à l’influence d’autrui, qu’elle provienne d’un Test de Sociabilité ou de la magie.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 121 ; achat : p. 191",
+      "specializationLabel": null
     },
     {
+      "id": "talent-seasoned-traveller",
       "nom": "Voyageur aguerri",
-      "description": "Ajoute Savoir (Région) à toute carrière entamée. (Ou permet de l'acheter 2x pour 5 PX de moins si déjà présent).",
-      "source": "Livre de base FR (2)"
+      "englishName": "Seasoned Traveller",
+      "sourceLabel": "Voyageur aguerri (Seasoned Traveller)",
+      "description": "Vous pouvez toujours augmenter le Savoir (Région) correspondant à la région où vous séjournez, même hors de votre carrière actuelle.",
+      "limitText": "1",
+      "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
     }
-  ]
+  ],
+  "legacyAliases": [
+    {
+      "label": "Acharné",
+      "englishName": "Relentless",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Ancestral Grudge*",
+      "englishName": "Ancestral Grudge",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Arcane Magick",
+      "englishName": "Arcane Magic",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Argumentateur",
+      "englishName": "Argumentative",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Artisan",
+      "englishName": "Craftsman",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Béni (Isha)",
+      "englishName": "Blessed by Isha",
+      "provenance": "ancien-mage-haut-elfe-rang-3-vers-source-isha"
+    },
+    {
+      "label": "Béni [Isha]",
+      "englishName": "Blessed by Isha",
+      "provenance": "ancien-mage-haut-elfe-rang-3-vers-source-isha"
+    },
+    {
+      "label": "Bludgeoner*",
+      "englishName": "Bludgeoner",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Cat Fall",
+      "englishName": "Catfall",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Chute de chat",
+      "englishName": "Catfall",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Combat \nMaster",
+      "englishName": "Combat Master",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Combat en espace clos",
+      "englishName": "Enclosed Fighter",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Combattant en espaces clos",
+      "englishName": "Enclosed Fighter",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Cool-headed",
+      "englishName": "Coolheaded",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Coup tournoyant de la mort",
+      "englishName": "Whirlwind of Death",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Crew Commander*",
+      "englishName": "Crew Commander",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Défi à la magie",
+      "englishName": "Magic Defiance",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Défi magique",
+      "englishName": "Magic Defiance",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Demolisher*",
+      "englishName": "Demolisher",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Detect Artifact",
+      "englishName": "Detect Artefact",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Détection d'artéfacts",
+      "englishName": "Detect Artefact",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Détournement de fonds",
+      "englishName": "Embezzle",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Diceman",
+      "englishName": "Dicer",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Dos puissant",
+      "englishName": "Strong Back",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Dragon Belcher*",
+      "englishName": "Dragon Belcher",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Entraîné",
+      "englishName": "Drilled",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Entrenchment*",
+      "englishName": "Entrenchment",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Exercé",
+      "englishName": "Drilled",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Fêtard",
+      "englishName": "Carouser",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Fin de gloire",
+      "englishName": "Glorious Demise",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Fleet Footed",
+      "englishName": "Fleet-footed",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Forgefire*",
+      "englishName": "Forgefire",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Franc-tireur",
+      "englishName": "Sharpshooter",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Garde royale",
+      "englishName": "Kingsguard",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Glorious \nDemise*",
+      "englishName": "Glorious Demise",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Glorious Demise*",
+      "englishName": "Glorious Demise",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Grimpeur de muraille",
+      "englishName": "Scale Sheer Surface",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Haine sainte",
+      "englishName": "Holy Hatred",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Harpooner*",
+      "englishName": "Harpooner",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Intrépide",
+      "englishName": "Fearless",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Kingsguard*",
+      "englishName": "Kingsguard",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "L'esprit sur la matière",
+      "englishName": "Mind over Body",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "L'œil du cyclone",
+      "englishName": "Eye of the Storm",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Langue de vipère",
+      "englishName": "Cat-tongued",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Liquid Fortification*",
+      "englishName": "Liquid Fortification",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Lire/ Écrire",
+      "englishName": "Read/Write",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Long Memory*",
+      "englishName": "Long Memory",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Magic Defiance*",
+      "englishName": "Magic Defiance",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Maître de la Magie des Runes",
+      "englishName": "Master Rune Magic",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Maîtrise de la Magie des Runes",
+      "englishName": "Master Rune Magic",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Maverick*",
+      "englishName": "Maverick",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Mort glorieuse",
+      "englishName": "Glorious Demise",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Nimble Fingered",
+      "englishName": "Nimble-fingered",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Nimblefingered",
+      "englishName": "Nimble-fingered",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Non-conformiste",
+      "englishName": "Maverick",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Ombre",
+      "englishName": "Shadow",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Petty Magick",
+      "englishName": "Petty Magic",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Public Speaking",
+      "englishName": "Public Speaker",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Rage de bataille",
+      "englishName": "Frenzy",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Randonneur",
+      "englishName": "Rover",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Read/ Write",
+      "englishName": "Read/Write",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Rough Rider",
+      "englishName": "Roughrider",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Sang-froid",
+      "englishName": "Coolheaded",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Savoirvivre",
+      "englishName": "Etiquette",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Seasoned \nTraveller",
+      "englishName": "Seasoned Traveller",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Secret Identy",
+      "englishName": "Secret Identity",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Short Fuse*",
+      "englishName": "Short Fuse",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Solidaire",
+      "englishName": "Supportive",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Soutien",
+      "englishName": "Supportive",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Spécialiste du bouclier",
+      "englishName": "Shieldsman",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Stouthearted",
+      "englishName": "Stout-hearted",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Strider",
+      "englishName": "Striding Gait",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Strike to Injure.",
+      "englishName": "Strike to Injure",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Strong Minded",
+      "englishName": "Strong-minded",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Strongminded",
+      "englishName": "Strong-minded",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Tireless*",
+      "englishName": "Tireless",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Tranchant",
+      "englishName": "Sharp",
+      "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Trick Riding",
+      "englishName": "Trick Rider",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Trick-Riding",
+      "englishName": "Trick Rider",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Tunnel Rat",
+      "englishName": "Tunnel Fighter",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Underminer*",
+      "englishName": "Underminer",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Unshakable",
+      "englishName": "Unshakeable",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Vigilance au combat",
+      "englishName": "Combat Aware",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Vision sacrée",
+      "englishName": "Holy Visions",
+      "provenance": "arbitrage-MJ-2026-10-07"
+    },
+    {
+      "label": "Visions saintes",
+      "englishName": "Holy Visions",
+      "provenance": "correspondance-explicite-anciens-libelles-carrieres-2026-10-07"
+    },
+    {
+      "label": "Warleader",
+      "englishName": "War Leader",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Wellprepared",
+      "englishName": "Well-prepared",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Whirlwind of Death*",
+      "englishName": "Whirlwind of Death",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Witch! SPELL FAMILIAR",
+      "englishName": "Witch!",
+      "provenance": "bibliotheque-auditee-2026-10-07"
+    },
+    {
+      "label": "Zèle passionné",
+      "englishName": "Impassioned Zeal",
+      "provenance": "audit-carrieres-2026-10-07"
+    }
+  ],
+  "specializationTranslations": {
+    "Coastal": "Littoral",
+    "Marshes": "Marécages",
+    "Rocky": "Rocailleux",
+    "Woodlands": "Régions boisées",
+    "Any": "au choix",
+    "Outlaws": "Hors-laloi",
+    "Heretics": "Hérétiques",
+    "Heavens": "Cieux",
+    "Any Lore": "Domaine au choix",
+    "Hedgecraft": "Magie naturelle",
+    "Witchcraft": "Sorcellerie",
+    "Apothecary": "Apothicaire",
+    "Boatbuilder": "Constructeur de bateaux",
+    "Explosives": "Explosifs",
+    "Herbalist": "Herboriste",
+    "Engineer": "Ingénieur",
+    "Disease": "Maladie",
+    "Poison": "Poison",
+    "Animals": "Animaux",
+    "Criminals": "Criminels",
+    "Trespassers": "Intrus",
+    "Watchmen": "Miliciens",
+    "Monsters": "Monstres",
+    "Undead": "Morts-vivants",
+    "Wreckers": "Naufrageurs",
+    "Riverwardens": "Patrouilleurs fluviaux",
+    "Roadwardens": "Patrouilleurs routiers",
+    "Bounties": "Primes",
+    "Rats": "Rats",
+    "Skaven": "Skaven",
+    "Witches": "Sorcières",
+    "Everything": "Tout",
+    "Beastmen": "hommes-bêtes",
+    "Herbs": "Herbes",
+    "Engineering": "Ingénierie",
+    "Law": "Loi",
+    "Medicine": "Médecine",
+    "Local Area": "Région",
+    "Theology": "Théologie",
+    "Waterways": "Voies fluviales",
+    "Cultists": "Fidèles",
+    "Nobles": "Nobles",
+    "Servants": "Serviteurs",
+    "Soldiers": "Soldats",
+    "Guilders": "Guilde",
+    "Scholars": "Érudits",
+    "Taste or Touch": "Goût ou Toucher",
+    "Taste": "Goût",
+    "Sight": "Vue",
+    "Empoisonneur": "Empoisonneur",
+    "Any One": "au choix",
+    "Any one": "au choix",
+    "Hearing": "Ouïe",
+    "Smell": "Odorat",
+    "Touch": "Toucher",
+    "Sight or Touch": "Vue ou Toucher",
+    "All": "Tous",
+    "Art Form": "au choix",
+    "Trade": "au choix",
+    "Lore": "au choix",
+    "Enemy": "au choix",
+    "God": "au choix",
+    "Terrain": "au choix",
+    "Sense": "au choix",
+    "Threat": "au choix",
+    "Alchemist": "Alchimiste",
+    "Alchemy": "Alchimie",
+    "All Forms": "Toutes les formes",
+    "Armour Runes and Engineering Runes": "Runes d’armure et runes d’ingénierie",
+    "Blacksmith, Goldsmith, or Engineer": "Forgeron ou Orfèvre ou Ingénieur",
+    "Brewer": "Brasseur",
+    "Cartography": "Cartographie",
+    "Cavalry": "Cavalerie",
+    "Cook": "Cuisinier",
+    "Dark Elves": "Elfes noirs",
+    "Guilder": "Guilde",
+    "Intruders": "Intrus",
+    "Large Beasts": "Grandes bêtes",
+    "Magic": "Magie",
+    "Magic Users": "Lanceurs de sorts",
+    "Mercenaries": "Mercenaires",
+    "Moot terrain": "Terrain du Moot",
+    "Mountains": "Montagnes",
+    "Oceans": "Océans",
+    "Poison or Disease": "Poison ou Maladie",
+    "Poisoner": "Empoisonneur",
+    "Protection Runes": "Runes de protection",
+    "Protection Runes and Talismanic Runes": "Runes de protection et runes talismaniques",
+    "Protective Runes": "Runes de protection",
+    "Rune of Striking": "Rune de frappe",
+    "Sea Monsters": "Monstres marins",
+    "Smith": "Forgeron",
+    "Talismanic Runes": "Runes talismaniques",
+    "The Deceiver": "Le Trompeur",
+    "The Gamester": "Le Joueur",
+    "The Night Prowler": "Le Rôdeur nocturne",
+    "The Protector": "Le Protecteur",
+    "Weapon Runes": "Runes d’armes"
+  }
 }

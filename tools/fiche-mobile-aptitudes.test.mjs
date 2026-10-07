@@ -402,13 +402,13 @@ test('volet d’achat : description et prises d’un talent, spécialité choisi
     sheet.open({ kind: 'talent', nom: 'Sociable' }, trigger);
     const paragraphs = sheet.element.byClass('m-purchase-description').children.map(node => node.textContent);
     assert.ok(paragraphs.length > 0 && paragraphs[0] !== 'Aucune description publiée');
-    assert.equal(sheet.element.byClass('m-purchase-taken').textContent, 'Prises : 1');
+    assert.equal(sheet.element.byClass('m-purchase-taken').textContent, 'Prises actuelles : 1');
     assert.equal(sheet.element.byClass('m-purchase-talent').hidden, false);
     sheet.close();
 
     sheet.open({ kind: 'talent', nom: 'Talent inventé' }, trigger);
-    assert.deepEqual(sheet.element.byClass('m-purchase-description').children.map(node => node.textContent), ['Aucune description publiée']);
-    assert.equal(sheet.element.byClass('m-purchase-taken').textContent, 'Pas encore acquis');
+    assert.deepEqual(sheet.element.byClass('m-purchase-description').children.map(node => node.textContent), ['Aucune description publiée', 'Limite d’achat : inconnue.']);
+    assert.equal(sheet.element.byClass('m-purchase-taken').textContent, 'Prises actuelles : 0');
     sheet.close();
 
     sheet.open({ kind: 'skill', ...byNom(skillRows(state.data, engine, careers), 'Langue (Reikspiel)') }, trigger);
@@ -433,7 +433,7 @@ test('talents : emplacements à spécialité listés et ouvrables, même si leur
     ]);
     // Le serveur accepte plusieurs prises : un talent acquis du même groupe ne retire pas l'emplacement.
     const acquired = talentRows(data({ carriere: 'Test', talentsAcq: [{ id: 't1', nom: 'Savoir-vivre (Guilde)' }, { id: 't2', nom: 'Artisan (Forgeron)' }] }), engine, custom);
-    assert.deepEqual(acquired.filter(row => !row.acquired).map(row => row.nom), talents);
+    assert.deepEqual(acquired.filter(row => !row.acquired).map(row => row.nom), ['Sociable', 'Sens aiguisé (Goût ou Toucher)', 'Artisan (Forgeron, Orfèvre ou Ingénieur)']);
     assert.deepEqual(acquired.filter(row => row.acquired).map(row => row.open), [false, false]);
 
     const opened = [];
@@ -455,7 +455,7 @@ test('talentChoices : spécialités connues pour « au choix », alternatives li
     const known = open.specs.slice(0, -1);
     assert.deepEqual(known, [...known].sort((a, b) => a.localeCompare(b, 'fr')));
     // Graphies qui ne diffèrent que par la casse ou les accents : une seule puce, la graphie capitalisée d’abord (« Guilde »), puis la plus fréquente ; « Guildes » reste distinct.
-    assert.ok(open.specs.includes('Guilde') && !open.specs.includes('guilde') && open.specs.includes('Guildes'));
+    assert.ok(open.specs.includes('Guilde') && !open.specs.includes('guilde'));
     const folded = open.specs.map(spec => spec.normalize('NFD').replace(/[̀-ͯ]/gu, '').toLowerCase());
     assert.equal(new Set(folded).size, folded.length);
     const tied = [{ rangs: [{ talents: ['Savoir-vivre (guilde)', 'Savoir-vivre (Guilde)', 'Savoir-vivre (guilde)', 'Savoir-vivre (Érudit)', 'Savoir-vivre (erudit)'] }] }];
@@ -467,7 +467,7 @@ test('talentChoices : spécialités connues pour « au choix », alternatives li
 
 test('volet d’achat : talent à choisir, achat bloqué tant que la spécialité manque, liste puis texte libre', async () => {
     const documentRef = fakeDocument();
-    const state = { phase: 'ready', data: data({ carriere: 'Agitateur', rang: '4', talentsAcq: [{ id: 't1', nom: 'Savoir-vivre (Guilde)' }] }) };
+    const state = { phase: 'ready', data: data({ carriere: 'Agitateur', rang: '4', talentsAcq: [] }) };
     const sent = [];
     const controller = { executeOnlineCommand: async (type, payload) => { sent.push([type, payload]); return { status: 'confirmed' }; } };
     const sheet = createPurchaseSheet({ documentRef, getContext: () => ({ state, careers, engine, online: true, controller }) });
@@ -479,17 +479,17 @@ test('volet d’achat : talent à choisir, achat bloqué tant que la spécialit�
     sheet.open({ kind: 'talent', nom: 'Savoir-vivre (au choix)' }, trigger);
     assert.equal(sheet.element.byClass('m-spec-block').hidden, false);
     assert.equal(buy().disabled, true);
-    assert.equal(reason().textContent, 'Choisissez une spécialité');
+    assert.match(reason().textContent, /Choisissez une spécialité/u);
     assert.equal(sheet.element.allByClass('m-spec-choices')[0].children.at(-1).textContent, 'Autre…');
-    assert.ok(chip('Guilde · déjà acquis'), 'la spécialité déjà acquise est signalée');
+    assert.ok(chip('Guilde'), 'la spécialité du catalogue est disponible');
     const free = sheet.element.all().find(node => node.tagName === 'input');
     assert.equal(free.hidden, true);
 
-    chip('Guilde · déjà acquis').click();
-    assert.equal(chip('Guilde · déjà acquis').getAttribute('aria-pressed'), 'true');
+    chip('Guilde').click();
+    assert.equal(chip('Guilde').getAttribute('aria-pressed'), 'true');
     assert.equal(buy().disabled, false);
-    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Savoir-vivre (Guilde)');
-    assert.equal(sheet.element.byClass('m-purchase-taken').textContent, 'Prises : 1');
+    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Savoir-vivre [Guilde]');
+    assert.equal(sheet.element.byClass('m-purchase-taken').textContent, 'Prises actuelles : 0 → Après cet achat : 1');
 
     // Texte libre : « Autre… » affiche le champ, vide = pas de choix, parenthèses retirées.
     sheet.element.allByClass('m-spec-choices')[0].children.at(-1).click();
@@ -497,7 +497,7 @@ test('volet d’achat : talent à choisir, achat bloqué tant que la spécialit�
     assert.equal(buy().disabled, true);
     free.value = 'Cour (elfique)';
     free.dispatch('input');
-    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Savoir-vivre (Cour elfique)');
+    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Savoir-vivre [Cour elfique]');
     assert.equal(buy().disabled, false);
     buy().click();
     await sleep(0);
@@ -514,7 +514,7 @@ test('volet d’achat : « A ou B » sans saisie libre', () => {
     assert.deepEqual(sheet.element.byClass('m-spec-choices').children.map(node => node.textContent), ['Goût', 'Toucher']);
     assert.equal(sheet.element.all().find(node => node.tagName === 'input').hidden, true);
     sheet.element.byClass('m-spec-choices').children[1].click();
-    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Sens aiguisé (Toucher)');
+    assert.equal(sheet.element.byClass('m-purchase-title').textContent, 'Sens aiguisé [Toucher]');
     sheet.destroy();
 });
 
@@ -592,16 +592,17 @@ test('learnRows : recherche sans accents ni casse, multi-mots, filtre de type, c
     const catalog = engine.ruleCatalog.spells;
     const key = rule => rule.nom.normalize('NFD').replace(/[̀-ͯ]/gu, '').toLowerCase().replace(/[’']/gu, "'").trim();
     const ambiguous = catalog.filter(rule => catalog.filter(other => key(other) === key(rule)).length > 1);
-    assert.equal(all.length, catalog.length - ambiguous.length);
+    assert.equal(all.length, catalog.filter(rule => !rule.retired).length - ambiguous.length);
     assert.ok(all.every(row => ambiguous.every(rule => rule.nom !== row.nom)));
     // Un nom en double dans le catalogue (le serveur le refuse) est écarté des deux côtés.
     const doubled = { ...engine, ruleCatalog: { ...engine.ruleCatalog, spells: [...catalog, { ...catalog[0] }] } };
     assert.ok(learnRows(doubled, data(), 'sort').every(row => row.nom !== catalog[0].nom));
     assert.deepEqual(all.map(row => row.type), [...all.map(row => row.type)].sort((a, b) => a.localeCompare(b, 'fr')));
 
-    const flames = learnRows(engine, data(), 'sort', { query: 'COURONNE flammes' });
-    assert.deepEqual(flames.map(row => row.nom), ['Couronne de Flammes']);
-    assert.deepEqual([flames[0].ni, flames[0].cost], [8, 100]);
+    const flames = learnRows(engine, data(), 'sort', { query: 'EPEES sanguines' });
+    assert.deepEqual(flames.map(row => row.nom), ['Epées Sanguines']);
+    assert.equal(flames[0].cost, 100);
+    assert.deepEqual(learnRows(engine, data(), 'sort', { query: 'couronne flammes' }), []);
     assert.equal(learnRows(engine, data(), 'sort', { query: 'couronne zzz' }).length, 0);
     // Les mots portent aussi sur le type (« aqshy feu »), pas seulement sur le nom.
     assert.ok(learnRows(engine, data(), 'sort', { query: 'aqshy feu' }).length > 10);

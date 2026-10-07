@@ -1,3 +1,5 @@
+import { createSourceTalentResolver } from './talent-source.mjs';
+
 function exactKey(value) {
     return String(value ?? '').normalize('NFC').replace(/\s+/gu, ' ').trim().toLocaleLowerCase('fr');
 }
@@ -70,6 +72,11 @@ export function createTalentResolver({
     sheetSnapshot,
     templates = [],
 } = {}) {
+    if (sheetSnapshot?.schemaVersion === 2) {
+        const legacyResolver = createTalentResolver({ version, entries, aliases, localDescriptions, templates,
+            sheetSnapshot: { ...sheetSnapshot, schemaVersion: 1 } });
+        return createSourceTalentResolver({ sheetSnapshot, legacyResolver });
+    }
     if (typeof version !== 'string' || !version.trim() || !Array.isArray(entries)
         || !Array.isArray(aliases) || !Array.isArray(localDescriptions) || !Array.isArray(templates)) {
         throw new TypeError('Référentiel de talents invalide.');

@@ -12,6 +12,9 @@ import { writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { loadSkills, validateSkillReferences, formatIssues } from './lib/validate-skills.mjs';
+import { readFile } from 'node:fs/promises';
+import { createTalentResolver } from '../js/catalogue/talent-resolver.js';
+import { careerSkillLabel } from './lib/career-skill-labels.mjs';
 
 const SHEET_ID = '1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs';
 const SHEET_NAME = 'Carri%C3%A8res'; // "Carrières" URL-encodé
@@ -72,7 +75,7 @@ function splitList(s) {
     for (const ch of s) {
         if (ch === '(') { depth++; buf += ch; }
         else if (ch === ')') { depth--; buf += ch; }
-        else if (ch === ',' && depth === 0) { if (buf.trim()) out.push(buf.trim()); buf = ''; }
+        else if ((ch === ',' || ch === ';') && depth === 0) { if (buf.trim()) out.push(buf.trim()); buf = ''; }
         else buf += ch;
     }
     if (buf.trim()) out.push(buf.trim());
@@ -139,6 +142,11 @@ function validate(careers) {
 
 // ── Main ───────────────────────────────────────────────
 async function main() {
+    const [catalogue, sheetSnapshot] = await Promise.all([
+        readFile(resolve(__dirname, '..', 'js/catalogue/referentiel-public.json'), 'utf8').then(JSON.parse),
+        readFile(resolve(__dirname, '..', 'js/catalogue/talents-sheet-snapshot.json'), 'utf8').then(JSON.parse),
+    ]);
+    const talentResolver = createTalentResolver({ version: catalogue.catalogVersion, ...catalogue.talents, sheetSnapshot });
     console.log(`Téléchargement depuis ${URL}…`);
     const res = await fetch(URL);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -178,8 +186,12 @@ async function main() {
             titre: normalize(row[idx.titre]),
             statut: normalize(row[idx.statut]),
             caracs: parseCarac(row[idx.carac]),
-            skills: splitList(normalize(row[idx.skills])),
-            talents: splitList(normalize(row[idx.talents])),
+            skills: splitList(normalize(row[idx.skills])).map(careerSkillLabel),
+            talents: splitList(normalize(row[idx.talents])).map(name => {
+                const match = talentResolver.resolve(name);
+                if (!match.sourceRule) throw new Error(`Talent de carrière sans règle publiée : ${name}`);
+                return match.open ? `${match.entry.nom} (au choix)` : match.purchaseName;
+            }),
         };
 
         let career = careersByNom.get(nom);

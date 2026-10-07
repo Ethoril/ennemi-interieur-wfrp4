@@ -1,4 +1,5 @@
 import { esc, stripAccents, parseCSV } from './utils.js';
+import { createSourceTalentResolver, parseTalentSourceRows } from './catalogue/talent-source.js';
 
 /* ================================================
    GOOGLE SHEETS — Dynamic Data Fetcher & Renderer
@@ -14,11 +15,47 @@ const TABS = [
     { id: 'armes-dist', name: 'Armes à Distance', icon: '🏹', sheet: 'Armes%20%C3%A0%20Distance' },
     { id: 'armures', name: 'Armures', icon: '🛡️', sheet: 'Armures' },
     { id: 'talents', name: 'Talents', icon: '🎭', sheet: 'Talents' },
+    { id: 'carrieres', name: 'Carrières', icon: '📜', sheet: 'Carri%C3%A8res' },
     { id: 'mots-cles', name: 'Mots Clés', icon: '🔑', sheet: 'Mots%20Cl%C3%A9s%20Armes%20et%20Armures' }
 ];
 
 // Cache to avoid refetching
 const dataCache = {};
+
+async function careerTalentLabels(headers, data) {
+    const column = headers.findIndex(header => stripAccents(header).toLowerCase().includes('talents accessibles'));
+    if (column < 0) return { data };
+    const response = await fetch('./js/catalogue/talents-sheet-snapshot.json');
+    if (!response.ok) throw new Error('Nomenclature des talents indisponible.');
+    const metadata = await response.json();
+    let entries = metadata.entries;
+    let warning = '';
+    try {
+        const source = await fetchSheetData('Talents');
+        if (source.error) throw new Error(source.error);
+        entries = parseTalentSourceRows(source.headers, source.data);
+    } catch {
+        warning = 'Le tableau Talents est temporairement invalide ou indisponible. Les noms utilisent le dernier référentiel validé.';
+    }
+    const resolver = createSourceTalentResolver({ sheetSnapshot: { ...metadata, entries },
+        legacyResolver: { version: metadata.catalogVersion, aliasErrors: [], resolve: () => ({ status: 'unknown' }) } });
+    const displayed = data.map(row => {
+        let depth = 0;
+        const names = [];
+        let part = '';
+        for (const char of row[column] || '') {
+            if (char === '(' || char === '[') depth += 1;
+            if (char === ')' || char === ']') depth -= 1;
+            if ((char === ',' || char === ';') && depth === 0) { names.push(part.trim()); part = ''; }
+            else part += char;
+        }
+        if (part.trim()) names.push(part.trim());
+        const copy = [...row];
+        copy[column] = names.map(name => resolver.resolve(name).displayedName || name).join(', ');
+        return copy;
+    });
+    return { data: displayed, warning };
+}
 
 // parseCSV est importé depuis utils.js (source unique partagée avec fiche.js)
 
@@ -93,7 +130,7 @@ function renderCards(container, headers, data, tabId) {
                 windAttr = ` data-wind="${windName}"`;
             }
         }
-        html += `<div class="sheet-card"${windAttr} style="animation-delay: ${idx * 0.03}s">`;
+        html += `<div class="sheet-card"${windAttr} style="animation-delay: ${tabId === 'carrieres' ? 0 : Math.min(idx, 9) * 0.03}s">`;
 
         // Title: use 2nd column (Nom) if it exists, else 1st
         const nameIdx = headers.findIndex(h => h.toLowerCase() === 'nom');
@@ -133,7 +170,7 @@ function renderCards(container, headers, data, tabId) {
 
 // ── Render Table (for Coûts XP) ───────────────────
 function renderTable(container, headers, data) {
-    const TALENT_COST_FIX = '100 PX + 100 PX par fois où le Talent a déjà été pris';
+    const TALENT_COST_FIX = '100 PX par prise en carrière ; 200 PX hors carrière';
 
     const caracIdx = headers.findIndex(h => /caract/i.test(h));
     const compIdx  = headers.findIndex(h => /comp/i.test(h));
@@ -260,13 +297,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const { headers, data, error } = await fetchSheetData(tab.sheet);
 
+        if (tabContainer.querySelector('.active')?.dataset.tab !== tab.id) return;
+
         if (loadingEl) loadingEl.style.display = 'none';
 
         if (error) {
-            contentContainer.innerHTML = `<p class="sheet-error">Erreur de chargement : ${error}</p>`;
+            contentContainer.innerHTML = `<p class="sheet-error">Erreur de chargement : ${esc(error)}</p>`;
             return;
         }
 
-        renderCards(contentContainer, headers, data, tab.id);
+        try {
+            const displayed = tab.id === 'carrieres' ? await careerTalentLabels(headers, data) : { data };
+            if (tabContainer.querySelector('.active')?.dataset.tab !== tab.id) return;
+            renderCards(contentContainer, headers, displayed.data, tab.id);
+            if (displayed.warning) showWarning(displayed.warning);
+        } catch (err) {
+            if (tabContainer.querySelector('.active')?.dataset.tab !== tab.id) return;
+            if (tab.id === 'carrieres') {
+                renderCards(contentContainer, headers, data, tab.id);
+                showWarning('Nomenclature indisponible : les carrières restent consultables avec les libellés du Drive.');
+            } else contentContainer.innerHTML = `<p class="sheet-error">Erreur de chargement : ${esc(err.message)}</p>`;
+        }
+    }
+
+    function showWarning(message) {
+        const warning = document.createElement('p');
+        warning.className = 'sheet-error';
+        warning.style.gridColumn = '1 / -1';
+        warning.setAttribute('role', 'status');
+        warning.textContent = message;
+        contentContainer.prepend(warning);
     }
 });

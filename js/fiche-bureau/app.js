@@ -87,9 +87,9 @@ function renderAptitudes() {
     const talents = talentRows(data, engine, catalogues.careers);
     $('bureau-talents').innerHTML = [true, false].map(acquired => `<h3>${acquired ? 'Acquis' : 'À prendre dans la carrière'}</h3><div class="bureau-talents">${talents.filter(t => t.acquired === acquired).map(t => {
         const inCareer = career && isTalentInCareer(career, +data.rang || 1, t.nom, data.chosenVariants, data.careerOverrides, engine.talentResolver);
-        return specButton(`${esc(t.label)}<small>${acquired ? `${inCareer ? 'De carrière' : 'Hors carrière'} · ×${t.count}` : t.cost === undefined ? 'Spécialité à choisir' : `${t.cost} XP`}</small>`, { kind: 'talent', nom: t.nom }, `bureau-talent ${acquired ? '' : 'is-available'}`);
+        return specButton(`${esc(t.label)}<small>${acquired ? `${inCareer ? 'De carrière' : 'Hors carrière'} · ×${t.count}${t.issue ? ' · À revoir avec le MJ' : ''}` : t.cost === undefined ? 'Spécialité à choisir' : `${t.cost} XP`}</small>`, { kind: 'talent', nom: t.nom }, `bureau-talent ${acquired ? '' : 'is-available'}`);
     }).join('') || '<p class="bureau-muted">Aucun pour l’instant</p>'}</div>`).join('');
-    const spells = spellRows(data);
+    const spells = spellRows(data, engine);
     $('bureau-spells').innerHTML = [...spells.spells, ...spells.prayers].map(row => specButton(`${esc(row.nom)} <small>${esc(row.type)}</small>`, { kind: 'consult', row }, 'bureau-talent')).join('') || '<p class="bureau-muted">Aucun pour l’instant</p>';
 }
 
@@ -115,7 +115,10 @@ function renderSearch() {
     const words = fold(searchQuery).split(/\s+/u).filter(Boolean);
     let choices = [];
     if (kind === 'skill') choices = publishedSkillRows(catalogues.engine.skillResolver).filter(row => !row.basic).map(row => ({ label: row.nom, spec: { kind: 'skill', newName: row.nom } }));
-    if (kind === 'talent') choices = (catalogues.engine.talentResolver.entries || []).filter(row => row.published !== false).map(row => ({ label: row.nom, spec: { kind: 'talent', nom: row.nom } }));
+    if (kind === 'talent') choices = (catalogues.engine.talentResolver.entries || []).filter(row => {
+        const status = catalogues.engine.talentResolver.purchaseStatus?.(state.data, row.nom);
+        return row.published !== false && (!status || (status.known && !status.reached));
+    }).map(row => ({ label: catalogues.engine.resolveTalent(row.nom).displayedName || row.nom, spec: { kind: 'talent', nom: row.nom } }));
     if (kind === 'sort' || kind === 'miracle') choices = learnRows(catalogues.engine, state.data, kind).map(row => ({ label: `${row.nom} · ${row.cost} XP`, spec: { kind, nom: row.nom } }));
     if (kind === 'career') choices = careerChangeOptions(state.data, catalogues.careers, { query: searchQuery, targetRank: selection.targetRank || 1 }).map(row => ({ label: `${row.nom}${row.reason ? ` — ${row.reason}` : ''}`, disabled: !row.ok, spec: { kind: 'rank', rankMode: 'changeCareer', careerId: row.id, targetRank: selection.targetRank || 1 } }));
     const filtered = choices.filter(row => words.every(word => fold(row.label).includes(word)));
@@ -147,9 +150,12 @@ function renderInspector() {
                 if (selection.careerSpecialty) content += `<p class="bureau-muted">La carrière demande ${esc(selection.careerSpecialty)}. Choisissez cette spécialité avant l’achat.</p>`;
                 if (target.total !== undefined) content += `<p>${esc(`${target.baseLabel} ${target.baseValue} + ${target.adv} avances = ${target.total}`)}</p>`;
                 content += (target.description || []).map(line => `<p>${esc(line)}</p>`).join('');
+                if (target.limitStatus) content += `<p>Limite d’achat : ${esc(target.limitStatus.limitText || 'inconnue')}</p>`
+                    + (target.limitStatus.overLimit ? '<p>Acquisitions historiques au-delà de la limite : à revoir avec le MJ.</p>' : '')
+                    + (target.limitStatus.warning ? `<p>${esc(target.limitStatus.warning)}</p>` : '');
                 if (target.maxCount > 1) content += `<div class="bureau-stepper"><button data-action="advance-minus" aria-label="Réduire le nombre d’avances" ${advances <= 1 ? 'disabled' : ''}>−</button><output aria-label="Nombre d’avances">${advances}</output><button data-action="advance-plus" aria-label="Augmenter le nombre d’avances" ${advances >= 10 ? 'disabled' : ''}>+</button><span>avances</span></div>`;
                 if (target.summary) content += `<p>${esc(target.summary)}</p><p>${target.complete ? 'Les trois objectifs sont atteints.' : `${careerProgress(state.data, catalogues.engine, catalogues.careers)?.gauges.reduce((sum, gauge) => sum + Math.max(0, gauge.total - gauge.done), 0) || 0} éléments manquants pour compléter la carrière.`}</p>`;
-                content += `${preview.newTotal === null ? '' : `<p>Nouveau total : <strong>${esc(preview.newTotal)}</strong>${target.kind === 'carac' ? ` · Bonus ${Math.floor(preview.newTotal / 10)}` : ''}</p>`}<p>${esc(target.tariff || (target.inCareer === false ? 'Tarif hors carrière doublé' : 'Tarif de carrière'))}</p><p>Coût : <strong>${preview.cost} XP</strong></p><p class="${preview.after < 0 ? 'bureau-negative' : ''}">XP restantes : ${preview.after}</p><p id="bureau-purchase-reason">${esc(reason)}</p><button class="bureau-purchase" data-action="purchase" aria-describedby="bureau-purchase-reason" ${model.enabled ? '' : 'disabled'}>${target.taken ? 'Reprendre' : 'Acheter'} pour ${preview.cost} XP</button>`;
+                content += `${preview.newTotal === null ? '' : `<p>Nouveau total : <strong>${esc(preview.newTotal)}</strong>${target.kind === 'carac' ? ` · Bonus ${Math.floor(preview.newTotal / 10)}` : ''}</p>`}<p>${esc(target.tariff || (target.inCareer === false ? 'Tarif hors carrière doublé' : 'Tarif de carrière'))}</p><p>Coût : <strong>${preview.cost} XP</strong></p><p class="${preview.after < 0 ? 'bureau-negative' : ''}">XP restantes : ${preview.after}</p><p id="bureau-purchase-reason">${esc(reason)}</p><button class="bureau-purchase" data-action="purchase" aria-describedby="bureau-purchase-reason" ${target.limitStatus?.reached || target.limitStatus?.known === false ? 'hidden' : ''} ${model.enabled ? '' : 'disabled'}>${target.taken ? 'Reprendre' : 'Acheter'} pour ${preview.cost} XP</button>`;
             }
         }
     }

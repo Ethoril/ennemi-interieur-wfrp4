@@ -126,10 +126,13 @@ test('talent à spécialité : nom composé, coût prévu égal au coût accept�
     }
     // Une spécialité déjà acquise reste achetable (le serveur accepte plusieurs prises) et est signalée.
     const twice = data('Agitateur', { rang: '4', talentsAcq: [{ id: 't1', nom: 'Savoir-vivre (Guilde)' }] });
-    const again = assertAgrees('savoir-vivre repris', twice, { kind: 'talent', nom: slot, pick: 'Guilde' }, 1, true);
+    const again = purchaseTarget(twice, engine, careers, { kind: 'talent', nom: slot, pick: 'Guilde' });
     assert.equal(again.taken, 1);
-    assert.equal(again.choice.options.find(({ spec }) => spec === 'Guilde').taken, 1);
+    assert.equal(again.choice.options.some(({ spec }) => spec === 'Guilde'), false);
     assert.equal(twice.talentsAcq.length, 1);
+    assert.match(again.disabledReason, /Limite atteinte/u);
+    assert.throws(() => engine.applyCommand(twice, { type: 'purchase', operationId: 'savoir-vivre-repris',
+        payload: purchasePayload(again, 1, engine) }, { uid: 'u', role: 'joueur' }), /Limite atteinte/u);
 });
 
 test('talent « A ou B » : seuls les choix listés sont acceptés, tarif identique au serveur', () => {

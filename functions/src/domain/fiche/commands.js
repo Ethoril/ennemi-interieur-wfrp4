@@ -94,9 +94,13 @@ function spellKey(value) {
     return normalizeRuleName(value);
 }
 
+function ruleMatches(rule, name) {
+    return [rule?.nom, ...(rule?.aliases || [])].some(label => spellKey(label) === spellKey(name));
+}
+
 function uniqueRule(rules, name, kind) {
     if (!Array.isArray(rules)) fail(`catalogue ${kind} indisponible`, 'failed-precondition', { kind: 'catalog-version-unsupported' });
-    const matches = rules.filter(rule => spellKey(rule?.nom) === spellKey(name));
+    const matches = rules.filter(rule => ruleMatches(rule, name));
     if (matches.length !== 1) fail(`${kind} absent ou ambigu dans le catalogue`, 'not-found', { kind: 'target-not-found' });
     return matches[0];
 }
@@ -133,6 +137,7 @@ function getCatalogSpell(rule) {
         type,
         cn,
         portee: typeof rule.portee === 'string' ? rule.portee.slice(0, TEXT_LIMIT) : '',
+        ...(typeof rule.cible === 'string' ? { cible: rule.cible.slice(0, TEXT_LIMIT) } : {}),
         duree: typeof rule.duree === 'string' ? rule.duree.slice(0, TEXT_LIMIT) : '',
         desc: typeof rule.desc === 'string' ? rule.desc : typeof rule.description === 'string' ? rule.description : '',
     };
@@ -163,6 +168,7 @@ function spellEntry(rule) {
         vent: spellVent(rule.type),
         cn: rule.cn,
         portee: rule.portee,
+        ...(rule.cible !== undefined ? { cible: rule.cible } : {}),
         duree: rule.duree,
         resume: firstParagraph(rule.desc),
     };
@@ -339,7 +345,7 @@ function requirementForPath(data, career, rank, chosen, overrides, skillResolver
     const qualifiedSkills = [...skillAdvances.entries()]
         .filter(([name, advances]) => advances >= threshold && hasAvailableSkill(available, name, skillResolver));
     const currentRankVariants = getVariantsToConsider(career, rank, chosen);
-    const currentRankTalents = currentRankVariants.flatMap(variant => getEffectiveTalents(career, rank, variant, overrides));
+    const currentRankTalents = currentRankVariants.flatMap(variant => getEffectiveTalents(career, rank, variant, overrides, talentResolver));
     // Même règle que la tarification : alternatives « A (X ou Y) » et emplacements « au choix » compris.
     const rankTalents = { id: 'rank-talents', rangs: [{ rang: 1, talents: currentRankTalents }] };
     const hasTalent = (Array.isArray(data.talentsAcq) ? data.talentsAcq : []).some(entry => {
@@ -497,7 +503,11 @@ function purchase(data, command, context, options) {
     } else if (payload.kind === 'talent') {
         const name = cleanText(payload.name, 'nom de talent');
         const resolvedTalent = options.talentResolver?.resolve(name);
-        const canonicalName = resolvedTalent?.status === 'resolved' ? resolvedTalent.entry.nom : name;
+        const canonicalName = resolvedTalent?.status === 'resolved' ? resolvedTalent.purchaseName || resolvedTalent.entry.nom : name;
+        if (options.talentResolver?.purchaseStatus) {
+            const status = options.talentResolver.purchaseStatus(data, canonicalName);
+            if (!status.allowed) fail(status.reason, 'failed-precondition', { kind: 'talent-limit', reason: status.reason });
+        }
         kind = 'talent'; target = canonicalName; targetType = 'talent'; targetStorage = 'talent'; advances = 1;
         const inCareer = career ? isTalentInCareer(career, rank, canonicalName, chosen, overrides, options.talentResolver) : false;
         cost = talentXpCost(inCareer);
@@ -507,11 +517,12 @@ function purchase(data, command, context, options) {
         label = canonicalName;
     } else if (payload.kind === 'sort') {
         const name = cleanText(payload.name, 'nom de sort');
-        if (data.sorts?.some(known => spellKey(known.nom) === spellKey(name))) fail('sort déjà connu', 'failed-precondition', { kind: 'target-not-found' });
         const rules = uniqueRule(options.ruleCatalog.spells, name, 'sort');
+        if (rules.retired) fail('sort retiré des nouveaux achats', 'failed-precondition', { kind: 'target-not-found' });
+        if (data.sorts?.some(known => ruleMatches(rules, known.nom))) fail('sort déjà connu', 'failed-precondition', { kind: 'target-not-found' });
         const spell = getCatalogSpell(rules);
         const knownSpells = (Array.isArray(data.sorts) ? data.sorts : [])
-            .map(known => options.ruleCatalog.spells.find(rule => spellKey(rule?.nom) === spellKey(known.nom)))
+            .map(known => options.ruleCatalog.spells.find(rule => ruleMatches(rule, known.nom)))
             .filter(Boolean).map(getCatalogSpell);
         cost = spellXpCost(spell, knownSpells);
         kind = 'sort'; target = spell.nom; targetType = 'sort'; targetStorage = 'sort'; advances = 1;
@@ -728,8 +739,8 @@ function validateBatchRow(root, row, id, ruleCatalog) {
         cleanText(next.nom, 'nom de sort');
         if (typeof next.vent !== 'string' || !Number.isSafeInteger(next.cn) || next.cn < 0) fail('métadonnées de sort invalides');
         getCatalogSpell(uniqueRule(ruleCatalog.spells, next.nom, 'sort'));
-        for (const key of ['portee', 'duree', 'resume']) if (next[key] !== undefined && typeof next[key] !== 'string') fail(`champ ${key} invalide`);
-        if (Object.keys(next).some(key => !['id', 'nom', 'vent', 'cn', 'portee', 'duree', 'resume', 'type'].includes(key))) fail('champs de sort non pris en charge');
+        for (const key of ['portee', 'cible', 'duree', 'resume']) if (next[key] !== undefined && typeof next[key] !== 'string') fail(`champ ${key} invalide`);
+        if (Object.keys(next).some(key => !['id', 'nom', 'vent', 'cn', 'portee', 'cible', 'duree', 'resume', 'type'].includes(key))) fail('champs de sort non pris en charge');
     } else if (root === 'prieres') {
         cleanText(next.nom, 'nom de prière');
         if (next.type !== undefined && !['Miracle', 'Bénédiction'].includes(next.type)) fail('type de prière invalide');
@@ -892,7 +903,7 @@ function correctBatch(data, command, context, reason, changes, options) {
     return { data, result: { kind: 'batch', reason, fields }, summary: { kind: 'correction', target: reason, fields } };
 }
 
-function cancel(data, command, context) {
+function cancel(data, command, context, talentResolver = null) {
     checkPayloadKeys(command.payload, ['purchaseId']);
     const purchaseId = cleanText(command.payload.purchaseId, 'identifiant d’achat', 200);
     const rows = Array.isArray(data.xpLog) ? data.xpLog : [];
@@ -919,6 +930,17 @@ function cancel(data, command, context) {
     }
     const reversed = clone(data);
     for (const item of original.effects) applyBeforeEffect(reversed, item);
+    for (const row of reversed.talentsAcq || []) {
+        const before = talentResolver?.purchaseStatus?.(data, row.nom);
+        const after = talentResolver?.purchaseStatus?.(reversed, row.nom);
+        if (after?.known && after.overLimit
+            && Math.max(0, after.totalTaken - after.max) > Math.max(0, before.totalTaken - before.max)) {
+            const resolved = talentResolver.resolve(row.nom);
+            const name = resolved.entry?.nom || resolved.displayedName || row.nom;
+            fail(`Cette annulation créerait ou aggraverait un dépassement du plafond de ${name}. Le MJ peut effectuer une correction manuelle.`,
+                'failed-precondition', { kind: 'cancel-talent-limit', reason: `Annulation bloquée : plafond de ${name} dépassé. Une correction manuelle du MJ reste possible.` });
+        }
+    }
     const refund = safeInteger(original.cout, 'coût d’achat', 1);
     const compensation = {
         id: deterministicId(command, 'xp'), operationId: command.operationId,
@@ -1097,7 +1119,7 @@ export function createFicheCommandEngine({ careers, skills, spells, catalogVersi
         const nextData = clone(data);
         const commandContext = { uid: cleanText(context.uid, 'acteur uid', 200), role: context.role, operationId: operationId(command) };
         if (command.type === 'purchase') return purchase(nextData, command, commandContext, options);
-        if (command.type === 'cancel') return cancel(nextData, command, commandContext);
+        if (command.type === 'cancel') return cancel(nextData, command, commandContext, options.talentResolver);
         if (command.type === 'gain') return gain(nextData, command, commandContext);
         if (command.type === 'correct') return correct(nextData, command, commandContext, options);
         if (command.type === 'import') return importData(nextData, command, commandContext);
