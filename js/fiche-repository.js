@@ -18,6 +18,15 @@ export function createFicheRepository({
     }
 
     return Object.freeze({
+        subscribeEquipmentModels(onValue, onError = () => {}) {
+            return onSnapshot(collection(db, 'equipment_models'), snapshot => onValue(
+                snapshot.docs.map(row => ({ id: row.id, ...row.data() })),
+            ), onError);
+        },
+        async saveEquipmentModel(id, item) {
+            if (!/^[A-Za-z0-9_-]{1,100}$/u.test(id)) throw new TypeError('Identifiant de modèle invalide');
+            await setDoc(doc(db, 'equipment_models', id), { item, createdAt: serverTimestamp() });
+        },
         subscribe(charId, onValue, onError = () => {}) {
             if (typeof onValue !== 'function') throw new TypeError('Callback Firestore invalide');
             return onSnapshot(ficheRef(charId), snapshot => onValue({

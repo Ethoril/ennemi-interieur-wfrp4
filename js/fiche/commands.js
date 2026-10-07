@@ -12,6 +12,7 @@ import {
 } from './career-model.js';
 import { BASIC_SKILLS, basicRowFor, basicSkillNom, getCaracForGroup } from './basic-skills.js';
 import { canonicalSkillNom, sameSkill } from './skill-names.js';
+import { applyEquipmentCommand, validateEquipmentItem } from './equipment.js';
 import {
     CARAC_XP_BANDS,
     SKILL_XP_BANDS,
@@ -29,7 +30,7 @@ const EXPORT_KEYS = new Set([
     'nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance',
     'destin', 'corruption', 'possessions', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers',
     'talentsAcq', 'talentsAvail', 'sorts', 'prieres', 'xpLog', 'customSpecs', 'basicSpecs',
-    'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible',
+    'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment',
 ]);
 
 export class FicheCommandError extends Error {
@@ -1039,8 +1040,13 @@ function ensureNoLaterDependencies(rows, index, original) {
     if (dependent) fail('un achat ultérieur dépend de cet achat', 'failed-precondition', { kind: 'purchase-not-reversible' });
 }
 
-function validateImportData(imported) {
+function validateImportData(imported, equipmentCatalogue) {
     if (!isRecord(imported) || Object.keys(imported).some(key => !EXPORT_KEYS.has(key))) fail('format d’import non pris en charge');
+    if (Object.hasOwn(imported, 'equipment')) {
+        if (!Array.isArray(imported.equipment) || imported.equipment.length > 500
+            || new Set(imported.equipment.map(item => item?.id)).size !== imported.equipment.length) fail('équipement importé invalide');
+        for (const item of imported.equipment) validateEquipmentItem(item, equipmentCatalogue);
+    }
     for (const key of ['nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance', 'destin', 'corruption', 'possessions']) {
         if (Object.hasOwn(imported, key) && typeof imported[key] !== 'string') fail(`champ d’import invalide: ${key}`);
     }
@@ -1087,11 +1093,11 @@ function validateImportData(imported) {
     }
 }
 
-function importData(data, command, context) {
+function importData(data, command, context, equipmentCatalogue) {
     if (context.role !== 'mj') fail('commande réservée au MJ', 'permission-denied');
     checkPayloadKeys(command.payload, ['reason', 'data']);
     const reason = requireReason(command.payload);
-    validateImportData(command.payload.data);
+    validateImportData(command.payload.data, equipmentCatalogue);
     const imported = clone(command.payload.data);
     imported.xpLog = (Array.isArray(imported.xpLog) ? imported.xpLog : []).map(entry => {
         const protectedFields = new Set(['operationId', 'origin', 'actorUid', 'purchaseId', 'cancelledByOperationId', 'cancelledPurchaseId', 'effects']);
@@ -1110,7 +1116,7 @@ function importData(data, command, context) {
 }
 
 export function createFicheCommandEngine({ careers, skills, spells, catalogVersion, rankCompletionPolicy = 'automatic',
-    skillResolver = null, talentResolver = null } = {}) {
+    skillResolver = null, talentResolver = null, equipmentCatalogue = null } = {}) {
     const ruleCatalog = knownRuleCatalog(spells);
     const options = { careers: Array.isArray(careers) ? careers : [], skills: Array.isArray(skills) ? skills : [],
         ruleCatalog, catalogVersion, rankCompletionPolicy, skillResolver, talentResolver };
@@ -1122,7 +1128,8 @@ export function createFicheCommandEngine({ careers, skills, spells, catalogVersi
         if (command.type === 'cancel') return cancel(nextData, command, commandContext, options.talentResolver);
         if (command.type === 'gain') return gain(nextData, command, commandContext);
         if (command.type === 'correct') return correct(nextData, command, commandContext, options);
-        if (command.type === 'import') return importData(nextData, command, commandContext);
+        if (command.type === 'equipment') return applyEquipmentCommand(nextData, command, commandContext, equipmentCatalogue);
+        if (command.type === 'import') return importData(nextData, command, commandContext, equipmentCatalogue);
         fail('commande non prise en charge par le moteur XP');
     }
     return Object.freeze({ applyCommand, evaluateCareerCompletion: (data, career, rank) => evaluateCareerCompletion(

@@ -7,7 +7,7 @@ function fail(message, code = 'failed-precondition', details = undefined) {
 }
 
 /** Compose le moteur XP avec une version publiée injectée du référentiel. */
-export function createPublishedCatalogueEngine({ catalogue, careers, skills, spells, talentSheetSnapshot, rankCompletionPolicy = 'automatic' } = {}) {
+export function createPublishedCatalogueEngine({ catalogue, careers, skills, spells, talentSheetSnapshot, rankCompletionPolicy = 'automatic', equipmentCatalogue = null } = {}) {
     if (!catalogue || typeof catalogue.catalogVersion !== 'string' || !catalogue.catalogVersion
         || !catalogue.skills || !catalogue.talents || typeof spells?.catalogVersion !== 'string'
         || !Array.isArray(spells.spells) || !Array.isArray(spells.miracles)) {
@@ -32,7 +32,7 @@ export function createPublishedCatalogueEngine({ catalogue, careers, skills, spe
         + (talentSheetSnapshot?.schemaVersion === 2 ? `|talents:${talentSheetSnapshot.catalogVersion}` : '');
     const publishedSkills = (skillResolver.primaryEntries || skills).map(entry => ({ ...entry, group: entry.nom.split('(')[0].trim(), spec: entry.specialization || '' }));
     const engine = createFicheCommandEngine({ careers, skills: publishedSkills, spells, catalogVersion,
-        rankCompletionPolicy, skillResolver, talentResolver });
+        rankCompletionPolicy, skillResolver, talentResolver, equipmentCatalogue });
     function applyCommand(data, command, context) {
         if (command?.type !== 'purchase' || !command.payload || typeof command.payload.name !== 'string') {
             return engine.applyCommand(data, command, context);

@@ -8,6 +8,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const dataDir = resolve(here, '../../data');
 const readJson = name => JSON.parse(readFileSync(resolve(dataDir, name), 'utf8'));
 const catalog = readJson('fiche-catalog.json');
+const equipmentCatalogue = readJson('equipment-catalog.json');
 const careers = readJson('careers.json');
 const skills = readJson('skills.json');
 
@@ -16,6 +17,7 @@ export const ficheCommandEngine = createFicheCommandEngine({
     skills,
     spells: { spells: catalog.spells, miracles: catalog.miracles },
     catalogVersion: catalog.catalogVersion,
+    equipmentCatalogue,
 });
 
 export const applyFicheDomainCommand = ficheCommandEngine.applyCommand;

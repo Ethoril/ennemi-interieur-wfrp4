@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { executeFicheCommand, FicheCommandError } from '../src/fiche/service.mjs';
 import { createFicheCommandHandler } from '../src/fiche/handler.mjs';
+import { applyEquipmentCommand } from '../../js/fiche/equipment.js';
+import equipmentCatalogue from '../../js/data/equipment-catalog.json' with { type: 'json' };
 
 const PLAYER = { auth: { uid: 'player-1', token: { email: 'PLAYER@example.test', email_verified: true } } };
 const MJ = { auth: { uid: 'mj-1', token: { email: 'ethoril@gmail.com', email_verified: true } } };
@@ -77,6 +79,32 @@ function command(type, payload = {}, overrides = {}) {
 async function rejectCode(promise, code, kind) {
     await assert.rejects(promise, error => error.code === code && (kind === undefined || error.details?.kind === kind));
 }
+
+test('équipement : MJ seul, transaction rejouable, XP préservées et conflit sans écrasement', async () => {
+    const store = createStore(seed());
+    let calls = 0;
+    const services = deps(store, (data, cmd, context) => { calls++; return applyEquipmentCommand(data, cmd, context, equipmentCatalogue); });
+    const base = equipmentCatalogue.items.find(item => item.kind === 'weapon');
+    const request = command('equipment', { action: 'add', item: base, reason: 'Arme de départ' });
+    await rejectCode(executeFicheCommand(request, PLAYER, services), 'permission-denied');
+    assert.equal(calls, 0);
+    const receipt = await executeFicheCommand(request, MJ, services);
+    assert.deepEqual(await executeFicheCommand(request, MJ, services), receipt);
+    assert.equal(calls, 1);
+    const added = store.documents.get('fiches/bhelgi').data.equipment[0];
+    assert.equal(added.id, 'operation-1:equipment');
+    assert.equal(store.documents.get('fiches/bhelgi').data.possessions, 'hache');
+    assert.equal(store.documents.get('fiches/bhelgi').data.xpLog, undefined);
+    assert.match(store.documents.get('fiches/bhelgi/history/operation-1').summary.label, /^Ajout :/u);
+    const edit = command('equipment', { action: 'update', id: added.id, before: added, item: { ...added, name: 'Arme renommée', custom: true }, reason: 'Personnalisation' }, { operationId: 'equipment-edit', baseRevision: 1 });
+    await executeFicheCommand(edit, MJ, services);
+    await rejectCode(executeFicheCommand(command('equipment', { action: 'remove', id: added.id, before: added, reason: 'Retrait' }, { operationId: 'equipment-stale', baseRevision: 1 }), MJ, services), 'aborted', 'conflict');
+    await rejectCode(executeFicheCommand(command('equipment', { action: 'remove', id: added.id, before: added, reason: 'Retrait' }, { operationId: 'equipment-stale-object', baseRevision: 2 }), MJ, services), 'aborted');
+    assert.equal(store.documents.get('fiches/bhelgi').data.equipment[0].name, 'Arme renommée');
+    const latest = store.documents.get('fiches/bhelgi').data.equipment[0];
+    await executeFicheCommand(command('equipment', { action: 'remove', id: latest.id, before: latest, reason: 'Retrait' }, { operationId: 'equipment-remove', baseRevision: 2 }), MJ, services);
+    assert.deepEqual(store.documents.get('fiches/bhelgi').data.equipment, []);
+});
 
 test('purchase écrit fiche, reçu et historique ensemble avec rôle et révision', async () => {
     const store = createStore(seed());

@@ -7,7 +7,7 @@ export const FICHE_EXPORT_KEYS = Object.freeze([
     'nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance',
     'destin', 'corruption', 'possessions', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers',
     'talentsAcq', 'talentsAvail', 'sorts', 'prieres', 'xpLog', 'customSpecs', 'basicSpecs',
-    'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible',
+    'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment',
 ]);
 
 /** Ne garde que les clés exportables, dans l'ordre de la fiche (celui d'exportData du bureau). */

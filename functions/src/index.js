@@ -13,6 +13,7 @@ import { createFicheMigrationHandler } from './fiche/migration-handler.mjs';
 import careers from './data/careers.json' with { type: 'json' };
 import skills from './data/skills.json' with { type: 'json' };
 import spells from './data/fiche-catalog.json' with { type: 'json' };
+import equipmentCatalogue from './data/equipment-catalog.json' with { type: 'json' };
 import initialCatalogue from './catalogue/referentiel-public.json' with { type: 'json' };
 import sheetSnapshot from './catalogue/talents-sheet-snapshot.json' with { type: 'json' };
 import { createPublishedCatalogueEngine } from './domain/fiche/published-catalogue-engine.mjs';
@@ -26,6 +27,7 @@ const createCurrentFicheEngine = catalogue => createPublishedCatalogueEngine({
   skills,
   spells,
   talentSheetSnapshot: sheetSnapshot,
+  equipmentCatalogue,
 });
 
 initializeApp();
