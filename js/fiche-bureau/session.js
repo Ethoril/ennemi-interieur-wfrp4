@@ -8,20 +8,24 @@ import { createFicheRepository } from '../fiche-repository.js';
 import { createFicheSessionView } from '../fiche-session-view.js';
 import { createPublishedCatalogueEngine } from '../fiche/published-catalogue-engine.js';
 
+let equipmentRepository = null;
+export const getEquipmentRepository = () => equipmentRepository;
+
 export async function loadBureauCatalogues() {
-    const paths = ['data/careers.json', 'data/skills.json', 'data/fiche-catalog.json', 'catalogue/referentiel-public.json', 'catalogue/talents-sheet-snapshot.json'];
-    const [careers, skills, spells, catalogue, talentSheetSnapshot] = await Promise.all(paths.map(async path => {
+    const paths = ['data/careers.json', 'data/skills.json', 'data/fiche-catalog.json', 'catalogue/referentiel-public.json', 'catalogue/talents-sheet-snapshot.json', 'data/equipment-catalog.json'];
+    const [careers, skills, spells, catalogue, talentSheetSnapshot, equipmentCatalogue] = await Promise.all(paths.map(async path => {
         const response = await fetch(new URL(`../${path}`, import.meta.url));
         if (!response.ok) throw new Error('Chargement du référentiel impossible.');
         return response.json();
     }));
-    const makeEngine = published => ({ ...createPublishedCatalogueEngine({ catalogue: published, careers, skills, spells, talentSheetSnapshot }), ruleCatalog: spells });
-    return { careers, engine: makeEngine(catalogue), makeEngine };
+    const makeEngine = published => ({ ...createPublishedCatalogueEngine({ catalogue: published, careers, skills, spells, talentSheetSnapshot, equipmentCatalogue }), ruleCatalog: spells });
+    return { careers, equipmentCatalogue, engine: makeEngine(catalogue), makeEngine };
 }
 
 export function connectBureau({ charId, onState, onCatalogue }) {
     const repository = createFicheRepository({ db, doc, onSnapshot, collection, query, orderBy, limit, setDoc, deleteDoc, serverTimestamp,
         callCommand: httpsCallable(functions, 'executeFicheCommand'), callMigration: httpsCallable(functions, 'migrateFiche') });
+    equipmentRepository = repository;
     let sessionView;
     let uid = null;
     let stopCatalogue = () => {};

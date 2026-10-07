@@ -589,6 +589,36 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Les modèles d'équipement sont des copies privées, créées exclusivement par le MJ.
+    match /equipment_models/{id} {
+      allow read, delete: if isGM();
+      allow create: if isGM() && id.matches('^[A-Za-z0-9_-]{1,100}$')
+        && request.resource.data.keys().hasOnly(['item', 'createdAt'])
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.item is map
+        && request.resource.data.item.keys().hasOnly(['id', 'baseId', 'catalogVersion', 'kind', 'name', 'category', 'damage', 'reach', 'range', 'ap', 'locations', 'layer', 'keywords', 'notes', 'source', 'custom'])
+        && request.resource.data.item.name is string && request.resource.data.item.name.size() > 0
+        && request.resource.data.item.name.size() <= 300
+        && request.resource.data.item.keys().hasAll(['id', 'baseId', 'catalogVersion', 'kind', 'name', 'category', 'damage', 'reach', 'range', 'ap', 'locations', 'layer', 'keywords', 'notes', 'source', 'custom'])
+        && request.resource.data.item.kind in ['weapon', 'armour', 'shield', 'ammunition']
+        && request.resource.data.item.layer in ['leather', 'flexible', 'rigid', 'bonus', 'none']
+        && request.resource.data.item.custom is bool
+        && (request.resource.data.item.ap == null || (request.resource.data.item.ap is int && request.resource.data.item.ap >= 0 && request.resource.data.item.ap <= 100))
+        && request.resource.data.item.locations is list && request.resource.data.item.locations.size() <= 6
+        && request.resource.data.item.locations.hasOnly(['head', 'body', 'rightArm', 'leftArm', 'rightLeg', 'leftLeg'])
+        && validText(request.resource.data.item, 'id', 300)
+        && validText(request.resource.data.item, 'baseId', 300)
+        && validText(request.resource.data.item, 'catalogVersion', 300)
+        && validText(request.resource.data.item, 'category', 300)
+        && validText(request.resource.data.item, 'damage', 300)
+        && validText(request.resource.data.item, 'reach', 300)
+        && validText(request.resource.data.item, 'range', 300)
+        && validText(request.resource.data.item, 'notes', 5000)
+        && validText(request.resource.data.item, 'source', 5000)
+        && request.resource.data.item.keywords is list && request.resource.data.item.keywords.size() <= 60;
+      allow update: if false;
+    }
+
     // ── Courriels : création seule, destinataire et forme imposés ──
     match /mail/{id} {
       allow read, update, delete: if false;

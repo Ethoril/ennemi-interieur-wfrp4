@@ -7,11 +7,11 @@ test('#/fiches/<id> ouvre l\'onglet Principal, #/fiches reste la liste', () => {
     assert.deepEqual({ ...parseRoute('#/fiches/test') }, { name: ROUTE_NAMES.FICHE, id: 'test', tab: 'principal' });
 });
 
-test('les quatre onglets sont reconnus, tout autre est inconnu', () => {
-    for (const tab of ['principal', 'aptitudes', 'carriere', 'journal']) {
+test('les cinq onglets sont reconnus, tout autre est inconnu', () => {
+    for (const tab of ['principal', 'aptitudes', 'equipement', 'carriere', 'journal']) {
         assert.deepEqual({ ...parseRoute(`#/fiches/caelel/${tab}`) }, { name: ROUTE_NAMES.FICHE, id: 'caelel', tab });
     }
-    for (const hash of ['#/fiches/caelel/equipement', '#/fiches/caelel/journal/x', '#/fiches/%2e%2e/journal', '#/fiches//journal']) {
+    for (const hash of ['#/fiches/caelel/inconnu', '#/fiches/caelel/journal/x', '#/fiches/%2e%2e/journal', '#/fiches//journal']) {
         assert.equal(parseRoute(hash).name, ROUTE_NAMES.UNKNOWN, hash);
     }
 });
@@ -21,7 +21,7 @@ test('routeToHash omet l\'onglet Principal et fait l\'aller-retour', () => {
     assert.equal(routeToHash({ name: ROUTE_NAMES.FICHE, id: 'test', tab: 'principal' }), '#/fiches/test');
     assert.equal(routeToHash({ name: ROUTE_NAMES.FICHE, id: 'test', tab: 'carriere' }), '#/fiches/test/carriere');
     assert.equal(routeToHash({ name: ROUTE_NAMES.FICHE, id: '../x' }), '#/fiches');
-    for (const tab of ['principal', 'aptitudes', 'carriere', 'journal']) {
+    for (const tab of ['principal', 'aptitudes', 'equipement', 'carriere', 'journal']) {
         const route = parseRoute(`#/fiches/test/${tab}`);
         assert.deepEqual({ ...parseRoute(routeToHash(route)) }, { ...route });
     }

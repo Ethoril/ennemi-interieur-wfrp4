@@ -6,6 +6,8 @@ import { createHash } from 'node:crypto';
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const checkOnly = process.argv.slice(2).includes('--check');
 const generated = [
+    ['js/fiche/equipment.js', 'functions/src/domain/fiche/equipment.js'],
+    ['js/data/equipment-catalog.json', 'functions/src/data/equipment-catalog.json'],
     ['js/fiche/commands.js', 'functions/src/domain/fiche/commands.js'],
     ['js/fiche/career-model.js', 'functions/src/domain/fiche/career-model.js'],
     ['js/fiche/basic-skills.js', 'functions/src/domain/fiche/basic-skills.js'],

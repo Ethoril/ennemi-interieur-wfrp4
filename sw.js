@@ -1,6 +1,6 @@
 // sw.js, en tête. Doit rester identique à APP_VERSION de js/layout.js :
 // la CI le vérifie (.github/workflows/validate.yml).
-const APP_VERSION = 'v2.36.1';
+const APP_VERSION = 'v2.37.0';
 const CACHE_NAME  = 'wfrp-cache-' + APP_VERSION;
 
 const ASSETS_LOCAUX = [
@@ -22,6 +22,12 @@ const ASSETS_LOCAUX = [
   './js/fiche-bureau/app.js',
   './js/fiche-bureau/model.js',
   './js/fiche-bureau/session.js',
+  './css/equipment.css',
+  './js/equipment/view.js',
+  './js/equipment/memo.js',
+  './js/fiche/equipment.js',
+  './js/data/equipment-catalog.json',
+  './docs/memo-armures.pdf',
   './offline.html',
   './css/base.css',
   './css/components.css',
@@ -141,6 +147,11 @@ const ASSETS_LOCAUX = [
   './img/Wren.webp',
   './img/pnj-default.webp',
   './img/pnj-default-medaillon.webp',
+  './img/silhouettes/bhelgi.webp',
+  './img/silhouettes/caelel.webp',
+  './img/silhouettes/elysia.webp',
+  './img/silhouettes/hellaya.webp',
+  './img/silhouettes/wren.webp',
   './img/thumb-empire.webp',
   './img/thumb-vieux-monde.webp',
   './img/thumb-middenheim.webp',

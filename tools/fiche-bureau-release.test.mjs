@@ -20,13 +20,13 @@ test('bureau : CSP conservée et ancienne page raccordée aux modules historique
     assert.match(read('js/fiche-bureau/app.js'), /fiche-ancienne\.html\?/u);
 });
 
-test('bureau : page et graphe local précachés, livraison v2.36.1 cohérente', () => {
+test('bureau : page et graphe local précachés, livraison v2.37.0 cohérente', () => {
     const sw = read('sw.js');
-    assert.match(sw, /APP_VERSION = 'v2\.36\.1'/u);
-    assert.match(read('js/layout.js'), /APP_VERSION = 'v2\.36\.1'/u);
-    assert.match(read('CHANGELOG.md'), /^## \[2\.36\.1\]/u);
+    assert.match(sw, /APP_VERSION = 'v2\.37\.0'/u);
+    assert.match(read('js/layout.js'), /APP_VERSION = 'v2\.37\.0'/u);
+    assert.match(read('CHANGELOG.md'), /^## \[2\.37\.0\]/u);
     const assets = new Set([...sw.matchAll(/['"]\.\/([^'"]+)['"]/gu)].map(match => match[1]));
-    for (const file of ['fiche.html', 'fiche-ancienne.html', 'css/fiche-bureau.css']) assert.ok(assets.has(file), file);
+    for (const file of ['fiche.html', 'fiche-ancienne.html', 'css/fiche-bureau.css', 'css/equipment.css', 'js/data/equipment-catalog.json', 'docs/memo-armures.pdf']) assert.ok(assets.has(file), file);
     const pending = ['js/fiche-bureau/app.js'];
     const visited = new Set();
     while (pending.length) {

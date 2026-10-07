@@ -2,12 +2,12 @@ import { createHash } from 'node:crypto';
 
 export const FICHE_CHAR_IDS = Object.freeze(['bhelgi', 'caelel', 'elysia', 'hellaya', 'wren', 'test']);
 export const FICHE_SCHEMA_VERSION = 2;
-export const FICHE_COMMAND_TYPES = Object.freeze(['patch', 'purchase', 'cancel', 'gain', 'correct', 'import', 'reset']);
+export const FICHE_COMMAND_TYPES = Object.freeze(['patch', 'purchase', 'cancel', 'gain', 'correct', 'import', 'reset', 'equipment']);
 
 const PLAYER_CHAR_IDS = new Set(FICHE_CHAR_IDS.filter(charId => charId !== 'test'));
 const ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/u;
 const PATCH_TYPES = new Set(['patch']);
-const SERVER_ONLY_TYPES = new Set(['gain', 'correct', 'import', 'reset']);
+const SERVER_ONLY_TYPES = new Set(['gain', 'correct', 'import', 'reset', 'equipment']);
 const ADMIN_EMAIL = 'ethoril@gmail.com';
 const PATCH_FIELDS = new Set([
     'nom', 'race', 'blessuresAct', 'resilience', 'determination', 'chance', 'destin',

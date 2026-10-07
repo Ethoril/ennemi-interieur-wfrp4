@@ -100,7 +100,7 @@
   bottom: 0;
   left: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   padding: 0 var(--m-safe-right) var(--m-safe-bottom) var(--m-safe-left);
   background: var(--bg-dark);
   border-top: 1px solid var(--border-subtle);

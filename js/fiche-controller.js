@@ -5,7 +5,7 @@ const SIMPLE_PATHS = new Set([
     'nom', 'race', 'blessuresAct', 'resilience', 'determination', 'chance', 'destin',
     'corruption', 'possessions', 'optVisible.section-sorts', 'optVisible.section-prieres',
 ]);
-const PRIVATE_COMMANDS = new Set(['gain', 'correct', 'import', 'reset']);
+const PRIVATE_COMMANDS = new Set(['gain', 'correct', 'import', 'reset', 'equipment']);
 
 function clone(value) {
     return globalThis.structuredClone(value);

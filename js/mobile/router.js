@@ -15,7 +15,7 @@ const ROUTE_NAMES = Object.freeze({
     UNKNOWN: 'unknown',
 });
 
-const FICHE_TABS = Object.freeze(['principal', 'aptitudes', 'carriere', 'journal']);
+const FICHE_TABS = Object.freeze(['principal', 'aptitudes', 'equipement', 'carriere', 'journal']);
 
 function decodeSegment(segment) {
     if (!segment || segment.includes('/') || segment.includes('\\')) return null;
