@@ -19,6 +19,7 @@ export function connectBureau({charId,onState}) {
  const keys=['cc','ct','f','e','i','ag','dex','int','fm','soc'];
  const role=new URLSearchParams(location.search).get('qa-role')||'joueur';
  let envelope={schemaVersion:2,revision:1,data:{nom:'Hanna Vogt',race:'humain',carriere:'Agitateur',rang:new URLSearchParams(location.search).get('qa-rank')||'1',destin:'2',chance:'2',resilience:'1',determination:'1',blessuresAct:'10',corruption:'0',possessions:'Une plume, un carnet et quelques pièces.',basicSpecs:{},chosenVariants:{},careerOverrides:{},carac:Object.fromEntries(keys.map(k=>[k,{base:30,adv:3}])),skillsBasic:{Charme:3,Esquive:0},skillsAdvanced:[],talentsAcq:[],talentsAvail:[],sorts:[],prieres:[],careers:[],xpLog:[{id:'g',kind:'gain',raison:'Expérience de test',montant:5000}]}};
+ if(new URLSearchParams(location.search).has('qa-talent-duplicate')) envelope.data.talentsAcq=[{id:'vision-old',nom:'Vision sacrée',note:'Première prise'},{id:'vision-new',nom:'Visions sacrées',note:'Doublon'}];
  let notify; let engine; const receipts=new Map();
  const repository={subscribe(id,callback){notify=callback;queueMicrotask(()=>callback({exists:true,envelope}));return ()=>{};},async execute(command){
  if(receipts.has(command.operationId))return receipts.get(command.operationId);
@@ -177,6 +178,52 @@ try {
     page.removeAllListeners('dialog');
     await page.locator('#possessions').fill('Notes sauvegardées automatiquement');
     await page.waitForFunction(() => globalThis.qaController.getState().envelope.data.possessions === 'Notes sauvegardées automatiquement');
+    for (const width of [1280, 320]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(`${base}/fiche.html?char=test&qa-role=mj&qa-talent-duplicate=1`);
+        await page.locator('.bureau-talent').filter({ hasText: 'Visions sacrées' }).click();
+        for (const theme of ['dark', 'parchment']) {
+            await page.evaluate(value => { document.documentElement.dataset.theme = value; }, theme);
+            await page.getByRole('button', { name: 'Corriger', exact: true }).click();
+            const taken = page.locator('input[name="taken"]');
+            const add = page.getByRole('button', { name: 'Ajouter aux corrections MJ', exact: true });
+            assert.equal(await taken.inputValue(), '2', 'Le formulaire compte les deux alias');
+            await add.click();
+            assert.match(await page.locator('#bureau-correction-feedback').innerText(), /Aucun changement/u);
+            assert.match(await page.locator('#bureau-corrections summary').innerText(), /· 0/u);
+            await taken.fill('1');
+            await add.click();
+            assert.equal(await taken.inputValue(), '1');
+            assert.match(await page.locator('#bureau-correction-feedback').innerText(), /Correction ajoutée/u);
+            assert.match(await page.locator('#bureau-corrections summary').innerText(), /· 1/u);
+            await add.click();
+            assert.match(await page.locator('#bureau-corrections summary').innerText(), /· 1/u, 'Un second clic remplace la même cible');
+            assert.equal(await page.evaluate(() => globalThis.qaController.getState().envelope.data.talentsAcq.length), 2, 'Le brouillon ne modifie pas la fiche enregistrée');
+            await taken.fill('0');
+            await add.click();
+            assert.match(await page.locator('#bureau-corrections summary').innerText(), /· 2/u);
+            await taken.fill('1');
+            await add.click();
+            assert.match(await page.locator('#bureau-corrections summary').innerText(), /· 1/u, 'Le changement de nombre remplace aussi les suppressions par alias');
+            await page.screenshot({ path: `${out}/correction-alias-${width}-${theme}.png`, fullPage: true });
+            await taken.fill('2');
+            await add.click();
+            assert.match(await page.locator('#bureau-corrections summary').innerText(), /· 0/u, 'Retour au nombre enregistré : retrait du brouillon');
+        }
+        const beforeCorrection = await page.evaluate(() => ({ data: globalThis.qaController.getState().data, revision: globalThis.qaController.getState().envelope.revision }));
+        await page.locator('input[name="taken"]').fill('1');
+        await page.getByRole('button', { name: 'Ajouter aux corrections MJ', exact: true }).click();
+        await page.getByRole('link', { name: 'Consulter les corrections MJ dans le journal' }).click();
+        await page.locator('#bureau-correction-reason').fill('Retrait du doublon de Visions sacrées');
+        await page.locator('[data-action="submit-corrections"]').click();
+        await page.waitForFunction(() => globalThis.qaController.getState().envelope.data.talentsAcq.length === 1);
+        const afterCorrection = await page.evaluate(() => ({ data: globalThis.qaController.getState().data, revision: globalThis.qaController.getState().envelope.revision }));
+        assert.deepEqual(afterCorrection.data.talentsAcq, [beforeCorrection.data.talentsAcq[0]], 'La première prise et sa note sont conservées');
+        assert.equal(afterCorrection.revision, beforeCorrection.revision + 1, 'Une seule commande serveur');
+        assert.equal(afterCorrection.data.xpLog.length, beforeCorrection.data.xpLog.length + 1, 'Correction tracée dans le journal');
+        assert.equal(afterCorrection.data.xpLog.at(-1).cout, 0, 'Aucun débit ou remboursement XP');
+        assert.deepEqual(afterCorrection.data.xpLog.slice(0, -1), beforeCorrection.data.xpLog, 'Historique XP préservé');
+    }
     assert.deepEqual(errors, []);
     console.log(JSON.stringify({ passed: true, geometry, contrasts, errors, screenshots: out }));
     await context.close();

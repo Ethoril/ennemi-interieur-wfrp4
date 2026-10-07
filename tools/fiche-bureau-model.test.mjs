@@ -5,6 +5,7 @@ import { fileURLToPath, URL } from 'node:url';
 import { loadFicheCatalogue } from '../js/mobile/fiche-catalogue.js';
 import { purchasePayload } from '../js/mobile/fiche-purchase.js';
 import { xpBalance } from '../js/fiche/derived.js';
+import { talentRows, talentTaken } from '../js/mobile/fiche-aptitudes-model.js';
 import { bureauSkills, inspectorModel, missingChips, roleControls, correctionChanges, correctionOverlay, correctionMatches } from '../js/fiche-bureau/model.js';
 
 const read = path => JSON.parse(readFileSync(fileURLToPath(new URL(`../${path}`, import.meta.url)), 'utf8'));
@@ -115,4 +116,42 @@ test('lot MJ : aperçu des corrections et remplacement d’une cible sans cumule
     assert.equal(correctionOverlay(d, updated).talentsAcq.length, 1);
     assert.equal(d.talentsAcq.length, 0);
     assert.equal(xpBalance(correctionOverlay(d, updated)).libre, 5000);
+});
+
+test('correction talent : les alias regroupés sont retirés par leur identifiant, sans toucher aux XP', () => {
+    const d = data({ talentsAcq: [
+        { id: 'vision-old', nom: 'Vision sacrée', note: 'Première prise' },
+        { id: 'vision-new', nom: 'Visions sacrées', note: 'Doublon' },
+        { id: 'other', nom: 'Sociable', note: '' },
+    ] });
+    const spec = { kind: 'talent', nom: talentRows(d, engine, careers).find(row => row.count === 2).nom };
+    const changes = correctionChanges(d, spec, { taken: '1' }, engine);
+    assert.deepEqual(changes, [{ pathParts: ['talentsAcq', 'vision-new'], value: null }]);
+    assert.ok(correctionMatches(changes[0], d, spec, engine));
+    const applied = engine.applyCommand(d, { type: 'correct', operationId: 'alias-correction',
+        payload: { kind: 'batch', reason: 'Retrait du doublon', changes } }, { uid: 'test', role: 'mj' });
+    assert.equal(talentTaken(applied.data, engine, 'Visions sacrées'), 1);
+    assert.deepEqual(applied.data.talentsAcq, [d.talentsAcq[0], d.talentsAcq[2]]);
+    assert.deepEqual(xpBalance(applied.data), xpBalance(d));
+    assert.equal(d.talentsAcq.length, 3);
+});
+
+test('correction talent : remplacement du brouillon par un autre alias, spécialités conservées séparément', () => {
+    const d = data({ talentsAcq: [
+        { id: 'vision-old', nom: 'Vision sacrée', note: '' },
+        { id: 'vision-new', nom: 'Visions sacrées', note: '' },
+        { id: 'fire', nom: 'Magie des arcanes (Feu)', note: '' },
+        { id: 'light', nom: 'Magie des arcanes (Lumière)', note: '' },
+    ] });
+    const spec = { kind: 'talent', nom: 'Holy Visions' };
+    const removals = correctionChanges(d, spec, { taken: '0' }, engine);
+    assert.equal(removals.length, 2);
+    assert.ok(removals.every(item => correctionMatches(item, d, { kind: 'talent', nom: 'Visions sacrées' }, engine)));
+    const additions = correctionChanges(d, spec, { taken: '3' }, engine);
+    assert.ok(correctionMatches(additions[0], d, { kind: 'talent', nom: 'Vision sacrée' }, engine));
+    assert.deepEqual(correctionChanges(d, spec, { taken: '2' }, engine), []);
+    const fire = { kind: 'talent', nom: 'Arcane Magic (Fire)' };
+    assert.equal(talentTaken(d, engine, fire.nom), 1);
+    assert.deepEqual(correctionChanges(d, fire, { taken: '0' }, engine), [{ pathParts: ['talentsAcq', 'fire'], value: null }]);
+    assert.equal(correctionMatches({ pathParts: ['talentsAcq', 'light'], value: null }, d, fire, engine), false);
 });

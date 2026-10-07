@@ -3,7 +3,7 @@ import { activeCareerRank, findCareerByName, getEffectiveSkills, getVariantsToCo
 import { caracTotal, xpBalance } from '../fiche/derived.js';
 import { expandChoiceSkill } from '../fiche/skill-names.js';
 import { skillRows, CARACS } from '../mobile/fiche-model.js';
-import { filterSkills, sortSkills } from '../mobile/fiche-aptitudes-model.js';
+import { filterSkills, sortSkills, talentAcquisitions } from '../mobile/fiche-aptitudes-model.js';
 import { careerProgress } from '../mobile/fiche-career-model.js';
 import { purchaseTarget, purchasePreview } from '../mobile/fiche-purchase.js';
 
@@ -69,7 +69,7 @@ export function missingChips(data, engine, careers) {
     return [caracs, skills, talents];
 }
 
-export function correctionChanges(data, selection, values) {
+export function correctionChanges(data, selection, values, engine) {
     if (selection.kind === 'identity') return ['nom', 'race'].filter(key => values[key] !== data[key]).map(key => ({ pathParts: [key], value: values[key] }));
     if (selection.kind === 'carac') return ['base', 'adv'].filter(key => Number(values[key]) !== data.carac[selection.key][key])
         .map(key => ({ pathParts: ['carac', selection.key, key], value: Number(values[key]) }));
@@ -79,7 +79,7 @@ export function correctionChanges(data, selection, values) {
         return Number(values.adv) === old ? [] : [{ pathParts, value: Number(values.adv) }];
     }
     if (selection.kind === 'talent') {
-        const rows = (data.talentsAcq || []).filter(row => row.nom === selection.nom);
+        const rows = talentAcquisitions(data, engine, selection.nom);
         const desired = Math.max(0, Math.floor(Number(values.taken)) || 0);
         return desired < rows.length ? rows.slice(desired).map(row => ({ pathParts: ['talentsAcq', row.id], value: null }))
             : Array.from({ length: desired - rows.length }, () => ({ pathParts: ['talentsAcq', '@new'], value: { nom: selection.nom, note: '' } }));
@@ -109,11 +109,14 @@ export function correctionOverlay(data, items) {
     return next;
 }
 
-export function correctionMatches(item, data, selection) {
+export function correctionMatches(item, data, selection, engine) {
     const [root, key] = item.pathParts;
     if (selection.kind === 'identity') return ['nom', 'race'].includes(root);
     if (selection.kind === 'carac') return root === 'carac' && key === selection.key;
     if (selection.kind === 'skill') return selection.row ? root === 'skillsBasic' && key === selection.row : root === 'skillsAdvanced' && key === selection.targetId;
-    if (selection.kind === 'talent' && root === 'talentsAcq') return item.value?.nom === selection.nom || data.talentsAcq?.find(row => row.id === key)?.nom === selection.nom;
+    if (selection.kind === 'talent' && root === 'talentsAcq') {
+        const row = key === '@new' ? item.value : data.talentsAcq?.find(row => row.id === key);
+        return !!row && talentAcquisitions({ talentsAcq: [row] }, engine, selection.nom).length > 0;
+    }
     return false;
 }

@@ -83,7 +83,7 @@ test('la release M4-05 aligne meta/cache/changelog et garde /app hors annonce', 
     const currentVersion = layout.match(/APP_VERSION = '(v[^']+)'/u)?.[1];
     assert.ok(currentVersion);
     // La refonte bureau ne modifie pas la version propre à la coque mobile.
-    assert.match(html, /app-version" content="v2.36.0"/u);
+    assert.match(html, /app-version" content="v2.36.1"/u);
     assert.match(sw, new RegExp(`APP_VERSION = '${currentVersion.replaceAll('.', '\\.')}'`));
     assert.match(changelog, /^## \[2\.28\.3\]/mu);
     const currentEntry = changelog.match(/^## \[2[2.23.1]19\.0\][\s\S]*?(?=^## \[2\.18\.0\])/mu)?.[0] ?? '';

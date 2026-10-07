@@ -1,3 +1,9 @@
+## [2.36.1] - 2026-10-07
+
+- Corrections MJ des talents : comptage et retrait cohérents des acquisitions regroupées par alias, notamment « Vision sacrée » et « Visions sacrées » ; spécialités distinctes préservées.
+- Retour visible après l’ajout d’une correction et lien vers le journal pour saisir le motif et enregistrer le lot ; acquisitions conservées et XP inchangées.
+- Tests de régression sur le retrait du doublon, le remplacement du brouillon et l’enregistrement, sur ordinateur et mobile dans les deux thèmes ; cache actualisé.
+
 ## [2.36.0] - 2026-10-07
 
 - Référentiel du Drive : descriptions et plafonds des 206 talents, 136 carrières et 558 rangs ; noms français et options entre crochets.

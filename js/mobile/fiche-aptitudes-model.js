@@ -66,10 +66,15 @@ function talentKey(engine, nom) {
     return match?.status === 'resolved' && !match.template ? match.entry.id : `n:${fold(nom).trim()}`;
 }
 
+/** Lignes acquises d'un même talent, alias compris et spécialités distinctes. */
+export function talentAcquisitions(data, engine, nom) {
+    const key = talentKey(engine, nom);
+    return (data?.talentsAcq || []).filter(row => talentKey(engine, row?.nom ?? '') === key);
+}
+
 /** Nombre de prises d'un talent déjà acquis. */
 export function talentTaken(data, engine, nom) {
-    const key = talentKey(engine, nom);
-    return (data?.talentsAcq || []).filter(row => talentKey(engine, row?.nom ?? '') === key).length;
+    return talentAcquisitions(data, engine, nom).length;
 }
 
 /**

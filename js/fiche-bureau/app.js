@@ -1,6 +1,6 @@
 import { esc, stripAccents } from '../utils.js';
 import { CARACS, ficheIdentity, ficheCaracs, resourceTokens, dotTarget, resourceChange, xpLogRows } from '../mobile/fiche-model.js';
-import { talentRows, spellRows, learnRows } from '../mobile/fiche-aptitudes-model.js';
+import { talentRows, talentTaken, spellRows, learnRows } from '../mobile/fiche-aptitudes-model.js';
 import { careerProgress, careerChangeOptions } from '../mobile/fiche-career-model.js';
 import { purchasePayload, purchaseErrorMessage, cancelErrorMessage } from '../mobile/fiche-purchase.js';
 import { blessuresMax, mouvement, xpBalance } from '../fiche/derived.js';
@@ -26,6 +26,7 @@ let mode = 'buy';
 
 let correctionItems = [];
 let correctionReason = '';
+let correctionFeedback = '';
 let message = '';
 let lastFailure = null;
 let searchQuery = '';
@@ -106,8 +107,8 @@ function renderCorrection() {
     if (selection.kind === 'identity') fields = `<label>Nom<input name="nom" value="${esc(data.nom || '')}" required maxlength="200"></label><label>Race<select name="race">${Object.entries(races).map(([key, label]) => `<option value="${key}" ${data.race === key ? 'selected' : ''}>${label}</option>`).join('')}</select></label>`;
     if (selection.kind === 'carac') fields = ['base', 'adv'].map(key => `<label>${key === 'base' ? 'Base' : 'Avances'}<input name="${key}" type="number" min="0" max="10000" value="${esc(data.carac[selection.key][key])}" required></label>`).join('');
     if (selection.kind === 'skill') fields = `<label>Avances<input name="adv" type="number" min="0" max="10000" value="${esc(selection.row ? data.skillsBasic?.[selection.row] || 0 : data.skillsAdvanced.find(row => row.id === selection.targetId)?.adv || 0)}" required></label>`;
-    if (selection.kind === 'talent') fields = `<label>Nombre de prises (0 pour retirer)<input name="taken" type="number" min="0" max="50" value="${(data.talentsAcq || []).filter(row => row.nom === selection.nom).length}" required></label>`;
-    return `<form id="bureau-correction-form" class="bureau-correction-form">${fields}<p>Aucune XP débitée. La correction sera ajoutée au lot MJ du journal.</p><button ${roleControls(state).actions ? '' : 'disabled'}>Ajouter aux corrections MJ</button></form>`;
+    if (selection.kind === 'talent') fields = `<label>Nombre de prises (0 pour retirer)<input name="taken" type="number" min="0" max="50" value="${talentTaken(data, catalogues.engine, selection.nom)}" required></label>`;
+    return `<form id="bureau-correction-form" class="bureau-correction-form">${fields}<p>Aucune XP débitée. La correction sera ajoutée au lot MJ du journal.</p><button ${roleControls(state).actions ? '' : 'disabled'}>Ajouter aux corrections MJ</button><p id="bureau-correction-feedback" role="status" aria-live="polite">${esc(correctionFeedback)}</p><a href="#journal">Consulter les corrections MJ dans le journal</a></form>`;
 }
 
 function renderSearch() {
@@ -204,7 +205,7 @@ function render() {
 
 function select(spec, origin) {
     selection = spec; selectionOrigin = origin?.dataset?.origin || null;
-    advances = 1; mode = 'buy'; lastFailure = null; searchQuery = ''; renderInspector();
+    advances = 1; mode = 'buy'; lastFailure = null; searchQuery = ''; correctionFeedback = ''; renderInspector();
     $('bureau-detail-title')?.focus({ preventScroll: true });
     $('bureau-search')?.focus({ preventScroll: true });
 }
@@ -225,7 +226,7 @@ async function command(type, payload, retry = false) {
         const result = retry ? await controller.retryPendingCommand() : await controller.executeOnlineCommand(type, payload);
         message = result.status === 'confirmed' ? 'Modification enregistrée.' : 'Confirmation serveur en attente. Utilisez Réessayer si nécessaire.';
         if (result.status !== 'confirmed' && result.status !== 'stale') lastFailure = { type, payload, selection: attemptedSelection, count: attemptedCount };
-        if (result.status === 'confirmed' && type === 'correct' && payload.kind === 'batch') { correctionItems = []; correctionReason = ''; controller.removeCorrectionDraft(); }
+        if (result.status === 'confirmed' && type === 'correct' && payload.kind === 'batch') { correctionItems = []; correctionReason = ''; correctionFeedback = ''; controller.removeCorrectionDraft(); }
     } catch (error) {
         message = type === 'cancel' ? cancelErrorMessage(error) : purchaseErrorMessage(error);
         lastFailure = { type, payload, selection: attemptedSelection, count: attemptedCount };
@@ -244,7 +245,7 @@ function stageCorrections(changes) {
         if (existing) existing.value = change.value;
         else correctionItems.push({ ...change, baseValue: readPath(baseline, change.pathParts) });
     }
-    persistCorrections(); message = `${correctionItems.length} correction(s) en attente dans le journal.`; render();
+    persistCorrections(); message = correctionItems.length ? `${correctionItems.length} correction(s) en attente dans le journal.` : 'Aucune correction en attente dans le journal.'; render();
 }
 
 // Le contrôleur persiste immédiatement le brouillon ; seul l’envoi cloud est temporisé.
@@ -264,7 +265,7 @@ $('bureau-content').addEventListener('click', async event => {
     if (name === 'close') { closeInspector(); return; }
     if (name === 'search' || name === 'change-career') { select({ kind: 'search', searchKind: button.dataset.kind || 'career' }, button); return; }
     if (name === 'identity') { select({ kind: 'identity' }, button); return; }
-    if (name === 'buy-mode' || name === 'correct-mode') { mode = name === 'buy-mode' ? 'buy' : 'correct'; renderInspector(); return; }
+    if (name === 'buy-mode' || name === 'correct-mode') { mode = name === 'buy-mode' ? 'buy' : 'correct'; correctionFeedback = ''; renderInspector(); return; }
     if (name === 'advance-minus' || name === 'advance-plus') { advances = Math.max(1, Math.min(10, advances + (name === 'advance-plus' ? 1 : -1))); renderInspector(); return; }
     if (name === 'talent-pick') { selection.pick = button.dataset.value; renderInspector(); return; }
     if (name === 'purchase') {
@@ -350,8 +351,11 @@ $('bureau-content').addEventListener('submit', event => {
     event.preventDefault();
     if (!roleControls(state).actions) return;
     const values = Object.fromEntries([...event.target.querySelectorAll('[name]')].map(input => [input.name, input.value]));
-    correctionItems = correctionItems.filter(item => !correctionMatches(item, state.data, selection));
-    stageCorrections(correctionChanges(state.data, selection, values));
+    const changes = correctionChanges(state.data, selection, values, catalogues.engine);
+    correctionItems = correctionItems.filter(item => !correctionMatches(item, state.data, selection, catalogues.engine));
+    correctionFeedback = changes.length ? 'Correction ajoutée au lot MJ. Saisissez un motif dans le journal puis enregistrez les corrections.'
+        : 'Aucun changement à ajouter : ces valeurs correspondent déjà à la fiche enregistrée.';
+    stageCorrections(changes);
 });
 $('btn-import-fiche').addEventListener('click', () => { if (state.role === 'mj') $('bureau-import').click(); });
 $('bureau-import').addEventListener('change', async event => {
@@ -377,7 +381,7 @@ async function start() {
             catch { message = 'Référentiel publié indisponible. Rechargez la fiche.'; render(); }
         }, onState: next => {
             const nextKey = `${next.uid || ''}:${next.charId || ''}:${next.role || ''}`;
-            if (nextKey !== sessionKey) { sessionKey = nextKey; selection = null; correctionItems = []; correctionReason = ''; lastFailure = null; message = ''; viewer?.destroy(); viewer = null; }
+            if (nextKey !== sessionKey) { sessionKey = nextKey; selection = null; correctionItems = []; correctionReason = ''; correctionFeedback = ''; lastFailure = null; message = ''; viewer?.destroy(); viewer = null; }
             state = next;
             const visible = !!state.data && !['signed-out', 'loading', 'error'].includes(state.phase);
             $('bureau-content').hidden = !visible;
