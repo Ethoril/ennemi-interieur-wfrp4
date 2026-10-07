@@ -1,3 +1,14 @@
+## [2.37.0] - 2026-10-08
+
+- Armes et boucliers, armures : deux cartouches sur la fiche bureau et onglet Équipement sur mobile ; 205 profils et 55 mots clés issus des aides de jeu, plus huit munitions standard du livre de base.
+- Formule et valeur des dégâts et portées dépendant du Bonus de Force ; silhouette avec PA par zone, détail des couches comptées et ignorées, bouclier conditionnel séparé.
+- Silhouette illustrée propre à chacun des cinq PJ, en pied et détourée ; tracé générique conservé pour les autres fiches.
+- Gestion réservée au MJ : personnalisation à partir d’une base, paramètres des mots clés du référentiel et modèles réutilisables privés. Copies propres à chaque fiche et actualisation explicite depuis le catalogue.
+- Type d’objet (arme, bouclier, munition) choisissable par le MJ ; mots clés retirés du référentiel conservés sur l’objet et signalés « hors référentiel ».
+- Sauvegarde par commandes serveur avec contrôle de révision et reprise sans doublon ; export et import de l’équipement, y compris depuis l’ancienne fiche.
+- Mémo du cumul accessible sur la fiche et en PDF ; effets, talents et pénalités rappelés séparément. Douze portées complétées avec références ; portée du globe de vent empoisonné skaven signalée à confirmer.
+- Site, fonction de commande des fiches et règles Firestore à publier ensemble pour activer cette version ; cache préparé.
+
 ## [2.36.1] - 2026-10-07
 
 - Corrections MJ des talents : comptage et retrait cohérents des acquisitions regroupées par alias, notamment « Vision sacrée » et « Visions sacrées » ; spécialités distinctes préservées.
