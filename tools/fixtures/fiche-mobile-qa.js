@@ -17,6 +17,10 @@ const catalogue = await loadFicheCatalogue();
 const CARACS = ['cc', 'ct', 'f', 'e', 'i', 'ag', 'dex', 'int', 'fm', 'soc'];
 const BASES = [28, 30, 25, 30, 28, 32, 27, 33, 29, 35];
 const ADVANCES = [3, 4, 3, 3, 2, 4, 2, 5, 3, 6];
+const previewEquipment = new URLSearchParams(location.search).has('qa-equipment')
+    ? ['Hallebarde Haut Elfe', 'Bouclier', 'Veste de cuir', 'Cotte de mailles', 'Plastron']
+        .map(name => catalogue.equipmentCatalogue.items.find(item => item.name === name)).filter(Boolean)
+        .map((item, index) => ({ ...globalThis.structuredClone(item), id: `qa_equipment_${index}` })) : null;
 const testData = () => ({
     nom: 'Ilsa Brandt', race: 'humain', carriere: 'Agitateur', rang: '1',
     blessuresAct: '9', resilience: '1', determination: '1', chance: '1', destin: '2', corruption: '0',
@@ -44,11 +48,14 @@ const testData = () => ({
     ],
     customSpecs: {}, basicSpecs: { 'Corps à corps (Base)': 'Escrime' }, customTalents: {}, chosenVariants: {}, careerOverrides: {},
     optVisible: { 'section-sorts': false, 'section-prieres': false },
+    ...(previewEquipment ? { equipment: previewEquipment } : {}),
 });
 
 let current = { schemaVersion: FICHE_SCHEMA_VERSION, revision: 1, tombstone: false, data: testData() };
 const snapshots = new Set();
 const operations = new Map();
+const equipmentModels = new Map();
+const modelListeners = new Set();
 // Sorts et prières fictifs pour l'onglet Sorts (bouton « Sorts »), absents de la fiche par défaut.
 const SPELLS = {
     sorts: [{ id: 'qa-spell-1', nom: 'Couronne de Flammes', vent: 'Aqshy - Rouge - Domaine du Feu', cn: 8, portee: 'Vous', duree: '(Bonus de Force Mentale) Rounds', resume: 'Vous focalisez Aqshy en une couronne de feu.' }],
@@ -76,6 +83,8 @@ const publishSnapshot = () => {
 
 // Faux dépôt : applique les commandes avec le même moteur que le serveur (catalogue chargé comme l'application).
 const repository = {
+    subscribeEquipmentModels(next) { modelListeners.add(next); next([...equipmentModels.values()]); return () => modelListeners.delete(next); },
+    async saveEquipmentModel(id, item) { equipmentModels.set(id, { id, item: structuredClone(item) }); for (const next of modelListeners) next([...equipmentModels.values()]); },
     subscribe(_charId, next) {
         snapshots.add(next);
         next({ exists: true, envelope: globalThis.structuredClone(current) });
@@ -106,7 +115,8 @@ const repository = {
 const accessWatchers = new Set();
 const accessValue = () => ({
     user: { uid: 'qa-user' },
-    capabilities: { role, contribution: true, characterIds: ['test'] },
+    // ?qa-char=wren ouvre la même fiche fictive sous l'identifiant d'un PJ (silhouette d'armure).
+    capabilities: { role, contribution: true, characterIds: ['test', new URLSearchParams(location.search).get('qa-char')].filter(Boolean) },
 });
 const client = {
     watch(listener) {
@@ -220,4 +230,8 @@ document.getElementById('qa-reset').addEventListener('click', () => {
     stateEl.textContent = 'Fiche fictive réinitialisée.';
 });
 
-globalThis.ficheMobileQa = Object.freeze({ getEnvelope: () => globalThis.structuredClone(current) });
+globalThis.ficheMobileQa = Object.freeze({
+    getEnvelope: () => globalThis.structuredClone(current),
+    setEquipment: equipment => { current = { ...current, revision: current.revision + 1, data: { ...current.data, equipment } }; publishSnapshot(); },
+    failUncertain: () => { const original = repository.execute; repository.execute = async cmd => { repository.execute = original; await original(cmd); throw Object.assign(new Error('Réponse réseau perdue'), { code: 'unavailable' }); }; },
+});

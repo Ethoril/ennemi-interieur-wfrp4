@@ -16,6 +16,7 @@ import { talentNameKey as talentNomKey } from './fiche/career-model.js';
 let _ruleCatalog = null;
 let _publishedCatalogue = null;
 let _talentSheetSnapshot = null;
+let _equipmentCatalogue = null;
 let _activeFicheRole = 'joueur';
 let _localCommandEngine = null;
 let _serverBaselineData = null;
@@ -53,14 +54,15 @@ const VENTS = ['Aqshy','Azyr','Chamon','Ghur','Ghyran','Hysh','Shyish','Ulgu','Q
 
 async function loadRuleCatalog() {
     try {
-        const [rulesResponse, catalogueResponse, talentResponse] = await Promise.all([
+        const [rulesResponse, catalogueResponse, talentResponse, equipmentResponse] = await Promise.all([
             fetch('js/data/fiche-catalog.json'),
             fetch('js/catalogue/referentiel-public.json'),
             fetch('js/catalogue/talents-sheet-snapshot.json'),
+            fetch('js/data/equipment-catalog.json'),
         ]);
-        if (!rulesResponse.ok || !catalogueResponse.ok || !talentResponse.ok) return null;
-        [_ruleCatalog, _publishedCatalogue, _talentSheetSnapshot] = await Promise.all([
-            rulesResponse.json(), catalogueResponse.json(), talentResponse.json(),
+        if (!rulesResponse.ok || !catalogueResponse.ok || !talentResponse.ok || !equipmentResponse.ok) return null;
+        [_ruleCatalog, _publishedCatalogue, _talentSheetSnapshot, _equipmentCatalogue] = await Promise.all([
+            rulesResponse.json(), catalogueResponse.json(), talentResponse.json(), equipmentResponse.json(),
         ]);
         _publishedCatalogue = window.FICHE_PUBLIC_CATALOGUE || _publishedCatalogue;
         window.FICHE_CATALOG = _ruleCatalog;
@@ -82,6 +84,7 @@ function getLocalCommandEngine() {
         skills: window.WFRP_SKILLS,
         spells: _ruleCatalog,
         talentSheetSnapshot: _talentSheetSnapshot,
+        equipmentCatalogue: _equipmentCatalogue,
     });
     return _localCommandEngine;
 }
@@ -96,6 +99,7 @@ export function setPublishedFicheCatalogue(catalogue) {
             skills: window.WFRP_SKILLS,
             spells: _ruleCatalog,
             talentSheetSnapshot: _talentSheetSnapshot,
+            equipmentCatalogue: _equipmentCatalogue,
         });
     } catch { return false; }
     _publishedCatalogue = catalogue;
@@ -963,6 +967,7 @@ const state = {
     chosenVariants: {},   // { careerId: { rang: variantTitre, ... }, ... }
     careerOverrides:{},   // { careerId: { rang: { skillsRemoved, skillsAdded, talentsRemoved, talentsAdded } } }
     optVisible:     { 'section-sorts': false, 'section-prieres': false },
+    equipment: [],
 };
 
 // État éphémère d'édition (pas persisté) — un Set de clés `${careerId}_${rang}`
@@ -2169,6 +2174,7 @@ export function exportData() {
         chosenVariants: state.chosenVariants,
         careerOverrides:state.careerOverrides,
         optVisible:     state.optVisible,
+        equipment:      state.equipment,
     };
 }
 
@@ -2224,7 +2230,7 @@ async function importFromFile(file) {
         'nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance',
         'destin', 'corruption', 'possessions', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers',
         'talentsAcq', 'talentsAvail', 'sorts', 'prieres', 'xpLog', 'customSpecs', 'basicSpecs',
-        'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible',
+        'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment',
     ]);
     const cleaned = Object.fromEntries(Object.entries(payload).filter(([key]) => exportKeys.has(key)));
     const migrated = await migrateFicheDocument({ schemaVersion: 1, revision: 1, data: cleaned }, { charId });
@@ -2350,6 +2356,7 @@ function resetState() {
     state.customTalents         = {};
     state.chosenVariants        = {};
     state.careerOverrides       = {};
+    state.equipment             = [];
     Object.keys(state.optVisible).forEach(k => { state.optVisible[k] = false; });
 }
 
@@ -2393,6 +2400,7 @@ function applyData(d) {
     if (d.chosenVariants)  Object.assign(state.chosenVariants, d.chosenVariants);
     if (d.careerOverrides) Object.assign(state.careerOverrides, d.careerOverrides);
     if (d.optVisible)      Object.assign(state.optVisible, d.optVisible);
+    if (Array.isArray(d.equipment)) state.equipment = globalThis.structuredClone(d.equipment);
     updatePageTitle();
     updateCharacterPortrait();
 }

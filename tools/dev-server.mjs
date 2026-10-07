@@ -21,6 +21,7 @@ const MIME = {
     '.webp':'image/webp',
     '.ico': 'image/x-icon',
     '.txt': 'text/plain; charset=utf-8',
+    '.pdf': 'application/pdf',
 };
 
 createServer(async (req, res) => {

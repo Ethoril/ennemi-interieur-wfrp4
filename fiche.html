@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/theme-parchment.css">
     <link rel="stylesheet" href="css/fiche-bureau.css">
+    <link rel="stylesheet" href="css/equipment.css">
     <link rel="stylesheet" href="css/career-viewer.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#07070d">
@@ -48,7 +49,8 @@
           </section>
           <section class="bureau-card" aria-labelledby="talents-title"><h2 id="talents-title">Talents</h2><div id="bureau-talents"></div><button type="button" data-action="search" data-kind="talent">+ Talent hors carrière</button></section>
           <section class="bureau-card" aria-labelledby="spells-title"><h2 id="spells-title">Sorts et miracles</h2><div id="bureau-spells"></div><div class="bureau-actions"><button type="button" data-action="search" data-kind="sort">+ Apprendre un sort</button><button type="button" data-action="search" data-kind="miracle">+ Apprendre un miracle</button></div></section>
-          <section class="bureau-card bureau-placeholder"><h2>Équipement</h2><p>Emplacement réservé</p></section>
+          <div class="bureau-card" id="bureau-weapons"></div>
+          <div class="bureau-card" id="bureau-armours"></div>
         </div>
         <aside class="bureau-rail" aria-label="Carrière et détail"><p id="bureau-status" role="status" aria-live="polite" aria-atomic="true"></p><div id="bureau-inspector" class="bureau-card"></div><div id="bureau-recent" class="bureau-card"></div></aside>
         <section id="journal" class="bureau-card bureau-journal" aria-labelledby="journal-title"><h2 id="journal-title">Journal d’expérience</h2><div id="bureau-journal"></div><div id="bureau-corrections"></div></section>

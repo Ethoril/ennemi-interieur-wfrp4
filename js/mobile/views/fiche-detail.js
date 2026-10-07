@@ -11,6 +11,7 @@ import { createCareerPanel } from './fiche-carriere.js';
 import { createJournalPanel } from './fiche-journal.js';
 import { createPinSkillSheet } from './fiche-pin-skill.js';
 import { createPrincipalPanel } from './fiche-principal.js';
+import { createEquipmentView } from '../../equipment/view.js';
 import { createConflictNotice } from './fiche-conflicts.js';
 import { createResourceSheet } from './fiche-resource-sheet.js';
 import { createPurchaseSheet } from './fiche-purchase-sheet.js';
@@ -24,6 +25,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const TABS = Object.freeze([
     { key: 'principal', label: 'Principal', icon: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z' },
     { key: 'aptitudes', label: 'Aptitudes', icon: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01' },
+    { key: 'equipement', label: 'Équipement', icon: 'M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2' },
     { key: 'carriere', label: 'Carrière', icon: 'M3 20h5v-5h5v-5h5V5h3' },
     { key: 'journal', label: 'Journal', icon: 'M5 5a2 2 0 0 1 2-2h12v16H7a2 2 0 0 0-2 2zM5 21V5' },
 ]);
@@ -74,6 +76,7 @@ export function createFicheDetailView({
     let backend = null;
     let controller = null;
     let catalogue = null;
+    let repository = null;
     let stopCatalogue = null;
     let stopEngine = null;
     let role = null;
@@ -190,6 +193,8 @@ export function createFicheDetailView({
     const journal = createJournalPanel({
         documentRef, getContext: ficheContext, onCancel: (purchaseId, trigger) => cancel.open(purchaseId, trigger),
     });
+    const equipment = createEquipmentView({ documentRef, getContext: () => ({ state: controllerState,
+        controller, catalogue: catalogue?.equipmentCatalogue, engine: catalogue?.getEngine(), repository, online }) });
 
     // La visionneuse de carrière existante, réduite à sa modale plein écran ; créée à la première ouverture.
     const viewerHost = make(documentRef, 'div', '', 'm-career-viewer-host');
@@ -267,6 +272,7 @@ export function createFicheDetailView({
         updateAptitudes();
         updateCareer();
         updateJournal();
+        equipment.update();
         careerChange.update();
         spellLearn.update();
         skillLearn.update();
@@ -305,6 +311,8 @@ export function createFicheDetailView({
         aptitudes.element.hidden = tab !== 'aptitudes';
         shell.career.element.hidden = tab !== 'carriere';
         journal.element.hidden = tab !== 'journal';
+        equipment.element.hidden = tab !== 'equipement';
+        if (tab === 'equipement') equipment.update();
         for (const [key, link] of shell.links) {
             if (key === tab) link.setAttribute('aria-current', 'page');
             else link.removeAttribute('aria-current');
@@ -342,7 +350,7 @@ export function createFicheDetailView({
             onChangeCareer: trigger => careerChange.open(trigger),
             onOpenAll: openCareerViewer,
         });
-        panel.append(panelTitle, principal.element, aptitudes.element, career.element, journal.element);
+        panel.append(panelTitle, principal.element, aptitudes.element, equipment.element, career.element, journal.element);
         const nav = make(documentRef, 'nav', '', 'm-fiche-tabs');
         nav.setAttribute('aria-label', 'Sections de la fiche');
         const links = new Map();
@@ -419,6 +427,7 @@ export function createFicheDetailView({
         backend ??= Promise.all([loadRuntime(), loadCatalogue()]).then(([runtime, service]) => {
             if (!mounted) return;
             catalogue = service;
+            repository = runtime.repository;
             controller = createFicheController({
                 repository: runtime.repository,
                 draftStore: createFicheDraftStore({ storage: safeStorage(windowRef) }),
@@ -541,6 +550,7 @@ export function createFicheDetailView({
         // Une note encore en attente de la pause de saisie est envoyée avant de fermer la session.
         void journal.save();
         journal.destroy();
+        equipment.destroy();
         controller?.close();
         abortSignal?.removeEventListener?.('abort', unmount);
         abortSignal = null;

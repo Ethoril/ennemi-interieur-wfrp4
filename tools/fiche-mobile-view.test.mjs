@@ -73,7 +73,7 @@ const data = () => ({
     customSpecs: {}, basicSpecs: {}, customTalents: {}, chosenVariants: {}, careerOverrides: {},
 });
 
-function setup({ hash = '#/fiches/test', capabilities = { role: 'joueur', characterIds: ['test'] }, user = { uid: 'u1' }, exists = true, manual = false } = {}) {
+function setup({ hash = '#/fiches/test', capabilities = { role: 'joueur', characterIds: ['test'] }, user = { uid: 'u1' }, exists = true, manual = false, models = null } = {}) {
     let emit = () => {};
     let fail = () => {};
     let release = () => {};
@@ -90,6 +90,7 @@ function setup({ hash = '#/fiches/test', capabilities = { role: 'joueur', charac
         },
         subscribePublicCatalogue: () => () => {},
         execute: async () => { throw new Error('inattendu'); },
+        ...(models ? { subscribeEquipmentModels: models.subscribe, saveEquipmentModel: models.save } : {}),
     };
     const log = { titles: [], announces: [], navigations: [], signIns: 0 };
     const view = createFicheDetailView({
@@ -117,7 +118,7 @@ const texts = root => [root.textContent, ...root.children.flatMap(texts)].filter
 const tabs = container => container.querySelectorAll('.m-fiche-tab');
 const current = container => tabs(container).filter(link => link.getAttribute('aria-current') === 'page').map(link => link.href);
 
-test('squelette pendant le chargement puis identité, XP libres, titre et quatre onglets', async () => {
+test('squelette pendant le chargement puis identité, XP libres, titre et cinq onglets', async () => {
     const { view, container, log } = setup();
     view.mount({});
     assert.ok(texts(container).includes('Chargement de la fiche'));
@@ -127,7 +128,7 @@ test('squelette pendant le chargement puis identité, XP libres, titre et quatre
     assert.equal(container.querySelector('.m-fiche-xp').href, '#/fiches/test/journal');
     assert.equal(container.querySelector('nav').getAttribute('aria-label'), 'Sections de la fiche');
     assert.deepEqual(tabs(container).map(link => link.href),
-        ['#/fiches/test', '#/fiches/test/aptitudes', '#/fiches/test/carriere', '#/fiches/test/journal']);
+        ['#/fiches/test', '#/fiches/test/aptitudes', '#/fiches/test/equipement', '#/fiches/test/carriere', '#/fiches/test/journal']);
     assert.deepEqual(current(container), ['#/fiches/test']);
     assert.equal(log.titles.at(-1), 'Ilsa Brandt');
     assert.equal(view.routeAnnouncement(), 'Fiche de Ilsa Brandt');
@@ -263,4 +264,16 @@ test("une déconnexion arrivée pendant le chargement n'ouvre pas la session de 
     assert.equal(subscriptions.size, 0, 'aucune lecture de fiche pour un compte déconnecté');
     assert.ok(texts(container).includes('Connexion requise'));
     view.unmount();
+});
+
+test('équipement MJ : le dépôt chargé est transmis à la vue, abonnement aux modèles ouvert puis fermé', async () => {
+    const calls = { subscribed: 0, stopped: 0 };
+    const models = { subscribe: next => { calls.subscribed += 1; next([]); return () => { calls.stopped += 1; }; }, save: async () => {} };
+    const { view, container } = setup({ hash: '#/fiches/test/equipement', capabilities: { role: 'mj', characterIds: ['test'] }, models });
+    view.mount({});
+    await settle();
+    assert.deepEqual(current(container), ['#/fiches/test/equipement']);
+    assert.equal(calls.subscribed, 1, 'les modèles MJ sont lus avec le dépôt résolu');
+    view.unmount();
+    assert.equal(calls.stopped, 1);
 });

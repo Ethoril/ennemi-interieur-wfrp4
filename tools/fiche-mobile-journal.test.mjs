@@ -98,7 +98,7 @@ test('export : même objet que le bureau, mêmes clés que le serveur, nom de fi
 
     const data = { ...sheet(), customSpecs: {}, customTalents: {}, optVisible: { 'section-sorts': false }, nom: 'Ilsa', race: 'humain',
         blessuresAct: '3', resilience: '1', determination: '1', chance: '1', destin: '2', corruption: '0',
-        catalogueMigrationBarriers: [{ purchaseIds: ['x'] }], revision: 9 };
+        catalogueMigrationBarriers: [{ purchaseIds: ['x'] }], revision: 9, equipment: [] };
     const exportedAt = '2026-10-06T12:34:56.000Z';
     // Ce que le bureau écrit : { _format, _version, _app, _charId, _exportedAt, ...exportData() } (exportData : les 26 clés).
     const expected = {

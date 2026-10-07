@@ -8,7 +8,8 @@ import { publishedSkillRows } from '../catalogue/skill-forms.js';
 import { isTalentInCareer, findCareerByName } from '../fiche/career-model.js';
 import { createCareerViewer } from '../fiche/career-viewer.js';
 import { bureauSkills, roleControls, inspectorModel, missingChips, correctionChanges, correctionOverlay, correctionMatches } from './model.js';
-import { connectBureau, loadBureauCatalogues } from './session.js';
+import { connectBureau, loadBureauCatalogues, getEquipmentRepository } from './session.js';
+import { createEquipmentView } from '../equipment/view.js';
 
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -19,6 +20,10 @@ const portraits = { bhelgi: 'Bhelgi', caelel: 'Caelel', elysia: 'Elysia', hellay
 let state = { phase: 'loading', data: null };
 let controller;
 let catalogues;
+const equipment = createEquipmentView({ getContext: () => ({ state, controller, catalogue: catalogues?.equipmentCatalogue,
+    engine: catalogues?.engine, repository: getEquipmentRepository(), online: navigator.onLine }) });
+$('bureau-weapons').append(equipment.weapons);
+$('bureau-armours').append(equipment.armours);
 let selection = null;
 let selectionOrigin = null;
 let advances = 1;
@@ -183,6 +188,7 @@ function renderJournal() {
 }
 
 function render() {
+    equipment.update();
     if (!catalogues || !state.data) return;
     const active = document.activeElement;
     const focusId = active?.id;
