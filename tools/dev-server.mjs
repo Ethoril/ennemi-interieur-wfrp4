@@ -43,4 +43,4 @@ createServer(async (req, res) => {
         if (err.code === 'ENOENT') { res.writeHead(404); res.end('Not found'); }
         else { res.writeHead(500); res.end(String(err)); }
     }
-}).listen(PORT, () => console.log(`Dev server: http://localhost:${PORT}/`));
+}).listen(PORT, '127.0.0.1', () => console.log(`Dev server: http://127.0.0.1:${PORT}/`));

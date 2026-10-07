@@ -1,3 +1,14 @@
+## [2.36.0] - 2026-10-07
+
+- Référentiel du Drive : descriptions et plafonds des 206 talents, 136 carrières et 558 rangs ; noms français et options entre crochets.
+- Achats de talents à 100 XP par prise en carrière, 200 XP hors carrière ; plafonds revérifiés côté serveur et choix épuisés retirés.
+- Alias historiques explicites, conservation des acquisitions et XP anciens, avertissement au MJ pour les bonus ; calcul existant de Dur à cuire conservé.
+- Magie des Arcanes des Elfes : huit Vents distincts et Qhaysh séparé ; sorts renommés reconnus, sorts retirés conservés sur les fiches et exclus des achats.
+- Ajout des Carrières aux aides de jeu, affichage de secours et cartes sans délai cumulatif ; Mots clés limités au nom et à l’effet.
+- Ancienne fiche corrigée pour la race et les spécialités ; volet mobile explicite sur les prises actuelles et après achat, puces fiables lors des mises à jour.
+- Marqueurs de spécialité reconnus depuis le Drive, alias historique de Béni par Isha, sorts connus reconnus sous leur ancien nom ; annulations créant ou aggravant un dépassement de plafond refusées.
+- Cache actualisé ; livraison coordonnée du site et de la fonction requise à cause de la nouvelle version du catalogue de talents.
+
 ## [2.35.0] - 2026-10-06
 
 ### Documents et enquêtes
