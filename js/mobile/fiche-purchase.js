@@ -95,7 +95,7 @@ export function purchaseTarget(data, engine, careers, spec) {
 
     if (spec.kind === 'talent') {
         // Emplacement à spécialité : le nom acheté est `Base (Choix)`, tarifé comme le serveur sur ce nom composé.
-        const slot = talentChoices(careers, data, spec.nom);
+        const slot = talentChoices(careers, data, spec.nom, engine);
         const pick = String(spec.pick ?? '').replace(/[()]/gu, '').trim();
         const choice = slot && {
             ...slot, pick, options: slot.specs.map(name => ({ spec: name, taken: talentTaken(data, engine, `${slot.base} (${name})`) })),
@@ -104,9 +104,11 @@ export function purchaseTarget(data, engine, careers, spec) {
         const name = slot && !needsChoice ? `${slot.base} (${pick})` : spec.nom;
         const inCareer = career ? isTalentInCareer(career, rank, name, chosen, overrides, engine?.talentResolver) : false;
         const described = engine?.resolveTalent?.(name);
+        const limitStatus = engine?.talentResolver?.purchaseStatus?.(data, name);
         return {
-            kind: 'talent', title: slot ? described?.displayedName || name : spec.nom, nature: 'Talent', name, inCareer, maxCount: 1,
+            kind: 'talent', title: described?.displayedName || name, nature: 'Talent', name, inCareer, maxCount: 1,
             choice, needsChoice, taken: talentTaken(data, engine, name),
+            limitStatus, disabledReason: limitStatus && !limitStatus.allowed ? limitStatus.reason : '',
             // Texte publié localement (aucun réseau) ; une ligne vide n'est pas un paragraphe.
             description: String(described?.description ?? '').split('\n').map(line => line.trim()).filter(Boolean),
         };
@@ -193,6 +195,8 @@ export function purchasePayload(target, count, engine) {
 export function purchaseErrorMessage(error) {
     const kind = error?.details?.kind || error?.code;
     switch (kind) {
+    case 'talent-limit':
+        return error.details.reason || 'Limite d’achat de ce talent atteinte.';
     case 'insufficient-xp':
         return `XP insuffisants : ${error.details.cost} requis, ${error.details.balance} disponibles.`;
     case 'price-changed':
@@ -215,6 +219,8 @@ export function purchaseErrorMessage(error) {
 /** Message français pour une erreur d'annulation (mêmes codes que purchaseErrorMessage, plus la règle du dernier achat). */
 export function cancelErrorMessage(error) {
     switch (error?.details?.kind || error?.code) {
+    case 'cancel-talent-limit':
+        return error.details.reason || 'Annulation bloquée : elle dépasserait le plafond d’un talent. Une correction manuelle du MJ reste possible.';
     case 'purchase-not-reversible':
         return 'Cet achat ne peut plus être annulé.';
     case 'permission-denied':

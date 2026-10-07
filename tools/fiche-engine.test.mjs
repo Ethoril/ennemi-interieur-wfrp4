@@ -136,8 +136,8 @@ test('les correspondances de compétence conservent chaque alias validé du mote
     for (const [raw, expected] of aliases) assert.equal(canonicalSkillNom(raw), expected, raw);
 });
 
-test('les 132 carrières du catalogue gardent la reconnaissance et l’appartenance cumulée', () => {
-    assert.equal(careers.length, 132);
+test('les 136 carrières du catalogue gardent la reconnaissance et l’appartenance cumulée', () => {
+    assert.equal(careers.length, 136);
     for (const career of careers) {
         const careerNameMatch = careers.find(entry => entry.nom.toLowerCase() === career.nom.toLowerCase()
             || entry.rangs.some(rank => rank.titre.toLowerCase() === career.nom.toLowerCase()));

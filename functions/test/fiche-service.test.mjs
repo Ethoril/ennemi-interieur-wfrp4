@@ -446,3 +446,18 @@ test('le handler callable conserve les erreurs métier sans exposer de données 
         && !JSON.stringify(error.details).includes('possessions')
     ));
 });
+
+test('le handler callable transmet le motif des refus de plafond de talent', async () => {
+    const store = createStore(seed());
+    for (const kind of ['talent-limit', 'cancel-talent-limit']) {
+        const handler = createFicheCommandHandler(deps(store, async () => {
+            throw new FicheCommandError('refus', 'failed-precondition', { kind, reason: 'Choisissez une spécialité.', data: { possessions: 'secret' } });
+        }));
+        await assert.rejects(handler({ data: command('purchase', {}), ...PLAYER }), error => (
+            error.code === 'failed-precondition'
+            && error.details.kind === kind
+            && error.details.reason === 'Choisissez une spécialité.'
+            && !JSON.stringify(error.details).includes('possessions')
+        ));
+    }
+});

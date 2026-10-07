@@ -1,5 +1,8 @@
 import { canonicalSkillNom, expandChoiceSkill, isOpenCareerSlot, skillBaseNom } from './skill-names.js';
 
+export const talentNameKey = name => String(name ?? '').normalize('NFD').replace(/[\u0300-\u036f]/gu, '')
+    .replace(/[’']/gu, "'").replace(/\s+/gu, ' ').trim().toLocaleLowerCase('fr');
+
 export function findCareerByName(careers, name) {
     if (!name) return null;
     const normalized = name.toLowerCase().trim();
@@ -51,13 +54,17 @@ export function getEffectiveSkills(career, rang, variant, careerOverrides = {}) 
     ];
 }
 
-export function getEffectiveTalents(career, rang, variant, careerOverrides = {}) {
+export function getEffectiveTalents(career, rang, variant, careerOverrides = {}, talentResolver = null) {
     const base = (variant?.talents || []).slice();
     const overrides = careerOverrides?.[career.id]?.[rang];
     if (!overrides) return base;
-    const removed = new Set((overrides.talentsRemoved || []).map(talent => talent.toLowerCase()));
+    const talentKey = name => {
+        const resolved = talentResolver?.resolve(name);
+        return talentNameKey(resolved?.status === 'resolved' ? resolved.purchaseName || resolved.entry.nom : name);
+    };
+    const removed = new Set((overrides.talentsRemoved || []).map(talentKey));
     return [
-        ...base.filter(talent => !removed.has(talent.toLowerCase())),
+        ...base.filter(talent => !removed.has(talentKey(talent))),
         ...(overrides.talentsAdded || []),
     ];
 }
@@ -99,16 +106,17 @@ export function getCareerTalentSets(career, rang, chosenVariants = {}, careerOve
     const exact = new Set(), openBases = new Set();
     for (let currentRank = 1; currentRank <= rang; currentRank++) {
         for (const variant of getVariantsToConsider(career, currentRank, chosenVariants)) {
-            for (const talent of getEffectiveTalents(career, currentRank, variant, careerOverrides)) {
+            for (const talent of getEffectiveTalents(career, currentRank, variant, careerOverrides, talentResolver)) {
                 const resolved = talentResolver?.resolve(talent);
-                exact.add((resolved?.status === 'resolved' ? resolved.entry.nom : talent).toLowerCase());
+                exact.add(talentNameKey(resolved?.status === 'resolved' ? resolved.purchaseName || resolved.entry.nom : talent));
+                if (resolved?.sourceRule && resolved.open) openBases.add(talentNameKey(resolved.entry.nom));
                 // « A (X ou Y) » : acheter une seule option listée compte comme talent de carrière.
                 for (const option of expandChoiceSkill(talent, name => name)) {
                     const optionResolved = talentResolver?.resolve(option);
-                    exact.add((optionResolved?.status === 'resolved' ? optionResolved.entry.nom : option).toLowerCase());
+                    exact.add(talentNameKey(optionResolved?.status === 'resolved' ? optionResolved.purchaseName || optionResolved.entry.nom : option));
                 }
                 if (/\((?:.*?\bchoix\b|n'importe quelle|celle du lanceur).*?\)$/i.test(talent)) {
-                    openBases.add(talent.split('(')[0].trim().toLowerCase());
+                    openBases.add(talentNameKey(talent.split('(')[0]));
                 }
             }
         }
@@ -140,7 +148,7 @@ export function isSkillInCareer(career, rang, name, chosenVariants = {}, careerO
 export function isTalentInCareer(career, rang, name, chosenVariants = {}, careerOverrides = {}, talentResolver = null) {
     const sets = getCareerTalentSets(career, rang, chosenVariants, careerOverrides, talentResolver);
     const resolved = talentResolver?.resolve(name);
-    const normalized = (resolved?.status === 'resolved' ? resolved.entry.nom : name).toLowerCase().trim();
+    const normalized = talentNameKey(resolved?.status === 'resolved' ? resolved.purchaseName || resolved.entry.nom : name);
     return sets.exact.has(normalized) || sets.openBases.has(normalized.split('(')[0].trim());
 }
 

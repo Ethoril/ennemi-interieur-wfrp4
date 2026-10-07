@@ -1,5 +1,5 @@
 import { createTalentResolver } from '../catalogue/talent-resolver.js';
-import { createSkillResolver } from '../catalogue/skill-resolver.js';
+import { buildSkillEntries, createSkillResolver } from '../catalogue/skill-resolver.js';
 import { FicheCommandError, createFicheCommandEngine } from './commands.js';
 
 function fail(message, code = 'failed-precondition', details = undefined) {
@@ -16,7 +16,11 @@ export function createPublishedCatalogueEngine({ catalogue, careers, skills, spe
     let skillResolver;
     let talentResolver;
     try {
-        skillResolver = createSkillResolver({ version: catalogue.catalogVersion, ...catalogue.skills });
+        const additional = talentSheetSnapshot?.schemaVersion === 2 ? buildSkillEntries((skills || [])
+            .filter(row => row.source === 'Drive Carrières — Lustria')) : [];
+        const known = new Set(catalogue.skills.entries.map(row => row.nom));
+        skillResolver = createSkillResolver({ version: catalogue.catalogVersion, ...catalogue.skills,
+            entries: [...catalogue.skills.entries, ...additional.filter(row => !known.has(row.nom))] });
         talentResolver = createTalentResolver({ version: catalogue.catalogVersion, ...catalogue.talents, sheetSnapshot: talentSheetSnapshot });
     } catch (error) {
         fail(`référentiel invalide : ${error.message}`, 'failed-precondition', { kind: 'catalog-version-unsupported' });
@@ -24,7 +28,8 @@ export function createPublishedCatalogueEngine({ catalogue, careers, skills, spe
     if (skillResolver.aliasErrors.length || talentResolver.aliasErrors.length) {
         fail('référentiel publié invalide', 'failed-precondition', { kind: 'catalog-version-unsupported' });
     }
-    const catalogVersion = `skills:${catalogue.catalogVersion}|rules:${spells.catalogVersion}`;
+    const catalogVersion = `skills:${catalogue.catalogVersion}|rules:${spells.catalogVersion}`
+        + (talentSheetSnapshot?.schemaVersion === 2 ? `|talents:${talentSheetSnapshot.catalogVersion}` : '');
     const publishedSkills = (skillResolver.primaryEntries || skills).map(entry => ({ ...entry, group: entry.nom.split('(')[0].trim(), spec: entry.specialization || '' }));
     const engine = createFicheCommandEngine({ careers, skills: publishedSkills, spells, catalogVersion,
         rankCompletionPolicy, skillResolver, talentResolver });
@@ -36,7 +41,7 @@ export function createPublishedCatalogueEngine({ catalogue, careers, skills, spe
         const resolver = payload.kind === 'skill' ? skillResolver : payload.kind === 'talent' ? talentResolver : null;
         const match = resolver?.resolve(payload.name);
         if (match?.status === 'ambiguous') fail('libellé de compétence ou talent ambigu', 'failed-precondition', { kind: 'target-ambiguous' });
-        if (match?.status === 'resolved') payload.name = match.entry.nom;
+        if (match?.status === 'resolved') payload.name = match.purchaseName || match.entry.nom;
         return engine.applyCommand(data, { ...command, payload }, context);
     }
     function validatePatch(data, payload) {

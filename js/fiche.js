@@ -9,6 +9,8 @@ import { createPublishedCatalogueEngine } from './fiche/published-catalogue-engi
 import { publishedSkillRows, primarySkillLabel } from './catalogue/skill-forms.js';
 import { createCareerViewer } from './fiche/career-viewer.js';
 import { migrateFicheDocument } from './fiche-schema.js';
+import { talentChoices } from './mobile/fiche-aptitudes-model.js';
+import { talentNameKey as talentNomKey } from './fiche/career-model.js';
 
 // Promesse de chargement des bases de données JSON et statut du cloud
 let _ruleCatalog = null;
@@ -234,7 +236,7 @@ function _buildCareerSkillSets(career, rang) {
 }
 
 function _buildCareerTalentSets(career, rang) {
-    return getCareerTalentSets(career, rang, state.chosenVariants, state.careerOverrides);
+    return getCareerTalentSets(career, rang, state.chosenVariants, state.careerOverrides, getLocalCommandEngine()?.talentResolver);
 }
 
 function _buildCareerCaracs(career, rang) {
@@ -278,7 +280,8 @@ function isTalentInCareer(talentNom) {
     if (!career) return false;
     const sets = _memo(_careerCache.talents, _careerKey(career.id, getActiveRang()),
                        () => _buildCareerTalentSets(career, getActiveRang()));
-    const nom = talentNom.toLowerCase().trim();
+    const match = getLocalCommandEngine()?.resolveTalent(talentNom);
+    const nom = talentNomKey(match?.purchaseName || talentNom);
     if (sets.exact.has(nom)) return true;
     return sets.openBases.has(nom.split('(')[0].trim());
 }
@@ -430,16 +433,21 @@ function getCareerTalentsBase() {
 
 // HTML de datalist mémoïsé — invalidé quand state.customTalents change.
 let _talentsDatalistCache = { sig: null, html: '' };
-function buildTalentsDatalistHtml() {
+function buildTalentsDatalistHtml(purchases = false) {
     const base = getCareerTalentsBase();
     if (!base) return null;
-    const sig = JSON.stringify(state.customTalents || {});
+    const engine = getLocalCommandEngine();
+    const data = exportData();
+    const sig = JSON.stringify([state.customTalents || {}, purchases, purchases ? [data.talentsAcq, data.carac, data.race, engine?.catalogVersion] : null]);
     if (_talentsDatalistCache.sig === sig) return _talentsDatalistCache.html;
-    const set = new Set(base);
+    const set = new Set(purchases && engine?.talentResolver ? engine.talentResolver.entries.map(row => row.nom) : base);
     Object.entries(state.customTalents || {}).forEach(([baseName, specs]) =>
         specs.forEach(spec => set.add(`${baseName} (${spec})`))
     );
-    const html = [...set].sort((a, b) => a.localeCompare(b, 'fr'))
+    const html = [...set].filter(name => {
+        const status = purchases && engine?.talentResolver?.purchaseStatus?.(data, name);
+        return !status || (status.known && !status.reached);
+    }).map(name => engine?.resolveTalent(name)?.displayedName || name).sort((a, b) => a.localeCompare(b, 'fr'))
         .map(t => `<option value="${esc(t)}">`).join('');
     _talentsDatalistCache = { sig, html };
     return html;
@@ -472,14 +480,15 @@ function buildXfTalentSpecPicker(groupBase, wrap) {
     wrap.innerHTML = '';
     const knownSpecs  = getTalentSpecsForGroup(groupBase);
     const customSpecs = state.customTalents[groupBase] || [];
-    const allSpecs    = [...new Set([...knownSpecs, ...customSpecs])];
+    const choice = talentChoices(window.WFRP_CAREERS, exportData(), groupBase, getLocalCommandEngine());
+    const allSpecs = choice?.specs || [...new Set([...knownSpecs, ...customSpecs])];
 
     const specSel = document.createElement('select');
     specSel.id = 'xf-talent-spec-sel';
     specSel.className = 'xf-spec-sel';
     specSel.innerHTML =
         allSpecs.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('') +
-        '<option value="_custom">Autre (personnalisé)…</option>';
+        (choice?.free === false ? '' : '<option value="_custom">Autre (personnalisé)…</option>');
     if (allSpecs.length === 0) specSel.value = '_custom';
     wrap.appendChild(specSel);
 
@@ -503,7 +512,8 @@ function getXfTalentFullNom() {
     const inp = document.getElementById('xf-talent');
     if (!inp) return '';
     // Nettoyer "(au choix)" éventuel dans la saisie
-    const base = inp.value.trim().replace(OPEN_SPEC_PATTERN, '').trim();
+    const match = getLocalCommandEngine()?.resolveTalent(inp.value);
+    const base = match?.sourceRule && match.open ? match.entry.nom : inp.value.trim().replace(OPEN_SPEC_PATTERN, '').trim();
     if (!base) return '';
     const specSel = document.getElementById('xf-talent-spec-sel');
     if (!specSel) return base;
@@ -679,7 +689,7 @@ function updateXfTarget() {
 
         // Datalist mémoïsée : on garde le noeud DOM et on ne reconstruit le HTML
         // que si la signature des customTalents a changé.
-        const html = buildTalentsDatalistHtml();
+        const html = buildTalentsDatalistHtml(true);
         if (html !== null) {
             let dl = document.getElementById('xf-talent-datalist');
             if (!dl) {
@@ -695,8 +705,9 @@ function updateXfTarget() {
 
         inp.addEventListener('input', () => {
             // Retirer "(au choix)" si l'utilisateur a sélectionné le nom complet depuis la datalist
-            const val = inp.value.trim().replace(OPEN_SPEC_PATTERN, '').trim();
-            if (val && isTalentGroupOpen(val)) {
+            const match = getLocalCommandEngine()?.resolveTalent(inp.value);
+            const val = match?.sourceRule && match.open ? match.entry.nom : inp.value.trim().replace(OPEN_SPEC_PATTERN, '').trim();
+            if (val && (match?.open || isTalentGroupOpen(val))) {
                 buildXfTalentSpecPicker(val, talentSpecWrap);
             } else {
                 talentSpecWrap.innerHTML = '';
@@ -745,7 +756,18 @@ function computeXfCost() {
         }
 
     } else if (type === 'talent') {
-        cost = talentXpCost(inCareer);
+        const nom = getXfTalentFullNom();
+        const status = nom ? getLocalCommandEngine()?.talentResolver?.purchaseStatus?.(exportData(), nom) : null;
+        cost = nom && status?.allowed !== false ? talentXpCost(inCareer) : 0;
+        let notice = document.getElementById('xf-talent-info');
+        if (!notice) {
+            notice = document.createElement('p');
+            notice.id = 'xf-talent-info';
+            notice.className = 'xf-sort-info';
+            notice.setAttribute('aria-live', 'polite');
+            document.getElementById('xf-target-wrap')?.appendChild(notice);
+        }
+        notice.textContent = status ? [status.reason, `Limite d’achat : ${status.limitText || 'inconnue'}.`, status.warning].filter(Boolean).join(' ') : '';
 
     } else if (type === 'rang') {
         // Aperçu calculé à partir de l’état de fiche. Le serveur revalide toutes
@@ -762,12 +784,13 @@ function computeXfCost() {
         const nom  = document.getElementById('xf-sort')?.value || '';
         const sp   = findSpell(nom);
         const info = document.getElementById('xf-sort-info');
-        const known = sp && state.sorts.some(s => sameSpellNom(s.nom, sp.nom));
-        if (sp && !known) cost = calculateSpellXpCost(sp, state.sorts.map(s => findSpell(s.nom)).filter(Boolean));
+        const known = sp && state.sorts.some(s => sameSpellNom(findSpell(s.nom)?.nom || s.nom, sp.nom));
+        if (sp && !sp.retired && !known) cost = calculateSpellXpCost(sp, state.sorts.map(s => findSpell(s.nom)).filter(Boolean));
         if (info) {
             info.textContent = !nom.trim() ? ''
                 : !_spellCache ? 'Chargement de la liste des sorts…'
                 : !sp ? 'Sort introuvable dans l\'aide de jeu'
+                : sp.retired ? 'Sort retiré des nouveaux achats'
                 : known ? 'Sort déjà connu'
                 : `${sp.type} — NI ${sp.cn}`;
         }
@@ -787,6 +810,8 @@ function computeXfCost() {
     }
 
     costEl.textContent = cost > 0 ? cost : '—';
+    const validate = document.getElementById('xf-validate');
+    if (validate) validate.disabled = cost <= 0;
 
     // Badge carrière informatif
     const badge = document.getElementById('xf-career-badge');
@@ -829,7 +854,10 @@ async function executeFicheCommand(type, payload) {
         return null;
     } catch (error) {
         const kind = error?.details?.kind || error?.code || 'command-failed';
-        ficheCommandStatus('Commande refusée : ' + kind, true);
+        const reason = typeof error?.details?.reason === 'string' && error.details.reason ? error.details.reason
+            : kind === 'cancel-talent-limit' ? 'annulation bloquée par le plafond d’un talent'
+                : kind === 'talent-limit' ? 'limite d’achat de ce talent atteinte' : kind;
+        ficheCommandStatus('Commande refusée : ' + reason, true);
         return null;
     }
 }
@@ -1250,6 +1278,7 @@ async function showTalentModal(nom) {
         if (result.descriptionStatus === 'available') {
             body.innerHTML = `<h3 class="talent-modal-title">${_e(title)}</h3>
                 <div class="talent-modal-field"><span class="talent-modal-value">${_e(result.description).replace(/\n/g, '<br>')}</span></div>
+                ${result.limitText ? `<p>Limite d’achat : ${_e(result.limitText)}</p>` : ''}
                 ${sourceLabel ? `<p class="talent-modal-source">${_e(sourceLabel)}</p>` : ''}`;
             return;
         }
@@ -1791,7 +1820,7 @@ function renderTalents() {
             const hors = t.note ? ` <span class="talent-hors-badge" title="${esc(t.note)}">!</span>` : '';
             return `<span class="talent-chip-wrap">
                 <button class="talent-chip career-tag-talent" data-idx="${i}"
-                        title="Cliquer pour voir la description">${esc(t.nom)}${hors}</button>
+                        title="Cliquer pour voir la description">${esc(getLocalCommandEngine()?.resolveTalent(t.nom)?.displayedName || t.nom)}${hors}</button>
                 <button class="btn-rm talent-rm" data-idx="${i}" title="Supprimer" aria-label="Supprimer le talent ${esc(t.nom)}">×</button>
             </span>`;
         }).join('');
@@ -1852,7 +1881,7 @@ async function fetchSpellData() {
 
 function findSpell(nom) {
     if (!_spellCache || !nom?.trim()) return null;
-    return _spellCache.find(s => sameSpellNom(s.nom, nom)) || null;
+    return _spellCache.find(s => sameSpellNom(s.nom, nom) || (s.aliases || []).some(alias => sameSpellNom(alias, nom))) || null;
 }
 
 function spellVent(type) {
@@ -1873,7 +1902,7 @@ async function ensureSpellDatalist() {
     if (!spells || document.getElementById('spell-names-list')) return;
     const dl = document.createElement('datalist');
     dl.id = 'spell-names-list';
-    dl.innerHTML = spells.map(s => `<option value="${esc(s.nom)}">${esc(s.type)}</option>`).join('');
+    dl.innerHTML = spells.filter(s => !s.retired).map(s => `<option value="${esc(s.nom)}">${esc(s.type)}</option>`).join('');
     document.body.appendChild(dl);
 }
 
@@ -2819,7 +2848,10 @@ function bindAll() {
             invalidateCareerCache();
             renderCareerDetail();
         }));
-    ['race'].forEach(id => document.getElementById(id)?.addEventListener('input', recalc));
+    ['race'].forEach(id => document.getElementById(id)?.addEventListener('input', () => {
+        recalc();
+        if (document.getElementById('xf-type')?.value === 'talent') updateXfTarget();
+    }));
 
     // Boutons ajout
     document.getElementById('btn-add-adv-skill')?.addEventListener('click', () => {

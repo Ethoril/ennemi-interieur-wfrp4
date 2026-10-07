@@ -69,7 +69,7 @@ function catalogLabel(value, resolver) {
         const resolution = resolver(value);
         if (['resolved', 'custom-specialization'].includes(resolution?.status)
             && typeof resolution.entry?.nom === 'string' && resolution.entry.nom.trim()) {
-            return resolution.entry.nom;
+            return resolution.displayedName || resolution.entry.nom;
         }
     } catch { /* Keep the career's original label if a local resolver cannot resolve it. */ }
     return value;
@@ -83,7 +83,7 @@ function renderRank(parent, career, rank, variant, overrides, onTalent, context 
     if (variant?.statut) panel.append(element('p', 'career-viewer-status', `Statut : ${variant.statut}`));
     const caracs = getEffectiveCaracs(career, rank, variant, overrides).map(code => CARAC_LABELS[code] || code);
     const skills = getEffectiveSkills(career, rank, variant, overrides);
-    const talents = getEffectiveTalents(career, rank, variant, overrides);
+    const talents = getEffectiveTalents(career, rank, variant, overrides, context.resolveTalent ? { resolve: context.resolveTalent } : undefined);
     appendList(panel, 'Caractéristiques', caracs);
     appendList(panel, 'Compétences', skills, value => context.skillResolver ? primarySkillLabel(context.skillResolver, value, true) : catalogLabel(value, context.resolveSkill));
     appendList(panel, 'Talents', talents, value => catalogLabel(value, context.resolveTalent), onTalent

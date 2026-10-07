@@ -126,7 +126,7 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         refresh();
     }
 
-    // Les puces sont créées une fois par emplacement, puis seulement mises à jour (le focus reste sur la puce touchée).
+    // Une modification de la liste doit aussi renouveler les actions associées aux libellés.
     function updateChoices(choice, locked = false) {
         nodes.picker.hidden = !choice;
         if (!choice) return;
@@ -136,8 +136,11 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
             button.addEventListener('click', onClick);
             return button;
         };
-        if (chipsFor !== choice.base) {
-            chipsFor = choice.base;
+        const signature = JSON.stringify([choice.base, choice.free, choice.options.map(option => option.spec)]);
+        if (chipsFor !== signature) {
+            const focusedIndex = [...nodes.pickChoices.children].indexOf(documentRef.activeElement);
+            const focusedName = focusedIndex >= 0 ? nodes.pickChoices.children[focusedIndex].textContent.replace(/ · déjà acquis$/u, '') : null;
+            chipsFor = signature;
             nodes.pickChoices.replaceChildren(...choice.options.map(({ spec: name }) => chip(name, () => {
                 nodes.pickFree.value = '';
                 pickSpecialty(name, false);
@@ -145,6 +148,11 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
                 pickSpecialty(nodes.pickFree.value, true);
                 nodes.pickFree.focus();
             })] : []));
+            if (focusedName) {
+                const index = choice.options.findIndex(option => option.spec === focusedName);
+                const nextFocus = index >= 0 ? nodes.pickChoices.children[index] : nodes.pickChoices.children[0];
+                nextFocus?.focus();
+            }
         }
         choice.options.forEach(({ spec: name, taken }, index) => {
             const button = nodes.pickChoices.children[index];
@@ -203,20 +211,27 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         nodes.talent.hidden = !talent && !magic;
         updateChoices(current.choice, pending);
         if (talent || magic) {
-            nodes.taken.textContent = magic || current.needsChoice ? '' : current.taken ? `Prises : ${current.taken}` : 'Pas encore acquis';
-            const key = JSON.stringify(current.description);
+            nodes.taken.textContent = magic || current.needsChoice ? ''
+                : `Prises actuelles : ${current.taken}${current.disabledReason ? '' : ` → Après cet achat : ${current.taken + 1}`}`;
+            const key = JSON.stringify([current.description, current.limitStatus?.limitText, current.limitStatus?.overLimit]);
             if (shownDescription !== key) {
                 shownDescription = key;
-                nodes.description.replaceChildren(...(current.description.length ? current.description : ['Aucune description publiée'])
+                nodes.description.replaceChildren(...[...(current.description.length ? current.description : ['Aucune description publiée']),
+                    ...(current.limitStatus ? [`Limite d’achat : ${current.limitStatus.limitText || 'inconnue'}.`,
+                        ...(current.limitStatus.overLimit ? ['Acquisitions historiques au-delà de la limite : à revoir avec le MJ.'] : []),
+                        ...(current.limitStatus.warning ? [current.limitStatus.warning] : [])] : [])]
                     .map(line => make(documentRef, 'p', line)));
             }
         }
         nodes.value.textContent = String(count);
         nodes.less.disabled = busy || count <= 1;
         nodes.more.disabled = busy || count >= current.maxCount;
+        nodes.newTotal.parentNode.hidden = talent;
         nodes.newTotal.textContent = rank ? `Rang ${current.targetRank}` : talent || magic ? 'Acquis' : String(preview.newTotal);
         nodes.cost.textContent = `${preview.cost} XP`;
+        nodes.cost.parentNode.hidden = Boolean(current.disabledReason);
         nodes.after.textContent = `${preview.after} XP`;
+        nodes.after.parentNode.hidden = Boolean(current.disabledReason || current.needsChoice);
         nodes.after.className = preview.affordable ? '' : 'm-purchase-short';
         nodes.tariff.textContent = magic ? current.tariff : rank ? (current.complete ? 'Rang achevé : 100 XP' : 'Rang non achevé : 200 XP')
             : current.inCareer ? 'Tarif carrière' : 'Hors carrière : coût doublé';
@@ -225,6 +240,7 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         const reason = !context.online ? 'Achat possible une fois en ligne'
             : phase === 'legacy-readonly' ? 'Fiche en lecture seule : achat impossible'
             : !pending && !busy && phase !== 'ready' ? 'Fiche en cours de mise à jour…'
+            : current.disabledReason ? current.disabledReason
             : current.needsChoice ? 'Choisissez une spécialité'
             : !pending && !preview.affordable ? `XP insuffisants : il manque ${-preview.after} XP` : info;
         nodes.reason.textContent = reason;
@@ -233,7 +249,7 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
         nodes.failure.hidden = !error;
         nodes.buy.textContent = busy ? 'Achat en cours…' : `Acheter pour ${preview.cost} XP`;
         nodes.buy.disabled = busy || !!reason;
-        nodes.buy.hidden = pending;
+        nodes.buy.hidden = pending || Boolean(current.limitStatus?.reached) || current.limitStatus?.known === false;
         nodes.retry.hidden = !pending;
         nodes.retry.disabled = !context.online;
     };
@@ -250,7 +266,7 @@ export function createPurchaseSheet({ documentRef, getContext, announce = () => 
     async function run(execute, fresh) {
         const context = getContext();
         const current = target(context);
-        if (busy || !current) return;
+        if (busy || !current || (fresh && current.disabledReason)) return;
         const message = current.kind === 'talent' ? `${current.title} : talent acheté`
             : current.kind === 'rank' ? `${current.summary} : achat enregistré`
             : current.kind === 'sort' ? `${current.title} : sort appris`

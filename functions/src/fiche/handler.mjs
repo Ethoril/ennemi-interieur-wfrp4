@@ -25,6 +25,9 @@ function safeDetails(code, details) {
         };
     }
     if (kind === 'migration-needed') return { kind };
+    if (kind === 'talent-limit' || kind === 'cancel-talent-limit') {
+        return { kind, ...(typeof details.reason === 'string' ? { reason: details.reason.slice(0, 300) } : {}) };
+    }
     if (kind === 'field-forbidden') return { kind, ...(typeof details.path === 'string' ? { path: details.path } : {}) };
     return kind ? { kind } : undefined;
 }

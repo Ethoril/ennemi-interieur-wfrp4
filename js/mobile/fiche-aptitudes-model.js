@@ -2,8 +2,9 @@ import { activeCareerRank, findCareerByName, getEffectiveTalents, getVariantsToC
 import { expandChoiceSkill, isOpenCareerSlot } from '../fiche/skill-names.js';
 import { miracleXpCost, spellCategory, spellXpCost, talentXpCost } from '../fiche/xp.js';
 import { stripAccents } from '../utils.js';
+import { ARCANE_WINDS } from '../catalogue/talent-source.js';
 
-const fold = text => stripAccents(String(text ?? '')).toLowerCase();
+const fold = text => stripAccents(String(text ?? '')).replace(/[’']/gu, "'").toLowerCase();
 
 /** Recherche (chaque mot, sans accents ni casse) et filtres combinables sur les lignes de skillRows. */
 export function filterSkills(rows, { query = '', career = false, trained = false, carac = '' } = {}) {
@@ -27,7 +28,14 @@ const specOf = nom => nom.match(/\(([^)]+)\)$/u)?.[1].trim();
  * - « au choix » (`free`) : spécialités fermées connues de toutes les carrières (comme le bureau) + data.customTalents[base], saisie libre permise ;
  * - « A ou B » : exactement les alternatives listées.
  */
-export function talentChoices(careers, data, nom) {
+export function talentChoices(careers, data, nom, engine) {
+    const resolved = engine?.resolveTalent?.(nom);
+    if (resolved?.sourceRule && resolved.open) nom = `${resolved.entry.nom} (au choix)`;
+    if (resolved?.sourceRule && resolved.open && resolved.entry.englishName === 'Arcane Magic') {
+        const elf = ['elfe', 'haut-elfe', 'elfe-sylvain'].includes(data?.race);
+        return { base: resolved.entry.nom, free: false, specs: [...ARCANE_WINDS, ...(elf ? ['Qhaysh'] : [])]
+            .filter(spec => !engine.talentResolver.purchaseStatus(data, `${resolved.entry.nom} (${spec})`).reached) };
+    }
     if (!isOpenTalentSlot(nom)) return null;
     const base = nom.split('(')[0].trim();
     if (!isOpenCareerSlot(nom)) return { base, free: false, specs: expandChoiceSkill(nom, name => name).map(specOf) };
@@ -47,12 +55,14 @@ export function talentChoices(careers, data, nom) {
     const known = [...spellings.values()].map(counts => [...counts].sort(([a, x], [b, y]) => capital(b) - capital(a) || y - x)[0][0])
         .sort((a, b) => a.localeCompare(b, 'fr'));
     const extra = (data?.customTalents?.[base] || []).filter(spec => !spellings.has(fold(spec)));
-    return { base, free: true, specs: [...new Set([...known, ...extra])] };
+    return { base, free: true, specs: [...new Set([...known, ...extra])]
+        .filter(spec => !engine?.talentResolver?.purchaseStatus?.(data, `${base} (${spec})`)?.reached) };
 }
 
 // Un modèle de spécialisation (« Maîtrise (Épées) ») partage l'entrée publiée de son talent : on le distingue par son libellé.
 function talentKey(engine, nom) {
     const match = engine?.resolveTalent?.(nom);
+    if (match?.sourceRule && match.specialization) return `${match.entry.id}:${fold(match.specialization).trim()}`;
     return match?.status === 'resolved' && !match.template ? match.entry.id : `n:${fold(nom).trim()}`;
 }
 
@@ -82,9 +92,11 @@ export function talentRows(data, engine, careers = []) {
         const rank = activeCareerRank(career, data?.rang);
         for (let current = 1; current <= rank; current += 1) {
             for (const variant of getVariantsToConsider(career, current, data?.chosenVariants || {})) {
-                for (const nom of getEffectiveTalents(career, current, variant, data?.careerOverrides || {})) {
+                for (const nom of getEffectiveTalents(career, current, variant, data?.careerOverrides || {}, engine?.talentResolver)) {
                     const key = talentKey(engine, nom);
                     if (!acquired.has(key) && !available.has(key)) {
+                        const status = engine?.talentResolver?.purchaseStatus?.(data, nom);
+                        if (status && (!status.known || status.reached)) continue;
                         available.set(key, {
                             nom, label: engine?.resolveTalent?.(nom)?.displayedName || nom, count: 0, acquired: false, open: isOpenTalentSlot(nom),
                             // Un emplacement à spécialité n'a pas de coût propre : il dépend du nom composé choisi (volet d'achat).
@@ -95,22 +107,33 @@ export function talentRows(data, engine, careers = []) {
             }
         }
     }
-    return [...acquired.values(), ...available.values()];
+    return [...acquired.values(), ...available.values()].map(row => {
+        const status = engine?.talentResolver?.purchaseStatus?.(data, row.nom);
+        return { ...row, ...(status ? { limitStatus: status,
+            issue: status.overLimit ? 'Acquisitions historiques au-delà de la limite : à revoir avec le MJ.'
+                : row.acquired && status.missingChoice ? 'Spécialité historique non précisée : à revoir avec le MJ.' : '' } : {}) };
+    });
 }
 
 /** Sorts puis miracles et prières possédés ; la ligne porte de quoi les consulter (l'apprentissage passe par learnRows). */
-export function spellRows(data) {
+export function spellRows(data, engine) {
     const text = value => (value === undefined || value === null ? '' : String(value));
-    const spells = (data?.sorts || []).map(row => ({
-        key: `s:${row?.id ?? row?.nom}`, nom: text(row?.nom), prayer: false, type: text(row?.vent), ni: text(row?.cn),
-        details: [['NI', row?.cn], ['Portée', row?.portee], ['Durée', row?.duree]]
+    const spells = (data?.sorts || []).map(row => {
+        const rule = engine?.ruleCatalog?.spells?.find(item => ruleMatches(item, row?.nom));
+        const current = rule && !rule.retired ? { ...row, cn: rule.cn, portee: rule.portee, cible: rule.cible, duree: rule.duree } : row;
+        return {
+        key: `s:${row?.id ?? row?.nom}`, nom: text(rule?.nom || row?.nom), prayer: false, type: text(row?.vent || rule?.type), ni: text(current.cn),
+        details: [['NI', current.cn], ['Portée', current.portee], ['Cible', current.cible], ['Durée', current.duree]]
             .filter(([, value]) => text(value)).map(([label, value]) => [label, text(value)]),
-        resume: text(row?.resume),
-    }));
-    const prayers = (data?.prieres || []).map(row => ({
+        resume: text(rule && !rule.retired ? rule.desc : row?.resume),
+    }; });
+    const prayers = (data?.prieres || []).map(row => {
+        const rule = engine?.ruleCatalog?.miracles?.find(item => ruleMatches(item, row?.nom));
+        return {
         key: `p:${row?.id ?? row?.nom}`, nom: text(row?.nom), prayer: true, type: text(row?.type) || 'Prière', ni: '',
-        details: [], resume: text(row?.resume),
-    }));
+        details: rule ? [['Portée', rule.portee], ['Cible', rule.cible], ['Durée', rule.duree]]
+            .filter(([, value]) => text(value)).map(([label, value]) => [label, text(value)]) : [], resume: text(rule?.effet || row?.resume),
+    }; });
     return { spells, prayers };
 }
 
@@ -124,6 +147,7 @@ export const hasSpells = data => Object.values(spellSections(data)).some(Boolean
 
 // Même clé que le serveur (commands.js spellKey) : sans accents ni casse, apostrophes unifiées.
 const ruleKey = text => fold(text).replace(/[’']/gu, "'").trim();
+const ruleMatches = (rule, name) => [rule?.nom, ...(rule?.aliases || [])].some(label => ruleKey(label) === ruleKey(name));
 const shortType = type => String(type ?? '').split(/\s[-–]\s/u)[0].trim();
 
 /**
@@ -134,18 +158,18 @@ export function learnable(engine, data, kind, nom) {
     const prayer = kind === 'miracle';
     const rules = engine?.ruleCatalog?.[prayer ? 'miracles' : 'spells'] || [];
     const known = (prayer ? data?.prieres : data?.sorts) || [];
-    const matches = rules.filter(rule => ruleKey(rule?.nom) === ruleKey(nom));
-    if (matches.length !== 1 || known.some(row => ruleKey(row?.nom) === ruleKey(nom))) return null;
+    const matches = rules.filter(rule => ruleMatches(rule, nom));
+    if (matches.length !== 1 || matches[0].retired || known.some(row => ruleMatches(matches[0], row.nom))) return null;
     const [rule] = matches;
     if (prayer) return { rule, cost: miracleXpCost(known), known: known.filter(row => row.type === 'Miracle' && row.nom?.trim()).length };
-    const owned = known.map(row => rules.find(item => ruleKey(item?.nom) === ruleKey(row.nom))).filter(Boolean);
+    const owned = known.map(row => rules.find(item => ruleMatches(item, row.nom))).filter(Boolean);
     const category = spellCategory(rule);
     return { rule, cost: spellXpCost(rule, owned), known: owned.filter(item => spellCategory(item) === category).length };
 }
 
 /** Types de sorts du catalogue (libellé court), pour les puces de filtre. */
 export function spellTypes(engine) {
-    return [...new Set((engine?.ruleCatalog?.spells || []).map(rule => shortType(rule.type)))].sort((a, b) => a.localeCompare(b, 'fr'));
+    return [...new Set((engine?.ruleCatalog?.spells || []).filter(rule => !rule.retired).map(rule => shortType(rule.type)))].sort((a, b) => a.localeCompare(b, 'fr'));
 }
 
 /**
@@ -155,7 +179,7 @@ export function spellTypes(engine) {
 export function learnRows(engine, data, kind, { query = '', type = '' } = {}) {
     const words = fold(query).split(/\s+/u).filter(Boolean);
     const rules = engine?.ruleCatalog?.[kind === 'miracle' ? 'miracles' : 'spells'] || [];
-    return rules
+    return rules.filter(rule => !rule.retired)
         .filter(rule => !type || shortType(rule.type) === type)
         .filter(rule => words.every(word => fold(`${rule.nom} ${rule.type ?? ''}`).includes(word)))
         .map(rule => ({ rule, found: learnable(engine, data, kind, rule.nom) }))
