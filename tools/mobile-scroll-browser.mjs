@@ -1,4 +1,4 @@
-/* global document, innerHeight, location */
+/* global document, innerHeight, location, requestAnimationFrame */
 // Recette géométrique dans Chromium : vraie coque HTML et fiche à données fictives.
 // MOBILE_SCROLL_QA_URL : serveur tools/dev-server.mjs ; PLAYWRIGHT_MODULE : module installé.
 import assert from 'node:assert/strict';
@@ -9,7 +9,7 @@ const { chromium } = await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE).h
 const base = process.env.MOBILE_SCROLL_QA_URL || 'http://127.0.0.1:4183';
 const out = resolve(process.env.MOBILE_SCROLL_QA_OUTPUT || 'tools/.runtime/mobile-scroll');
 await mkdir(out, { recursive: true });
-const [appHtml, fixtureHtml] = await Promise.all(['/app/index.html', '/tools/fixtures/fiche-mobile-qa.html']
+const [appHtml, fixtureHtml, fixtureScript] = await Promise.all(['/app/index.html', '/tools/fixtures/fiche-mobile-qa.html', '/tools/fixtures/fiche-mobile-qa.js']
     .map(async path => { const response = await fetch(base + path); assert.ok(response.ok); return response.text(); }));
 const shellPattern = /  <div class="m-app"[\s\S]*?(?=  <script type="module")/u;
 assert.ok(appHtml.match(shellPattern));
@@ -33,7 +33,9 @@ try {
         document.querySelector('#m-pwa-update').hidden = false;
         document.querySelector('#m-pwa-dismiss').hidden = false;
     });
-    const geometry = () => page.evaluate(() => {
+    const geometry = async () => {
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        return page.evaluate(() => {
         const main = document.querySelector('#m-main');
         main.scrollTop = main.scrollHeight;
         const panel = document.querySelector('.m-fiche-panel');
@@ -42,7 +44,8 @@ try {
         return { lastBottom: last.getBoundingClientRect().bottom, mainBottom: main.getBoundingClientRect().bottom,
             mainHeight: main.clientHeight, navTop: nav.getBoundingClientRect().top, navBottom: nav.getBoundingClientRect().bottom,
             viewport: innerHeight, documentHeight: document.documentElement.scrollHeight, hash: location.hash };
-    });
+        });
+    };
     const check = (g, label) => {
         assert.ok(g.mainHeight > 0, `${label}: contenu sans hauteur ${JSON.stringify(g)}`);
         assert.ok(g.lastBottom <= g.mainBottom + 1, `${label}: fin hors du défilement ${JSON.stringify(g)}`);
@@ -136,6 +139,63 @@ try {
             check(g, 'navigation générale'); shellCases += 1;
         }
     }
+    // Chargement volontairement bloqué : une fiche ne doit jamais supprimer toute navigation.
+    const delayed = await context.newPage();
+    delayed.on('pageerror', error => errors.push(error.message));
+    await delayed.route('**/tools/fixtures/fiche-mobile-qa.html*', route => route.fulfill({ contentType: 'text/html', body: fixtureWithProductionShell }));
+    const gatedScript = fixtureScript.replace('loadRuntime: async () => ({ repository })',
+        'loadRuntime: async () => { await new Promise(resolve => { globalThis.qaReleaseRuntime = resolve; }); return { repository }; }');
+    assert.notEqual(gatedScript, fixtureScript, 'le test retarde vraiment le chargement de la fiche');
+    await delayed.route('**/tools/fixtures/fiche-mobile-qa.js', route => route.fulfill({ contentType: 'application/javascript', body: gatedScript }));
+    await delayed.goto(base + '/tools/fixtures/fiche-mobile-qa.html');
+    await delayed.waitForFunction(() => typeof globalThis.qaReleaseRuntime === 'function');
+    assert.equal(await delayed.locator('.m-fiche-tabs').count(), 0);
+    assert.equal(await delayed.locator('.m-bottom-nav').isVisible(), true, 'navigation disponible pendant le chargement');
+    await delayed.evaluate(() => globalThis.qaReleaseRuntime());
+    await delayed.locator('.m-fiche-tabs').waitFor();
+    await delayed.waitForFunction(() => document.querySelector('.m-bottom-nav').hidden);
+    assert.equal(await delayed.locator('.m-fiche-tab').count(), 5);
+    await delayed.evaluate(() => { location.hash = '#/reglages'; });
+    await delayed.locator('.m-fiche-tabs').waitFor({ state: 'detached' });
+    await delayed.waitForFunction(() => !document.querySelector('.m-bottom-nav').hidden);
+    await delayed.close();
+    // Démarrage réel : vérifier les boutons après navigation, avec la coque courante
+    // et une coque HTML antérieure conservée pendant une mise à jour.
+    const legacyHtml = appHtml
+        .replace(/    <div class="m-topbar">([\s\S]*?)    <\/div>\s*(?=    <main)/u, '$1')
+        .replace(/    <div class="m-navigation" id="m-navigation">\n([\s\S]*?<\/nav>)\n    <\/div>/u, '$1');
+    assert.doesNotMatch(legacyHtml, /class="m-topbar"/u);
+    assert.doesNotMatch(legacyHtml, /id="m-navigation"/u);
+    for (const legacy of [false, true]) {
+        const runtime = await context.newPage();
+        runtime.on('pageerror', error => errors.push(error.message));
+        if (legacy) await runtime.route('**/app/index.html*', route => route.fulfill({ contentType: 'text/html', body: legacyHtml }));
+        await runtime.goto(base + '/app/index.html#/pnjs');
+        await runtime.waitForFunction(() => document.querySelector('#m-main').childElementCount > 0);
+        assert.equal(await runtime.locator('.m-topbar').count(), 1);
+        assert.equal(await runtime.locator('#m-navigation').count(), 1);
+        for (const viewport of [{ width: 390, height: 844 }, { width: 844, height: 390 }]) {
+            await runtime.setViewportSize(viewport);
+            for (const section of ['pnjs', 'enquetes', 'fiches', 'reglages', 'pnjs']) {
+                await runtime.locator('.m-bottom-nav a[data-route="' + section + '"]').click();
+                await runtime.waitForFunction(section => document.querySelector('.m-bottom-nav a[aria-current="page"]').dataset.route === section, section);
+                const navigation = await runtime.evaluate(() => {
+                    const nav = document.querySelector('.m-bottom-nav');
+                    const rect = nav.getBoundingClientRect();
+                    return { hidden: nav.hidden, top: rect.top, bottom: rect.bottom, viewport: innerHeight,
+                        usable: [...nav.querySelectorAll('a')].every(link => {
+                            const box = link.getBoundingClientRect();
+                            const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+                            return hit === link || link.contains(hit);
+                        }) };
+                });
+                assert.equal(navigation.hidden, false);
+                assert.ok(navigation.top >= 0 && navigation.bottom <= navigation.viewport + 1, JSON.stringify(navigation));
+                assert.equal(navigation.usable, true, 'les boutons de navigation sont visibles et atteignables');
+            }
+        }
+        await runtime.close();
+    }
     assert.deepEqual(errors, []);
-    console.log(JSON.stringify({ passed: true, ficheCases, shellCases, touch, screenshots: out }));
+    console.log(JSON.stringify({ passed: true, ficheCases, shellCases, runtimeCases: 20, delayedLoadCases: 2, touch, screenshots: out }));
 } finally { await browser.close(); }

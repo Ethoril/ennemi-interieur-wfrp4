@@ -1,3 +1,10 @@
+## [2.37.4] - 2026-10-08
+
+- Navigation mobile : barre ancrée au bas de la fenêtre et espace de contenu réservé selon sa hauteur réelle, zone système comprise.
+- La navigation générale reste disponible pendant le chargement d’une fiche ; les onglets la remplacent seulement une fois prêts.
+- Raccordement d’une ancienne coque HTML encore ouverte pendant une mise à jour. Recette étendue au démarrage réel, aux changements d’écran et au chargement retardé d’une fiche.
+- Cache actualisé pour l’application installée.
+
 ## [2.37.3] - 2026-10-08
 
 - Défilement mobile : navigation et onglets de fiche placés hors du contenu défilant, avec une hauteur adaptée au bandeau de mise à jour, à la rotation et au texte agrandi.

@@ -1,3 +1,4 @@
+import { observeMobileNavigation } from '../../js/mobile/navigation-layout.js';
 const localHosts = new Set(['localhost', '127.0.0.1', '::1']);
 if (!localHosts.has(location.hostname)) {
     document.body.replaceChildren(Object.assign(document.createElement('p'), {
@@ -13,6 +14,7 @@ const [{ createFicheDetailView }, { createRouter, parseRoute, ROUTE_NAMES }, { l
     import('../../js/fiche-schema.js'),
 ]);
 const catalogue = await loadFicheCatalogue();
+observeMobileNavigation({ app: document.getElementById('m-app'), navigation: document.getElementById('m-navigation') });
 
 const CARACS = ['cc', 'ct', 'f', 'e', 'i', 'ag', 'dex', 'int', 'fm', 'soc'];
 const BASES = [28, 30, 25, 30, 28, 32, 27, 33, 29, 35];
@@ -165,7 +167,7 @@ router = createRouter({
     onRoute: (route, view) => {
         currentView = view;
         const bottomNav = document.querySelector('.m-bottom-nav');
-        if (bottomNav) bottomNav.hidden = route.name === ROUTE_NAMES.FICHE;
+        if (bottomNav) bottomNav.hidden = Boolean(document.querySelector('#m-navigation .m-fiche-tabs'));
         title.textContent = 'Fiche';
         back.hidden = route.name !== ROUTE_NAMES.FICHE;
         headerAction.hidden = route.name !== ROUTE_NAMES.FICHE;

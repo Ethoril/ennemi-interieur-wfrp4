@@ -1,3 +1,4 @@
+import { observeMobileNavigation } from './navigation-layout.js';
 import { createEnqueteWorkspaceView } from '../enquetes-workspace.js';
 import { createAppLifecycle } from './lifecycle.js';
 import { createRouter, documentTitleForRoute, parseRoute, ROUTE_NAMES } from './router.js';
@@ -223,6 +224,7 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
 
 function boot(documentRef = globalThis.document, windowRef = globalThis.window) {
     const container = documentRef?.querySelector?.('#m-main');
+    const app = documentRef?.querySelector?.('#m-app');
     const status = documentRef?.querySelector?.('#m-status');
     const routeStatus = documentRef?.querySelector?.('#m-route-status');
     const title = documentRef?.querySelector?.('#m-title');
@@ -233,7 +235,29 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     const dialogOk = documentRef?.querySelector?.('#m-dialog-ok');
     const themeToggle = documentRef?.querySelector?.('#m-theme-toggle');
     const cacheNote = documentRef?.querySelector?.('#m-cache-note');
-    if (!container || !windowRef || !title || !back || !headerAction || !dialogElement) return null;
+    if (!container || !app || !windowRef || !title || !back || !headerAction || !dialogElement) return null;
+
+    // Une mise à jour peut conserver une ancienne coque HTML dans l'onglet ouvert.
+    // Raccorder ses éléments au même layout avant de démarrer les vues et la PWA.
+    if (!app.querySelector('.m-topbar')) {
+        const topbar = documentRef.createElement('div');
+        topbar.className = 'm-topbar';
+        app.insertBefore(topbar, container);
+        for (const selector of ['.m-header', '#m-pwa-banner', '#m-status', '#m-route-status']) {
+            const element = app.querySelector(selector);
+            if (element) topbar.append(element);
+        }
+    }
+    if (!app.querySelector('#m-navigation')) {
+        const navigation = documentRef.createElement('div');
+        navigation.id = 'm-navigation';
+        navigation.className = 'm-navigation';
+        const nav = app.querySelector('.m-bottom-nav');
+        if (nav) navigation.append(nav);
+        app.append(navigation);
+    }
+
+    const stopNavigationLayout = observeMobileNavigation({ app, navigation: app.querySelector('#m-navigation'), windowRef });
 
     const session = createDefaultPublicSession({ navigatorRef: windowRef.navigator });
     const draftStore = createPublicDraftStore({ storage: (() => { try { return windowRef.localStorage; } catch { return null; } })() });
@@ -417,7 +441,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             // La fiche remplace la barre basse par ses propres onglets et a son propre menu ⋯.
             const onFiche = route.name === ROUTE_NAMES.FICHE;
             currentView = view;
-            if (bottomNav) bottomNav.hidden = onFiche;
+            if (bottomNav) bottomNav.hidden = Boolean(documentRef.querySelector('#m-navigation .m-fiche-tabs'));
             headerAction.setAttribute('aria-label', onFiche ? 'Menu de la fiche' : route.name === ROUTE_NAMES.ENQUETE ? (view?.menuLabel?.() || 'Actions du dossier') : 'Actions');
             headerAction.hidden = !(onFiche || route.name === ROUTE_NAMES.ENQUETE || route.name === ROUTE_NAMES.REGLAGES);
             if (onFiche || route.name === ROUTE_NAMES.ENQUETE) {
@@ -512,6 +536,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             dialogElement.removeEventListener('cancel', onDialogCancel);
             headerAction.removeEventListener('click', onHeaderAction);
             themeToggle?.removeEventListener('click', onThemeToggle);
+            stopNavigationLayout();
             await session.stop();
             await mjSession.stop();
             await logoutContributionAccount().catch(() => {});

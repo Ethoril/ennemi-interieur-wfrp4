@@ -26,21 +26,22 @@ body {
 }
 
 .m-app {
-  height: 100vh;
-  height: 100dvh;
-  min-height: 100vh;
-  min-height: 100dvh;
+  /* La coque reste ancrée à la fenêtre, y compris dans la PWA Android. */
+  position: fixed;
+  inset: 0;
+  min-height: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) var(--m-navigation-height, calc(var(--m-nav-height) + var(--m-safe-bottom)));
   padding-top: var(--m-safe-top);
   padding-right: var(--m-safe-right);
   padding-left: var(--m-safe-left);
   background: var(--bg-darkest);
 }
 
-/* L'en-tête et la navigation restent dans le flux. Même avec un bandeau et du
-   texte agrandi, l'en-tête laisse de la place au contenu et reste consultable. */
+/* L'en-tête laisse de la place au contenu, même avec un bandeau et du texte agrandi. */
 .m-topbar {
+  grid-row: 1;
+  grid-column: 1;
   position: relative;
   min-height: 0;
   max-height: 45vh;
@@ -49,6 +50,11 @@ body {
 }
 
 .m-navigation {
+  position: fixed;
+  right: var(--m-safe-right);
+  bottom: 0;
+  left: var(--m-safe-left);
+  z-index: 10;
   min-width: 0;
   background: var(--bg-dark);
 }
@@ -153,6 +159,8 @@ body {
 .m-pwa-banner-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
 
 .m-main {
+  grid-row: 2;
+  grid-column: 1;
   /* Les libellés accessibles en position absolue défilent dans ce conteneur. */
   position: relative;
   width: min(100%, var(--m-content-width));
