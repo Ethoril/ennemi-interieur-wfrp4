@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "catalogVersion": "sha256:0e2a9ccf3059a936e9af670386aa2565f3069127558b77629c267f078b9a956e",
-  "fetchedAt": "2026-10-07",
+  "catalogVersion": "sha256:57a689ad47ebfa994ced3b48050160a3b081370322cdcf6c1cfcf9fa09bac9d0",
+  "fetchedAt": "2026-10-08",
   "source": {
     "kind": "google-sheets-public-snapshot",
     "spreadsheetId": "1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs",
@@ -105,7 +105,7 @@
       "nom": "Assistant animal",
       "englishName": "Animal Assistant",
       "sourceLabel": "Assistant animal (Animal Assistant)",
-      "description": "Réservé aux familiers de pouvoir animaux. Vous pouvez assister le lanceur de sorts lié à votre âme pour Focalisation, Langue (Magick), Survie en extérieur et les Tests de Perception de nature magique. Chaque assistant donne le bonus normal de +10, même sans connaître la Compétence.",
+      "description": "Réservé aux familiers de pouvoir animaux. Vous pouvez assister le lanceur de sorts lié à votre âme pour Focalisation, Langue (Magick), Survie en extérieur et les Tests de Perception de nature magique. L’assistance confère l’Avantage V5 au lanceur de sorts (inversion du d100 si favorable), même si le familier ne connaît pas la Compétence.",
       "limitText": "1",
       "source": "Archives of the Empire 3 (V4), p. 81",
       "specializationLabel": null
@@ -115,7 +115,7 @@
       "nom": "Assistant magique",
       "englishName": "Magical Assistant",
       "sourceLabel": "Assistant magique (Magical Assistant)",
-      "description": "Réservé aux Familiers de Pouvoir ; aucune autre espèce ne peut l’acquérir. Le familier aide son créateur aux Tests de Focalisation, Savoir (Magie), Langue (Magick), ainsi qu’aux Tests de Recherche portant sur une découverte ou innovation magique. Bonus d’assistance +20 au lieu de +10.",
+      "description": "Réservé aux Familiers de Pouvoir ; aucune autre espèce ne peut l’acquérir. Le familier aide son créateur aux Tests de Focalisation, Savoir (Magie), Langue (Magick), ainsi qu’aux Tests de Recherche portant sur une découverte ou innovation magique. Son assistance accorde un bonus fixe de +2 DR au lieu de l’Avantage V5 de l’assistance normale, sans accorder cet Avantage en plus.",
       "limitText": "1",
       "source": "Winds of Magic (V4), p. 186",
       "specializationLabel": null
@@ -446,7 +446,7 @@
       "nom": "Danse des épées",
       "englishName": "Sword-dancing",
       "sourceLabel": "Danse des épées (Sword-dancing)",
-      "description": "Apprenez Ritual of Cleansing. Chaque technique supplémentaire coûte 100 PX × nombre de techniques déjà connues. Pour une technique, faites un Test de Corps à corps (À deux mains) et atteignez son seuil de DR ; échec : perdez tous vos Avantages V4 ; échec stupéfiant : table Oops! en plus. Difficulté : Yenlui équilibré/lumineux, (+0) ; sombre, Très difficile (−30). Techniques : Cleansing (1 DR), rituel de plusieurs minutes pour déplacer Yenlui vers lumineux au lever du soleil ou sombre au coucher ; Phoenix (1), lancer de l'épée hors engagement à Bonus de Force + Bonus de Force Mentale yards, dégâts de l'arme et Pénétrante, +1 yard et +1 dégât par DR obtenu au Test ; Sun (1), +1 niveau de War Leader pendant Bonus de Force Mentale Rounds, chaque DR obtenu au Test ajoute un niveau ou un Round ; Frost (1), ignorez 1 PA pendant Bonus de Capacité de Combat Rounds, +10 aux jets de Blessure critique par DR obtenu au Test ; Storm (1), opposez les tirs avec Corps à corps (À deux mains) pendant Bonus d'Initiative Rounds, +1 Round par DR obtenu au Test ; Rain (2), +1 DR à Esquive pendant Bonus d'Agilité Rounds, chaque DR obtenu au Test ajoute +1 DR à Esquive et un Round ; Shadows of Loec (2), déplacement jusqu'à DR × Mouvement yards (minimum 5), terrain normal, ennemis auparavant engagés : Initiative (+0) ou Surpris ; Hawk (3), cible à une distance maximale de votre Bonus de Force Mentale en yards : Résistance (−10) ou 10 + DR dégâts ignorant PA mais pas Bonus d'Endurance et 2 états Assourdi, +1 yard et +1 cible par DR obtenu au Test ; Falling Water (3), une attaque contre chaque ennemi engagé à portée de l'arme, trois contre ceux avec Swarm ; Final Stroke (4), cible : Esquive Très difficile (−30) ou coup inévitable à +4 dégâts, +1 dégât par DR obtenu au Test.",
+      "description": "Apprenez Ritual of Cleansing. Chaque technique supplémentaire coûte 100 PX × nombre de techniques déjà connues. Pour une technique, faites un Test de Corps à corps (À deux mains) et atteignez son seuil de DR ; échec : perdez votre Élan (Momentum) ; échec stupéfiant : table Oops! en plus. Difficulté : Yenlui équilibré/lumineux, (+0) ; sombre, Très difficile (−3 DR). Techniques : Cleansing (1 DR), rituel de plusieurs minutes pour déplacer Yenlui vers lumineux au lever du soleil ou sombre au coucher ; Phoenix (1), lancer de l'épée hors engagement à Bonus de Force + Bonus de Force Mentale yards, dégâts de l'arme et Pénétrante, +1 yard et +1 dégât par DR obtenu au Test ; Sun (1), +1 niveau de War Leader pendant Bonus de Force Mentale Rounds, chaque DR obtenu au Test ajoute un niveau ou un Round ; Frost (1), ignorez 1 PA pendant Bonus de Capacité de Combat Rounds, +10 aux jets de Blessure critique par DR obtenu au Test ; Storm (1), opposez les tirs avec Corps à corps (À deux mains) pendant Bonus d'Initiative Rounds, +1 Round par DR obtenu au Test ; Rain (2), +1 DR à Esquive pendant Bonus d'Agilité Rounds, chaque DR obtenu au Test ajoute +1 DR à Esquive et un Round ; Shadows of Loec (2), déplacement jusqu'à DR × Mouvement yards (minimum 5), terrain normal, ennemis auparavant engagés : Initiative (+0) ou Surpris ; Hawk (3), cible à une distance maximale de votre Bonus de Force Mentale en yards : Résistance (−1 DR) ou 10 + DR dégâts ignorant PA mais pas Bonus d'Endurance et 2 états Assourdi, +1 yard et +1 cible par DR obtenu au Test ; Falling Water (3), une attaque contre chaque ennemi engagé à portée de l'arme, trois contre ceux avec Swarm ; Final Stroke (4), cible : Esquive Très difficile (−3 DR) ou coup inévitable à +4 dégâts, +1 dégât par DR obtenu au Test.",
       "limitText": "1",
       "source": "High Elf Player’s Guide (V4), p. 68–69",
       "specializationLabel": null
@@ -456,7 +456,7 @@
       "nom": "Défiance magique",
       "englishName": "Magic Defiance",
       "sourceLabel": "Défiance magique (Magic Defiance)",
-      "description": "Vous pouvez inverser les dés de tout Test exigé par les effets d’un sort. Une fois par aventure, dépenser 1 point de Chance annule les effets d’un sort lancé avec succès sur vous. +1 DR par acquisition aux Tests réussis de Force Mentale pour utiliser Résistance à la Magie selon les règles V4.",
+      "description": "Vous pouvez inverser les dés de tout Test exigé par les effets d’un sort. Une fois par aventure, dépenser 1 point de Chance annule les effets d’un sort lancé avec succès sur vous.",
       "limitText": "1",
       "source": "Dwarf Player’s Guide (V4), p. 80",
       "specializationLabel": null
@@ -787,7 +787,7 @@
       "nom": "Garde royal",
       "englishName": "Kingsguard",
       "sourceLabel": "Garde royal (Kingsguard)",
-      "description": "Les attaques ennemies contre un allié situé à 2 yards ou moins de vous subissent −10 par acquisition. Aucun effet sur les attaques contre vous-même ni lorsque vous souffrez d’un état.",
+      "description": "Les attaques ennemies contre un allié situé à 2 yards ou moins de vous subissent −1 DR par acquisition. Aucun effet sur les attaques contre vous-même ni lorsque vous souffrez d’un état.",
       "limitText": "3",
       "source": "Dwarf Player’s Guide (V4), p. 80",
       "specializationLabel": null
@@ -807,7 +807,7 @@
       "nom": "Grande taille",
       "englishName": "Large",
       "sourceLabel": "Grande taille (Large)",
-      "description": "Vous êtes de taille Grande. Règles V4 de Taille : Points de Blessure = 2×(Bonus de Force + 2×Bonus d’Endurance + Bonus de Force Mentale). Face à un adversaire plus petit : armes Dévastatrices ; Percutantes si écart d’au moins 2 catégories ; dégâts multipliés par l’écart de catégories, minimum ×1, après modificateurs ; Frappes Mortelles même si la cible survit. L’adversaire plus petit gagne +10 pour toucher et subit −2 DR par catégorie s’il pare avec CC. Vous quittez le Corps à corps sans désengagement. Tests opposés de Force : victoire automatique avec 2 catégories d’écart ; avec une seule, le plus petit doit obtenir un Critique pour comparer les DR. Si agressif : Peur si écart 1, Terreur si écart ≥2, indice égal à l’écart. Piétinement contre une cible plus petite : attaque gratuite de Corps à corps (Bagarre), dégâts Bonus de Force, coût 1 Avantage V4.",
+      "description": "Vous êtes de taille Grande. Points de Blessure = 2 × (Bonus de Force + 2 × Bonus d’Endurance + Bonus de Force Mentale). Vos attaques normales de Corps à corps infligent des dégâts supplémentaires égaux à votre Bonus de Force ; ce bonus de Taille ne s’applique ni aux attaques à distance, ni aux attaques gratuites ou supplémentaires. Un adversaire plus petit subit −2 DR s’il utilise Corps à corps pour se défendre contre vous, quelle que soit la différence de catégories. Si vous êtes agressif, vous provoquez la Peur chez les créatures plus petites. Vous pouvez quitter le Corps à corps avec des adversaires plus petits sans désengagement. En Force opposée, vous gagnez automatiquement avec au moins deux catégories d’écart ; avec une seule, le plus petit doit obtenir un Critique pour pouvoir comparer les DR. Pour déterminer si vous êtes en infériorité numérique, vous comptez comme deux créatures ; cela ne double pas votre contribution lorsque vous attaquez en surnombre des créatures plus petites. Contre un adversaire plus petit, vous pouvez perdre votre Élan (Momentum) pour une attaque gratuite de Piétinement : Corps à corps (Bagarre), dégâts égaux à votre Bonus de Force.",
       "limitText": "1",
       "source": "Archives of the Empire 2 (V4), p. 20",
       "specializationLabel": null
@@ -967,7 +967,7 @@
       "nom": "Inlassable",
       "englishName": "Tireless",
       "sourceLabel": "Inlassable (Tireless)",
-      "description": "Pour appliquer les pénalités d'Exténué, ignorez 1 état, plus 1 état supplémentaire par niveau. Exemple : niveau 2 et 4 états, seules les pénalités d'un état s'appliquent (−10 à tous les Tests).",
+      "description": "Pour appliquer les pénalités d'Exténué, ignorez 1 état, plus 1 état supplémentaire par niveau. Exemple : niveau 2 et 4 états, seules les pénalités d'un état s'appliquent (−1 DR à tous les Tests).",
       "limitText": "Bonus d’Endurance",
       "source": "Dwarf Player’s Guide (V4), p. 81",
       "specializationLabel": null
@@ -1017,7 +1017,7 @@
       "nom": "L’esprit sur le corps",
       "englishName": "Mind over Body",
       "sourceLabel": "L’esprit sur le corps (Mind over Body)",
-      "description": "Méditation d’au moins 20 minutes puis Test de Prière Intermédiaire (+0). Si réussi, effets pendant 1d10 + DRd10 heures. Niveau 1 : Trait Insensible à la douleur et aucun état causé par la douleur. Niveau 2 : vision mentale des formes, sans couleurs, expressions ni fins détails sauf objets fabriqués ; Métier (Forgeron) sans malus de cécité et immunité à Aveuglé, même magique ou divine. Niveau 3 : permet de dépenser une Détermination pour ignorer les pénalités des Blessures Critiques lors des Tests étendus, notamment de fabrication.",
+      "description": "Méditation d’au moins 20 minutes puis Test de Prière Intermédiaire (+0). Si réussi, effets pendant 1d10 + DRd10 heures. Niveau 1 : Trait Insensible à la douleur et aucun état causé par la douleur. Niveau 2 : vision mentale des formes, sans couleurs, expressions ni fins détails sauf objets fabriqués ; Métier (Forgeron) sans malus de cécité et immunité à Aveuglé, même magique ou divine. Niveau 3 : permet de dépenser un point de Chance pour ignorer les pénalités des Blessures Critiques lors des Tests étendus, notamment de fabrication.",
       "limitText": "3",
       "source": "High Elf Player’s Guide (V4), p. 101",
       "specializationLabel": null
@@ -1258,7 +1258,7 @@
       "nom": "Méditation Cadai",
       "englishName": "Cadai Meditation",
       "sourceLabel": "Méditation Cadai (Cadai Meditation)",
-      "description": "Chaque jour, méditez au moins une heure puis effectuez un Test de Prière Accessible (+20). Si vous réussissez, vous pouvez passer à l’état Yenlui (Lumineux).",
+      "description": "Chaque jour, méditez au moins une heure puis effectuez un Test de Prière Accessible (+2 DR). Si vous réussissez, vous pouvez passer à l’état Yenlui (Lumineux).",
       "limitText": "1",
       "source": "High Elf Player’s Guide (V4), p. 101",
       "specializationLabel": null
@@ -1619,7 +1619,7 @@
       "nom": "Retranchement",
       "englishName": "Entrenchment",
       "sourceLabel": "Retranchement (Entrenchment)",
-      "description": "Quand vous êtes à couvert léger, les attaques contre vous subissent −20 au lieu de −10 ; à couvert moyen, −30 au lieu de −20. Ajoutez +1 DR par acquisition aux Tests de Métier réussis pour construire un couvert protecteur.",
+      "description": "Quand vous êtes à couvert léger, les attaques contre vous subissent −2 DR au lieu de −1 DR ; à couvert moyen, −3 DR au lieu de −2 DR. Ajoutez +1 DR par acquisition aux Tests de Métier réussis pour construire un couvert protecteur.",
       "limitText": "Bonus d’Intelligence",
       "source": "Dwarf Player’s Guide (V4), p. 79",
       "specializationLabel": null
@@ -1659,7 +1659,7 @@
       "nom": "Sang d'Aenarion",
       "englishName": "Blood of Aenarion",
       "sourceLabel": "Sang d'Aenarion [Prodige magique ou martial] (Blood of Aenarion)",
-      "description": "À la création, gagnez +1 Destin et choisissez : prodige magique (coût des Sorts en PX divisé par deux) ou martial (coût divisé par deux de Combat instinctif, Véloce, Réflexes foudroyants, Tireur de précision, Vivacité, Très fort et Guerrier né). Chaque fin de semaine, réussissez un Test de Calme Accessible (+20) ou gagnez la Psychologie Yenlui (Sombre). À la création, tirez aussi la mutation mentale de la table dédiée : elle compte comme une Psychologie, pas comme une mutation pour les limites ou effets de règles. Table 1d100 : 01–20 Hollow Heart ; 21–40 Profane Urgency ; 41–60 Thrill Hunter ; 61–74 Tortured Visions ; 75–89 Unending Malice ; 90–00 Unholy Rage. Effets de ces Psychologies : livre de base V4, p. 185.",
+      "description": "À la création, gagnez +1 Destin et choisissez : prodige magique (coût des Sorts en PX divisé par deux) ou martial (coût divisé par deux de Combat instinctif, Véloce, Réflexes foudroyants, Tireur de précision, Vivacité, Très fort et Guerrier né). Chaque fin de semaine, réussissez un Test de Calme Accessible (+2 DR) ou gagnez la Psychologie Yenlui (Sombre). À la création, tirez aussi la mutation mentale de la table dédiée : elle compte comme une Psychologie, pas comme une mutation pour les limites ou effets de règles. Table 1d100 : 01–20 Hollow Heart ; 21–40 Profane Urgency ; 41–60 Thrill Hunter ; 61–74 Tortured Visions ; 75–89 Unending Malice ; 90–00 Unholy Rage. Effets de ces Psychologies : livre de base V4, p. 185.",
       "limitText": "1",
       "source": "High Elf Player’s Guide (V4), p. 51",
       "specializationLabel": "Prodige magique ou martial"
@@ -1680,7 +1680,7 @@
       "nom": "Sapeur",
       "englishName": "Underminer",
       "sourceLabel": "Sapeur (Underminer)",
-      "description": "Aucune pénalité pour attaquer À terre ou sous votre cible ; les ennemis n'ont pas de bonus pour vous attaquer À terre. +20 supplémentaire pour toucher un ennemi Surpris en émergeant d'une position cachée sous lui (tunnel, fosse…). Tests de Corps à corps réussis : +1 DR par niveau.",
+      "description": "Aucune pénalité pour attaquer À terre ou sous votre cible ; les ennemis n'ont pas de bonus pour vous attaquer À terre. +2 DR supplémentaires pour toucher un ennemi Surpris en émergeant d'une position cachée sous lui (tunnel, fosse…). Tests de Corps à corps réussis : +1 DR par niveau.",
       "limitText": "Bonus d’Agilité",
       "source": "Dwarf Player’s Guide (V4), p. 81",
       "specializationLabel": null
@@ -1832,7 +1832,7 @@
       "nom": "Tête brûlée",
       "englishName": "Maverick",
       "sourceLabel": "Tête brûlée (Maverick)",
-      "description": "Vous ignorez la pénalité de −20 aux attaques à distance lorsque vous utilisez le Trait Vol. +1 DR par acquisition aux Tests réussis de Voile (Aéronef) pour voler vite et dangereusement.",
+      "description": "Vous ignorez la pénalité de −2 DR aux attaques à distance lorsque vous utilisez le Trait Vol. +1 DR par acquisition aux Tests réussis de Voile (Aéronef) pour voler vite et dangereusement.",
       "limitText": "Bonus d’Agilité",
       "source": "Dwarf Player’s Guide (V4), p. 80",
       "specializationLabel": null
@@ -2013,7 +2013,7 @@
       "nom": "Vice",
       "englishName": "Vice",
       "sourceLabel": "Vice [Cible] (Vice)",
-      "description": "Chaque achat vous donne un nouveau vice (alcool, nourriture, narcotiques, plaisir…). Face à sa cible, Test de Psychologie ; échec : vous vous y adonnez excessivement en abandonnant toute autre action, jusqu'à devenir insensible et gagner 1 état Exténué. À la fin de chaque Round suivant, un nouveau Test peut mettre fin à cet état. −20 aux Tests de Sociabilité envers les témoins. Chaque jour entier sans satisfaire le vice ajoute −20 cumulatif aux Tests de Psychologie jusqu'à satisfaction. Tests de Force Mentale réussis pour résister à la cible : +1 DR par niveau.",
+      "description": "Chaque achat vous donne un nouveau vice (alcool, nourriture, narcotiques, plaisir…). Face à sa cible, Test de Psychologie ; échec : vous vous y adonnez excessivement en abandonnant toute autre action, jusqu'à devenir insensible et gagner 1 état Exténué. À la fin de chaque Round suivant, un nouveau Test peut mettre fin à cet état. −2 DR aux Tests de Sociabilité envers les témoins. Chaque jour entier sans satisfaire le vice ajoute −2 DR cumulatifs aux Tests de Psychologie jusqu'à satisfaction. Tests de Force Mentale réussis pour résister à la cible : +1 DR par niveau.",
       "limitText": "Bonus de Force Mentale",
       "source": "Archives of the Empire 2 (V4), p. 20",
       "specializationLabel": "Cible"

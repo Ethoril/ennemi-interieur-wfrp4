@@ -1,3 +1,8 @@
+## [2.37.5] - 2026-10-09
+
+- Talents : descriptions reprises de l’onglet Talents des Aides de jeu, désormais toutes compatibles V5 (19 talents modifiés, dont Garde royal, Retranchement, Grande taille, Danse des épées).
+- Un « = » placé en tête de cellule dans le tableau n’apparaît plus au début de la description. Cache actualisé pour l’application installée.
+
 ## [2.37.4] - 2026-10-08
 
 - Navigation mobile : barre ancrée au bas de la fenêtre et espace de contenu réservé selon sa hauteur réelle, zone système comprise.

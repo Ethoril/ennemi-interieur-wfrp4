@@ -19,7 +19,9 @@ export function parseTalentSourceRows(headers, rows) {
     const columns = ['nomdutalent', 'resumeprecisdeleffet', 'limitedachat', 'sources'].map(name => indexes.indexOf(name));
     if (columns.some(index => index < 0)) throw new Error('Colonnes du tableau Talents inattendues.');
     const entries = rows.filter(row => row[columns[0]]).map(row => {
-        const [sourceLabel, description, limitText, source] = columns.map(index => String(row[index] || '').trim());
+        const [sourceLabel, rawDescription, limitText, source] = columns.map(index => String(row[index] || '').trim());
+        // Un « = » saisi pour forcer « +5 … » en texte dans Sheets n'appartient pas à la description.
+        const description = rawDescription.replace(/^=(?=[+−-])/u, '');
         const separator = sourceLabel.indexOf(' (');
         if (separator < 0 || !sourceLabel.endsWith(')')) throw new Error(`Nom bilingue manquant : ${sourceLabel}`);
         const french = sourceLabel.slice(0, separator);
