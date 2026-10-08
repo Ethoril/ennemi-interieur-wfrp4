@@ -149,6 +149,7 @@ router = createRouter({
         }
         return createFicheDetailView({
             container, documentRef: document, windowRef: window, route,
+            navigationContainer: document.getElementById('m-navigation'),
             getClient: async () => client,
             signIn: async () => setRole('joueur'),
             loadRuntime: async () => ({ repository }),
@@ -163,6 +164,8 @@ router = createRouter({
     getScrollY: () => container.scrollTop,
     onRoute: (route, view) => {
         currentView = view;
+        const bottomNav = document.querySelector('.m-bottom-nav');
+        if (bottomNav) bottomNav.hidden = route.name === ROUTE_NAMES.FICHE;
         title.textContent = 'Fiche';
         back.hidden = route.name !== ROUTE_NAMES.FICHE;
         headerAction.hidden = route.name !== ROUTE_NAMES.FICHE;

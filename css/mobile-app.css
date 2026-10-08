@@ -31,11 +31,26 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   display: grid;
-  grid-template-rows: auto auto auto 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   padding-top: var(--m-safe-top);
   padding-right: var(--m-safe-right);
   padding-left: var(--m-safe-left);
   background: var(--bg-darkest);
+}
+
+/* L'en-tête et la navigation restent dans le flux. Même avec un bandeau et du
+   texte agrandi, l'en-tête laisse de la place au contenu et reste consultable. */
+.m-topbar {
+  position: relative;
+  min-height: 0;
+  max-height: 45vh;
+  max-height: 45dvh;
+  overflow-y: auto;
+}
+
+.m-navigation {
+  min-width: 0;
+  background: var(--bg-dark);
 }
 
 .m-skip-link {
@@ -138,20 +153,27 @@ body {
 .m-pwa-banner-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
 
 .m-main {
+  /* Les libellés accessibles en position absolue défilent dans ce conteneur. */
+  position: relative;
   width: min(100%, var(--m-content-width));
   min-width: 0;
   min-height: 0;
   margin: 0 auto;
-  padding: var(--space-md) var(--space-md) calc(var(--space-xl) + var(--m-nav-height) + var(--m-safe-bottom));
+  padding: 0 var(--space-md);
   overflow-y: auto;
   overscroll-behavior-y: contain;
   scrollbar-gutter: stable;
-  /* L'en-tête de lieu collant se pose sous le padding haut : réserver ce padding, sa
-     hauteur (padding + une ligne de 0,78rem à 1,4) et la marge du contour de focus
-     (2px + 2px de décalage), pour qu'une carte atteinte au clavier, Maj+Tab compris,
-     ne passe pas dessous. */
+  /* Garder une marge de confort au-dessus d'une carte atteinte au clavier,
+     en plus de la hauteur de l'en-tête de lieu collant et de son contour de focus. */
   scroll-padding-top: calc(var(--space-md) + 2 * var(--space-xs) + 0.78rem * 1.4 + var(--space-sm));
 }
+
+/* Ces espaces défilent avec le contenu ; ils ne fixent pas une hauteur minimale
+   au viewport lorsque le clavier ou le texte agrandi réduisent la place. */
+.m-main::before,
+.m-main::after { content: ''; display: block; }
+.m-main::before { height: var(--space-md); }
+.m-main::after { height: var(--space-xl); }
 
 .m-main:focus { outline: none; }
 .m-screen { display: grid; gap: var(--space-md); }
@@ -746,11 +768,8 @@ body {
 .m-removal-confirmation p { margin: 0; color: var(--text-primary); }
 
 .m-bottom-nav {
-  position: fixed;
-  z-index: 10;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  width: min(100%, var(--m-content-width));
+  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: var(--space-xs) var(--m-safe-right) calc(var(--space-xs) + var(--m-safe-bottom)) var(--m-safe-left);
@@ -759,6 +778,8 @@ body {
 }
 
 .m-bottom-nav a {
+  /* La largeur suit la colonne, même quand la taille de texte double. */
+  min-width: 0;
   display: grid;
   place-items: center;
   align-content: center;
@@ -835,7 +856,6 @@ body {
 
 @media (min-width: 45rem) {
   .m-main { padding-right: var(--space-xl); padding-left: var(--space-xl); }
-  .m-bottom-nav { right: 50%; left: 50%; width: min(100%, var(--m-content-width)); transform: translateX(-50%); }
 }
 
 /* Illustration par défaut du bandeau : carte entière sur son propre noir. */

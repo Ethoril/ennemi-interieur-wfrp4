@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#07070d">
-  <meta name="app-version" content="v2.37.2">
+  <meta name="app-version" content="v2.37.3">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' https://www.gstatic.com https://apis.google.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self'; img-src 'self' data: blob:; frame-src blob: https://campagne-wrpg.firebaseapp.com https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/; connect-src 'self' https://firestore.googleapis.com https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://europe-west1-campagne-wrpg.cloudfunctions.net https://firebaseappcheck.googleapis.com https://content-firebaseappcheck.googleapis.com https://www.google.com/recaptcha/">
   <title>PNJs — L'Ennemi Intérieur</title>
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -23,42 +23,46 @@
 <body>
   <a class="m-skip-link" href="#m-main">Aller au contenu</a>
   <div class="m-app" id="m-app">
-    <header class="m-header" aria-label="En-tête de l'application">
-      <button class="m-icon-button m-back-button" id="m-back" type="button" aria-label="Retour" hidden>‹</button>
-      <div class="m-header-copy">
-        <p class="m-eyebrow">L'Ennemi Intérieur</p>
-        <h1 id="m-title" tabindex="-1">PNJs</h1>
-      </div>
-      <button class="m-icon-button" id="m-header-action" type="button" aria-label="Actions" hidden>⋯</button>
-    </header>
+    <div class="m-topbar">
+      <header class="m-header" aria-label="En-tête de l'application">
+        <button class="m-icon-button m-back-button" id="m-back" type="button" aria-label="Retour" hidden>‹</button>
+        <div class="m-header-copy">
+          <p class="m-eyebrow">L'Ennemi Intérieur</p>
+          <h1 id="m-title" tabindex="-1">PNJs</h1>
+        </div>
+        <button class="m-icon-button" id="m-header-action" type="button" aria-label="Actions" hidden>⋯</button>
+      </header>
 
-    <section class="m-pwa-banner" id="m-pwa-banner" aria-label="Installation et mise à jour" aria-live="polite" hidden>
-      <p id="m-pwa-banner-text"></p>
-      <div class="m-pwa-banner-actions">
-        <button class="m-button m-button-primary" id="m-pwa-update" type="button" hidden>Mettre à jour</button>
-        <button class="m-button" id="m-pwa-install" type="button" hidden>Installer l’application</button>
-        <button class="m-button" id="m-pwa-dismiss" type="button" hidden>Plus tard</button>
-      </div>
-    </section>
+      <section class="m-pwa-banner" id="m-pwa-banner" aria-label="Installation et mise à jour" aria-live="polite" hidden>
+        <p id="m-pwa-banner-text"></p>
+        <div class="m-pwa-banner-actions">
+          <button class="m-button m-button-primary" id="m-pwa-update" type="button" hidden>Mettre à jour</button>
+          <button class="m-button" id="m-pwa-install" type="button" hidden>Installer l’application</button>
+          <button class="m-button" id="m-pwa-dismiss" type="button" hidden>Plus tard</button>
+        </div>
+      </section>
 
-    <div class="m-status" id="m-status" role="status" aria-live="polite" aria-atomic="true"></div>
-    <div class="visually-hidden" id="m-route-status" role="status" aria-live="polite" aria-atomic="true"></div>
+      <div class="m-status" id="m-status" role="status" aria-live="polite" aria-atomic="true"></div>
+      <div class="visually-hidden" id="m-route-status" role="status" aria-live="polite" aria-atomic="true"></div>
+    </div>
     <main class="m-main" id="m-main" tabindex="-1"></main>
 
-    <nav class="m-bottom-nav" aria-label="Navigation principale">
-      <a href="#/pnjs" data-route="pnjs" aria-current="page">
-        <span class="m-nav-icon" aria-hidden="true">♙</span><span>PNJs</span>
-      </a>
-      <a href="#/enquetes" data-route="enquetes">
-        <span class="m-nav-icon" aria-hidden="true">✦</span><span>Enquêtes</span>
-      </a>
-      <a href="#/fiches" data-route="fiches">
-        <span class="m-nav-icon" aria-hidden="true">▤</span><span>Fiches</span>
-      </a>
-      <a href="#/reglages" data-route="reglages">
-        <span class="m-nav-icon" aria-hidden="true">⚙</span><span>Réglages</span>
-      </a>
-    </nav>
+    <div class="m-navigation" id="m-navigation">
+      <nav class="m-bottom-nav" aria-label="Navigation principale">
+        <a href="#/pnjs" data-route="pnjs" aria-current="page">
+          <span class="m-nav-icon" aria-hidden="true">♙</span><span>PNJs</span>
+        </a>
+        <a href="#/enquetes" data-route="enquetes">
+          <span class="m-nav-icon" aria-hidden="true">✦</span><span>Enquêtes</span>
+        </a>
+        <a href="#/fiches" data-route="fiches">
+          <span class="m-nav-icon" aria-hidden="true">▤</span><span>Fiches</span>
+        </a>
+        <a href="#/reglages" data-route="reglages">
+          <span class="m-nav-icon" aria-hidden="true">⚙</span><span>Réglages</span>
+        </a>
+      </nav>
+    </div>
   </div>
 
   <dialog class="m-dialog" id="m-dialog" aria-labelledby="m-dialog-title">

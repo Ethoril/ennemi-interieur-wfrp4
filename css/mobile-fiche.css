@@ -92,19 +92,10 @@
 
 .m-fiche-soon { margin: 0; color: var(--text-secondary); }
 
-/* La barre peut grandir quand les libellés passent à la ligne. Sa hauteur mesurée inclut la zone système. */
-.m-main:has(.m-fiche-tabs) {
-  padding-bottom: calc(var(--space-xl) + var(--m-fiche-tabs-height, calc(var(--m-nav-height) + var(--m-safe-bottom))));
-  scroll-padding-bottom: calc(var(--space-xl) + var(--m-fiche-tabs-height, calc(var(--m-nav-height) + var(--m-safe-bottom))));
-}
-
 /* Barre d'onglets : remplace .m-bottom-nav sur la fiche. */
 .m-fiche-tabs {
-  position: fixed;
-  z-index: 10;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  width: min(100%, var(--m-content-width));
+  margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   padding: 0 var(--m-safe-right) var(--m-safe-bottom) var(--m-safe-left);
@@ -136,10 +127,6 @@
 .m-fiche-menu .m-dialog-card { display: grid; gap: var(--space-sm); }
 .m-fiche-menu-note { margin: 0; color: var(--text-secondary); font-size: 0.9rem; }
 .m-fiche-menu a.m-button { text-align: center; text-decoration: none; }
-
-@media (min-width: 45rem) {
-  .m-fiche-tabs { right: 50%; left: 50%; width: min(100%, var(--m-content-width)); transform: translateX(-50%); }
-}
 
 /* Onglet Principal : tient en 390 × 844 sans défilement. */
 .m-principal { display: grid; gap: var(--space-sm); }

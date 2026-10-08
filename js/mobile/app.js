@@ -356,6 +356,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
         }),
         [ROUTE_NAMES.FICHE]: route => createFicheDetailView({
             container, documentRef, windowRef, route,
+            navigationContainer: documentRef.querySelector('#m-navigation'),
             getClient: getContributionClient,
             signIn: signInContribution,
             // Modules chargés à la demande : les SDK de données restent hors de la coque.

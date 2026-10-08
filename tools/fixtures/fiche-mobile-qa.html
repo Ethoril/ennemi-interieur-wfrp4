@@ -33,17 +33,20 @@
     </div>
   </details>
   <div class="m-app" id="m-app">
-    <header class="m-header" aria-label="En-tête de l'application">
-      <button class="m-icon-button m-back-button" id="m-back" type="button" aria-label="Retour" hidden>‹</button>
-      <div class="m-header-copy">
-        <p class="m-eyebrow">L'Ennemi Intérieur</p>
-        <h1 id="m-title" tabindex="-1">Fiche</h1>
-      </div>
-      <button class="m-icon-button" id="m-header-action" type="button" aria-label="Menu de la fiche" hidden>⋯</button>
-    </header>
-    <div class="m-status" id="m-status" role="status" aria-live="polite" aria-atomic="true"></div>
-    <div class="visually-hidden" id="m-route-status" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div class="m-topbar">
+      <header class="m-header" aria-label="En-tête de l'application">
+        <button class="m-icon-button m-back-button" id="m-back" type="button" aria-label="Retour" hidden>‹</button>
+        <div class="m-header-copy">
+          <p class="m-eyebrow">L'Ennemi Intérieur</p>
+          <h1 id="m-title" tabindex="-1">Fiche</h1>
+        </div>
+        <button class="m-icon-button" id="m-header-action" type="button" aria-label="Menu de la fiche" hidden>⋯</button>
+      </header>
+      <div class="m-status" id="m-status" role="status" aria-live="polite" aria-atomic="true"></div>
+      <div class="visually-hidden" id="m-route-status" role="status" aria-live="polite" aria-atomic="true"></div>
+    </div>
     <main class="m-main" id="m-main" tabindex="-1"></main>
+    <div class="m-navigation" id="m-navigation"></div>
   </div>
   <script type="module" src="./fiche-mobile-qa.js"></script>
 </body>

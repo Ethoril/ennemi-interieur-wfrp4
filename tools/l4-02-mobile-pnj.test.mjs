@@ -556,7 +556,7 @@ test('le CSS mobile dégage les en-têtes collants, voile le nom en plein et gar
     assert.match(main, /scroll-padding-top:\s*calc\(var\(--space-md\) \+ 2 \* var\(--space-xs\) \+ 0\.78rem \* 1\.4 \+ var\(--space-sm\)\)/u);
     const heading = /\.m-screen \.m-lieu-heading\s*\{([^}]*)\}/u.exec(css)?.[1] ?? '';
     assert.match(heading, /padding:\s*var\(--space-xs\) 0;/u, 'scroll-padding-top suit le padding des en-têtes');
-    assert.match(main, /padding:\s*var\(--space-md\) /u, 'l’en-tête colle sous le padding haut de .m-main');
+    assert.match(css, /\.m-main::before\s*\{\s*height:\s*var\(--space-md\);/u, 'l’espace haut défile sans imposer de hauteur minimale au contenu');
     assert.match(heading, /font-size:\s*0\.78rem;[\s\S]*line-height:\s*1\.4;/u);
     // Le voile doit être plein avant la ligne du nom, c'est-à-dire au plus tard à la fin du padding haut.
     const overlay = /\.m-detail-overlay\s*\{([^}]*)\}/u.exec(css)?.[1] ?? '';

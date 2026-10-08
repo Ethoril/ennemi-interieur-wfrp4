@@ -73,13 +73,14 @@ const data = () => ({
     customSpecs: {}, basicSpecs: {}, customTalents: {}, chosenVariants: {}, careerOverrides: {},
 });
 
-function setup({ hash = '#/fiches/test', capabilities = { role: 'joueur', characterIds: ['test'] }, user = { uid: 'u1' }, exists = true, manual = false, models = null } = {}) {
+function setup({ hash = '#/fiches/test', capabilities = { role: 'joueur', characterIds: ['test'] }, user = { uid: 'u1' }, exists = true, manual = false, models = null, separateNavigation = false } = {}) {
     let emit = () => {};
     let fail = () => {};
     let release = () => {};
     const gate = manual ? new Promise(resolve => { release = resolve; }) : null;
     const documentRef = fakeDocument();
     const container = documentRef.createElement('main');
+    const navigationContainer = separateNavigation ? documentRef.createElement('footer') : container;
     const windowRef = fakeWindow(hash);
     const subscriptions = new Set();
     const repository = {
@@ -94,7 +95,7 @@ function setup({ hash = '#/fiches/test', capabilities = { role: 'joueur', charac
     };
     const log = { titles: [], announces: [], navigations: [], signIns: 0 };
     const view = createFicheDetailView({
-        container, documentRef, windowRef, route: parseRoute(hash),
+        container, navigationContainer, documentRef, windowRef, route: parseRoute(hash),
         getClient: async () => ({
             watch(listener, onError) {
                 emit = listener;
@@ -110,7 +111,7 @@ function setup({ hash = '#/fiches/test', capabilities = { role: 'joueur', charac
         announce: message => log.announces.push(message),
         navigate: target => log.navigations.push(target),
     });
-    return { view, container, windowRef, subscriptions, log, emit: value => emit(value), fail: error => fail(error), release: () => release(), capabilities, user };
+    return { view, container, navigationContainer, windowRef, subscriptions, log, emit: value => emit(value), fail: error => fail(error), release: () => release(), capabilities, user };
 }
 
 const settle = async () => { for (let index = 0; index < 5; index += 1) await sleep(0); };
@@ -276,4 +277,27 @@ test('équipement MJ : le dépôt chargé est transmis à la vue, abonnement aux
     assert.equal(calls.subscribed, 1, 'les modèles MJ sont lus avec le dépôt résolu');
     view.unmount();
     assert.equal(calls.stopped, 1);
+});
+
+
+test('les onglets vivent hors du défilement et sont retirés à la déconnexion et au démontage', async () => {
+    const f = setup({ separateNavigation: true });
+    const globalNav = f.container.ownerDocument.createElement('nav');
+    f.navigationContainer.append(globalNav);
+    f.view.mount({});
+    await settle();
+    assert.equal(f.container.querySelector('.m-fiche-tabs'), null);
+    assert.equal(tabs(f.navigationContainer).length, 5);
+    f.windowRef.location.hash = '#/fiches/test/aptitudes';
+    f.windowRef.dispatch('hashchange');
+    assert.deepEqual(current(f.navigationContainer), ['#/fiches/test/aptitudes']);
+    f.emit({ user: null, capabilities: { role: 'public', characterIds: [] } });
+    await settle();
+    assert.equal(tabs(f.navigationContainer).length, 0);
+    assert.deepEqual(f.navigationContainer.children, [globalNav]);
+    f.emit({ user: f.user, capabilities: f.capabilities });
+    await settle();
+    assert.equal(tabs(f.navigationContainer).length, 5, 'une seule barre après reconnexion');
+    f.view.unmount();
+    assert.deepEqual(f.navigationContainer.children, [globalNav]);
 });

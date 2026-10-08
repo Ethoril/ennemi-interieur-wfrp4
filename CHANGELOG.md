@@ -1,3 +1,9 @@
+## [2.37.3] - 2026-10-08
+
+- Défilement mobile : navigation et onglets de fiche placés hors du contenu défilant, avec une hauteur adaptée au bandeau de mise à jour, à la rotation et au texte agrandi.
+- Les libellés destinés aux lecteurs d’écran restent dans la zone défilante ; ils ne provoquent plus de débordement de la page.
+- Navigation générale contenue en largeur avec du texte à 200 %. Cache actualisé pour l’application installée.
+
 ## [2.37.2] - 2026-10-08
 
 - Réglages mobiles : état « Recherche en cours… » dès l’appui sur la recherche de mise à jour, bouton désactivé pendant l’attente et résultat visible à la fin, y compris en cas d’échec réseau.

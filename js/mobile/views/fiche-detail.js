@@ -60,7 +60,7 @@ function safeStorage(windowRef) {
  * Les panneaux d'onglet sont des emplacements ; les briefs suivants les remplissent.
  */
 export function createFicheDetailView({
-    container, documentRef = container?.ownerDocument, windowRef = globalThis.window, route,
+    container, navigationContainer = container, documentRef = container?.ownerDocument, windowRef = globalThis.window, route,
     getClient, signIn, loadRuntime, loadCatalogue, setTitle = () => {}, announce = () => {}, navigate = () => {},
 } = {}) {
     if (!container || !documentRef || !route?.id || typeof getClient !== 'function'
@@ -87,11 +87,10 @@ export function createFicheDetailView({
     let online = windowRef?.navigator?.onLine !== false;
     let shownKey = '';
     let shell = null;
-    let tabsObserver = null;
-    const clearTabsHeight = () => {
-        tabsObserver?.disconnect();
-        tabsObserver = null;
-        container.style?.removeProperty('--m-fiche-tabs-height');
+    let tabsNav = null;
+    const clearTabs = () => {
+        tabsNav?.parentNode?.removeChild(tabsNav);
+        tabsNav = null;
     };
 
     // Le menu vit hors du rendu des écrans : un état qui change ne doit pas fermer le menu ouvert.
@@ -251,7 +250,7 @@ export function createFicheDetailView({
             importSheet.close();
             closeCareerViewer();
             aptitudes.closeDetail();
-            clearTabsHeight();
+            clearTabs();
             shownKey = key;
             shell = null;
             build();
@@ -369,20 +368,13 @@ export function createFicheDetailView({
             nav.append(link);
         }
         const conflicts = createConflictNotice({ documentRef, getContext: ficheContext, announce });
-        root.append(strip, notice, conflicts.element, panel, nav);
+        root.append(strip, notice, conflicts.element, panel);
         container.append(root);
+        navigationContainer.append(nav);
+        tabsNav = nav;
         shell = { identity: identityLine, xp, xpValue, notice, conflicts, panelTitle, principal, career, links };
         updateShell();
         updatePanel();
-        // La réserve suit la hauteur réelle des onglets : texte agrandi, rotation et zone système Android/PWA.
-        if (windowRef?.ResizeObserver) {
-            const updateTabsHeight = () => {
-                container.style.setProperty('--m-fiche-tabs-height', `${Math.ceil(nav.getBoundingClientRect().height)}px`);
-            };
-            tabsObserver = new windowRef.ResizeObserver(updateTabsHeight);
-            tabsObserver.observe(nav, { box: 'border-box' });
-            updateTabsHeight();
-        }
     };
 
     const render = () => {
@@ -543,7 +535,7 @@ export function createFicheDetailView({
         if (!mounted) return;
         mounted = false;
         generation += 1;
-        clearTabsHeight();
+        clearTabs();
         windowRef?.removeEventListener?.('hashchange', onHashChange);
         windowRef?.removeEventListener?.('online', onOnline);
         windowRef?.removeEventListener?.('offline', onOffline);
