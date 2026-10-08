@@ -48,6 +48,8 @@ export function createPwaController({
     let stopped = false;
     let generation = 0;
     let checkGeneration = 0;
+    let checkingForUpdate = false;
+    let updateCheckMessage = '';
     let updateActionPromise = null;
     let workerVersion = null;
     let error = null;
@@ -64,6 +66,8 @@ export function createPwaController({
         registered: Boolean(registration),
         updateAvailable,
         updateRequested,
+        checkingForUpdate,
+        updateCheckMessage,
         installAvailable: Boolean(deferredPrompt) && canOfferInstall(),
         iosInstallHint: ios() && canOfferInstall(),
         standalone: standalone(),
@@ -110,6 +114,7 @@ export function createPwaController({
         waiting = worker;
         if (navigatorRef?.serviceWorker?.controller) {
             updateAvailable = true;
+            if (updateCheckMessage && !checkingForUpdate) updateCheckMessage = 'Mise à jour disponible.';
             safeMessage(announce, 'Mise à jour disponible. Vous pouvez l’appliquer depuis Réglages.');
             emit();
         }
@@ -207,25 +212,37 @@ export function createPwaController({
         if (!started || stopped) return false;
         const checkToken = ++checkGeneration;
         const currentRegistration = registration;
-        if (!currentRegistration?.update) {
-            const token = ++generation;
-            const retried = await register(token);
-            if (stopped || !started || token !== generation || checkToken !== checkGeneration) return false;
-            const succeeded = Boolean(retried);
-            safeMessage(announce, succeeded ? 'Service worker reconnecté.' : 'Service worker indisponible.');
-            return succeeded;
-        }
+        checkingForUpdate = true;
+        updateCheckMessage = 'Recherche de mise à jour en cours…';
+        emit();
+        const report = message => {
+            updateCheckMessage = message;
+            safeMessage(announce, message);
+        };
         try {
+            if (!currentRegistration?.update) {
+                const token = ++generation;
+                const retried = await register(token);
+                if (stopped || !started || token !== generation || checkToken !== checkGeneration) return false;
+                const succeeded = Boolean(retried);
+                report(succeeded ? 'Service worker reconnecté.' : 'Service worker indisponible.');
+                return succeeded;
+            }
             await currentRegistration.update();
             if (stopped || !started || checkToken !== checkGeneration) return false;
             if (currentRegistration.waiting) markWaiting(currentRegistration.waiting, generation);
             if (stopped || !started || checkToken !== checkGeneration) return false;
-            safeMessage(announce, updateAvailable ? 'Mise à jour disponible.' : 'Aucune mise à jour disponible.');
+            report(updateAvailable ? 'Mise à jour disponible.' : 'Aucune mise à jour disponible.');
             return true;
         } catch {
             if (stopped || !started || checkToken !== checkGeneration) return false;
-            safeMessage(announce, 'Recherche de mise à jour impossible hors connexion.');
+            report('Recherche de mise à jour impossible hors connexion.');
             return false;
+        } finally {
+            if (!stopped && started && checkToken === checkGeneration) {
+                checkingForUpdate = false;
+                emit();
+            }
         }
     };
 
@@ -305,6 +322,7 @@ export function createPwaController({
         stopped = true;
         generation += 1;
         checkGeneration += 1;
+        checkingForUpdate = false;
         updateActionPromise = null;
         windowRef?.removeEventListener?.('beforeinstallprompt', handlers.beforeInstallPrompt);
         windowRef?.removeEventListener?.('appinstalled', handlers.appInstalled);

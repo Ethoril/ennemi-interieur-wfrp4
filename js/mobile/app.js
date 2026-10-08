@@ -155,16 +155,24 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
             const check = documentRef.createElement('button');
             check.type = 'button';
             check.className = 'm-button';
-            check.textContent = 'Rechercher une mise à jour';
-            check.disabled = pwaState.updateRequested;
+            check.textContent = pwaState.checkingForUpdate ? 'Recherche en cours…' : 'Rechercher une mise à jour';
+            check.disabled = pwaState.updateRequested || pwaState.checkingForUpdate;
+            check.setAttribute('aria-busy', String(pwaState.checkingForUpdate));
             check.addEventListener('click', () => { void pwa.checkForUpdate(); });
             section.append(check);
+            const checkStatus = documentRef.createElement('p');
+            checkStatus.setAttribute('role', 'status');
+            checkStatus.setAttribute('aria-live', 'polite');
+            checkStatus.setAttribute('aria-atomic', 'true');
+            checkStatus.textContent = pwaState.updateCheckMessage || '';
+            checkStatus.hidden = !checkStatus.textContent;
+            section.append(checkStatus);
             if (pwaState.updateAvailable) {
                 const update = documentRef.createElement('button');
                 update.type = 'button';
                 update.className = 'm-button m-button-primary';
                 update.textContent = 'Appliquer la mise à jour';
-                update.disabled = pwaState.updateRequested;
+                update.disabled = pwaState.updateRequested || pwaState.checkingForUpdate;
                 update.addEventListener('click', () => { void (pwa.requestUpdate?.() ?? pwa.applyUpdate()); });
                 section.append(update);
             }

@@ -1,3 +1,8 @@
+## [2.37.2] - 2026-10-08
+
+- Réglages mobiles : état « Recherche en cours… » dès l’appui sur la recherche de mise à jour, bouton désactivé pendant l’attente et résultat visible à la fin, y compris en cas d’échec réseau.
+- Indicateur accessible aux lecteurs d’écran et cache actualisé pour l’application installée.
+
 ## [2.37.1] - 2026-10-08
 
 - Fiche mobile : la réserve de défilement suit la hauteur réelle des onglets, zone système comprise, pour afficher entièrement la dernière compétence même avec du texte agrandi ou après une rotation.
