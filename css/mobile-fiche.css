@@ -92,7 +92,13 @@
 
 .m-fiche-soon { margin: 0; color: var(--text-secondary); }
 
-/* Barre d'onglets : même emprise que .m-bottom-nav, qu'elle remplace sur la fiche. */
+/* La barre peut grandir quand les libellés passent à la ligne. Sa hauteur mesurée inclut la zone système. */
+.m-main:has(.m-fiche-tabs) {
+  padding-bottom: calc(var(--space-xl) + var(--m-fiche-tabs-height, calc(var(--m-nav-height) + var(--m-safe-bottom))));
+  scroll-padding-bottom: calc(var(--space-xl) + var(--m-fiche-tabs-height, calc(var(--m-nav-height) + var(--m-safe-bottom))));
+}
+
+/* Barre d'onglets : remplace .m-bottom-nav sur la fiche. */
 .m-fiche-tabs {
   position: fixed;
   z-index: 10;

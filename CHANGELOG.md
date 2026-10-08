@@ -1,3 +1,8 @@
+## [2.37.1] - 2026-10-08
+
+- Fiche mobile : la réserve de défilement suit la hauteur réelle des onglets, zone système comprise, pour afficher entièrement la dernière compétence même avec du texte agrandi ou après une rotation.
+- Cache actualisé pour l’application installée.
+
 ## [2.37.0] - 2026-10-08
 
 - Armes et boucliers, armures : deux cartouches sur la fiche bureau et onglet Équipement sur mobile ; 205 profils et 55 mots clés issus des aides de jeu, plus huit munitions standard du livre de base.

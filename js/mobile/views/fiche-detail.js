@@ -87,6 +87,12 @@ export function createFicheDetailView({
     let online = windowRef?.navigator?.onLine !== false;
     let shownKey = '';
     let shell = null;
+    let tabsObserver = null;
+    const clearTabsHeight = () => {
+        tabsObserver?.disconnect();
+        tabsObserver = null;
+        container.style?.removeProperty('--m-fiche-tabs-height');
+    };
 
     // Le menu vit hors du rendu des écrans : un état qui change ne doit pas fermer le menu ouvert.
     const menuDialog = make(documentRef, 'dialog', '', 'm-dialog m-fiche-menu');
@@ -245,6 +251,7 @@ export function createFicheDetailView({
             importSheet.close();
             closeCareerViewer();
             aptitudes.closeDetail();
+            clearTabsHeight();
             shownKey = key;
             shell = null;
             build();
@@ -367,6 +374,15 @@ export function createFicheDetailView({
         shell = { identity: identityLine, xp, xpValue, notice, conflicts, panelTitle, principal, career, links };
         updateShell();
         updatePanel();
+        // La réserve suit la hauteur réelle des onglets : texte agrandi, rotation et zone système Android/PWA.
+        if (windowRef?.ResizeObserver) {
+            const updateTabsHeight = () => {
+                container.style.setProperty('--m-fiche-tabs-height', `${Math.ceil(nav.getBoundingClientRect().height)}px`);
+            };
+            tabsObserver = new windowRef.ResizeObserver(updateTabsHeight);
+            tabsObserver.observe(nav, { box: 'border-box' });
+            updateTabsHeight();
+        }
     };
 
     const render = () => {
@@ -527,6 +543,7 @@ export function createFicheDetailView({
         if (!mounted) return;
         mounted = false;
         generation += 1;
+        clearTabsHeight();
         windowRef?.removeEventListener?.('hashchange', onHashChange);
         windowRef?.removeEventListener?.('online', onOnline);
         windowRef?.removeEventListener?.('offline', onOffline);
