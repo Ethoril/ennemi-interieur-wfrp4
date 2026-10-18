@@ -1,6 +1,6 @@
 {
-  "catalogVersion": "sha256:f574971101f38a564479e9acd9ccf9491bea4963946e98d92b0f6b73a38031ff",
-  "publishedAt": "2026-10-08",
+  "catalogVersion": "sha256:49b4d429bc5e98a4614a9a1e9165522d64f320aa24b44cb476c8c64bc52f685d",
+  "publishedAt": "2026-10-18",
   "sources": {
     "skills": "js/data/skills.json",
     "careers": "js/data/careers.json",
@@ -3579,7 +3579,7 @@
     ]
   },
   "talents": {
-    "version": "sha256:9eb07cd11475f10b239cdb953c837bb96095d40b3e55b0b3bfb56a6c64c81596",
+    "version": "sha256:808672add6495d14239eb52985295dc7506d6e1145e76142278c355de23d5626",
     "entries": [
       {
         "nom": "Acharné",
@@ -7515,6 +7515,6 @@
     "aliases": [],
     "templates": [],
     "localDescriptions": [],
-    "descriptionSnapshotVersion": "sha256:57a689ad47ebfa994ced3b48050160a3b081370322cdcf6c1cfcf9fa09bac9d0"
+    "descriptionSnapshotVersion": "sha256:0887ad79547afc27850c45fbae3514e8b8b957db65cb16f9826425b15888391b"
   }
 }

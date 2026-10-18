@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "catalogVersion": "sha256:57a689ad47ebfa994ced3b48050160a3b081370322cdcf6c1cfcf9fa09bac9d0",
-  "fetchedAt": "2026-10-08",
+  "catalogVersion": "sha256:0887ad79547afc27850c45fbae3514e8b8b957db65cb16f9826425b15888391b",
+  "fetchedAt": "2026-10-18",
   "source": {
     "kind": "google-sheets-public-snapshot",
     "spreadsheetId": "1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs",
@@ -14,7 +14,7 @@
       "nom": "Acrobaties équestres",
       "englishName": "Trick Rider",
       "sourceLabel": "Acrobaties équestres (Trick Rider)",
-      "description": "À cheval, vous pouvez utiliser toutes vos compétences de Représentation et votre compétence Esquive sans modification.",
+      "description": "À cheval, vous pouvez utiliser toutes vos compétences de Représentation. Vous pouvez également utiliser Esquive sans modification liée au fait d'être monté",
       "limitText": "1",
       "source": "Livre de base V5, p. 128 ; achat : p. 191",
       "specializationLabel": null
@@ -125,7 +125,7 @@
       "nom": "Attirant",
       "englishName": "Attractive",
       "sourceLabel": "Attirant (Attractive)",
-      "description": "Sur un Test de Charme réussi pour influencer une personne attirée par vous, choisissez entre les DR obtenus et le chiffre des unités de votre jet.",
+      "description": "Sur un Test de Charme réussi pour influencer une ou plusieurs personnes attirées par vous, choisissez les DR obtenus ou la valeur du dé des unités de ce jet.",
       "limitText": "1",
       "source": "Livre de base V5, p. 115 ; achat : p. 191",
       "specializationLabel": null
@@ -155,7 +155,7 @@
       "nom": "Bénédiction de Lileath",
       "englishName": "Lileath's Blessing",
       "sourceLabel": "Bénédiction de Lileath (Lileath's Blessing)",
-      "description": "+1 DR par acquisition aux Tests réussis de Focalisation (Qhaysh). Chaque acquisition permet d’ignorer une fois la limite qui réserve normalement le bénéfice au meilleur de plusieurs sorts donnant le même bonus : vous pouvez cumuler une source supplémentaire de ce bonus. S’applique aux sorts de Haute Magie et de magie de couleur.",
+      "description": "+1 DR par acquisition à tout Test de Focalisation (Qhaysh), réussi ou non. Chaque acquisition permet en outre d’ignorer une fois la limite qui réserve normalement le bénéfice au meilleur de plusieurs sorts donnant le même bonus : vous pouvez cumuler une source supplémentaire de ce bonus. S’applique aux sorts de Haute Magie et de magie de couleur.",
       "limitText": "Bonus d’Initiative",
       "source": "High Elf Player’s Guide (V4), p. 83",
       "specializationLabel": null
@@ -587,7 +587,7 @@
       "nom": "Effraction",
       "englishName": "Break and Enter",
       "sourceLabel": "Effraction (Break and Enter)",
-      "description": "En observant un bâtiment, une pièce fermée ou un coffre-fort, vous repérez le trajet d’entrée apparemment le plus rapide et silencieux. Avantage V5 aux Tests de Crochetage et de Force pour enfoncer portes ou fenêtres.",
+      "description": "En observant un bâtiment, une pièce fermée ou un coffre-fort, vous repérez le trajet d’entrée apparemment le plus rapide et silencieux. Avantage V5 aux Tests de Crochetage, ainsi qu'aux Tests de Force pour enfoncer portes ou fenêtres.",
       "limitText": "1",
       "source": "Livre de base V5, p. 116 ; achat : p. 191",
       "specializationLabel": null
@@ -667,7 +667,7 @@
       "nom": "Ferveur ardente",
       "englishName": "Impassioned Zeal",
       "sourceLabel": "Ferveur ardente [Cause] (Impassioned Zeal)",
-      "description": "Choisissez une cause politique, religieuse ou philosophique. Avantage V5 aux Tests de Charme lorsque vous la défendez ; Désavantage V5 lorsque vous mentez à son sujet ou la dénoncez.",
+      "description": "Choisissez une cause politique, religieuse ou philosophique. Avantage V5 aux Tests de Charme lorsque vous parlez de cette cause ; Désavantage V5 lorsque vous mentez à son sujet ou la dénoncez.",
       "limitText": "1",
       "source": "Livre de base V5, p. 121 ; achat : p. 191",
       "specializationLabel": "Cause"
@@ -1478,7 +1478,7 @@
       "nom": "Petit",
       "englishName": "Small",
       "sourceLabel": "Petit (Small)",
-      "description": "Vous êtes de taille Petite : Points de Blessure = 2×Bonus d’Endurance + Bonus de Force Mentale. Face à un adversaire plus grand, +10 pour le toucher et −2 DR par catégorie de différence si vous défendez avec Capacité de Combat. Ses armes sont Dévastatrices (écart 1) ou Percutantes (écart ≥2), ses dégâts sont multipliés par l’écart (minimum ×1), et ses coups réussis déclenchent les Frappes Mortelles même si vous survivez. Il peut quitter le combat sans désengagement. En Force opposée, avec un écart de 1, vous devez obtenir un Critique pour comparer les DR ; avec un écart ≥2, il gagne automatiquement. S’il est agressif, il cause Peur (écart 1) ou Terreur (écart ≥2), indice égal à l’écart, et peut vous Piétiner : attaque gratuite de Corps à corps (Bagarre), dégâts égaux à son Bonus de Force, coût 1 Avantage V4. Inversez les rapports lorsque votre adversaire est plus petit que vous.",
+      "description": "Vous êtes de taille Petite : Points de Blessure = 2×Bonus d’Endurance + Bonus de Force Mentale. Face à un adversaire plus grand, +10 pour le toucher et −2 DR par catégorie de différence si vous défendez avec Capacité de Combat. Ses armes sont Dévastatrices (écart 1) ou Percutantes (écart ≥2), ses dégâts sont multipliés par l’écart (minimum ×1). Il peut quitter le combat sans désengagement. En Force opposée, avec un écart de 1, vous devez obtenir un Critique pour comparer les DR ; avec un écart ≥2, il gagne automatiquement. S’il est agressif, il cause Peur (écart 1) ou Terreur (écart ≥2), indice égal à l’écart, et peut vous Piétiner : attaque gratuite de Corps à corps (Bagarre), dégâts égaux à son Bonus de Force, coût 1 Momentum. Inversez les rapports lorsque votre adversaire est plus petit que vous.",
       "limitText": "1",
       "source": "Livre de base V4 (FR), p. 143",
       "specializationLabel": null
@@ -1598,7 +1598,7 @@
       "nom": "Résistance",
       "englishName": "Resistant",
       "sourceLabel": "Résistance [Menace] (Resistant)",
-      "description": "Choisissez une menace. Une fois par séance, avant de lancer un Test pour lui résister, vous pouvez le réussir automatiquement ; Avantage V5 à tous les autres Tests de résistance à cette menace. Répétable avec une nouvelle menace, une fois par choix.",
+      "description": "Choisissez une menace. Une fois par séance, avant de lancer un Test pour lui résister, vous pouvez le réussir automatiquement ; Avantage V5 à tous les autres Tests de résistance à cette menace durant la session. Répétable avec une nouvelle menace, une fois par choix.",
       "limitText": "Sans limitation",
       "source": "Livre de base V5, p. 124 ; achat : p. 191",
       "specializationLabel": "Menace",
@@ -1690,7 +1690,7 @@
       "nom": "Saut carpé",
       "englishName": "Jump Up",
       "sourceLabel": "Saut carpé (Jump Up)",
-      "description": "Avantage V5 aux Tests de Représentation (Acrobaties) pour divertir ou vous déplacer rapidement hors combat. Chaque fois que vous subissez À terre, vous pouvez immédiatement réussir un Test d’Athlétisme ou de Représentation (Acrobaties) Intermédiaire (+0 DR) pour vous relever.",
+      "description": "Avantage V5 aux Tests de Représentation (Acrobaties) pour divertir ou vous déplacer rapidement hors combat. Chaque fois que vous subissez À terre, vous pouvez immédiatement tenter un Test d'Athlétisme ou de Représentation (Acrobaties) Intermédiaire (+0 DR) ; en cas de réussite, vous vous relevez.",
       "limitText": "1",
       "source": "Livre de base V5, p. 121 ; achat : p. 191",
       "specializationLabel": null

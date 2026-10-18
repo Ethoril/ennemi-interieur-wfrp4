@@ -1,3 +1,8 @@
+## [2.37.6] - 2026-10-18
+
+- Sorts et miracles : fiches alignés sur les Aides de jeu mises à jour (V5), dont le sort Tempête et le test d’Attaque Rapide.
+- Talents : 8 descriptions actualisées (Acrobaties équestres, Attirant, Bénédiction de Lileath, Effraction, Ferveur ardente, Petit, Résistance, Saut carpé). Cache actualisé pour l’application installée.
+
 ## [2.37.5] - 2026-10-09
 
 - Talents : descriptions reprises de l’onglet Talents des Aides de jeu, désormais toutes compatibles V5 (19 talents modifiés, dont Garde royal, Retranchement, Grande taille, Danse des épées).

@@ -77,6 +77,7 @@ const spells = exports.spells.map(row => ({
     duree: row.duree || '',
     desc: row.description || '',
     ...(row.nom === 'Epées Sanguines' ? { aliases: ['Sanguine Swords'] } : {}),
+    ...(row.nom === 'Tempête' ? { aliases: ['empête'] } : {}),
 }));
 const normalizeName = value => value.normalize('NFD').replace(/[\u0300-\u036f]/gu, '').replace(/[’']/gu, "'").toLowerCase().trim();
 for (const old of previous.spells) {
