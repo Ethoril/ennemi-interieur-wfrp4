@@ -1,3 +1,12 @@
+## [2.38.0] - 2026-10-21
+
+- Boutons : ils s’enfoncent légèrement dès qu’on appuie, et les effets de survol ne restent plus « collés » sur téléphone.
+- En-tête mobile : le bouton de thème ne sort plus de l’écran, et le menu comme le thème offrent une zone de toucher de 44 px.
+- Fenêtres vidéo et PNJ : elles s’ouvrent depuis l’élément touché, sans rebond, et la fenêtre vidéo se referme vers lui.
+- Volet bas de l’application mobile : un geste rapide vers le bas suffit à le fermer, il résiste quand on le tire vers le haut, et on peut le rattraper pendant qu’il se ferme.
+- Titres plus serrés en grande taille ; pulsations de la carte d’indice et de Morrslieb limitées à quelques battements.
+- Accessibilité : barre de navigation opaque si l’appareil demande moins de transparence, bordure franche en contraste élevé. Cache actualisé pour l’application installée.
+
 ## [2.37.6] - 2026-10-18
 
 - Sorts et miracles : fiches alignés sur les Aides de jeu mises à jour (V5), dont le sort Tempête et le test d’Attaque Rapide.
