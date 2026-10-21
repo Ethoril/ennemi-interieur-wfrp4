@@ -217,6 +217,7 @@ const ASSETS_LOCAUX = [
   './js/mobile/pwa.js',
   './js/mobile/pwa-banner.js',
   './js/mobile/components/bottom-sheet.js',
+  './js/mobile/components/sheet-physics.js',
   './js/mobile/components/filter-sheet.js',
   './js/mobile/components/indice-image.js',
   './js/mobile/components/pnj-picker.js',
