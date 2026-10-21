@@ -6,7 +6,9 @@
 .bureau button, .bureau input, .bureau select, .bureau textarea { font: inherit; color: inherit; max-width: 100%; }
 .bureau button, .bureau summary { cursor: pointer; }
 .bureau button { background: var(--bg-surface); border: 1px solid var(--border-gold); border-radius: 8px; padding: 7px 10px; }
-.bureau button:hover { background: var(--bg-card-hover); }
+@media (hover: hover) {
+  .bureau button:hover { background: var(--bg-card-hover); }
+}
 .bureau button:disabled { cursor: not-allowed; color: var(--text-secondary); }
 .bureau :focus-visible { outline: 2px solid var(--bureau-gold); outline-offset: 3px; }
 .bureau input, .bureau textarea, .bureau select { background: var(--bg-dark); border: 1px solid var(--border-strong); padding: 8px; border-radius: 7px; width: 100%; }
@@ -58,7 +60,10 @@
 .bureau-skill strong { min-width: 22px; text-align: right; font-variant-numeric: tabular-nums; }
 .bureau-skill.is-trained strong, .bureau-career-dot { color: var(--bureau-gold); }
 .bureau-plus { opacity: 0; }
-.bureau-skill:hover .bureau-plus, .bureau-skill:focus-visible .bureau-plus { opacity: 1; }
+.bureau-skill:focus-visible .bureau-plus { opacity: 1; }
+@media (hover: hover) {
+  .bureau-skill:hover .bureau-plus { opacity: 1; }
+}
 .bureau-talents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .bureau .bureau-talent { text-align: left; padding: 12px; }
 .bureau-talent small { display: block; color: var(--text-secondary); }

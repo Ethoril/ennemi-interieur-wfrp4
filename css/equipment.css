@@ -4,7 +4,9 @@
 .eq-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-md); }
 .eq-heading h2 { margin: 0; font-family: var(--font-heading); color: var(--text-heading); font-size: 1.1rem; }
 .eq-button, .eq-keyword, .eq-zone { font: inherit; color: var(--text-primary); background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: .6rem .8rem; min-height: 44px; cursor: pointer; text-decoration: none; }
-.eq-button:hover, .eq-keyword:hover, .eq-zone:hover { border-color: var(--border-gold); }
+@media (hover: hover) {
+  .eq-button:hover, .eq-keyword:hover, .eq-zone:hover { border-color: var(--border-gold); }
+}
 .eq-button:focus-visible, .eq-keyword:focus-visible, .eq-zone:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .eq-button:disabled { cursor: default; opacity: .55; }
 .eq-primary { color: var(--gold-bright); border-color: var(--border-gold); }

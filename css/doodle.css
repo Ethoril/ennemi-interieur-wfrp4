@@ -412,9 +412,11 @@
   transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 
-.doodle-card:hover {
-  border-color: var(--border-gold);
-  background: var(--gold-wash);
+@media (hover: hover) {
+  .doodle-card:hover {
+    border-color: var(--border-gold);
+    background: var(--gold-wash);
+  }
 }
 
 .doodle-card-info {
@@ -536,8 +538,10 @@
   transition: border-color var(--transition-fast);
 }
 
-.doodle-voter-item:hover {
-  border-color: var(--border-gold);
+@media (hover: hover) {
+  .doodle-voter-item:hover {
+    border-color: var(--border-gold);
+  }
 }
 
 /* Dans la modale les boutons d'action sont plus serrés et un cran plus

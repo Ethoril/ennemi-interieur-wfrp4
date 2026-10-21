@@ -32,7 +32,9 @@
 .entry-choice { flex: 1; min-width: 0; text-align: left; border: 1px solid transparent; border-radius: var(--radius-sm); background: var(--bg-dark); color: var(--text-primary); padding: .65rem .8rem; font: inherit; cursor: pointer; }
 .entry-choice strong, .entry-choice small { display: block; overflow-wrap: anywhere; }
 .entry-choice small { color: var(--text-muted); font-size: .76rem; margin-top: .2rem; }
-.entry-choice:hover { border-color: var(--border-gold); }
+@media (hover: hover) {
+  .entry-choice:hover { border-color: var(--border-gold); }
+}
 .entry-choice[aria-pressed="true"] { border-color: var(--gold); background: var(--bg-surface); box-shadow: inset 3px 0 var(--gold); }
 .empty-selection { padding: 2.5rem 1rem; text-align: center; color: var(--text-muted); border: 1px dashed var(--border-subtle); border-radius: var(--radius-sm); }
 .selection-count { font-weight: 600; margin: 0; }

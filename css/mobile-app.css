@@ -132,8 +132,10 @@ body {
   line-height: 1;
 }
 
-.m-icon-button:hover,
 .m-icon-button:focus-visible { border-color: var(--border-gold); background: var(--gold-wash); }
+@media (hover: hover) {
+  .m-icon-button:hover { border-color: var(--border-gold); background: var(--gold-wash); }
+}
 
 .m-status {
   min-height: 1.65rem;
@@ -304,13 +306,17 @@ body {
 .m-detail-empty { margin: 0; color: var(--text-muted); font-style: italic; }
 .m-detail-links { display: grid; gap: var(--space-sm); margin: 0; padding: 0; list-style: none; }
 .m-detail-links a { min-height: var(--m-touch-target); display: grid; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); color: var(--text-primary); background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); text-decoration: none; }
-.m-detail-links a:hover,
 .m-detail-links a:focus-visible { border-color: var(--border-gold); }
+@media (hover: hover) {
+  .m-detail-links a:hover { border-color: var(--border-gold); }
+}
 .m-detail-links strong { color: var(--text-heading); }
 /* --rc : couleur de la relation, validée par le modèle et posée sur le lien. */
 .m-detail-links .m-detail-relation,
-.m-detail-links .m-detail-relation:hover,
 .m-detail-links .m-detail-relation:focus-visible { border-left: 3px solid var(--rc, var(--gold)); }
+@media (hover: hover) {
+  .m-detail-links .m-detail-relation:hover { border-left: 3px solid var(--rc, var(--gold)); }
+}
 .m-detail-links .m-detail-relation-arrow { margin-right: var(--space-xs); color: var(--text-heading); font-weight: 700; }
 .m-detail-links span { color: var(--text-secondary); font-size: 0.86rem; overflow-wrap: anywhere; }
 .m-detail-metadata { display: grid; gap: var(--space-sm); }
@@ -364,8 +370,10 @@ body {
   text-decoration: none;
 }
 
-.m-public-list a:hover,
 .m-public-list a:focus-visible { border-color: var(--border-gold); }
+@media (hover: hover) {
+  .m-public-list a:hover { border-color: var(--border-gold); }
+}
 .m-public-list strong { color: var(--text-heading); font-family: var(--font-heading); }
 .m-public-list span { color: var(--text-muted); font-size: 0.86rem; }
 
@@ -396,8 +404,10 @@ body {
   border-color: var(--border-subtle);
 }
 
-.m-search-row .m-filter-button:hover,
 .m-search-row .m-filter-button:focus-visible { border-color: var(--border-gold); }
+@media (hover: hover) {
+  .m-search-row .m-filter-button:hover { border-color: var(--border-gold); }
+}
 .m-filter-icon { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
 
 .m-filter-count {
@@ -584,8 +594,10 @@ body {
 
 .m-enquete-card-copy { min-width: 0; display: grid; gap: var(--space-xs); }
 .m-enquete-card-copy > a { display: grid; gap: var(--space-xs); color: var(--text-primary); text-decoration: none; }
-.m-enquete-card-copy > a:hover,
 .m-enquete-card-copy > a:focus-visible { outline: 2px solid var(--border-gold); outline-offset: 2px; }
+@media (hover: hover) {
+  .m-enquete-card-copy > a:hover { outline: 2px solid var(--border-gold); outline-offset: 2px; }
+}
 .m-enquete-card-copy strong { overflow-wrap: anywhere; color: var(--text-heading); font-family: var(--font-heading); }
 .m-enquete-card-copy a span { color: var(--text-secondary); font-size: 0.9rem; overflow-wrap: anywhere; }
 .m-enquete-pnjs { color: var(--text-muted); font-size: 0.82rem; overflow-wrap: anywhere; }
@@ -689,8 +701,10 @@ body {
    (danger) et 2,5:1 (primaire survolé). Texte blanc, et l'or ne s'éclaircit pas. */
 [data-theme="parchment"] .m-button-primary,
 [data-theme="parchment"] .m-button-danger { color: var(--text-on-status); }
-[data-theme="parchment"] .m-button-primary:hover,
 [data-theme="parchment"] .m-button-primary:focus-visible { border-color: var(--gold-dim); background: var(--gold); }
+@media (hover: hover) {
+  [data-theme="parchment"] .m-button-primary:hover { border-color: var(--gold-dim); background: var(--gold); }
+}
 
 .m-app .contribution-dialog {
   box-sizing: border-box;

@@ -15,8 +15,10 @@
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
-.card:hover, .video-card:hover, .sheet-card:hover {
-  transform: translateY(-6px) scale(1.02);
+@media (hover: hover) {
+  .card:hover, .video-card:hover, .sheet-card:hover {
+    transform: translateY(-6px) scale(1.02);
+  }
 }
 
 /* Responsive adjustments */
@@ -43,8 +45,10 @@
 }
 
 /* -- Doodle Styles -- */
-.rules-table tr:hover td {
-  background: rgba(201, 168, 76, 0.06);
+@media (hover: hover) {
+  .rules-table tr:hover td {
+    background: rgba(201, 168, 76, 0.06);
+  }
 }
 .voter-row input[type="text"] {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -57,8 +61,10 @@
   accent-color: var(--gold);
   transition: transform 0.2s ease;
 }
-.voter-checkbox:hover {
-  transform: scale(1.1);
+@media (hover: hover) {
+  .voter-checkbox:hover {
+    transform: scale(1.1);
+  }
 }
 
 /* Force visible horizontal scrollbar with golden theme */
@@ -74,8 +80,10 @@
   background: var(--gold);
   border-radius: 4px;
 }
-.sheet-table-wrapper::-webkit-scrollbar-thumb:hover {
-  background: var(--gold-bright);
+@media (hover: hover) {
+  .sheet-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--gold-bright);
+  }
 }
 
 /* Les règles du Calendrier vivent dans css/doodle.css depuis L2-04 :
@@ -175,25 +183,31 @@
   background: transparent;
   color: var(--text-primary);
 }
-.ui-confirm-annuler:hover {
-  border-color: var(--border-strong);
+@media (hover: hover) {
+  .ui-confirm-annuler:hover {
+    border-color: var(--border-strong);
+  }
 }
 .ui-confirm-valider {
   background: var(--gold);
   border-color: var(--gold);
   color: var(--bg-darkest);
 }
-.ui-confirm-valider:hover {
-  background: var(--gold-bright);
+@media (hover: hover) {
+  .ui-confirm-valider:hover {
+    background: var(--gold-bright);
+  }
 }
 .ui-confirm-valider.ui-confirm-danger {
   background: var(--blood-bright);
   border-color: var(--blood-bright);
   color: var(--text-heading);
 }
-.ui-confirm-valider.ui-confirm-danger:hover {
-  background: var(--blood);
-  border-color: var(--blood);
+@media (hover: hover) {
+  .ui-confirm-valider.ui-confirm-danger:hover {
+    background: var(--blood);
+    border-color: var(--blood);
+  }
 }
 
 .contribution-dialog {

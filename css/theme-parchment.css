@@ -122,9 +122,14 @@
   color: rgba(230, 195, 140, 0.75);
 }
 
-[data-theme="parchment"] .nav-links a:hover,
 [data-theme="parchment"] .nav-links a.active {
   color: var(--gold-bright);
+}
+
+@media (hover: hover) {
+  [data-theme="parchment"] .nav-links a:hover {
+    color: var(--gold-bright);
+  }
 }
 
 [data-theme="parchment"] .nav-version {
@@ -169,8 +174,10 @@
   border-color: var(--border-subtle);
 }
 
-[data-theme="parchment"] .card:hover {
-  background-color: var(--bg-card-hover);
+@media (hover: hover) {
+  [data-theme="parchment"] .card:hover {
+    background-color: var(--bg-card-hover);
+  }
 }
 
 [data-theme="parchment"] .card p { color: var(--text-secondary); }
@@ -214,8 +221,10 @@
   background: rgba(100, 60, 20, 0.05);
 }
 
-[data-theme="parchment"] .rules-table tr:hover td {
-  background: rgba(100, 60, 20, 0.10);
+@media (hover: hover) {
+  [data-theme="parchment"] .rules-table tr:hover td {
+    background: rgba(100, 60, 20, 0.10);
+  }
 }
 
 /* ── Accordéons ──────────────────────────────────── */
@@ -229,8 +238,10 @@
   color: var(--text-heading);
 }
 
-[data-theme="parchment"] .accordion-header:hover {
-  background-color: var(--bg-card-hover);
+@media (hover: hover) {
+  [data-theme="parchment"] .accordion-header:hover {
+    background-color: var(--bg-card-hover);
+  }
 }
 
 [data-theme="parchment"] .accordion-body {
@@ -345,8 +356,10 @@
   border-color: var(--blood);
   color: var(--blood);
 }
-[data-theme="parchment"] .btn-danger:hover {
-  background: rgba(122, 31, 31, 0.08);
+@media (hover: hover) {
+  [data-theme="parchment"] .btn-danger:hover {
+    background: rgba(122, 31, 31, 0.08);
+  }
 }
 
 /* Éléments d'indices (Page Enquêtes) */
@@ -355,20 +368,24 @@
   border-color: var(--border-subtle);
   color: var(--text-secondary);
 }
-[data-theme="parchment"] .clue-pnj-chip:hover {
-  background: rgba(122, 92, 16, 0.12);
-  color: var(--gold);
-  border-color: var(--border-gold);
+@media (hover: hover) {
+  [data-theme="parchment"] .clue-pnj-chip:hover {
+    background: rgba(122, 92, 16, 0.12);
+    color: var(--gold);
+    border-color: var(--border-gold);
+  }
 }
 [data-theme="parchment"] .pnj-clue-badge {
   background: rgba(100, 60, 20, 0.05);
   border-color: var(--border-subtle);
   color: var(--text-secondary);
 }
-[data-theme="parchment"] .pnj-clue-badge:hover {
-  background: rgba(122, 92, 16, 0.1);
-  color: var(--gold);
-  border-color: var(--border-gold);
+@media (hover: hover) {
+  [data-theme="parchment"] .pnj-clue-badge:hover {
+    background: rgba(122, 92, 16, 0.1);
+    color: var(--gold);
+    border-color: var(--border-gold);
+  }
 }
 
 /* ── Page header ─────────────────────────────────── */
@@ -416,11 +433,15 @@
   transition-property: color, border-color;
   margin-left: var(--space-sm);
   flex-shrink: 0;
+  min-width: 44px;
+  min-height: 44px;
 }
 
-.theme-toggle:hover {
-  border-color: var(--border-gold);
-  color: var(--gold);
+@media (hover: hover) {
+  .theme-toggle:hover {
+    border-color: var(--border-gold);
+    color: var(--gold);
+  }
 }
 
 /* Enquêtes : fond clair, fiches de papier et visionneuse sombre. */
@@ -441,4 +462,6 @@
 }
 [data-theme="parchment"] .enq-workspace h2 { color:var(--text-heading); }
 [data-theme="parchment"] .enq-workspace .enq-section-title { color:var(--enq-accent); }
-[data-theme="parchment"] .enq-workspace .enq-button--primary:hover { background:var(--enq-accent); }
+@media (hover: hover) {
+  [data-theme="parchment"] .enq-workspace .enq-button--primary:hover { background:var(--enq-accent); }
+}

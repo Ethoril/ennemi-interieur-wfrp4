@@ -419,8 +419,10 @@
   vertical-align: middle;
 }
 
-.skills-table tr:hover td {
-  background: rgba(201, 168, 76, 0.04);
+@media (hover: hover) {
+  .skills-table tr:hover td {
+    background: rgba(201, 168, 76, 0.04);
+  }
 }
 
 .sk-nom {
@@ -507,9 +509,11 @@
   transition-property: color, border-color;
 }
 
-.btn-rm-adv-skill:hover {
-  border-color: var(--blood);
-  color: var(--blood-bright);
+@media (hover: hover) {
+  .btn-rm-adv-skill:hover {
+    border-color: var(--blood);
+    color: var(--blood-bright);
+  }
 }
 
 .btn-add {
@@ -531,9 +535,11 @@
   transition-property: color, border-color;
 }
 
-.btn-add:hover {
-  border-color: var(--border-gold);
-  color: var(--gold);
+@media (hover: hover) {
+  .btn-add:hover {
+    border-color: var(--border-gold);
+    color: var(--gold);
+  }
 }
 
 .empty-row td {
@@ -577,9 +583,11 @@
   color: inherit;
 }
 
-.talent-chip:hover {
-  opacity: .75;
-  text-decoration: underline;
+@media (hover: hover) {
+  .talent-chip:hover {
+    opacity: .75;
+    text-decoration: underline;
+  }
 }
 
 .talent-hors-badge {
@@ -765,10 +773,12 @@
   transition-property: color, background-color, border-color;
 }
 
-.btn-toggle-opt:hover {
-  background: rgba(201, 168, 76, 0.1);
-  color: var(--gold);
-  border-color: var(--gold);
+@media (hover: hover) {
+  .btn-toggle-opt:hover {
+    background: rgba(201, 168, 76, 0.1);
+    color: var(--gold);
+    border-color: var(--gold);
+  }
 }
 
 .fiche-section h2 {
@@ -789,7 +799,9 @@
   transition: color var(--transition-fast);
 }
 
-.btn-close-section:hover { color: var(--blood-bright); }
+@media (hover: hover) {
+  .btn-close-section:hover { color: var(--blood-bright); }
+}
 
 /* ── Sorts / Prières ─────────────────────────────── */
 .sort-wide {
@@ -1122,9 +1134,11 @@
   transition: background .15s;
 }
 
-.fiche-auth-btn:hover { background: rgba(255,255,255,.07); }
+@media (hover: hover) {
+  .fiche-auth-btn:hover { background: rgba(255,255,255,.07); }
 
-[data-theme="parchment"] .fiche-auth-btn:hover { background: rgba(0,0,0,.06); }
+  [data-theme="parchment"] .fiche-auth-btn:hover { background: rgba(0,0,0,.06); }
+}
 
 /* ── Login wall ──────────────────────────────────── */
 .fiche-login-wall {
@@ -1194,9 +1208,11 @@ tr.sk-ghost-row input[disabled] {
   pointer-events: none;
 }
 
-tr.sk-ghost-row:hover {
-  opacity: .85;
-  background: rgba(180, 140, 60, .06);
+@media (hover: hover) {
+  tr.sk-ghost-row:hover {
+    opacity: .85;
+    background: rgba(180, 140, 60, .06);
+  }
 }
 
 /* Slot ouvert "au choix" */
@@ -1239,7 +1255,9 @@ tr.sk-ghost-open td.sk-nom::after {
   line-height: 1;
 }
 
-.talent-modal-close:hover { opacity: 1; }
+@media (hover: hover) {
+  .talent-modal-close:hover { opacity: 1; }
+}
 
 .talent-modal-title {
   margin: 0 0 1rem;
@@ -1276,9 +1294,11 @@ tr.sk-ghost-open td.sk-nom::after {
   transition: opacity .15s;
 }
 
-.career-tag-talent:hover {
-  opacity: .75;
-  text-decoration: underline;
+@media (hover: hover) {
+  .career-tag-talent:hover {
+    opacity: .75;
+    text-decoration: underline;
+  }
 }
 
 /* ── Panneau référence carrière ──────────────────── */
@@ -1457,9 +1477,11 @@ tr.sk-ghost-open td.sk-nom::after {
   transition: opacity 0.15s, background 0.15s;
 }
 
-.career-rang-edit-btn:hover {
-  opacity: 1;
-  background: rgba(var(--accent-rgb, 180,140,60), 0.12);
+@media (hover: hover) {
+  .career-rang-edit-btn:hover {
+    opacity: 1;
+    background: rgba(var(--accent-rgb, 180,140,60), 0.12);
+  }
 }
 
 .career-rang-edit-btn-on {
@@ -1518,9 +1540,11 @@ tr.sk-ghost-open td.sk-nom::after {
   border-radius: 2px;
 }
 
-.career-tag-action:hover {
-  opacity: 1;
-  background: rgba(0, 0, 0, 0.1);
+@media (hover: hover) {
+  .career-tag-action:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.1);
+  }
 }
 
 /* Champ d'ajout en mode édition (compétence/talent custom) */
