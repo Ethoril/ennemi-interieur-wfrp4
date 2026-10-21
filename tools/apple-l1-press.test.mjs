@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { URL, fileURLToPath } from 'node:url';
 
 const CSS_DIR = new URL('../css/', import.meta.url);
 const files = readdirSync(CSS_DIR).filter((f) => f.endsWith('.css'));

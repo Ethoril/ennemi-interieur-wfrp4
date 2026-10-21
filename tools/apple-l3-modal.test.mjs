@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { URL } from 'node:url';
 import { allRules, decl } from './apple-css.mjs';
 import { originFromTrigger } from '../js/modal-origin.js';
 

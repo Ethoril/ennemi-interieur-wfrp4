@@ -1,7 +1,7 @@
 // Lecture partagée des règles CSS pour les tests apple-design.
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { URL, fileURLToPath } from 'node:url';
 
 export const CSS_DIR = fileURLToPath(new URL('../css/', import.meta.url));
 

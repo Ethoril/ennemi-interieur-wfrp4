@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { URL } from 'node:url';
 import { project, rubberband, velocityFrom, shouldDismiss, exitDuration } from '../js/mobile/components/sheet-physics.js';
 
 const near = (a, b, eps = 0.5) => assert.ok(Math.abs(a - b) <= eps, `${a} ≉ ${b}`);
