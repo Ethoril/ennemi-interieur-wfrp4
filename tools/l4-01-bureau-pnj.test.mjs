@@ -68,7 +68,9 @@ test('le focus d’un nœud a son propre anneau et le ramène dans le cadre', ()
     assert.match(pnjs, /attr\('class', 'node-focus-ring'\)/u);
     assert.match(pnjCss, /\.pnj-node:focus-visible \.node-focus-ring \{\s*visibility: visible;/u);
     assert.doesNotMatch(pnjCss, /\.pnj-node:focus-visible \.node-card/u);
-    assert.match(pnjCss, /\.pnj-node:hover,\n\.pnj-node:focus-visible \{\s*opacity: 1 !important;/u);
+    assert.match(pnjCss, /\.pnj-node:focus-visible \{\s*opacity: 1 !important;/u);
+    // Le survol n'existe qu'avec un pointeur qui survole (pas de hover collant au toucher).
+    assert.match(pnjCss, /@media \(hover: hover\) \{\s*\.pnj-node:hover \{\s*opacity: 1 !important;/u);
     assert.match(rule(pnjCss, '.node-focus-ring-dark'), /stroke: var\(--focus-ring-dark\);/u);
     assert.match(rule(pnjCss, '.node-focus-ring-light'), /stroke: var\(--focus-ring-light\);/u);
     for (const source of [base, parchment]) {
