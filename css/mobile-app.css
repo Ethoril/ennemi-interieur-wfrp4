@@ -250,7 +250,7 @@ body {
 }
 
 .m-pnj-banner .m-portrait-frame { width: 100%; height: 100%; border-radius: 0; }
-.m-pnj-banner .m-portrait-placeholder { font-size: 3rem; letter-spacing: 0.05em; }
+.m-pnj-banner .m-portrait-placeholder { font-size: 3rem; letter-spacing: 0.02em; }
 .m-pnj-banner .m-portrait-frame--inconnu { outline: 2px dashed var(--text-muted); outline-offset: -0.6rem; }
 .m-pnj-banner .m-portrait-morr { top: var(--space-sm); right: var(--space-sm); }
 .m-pnj-banner:has(.m-detail-edit) .m-portrait-morr { top: calc(2 * var(--space-sm) + var(--m-touch-target)); }

@@ -169,6 +169,7 @@ body {
   background-color: var(--bg-darkest);
   color: var(--text-primary);
   line-height: 1.7;
+  font-optical-sizing: auto;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
@@ -251,6 +252,8 @@ h6 {
 h1 {
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 900;
+  /* Grand texte : interlettrage resserré, les capitales Cinzel respirent déjà. */
+  letter-spacing: 0;
   text-transform: uppercase;
   background: linear-gradient(135deg, var(--gold-bright) 0%, var(--gold) 40%, var(--copper) 100%);
   -webkit-background-clip: text;
@@ -261,6 +264,7 @@ h1 {
 }
 
 h2 {
+  letter-spacing: 0.01em;
   font-size: clamp(1.5rem, 3vw, 2.25rem);
   font-weight: 700;
   color: var(--gold);
@@ -3536,12 +3540,13 @@ strong {
 .clue-card.highlighted {
   border-color: var(--gold-bright);
   box-shadow: var(--shadow-lg), var(--shadow-glow-strong);
-  animation: pulse-glow 2s infinite ease-in-out;
+  /* Signal d'attention bref, puis la carte reste lumineuse sans bouger. */
+  animation: pulse-glow 2s ease-in-out 3;
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 15px rgba(201, 168, 76, 0.2); }
-  50% { box-shadow: 0 0 30px rgba(201, 168, 76, 0.45); }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
 }
 
 .clue-header {
@@ -3866,7 +3871,7 @@ strong {
 /* Green glow & hue animation for Morrslieb to convert yellow emoji to chaotic green */
 .moon-card.morrslieb .moon-icon {
   filter: hue-rotate(65deg) saturate(1.3) brightness(1.1) drop-shadow(0 0 10px rgba(46, 204, 113, 0.6));
-  animation: pulse-green 4s infinite ease-in-out;
+  animation: pulse-green 4s ease-in-out 2;
 }
 
 /* Silver glow for Mannslieb */
@@ -3875,12 +3880,8 @@ strong {
 }
 
 @keyframes pulse-green {
-  0%, 100% {
-    filter: hue-rotate(65deg) saturate(1.3) brightness(1.1) drop-shadow(0 0 6px rgba(46, 204, 113, 0.4));
-  }
-  50% {
-    filter: hue-rotate(65deg) saturate(1.4) brightness(1.25) drop-shadow(0 0 16px rgba(46, 204, 113, 0.85));
-  }
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
 }
 
 .moon-phase {
