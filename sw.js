@@ -73,6 +73,7 @@ const ASSETS_LOCAUX = [
   './js/pwa-entry.js',
   './js/load-generation.js',
   './js/main.js',
+  './js/modal-origin.js',
   './js/maps.js',
   './js/pnjs.js',
   './js/contributions/client-core.js',

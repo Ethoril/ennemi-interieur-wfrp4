@@ -3,6 +3,8 @@
    Main JavaScript
    ================================================ */
 
+import { anchorToTrigger } from './modal-origin.js';
+
 document.addEventListener('DOMContentLoaded', () => {
   initNavbar();
   initScrollAnimations();
@@ -163,7 +165,10 @@ function initVideoModal() {
   const iframe = overlay.querySelector('iframe');
   const closeBtn = overlay.querySelector('.modal-close');
   overlay.setAttribute('aria-hidden', 'true');
+  const content = overlay.querySelector('.modal-content');
   let lastTrigger = null;
+  let closeTimer = null;
+  let finishClose = null;
 
   // Promotion clavier des cartes vidéo (rôle bouton + Enter/Space)
   document.querySelectorAll('.video-card').forEach(card => {
@@ -176,9 +181,16 @@ function initVideoModal() {
     const open = () => {
       const videoId = card.dataset.videoId;
       if (!videoId || !iframe) return;
+      // Réouverture pendant la sortie : annule la fermeture en cours.
+      if (overlay.classList.contains('closing')) {
+        clearTimeout(closeTimer);
+        content?.removeEventListener('animationend', finishClose);
+        overlay.classList.remove('closing');
+      }
       lastTrigger = card;
       iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
       overlay.classList.add('active');
+      anchorToTrigger(content, card);
       overlay.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
       // Focus le bouton de fermeture pour entrer dans la modale au clavier
@@ -191,9 +203,27 @@ function initVideoModal() {
   });
 
   function closeModal() {
-    if (!overlay.classList.contains('active')) return;
-    overlay.classList.remove('active');
+    if (!overlay.classList.contains('active') || overlay.classList.contains('closing')) return;
     overlay.setAttribute('aria-hidden', 'true');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !content) {
+      overlay.classList.remove('active');
+      cleanup();
+      return;
+    }
+    overlay.classList.add('closing');
+    finishClose = (e) => {
+      if (e && e.target !== content) return;
+      clearTimeout(closeTimer);
+      content.removeEventListener('animationend', finishClose);
+      overlay.classList.remove('active', 'closing');
+      cleanup();
+    };
+    content.addEventListener('animationend', finishClose);
+    closeTimer = setTimeout(finishClose, 400);
+  }
+
+  function cleanup() {
     if (iframe) iframe.src = '';
     document.body.style.overflow = '';
     // Rendre le focus à la carte qui a ouvert la modale (accessibilité)

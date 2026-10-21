@@ -19,6 +19,7 @@ import { createGraphDisplay } from './pnj-graph-display.js';
 import { rememberGraphNodes, restoreGraphNodes, applySharedGraphPositions } from './pnj-graph-layout.js';
 
 import { createLiveImages, graphStructureKey } from './pnj-live-images.js';
+import { anchorToTrigger } from './modal-origin.js';
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
@@ -957,7 +958,11 @@ function openPnjModal(pnjId = null) {
             preview.dataset.existingLegacyUrl = p.legacyImageUrl || (!p.imagePath ? (p.imageUrl || '') : '');
         }
     }
-    if (!dialog.open) dialog.showModal();
+    if (!dialog.open) {
+        const trigger = document.activeElement;
+        dialog.showModal();
+        anchorToTrigger(dialog.querySelector('.pnj-modal-content'), trigger);
+    }
 }
 
 // Rend le focus au déclencheur de l'édition. S'il a disparu (PNJ supprimé,
