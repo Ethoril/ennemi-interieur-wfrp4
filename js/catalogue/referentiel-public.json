@@ -1,6 +1,6 @@
 {
-  "catalogVersion": "sha256:49b4d429bc5e98a4614a9a1e9165522d64f320aa24b44cb476c8c64bc52f685d",
-  "publishedAt": "2026-10-18",
+  "catalogVersion": "sha256:4d3dff852ab0cf4f10e31ea206e0b8c6baaa7865c049eaacee9d4c2e89c15141",
+  "publishedAt": "2026-10-23",
   "sources": {
     "skills": "js/data/skills.json",
     "careers": "js/data/careers.json",
@@ -3579,7 +3579,7 @@
     ]
   },
   "talents": {
-    "version": "sha256:808672add6495d14239eb52985295dc7506d6e1145e76142278c355de23d5626",
+    "version": "sha256:4118ad2a8092bd4adc85f3537857d2e557a4cb77b3daf0f35aa6c7e0fb24ba46",
     "entries": [
       {
         "nom": "Acharné",
@@ -7259,6 +7259,14 @@
         ]
       },
       {
+        "id": "talent-4d_61_ee_74_72_65_20_e0_20_62_6f_72_64",
+        "key": "maître à bord",
+        "nom": "Maître à bord",
+        "sources": [
+          "sheet"
+        ]
+      },
+      {
         "id": "talent-4d_61_ee_74_72_65_20_61_72_74_69_73_61_6e",
         "key": "maître artisan",
         "nom": "Maître artisan",
@@ -7515,6 +7523,6 @@
     "aliases": [],
     "templates": [],
     "localDescriptions": [],
-    "descriptionSnapshotVersion": "sha256:0887ad79547afc27850c45fbae3514e8b8b957db65cb16f9826425b15888391b"
+    "descriptionSnapshotVersion": "sha256:711189dcb64920f251f3b08e06ac8bf4df93e09e8c32390b24c684d1282fbea0"
   }
 }

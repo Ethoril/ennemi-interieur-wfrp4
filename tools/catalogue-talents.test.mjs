@@ -26,7 +26,7 @@ test('les générateurs refusent une graine absente ou leur propre sortie avant 
 
 test('le snapshot des talents contient son empreinte et des lignes publiques sans données de fiches', () => {
     assert.match(sheet.catalogVersion, /^sha256:[a-f0-9]{64}$/u);
-    assert.equal(sheet.entries.length, 206);
+    assert.equal(sheet.entries.length, 207);
     assert.equal(sheet.schemaVersion, 2);
     assert.ok(sheet.entries.every(row => row.englishName && row.limitText && row.source));
     assert.ok(sheet.entries.every(row => typeof row.nom === 'string' && typeof row.description === 'string'));

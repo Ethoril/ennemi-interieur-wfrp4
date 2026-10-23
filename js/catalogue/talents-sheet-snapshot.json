@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "catalogVersion": "sha256:0887ad79547afc27850c45fbae3514e8b8b957db65cb16f9826425b15888391b",
-  "fetchedAt": "2026-10-18",
+  "catalogVersion": "sha256:711189dcb64920f251f3b08e06ac8bf4df93e09e8c32390b24c684d1282fbea0",
+  "fetchedAt": "2026-10-23",
   "source": {
     "kind": "google-sheets-public-snapshot",
     "spreadsheetId": "1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs",
@@ -1160,6 +1160,16 @@
       "description": "À chaque acquisition, créez un chef-d’œuvre extraordinaire avec une Compétence Art ou Métier. Il impressionne ses témoins et procure des bonus fixés par le MJ, généralement en Sociabilité. Sa vente rapporte au moins dix fois la valeur normale. Chaque nouvelle acquisition produit une nouvelle œuvre.",
       "limitText": "Sans limitation",
       "source": "Livre de base V5, p. 122 ; achat : p. 191",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-master-and-commander",
+      "nom": "Maître à bord",
+      "englishName": "Master and Commander",
+      "sourceLabel": "Maître à bord (Master and Commander)",
+      "description": "Votre équipage vous respecte et vous fait confiance. Tout Test de Commandement approprié à bord de votre navire ou impliquant votre équipage gagne un bonus de DR égal à vos niveaux dans ce Talent ; le bonus s'applique aux Tests d'équipage comme aux Tests de Commandement individuels. Tests : Commandement.",
+      "limitText": "Bonus de Sociabilité",
+      "source": "Sea of Claws (V4), p. 63",
       "specializationLabel": null
     },
     {
