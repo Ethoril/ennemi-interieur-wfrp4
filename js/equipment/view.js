@@ -251,7 +251,7 @@ export function createEquipmentView({ documentRef = globalThis.document, getCont
             const words = fold(query.value).split(/\s+/u).filter(Boolean);
             const entries = [...catalogue().items.map(item => ({ item, model: false })), ...models.map(model => ({ item: { ...model.item, baseId: `model_${model.id}` }, model: true }))];
             results.replaceChildren();
-            for (const { item, model } of entries.filter(({ item }) => (kind === 'armour' ? item.kind === 'armour' : item.kind !== 'armour') && words.every(word => fold(`${item.name} ${item.category}`).includes(word)))) {
+            for (const { item, model } of entries.filter(({ item }) => (kind === 'armour' ? ['armour', 'shield'].includes(item.kind) : item.kind !== 'armour') && words.every(word => fold(`${item.name} ${item.category}`).includes(word)))) {
                 const node = button(`${item.name} · ${item.category}${model ? ' · Modèle MJ' : ''}`, () => editItem(item, origin), results, !editable());
                 node.dataset.eqEdit = 'true';
             }

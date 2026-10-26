@@ -34,8 +34,9 @@ export let isCloudLoaded = false;
 const CARACS = ['cc', 'ct', 'f', 'e', 'i', 'ag', 'dex', 'int', 'fm', 'soc'];
 const CARAC_LABELS = { cc:'CC', ct:'CT', f:'F', e:'E', i:'I', ag:'Ag', dex:'Dex', int:'Int', fm:'FM', soc:'Soc' };
 const MOUVEMENT = {
-    humain:4, 'elfe-sylvain':5, 'haut-elfe':5, halfelin:4, ogre:6,
-    elfe:5, halfling:4, nain:3, // rétrocompat anciennes sauvegardes
+    humain:4, 'elfe-sylvain':5, 'haut-elfe':5, 'elfe-noir':5, 'elfe-des-mers':5,
+    halfelin:3, gnome:3, ogre:6, skink:6,
+    elfe:5, halfling:3, nain:3, // rétrocompat anciennes sauvegardes
 };
 const _charParam = new URLSearchParams(window.location.search).get('char');
 
@@ -997,12 +998,14 @@ function countTalent(nom) {
     return state.talentsAcq.filter(t => stripAccents(t.nom || '').trim().toLowerCase() === cible).length;
 }
 
-// Les Halfelins n'ajoutent pas leur Bonus de Force.
+// Espèces de taille Petite (Gnome, Skink) : pas de Bonus de Force. Ogre (Grande) : total doublé.
+// Halfelin (L06 p. 341) : inclut BF en V4/V5.
 function updateBlessuresMax() {
     const race = document.getElementById('race')?.value || 'humain';
-    const bf   = ['halfelin', 'halfling'].includes(race) ? 0 : getBonus('f');
+    const bf   = ['gnome', 'skink'].includes(race) ? 0 : getBonus('f');
     const be   = getBonus('e');
-    setText('blessures-max', bf + 2 * be + getBonus('fm') + countTalent('Dur à cuire') * be);
+    const base = bf + 2 * be + getBonus('fm') + countTalent('Dur à cuire') * be;
+    setText('blessures-max', race === 'ogre' ? base * 2 : base);
 }
 
 function recalc() {
@@ -1010,8 +1013,9 @@ function recalc() {
     CARACS.forEach(c => setText(`total-${c}`, getCaracTotal(c)));
 
     // Dérivées
-    const race = document.getElementById('race')?.value || 'humain';
-    setText('mouvement', MOUVEMENT[race] ?? 4);
+    const rawRace = document.getElementById('race')?.value || state.race || '';
+    const mvt = rawRace ? (MOUVEMENT[rawRace] ?? null) : MOUVEMENT.humain;
+    setText('mouvement', mvt ?? 'Espèce inconnue');
     updateBlessuresMax();
 
     // XP — total gagné = somme des entrées gain, dépensé = somme des achats

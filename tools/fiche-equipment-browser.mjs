@@ -139,7 +139,7 @@ try {
     await page.locator('.eq-section').first().getByRole('button', { name: '+ Ajouter', exact: true }).click();
     await page.locator('.eq-dialog[open]').getByRole('searchbox').fill('Bouclier');
     await page.locator('.eq-dialog[open]').getByRole('button', { name: 'Bouclier · Bouclier', exact: true }).click();
-    await page.locator('.eq-dialog[open]').getByRole('spinbutton', { name: 'Paramètre de Protectrice X', exact: true }).fill('4');
+    await page.locator('.eq-dialog[open] [name="ap"]').fill('4');
     assert.equal(await page.locator('.eq-dialog[open] [name="ap"]').inputValue(), '4');
     await page.locator('.eq-dialog[open] [name="name"]').fill('Bouclier mobile');
     await page.locator('.eq-dialog[open]').getByRole('button', { name: 'Enregistrer sur la fiche', exact: true }).click();

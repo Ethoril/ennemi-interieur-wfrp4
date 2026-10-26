@@ -130,7 +130,7 @@ export function talentPurchaseStatus(data, resolver, name) {
     };
     const entry = match.entry;
     const rule = parseTalentLimit(entry.limitText);
-    const elf = ['elfe', 'haut-elfe', 'elfe-sylvain'].includes(data?.race);
+    const elf = ['elfe', 'haut-elfe', 'elfe-sylvain', 'elfe-noir', 'elfe-des-mers'].includes(data?.race);
     const arcane = entry.englishName === 'Arcane Magic';
     const qhaysh = arcane && elf && match.specialization === 'Qhaysh';
     const max = qhaysh ? 1 : arcane && elf ? (match.open ? 9 : 8) : rule.kind === 'unlimited' ? Infinity : rule.kind === 'fixed' ? rule.value

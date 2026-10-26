@@ -11,18 +11,19 @@ const data = { carac: { f: { base: 31, adv: 9 } }, xpLog: [{ id: 'xp', kind: 'ga
 const body = result => result.locations.find(location => location.id === 'body');
 
 test('catalogue : profils complets validés, identités uniques et portée absente explicite', () => {
-    assert.equal(catalogue.items.length, 213);
-    assert.equal(catalogue.keywords.length, 55);
+    assert.equal(catalogue.items.length, 211);
+    assert.equal(catalogue.keywords.length, 57);
     assert.equal(new Set(catalogue.items.map(item => item.id)).size, catalogue.items.length);
     for (const item of catalogue.items) assert.equal(validateEquipmentItem(item, catalogue), item);
     assert.equal(get('Javelot').range, 'BF × 3');
     assert.equal(get('Bombe Cinderblast').range, 'BF');
     assert.equal(get('Globe de Vent Empoisonné Skaven').range, '');
-    assert.equal(get('Targe (Buckler)').ap, 1);
-    assert.equal(get('Targe (Buckler)').damage, 'BF + 2');
+    assert.equal(get('Targe (Buckler)', 'Bouclier').ap, 1);
+    assert.equal(get('Targe (Buckler)', 'Bouclier').damage, 'BF + 1');
+    assert.equal(get('Targe (Buckler)', 'Escrime').damage, 'BF +1');
     assert.deepEqual([get('Pavois (Pavise)').damage, get('Pavois (Pavise)').reach], ['', '']);
     assert.equal(catalogue.items.filter(item => item.kind === 'ammunition' && item.source.startsWith('Livre de base')).length, 8);
-    assert.deepEqual(get('Flèches elfiques (12)').keywords.map(word => word.id), ['precise', 'empaleuse', 'perforante']);
+    assert.deepEqual(get('Flèches elfiques (12)').keywords.map(word => word.id), ['empaleuse']);
     for (const source of Object.values(catalogue.sources)) assert.match(source.sha256, /^[0-9a-f]{64}$/u);
 });
 

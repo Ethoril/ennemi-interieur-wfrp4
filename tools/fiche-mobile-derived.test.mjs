@@ -25,9 +25,12 @@ test('blessures maximales d\'un humain : 3 + 2×3 + 3 = 12', () => {
     assert.equal(blessuresMax(humain), 12);
 });
 
-test('un halfelin n\'ajoute pas son bonus de Force (2×3 + 3 = 9), « halfling » non plus', () => {
-    assert.equal(blessuresMax({ ...humain, race: 'halfelin' }), 9);
-    assert.equal(blessuresMax({ ...humain, race: 'halfling' }), 9);
+test('blessures maximales par espèce : halfelin inclut BF (12), gnome/skink sans BF (9), ogre doublé (24)', () => {
+    assert.equal(blessuresMax({ ...humain, race: 'halfelin' }), 12);
+    assert.equal(blessuresMax({ ...humain, race: 'halfling' }), 12);
+    assert.equal(blessuresMax({ ...humain, race: 'gnome' }), 9);
+    assert.equal(blessuresMax({ ...humain, race: 'skink' }), 9);
+    assert.equal(blessuresMax({ ...humain, race: 'ogre' }), 24);
 });
 
 test('« Dur à cuire » ajoute le bonus d\'Endurance à chaque prise, sans tenir compte des accents ni de la casse', () => {
@@ -35,16 +38,25 @@ test('« Dur à cuire » ajoute le bonus d\'Endurance à chaque prise, sans teni
     const twice = { ...humain, talentsAcq: [{ nom: 'Dur à cuire' }, { nom: ' DUR A CUIRE ' }, { nom: 'Sociable' }] };
     assert.equal(blessuresMax(once), 15);
     assert.equal(blessuresMax(twice), 18);
-    assert.equal(blessuresMax({ ...twice, race: 'halfelin' }), 15);
+    assert.equal(blessuresMax({ ...twice, race: 'halfelin' }), 18);
+    assert.equal(blessuresMax({ ...twice, race: 'gnome' }), 15);
+    assert.equal(blessuresMax({ ...twice, race: 'ogre' }), 36);
 });
 
-test('mouvement : table des races, rétrocompatibilité et défaut à 4', () => {
+test('mouvement : table des espèces, rétrocompatibilité, défaut à 4 sans espèce et null pour espèce inconnue', () => {
+    assert.equal(mouvement({ race: 'humain' }), 4);
     assert.equal(mouvement({ race: 'nain' }), 3);
-    assert.equal(mouvement({ race: 'ogre' }), 6);
+    assert.equal(mouvement({ race: 'halfelin' }), 3);
+    assert.equal(mouvement({ race: 'halfling' }), 3);
+    assert.equal(mouvement({ race: 'gnome' }), 3);
     assert.equal(mouvement({ race: 'haut-elfe' }), 5);
+    assert.equal(mouvement({ race: 'elfe-sylvain' }), 5);
+    assert.equal(mouvement({ race: 'elfe-noir' }), 5);
+    assert.equal(mouvement({ race: 'elfe-des-mers' }), 5);
     assert.equal(mouvement({ race: 'elfe' }), 5);
-    assert.equal(mouvement({ race: 'halfling' }), 4);
-    assert.equal(mouvement({ race: 'inconnue' }), 4);
+    assert.equal(mouvement({ race: 'ogre' }), 6);
+    assert.equal(mouvement({ race: 'skink' }), 6);
+    assert.equal(mouvement({ race: 'inconnue' }), null);
     assert.equal(mouvement({}), 4);
 });
 

@@ -112,7 +112,7 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
             cell.button.setAttribute('aria-label',
                 `${carac.nom} ${carac.total}, bonus ${carac.bonus}${carac.career ? ', de carrière' : ''}`);
         });
-        derived.textContent = `Mouvement ${mouvement(data)} · Blessures max ${blessuresMax(data)} · Corruption ${Math.max(0, Math.floor(+data?.corruption) || 0)}`;
+        derived.textContent = `Mouvement ${mouvement(data) ?? 'Espèce inconnue'} · Blessures max ${blessuresMax(data)} · Corruption ${Math.max(0, Math.floor(+data?.corruption) || 0)}`;
         favoriteSlots(data, engine, careers).forEach(({ slot, row }, index) => {
             const { button } = slots[index];
             button.disabled = readonly;

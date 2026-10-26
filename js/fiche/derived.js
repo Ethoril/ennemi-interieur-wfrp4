@@ -5,8 +5,9 @@ import { stripAccents } from '../utils.js';
 // Toute évolution de ces règles dans fiche.js doit être reportée ici (le test les compare).
 
 export const MOUVEMENT = Object.freeze({
-    humain: 4, 'elfe-sylvain': 5, 'haut-elfe': 5, halfelin: 4, ogre: 6,
-    elfe: 5, halfling: 4, nain: 3, // rétrocompat anciennes sauvegardes
+    humain: 4, 'elfe-sylvain': 5, 'haut-elfe': 5, 'elfe-noir': 5, 'elfe-des-mers': 5,
+    halfelin: 3, gnome: 3, ogre: 6, skink: 6,
+    elfe: 5, halfling: 3, nain: 3, // rétrocompat anciennes sauvegardes
 });
 
 export function caracTotal(data, key) {
@@ -23,16 +24,19 @@ function countTalent(data, nom) {
     return (data?.talentsAcq || []).filter(t => stripAccents(t.nom || '').trim().toLowerCase() === cible).length;
 }
 
-// Les Halfelins n'ajoutent pas leur Bonus de Force.
+// Espèces de taille Petite (Gnome, Skink) : pas de Bonus de Force. Ogre (Grande) : total doublé.
+// Halfelin (L06 p. 341) : inclut BF en V4/V5.
 export function blessuresMax(data) {
     const race = data?.race || 'humain';
-    const bf = ['halfelin', 'halfling'].includes(race) ? 0 : caracBonus(data, 'f');
+    const bf = ['gnome', 'skink'].includes(race) ? 0 : caracBonus(data, 'f');
     const be = caracBonus(data, 'e');
-    return bf + 2 * be + caracBonus(data, 'fm') + countTalent(data, 'Dur à cuire') * be;
+    const base = bf + 2 * be + caracBonus(data, 'fm') + countTalent(data, 'Dur à cuire') * be;
+    return race === 'ogre' ? base * 2 : base;
 }
 
 export function mouvement(data) {
-    return MOUVEMENT[data?.race || 'humain'] ?? 4;
+    if (!data?.race) return MOUVEMENT.humain;
+    return MOUVEMENT[data.race] ?? null;
 }
 
 // Gagné = somme des gains, dépensé = somme des autres lignes (même règle que recalc()).

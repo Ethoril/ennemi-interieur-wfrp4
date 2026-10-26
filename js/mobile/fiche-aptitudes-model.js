@@ -32,7 +32,7 @@ export function talentChoices(careers, data, nom, engine) {
     const resolved = engine?.resolveTalent?.(nom);
     if (resolved?.sourceRule && resolved.open) nom = `${resolved.entry.nom} (au choix)`;
     if (resolved?.sourceRule && resolved.open && resolved.entry.englishName === 'Arcane Magic') {
-        const elf = ['elfe', 'haut-elfe', 'elfe-sylvain'].includes(data?.race);
+        const elf = ['elfe', 'haut-elfe', 'elfe-sylvain', 'elfe-noir', 'elfe-des-mers'].includes(data?.race);
         return { base: resolved.entry.nom, free: false, specs: [...ARCANE_WINDS, ...(elf ? ['Qhaysh'] : [])]
             .filter(spec => !engine.talentResolver.purchaseStatus(data, `${resolved.entry.nom} (${spec})`).reached) };
     }
