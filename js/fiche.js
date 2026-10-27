@@ -1001,7 +1001,7 @@ function countTalent(nom) {
 // Espèces de taille Petite (Gnome, Skink) : pas de Bonus de Force. Ogre (Grande) : total doublé.
 // Halfelin (L06 p. 341) : inclut BF en V4/V5.
 function updateBlessuresMax() {
-    const race = document.getElementById('race')?.value || 'humain';
+    const race = document.getElementById('race')?.value || state.race || 'humain';
     const bf   = ['gnome', 'skink'].includes(race) ? 0 : getBonus('f');
     const be   = getBonus('e');
     const base = bf + 2 * be + getBonus('fm') + countTalent('Dur à cuire') * be;
@@ -2368,6 +2368,7 @@ function applyData(d) {
     if (!d) return;
     invalidateCareerCache();
     setVal('nom',           d.nom);
+    state.race = d.race ?? ''; // espèce stockée, même absente de la liste : signalée « Espèce inconnue »
     setVal('race',          d.race);
     setVal('carriere',      d.carriere);
     setVal('rang',          d.rang);

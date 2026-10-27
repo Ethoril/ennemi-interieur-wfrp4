@@ -78,7 +78,7 @@ Des fichiers CSV prêts à coller (encodage UTF-8, fins de ligne LF, colonnes Pr
 | 68 | **Marteau de guerre (2M)** | `Atouts et Défauts` | Assommante, Dévastatrice, Lente | Dévastatrice, Assommante, Déséquilibrée | L06 p.301 ((2H) Warhammer : Long, +SB+6, Damaging, Pummel, Unbalanced) |
 | 69 | **Pioche (2M)** | `Allonge` | Moyenne | Longue | L06 p.301 ((2H) Pick : Long, +SB+5, Damaging, Penetrating, Unbalanced) |
 | 69 | **Pioche (2M)** | `Atouts et Défauts` | Dévastatrice, Empaleuse, Lente | Dévastatrice, Perforante, Déséquilibrée | L06 p.301 ((2H) Pick : Long, +SB+5, Damaging, Penetrating, Unbalanced) |
-| 73 | **Hache de Tueur (2M)** | `Atouts et Défauts` | Percutante, Perforante | Dévastatrice, Perforante, Déséquilibrée | Archives I p.92 / conversion V5 de Percutante (à arbitrer) |
+| 73 | **Hache de Tueur (2M)** | `Atouts et Défauts` | Percutante, Perforante | Dévastatrice, Perforante | Archives I p.92 / conversion V5 de Percutante (à arbitrer) |
 | 77 | **Fléau** | `Dégâts` | =+BF +5 | =+BF +4 | L06 p.301 (Flail : Average, +SB+4, Pummel, Wrap, Unbalanced) |
 | 77 | **Fléau** | `Atouts et Défauts` | Perturbante, À Enroulement | Assommante, À Enroulement, Déséquilibrée | L06 p.301 (Flail : Average, +SB+4, Pummel, Wrap, Unbalanced) |
 | 78 | **Fléau à grain** | `Nom` | Fléau à grain | Fléau à grain (2M) | L06 p.301 ((2H) Grain Flail : Long, +SB+3, Pummel, Imprecise) |
@@ -104,7 +104,7 @@ Des fichiers CSV prêts à coller (encodage UTF-8, fins de ligne LF, colonnes Pr
 | 88 | **Filet lesté (2M)** | `Dégâts` | =+BF +0 | - | L06 p.301 (Net) & Décision 2 |
 | 88 | **Filet lesté (2M)** | `Atouts et Défauts` | Immobilisante, Défensive, Protectrice 1, Lente, Inoffensive, À Enroulement | Défensive, Inflige (Empêtré 50) | L06 p.301 (Net) & Décision 2 |
 | 89 | **Filet Druchii** | `Catégorie` | Parade | Base | Temple of Spite p.57 / conversion V5 calquée sur Filet L06 p.301 & Décision 2 (à arbitrer) |
-| 89 | **Filet Druchii** | `Atouts et Défauts` | À Enroulement, Défensive, Raffiné 1, Immobilisante, Inoffensive, Lente | À Enroulement, Défensive, Raffiné 1, Inflige (Empêtré 50), Inoffensive | Temple of Spite p.57 / conversion V5 calquée sur Filet L06 p.301 & Décision 2 (à arbitrer) |
+| 89 | **Filet Druchii** | `Atouts et Défauts` | À Enroulement, Défensive, Raffiné 1, Immobilisante, Inoffensive, Lente | À Enroulement, Défensive, Raffiné 1, Inflige (Empêtré votre Force), Inoffensive (Force du porteur comme l’ancien Immobilisante ; retrait de Lente à arbitrer) | Temple of Spite p.57 / conversion V5 calquée sur Filet L06 p.301 & Décision 2 (à arbitrer) |
 
 ### 2.2. Lignes à ajouter (2 lignes)
 
@@ -249,8 +249,8 @@ Des fichiers CSV prêts à coller (encodage UTF-8, fins de ligne LF, colonnes Pr
 ## 5. Récapitulatif des doublons résolus et doublons de suppléments signalés au MJ
 
 ### 5.1. Doublons résolus (Décision 8)
-1. **`Pistolet` × 2** (*Armes à Distance* lignes 50 et 53) : ligne 50 passée au profil V5 (`À Poudre noire, Dévastatrice, Dangereuse, Pistolet, Recharge 1`), ligne 53 supprimée.
-2. **`Arquebuse (2M)` (ligne 48) / `Mousquet (2M)` (ligne 52)** (*Armes à Distance*) : deux traductions françaises du même *Handgun* du livre de base (4 CO, Limitée, Portée 50, +9, Recharge 3), distinct de l'`Arquebuse ancienne (2M)` d'*Up in Arms* p.101 (ligne 56, 5 CO, Exotique, Portée 40, Imprécise, Recharge 5). Ligne 48 (`Arquebuse (2M)`) mise au profil V5, ligne 52 (`Mousquet (2M)`) supprimée.
+1. **`Pistolet` × 2** (*Armes à Distance* lignes 50 et 53) : ligne 50 passée au profil V5 (`Pistolet, Recharge 2, À Poudre noire, Dévastatrice`, L06 p.303), ligne 53 supprimée.
+2. **`Arquebuse (2M)` (ligne 48) / `Mousquet (2M)` (ligne 52)** (*Armes à Distance*) : deux traductions françaises du même *Handgun* du livre de base (4 CO, Limitée, Portée 50, +9, Recharge 3). Ligne 48 (`Arquebuse (2M)`) mise au profil V5, ligne 52 (`Mousquet (2M)`) supprimée.
 3. **`Bouclier` (ligne 49) / `Bouclier standard` (ligne 52)** (*Armes Corps à Corps*) : fusionnés en une seule entrée `Bouclier` dans l'onglet *Armures* (`Catégorie : Bouclier`, `PA : 2`, `Zones : Toutes`, `Atouts : Bouclier`).
 4. **`Pavois` (ligne 50) / `Pavois (Pavise)` (ligne 54)** (*Armes Corps à Corps*) : fusionnés en une seule entrée `Pavois (Pavise)` dans l'onglet *Armures* (`Catégorie : Bouclier`, `PA : 3`, `Zones : Toutes`, `Atouts : Bouclier (Posé au sol en 2 Actions : confère 5 PA face à la direction choisie ; manié au bras : Grand Bouclier encombrant, à arbitrer)`).
 

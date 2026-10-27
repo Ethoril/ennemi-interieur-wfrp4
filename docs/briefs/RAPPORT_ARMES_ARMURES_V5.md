@@ -13,11 +13,11 @@ Les 4 onglets concernés du Google Sheet (`1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuY
 
 1. **`Mots Clés Armes et Armures.csv`** (`21` cellules modifiées, `2` lignes ajoutées) :
    - **Ajouts V5** :
-     - **`Bouclier`** (`id: bouclier`, Nom EN : `Shield`, Type : `Qualité d'armure`) : annule le malus de `-20` pour défendre contre une attaque à distance, permet d'opposer les attaques à distance à portée Moyenne/Longue/Extrême, et ignore `1 PA` sur le bras porteur si tenu en main.
-     - **`Inflige X`** (`id: inflige`, Nom EN : `Inflicts X`, Type : `Qualité d'arme`) : permet de renoncer aux dégâts en dépensant `2 Avantages` pour infliger l'état `X`.
+     - **`Bouclier`** (`id: bouclier`, Nom EN `Shield`, qualité d'armure) : texte V5 dans l'onglet Mots-clés du CSV (L06 p.306).
+     - **`Inflige X`** (`id: inflige`, Nom EN `Inflict`) : texte V5 dans l'onglet Mots-clés du CSV (L06 p.304-305).
    - **Bascules V5** :
-     - **`Explosion X`** : basculée sur l'effet V5 (cible principale + `X` cibles supplémentaires à moins de `X × 2` mètres).
-     - **`Recharge X`** : basculée sur l'effet V5 (`X` Actions pour recharger ; test Étendu de *Projectile (Groupe)* à `+20` demandant `X` DR seulement sous la menace ennemie).
+     - **`Explosion X`** : texte V5 dans le CSV (diamètre de X yards, sans opposition ordinaire, dégâts sans DR).
+     - **`Recharge X`** : texte V5 dans le CSV (X Actions). L'outil MJ applique la règle du MJ (recharge comptée en succès, décision F1).
    - **7 mots-clés V4 marqués en `Remarque`** (`Épuisante`, `Immobilisante`, `Lente`, `Percutante`, `Perturbante`, `Précise`, `Protectrice X`) : conservés dans l'onglet pour la compatibilité des objets historiques déjà équipés sur les fiches, mais retirés de tous les objets du catalogue. Le `Nom EN` de `Protectrice X` a été passé à `Shield (V4)` (et `Anciens noms` vidé) afin que `"Shield"` et `"Bouclier"` résolvent exclusivement vers la nouvelle qualité V5 `bouclier`.
 
 2. **`Armes Corps à Corps.csv`** (`50` cellules modifiées, `7` lignes supprimées, `2` lignes ajoutées) :
@@ -70,45 +70,17 @@ Les 4 onglets concernés du Google Sheet (`1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuY
 
 ---
 
-## 2. Conversions de suppléments marquées « à arbitrer » et doublons Nains signalés
+## 2. Conversions de suppléments à arbitrer
 
-### A. Conversions des armes de suppléments vers V5 (marquées « à arbitrer »)
+**Correction de la contre-vérification Claude (27/10)** : la première version de cette section citait des objets absents de la feuille (Pistolet de Duel, Baliste de Poing, Canon Orgue Portatif, Lance-Flammes Nain, Hallebarde de Garde Phénix, etc.) et des conversions qui ne sont pas dans les CSV. Elle est remplacée. **La seule liste qui fait foi est `CHANGEMENTS_FEUILLE_ARMES_V5.md`** (colonne « à arbitrer », 24 lignes) ; les CSV de `csv-armes-v5/` la reflètent.
 
-| Onglet | Objet (Supplément) | Ancienne valeur (V4) | Nouvelle valeur proposée (V5) | Justification |
-|---|---|---|---|---|
-| Armes CàC | `Épée Bâtarde` (*Up in Arms*) | `Défensive, Percutante` | `Défensive, Dévastatrice` | Aligné sur l'Épée bâtarde (2M) L06 (`Percutante` → `Dévastatrice`) |
-| Armes CàC | `Grande Hache de Chrace (2M)` (*High Elf PG*) | `Hachoir, Percutante, Encombrante` | `Taille, Dévastatrice, Déséquilibrée` | Aligné sur la Grande hache (2M) L06 |
-| Armes CàC | `Hallebarde de Garde Phénix (2M)` (*High Elf PG*) | `Défensive, Empaleuse, Hachoir, Percutante, Magique` | `Défensive, Empaleuse, Taille, Dévastatrice, Magique` | `Percutante` → `Dévastatrice` |
-| Armes CàC | `Marteau Piqueur à Vapeur (2M)` (*Dwarf PG*) | `Percutante, Lente, Dévastatrice` | `Assommante, Déséquilibrée, Dévastatrice` | Aligné sur le Marteau de guerre (2M) L06 (`Lente` → `Déséquilibrée`, `Percutante` → `Assommante`) |
-| Armes CàC | `Marteau Piqueur à Vapeur (2M)` (*Archives I*) | `Assommante, Lente, Dévastatrice` | `Assommante, Déséquilibrée, Dévastatrice` | `Lente` → `Déséquilibrée` |
-| Armes CàC | `Pique (2M)` (*Up in Arms*) | `Empaleuse, Percutante (en charge)` | `Empaleuse, Dévastatrice` | `Percutante` → `Dévastatrice` |
-| Armes CàC | `Hache-Pic (2M)` (*Dwarf PG*) | `(aucune qualité)` | `Déséquilibrée, Dévastatrice, Taille, Perforante` | Combinaison Grande hache + Pioche L06 |
-| Armes CàC | `Lance de Chasse` (*Archives III*) | `Empaleuse, Défensive, Percutante` | `Empaleuse, Défensive, Dévastatrice` | `Percutante` → `Dévastatrice` |
-| Armes CàC | `Coup-de-poing (Knuckledusters)` (*Up in Arms*) | `Inoffensive` | `(aucune)` | Aligné sur `Coup-de-poing` L06 p. 300 |
-| Armes CàC | `Fléau Lourd (2M)` (*Up in Arms*) | `Perturbante, Percutante, Épuisante, Enroulement` | `À enroulement, Assommante, Déséquilibrée, Dévastatrice` | Aligné sur `Fléau d’armes (2M)` L06 p. 300 |
-| Armes CàC | `Fouet de Guerre` / `Fouet d'Agonie` (*Archives II* / *Sea of Claws*) | `Enroulement, Immobilisante, Rapide / Peur` | `À enroulement, Déséquilibrée, Inflige (Empêtré votre Force), Rapide / Peur` | `Immobilisante` → `Inflige (Empêtré votre Force)` + `Déséquilibrée` |
-| Armes CàC | `Brise-Épée Nain` (*Dwarf PG*) | Groupe `Parade`, `Défensive, Piège-lame, Solide` | Groupe `Escrime`, `Défensive, Parade, Piège-lame, Solide 1` | Suppression du groupe `Parade` → `Escrime` + `Parade` |
-| Armes CàC | `Filet Druchii` (*Salzenmund*) | Groupe `Parade`, `Immobilisante, Empaleuse` | Groupe `Base`, `Défensive, Inflige (Empêtré 50), Empaleuse` | Suppression du groupe `Parade` → `Base` + `Inflige (Empêtré 50)` |
-| Armes CàC | `Attrape-Homme (2M)` (*Up in Arms*) | `Immobilisante, Assommante` | `Inflige (Empêtré votre Force), Assommante` | `Immobilisante` → `Inflige (Empêtré votre Force)` |
-| Armes Distance | `Mousquet (2M)` (*Up in Arms*) | `Poudre noire, Dangereuse, Percutante, Précise, Recharge 3` | `À poudre noire, Dévastatrice, Pointue, Recharge 3` | Aligné sur l'Arquebuse V5 + `Pointue` (`Précise` → `Pointue`) |
-| Armes Distance | `Pistolet de Duel` (*Up in Arms*) | `Poudre noire, Dangereuse, Percutante, Pistolet, Précise, Recharge 2` | `À poudre noire, Dévastatrice, Pistolet, Pointue, Recharge 2` | Aligné sur le Pistolet V5 + `Pointue` |
-| Armes Distance | `Baliste de Poing` (*Sea of Claws*) | `Percutante, Empaleuse, Recharge 2` | `Dévastatrice, Empaleuse, Recharge 2` | `Percutante` → `Dévastatrice` |
-| Armes Distance | `Arbalète à Répétition Druchii (2M)` / `Arbalète à Répétition` (*Salzenmund* / *High Elf PG*) | `Recharge 3` | `Recharge 4` | Aligné sur le barème V5 des armes à répétition |
-| Armes Distance | `Canon Orgue Portatif (2M)` / `Lance-Flammes Nain (2M)` / `Tromblon Grudge-Raker (2M)` | `Recharge 5 / 6 / 3` | `Recharge 6 / 6 / 4` | Barème V5 + `Inflige (Enflammé)` sur le Lance-Flammes |
-| Armes Distance | `Bolas Lourds` (*Middenheim*) | Groupe `Lancer`, `Immobilisante, Assommante` | Groupe `Entraves`, `Inflige (Empêtré 45), Inflige (À terre), Assommante` | Aligné sur `Bolas` L06 p. 301 |
-| Armes Distance | `Filet Barbelé` (*Corsairs*) | `Immobilisante, Déchirante` | `Inflige (Empêtré 50), Déchirante` | Aligné sur `Filet` L06 p. 301 |
-| Armes Distance | `Bombe Incendiaire Naine` / `Bombe Cinderblast` / `Flasque de Feu` | `Explosion X` | `+ Inflige (Enflammé)` | Aligné sur `Bombe incendiaire` L06 p. 301 |
-| Armes Distance | `Lance-Rochers (2M)` (*Up in Arms*) | `Assommante, Percutante` | `Assommante, Dévastatrice` | `Percutante` → `Dévastatrice` |
-| Armes Distance | `Javeline Lourde` (*Archives III*) | `Empaleuse, Percutante` | `Empaleuse, Dévastatrice` | `Percutante` → `Dévastatrice` |
+Points qui demandent une décision du MJ (détail et pages dans `CHANGEMENTS`) :
+- Conversions de mots-clés V4 sans équivalent direct : Arme de queue Skaven (Perturbante → Déséquilibrée, alors que les fléaux reçoivent Assommante), Lames tournoyantes et Encensoir à Peste (même question), Gantelet à Vapeur Nain (Protectrice 1 → Défensive : perte du PA), Filet Druchii (retrait de Lente), Cape (groupe Base, Inflige (Empêtré 25)).
+- Précise → Pointue et retrait de Percutante sur les armes de siège et navales (Balistes, Catapultes, Mortier naval, Torpille, Harpon Ravageur).
+- Recharge : valeurs des suppléments (jusqu'à 12) restées à l'échelle d'origine.
+- Doublons d'éditions naines (`CHANGEMENTS` §5.2), conservés tels quels.
 
-### B. Signalement des 4 paires de quasi-doublons Nains (*Archives I* vs *Dwarf Player's Guide*)
-Conformément à la Décision 7, ces 4 paires ont été **conservées telles quelles** dans le catalogue mais sont signalées pour arbitrage éventuel du MJ :
-1. **`Hache de lancer naine`** (*Archives of the Empire Vol. I*, Lancer) vs **`Hache de Lancer Naine`** (*Dwarf Player's Guide*, Lancer).
-2. **`Marteau Piqueur à Vapeur (2M)`** (*Dwarf Player's Guide*, Deux-Mains) vs **`Marteau Piqueur à Vapeur (2M)`** (*Archives of the Empire Vol. I*, Deux-Mains).
-3. **`Harpon à Ressort (2M)`** (*Dwarf Player's Guide*, Ingénierie) vs **`Harpon à Ressort (2M)`** (*Archives of the Empire Vol. I*, Ingénierie).
-4. **`Bombarde à Vapeur (2M)`** (*Dwarf Player's Guide*, Ingénierie) vs **`Bombarde à Vapeur (2M)`** (*Archives of the Empire Vol. I*, Ingénierie).
-
----
+Corrigé par Claude : Hache de Tueur (2M) = `Dévastatrice, Perforante` (Déséquilibrée avait été ajoutée sans source) ; Filet Druchii = `Inflige (Empêtré votre Force)` (la Force 50 venait du Filet du livre de base).
 
 ## 3. PJ concernés par `Corps à corps (Parade)` / `(Bouclier)` (Décision 2)
 
@@ -162,7 +134,7 @@ Conformément à la contrainte sur les tests existants, seuls les 3 fichiers de 
 ## 6. Suites à donner côté `Outil MJ Warhammer`
 
 1. **Google Sheet (`1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs`)** :
-   - Importer les 4 CSV de `docs/briefs/csv-armes-v5/` dans leurs onglets respectifs (*Mots Clés Armes et Armures*, *Armes Corps à Corps*, *Armes à Distance*, *Armures*), puis relancer `node tools/refresh-equipment-catalog.mjs` sans `--source-dir` pour vérifier que le hash en ligne coïncide.
+   - Importer les 4 CSV de `docs/briefs/csv-armes-v5/` dans leurs onglets respectifs (*Mots Clés Armes et Armures*, *Armes Corps à Corps*, *Armes à Distance*, *Armures*), puis relancer `node tools/refresh-equipment-catalog.mjs` sans `--source-dir` et vérifier que le catalogue obtenu est identique (hors `fetchedAt` et `sources`) : les `sha256` des sources diffèrent forcément, l'export Google mettant tous les champs entre guillemets.
 2. **Compétences du Google Sheet** :
    - Retirer ou marquer obsolète la spécialité `Corps à corps (Parade)` dans l'onglet des compétences si souhaité, après avoir arbitré le reclassement des `+5` avances d'**Elysia Valtieri**.
 3. **Dépôt `Outil MJ Warhammer`** :
