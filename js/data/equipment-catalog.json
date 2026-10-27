@@ -3,20 +3,20 @@
   "fetchedAt": "2026-10-27",
   "sources": {
     "Mots Clés Armes et Armures": {
-      "url": "https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&sheet=Mots%20Cl%C3%A9s%20Armes%20et%20Armures",
-      "sha256": "57b74d9c2a08a50d644fc9601623ebc6fff6d81932628ead2dc70185c60b1f6b"
+      "url": "https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&headers=1&sheet=Mots%20Cl%C3%A9s%20Armes%20et%20Armures",
+      "sha256": "2c514b2a8d991dd160fa3ecda559488909beb684826d6602a16187cf4fe5da13"
     },
     "Armes Corps à Corps": {
-      "url": "https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&sheet=Armes%20Corps%20%C3%A0%20Corps",
-      "sha256": "c0fbd5340c8672fbf18ed07e5d69606fc8a7ca3123556b21782ce9ba6f22507d"
+      "url": "https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&headers=1&sheet=Armes%20Corps%20%C3%A0%20Corps",
+      "sha256": "ee022b8079d42990f7cdfda1ca4d9f5e39a83a3394409a680ae7e128dfc9aad4"
     },
     "Armes à Distance": {
-      "url": "https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&sheet=Armes%20%C3%A0%20Distance",
-      "sha256": "d7b6401580a5bba28ccacc66b2b3cfb879d65e75aa17a53f950b0b61ce1226e0"
+      "url": "https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&headers=1&sheet=Armes%20%C3%A0%20Distance",
+      "sha256": "4c74147e420be76065dcf9fde332ed51c44c0ca0a25bfcc9c39e43f59c59d9c8"
     },
     "Armures": {
-      "url": "https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&sheet=Armures",
-      "sha256": "3e2ff13eb13b2479e4069e5203f0a164113e7ad85606ccd3b8230f832b76bc58"
+      "url": "https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&headers=1&sheet=Armures",
+      "sha256": "d540299714bc6b7aeb54cf3dbc8436de72ad21136e20f5f70024207aae168d7c"
     }
   },
   "keywords": [

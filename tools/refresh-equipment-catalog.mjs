@@ -6,7 +6,7 @@ import { parseCSV } from '../js/utils.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const sourceDirectory = process.argv.find(argument => argument.startsWith('--source-dir='))?.slice(13);
-const sheetRoot = 'https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&sheet=';
+const sheetRoot = 'https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&headers=1&sheet=';
 const fold = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/gu, '').toLowerCase().trim();
 const slug = value => fold(value).replace(/[^a-z0-9]+/gu, '-').replace(/^-|-$/gu, '');
 const sources = {};
