@@ -25,27 +25,35 @@ const keywords = keywordRows.map(row => ({ id: row.Identifiant, name: row.Nom, e
     parameter: row['Paramètre'], source: row.Source, edition: row['Version retenue'],
     aliases: [row['Nom EN'], ...row['Anciens noms'].split(',').map(value => value.trim())].filter(Boolean), note: row.Remarque }));
 function parseKeywords(text) {
-    const clean = String(text || '').normalize('NFC').trim();
-    const folded = fold(clean);
     const result = [];
+    text = String(text || '').normalize('NFC');
+    const parts = [];
+    let start = 0, depth = 0;
+    for (let i = 0; i < text.length; i += 1) {
+        if (text[i] === '(') depth += 1;
+        else if (text[i] === ')') depth = Math.max(0, depth - 1);
+        else if (!depth && /[,;]/u.test(text[i])) { parts.push(text.slice(start, i)); start = i + 1; }
+        else if (!depth && /^\s+ou\s+/iu.test(text.slice(i))) {
+            const separator = text.slice(i).match(/^\s+ou\s+/iu)[0];
+            parts.push(text.slice(start, i)); i += separator.length - 1; start = i + 1;
+        }
+    }
+    parts.push(text.slice(start));
     for (const entry of keywords) {
         const names = [entry.name, ...entry.aliases].map(name => fold(name).replace(/\s+(?:x|\d+)$/u, '')).filter(Boolean);
-        const params = [];
-        let matched = false;
         for (const name of names) {
             const escaped = name.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
-            const regex = new RegExp(`(?:^|[,;]|\\bou\\s)\\s*${escaped}(?=$|[\\s.(,;])\\s*([+-]?\\d+|\\([^)]*\\))?`, 'gu');
-            for (const match of folded.matchAll(regex)) {
-                matched = true;
-                if (entry.parameter && match[1]) {
-                    const start = match.index + match[0].length - match[1].length;
-                    const rawParam = clean.slice(start, start + match[1].length).replace(/^\(|\)$/gu, '').trim();
-                    if (rawParam && !params.includes(rawParam)) params.push(rawParam);
-                }
+            const pattern = new RegExp(`^\\s*(?:ou\\s+)?${escaped}(?=$|[\\s.(])\\s*([+-]?\\d+|\\([^)]*\\))?`, 'u');
+            const matches = parts.map(value => value.trim()).map(part => ({ part, match: fold(part).match(pattern) })).filter(value => value.match);
+            if (matches.length) {
+                const parameters = matches.map(({ part, match }) => {
+                    if (!entry.parameter || !match[1]) return '';
+                    const start = match.index + match[0].lastIndexOf(match[1]);
+                    return part.slice(start, start + match[1].length).replace(/^\(|\)$/gu, '');
+                }).filter(Boolean);
+                result.push({ id: entry.id, parameter: [...new Set(parameters)].join(' ; ') }); break;
             }
-            if (matched) break;
         }
-        if (matched) result.push({ id: entry.id, parameter: entry.parameter ? params.join(', ') : '' });
     }
     return result;
 }
@@ -108,9 +116,10 @@ for (const [name, defaultKind] of [['Armes Corps à Corps', 'weapon'], ['Armes �
         const id = identity + (occurrence ? `-${occurrence + 1}` : '');
         const layer = kind !== 'armour' ? 'none' : /^cuir souple/iu.test(category) ? 'leather'
             : /^\s*=*\s*\+/u.test(row["Valeur d'Armure (PA)"]) ? 'bonus' : words.some(word => word.id === 'flexible') ? 'flexible' : 'rigid';
+        const notes = row['Atouts et Défauts'] || row['Atouts et Défauts (et Pénalités)'] || '';
         items.push({ id, baseId: id, catalogVersion: '', kind, name: row.Nom, category, damage, reach, range,
             ap: Number.isFinite(ap) ? ap : null, locations: locations(row['Zones Couvertes'] || ''), layer, keywords: words,
-            notes: row['Atouts et Défauts'] || row['Atouts et Défauts (et Pénalités)'] || '', source, custom: false });
+            notes: kind === 'shield' && words.some(word => word.id === 'bouclier') ? `${notes} ; en attaque : arme improvisée (Inoffensive, Déséquilibrée).` : notes, source, custom: false });
     }
 }
 // Munitions standard absentes des aides de jeu (Livre de base V5 EN p.302).
@@ -133,7 +142,29 @@ for (const [name, category, damage, range, words, notes] of standardAmmunition) 
 if (new Set(items.map(item => item.id)).size !== items.length) throw new Error('Identifiants d’équipement en doublon');
 const catalogVersion = `equipment:${createHash('sha256').update(JSON.stringify({ items, keywords })).digest('hex')}`;
 for (const item of items) item.catalogVersion = catalogVersion;
-const catalogue = { catalogVersion, fetchedAt: new Date().toISOString().slice(0, 10), sources, keywords, items };
+const prior = JSON.parse(await readFile(resolve(root, 'js/data/equipment-catalog.json'), 'utf8'));
+const keywordHistory = { ...(prior.keywordHistory || {}) };
+if (prior.catalogVersion !== catalogVersion) keywordHistory[prior.catalogVersion] = prior.keywords;
+const aliases = {
+    'shield-armes-corps-a-corps-bouclier-bouclier-haut-elfe': 'shield-armures-bouclier-bouclier-haut-elfe',
+    'shield-armes-corps-a-corps-bouclier-bouclier-standard': 'shield-armures-bouclier-bouclier',
+    'shield-armes-corps-a-corps-bouclier-pavois': 'shield-armures-bouclier-pavois-pavise',
+    'shield-armes-corps-a-corps-bouclier-bouclier': 'shield-armures-bouclier-bouclier',
+    'shield-armes-corps-a-corps-bouclier-targe-buckler': 'shield-armures-bouclier-targe-buckler',
+    'shield-armes-corps-a-corps-bouclier-grand-bouclier': 'shield-armures-bouclier-grand-bouclier',
+    'shield-armes-corps-a-corps-bouclier-pavois-pavise': 'shield-armures-bouclier-pavois-pavise',
+    'weapon-armes-corps-a-corps-fleau-fleau-a-grain': 'weapon-armes-corps-a-corps-fleau-fleau-a-grain-2m',
+    'weapon-armes-corps-a-corps-parade-brise-epee': 'weapon-armes-corps-a-corps-escrime-brise-epee',
+    'weapon-armes-corps-a-corps-parade-main-gauche': 'weapon-armes-corps-a-corps-escrime-main-gauche',
+    'weapon-armes-corps-a-corps-parade-cape': 'weapon-armes-corps-a-corps-base-cape',
+    'weapon-armes-corps-a-corps-parade-filet-druchii': 'weapon-armes-corps-a-corps-base-filet-druchii',
+    'weapon-armes-a-distance-entraves-fouet': 'weapon-armes-corps-a-corps-fleau-fouet',
+    'weapon-armes-a-distance-entraves-lasso': 'weapon-armes-a-distance-entraves-lasso-2m',
+    'weapon-armes-a-distance-lancer-bolas': 'weapon-armes-a-distance-entraves-bolas',
+    'weapon-armes-a-distance-poudre-noire-long-fusil-d-hochland-2m': 'weapon-armes-a-distance-ingenierie-long-fusil-d-hochland-2m',
+};
+if (Object.values(aliases).some(id => !items.some(item => item.id === id))) throw new Error('Cible de correspondance absente du catalogue');
+const catalogue = { catalogVersion, fetchedAt: new Date().toISOString().slice(0, 10), sources, keywords, keywordHistory, aliases, items };
 if (items.some(item => item.keywords.some(word => !keywords.some(entry => entry.id === word.id)))) throw new Error('Mot clé de munition absent du référentiel');
 await writeFile(resolve(root, 'js/data/equipment-catalog.json'), `${JSON.stringify(catalogue, null, 2)}\n`);
 console.log(JSON.stringify({ items: items.length, keywords: keywords.length, corrections: Object.keys(rangeCorrections).length, ammunition: standardAmmunition.length,

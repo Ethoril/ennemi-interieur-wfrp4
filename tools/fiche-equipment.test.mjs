@@ -39,6 +39,16 @@ test('catalogue : profils complets validés, identités uniques et portée absen
     assert.equal(get('Targe (Buckler)', 'Bouclier').damage, 'BF + 1');
     assert.equal(get('Targe (Buckler)', 'Escrime').damage, 'BF +1');
     assert.deepEqual([get('Pavois (Pavise)').damage, get('Pavois (Pavise)').reach], ['', '']);
+    assert.deepEqual(get('Bolas').keywords.find(word => word.id === 'inflige'), { id: 'inflige', parameter: 'Empêtré 35 ; À terre' });
+    assert.equal(get('Javelot Blackbriar elfe sylvain').keywords.some(word => word.id === 'inflige'), false);
+    assert.deepEqual(get('Guisarme (2M)').keywords.map(word => word.id).sort(), ['croche-pied', 'defensive', 'taille']);
+    assert.deepEqual(get('Partizan/Glaive (2M)').keywords.find(word => word.id === 'entaille'), { id: 'entaille', parameter: '2' });
+    assert.deepEqual(get("Hache d'armes (2M)").keywords.map(word => word.id).sort(), ['assommante', 'defensive', 'empaleuse', 'taille']);
+    assert.equal(get('Cotte de mailles').keywords.some(word => word.id === 'plusieurs'), false);
+    assert.equal(catalogue.aliases['shield-armes-corps-a-corps-bouclier-bouclier'], get('Bouclier', 'Bouclier').id);
+    const history = Object.values(catalogue.keywordHistory).find(entries => entries.some(entry => entry.id === 'explosion' && entry.edition === 'V4'));
+    assert.ok(history);
+    assert.equal(catalogue.keywords.find(entry => entry.id === 'explosion').edition, 'V5');
     assert.equal(catalogue.items.filter(item => item.kind === 'ammunition' && item.source.startsWith('Livre de base')).length, 8);
     assert.deepEqual(get('Flèches elfiques (12)').keywords.map(word => word.id), ['empaleuse']);
     for (const source of Object.values(catalogue.sources)) assert.match(source.sha256, /^[0-9a-f]{64}$/u);
