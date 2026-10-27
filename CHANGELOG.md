@@ -1,3 +1,8 @@
+## [2.38.3] - 2026-10-27
+
+- Application mobile : « Rechercher une mise à jour » attend la fin du téléchargement au lieu de répondre « Aucune mise à jour » trop tôt.
+- Application mobile : une mise à jour est recherchée quand l’application revient au premier plan (au plus toutes les 5 minutes), sans devoir la fermer complètement.
+
 ## [2.38.2] - 2026-10-27
 
 - Fiches : calculs V5 des espèces et actualisation des anciens boucliers, y compris les profils fusionnés ; catalogue et historique des mots clés conservés.

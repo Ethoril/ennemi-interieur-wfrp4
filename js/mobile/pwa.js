@@ -1,5 +1,9 @@
 const DISMISS_KEY = 'wfrp-pwa-install-dismissed-at';
 const DISMISS_MS = 7 * 24 * 60 * 60 * 1000;
+// Le précache pèse plusieurs Mo : sur mobile, l'installation dépasse souvent la seconde.
+const INSTALL_WAIT_MS = 60 * 1000;
+// Au retour au premier plan, une vérification silencieuse au plus toutes les 5 minutes.
+const RESUME_CHECK_MS = 5 * 60 * 1000;
 
 function isIos(windowRef, navigatorRef) {
     return /iphone|ipad|ipod/iu.test(navigatorRef?.userAgent || '')
@@ -54,6 +58,7 @@ export function createPwaController({
     let workerVersion = null;
     let error = null;
     let installError = false;
+    let lastResumeCheck = 0;
     const listeners = new Set();
     const handlers = {};
     const installingListeners = new Map();
@@ -155,8 +160,29 @@ export function createPwaController({
         reloadScheduled = true;
         windowRef?.location?.reload?.();
     };
+    const waitForInstalled = worker => new Promise(resolve => {
+        if (!worker?.addEventListener || worker.state !== 'installing') { resolve(); return; }
+        let timer = null;
+        const onStateChange = () => { if (worker.state !== 'installing') done(); };
+        const done = () => {
+            worker.removeEventListener?.('statechange', onStateChange);
+            windowRef?.clearTimeout?.(timer);
+            resolve();
+        };
+        worker.addEventListener('statechange', onStateChange);
+        timer = windowRef?.setTimeout?.(done, INSTALL_WAIT_MS) ?? null;
+    });
     const onUpdateFound = () => watchInstalling(registration?.installing, generation);
     const onControllerChange = () => completeUpdate();
+    const onVisibilityChange = () => {
+        if (stopped || !started || documentRef?.visibilityState !== 'visible') return;
+        if (checkingForUpdate || updateAvailable || !registration?.update) return;
+        const current = now();
+        if (current - lastResumeCheck < RESUME_CHECK_MS) return;
+        lastResumeCheck = current;
+        // updatefound puis statechange affichent le bandeau quand le worker est prêt.
+        Promise.resolve().then(() => registration.update()).catch(() => {});
+    };
     const onBeforeInstallPrompt = event => {
         event.preventDefault?.();
         deferredPrompt = event;
@@ -203,6 +229,8 @@ export function createPwaController({
         windowRef?.addEventListener?.('beforeinstallprompt', handlers.beforeInstallPrompt);
         windowRef?.addEventListener?.('appinstalled', handlers.appInstalled);
         navigatorRef?.serviceWorker?.addEventListener?.('controllerchange', handlers.controllerChange);
+        lastResumeCheck = now();
+        documentRef?.addEventListener?.('visibilitychange', onVisibilityChange);
         const token = ++generation;
         await register(token);
         return getState();
@@ -230,9 +258,21 @@ export function createPwaController({
             }
             await currentRegistration.update();
             if (stopped || !started || checkToken !== checkGeneration) return false;
+            // update() rend la main dès que le nouveau worker commence à s'installer :
+            // conclure à ce moment-là affichait « Aucune mise à jour » à tort.
+            const installing = currentRegistration.installing;
+            if (installing) {
+                updateCheckMessage = 'Téléchargement de la mise à jour…';
+                emit();
+                await waitForInstalled(installing);
+                if (stopped || !started || checkToken !== checkGeneration) return false;
+            }
             if (currentRegistration.waiting) markWaiting(currentRegistration.waiting, generation);
             if (stopped || !started || checkToken !== checkGeneration) return false;
-            report(updateAvailable ? 'Mise à jour disponible.' : 'Aucune mise à jour disponible.');
+            if (updateAvailable) report('Mise à jour disponible.');
+            else if (installing?.state === 'installing') report('Mise à jour en cours de téléchargement : elle sera proposée dès qu’elle sera prête.');
+            else if (installing?.state === 'redundant') report('Téléchargement de la mise à jour interrompu. Réessayez.');
+            else report('Aucune mise à jour disponible.');
             return true;
         } catch {
             if (stopped || !started || checkToken !== checkGeneration) return false;
@@ -327,6 +367,7 @@ export function createPwaController({
         windowRef?.removeEventListener?.('beforeinstallprompt', handlers.beforeInstallPrompt);
         windowRef?.removeEventListener?.('appinstalled', handlers.appInstalled);
         navigatorRef?.serviceWorker?.removeEventListener?.('controllerchange', handlers.controllerChange);
+        documentRef?.removeEventListener?.('visibilitychange', onVisibilityChange);
         registration?.removeEventListener?.('updatefound', onUpdateFound);
         installingListeners.forEach((listener, worker) => worker.removeEventListener?.('statechange', listener));
         installingListeners.clear();
