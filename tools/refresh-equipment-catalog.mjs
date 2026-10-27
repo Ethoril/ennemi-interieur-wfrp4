@@ -88,7 +88,8 @@ for (const [name, defaultKind] of [['Armes Corps à Corps', 'weapon'], ['Armes �
         let reach = row.Allonge || '';
         let range = row['Portée'] || '';
         let source = `Aides de jeu : ${name} / ${category} / ${row.Nom}`;
-        if (!range && rangeCorrections[row.Nom]) { [range] = rangeCorrections[row.Nom]; source += ` ; portée : ${rangeCorrections[row.Nom][1]}`; }
+        if (!range && name === 'Armes à Distance' && rangeCorrections[row.Nom]) { // corrections de portée : armes à distance seulement (le Filet de mêlée n'a pas de portée)
+            [range] = rangeCorrections[row.Nom]; source += ` ; portée : ${rangeCorrections[row.Nom][1]}`; }
         let ap = defaultKind === 'armour' ? Number((row["Valeur d'Armure (PA)"] || '').match(/\d+/u)?.[0] ?? NaN) : NaN;
         if (kind === 'shield') {
             if (!Number.isFinite(ap)) ap = Number(words.find(word => word.id === 'protectrice')?.parameter || reach.match(/\d+/u)?.[0] || NaN);
