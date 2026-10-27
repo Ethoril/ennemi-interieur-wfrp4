@@ -4,7 +4,7 @@ La fiche bureau affiche deux cartouches, Armes et boucliers et Armures. Le mobil
 
 ## Profils et calculs
 
-Le catalogue `js/data/equipment-catalog.json` contient 205 profils et 55 mots clés provenant des quatre onglets des aides de jeu. Chaque ajout crée une copie dans `data.equipment` avec une identité propre, sa base et sa version de catalogue. Les évolutions ultérieures du catalogue ne remplacent pas ces copies. Le MJ peut appliquer explicitement le profil de base, avec confirmation de la perte des personnalisations.
+Le catalogue `js/data/equipment-catalog.json` contient les profils et mots clés provenant des quatre onglets des aides de jeu. Chaque ajout crée une copie dans `data.equipment` avec une identité propre, sa base et sa version de catalogue. Les évolutions ultérieures du catalogue ne remplacent pas ces copies. Le MJ peut appliquer explicitement le profil de base, avec confirmation de la perte des personnalisations. Les anciens identifiants des boucliers déplacés vers les armures proposent leur profil V5 correspondant ; les deux anciens pavois et les deux anciens boucliers standard convergent chacun vers leur profil fusionné.
 
 Les dégâts et portées BF sont calculés avec le Bonus de Force actuel. Les expressions spéciales et les valeurs alternatives restent lisibles. Les talents, pénalités et autres effets sont des rappels, sans modification automatique des caractéristiques ou des dégâts. Les paramètres numériques de Protectrice et les PA d'un bouclier restent cohérents dans l'éditeur.
 

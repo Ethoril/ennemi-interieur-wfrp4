@@ -8,6 +8,22 @@ const pdfUrl = new URL('../../docs/memo-armures.pdf', import.meta.url).href;
 const SILHOUETTES = new Set(['bhelgi', 'caelel', 'elysia', 'hellaya', 'wren']);
 const silhouetteUrl = id => new URL(`../../img/silhouettes/${id}.webp`, import.meta.url).href;
 
+const legacyShieldBases = Object.freeze({
+    'shield-armes-corps-a-corps-bouclier-bouclier-haut-elfe': 'shield-armures-bouclier-bouclier-haut-elfe',
+    'shield-armes-corps-a-corps-bouclier-bouclier': 'shield-armures-bouclier-bouclier',
+    'shield-armes-corps-a-corps-bouclier-bouclier-standard': 'shield-armures-bouclier-bouclier',
+    'shield-armes-corps-a-corps-bouclier-grand-bouclier': 'shield-armures-bouclier-grand-bouclier',
+    'shield-armes-corps-a-corps-bouclier-targe-buckler': 'shield-armures-bouclier-targe-buckler',
+    'shield-armes-corps-a-corps-bouclier-pavois': 'shield-armures-bouclier-pavois-pavise',
+    'shield-armes-corps-a-corps-bouclier-pavois-pavise': 'shield-armures-bouclier-pavois-pavise',
+});
+
+export function equipmentBase(item, catalogue, models = []) {
+    const id = legacyShieldBases[item.baseId] || item.baseId;
+    return catalogue.items.find(entry => entry.id === id)
+        || models.find(model => `model_${model.id}` === item.baseId)?.item || null;
+}
+
 /** Deux cartouches au bureau, un panneau sur mobile ; les calculs restent partagés. */
 export function createEquipmentView({ documentRef = globalThis.document, getContext } = {}) {
     const make = (tag, text = '', className = '') => {
@@ -214,7 +230,7 @@ export function createEquipmentView({ documentRef = globalThis.document, getCont
             next.keywords = [...keywordRows.children].map(row => ({ id: row.dataset.keyword, parameter: row.querySelector('input')?.value ?? row.dataset.parameter ?? '' }));
             // Type passé à Bouclier après ouverture : PA et Protectrice restent alignés.
             const guard = next.keywords.find(word => word.id === 'protectrice');
-            if (kind === 'shield' && guard && /^d+$/u.test(guard.parameter) && next.ap === null) next.ap = Number(guard.parameter);
+            if (kind === 'shield' && guard && /^\d+$/u.test(guard.parameter) && next.ap === null) next.ap = Number(guard.parameter);
             if (kind === 'shield' && guard && !guard.parameter && next.ap !== null) guard.parameter = String(next.ap);
             return validateEquipmentItem(next, catalogue());
         };
@@ -270,14 +286,14 @@ export function createEquipmentView({ documentRef = globalThis.document, getCont
         }, dialog); node.dataset.eqEdit = 'true'; dialog.append(feedback);
     }
     function resetItem(item, origin) {
-        const latest = catalogue().items.find(entry => entry.id === item.baseId)
-            || models.find(model => `model_${model.id}` === item.baseId)?.item;
+        const latest = equipmentBase(item, catalogue(), models);
         if (!latest) return;
         openDialog(dialog, 'Actualiser depuis la base', origin);
         dialog.append(make('p', `Remplacer les valeurs et le nom de « ${item.name} » par le profil « ${latest.name} » ? Les modifications personnalisées seront remplacées.`));
         const feedback = make('p', '', 'eq-feedback'); feedback.setAttribute('role', 'status');
         const node = button('Appliquer le profil de base', async () => {
-            const done = await send({ action: 'update', id: item.id, before: copy(item), item: { ...copy(latest), id: item.id, baseId: item.baseId }, reason: `Actualisation : ${item.name}` }, feedback);
+            const baseId = legacyShieldBases[item.baseId] || item.baseId;
+            const done = await send({ action: 'update', id: item.id, before: copy(item), item: { ...copy(latest), id: item.id, baseId }, reason: `Actualisation : ${item.name}` }, feedback);
             if (done) finishDialog(dialog);
         }, dialog); node.dataset.eqEdit = 'true'; dialog.append(feedback);
     }
@@ -305,7 +321,7 @@ export function createEquipmentView({ documentRef = globalThis.document, getCont
             edit.dataset.eqFocus = `edit:${item.id}`;
             const remove = button('Retirer', () => removeItem(item, remove), actions, !editable()); remove.dataset.eqEdit = 'true';
             remove.dataset.eqFocus = `remove:${item.id}`;
-            if (catalogue().items.some(base => base.id === item.baseId) || models.some(model => `model_${model.id}` === item.baseId)) {
+            if (equipmentBase(item, catalogue(), models)) {
                 const reset = button('Actualiser la base', () => resetItem(item, reset), actions, !editable()); reset.dataset.eqEdit = 'true';
                 reset.dataset.eqFocus = `reset:${item.id}`;
             }

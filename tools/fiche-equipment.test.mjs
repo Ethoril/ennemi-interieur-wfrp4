@@ -4,11 +4,28 @@ import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
 import { armourProtection, equipmentFormula, applyEquipmentCommand, validateEquipmentItem } from '../js/fiche/equipment.js';
 import { buildFicheExport, parseFicheImport } from '../js/fiche/export-import.js';
+import { equipmentBase } from '../js/equipment/view.js';
 
 const catalogue = JSON.parse(readFileSync(new URL('../js/data/equipment-catalog.json', import.meta.url), 'utf8'));
 const get = (name, category) => globalThis.structuredClone(catalogue.items.find(item => item.name === name && (!category || item.category === category)));
 const data = { carac: { f: { base: 31, adv: 9 } }, xpLog: [{ id: 'xp', kind: 'gain', montant: 200 }], nom: 'Test' };
 const body = result => result.locations.find(location => location.id === 'body');
+
+test('anciens boucliers : actualisation explicite vers le profil V5, y compris les doublons fusionnés', () => {
+    const bases = {
+        'bouclier': 'Bouclier', 'bouclier-standard': 'Bouclier', 'grand-bouclier': 'Grand Bouclier',
+        'targe-buckler': 'Targe (Buckler)', 'pavois': 'Pavois (Pavise)', 'pavois-pavise': 'Pavois (Pavise)',
+        'bouclier-haut-elfe': 'Bouclier Haut Elfe',
+    };
+    for (const [old, name] of Object.entries(bases)) {
+        const item = { baseId: `shield-armes-corps-a-corps-bouclier-${old}` };
+        const result = equipmentBase(item, catalogue);
+        assert.equal(result.name, name);
+        assert.equal(result.kind, 'shield');
+        assert.ok(result.keywords.some(word => word.id === 'bouclier'));
+    }
+    assert.equal(equipmentBase({ baseId: 'inconnu' }, catalogue), null);
+});
 
 test('catalogue : profils complets validés, identités uniques et portée absente explicite', () => {
     assert.equal(catalogue.items.length, 211);
