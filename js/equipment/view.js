@@ -61,16 +61,21 @@ export function createEquipmentView({ documentRef = globalThis.document, getCont
         if (!target.open) target.showModal();
     };
     for (const target of [dialog, detailDialog]) target.addEventListener('close', () => restoreFocus(target));
-    function keywordButtons(parent, words = []) {
+    function keywordButtons(parent, item) {
         const group = make('div', '', 'eq-keywords');
-        for (const word of words) {
-            const entry = catalogue().keywords.find(row => row.id === word.id);
+        const historical = catalogue().keywordHistory?.[item.catalogVersion];
+        for (const word of item.keywords || []) {
+            const oldEntry = historical?.find(row => row.id === word.id);
+            const entry = oldEntry || catalogue().keywords.find(row => row.id === word.id);
             if (!entry) { group.append(make('span', `${word.id}${word.parameter ? ` ${word.parameter}` : ''} · hors référentiel`, 'eq-keyword-unknown')); continue; }
             const name = entry.name.replace(/\s+X$/u, '') + (word.parameter ? ` ${word.parameter}` : '');
             const node = button(name, () => {
                 openDialog(detailDialog, name, node);
                 const effect = word.parameter ? entry.effect.replace(/\bX\b/gu, word.parameter) : entry.effect;
                 detailDialog.append(make('p', effect), make('p', [entry.type, entry.source, entry.edition].filter(Boolean).join(' · '), 'eq-note'));
+                if (word.id === 'inflige' && word.parameter.includes(' ; ')) detailDialog.append(make('p', 'Chaque état indiqué est infligé séparément ; consultez aussi les particularités du profil.', 'eq-note'));
+                if (oldEntry) detailDialog.append(make('p', 'Définition conservée de la version de cet objet. Actualisez son profil pour adopter la définition actuelle.', 'eq-note'));
+                else if (item.catalogVersion && item.catalogVersion !== catalogue().catalogVersion) detailDialog.append(make('p', 'Définition actuelle : la définition de la version de cet objet n’est pas disponible.', 'eq-note'));
                 if (entry.note) detailDialog.append(make('p', entry.note, 'eq-note'));
             }, group);
             node.className = 'eq-keyword';
@@ -91,7 +96,7 @@ export function createEquipmentView({ documentRef = globalThis.document, getCont
         for (const item of location.counted) {
             const row = make('div', '', 'eq-detail-row');
             row.append(make('h3', `${item.name} · ${item.ap} PA`), make('p', item.category));
-            keywordButtons(row, item.keywords); detailDialog.append(row);
+            keywordButtons(row, item); detailDialog.append(row);
         }
         if (!location.counted.length) detailDialog.append(make('p', 'Aucune protection chiffrée sur cette zone.'));
         for (const { item, reason } of location.ignored) detailDialog.append(make('p', `${item.name} : ${reason}.`, 'eq-note'));
@@ -214,7 +219,7 @@ export function createEquipmentView({ documentRef = globalThis.document, getCont
             next.keywords = [...keywordRows.children].map(row => ({ id: row.dataset.keyword, parameter: row.querySelector('input')?.value ?? row.dataset.parameter ?? '' }));
             // Type passé à Bouclier après ouverture : PA et Protectrice restent alignés.
             const guard = next.keywords.find(word => word.id === 'protectrice');
-            if (kind === 'shield' && guard && /^d+$/u.test(guard.parameter) && next.ap === null) next.ap = Number(guard.parameter);
+            if (kind === 'shield' && guard && /^\d+$/u.test(guard.parameter) && next.ap === null) next.ap = Number(guard.parameter);
             if (kind === 'shield' && guard && !guard.parameter && next.ap !== null) guard.parameter = String(next.ap);
             return validateEquipmentItem(next, catalogue());
         };
@@ -269,15 +274,32 @@ export function createEquipmentView({ documentRef = globalThis.document, getCont
             if (done) finishDialog(dialog);
         }, dialog); node.dataset.eqEdit = 'true'; dialog.append(feedback);
     }
-    function resetItem(item, origin) {
-        const latest = catalogue().items.find(entry => entry.id === item.baseId)
+    function latestProfile(item) {
+        const id = catalogue().aliases?.[item.baseId] || item.baseId;
+        return catalogue().items.find(entry => entry.id === id)
             || models.find(model => `model_${model.id}` === item.baseId)?.item;
+    }
+    function resetItem(item, origin) {
+        const latest = latestProfile(item);
         if (!latest) return;
         openDialog(dialog, 'Actualiser depuis la base', origin);
         dialog.append(make('p', `Remplacer les valeurs et le nom de « ${item.name} » par le profil « ${latest.name} » ? Les modifications personnalisées seront remplacées.`));
+        const describe = profile => [
+            `Nom : ${profile.name} · Catégorie : ${profile.category} · Type : ${profile.kind}`,
+            `Dégâts : ${profile.damage || '—'} · Allonge : ${profile.reach || '—'} · Portée : ${profile.range || '—'} · PA : ${profile.ap ?? '—'}`,
+            `Zones : ${(profile.locations || []).join(', ') || '—'} · Couche : ${profile.layer}`,
+            `Mots clés : ${(profile.keywords || []).map(word => `${word.id}${word.parameter ? ` (${word.parameter})` : ''}`).join(', ') || '—'}`,
+            `Particularités : ${profile.notes || '—'}`,
+            `Source : ${profile.source || '—'}`,
+        ];
+        for (const [label, profile] of [['Profil actuel', item], ['Nouveau profil', latest]]) {
+            dialog.append(make('h3', label));
+            for (const line of describe(profile)) dialog.append(make('p', line));
+        }
+        dialog.append(make('p', 'Les définitions des mots clés seront également celles du nouveau catalogue.', 'eq-note'));
         const feedback = make('p', '', 'eq-feedback'); feedback.setAttribute('role', 'status');
         const node = button('Appliquer le profil de base', async () => {
-            const done = await send({ action: 'update', id: item.id, before: copy(item), item: { ...copy(latest), id: item.id, baseId: item.baseId }, reason: `Actualisation : ${item.name}` }, feedback);
+            const done = await send({ action: 'update', id: item.id, before: copy(item), item: { ...copy(latest), id: item.id, baseId: item.baseId.startsWith('model_') ? item.baseId : latest.baseId }, reason: `Actualisation : ${item.name}` }, feedback);
             if (done) finishDialog(dialog);
         }, dialog); node.dataset.eqEdit = 'true'; dialog.append(feedback);
     }
@@ -297,7 +319,7 @@ export function createEquipmentView({ documentRef = globalThis.document, getCont
             if (item.range || item.source.includes('Armes à Distance')) fact('Portée', item.range ? `${equipmentFormula(item.range, context().state?.data).label}${/^(?:BF|[0-9])/iu.test(item.range) ? ' m' : ''}` : 'À confirmer par le MJ');
             if (item.kind === 'shield') fact('Protection conditionnelle', item.ap === null ? 'PA à confirmer' : `+ ${item.ap} PA si applicable`);
         }
-        row.append(facts); keywordButtons(row, item.keywords);
+        row.append(facts); keywordButtons(row, item);
         const details = make('details'); details.append(make('summary', 'Effets et source'), make('p', item.notes || 'Aucun effet particulier.'), make('p', item.source, 'eq-note')); row.append(details);
         if (context().state?.role === 'mj') {
             const actions = make('div', '', 'eq-actions');
@@ -305,10 +327,10 @@ export function createEquipmentView({ documentRef = globalThis.document, getCont
             edit.dataset.eqFocus = `edit:${item.id}`;
             const remove = button('Retirer', () => removeItem(item, remove), actions, !editable()); remove.dataset.eqEdit = 'true';
             remove.dataset.eqFocus = `remove:${item.id}`;
-            if (catalogue().items.some(base => base.id === item.baseId) || models.some(model => `model_${model.id}` === item.baseId)) {
+            if (latestProfile(item)) {
                 const reset = button('Actualiser la base', () => resetItem(item, reset), actions, !editable()); reset.dataset.eqEdit = 'true';
                 reset.dataset.eqFocus = `reset:${item.id}`;
-            }
+            } else if (!item.baseId.startsWith('model_')) actions.append(make('p', 'Aucune correspondance de base : vérification manuelle nécessaire.', 'eq-note'));
             row.append(actions);
         }
         parent.append(row);

@@ -96,6 +96,21 @@ try {
     await page.locator('.eq-dialog[open]').getByRole('button', { name: 'Retirer de la fiche', exact: true }).click();
     await page.locator('.eq-dialog[open]').waitFor({ state: 'hidden' });
 
+    const oldVersion = Object.keys(catalogue.keywordHistory)[0];
+    const legacy = { ...get('Bouclier', 'Bouclier'), id: 'legacy_shield', baseId: 'shield-armes-corps-a-corps-bouclier-bouclier',
+        catalogVersion: oldVersion, name: 'Mon ancien bouclier', damage: 'BF + 2', keywords: [{ id: 'protectrice', parameter: '2' }], custom: true };
+    await page.evaluate(item => globalThis.qaSetEquipment([item]), legacy);
+    const legacyRow = page.locator('.eq-item').filter({ hasText: 'Mon ancien bouclier' });
+    await legacyRow.getByRole('button', { name: 'Protectrice 2', exact: true }).click();
+    assert.match(await page.locator('.eq-dialog[open]').innerText(), /Définition conservée/u);
+    await page.keyboard.press('Escape');
+    await legacyRow.getByRole('button', { name: 'Actualiser la base', exact: true }).click();
+    assert.match(await page.locator('.eq-dialog[open]').innerText(), /Profil actuel[\s\S]*Mon ancien bouclier[\s\S]*Nouveau profil[\s\S]*Bouclier/u);
+    assert.equal(await page.evaluate(() => globalThis.qaController.getState().data.equipment[0].name), 'Mon ancien bouclier');
+    await page.locator('.eq-dialog[open]').getByRole('button', { name: 'Appliquer le profil de base', exact: true }).click();
+    await page.locator('.eq-dialog[open]').waitFor({ state: 'hidden' });
+    assert.equal(await page.evaluate(() => globalThis.qaController.getState().data.equipment[0].baseId), get('Bouclier', 'Bouclier').id);
+
     await page.getByRole('button', { name: 'Comprendre le cumul des armures', exact: true }).click();
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('link', { name: 'Télécharger le mémo PDF', exact: true }).click();
@@ -139,7 +154,7 @@ try {
     await page.locator('.eq-section').first().getByRole('button', { name: '+ Ajouter', exact: true }).click();
     await page.locator('.eq-dialog[open]').getByRole('searchbox').fill('Bouclier');
     await page.locator('.eq-dialog[open]').getByRole('button', { name: 'Bouclier · Bouclier', exact: true }).click();
-    await page.locator('.eq-dialog[open]').getByRole('spinbutton', { name: 'Paramètre de Protectrice X', exact: true }).fill('4');
+    await page.locator('.eq-dialog[open] [name="ap"]').fill('4');
     assert.equal(await page.locator('.eq-dialog[open] [name="ap"]').inputValue(), '4');
     await page.locator('.eq-dialog[open] [name="name"]').fill('Bouclier mobile');
     await page.locator('.eq-dialog[open]').getByRole('button', { name: 'Enregistrer sur la fiche', exact: true }).click();

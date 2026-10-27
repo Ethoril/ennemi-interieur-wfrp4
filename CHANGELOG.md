@@ -1,3 +1,9 @@
+## [2.38.1] - 2026-10-27
+
+- Fiches : catalogue des armes, armures et mots clés aligné sur les Aides de jeu, y compris les PA des boucliers et les états infligés.
+- Équipement existant : anciennes définitions conservées lorsque leur version est connue ; comparaison du profil avant actualisation, avec correspondances explicites et signalement des objets à vérifier.
+- Cache de l’application actualisé. Les fiches ne sont pas modifiées automatiquement.
+
 ## [2.38.0] - 2026-10-21
 
 - Boutons : ils s’enfoncent légèrement dès qu’on appuie, et les effets de survol ne restent plus « collés » sur téléphone.
