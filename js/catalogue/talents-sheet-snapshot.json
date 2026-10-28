@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "catalogVersion": "sha256:711189dcb64920f251f3b08e06ac8bf4df93e09e8c32390b24c684d1282fbea0",
+  "catalogVersion": "sha256:ce434d8f6dc8343b77de63504895e9c66f79f8b66f2b60dcf3a1a3ad2dab2922",
   "fetchedAt": "2026-10-23",
   "source": {
     "kind": "google-sheets-public-snapshot",
@@ -2539,6 +2539,26 @@
       "label": "Zèle passionné",
       "englishName": "Impassioned Zeal",
       "provenance": "audit-carrieres-2026-10-07"
+    },
+    {
+      "label": "Béni d'Isha",
+      "englishName": "Blessed by Isha",
+      "provenance": "coherence-mj-2026-10-28"
+    },
+    {
+      "label": "Maniement de 2 armes",
+      "englishName": "Dual Wielder",
+      "provenance": "coherence-mj-2026-10-28"
+    },
+    {
+      "label": "Imprégné par le",
+      "englishName": "Suffuse With",
+      "provenance": "coherence-mj-2026-10-28"
+    },
+    {
+      "label": "Imprégné par le (Vent)",
+      "englishName": "Suffuse With",
+      "provenance": "coherence-mj-2026-10-28"
     }
   ],
   "specializationTranslations": {

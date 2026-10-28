@@ -4,10 +4,6 @@ const SKILL_NAME_ALIASES = {
     'langage de bataille': 'Langue (Bataille)',
     'lecture sur les lèvres': 'Lire sur les lèvres',
     'signe secrets ranger': 'Signes secrets (Ranger)',
-    'représentation (acteur)': 'Divertissement (Acteur)',
-    'métier (calligraphe)': 'Art (Calligraphie)',
-    'métier (cartographe)': 'Art (Cartographie)',
-    'métier (graveur)': 'Art (Gravure)',
 };
 
 const SKILL_SPEC_ALIASES = {

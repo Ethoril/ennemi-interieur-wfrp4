@@ -31,10 +31,19 @@ const prior = await readJson(seedPath);
 const careerSkillLabels = careers.flatMap(career => career.rangs.flatMap(rank => rank.skills || []));
 const generatedSkills = buildSkillEntries(skillRows);
 const knownSkills = new Set(prior.skills.entries.map(row => row.nom));
-const skillEntries = [...prior.skills.entries, ...generatedSkills.filter(row => !knownSkills.has(row.nom)
+// Polearm est une spécialité de Melee, compétence de base en V5 (L06 p.112).
+const correctedPriorSkills = prior.skills.entries.map(row => row.nom === "Corps à corps (Armes d'hast)" ? { ...row, basic: true } : row);
+const skillEntries = [...correctedPriorSkills, ...generatedSkills.filter(row => !knownSkills.has(row.nom)
     && skillRows.some(source => source.nom === row.nom && source.source === 'Drive Carrières — Lustria'))];
-const skillAliases = prior.skills.aliases || collectLegacySkillAliases([...skillRows.map(row => row.nom), ...careerSkillLabels], skillEntries);
-const talentEntries = [...new Map([...prior.talents.entries, ...buildTalentEntries({ sheetSnapshot, careers })]
+// V5 distingue Trade (avancé) d'Art et Perform (avancé) d'Entertain (L06 p.111, 113–114).
+const distinctSkills = new Set(['Métier (Calligraphe)', 'Métier (Cartographe)', 'Métier (Graveur)', 'Représentation (Acteur)']);
+const skillAliases = (prior.skills.aliases || collectLegacySkillAliases([...skillRows.map(row => row.nom), ...careerSkillLabels], skillEntries))
+    .filter(alias => !distinctSkills.has(alias.label));
+// Libellés sans source ou Traits de familier, pas des talents achetables.
+const excludedTalents = new Set(['Bon sens', 'Vivant', 'Compagnon', 'Invisibilité', 'Messager', 'Partage sensoriel', 'Télépathie animale']);
+const referencedExcluded = careers.flatMap(c => c.rangs.flatMap(r => r.talents || [])).filter(name => excludedTalents.has(name));
+if (referencedExcluded.length) throw new Error('Talent exclu encore cité par une carrière : ' + referencedExcluded.join(', '));
+const talentEntries = [...new Map([...prior.talents.entries.filter(row => !excludedTalents.has(row.nom)), ...buildTalentEntries({ sheetSnapshot, careers })]
     .map(row => [row.id, row])).values()];
 const talentAliases = prior.talents.aliases || [];
 const talentTemplates = prior.talents.templates || [];

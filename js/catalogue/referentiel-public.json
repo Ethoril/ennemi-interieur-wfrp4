@@ -1,6 +1,6 @@
 {
-  "catalogVersion": "sha256:4d3dff852ab0cf4f10e31ea206e0b8c6baaa7865c049eaacee9d4c2e89c15141",
-  "publishedAt": "2026-10-23",
+  "catalogVersion": "sha256:17b5d237dde619dfa2dffe4b3e7b18e736ec4e5c9e0266da39cd18a21efe779b",
+  "publishedAt": "2026-10-28",
   "sources": {
     "skills": "js/data/skills.json",
     "careers": "js/data/careers.json",
@@ -13,7 +13,7 @@
     "skillAliasProvenance": "alias-historique-du-site"
   },
   "skills": {
-    "version": "sha256:2c405eefc9bfcb7e79ecac94451d58dc886936b27ded69e0d9f155b7136da539",
+    "version": "sha256:0e8ac7e9a3ac7d98744162777b6a058e3ce065fa6ed5ad13e52f0b028fa3bcd1",
     "entries": [
       {
         "groupId": "skill-group-41_72_74",
@@ -341,7 +341,7 @@
         "group": "Corps à corps",
         "specializationId": "skill-spec-43_6f_72_70_73_20_e0_20_63_6f_72_70_73-41_72_6d_65_73_20_64_27_68_61_73_74",
         "id": "skill-43_6f_72_70_73_20_e0_20_63_6f_72_70_73-41_72_6d_65_73_20_64_27_68_61_73_74",
-        "basic": false,
+        "basic": true,
         "nom": "Corps à corps (Armes d'hast)",
         "groupId": "skill-group-43_6f_72_70_73_20_e0_20_63_6f_72_70_73"
       },
@@ -3372,21 +3372,6 @@
         "provenance": "alias-historique-du-site"
       },
       {
-        "label": "Métier (Calligraphe)",
-        "provenance": "alias-historique-du-site",
-        "targetId": "skill-41_72_74-43_61_6c_6c_69_67_72_61_70_68_69_65"
-      },
-      {
-        "targetId": "skill-41_72_74-43_61_72_74_6f_67_72_61_70_68_69_65",
-        "provenance": "alias-historique-du-site",
-        "label": "Métier (Cartographe)"
-      },
-      {
-        "label": "Métier (Graveur)",
-        "provenance": "alias-historique-du-site",
-        "targetId": "skill-41_72_74-47_72_61_76_75_72_65"
-      },
-      {
         "targetId": "skill-4d_e9_74_69_65_72-49_6d_70_72_69_6d_65_72_69_65",
         "provenance": "alias-historique-du-site",
         "label": "Métier (Imprimeur)"
@@ -3425,11 +3410,6 @@
         "provenance": "alias-historique-du-site",
         "label": "Projectiles (Lancer)",
         "targetId": "skill-50_72_6f_6a_65_63_74_69_6c_65_73-4a_65_74"
-      },
-      {
-        "label": "Représentation (Acteur)",
-        "provenance": "alias-historique-du-site",
-        "targetId": "skill-44_69_76_65_72_74_69_73_73_65_6d_65_6e_74-41_63_74_65_75_72"
       },
       {
         "label": "Savoir (Démons)",
@@ -3579,7 +3559,7 @@
     ]
   },
   "talents": {
-    "version": "sha256:4118ad2a8092bd4adc85f3537857d2e557a4cb77b3daf0f35aa6c7e0fb24ba46",
+    "version": "sha256:c4d06829b1cbac33775707e3b9a9b7cb728e253cfa597f751f0b7a4758c962c2",
     "entries": [
       {
         "nom": "Acharné",
@@ -3954,14 +3934,6 @@
         "id": "talent-42_6f_6e_20_6d_61_72_63_68_65_75_72_20_28_54_65_72_72_61_69_6e_29"
       },
       {
-        "sources": [
-          "career"
-        ],
-        "id": "talent-42_6f_6e_20_73_65_6e_73",
-        "key": "bon sens",
-        "nom": "Bon sens"
-      },
-      {
         "id": "talent-42_6f_6e_6e_65_73_20_6a_61_6d_62_65_73",
         "key": "bonnes jambes",
         "nom": "Bonnes jambes",
@@ -4119,14 +4091,6 @@
         "id": "talent-43_6f_6d_6d_61_6e_64_61_6e_74_20_64_27_c9_71_75_69_70_61_67_65_20_28_43_72_65_77_20_43_6f_6d_6d_61_6e_64_65_72_29",
         "nom": "Commandant d'Équipage (Crew Commander)",
         "key": "commandant d'équipage (crew commander)"
-      },
-      {
-        "key": "compagnon",
-        "nom": "Compagnon",
-        "sources": [
-          "career"
-        ],
-        "id": "talent-43_6f_6d_70_61_67_6e_6f_6e"
       },
       {
         "id": "talent-43_6f_6e_63_6f_63_74_65_72",
@@ -4887,14 +4851,6 @@
         ]
       },
       {
-        "id": "talent-49_6e_76_69_73_69_62_69_6c_69_74_e9",
-        "sources": [
-          "career"
-        ],
-        "nom": "Invisibilité",
-        "key": "invisibilité"
-      },
-      {
         "id": "talent-49_6e_76_6f_63_61_74_69_6f_6e_20_28_61_75_20_63_68_6f_69_78_29",
         "key": "invocation (au choix)",
         "nom": "Invocation (au choix)",
@@ -5548,14 +5504,6 @@
         ]
       },
       {
-        "nom": "Messager",
-        "id": "talent-4d_65_73_73_61_67_65_72",
-        "sources": [
-          "career"
-        ],
-        "key": "messager"
-      },
-      {
         "key": "mort glorieuse",
         "nom": "Mort glorieuse",
         "id": "talent-4d_6f_72_74_20_67_6c_6f_72_69_65_75_73_65",
@@ -5694,14 +5642,6 @@
           "career",
           "sheet"
         ]
-      },
-      {
-        "key": "partage sensoriel",
-        "id": "talent-50_61_72_74_61_67_65_20_73_65_6e_73_6f_72_69_65_6c",
-        "sources": [
-          "career"
-        ],
-        "nom": "Partage sensoriel"
       },
       {
         "id": "talent-50_61_73_20_64_65_20_63_f4_74_e9",
@@ -6623,14 +6563,6 @@
         ]
       },
       {
-        "key": "télépathie animale",
-        "sources": [
-          "career"
-        ],
-        "id": "talent-54_e9_6c_e9_70_61_74_68_69_65_20_61_6e_69_6d_61_6c_65",
-        "nom": "Télépathie animale"
-      },
-      {
         "nom": "Tête Brûlée",
         "key": "tête brûlée",
         "id": "talent-54_ea_74_65_20_42_72_fb_6c_e9_65",
@@ -6903,14 +6835,6 @@
           "career",
           "sheet"
         ]
-      },
-      {
-        "sources": [
-          "career"
-        ],
-        "key": "vivant",
-        "id": "talent-56_69_76_61_6e_74",
-        "nom": "Vivant"
       },
       {
         "id": "talent-56_6f_6c_6f_6e_74_e9_20_64_65_20_66_65_72",
@@ -7523,6 +7447,6 @@
     "aliases": [],
     "templates": [],
     "localDescriptions": [],
-    "descriptionSnapshotVersion": "sha256:711189dcb64920f251f3b08e06ac8bf4df93e09e8c32390b24c684d1282fbea0"
+    "descriptionSnapshotVersion": "sha256:ce434d8f6dc8343b77de63504895e9c66f79f8b66f2b60dcf3a1a3ad2dab2922"
   }
 }
