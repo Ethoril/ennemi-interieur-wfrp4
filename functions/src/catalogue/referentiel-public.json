@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "sha256:eb5dae51e6dc960954638e572851220f6f2c3e4fe4e842d86b1bf513da38e7ac",
+  "catalogVersion": "sha256:6f3b5caddab1f93fd99f91ea839c626327b5671569c2d5d746d9c8256c1d33eb",
   "publishedAt": "2026-10-28",
   "sources": {
     "skills": "js/data/skills.json",
@@ -3564,7 +3564,7 @@
     ]
   },
   "talents": {
-    "version": "sha256:c4d06829b1cbac33775707e3b9a9b7cb728e253cfa597f751f0b7a4758c962c2",
+    "version": "sha256:8512d4724538e53ecb567a3138f8d8d4b06fa3e38f9f25509fb8fb3603ab9c58",
     "entries": [
       {
         "nom": "Acharné",
@@ -6919,6 +6919,22 @@
         ]
       },
       {
+        "id": "talent-43_6f_72_72_75_70_74_69_6f_6e_20_43_6f_6e_74_72_f4_6c_e9_65",
+        "key": "corruption contrôlée",
+        "nom": "Corruption Contrôlée",
+        "sources": [
+          "sheet"
+        ]
+      },
+      {
+        "id": "talent-43_6f_72_72_75_70_74_69_6f_6e_20_56_6f_6c_6f_6e_74_61_69_72_65",
+        "key": "corruption volontaire",
+        "nom": "Corruption Volontaire",
+        "sources": [
+          "sheet"
+        ]
+      },
+      {
         "id": "talent-44_61_6e_73_65_20_64_65_73_20_e9_70_e9_65_73",
         "key": "danse des épées",
         "nom": "Danse des épées",
@@ -6928,9 +6944,25 @@
         ]
       },
       {
+        "id": "talent-44_69_73_63_69_70_6c_65_20_64_75_20_43_68_61_6e_67_65_6d_65_6e_74",
+        "key": "disciple du changement",
+        "nom": "Disciple du Changement",
+        "sources": [
+          "sheet"
+        ]
+      },
+      {
         "id": "talent-44_6f_6e_73_20_64_65_20_4b_68_61_69_6e_65",
         "key": "dons de khaine",
         "nom": "Dons de Khaine",
+        "sources": [
+          "sheet"
+        ]
+      },
+      {
+        "id": "talent-44_6f_75_62_6c_65_20_56_69_65",
+        "key": "double vie",
+        "nom": "Double Vie",
         "sources": [
           "sheet"
         ]
@@ -6981,6 +7013,14 @@
         "id": "talent-49_6d_70_72_e9_67_6e_e9",
         "key": "imprégné",
         "nom": "Imprégné",
+        "sources": [
+          "sheet"
+        ]
+      },
+      {
+        "id": "talent-49_6d_70_72_e9_67_6e_e9_20_64_65_20_4d_61_67_69_65",
+        "key": "imprégné de magie",
+        "nom": "Imprégné de Magie",
         "sources": [
           "sheet"
         ]
@@ -7375,6 +7415,14 @@
         ]
       },
       {
+        "id": "talent-53_6f_72_74_20_53_75_70_70_6c_e9_6d_65_6e_74_61_69_72_65",
+        "key": "sort supplémentaire",
+        "nom": "Sort Supplémentaire",
+        "sources": [
+          "sheet"
+        ]
+      },
+      {
         "id": "talent-54_ea_74_65_20_62_72_fb_6c_e9_65",
         "key": "tête brûlée",
         "nom": "Tête brûlée",
@@ -7452,6 +7500,6 @@
     "aliases": [],
     "templates": [],
     "localDescriptions": [],
-    "descriptionSnapshotVersion": "sha256:ce434d8f6dc8343b77de63504895e9c66f79f8b66f2b60dcf3a1a3ad2dab2922"
+    "descriptionSnapshotVersion": "sha256:18b2426c16438158b38619c2638c93abffc056ba4534636e45807c127e2213e9"
   }
 }

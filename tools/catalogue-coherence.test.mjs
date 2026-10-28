@@ -15,7 +15,8 @@ test('les trois anciens libellés correspondent aux talents existants et préser
  }
  assert.equal(talents.resolve('Imprégné par le (Vent)').open,true);
  assert.equal(talents.resolve('Imprégné par le (Aqshy)').specialization,'Aqshy');
- assert.equal(talents.resolve('Imprégné de Magie (Suffused with Magic)').sourceRule,undefined);
+ // Imprégné de Magie est un talent distinct, ajouté à la feuille par le MJ (28/10).
+ const suffused=talents.resolve('Imprégné de Magie (Suffused with Magic)');assert.equal(suffused.status,'resolved');assert.equal(suffused.entry.englishName,'Suffused with Magic');
 });
 test('les deux noms sans source et cinq traits ne sont pas achetables comme talents',()=>{
  for(const name of ['Bon sens','Vivant','Compagnon','Invisibilité','Messager','Partage sensoriel','Télépathie animale']){

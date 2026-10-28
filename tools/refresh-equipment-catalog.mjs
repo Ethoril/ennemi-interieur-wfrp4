@@ -85,6 +85,9 @@ const locations = text => {
 };
 const items = [];
 const identities = new Map();
+const standardAmmunitionKeys = new Set(['arc-fleches-12', 'arc-fleches-elfiques-12', 'arbalete-carreaux-12', 'fronde-balles-de-plomb-12',
+    'fronde-pierres-12', 'poudre-noire-balles-et-poudre-12', 'poudre-noire-grenaille-et-poudre-12', 'poudre-noire-munitions-improvisees-et-poudre']);
+const foundAmmunition = new Set();
 for (const [name, defaultKind] of [['Armes Corps à Corps', 'weapon'], ['Armes à Distance', 'weapon'], ['Armures', 'armour']]) {
     for (const row of await sheet(name)) {
         const category = row['Catégorie'];
@@ -92,6 +95,8 @@ for (const [name, defaultKind] of [['Armes Corps à Corps', 'weapon'], ['Armes �
         let kind = defaultKind;
         if (fold(category).includes('bouclier')) kind = 'shield';
         if (/fléchettes \(lot|flèche |flèches |carreau|munition|balle.*poudre/iu.test(row.Nom)) kind = 'ammunition';
+        const standardKey = name === 'Armes à Distance' ? `${slug(category)}-${slug(row.Nom)}` : null;
+        if (standardAmmunitionKeys.has(standardKey)) kind = 'ammunition';
         let damage = (row['Dégâts'] || '').replace(/^=\s*/u, '').replace(/^\+\s*(?=BF)/iu, '').trim();
         let reach = row.Allonge || '';
         let range = row['Portée'] || '';
@@ -113,7 +118,9 @@ for (const [name, defaultKind] of [['Armes Corps à Corps', 'weapon'], ['Armes �
         const identity = `${kind}-${slug(name)}-${slug(category)}-${slug(row.Nom)}`;
         const occurrence = identities.get(identity) || 0;
         identities.set(identity, occurrence + 1);
-        const id = identity + (occurrence ? `-${occurrence + 1}` : '');
+        // Munitions du Livre de base : identifiant historique stable (référencé par l'Outil MJ).
+        const id = standardAmmunitionKeys.has(standardKey) ? `ammunition-livre-de-base-${standardKey}` : identity + (occurrence ? `-${occurrence + 1}` : '');
+        if (standardAmmunitionKeys.has(standardKey)) foundAmmunition.add(standardKey);
         const layer = kind !== 'armour' ? 'none' : /^cuir souple/iu.test(category) ? 'leather'
             : /^\s*=*\s*\+/u.test(row["Valeur d'Armure (PA)"]) ? 'bonus' : words.some(word => word.id === 'flexible') ? 'flexible' : 'rigid';
         const notes = row['Atouts et Défauts'] || row['Atouts et Défauts (et Pénalités)'] || '';
@@ -122,23 +129,10 @@ for (const [name, defaultKind] of [['Armes Corps à Corps', 'weapon'], ['Armes �
             notes: kind === 'shield' && words.some(word => word.id === 'bouclier') ? `${notes} ; en attaque : arme improvisée (Inoffensive, Déséquilibrée).` : notes, source, custom: false });
     }
 }
-// Munitions standard absentes des aides de jeu (Livre de base V5 EN p.302).
-const ammunitionSource = 'Livre de base V5 EN p.302, tableau Munitions (complément absent des aides de jeu)';
-const standardAmmunition = [
-    ['Flèches (12)', 'Arc', '+0', 'Comme l’arc', ['empaleuse'], 'Empaleuse'],
-    ['Flèches elfiques (12)', 'Arc', '+0', 'Comme l’arc + 10', ['empaleuse'], 'Empaleuse'],
-    ['Carreaux (12)', 'Arbalète', '+0', 'Comme l’arbalète', ['empaleuse'], 'Empaleuse'],
-    ['Balles de plomb (12)', 'Fronde', '+1', 'Comme la fronde − 10', ['assommante'], 'Assommante'],
-    ['Pierres (12)', 'Fronde', '+0', 'Comme la fronde', ['assommante'], 'Assommante'],
-    ['Balles et poudre (12)', 'Poudre Noire', '+0', 'Comme l’arme', ['empaleuse', 'perforante'], 'Empaleuse, Perforante'],
-    ['Grenaille et poudre (12)', 'Poudre Noire', '+0', 'Comme l’arme', [{ id: 'explosion', parameter: '+1' }], 'Explosion +1'],
-    ['Munitions improvisées et poudre', 'Poudre Noire', '-1', 'Moitié de la portée de l’arme', [], ''],
-];
-for (const [name, category, damage, range, words, notes] of standardAmmunition) {
-    const id = `ammunition-livre-de-base-${slug(category)}-${slug(name)}`;
-    items.push({ id, baseId: id, catalogVersion: '', kind: 'ammunition', name, category, damage, reach: '', range, ap: null, locations: [], layer: 'none',
-        keywords: words.map(word => typeof word === 'string' ? { id: word, parameter: '' } : word), notes, source: ammunitionSource, custom: false });
-}
+// Les munitions du Livre de base (V5 EN p.302) sont désormais dans l'onglet Armes à Distance (MJ, 28/10) :
+// la feuille fait foi, aucune ligne n'est plus ajoutée par ce script.
+const missingAmmunition = [...standardAmmunitionKeys].filter(key => !foundAmmunition.has(key));
+if (missingAmmunition.length) throw new Error(`Munitions du Livre de base absentes de la feuille : ${missingAmmunition.join(', ')}`);
 if (new Set(items.map(item => item.id)).size !== items.length) throw new Error('Identifiants d’équipement en doublon');
 const catalogVersion = `equipment:${createHash('sha256').update(JSON.stringify({ items, keywords })).digest('hex')}`;
 for (const item of items) item.catalogVersion = catalogVersion;
@@ -167,5 +161,5 @@ if (Object.values(aliases).some(id => !items.some(item => item.id === id))) thro
 const catalogue = { catalogVersion, fetchedAt: new Date().toISOString().slice(0, 10), sources, keywords, keywordHistory, aliases, items };
 if (items.some(item => item.keywords.some(word => !keywords.some(entry => entry.id === word.id)))) throw new Error('Mot clé de munition absent du référentiel');
 await writeFile(resolve(root, 'js/data/equipment-catalog.json'), `${JSON.stringify(catalogue, null, 2)}\n`);
-console.log(JSON.stringify({ items: items.length, keywords: keywords.length, corrections: Object.keys(rangeCorrections).length, ammunition: standardAmmunition.length,
+console.log(JSON.stringify({ items: items.length, keywords: keywords.length, corrections: Object.keys(rangeCorrections).length, ammunition: foundAmmunition.size,
     rangesToConfirm: items.filter(item => item.kind === 'weapon' && item.source.includes('Armes à Distance') && !item.range).map(item => item.name) }));

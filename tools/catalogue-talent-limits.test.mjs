@@ -162,8 +162,9 @@ test('accent et apostrophe ne changent ni le tarif de carrière ni un retrait de
     assert.equal(buy(state, "Sans peur (l'armee)").result.cost, 100);
 });
 
-test('les 207 descriptions ont un plafond interprétable et les carrières se résolvent en français', () => {
-    assert.equal(snapshot.entries.length, 207);
+// 213 depuis l'ajout par le MJ des six talents de suppléments (28/10).
+test('les 213 descriptions ont un plafond interprétable et les carrières se résolvent en français', () => {
+    assert.equal(snapshot.entries.length, 213);
     for (const entry of snapshot.entries) { assert.ok(entry.description); assert.ok(parseTalentLimit(entry.limitText)); }
     for (const career of careers) for (const rank of career.rangs) for (const name of rank.talents) {
         const resolved = engine.resolveTalent(name);

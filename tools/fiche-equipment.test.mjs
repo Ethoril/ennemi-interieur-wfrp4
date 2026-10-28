@@ -49,7 +49,8 @@ test('catalogue : profils complets validés, identités uniques et portée absen
     const history = Object.values(catalogue.keywordHistory).find(entries => entries.some(entry => entry.id === 'explosion' && entry.edition === 'V4'));
     assert.ok(history);
     assert.equal(catalogue.keywords.find(entry => entry.id === 'explosion').edition, 'V5');
-    assert.equal(catalogue.items.filter(item => item.kind === 'ammunition' && item.source.startsWith('Livre de base')).length, 8);
+    // Munitions du Livre de base : lues dans la feuille depuis le 28/10, identifiants historiques conservés.
+    assert.equal(catalogue.items.filter(item => item.kind === 'ammunition' && item.id.startsWith('ammunition-livre-de-base-') && item.source.startsWith('Aides de jeu')).length, 8);
     assert.deepEqual(get('Flèches elfiques (12)').keywords.map(word => word.id), ['empaleuse']);
     for (const source of Object.values(catalogue.sources)) assert.match(source.sha256, /^[0-9a-f]{64}$/u);
 });

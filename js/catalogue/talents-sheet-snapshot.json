@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "catalogVersion": "sha256:ce434d8f6dc8343b77de63504895e9c66f79f8b66f2b60dcf3a1a3ad2dab2922",
-  "fetchedAt": "2026-10-23",
+  "catalogVersion": "sha256:18b2426c16438158b38619c2638c93abffc056ba4534636e45807c127e2213e9",
+  "fetchedAt": "2026-10-28",
   "source": {
     "kind": "google-sheets-public-snapshot",
     "spreadsheetId": "1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs",
@@ -2086,6 +2086,66 @@
       "description": "Vous pouvez toujours augmenter le Savoir (Région) correspondant à la région où vous séjournez, même hors de votre carrière actuelle.",
       "limitText": "1",
       "source": "Livre de base V5, p. 125 ; achat : p. 191",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-controlled-corruption",
+      "nom": "Corruption Contrôlée",
+      "englishName": "Controlled Corruption",
+      "sourceLabel": "Corruption Contrôlée (Controlled Corruption)",
+      "description": "Les tests de Résistance contre une mutation deviennent Difficiles (−1 DR) ; à chaque mutation, tirez deux résultats et choisissez. Réservé aux adeptes de Slaanesh.",
+      "limitText": "1",
+      "source": "Power Behind the Throne Companion (V4), p. 34",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-wilful-corruption",
+      "nom": "Corruption Volontaire",
+      "englishName": "Wilful Corruption",
+      "sourceLabel": "Corruption Volontaire (Wilful Corruption)",
+      "description": "Quand une mutation est obtenue, tirez deux fois les dés et choisissez le résultat.",
+      "limitText": "Sans limitation",
+      "source": "Death on the Reik Companion (V4), p. 100",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-disciple-of-change",
+      "nom": "Disciple du Changement",
+      "englishName": "Disciple of Change",
+      "sourceLabel": "Disciple du Changement (Disciple of Change)",
+      "description": "Lorsqu’une mutation est obtenue, tirez deux résultats et choisissez. Talent normalement réservé aux fidèles de Tzeentch.",
+      "limitText": "1",
+      "source": "Enemy in Shadows Companion (V4), p. 75",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-double-life",
+      "nom": "Double Vie",
+      "englishName": "Double Life",
+      "sourceLabel": "Double Vie (Double Life)",
+      "description": "Autorise une seconde carrière en parallèle de la carrière du Chaos ; progression et changements de carrière restent soumis à l’accord du MJ.",
+      "limitText": "1",
+      "source": "Enemy in Shadows Companion (V4), p. 75",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-suffused-with-magic",
+      "nom": "Imprégné de Magie",
+      "englishName": "Suffused with Magic",
+      "sourceLabel": "Imprégné de Magie (Suffused with Magic)",
+      "description": "Les sorts lancés dans un rayon égal au bonus de Force Mentale gagnent +1 DR ; plusieurs porteurs ne cumulent pas ce bonus.",
+      "limitText": "1",
+      "source": "Enemy in Shadows Companion (V4), p. 79",
+      "specializationLabel": null
+    },
+    {
+      "id": "talent-extra-spell",
+      "nom": "Sort Supplémentaire",
+      "englishName": "Extra Spell",
+      "sourceLabel": "Sort Supplémentaire (Extra Spell)",
+      "description": "Chaque acquisition donne un sort du Domaine de Slaanesh hors de la liste habituelle ; nécessite ce domaine et nomme le sort choisi. Réservé aux fidèles de Slaanesh.",
+      "limitText": "Sans limitation",
+      "source": "Power Behind the Throne Companion (V4), p. 34",
       "specializationLabel": null
     }
   ],
