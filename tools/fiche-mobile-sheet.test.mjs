@@ -80,17 +80,18 @@ test('volet bas : ouverture, Échap, retour du focus, clic sur le fond, fermetur
     dialog.dispatch('click', { target: dialog });
     assert.ok(!sheet.isOpen());
 
-    // Glissé trop court : le volet revient ; au-delà du seuil : il se ferme.
+    // Glissé lent trop court : le volet revient ; au-delà du seuil : il se ferme.
+    // Horodatages explicites : sans eux, Date.now() fait varier la vitesse d'un passage à l'autre.
     sheet.open({ trigger, render });
-    handle.dispatch('pointerdown', { clientY: 100, pointerId: 1 });
-    dialog.dispatch('pointermove', { clientY: 140 });
+    handle.dispatch('pointerdown', { clientY: 100, pointerId: 1, timeStamp: 0 });
+    dialog.dispatch('pointermove', { clientY: 140, timeStamp: 400 });
     assert.equal(dialog.style.transform, 'translateY(40px)');
-    dialog.dispatch('pointerup', {});
+    dialog.dispatch('pointerup', { timeStamp: 800 });
     assert.ok(sheet.isOpen());
     assert.equal(dialog.style.transform, '');
-    handle.dispatch('pointerdown', { clientY: 100, pointerId: 1 });
-    dialog.dispatch('pointermove', { clientY: 300 });
-    dialog.dispatch('pointerup', {});
+    handle.dispatch('pointerdown', { clientY: 100, pointerId: 1, timeStamp: 1000 });
+    dialog.dispatch('pointermove', { clientY: 300, timeStamp: 1400 });
+    dialog.dispatch('pointerup', { timeStamp: 1800 });
     assert.ok(!sheet.isOpen());
 
     // Un glissé qui ne part pas de la poignée ou de l'en-tête est ignoré.
