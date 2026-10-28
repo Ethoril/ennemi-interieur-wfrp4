@@ -1,3 +1,4 @@
+import { URL } from 'node:url';
 // Recalcule uniquement l'identité du catalogue après évolution locale des compétences.
 // Les sorts et miracles existants sont conservés, aucune requête réseau.
 import { createHash } from 'node:crypto';

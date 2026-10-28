@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "sha256:ac9fa077bb92a6fef86ba8bbe23d489e413e35e396fc942921c78edfac299b58",
+  "catalogVersion": "sha256:eb5dae51e6dc960954638e572851220f6f2c3e4fe4e842d86b1bf513da38e7ac",
   "publishedAt": "2026-10-28",
   "sources": {
     "skills": "js/data/skills.json",
@@ -13,7 +13,7 @@
     "skillAliasProvenance": "alias-historique-du-site"
   },
   "skills": {
-    "version": "sha256:9c3ac2918294ece91336d62b2aae204f347781c28f18d527225afa5c16eba045",
+    "version": "sha256:96dc69d311c6a87dd16a15c3bc1e9b203f715fb69172a4c8fa4fb691eb0a95d6",
     "entries": [
       {
         "groupId": "skill-group-41_72_74",
@@ -341,7 +341,7 @@
         "group": "Corps à corps",
         "specializationId": "skill-spec-43_6f_72_70_73_20_e0_20_63_6f_72_70_73-41_72_6d_65_73_20_64_27_68_61_73_74",
         "id": "skill-43_6f_72_70_73_20_e0_20_63_6f_72_70_73-41_72_6d_65_73_20_64_27_68_61_73_74",
-        "basic": true,
+        "basic": false,
         "nom": "Corps à corps (Armes d'hast)",
         "groupId": "skill-group-43_6f_72_70_73_20_e0_20_63_6f_72_70_73"
       },

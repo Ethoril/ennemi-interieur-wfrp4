@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { URL } from 'node:url';
 import { createTalentResolver } from '../js/catalogue/talent-resolver.js';
 import { createSkillResolver } from '../js/catalogue/skill-resolver.js';
 import { canonicalSkillNom } from '../js/fiche/skill-names.js';
@@ -23,7 +24,7 @@ test('les deux noms sans source et cinq traits ne sont pas achetables comme tale
  }
 });
 test('les six valeurs et résolutions de compétences suivent les groupes du livre V5',()=>{
- for(const [label,carac,basic] of [["Corps à corps (Arme d'hast)",'cc',true],['Métier (Calligraphe)','dex',false],['Métier (Cartographe)','dex',false],['Métier (Graveur)','dex',false],['Représentation (Acteur)','soc',true]]) {
+ for(const [label,carac,basic] of [["Corps à corps (Arme d'hast)",'cc',false],['Métier (Calligraphe)','dex',false],['Métier (Cartographe)','dex',false],['Métier (Graveur)','dex',false],['Représentation (Acteur)','soc',true]]) {
   let x=skills.resolve(label);assert.equal(x.status,'resolved',label);assert.equal(x.entry.carac,carac,label);assert.equal(x.entry.basic,basic,label);
  }
  for(const name of ['Métier (Calligraphe)','Métier (Cartographe)','Métier (Graveur)']) assert.equal(canonicalSkillNom(name),name);

@@ -31,8 +31,9 @@ const prior = await readJson(seedPath);
 const careerSkillLabels = careers.flatMap(career => career.rangs.flatMap(rank => rank.skills || []));
 const generatedSkills = buildSkillEntries(skillRows);
 const knownSkills = new Set(prior.skills.entries.map(row => row.nom));
-// Polearm est une spécialité de Melee, compétence de base en V5 (L06 p.112).
-const correctedPriorSkills = prior.skills.entries.map(row => row.nom === "Corps à corps (Armes d'hast)" ? { ...row, basic: true } : row.nom === 'Représentation (Acteur)' ? { ...row, carac: 'soc', basic: true } : row);
+// Les spécialités de Corps à corps hors Base restent avancées (choix du MJ du 28/10, écart assumé à L06 p.112 :
+// les fiches n'ont qu'une ligne de base « Corps à corps (Base) »).
+const correctedPriorSkills = prior.skills.entries.map(row => row.nom === 'Représentation (Acteur)' ? { ...row, carac: 'soc', basic: true } : row);
 const skillEntries = [...correctedPriorSkills, ...generatedSkills.filter(row => !knownSkills.has(row.nom)
     && skillRows.some(source => source.nom === row.nom && source.source === 'Drive Carrières — Lustria'))];
 // V5 distingue Trade (avancé) d'Art et Perform (avancé) d'Entertain (L06 p.111, 113–114).
