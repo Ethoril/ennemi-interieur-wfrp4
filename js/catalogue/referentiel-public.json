@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "sha256:17b5d237dde619dfa2dffe4b3e7b18e736ec4e5c9e0266da39cd18a21efe779b",
+  "catalogVersion": "sha256:ac9fa077bb92a6fef86ba8bbe23d489e413e35e396fc942921c78edfac299b58",
   "publishedAt": "2026-10-28",
   "sources": {
     "skills": "js/data/skills.json",
@@ -13,7 +13,7 @@
     "skillAliasProvenance": "alias-historique-du-site"
   },
   "skills": {
-    "version": "sha256:0e8ac7e9a3ac7d98744162777b6a058e3ce065fa6ed5ad13e52f0b028fa3bcd1",
+    "version": "sha256:9c3ac2918294ece91336d62b2aae204f347781c28f18d527225afa5c16eba045",
     "entries": [
       {
         "groupId": "skill-group-41_72_74",
@@ -2110,8 +2110,8 @@
         "id": "skill-52_65_70_72_e9_73_65_6e_74_61_74_69_6f_6e-41_63_74_65_75_72",
         "specialization": "Acteur",
         "groupId": "skill-group-52_65_70_72_e9_73_65_6e_74_61_74_69_6f_6e",
-        "carac": "ag",
-        "basic": false,
+        "carac": "soc",
+        "basic": true,
         "group": "Représentation",
         "specializationId": "skill-spec-52_65_70_72_e9_73_65_6e_74_61_74_69_6f_6e-41_63_74_65_75_72",
         "aliases": []
@@ -3410,6 +3410,11 @@
         "provenance": "alias-historique-du-site",
         "label": "Projectiles (Lancer)",
         "targetId": "skill-50_72_6f_6a_65_63_74_69_6c_65_73-4a_65_74"
+      },
+      {
+        "label": "Représentation (Acteur)",
+        "provenance": "alias-historique-du-site",
+        "targetId": "skill-44_69_76_65_72_74_69_73_73_65_6d_65_6e_74-41_63_74_65_75_72"
       },
       {
         "label": "Savoir (Démons)",

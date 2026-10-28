@@ -1333,8 +1333,8 @@
     "group": "Représentation",
     "spec": "Acteur",
     "nom": "Représentation (Acteur)",
-    "carac": "ag",
-    "basic": false
+    "carac": "soc",
+    "basic": true
   },
   {
     "group": "Représentation",

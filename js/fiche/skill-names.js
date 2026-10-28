@@ -4,6 +4,7 @@ const SKILL_NAME_ALIASES = {
     'langage de bataille': 'Langue (Bataille)',
     'lecture sur les lèvres': 'Lire sur les lèvres',
     'signe secrets ranger': 'Signes secrets (Ranger)',
+    'représentation (acteur)': 'Divertissement (Acteur)',
 };
 
 const SKILL_SPEC_ALIASES = {

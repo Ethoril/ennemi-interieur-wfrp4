@@ -32,11 +32,11 @@ const careerSkillLabels = careers.flatMap(career => career.rangs.flatMap(rank =>
 const generatedSkills = buildSkillEntries(skillRows);
 const knownSkills = new Set(prior.skills.entries.map(row => row.nom));
 // Polearm est une spécialité de Melee, compétence de base en V5 (L06 p.112).
-const correctedPriorSkills = prior.skills.entries.map(row => row.nom === "Corps à corps (Armes d'hast)" ? { ...row, basic: true } : row);
+const correctedPriorSkills = prior.skills.entries.map(row => row.nom === "Corps à corps (Armes d'hast)" ? { ...row, basic: true } : row.nom === 'Représentation (Acteur)' ? { ...row, carac: 'soc', basic: true } : row);
 const skillEntries = [...correctedPriorSkills, ...generatedSkills.filter(row => !knownSkills.has(row.nom)
     && skillRows.some(source => source.nom === row.nom && source.source === 'Drive Carrières — Lustria'))];
 // V5 distingue Trade (avancé) d'Art et Perform (avancé) d'Entertain (L06 p.111, 113–114).
-const distinctSkills = new Set(['Métier (Calligraphe)', 'Métier (Cartographe)', 'Métier (Graveur)', 'Représentation (Acteur)']);
+const distinctSkills = new Set(['Métier (Calligraphe)', 'Métier (Cartographe)', 'Métier (Graveur)']);
 const skillAliases = (prior.skills.aliases || collectLegacySkillAliases([...skillRows.map(row => row.nom), ...careerSkillLabels], skillEntries))
     .filter(alias => !distinctSkills.has(alias.label));
 // Libellés sans source ou Traits de familier, pas des talents achetables.

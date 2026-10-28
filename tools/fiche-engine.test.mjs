@@ -94,7 +94,7 @@ test('les correspondances de compétence conservent chaque alias validé du mote
         ['Langage de bataille', 'Langue (Bataille)'],
         ['Lecture sur les lèvres', 'Lire sur les lèvres'],
         ['Signe secrets Ranger', 'Signes secrets (Ranger)'],
-        ['Représentation (Acteur)', 'Représentation (Acteur)'],
+        ['Représentation (Acteur)', 'Divertissement (Acteur)'],
         ['Métier (Calligraphe)', 'Métier (Calligraphe)'],
         ['Métier (Cartographe)', 'Métier (Cartographe)'],
         ['Métier (Graveur)', 'Métier (Graveur)'],
