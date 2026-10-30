@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "catalogVersion": "sha256:18b2426c16438158b38619c2638c93abffc056ba4534636e45807c127e2213e9",
-  "fetchedAt": "2026-10-28",
+  "catalogVersion": "sha256:f9bf34fbfaca105f09edc776b2e36084f96dd92b00609c8e1348c2ce9b1f5949",
+  "fetchedAt": "2026-10-30",
   "source": {
     "kind": "google-sheets-public-snapshot",
     "spreadsheetId": "1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs",
@@ -252,6 +252,16 @@
       "specializationLabel": null
     },
     {
+      "id": "talent-chanty",
+      "nom": "Chant marin",
+      "englishName": "Chanty",
+      "sourceLabel": "Chant marin (Chanty)",
+      "description": "Chaque acquisition permet d’apprendre un nouveau chant de marin (liste p. 67). Placez-vous à portée de voix du plus grand nombre possible de membres de l’équipage et réussissez un Test de Divertissement (Chant) : après 30 secondes, le chant affecte tout l’équipage pendant 3 minutes plus 1 minute par DR. Tant que vous chantez, votre seule action de combat possible est l’Esquive ; d’autres actions, comme des Tests de Perception ou de Calme, restent à la discrétion du MJ. Le chant prend fin si vous subissez des dégâts ou échouez à un Test opposé. Un seul chant par quart.",
+      "limitText": "Bonus d’Intelligence",
+      "source": "Sea of Claws (V4), p. 63",
+      "specializationLabel": null
+    },
+    {
       "id": "talent-berserk-charge",
       "nom": "Charge berserk",
       "englishName": "Berserk Charge",
@@ -446,7 +456,7 @@
       "nom": "Danse des épées",
       "englishName": "Sword-dancing",
       "sourceLabel": "Danse des épées (Sword-dancing)",
-      "description": "Apprenez Ritual of Cleansing. Chaque technique supplémentaire coûte 100 PX × nombre de techniques déjà connues. Pour une technique, faites un Test de Corps à corps (À deux mains) et atteignez son seuil de DR ; échec : perdez votre Élan (Momentum) ; échec stupéfiant : table Oops! en plus. Difficulté : Yenlui équilibré/lumineux, (+0) ; sombre, Très difficile (−3 DR). Techniques : Cleansing (1 DR), rituel de plusieurs minutes pour déplacer Yenlui vers lumineux au lever du soleil ou sombre au coucher ; Phoenix (1), lancer de l'épée hors engagement à Bonus de Force + Bonus de Force Mentale yards, dégâts de l'arme et Pénétrante, +1 yard et +1 dégât par DR obtenu au Test ; Sun (1), +1 niveau de War Leader pendant Bonus de Force Mentale Rounds, chaque DR obtenu au Test ajoute un niveau ou un Round ; Frost (1), ignorez 1 PA pendant Bonus de Capacité de Combat Rounds, +10 aux jets de Blessure critique par DR obtenu au Test ; Storm (1), opposez les tirs avec Corps à corps (À deux mains) pendant Bonus d'Initiative Rounds, +1 Round par DR obtenu au Test ; Rain (2), +1 DR à Esquive pendant Bonus d'Agilité Rounds, chaque DR obtenu au Test ajoute +1 DR à Esquive et un Round ; Shadows of Loec (2), déplacement jusqu'à DR × Mouvement yards (minimum 5), terrain normal, ennemis auparavant engagés : Initiative (+0) ou Surpris ; Hawk (3), cible à une distance maximale de votre Bonus de Force Mentale en yards : Résistance (−1 DR) ou 10 + DR dégâts ignorant PA mais pas Bonus d'Endurance et 2 états Assourdi, +1 yard et +1 cible par DR obtenu au Test ; Falling Water (3), une attaque contre chaque ennemi engagé à portée de l'arme, trois contre ceux avec Swarm ; Final Stroke (4), cible : Esquive Très difficile (−3 DR) ou coup inévitable à +4 dégâts, +1 dégât par DR obtenu au Test.",
+      "description": "Apprenez Ritual of Cleansing. Chaque technique supplémentaire coûte 100 PX × nombre de techniques déjà connues. Pour une technique, faites un Test de Corps à corps (À deux mains) et atteignez son seuil de DR ; échec : perdez votre Élan (Momentum) ; échec stupéfiant : table Oops! en plus. Difficulté : Yenlui équilibré/lumineux, (+0) ; sombre, Très difficile (−3 DR). Techniques : Cleansing (1 DR), rituel de plusieurs minutes pour déplacer Yenlui vers lumineux au lever du soleil ou sombre au coucher ; Phoenix (1), lancer de l'épée hors engagement à Bonus de Force + Bonus de Force Mentale mètres, dégâts de l'arme et Pénétrante, +1 mètre et +1 dégât par DR obtenu au Test ; Sun (1), +1 niveau de War Leader pendant Bonus de Force Mentale Rounds, chaque DR obtenu au Test ajoute un niveau ou un Round ; Frost (1), ignorez 1 PA pendant Bonus de Capacité de Combat Rounds, +10 aux jets de Blessure critique par DR obtenu au Test ; Storm (1), opposez les tirs avec Corps à corps (À deux mains) pendant Bonus d'Initiative Rounds, +1 Round par DR obtenu au Test ; Rain (2), +1 DR à Esquive pendant Bonus d'Agilité Rounds, chaque DR obtenu au Test ajoute +1 DR à Esquive et un Round ; Shadows of Loec (2), déplacement jusqu'à DR × Mouvement mètres (minimum 5), terrain normal, ennemis auparavant engagés : Initiative (+0) ou Surpris ; Hawk (3), cible à une distance maximale de votre Bonus de Force Mentale en mètres : Résistance (−1 DR) ou 10 + DR dégâts ignorant PA mais pas Bonus d'Endurance et 2 états Assourdi, +1 mètre et +1 cible par DR obtenu au Test ; Falling Water (3), une attaque contre chaque ennemi engagé à portée de l'arme, trois contre ceux avec Swarm ; Final Stroke (4), cible : Esquive Très difficile (−3 DR) ou coup inévitable à +4 dégâts, +1 dégât par DR obtenu au Test.",
       "limitText": "1",
       "source": "High Elf Player’s Guide (V4), p. 68–69",
       "specializationLabel": null
@@ -516,7 +526,7 @@
       "nom": "Diction instinctive",
       "englishName": "Instinctive Diction",
       "sourceLabel": "Diction instinctive (Instinctive Diction)",
-      "description": "Si vous devez effectuer un jet sur la table des Incantations imparfaites mineures, vous pouvez réduire le résultat de 20 ; sous 01, aucun effet ne se produit. Aucun effet sur les Incantations imparfaites majeures.",
+      "description": "Si vous devez effectuer un jet sur la table des Incantations imparfaites mineures, vous pouvez réduire le résultat de 20, mais seulement si le Test d'incantation ou de Focalisation a réussi ; sous 01, aucun effet ne se produit. Aucun effet sur les Incantations imparfaites majeures.",
       "limitText": "1",
       "source": "Livre de base V5, p. 121 ; achat : p. 191",
       "specializationLabel": null
@@ -536,7 +546,7 @@
       "nom": "Distraire",
       "englishName": "Distract",
       "sourceLabel": "Distraire (Distract)",
-      "description": "Utilisez votre Mouvement pour un Test opposé Athlétisme, Représentation ou Escamotage contre Perception, sur une cible à 2 yards maximum. Si vous gagnez, elle perd Momentum et ne peut ni le récupérer ni effectuer de Test avec Avantage V5 jusqu’à la fin de votre prochain Tour.",
+      "description": "Utilisez votre Mouvement pour un Test opposé Athlétisme, Représentation ou Escamotage contre Perception, sur une cible à 2 mètres maximum. Si vous gagnez, elle perd Momentum et ne peut ni le récupérer ni effectuer de Test avec Avantage V5 jusqu’à la fin de votre prochain Tour.",
       "limitText": "1",
       "source": "Livre de base V5, p. 118 ; achat : p. 191",
       "specializationLabel": null
@@ -637,7 +647,7 @@
       "nom": "Exaltant",
       "englishName": "Inspiring",
       "sourceLabel": "Exaltant (Inspiring)",
-      "description": "Avantage V5 aux Tests de Commandement effectués en combat.",
+      "description": "En l’absence d’autorité reconnue, les gens se tournent naturellement vers vous en cas de crise et suivent vos ordres raisonnables. Avantage V5 aux Tests de Commandement.",
       "limitText": "1",
       "source": "Livre de base V5, p. 121 ; achat : p. 191",
       "specializationLabel": null
@@ -677,7 +687,7 @@
       "nom": "Feu de forge",
       "englishName": "Forgefire",
       "sourceLabel": "Feu de forge (Forgefire)",
-      "description": "Tant que vous êtes Engagé, vos armes de Corps à corps et celles de vos alliés à Bonus de Force Mentale yards gagnent l’Atout Pénétrante. Si une arme l’est déjà, ses attaques ignorent 1 PA supplémentaire d’armure métallique.",
+      "description": "Tant que vous êtes Engagé, vos armes de Corps à corps et celles de vos alliés à Bonus de Force Mentale mètres gagnent l’Atout Pénétrante. Si une arme l’est déjà, ses attaques ignorent 1 PA supplémentaire d’armure métallique.",
       "limitText": "1",
       "source": "Dwarf Player’s Guide (V4), p. 79",
       "specializationLabel": null
@@ -707,7 +717,7 @@
       "nom": "Flairer les ennuis",
       "englishName": "Nose for Trouble",
       "sourceLabel": "Flairer les ennuis (Nose for Trouble)",
-      "description": "Avantage V5 aux Tests d’Intuition ; vous savez généralement où trouver, dans une ville ou un village, de quoi parier, vous battre ou vous enivrer.",
+      "description": "Avantage V5 aux Tests d’Intuition liés à un danger potentiel ; vous savez généralement où trouver, dans une ville ou un village, de quoi parier, vous battre ou vous enivrer.",
       "limitText": "1",
       "source": "Livre de base V5, p. 123 ; achat : p. 191",
       "specializationLabel": null
@@ -727,7 +737,7 @@
       "nom": "Frappe assommante",
       "englishName": "Strike to Stun",
       "sourceLabel": "Frappe assommante (Strike to Stun)",
-      "description": "Toutes vos armes improvisées ont la Qualité Assommante (Pummel). Avec une arme Assommante, ignorez la pénalité de coup ciblé pour une neutralisation silencieuse (p. 135).",
+      "description": "Toutes vos armes improvisées ont la Qualité Assommante (Pummel). Avec une arme Assommante, bénéficiez d'un Avantage V5 aux neutralisations silencieuses (p. 135).",
       "limitText": "1",
       "source": "Livre de base V5, p. 127 ; achat : p. 191",
       "specializationLabel": null
@@ -787,7 +797,7 @@
       "nom": "Garde royal",
       "englishName": "Kingsguard",
       "sourceLabel": "Garde royal (Kingsguard)",
-      "description": "Les attaques ennemies contre un allié situé à 2 yards ou moins de vous subissent −1 DR par acquisition. Aucun effet sur les attaques contre vous-même ni lorsque vous souffrez d’un état.",
+      "description": "Les attaques ennemies contre un allié situé à 2 mètres ou moins de vous subissent −1 DR par acquisition. Aucun effet sur les attaques contre vous-même ni lorsque vous souffrez d’un état.",
       "limitText": "3",
       "source": "Dwarf Player’s Guide (V4), p. 80",
       "specializationLabel": null
@@ -867,7 +877,7 @@
       "nom": "Harmonisation aethyrique",
       "englishName": "Aethyric Attunement",
       "sourceLabel": "Harmonisation aethyrique (Aethyric Attunement)",
-      "description": "Sur la table des Incantations imparfaites mineures, lancez deux fois et choisissez le résultat. La seconde acquisition étend ce bénéfice à la table des Incantations imparfaites majeures.",
+      "description": "Sur la table des Incantations imparfaites mineures, si le Test d'incantation ou de Focalisation a réussi, lancez deux fois et choisissez le résultat. La seconde acquisition étend ce bénéfice à la table des Incantations imparfaites majeures.",
       "limitText": "2",
       "source": "Livre de base V5, p. 114 ; achat : p. 191",
       "specializationLabel": null
@@ -937,7 +947,7 @@
       "nom": "Imprégné",
       "englishName": "Suffuse With",
       "sourceLabel": "Imprégné [Vent] (Suffuse With)",
-      "description": "Les sorts réussis du domaine associé au Vent, lancés à 8 yards ou moins de vous, gagnent +1 DR ; ce bonus ne se cumule pas avec d'autres porteurs du même Vent. Votre Focalisation de ce Vent remplace : Aqshy, Force Mentale pour entrer en Frénésie, dont vous pouvez bénéficier ; Azyr, Perception ; Chamon, Évaluation ; Ghur, Emprise sur les animaux et Savoir (Bêtes) ; Ghyran, Savoir (Plantes, Animaux, Herbes) et Soin aux animaux ; Hysh, Recherche ; Shyish, Intimidation ; Ulgu, Discrétion. Les personnes ayant Seconde vue perçoivent le Vent autour de vous.",
+      "description": "Les sorts réussis du domaine associé au Vent, lancés à 8 mètres ou moins de vous, gagnent +1 DR ; ce bonus ne se cumule pas avec d'autres porteurs du même Vent. Votre Focalisation de ce Vent remplace : Aqshy, Force Mentale pour entrer en Frénésie, dont vous pouvez bénéficier ; Azyr, Perception ; Chamon, Évaluation ; Ghur, Emprise sur les animaux et Savoir (Bêtes) ; Ghyran, Savoir (Plantes, Animaux, Herbes) et Soin aux animaux ; Hysh, Recherche ; Shyish, Intimidation ; Ulgu, Discrétion. Les personnes ayant Seconde vue perçoivent le Vent autour de vous.",
       "limitText": "1",
       "source": "Winds of Magic (V4), p. 186",
       "specializationLabel": "Vent"
@@ -1177,7 +1187,7 @@
       "nom": "Mains agiles",
       "englishName": "Fast Hands",
       "sourceLabel": "Mains agiles (Fast Hands)",
-      "description": "Vous pouvez divertir avec Escamotage en faisant apparaître ou disparaître de petits objets. Avantage V5 aux Tests d’Escamotage et de Corps à corps (Bagarre) pour toucher un adversaire, notamment pour un Sort de contact.",
+      "description": "Avantage V5 aux Tests d’Escamotage et de Corps à corps (Bagarre) pour toucher un adversaire, notamment pour un Sort de contact.",
       "limitText": "1",
       "source": "Livre de base V5, p. 119 ; achat : p. 191",
       "specializationLabel": null
@@ -1228,7 +1238,7 @@
       "nom": "Maniement de deux armes",
       "englishName": "Dual Wielder",
       "sourceLabel": "Maniement de deux armes (Dual Wielder)",
-      "description": "En combattant avec deux armes, l’attaque gratuite de la seconde arme ne vous coûte pas Momentum. Pendant ce combat à deux armes, les dagues, couteaux et armes similaires que vous maniez gagnent l’Atout Parade.",
+      "description": "En combattant avec deux armes, l’attaque de la seconde arme ne demande pas de dépenser d'Élan, mais vous devez en avoir. Pendant ce combat à deux armes, les dagues, couteaux et armes similaires que vous maniez gagnent l’Atout Parade.",
       "limitText": "1",
       "source": "Livre de base V5, p. 119 ; achat : p. 191",
       "specializationLabel": null
@@ -1418,7 +1428,7 @@
       "nom": "Pacte de l’âme",
       "englishName": "Soul Pact",
       "sourceLabel": "Pacte de l’âme (Soul Pact)",
-      "description": "Réservé aux Elfes. Chaque achat conclut un autre pacte ; l'entité exige des sacrifices croissants pour protéger corps et âme du Dhar. Sur un sort de Magie noire qui inflige des dégâts avec des DR au-delà de son NI, dépensez 3 DR pour un effet de votre pacte, compatible avec les effets de surincantation : Hekarti, un coup supplémentaire au corps de dégâts égaux au NI de base ignorant les PA, ou ignorez Incantations imparfaites et gain de Corruption pendant 1d10 Tours ; Slaanesh, 3 cibles à une distance maximale de votre Bonus de Force Mentale en yards font un Test de Calme Difficile (−2 DR), puis celles qui échouent doivent le réussir avant toute action hostile contre vous pendant 2d10 Rounds, sinon elles deviennent Surprises ; Tzeentch, appliquez un résultat de Incantation imparfaite mineure à une autre créature à une distance maximale de votre Bonus de Force Mentale en yards ; démon non aligné, gagnez le Trait Daemonic 8+ jusqu'au Round suivant.",
+      "description": "Réservé aux Elfes. Chaque achat conclut un autre pacte ; l'entité exige des sacrifices croissants pour protéger corps et âme du Dhar. Sur un sort de Magie noire qui inflige des dégâts avec des DR au-delà de son NI, dépensez 3 DR pour un effet de votre pacte, compatible avec les effets de surincantation : Hekarti, un coup supplémentaire au corps de dégâts égaux au NI de base ignorant les PA, ou ignorez Incantations imparfaites et gain de Corruption pendant 1d10 Tours ; Slaanesh, 3 cibles à une distance maximale de votre Bonus de Force Mentale en mètres font un Test de Calme Difficile (−2 DR), puis celles qui échouent doivent le réussir avant toute action hostile contre vous pendant 2d10 Rounds, sinon elles deviennent Surprises ; Tzeentch, appliquez un résultat de Incantation imparfaite mineure à une autre créature à une distance maximale de votre Bonus de Force Mentale en mètres ; démon non aligné, gagnez le Trait Daemonic 8+ jusqu'au Round suivant.",
       "limitText": "4",
       "source": "Temple of Spite (édition non nommée, compatible V5), p. 63–64",
       "specializationLabel": null
@@ -1438,7 +1448,7 @@
       "nom": "Pas de côté",
       "englishName": "Step Aside",
       "sourceLabel": "Pas de côté (Step Aside)",
-      "description": "Après une défense réussie avec Esquive, vous pouvez vous déplacer jusqu'à 2 yards et ne plus être engagé. Les adversaires n'obtiennent pas d'attaque gratuite.",
+      "description": "Après une défense réussie avec Esquive, vous pouvez vous déplacer jusqu'à 2 mètres et ne plus être engagé. Les adversaires n'obtiennent pas d'attaque gratuite.",
       "limitText": "1",
       "source": "Livre de base V5, p. 126 ; achat : p. 191",
       "specializationLabel": null
@@ -1458,7 +1468,7 @@
       "nom": "Perception de la Magie",
       "englishName": "Magical Sense",
       "sourceLabel": "Perception de la Magie (Magical Sense)",
-      "description": "Vous détectez immédiatement tout lancement de sort à une distance en yards égale à votre Perception, avec seulement sa direction approximative, sans identifier la magie. Si vous avez Seconde vue ou percevez autrement les Vents, Avantage V5 aux Tests pour discerner leurs mouvements ou variations.",
+      "description": "Vous détectez immédiatement tout lancement de sort à une distance en mètres égale à votre Perception, avec seulement sa direction approximative, sans identifier la magie. Si vous avez Seconde vue ou percevez autrement les Vents, Avantage V5 aux Tests pour discerner leurs mouvements ou variations.",
       "limitText": "1",
       "source": "Livre de base V5, p. 122 ; achat : p. 191",
       "specializationLabel": null
@@ -1528,7 +1538,7 @@
       "nom": "Porte-bouclier",
       "englishName": "Shieldsman",
       "sourceLabel": "Porte-bouclier (Shieldsman)",
-      "description": "Une fois par Round, avec un bouclier, perdez Momentum pour : donner le bonus de PA du bouclier à un allié adjacent sans bouclier ; ou, après avoir remporté un Test opposé de Corps à corps en attaque ou défense, renoncer aux dégâts pour repousser l'adversaire jusqu'à 2 yards directement et ne plus être engagé.",
+      "description": "Une fois par Round, avec un bouclier, perdez Momentum pour : donner le bonus de PA du bouclier à un allié adjacent sans bouclier ; ou, après avoir remporté un Test opposé de Corps à corps en attaque ou défense, renoncer aux dégâts pour repousser l'adversaire jusqu'à 2 mètres directement et ne plus être engagé.",
       "limitText": "1",
       "source": "Livre de base V5, p. 125 ; achat : p. 191",
       "specializationLabel": null
@@ -1538,7 +1548,7 @@
       "nom": "Présence imposante",
       "englishName": "Commanding Presence",
       "sourceLabel": "Présence imposante (Commanding Presence)",
-      "description": "En l’absence d’autorité reconnue, les gens se tournent naturellement vers vous en cas de crise et suivent vos ordres raisonnables. Avantage V5 aux Tests de Commandement.",
+      "description": "Sur un Test de Commandement réussi en combat, choisissez les DR obtenus ou la valeur du dé des unités.",
       "limitText": "1",
       "source": "Livre de base V5, p. 117 ; achat : p. 191",
       "specializationLabel": null
@@ -1639,7 +1649,7 @@
       "nom": "Riposte",
       "englishName": "Riposte",
       "sourceLabel": "Riposte (Riposte)",
-      "description": "Si vous remportez un Test opposé en défendant au corps à corps, vous infligez des dégâts comme si vous étiez l'attaquant.",
+      "description": "Une fois par Round, si vous remportez un Test opposé en défendant au corps à corps, vous infligez des dégâts comme si vous étiez l'attaquant.",
       "limitText": "1",
       "source": "Livre de base V5, p. 124 ; achat : p. 191",
       "specializationLabel": null
@@ -1812,7 +1822,7 @@
       "nom": "Sprinter",
       "englishName": "Sprinter",
       "sourceLabel": "Sprinter (Sprinter)",
-      "description": "Avantage V5 aux Tests d'Athlétisme pour courir et sauter.",
+      "description": "Avantage V5 aux Tests d'Athlétisme pour courir. À pied, vous ne subissez aucune pénalité pour vous frayer un chemin dans une foule dense.",
       "limitText": "1",
       "source": "Livre de base V5, p. 126 ; achat : p. 191",
       "specializationLabel": null
@@ -2043,7 +2053,7 @@
       "nom": "Vision nocturne",
       "englishName": "Night Vision",
       "sourceLabel": "Vision nocturne (Night Vision)",
-      "description": "Avec au moins une faible source de lumière naturelle ou équivalente, vous voyez clairement jusqu’à 20 yards ; augmentez aussi de 20 yards la portée effective d’éclairage de toute source lumineuse.",
+      "description": "Avec au moins une faible source de lumière naturelle ou équivalente, vous voyez clairement jusqu’à 20 mètres ; augmentez aussi de 20 mètres la portée effective d’éclairage de toute source lumineuse.",
       "limitText": "1",
       "source": "Livre de base V5, p. 123 ; achat : p. 191",
       "specializationLabel": null

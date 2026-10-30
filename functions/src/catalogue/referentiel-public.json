@@ -1,6 +1,6 @@
 {
-  "catalogVersion": "sha256:6f3b5caddab1f93fd99f91ea839c626327b5671569c2d5d746d9c8256c1d33eb",
-  "publishedAt": "2026-10-28",
+  "catalogVersion": "sha256:490514a73a718a4993f807aabc4f1a2119c0f78f22027af5aff77177a2d3a60f",
+  "publishedAt": "2026-10-30",
   "sources": {
     "skills": "js/data/skills.json",
     "careers": "js/data/careers.json",
@@ -13,7 +13,7 @@
     "skillAliasProvenance": "alias-historique-du-site"
   },
   "skills": {
-    "version": "sha256:96dc69d311c6a87dd16a15c3bc1e9b203f715fb69172a4c8fa4fb691eb0a95d6",
+    "version": "sha256:f136a44d9d0d1bc261c69804327c6a2eae2fb98e7fb2c58d2b33301d308922d9",
     "entries": [
       {
         "groupId": "skill-group-41_72_74",
@@ -3283,12 +3283,78 @@
         "carac": "int"
       },
       {
+        "id": "skill-4d_75_73_69_63_69_65_6e-43_6f_6e_63_65_72_74_69_6e_61",
+        "groupId": "skill-group-4d_75_73_69_63_69_65_6e",
+        "group": "Musicien",
+        "specializationId": "skill-spec-4d_75_73_69_63_69_65_6e-43_6f_6e_63_65_72_74_69_6e_61",
+        "specialization": "Concertina",
+        "nom": "Musicien (Concertina)",
+        "carac": "dex",
+        "basic": false,
+        "aliases": []
+      },
+      {
+        "id": "skill-4d_75_73_69_63_69_65_6e-56_69_6f_6c_6f_6e",
+        "groupId": "skill-group-4d_75_73_69_63_69_65_6e",
+        "group": "Musicien",
+        "specializationId": "skill-spec-4d_75_73_69_63_69_65_6e-56_69_6f_6c_6f_6e",
+        "specialization": "Violon",
+        "nom": "Musicien (Violon)",
+        "carac": "dex",
+        "basic": false,
+        "aliases": []
+      },
+      {
         "id": "skill-53_61_76_6f_69_72-41_6e_63_69_65_6e_73",
         "groupId": "skill-group-53_61_76_6f_69_72",
         "group": "Savoir",
         "specializationId": "skill-spec-53_61_76_6f_69_72-41_6e_63_69_65_6e_73",
         "specialization": "Anciens",
         "nom": "Savoir (Anciens)",
+        "carac": "int",
+        "basic": false,
+        "aliases": []
+      },
+      {
+        "id": "skill-53_61_76_6f_69_72-43_f4_74_65_73_20_65_74_20_6d_61_72_e9_65_73",
+        "groupId": "skill-group-53_61_76_6f_69_72",
+        "group": "Savoir",
+        "specializationId": "skill-spec-53_61_76_6f_69_72-43_f4_74_65_73_20_65_74_20_6d_61_72_e9_65_73",
+        "specialization": "Côtes et marées",
+        "nom": "Savoir (Côtes et marées)",
+        "carac": "int",
+        "basic": false,
+        "aliases": []
+      },
+      {
+        "id": "skill-53_61_76_6f_69_72-4d_61_6e_61_6e_6e",
+        "groupId": "skill-group-53_61_76_6f_69_72",
+        "group": "Savoir",
+        "specializationId": "skill-spec-53_61_76_6f_69_72-4d_61_6e_61_6e_6e",
+        "specialization": "Manann",
+        "nom": "Savoir (Manann)",
+        "carac": "int",
+        "basic": false,
+        "aliases": []
+      },
+      {
+        "id": "skill-53_61_76_6f_69_72-4f_63_e9_61_6e_73",
+        "groupId": "skill-group-53_61_76_6f_69_72",
+        "group": "Savoir",
+        "specializationId": "skill-spec-53_61_76_6f_69_72-4f_63_e9_61_6e_73",
+        "specialization": "Océans",
+        "nom": "Savoir (Océans)",
+        "carac": "int",
+        "basic": false,
+        "aliases": []
+      },
+      {
+        "id": "skill-53_61_76_6f_69_72-53_74_72_6f_6d_66_65_6c_73",
+        "groupId": "skill-group-53_61_76_6f_69_72",
+        "group": "Savoir",
+        "specializationId": "skill-spec-53_61_76_6f_69_72-53_74_72_6f_6d_66_65_6c_73",
+        "specialization": "Stromfels",
+        "nom": "Savoir (Stromfels)",
         "carac": "int",
         "basic": false,
         "aliases": []
@@ -3564,7 +3630,7 @@
     ]
   },
   "talents": {
-    "version": "sha256:8512d4724538e53ecb567a3138f8d8d4b06fa3e38f9f25509fb8fb3603ab9c58",
+    "version": "sha256:ee06e2d1aa6feb951583339a2f7f1270ae5074c23fcd7862717e28ea01b1c02c",
     "entries": [
       {
         "nom": "Acharné",
@@ -6910,6 +6976,14 @@
         ]
       },
       {
+        "id": "talent-43_68_61_6e_74_20_6d_61_72_69_6e",
+        "key": "chant marin",
+        "nom": "Chant marin",
+        "sources": [
+          "sheet"
+        ]
+      },
+      {
         "id": "talent-43_6f_6d_6d_61_6e_64_61_6e_74_20_64_27_c9_71_75_69_70_61_67_65",
         "key": "commandant d'équipage",
         "nom": "Commandant d'Équipage",
@@ -7500,6 +7574,6 @@
     "aliases": [],
     "templates": [],
     "localDescriptions": [],
-    "descriptionSnapshotVersion": "sha256:18b2426c16438158b38619c2638c93abffc056ba4534636e45807c127e2213e9"
+    "descriptionSnapshotVersion": "sha256:f9bf34fbfaca105f09edc776b2e36084f96dd92b00609c8e1348c2ce9b1f5949"
   }
 }

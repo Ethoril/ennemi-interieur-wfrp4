@@ -35,7 +35,7 @@ const knownSkills = new Set(prior.skills.entries.map(row => row.nom));
 // les fiches n'ont qu'une ligne de base « Corps à corps (Base) »).
 const correctedPriorSkills = prior.skills.entries.map(row => row.nom === 'Représentation (Acteur)' ? { ...row, carac: 'soc', basic: true } : row);
 const skillEntries = [...correctedPriorSkills, ...generatedSkills.filter(row => !knownSkills.has(row.nom)
-    && skillRows.some(source => source.nom === row.nom && source.source === 'Drive Carrières — Lustria'))];
+    && skillRows.some(source => source.nom === row.nom && source.source?.startsWith('Drive Carrières — ')))];
 // V5 distingue Trade (avancé) d'Art et Perform (avancé) d'Entertain (L06 p.111, 113–114).
 const distinctSkills = new Set(['Métier (Calligraphe)', 'Métier (Cartographe)', 'Métier (Graveur)']);
 const skillAliases = (prior.skills.aliases || collectLegacySkillAliases([...skillRows.map(row => row.nom), ...careerSkillLabels], skillEntries))

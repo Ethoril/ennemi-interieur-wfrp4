@@ -1142,6 +1142,14 @@
   },
   {
     "group": "Musicien",
+    "spec": "Concertina",
+    "nom": "Musicien (Concertina)",
+    "carac": "dex",
+    "basic": false,
+    "source": "Drive Carrières — Sea of Claws"
+  },
+  {
+    "group": "Musicien",
     "spec": "Cor",
     "nom": "Musicien (Cor)",
     "carac": "dex",
@@ -1181,6 +1189,14 @@
     "nom": "Musicien (Tambour)",
     "carac": "dex",
     "basic": false
+  },
+  {
+    "group": "Musicien",
+    "spec": "Violon",
+    "nom": "Musicien (Violon)",
+    "carac": "dex",
+    "basic": false,
+    "source": "Drive Carrières — Sea of Claws"
   },
   {
     "group": "Natation",
@@ -1429,6 +1445,14 @@
   },
   {
     "group": "Savoir",
+    "spec": "Côtes et marées",
+    "nom": "Savoir (Côtes et marées)",
+    "carac": "int",
+    "basic": false,
+    "source": "Drive Carrières — Sea of Claws"
+  },
+  {
+    "group": "Savoir",
     "spec": "Démonologie",
     "nom": "Savoir (Démonologie)",
     "carac": "int",
@@ -1604,6 +1628,14 @@
   },
   {
     "group": "Savoir",
+    "spec": "Manann",
+    "nom": "Savoir (Manann)",
+    "carac": "int",
+    "basic": false,
+    "source": "Drive Carrières — Sea of Claws"
+  },
+  {
+    "group": "Savoir",
     "spec": "Médecine",
     "nom": "Savoir (Médecine)",
     "carac": "int",
@@ -1664,6 +1696,14 @@
     "nom": "Savoir (Noble)",
     "carac": "int",
     "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Océans",
+    "nom": "Savoir (Océans)",
+    "carac": "int",
+    "basic": false,
+    "source": "Drive Carrières — Sea of Claws"
   },
   {
     "group": "Savoir",
@@ -1769,6 +1809,14 @@
     "nom": "Savoir (Sorcières)",
     "carac": "int",
     "basic": false
+  },
+  {
+    "group": "Savoir",
+    "spec": "Stromfels",
+    "nom": "Savoir (Stromfels)",
+    "carac": "int",
+    "basic": false,
+    "source": "Drive Carrières — Sea of Claws"
   },
   {
     "group": "Savoir",
