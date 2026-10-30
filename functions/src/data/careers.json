@@ -1962,6 +1962,109 @@
     ]
   },
   {
+    "id": "canonnier-de-marine",
+    "nom": "Canonnier de marine",
+    "source": "Sea of Claws",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Porte-poudre",
+        "statut": "Bronze 3",
+        "caracs": [
+          "ct",
+          "ag",
+          "int"
+        ],
+        "skills": [
+          "Athlétisme",
+          "Escalade",
+          "Esquive",
+          "Résistance",
+          "Langue (Bataille)",
+          "Corps à corps (Bagarre)",
+          "Perception",
+          "Projectiles (Poudre noire)",
+          "Ramer",
+          "Natation"
+        ],
+        "talents": [
+          "Loup de mer",
+          "Rechargement rapide",
+          "Pied marin",
+          "Infatigable"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Canonnier",
+        "statut": "Argent 3",
+        "caracs": [
+          "i"
+        ],
+        "skills": [
+          "Résistance à l'alcool",
+          "Calme",
+          "Pari",
+          "Ragot",
+          "Corps à corps (Base)",
+          "Voile"
+        ],
+        "talents": [
+          "Savoir-vivre (Marins)",
+          "Artilleur",
+          "Tireur de précision",
+          "Tireur embusqué"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Capitaine canonnier",
+        "statut": "Argent 5",
+        "caracs": [
+          "e"
+        ],
+        "skills": [
+          "Commandement",
+          "Savoir (Artillerie)",
+          "Orientation",
+          "Métier (Arquebusier)"
+        ],
+        "talents": [
+          "Vigilance",
+          "Commandant d'Équipage",
+          "Sens de l'orientation",
+          "Lire/Écrire"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Maître canonnier",
+        "statut": "Or 1",
+        "caracs": [
+          "fm"
+        ],
+        "skills": [
+          "Charme",
+          "Savoir (Océans)"
+        ],
+        "talents": [
+          "Tir précis",
+          "Exaltant",
+          "Voyageur aguerri",
+          "Cœur vaillant"
+        ]
+      }
+    ],
+    "carac": [
+      "ct",
+      "ag",
+      "int",
+      "i",
+      "e",
+      "fm"
+    ]
+  },
+  {
     "id": "cartographe",
     "nom": "Cartographe",
     "source": "Up in Arms",
@@ -2471,6 +2574,109 @@
       "ag",
       "i",
       "e"
+    ]
+  },
+  {
+    "id": "chanteur-de-bord",
+    "nom": "Chanteur de bord",
+    "source": "Sea of Claws",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Chanteur",
+        "statut": "Argent 1",
+        "caracs": [
+          "dex",
+          "int",
+          "soc"
+        ],
+        "skills": [
+          "Charme",
+          "Résistance à l'alcool",
+          "Esquive",
+          "Divertissement (Chant)",
+          "Ragot",
+          "Corps à corps (Bagarre)",
+          "Musicien (Violon, Concertina ou Fifre)",
+          "Ramer",
+          "Voile",
+          "Natation"
+        ],
+        "talents": [
+          "Savoir-vivre (Marins)",
+          "Oreille absolue",
+          "Pied marin",
+          "Bon marcheur (Littoral)"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Chanteur de bord",
+        "statut": "Argent 3",
+        "caracs": [
+          "ag"
+        ],
+        "skills": [
+          "Athlétisme",
+          "Escalade",
+          "Résistance",
+          "Pari",
+          "Corps à corps (Base)",
+          "Représentation (au choix)"
+        ],
+        "talents": [
+          "Chant marin",
+          "Saut carpé",
+          "Voyageur aguerri",
+          "Nageur endurant"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Chef de chœur",
+        "statut": "Argent 5",
+        "caracs": [
+          "fm"
+        ],
+        "skills": [
+          "Calme",
+          "Langue (au choix)",
+          "Commandement",
+          "Perception"
+        ],
+        "talents": [
+          "Noctambule",
+          "Pêcheur",
+          "Loup de mer",
+          "Orateur"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Maître des chants",
+        "statut": "Or 1",
+        "caracs": [
+          "i"
+        ],
+        "skills": [
+          "Savoir (Océans)",
+          "Orientation"
+        ],
+        "talents": [
+          "Persévérant",
+          "Magnum opus",
+          "Sens de l'orientation",
+          "Lire/Écrire"
+        ]
+      }
+    ],
+    "carac": [
+      "dex",
+      "int",
+      "soc",
+      "ag",
+      "fm",
+      "i"
     ]
   },
   {
@@ -4202,6 +4408,109 @@
       "ct",
       "int",
       "dex"
+    ]
+  },
+  {
+    "id": "ecumeur-de-greves",
+    "nom": "Écumeur de grèves",
+    "source": "Sea of Claws",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Fouilleur de grève",
+        "statut": "Bronze 1",
+        "caracs": [
+          "cc",
+          "i",
+          "int"
+        ],
+        "skills": [
+          "Escalade",
+          "Esquive",
+          "Ragot",
+          "Marchandage",
+          "Savoir (Côtes et marées)",
+          "Corps à corps (Base)",
+          "Survie en extérieur",
+          "Perception",
+          "Ramer",
+          "Discrétion (Rurale)"
+        ],
+        "talents": [
+          "Pêcheur",
+          "Sens de l'orientation",
+          "Bon marcheur (Littoral)",
+          "Nageur endurant"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Écumeur de grèves",
+        "statut": "Bronze 3",
+        "caracs": [
+          "ag"
+        ],
+        "skills": [
+          "Résistance à l'alcool",
+          "Résistance",
+          "Savoir (au choix)",
+          "Projectiles (Fronde)",
+          "Piégeage",
+          "Natation"
+        ],
+        "talents": [
+          "Imperturbable",
+          "Fuite !",
+          "Nomade",
+          "Brouet"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Vagabond des côtes",
+        "statut": "Bronze 5",
+        "caracs": [
+          "fm"
+        ],
+        "skills": [
+          "Charme",
+          "Évaluation",
+          "Pari",
+          "Voile"
+        ],
+        "talents": [
+          "Loup de mer",
+          "Savant (Côtes et marées)",
+          "Pied marin",
+          "Bricoleur"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Maître de la grève",
+        "statut": "Argent 2",
+        "caracs": [
+          "e"
+        ],
+        "skills": [
+          "Commandement",
+          "Métier (Construction de bateaux)"
+        ],
+        "talents": [
+          "Négociateur",
+          "Guide fluvial",
+          "Voyageur aguerri",
+          "Persévérant"
+        ]
+      }
+    ],
+    "carac": [
+      "cc",
+      "i",
+      "int",
+      "ag",
+      "fm",
+      "e"
     ]
   },
   {
@@ -7250,6 +7559,109 @@
     ]
   },
   {
+    "id": "lamaneur",
+    "nom": "Lamaneur",
+    "source": "Sea of Claws",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Guide portuaire",
+        "statut": "Bronze 4",
+        "caracs": [
+          "cc",
+          "e",
+          "i"
+        ],
+        "skills": [
+          "Résistance à l'alcool",
+          "Ragot",
+          "Intuition",
+          "Savoir (Région)",
+          "Savoir (Océans)",
+          "Corps à corps (Base)",
+          "Orientation",
+          "Perception",
+          "Ramer",
+          "Natation"
+        ],
+        "talents": [
+          "Pêcheur",
+          "Vision nocturne",
+          "Sens de l'orientation",
+          "Marinier"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Lamaneur",
+        "statut": "Argent 1",
+        "caracs": [
+          "fm"
+        ],
+        "skills": [
+          "Athlétisme",
+          "Charme",
+          "Escalade",
+          "Calme",
+          "Divertissement (Narration)",
+          "Langue (au choix)"
+        ],
+        "talents": [
+          "Négociateur",
+          "Savoir-vivre (Guilde)",
+          "Flairer les ennuis",
+          "Loup de mer"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Pilote",
+        "statut": "Argent 3",
+        "caracs": [
+          "int"
+        ],
+        "skills": [
+          "Marchandage",
+          "Intimidation",
+          "Savoir (Région)",
+          "Savoir (Épaves)"
+        ],
+        "talents": [
+          "Sens aiguisé (Vue)",
+          "Pilote",
+          "Pied marin",
+          "Très fort"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Maître pilote",
+        "statut": "Argent 5",
+        "caracs": [
+          "soc"
+        ],
+        "skills": [
+          "Commandement",
+          "Voile"
+        ],
+        "talents": [
+          "Vivacité",
+          "Sixième sens",
+          "Nageur endurant",
+          "Persévérant"
+        ]
+      }
+    ],
+    "carac": [
+      "cc",
+      "e",
+      "i",
+      "fm",
+      "int",
+      "soc"
+    ]
+  },
+  {
     "id": "mage-he",
     "nom": "Mage (HE)",
     "source": "High Elf Player Guide",
@@ -8051,6 +8463,109 @@
           "Perspicace",
           "Pilote",
           "Sens de l'orientation"
+        ]
+      }
+    ],
+    "carac": [
+      "ag",
+      "dex",
+      "soc",
+      "cc",
+      "i",
+      "int"
+    ]
+  },
+  {
+    "id": "marin-mer-des-griffes",
+    "nom": "Marin (Mer des Griffes)",
+    "source": "Sea of Claws",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Marin d'eau douce",
+        "statut": "Argent 1",
+        "caracs": [
+          "ag",
+          "dex",
+          "soc"
+        ],
+        "skills": [
+          "Escalade",
+          "Résistance à l'alcool",
+          "Pari",
+          "Ragot",
+          "Savoir (Océans)",
+          "Corps à corps (Bagarre)",
+          "Musicien (Fifre)",
+          "Ramer",
+          "Voile",
+          "Natation"
+        ],
+        "talents": [
+          "Pêcheur",
+          "Bon marcheur (Littoral)",
+          "Infatigable",
+          "Nageur endurant"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Marin",
+        "statut": "Argent 3",
+        "caracs": [
+          "cc"
+        ],
+        "skills": [
+          "Athlétisme",
+          "Esquive",
+          "Résistance",
+          "Divertissement (Chant)",
+          "Langue (au choix)",
+          "Corps à corps (Base)"
+        ],
+        "talents": [
+          "Souplesse féline",
+          "Pied marin",
+          "Voyageur aguerri",
+          "Bonnes jambes"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Maître d'équipage",
+        "statut": "Argent 5",
+        "caracs": [
+          "i"
+        ],
+        "skills": [
+          "Calme",
+          "Commandement",
+          "Perception",
+          "Métier (Charpentier)"
+        ],
+        "talents": [
+          "Loup de mer",
+          "Coup puissant",
+          "Persévérant",
+          "Très fort"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Capitaine de navire",
+        "statut": "Or 2",
+        "caracs": [
+          "int"
+        ],
+        "skills": [
+          "Charme",
+          "Orientation"
+        ],
+        "talents": [
+          "Sens de l'orientation",
+          "Pilote",
+          "Orateur",
+          "Perspicace"
         ]
       }
     ],
@@ -9040,6 +9555,109 @@
     ]
   },
   {
+    "id": "naufrageur-mer-des-griffes",
+    "nom": "Naufrageur (Mer des Griffes)",
+    "source": "Sea of Claws",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Pilleur d'épaves",
+        "statut": "Bronze 2",
+        "caracs": [
+          "cc",
+          "f",
+          "i"
+        ],
+        "skills": [
+          "Escalade",
+          "Résistance à l'alcool",
+          "Esquive",
+          "Résistance",
+          "Corps à corps (Base)",
+          "Survie en extérieur",
+          "Projectiles (Fronde)",
+          "Ramer",
+          "Voile",
+          "Natation"
+        ],
+        "talents": [
+          "Effraction",
+          "Criminel",
+          "Pêcheur",
+          "Infatigable"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Naufrageur",
+        "statut": "Bronze 3",
+        "caracs": [
+          "fm"
+        ],
+        "skills": [
+          "Subornation",
+          "Calme",
+          "Intuition",
+          "Orientation",
+          "Perception",
+          "Piégeage"
+        ],
+        "talents": [
+          "Fuite !",
+          "Nomade",
+          "Nageur endurant",
+          "Trappeur"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Pirate",
+        "statut": "Bronze 5",
+        "caracs": [
+          "ct"
+        ],
+        "skills": [
+          "Ragot",
+          "Intimidation",
+          "Projectiles (Arbalète)",
+          "Discrétion (Rurale)"
+        ],
+        "talents": [
+          "Combat déloyal",
+          "Savoir-vivre (Criminels)",
+          "Menaçant",
+          "Marinier"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Capitaine pirate",
+        "statut": "Argent 2",
+        "caracs": [
+          "soc"
+        ],
+        "skills": [
+          "Commandement",
+          "Savoir (Océans)"
+        ],
+        "talents": [
+          "Assaut féroce",
+          "Combattant au contact",
+          "Maître à bord",
+          "Guerrier né"
+        ]
+      }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "i",
+      "fm",
+      "ct",
+      "soc"
+    ]
+  },
+  {
     "id": "nautonier",
     "nom": "Nautonier",
     "source": "Livre de base",
@@ -9340,6 +9958,109 @@
       "fm",
       "i",
       "e"
+    ]
+  },
+  {
+    "id": "officier-de-marine",
+    "nom": "Officier de marine",
+    "source": "Sea of Claws",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Aspirant",
+        "statut": "Argent 1",
+        "caracs": [
+          "cc",
+          "int",
+          "soc"
+        ],
+        "skills": [
+          "Athlétisme",
+          "Escalade",
+          "Ragot",
+          "Commandement",
+          "Corps à corps (Base)",
+          "Survie en extérieur",
+          "Perception",
+          "Ramer",
+          "Voile",
+          "Natation"
+        ],
+        "talents": [
+          "Savoir-vivre (Marins)",
+          "Sens de l'orientation",
+          "Lire/Écrire",
+          "Pied marin"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Officier",
+        "statut": "Argent 5",
+        "caracs": [
+          "ct"
+        ],
+        "skills": [
+          "Calme",
+          "Résistance",
+          "Intimidation",
+          "Savoir (Océans)",
+          "Orientation",
+          "Projectiles (Poudre noire)"
+        ],
+        "talents": [
+          "Imperturbable",
+          "Loup de mer",
+          "Maître à bord",
+          "Pilote"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Capitaine",
+        "statut": "Or 2",
+        "caracs": [
+          "e"
+        ],
+        "skills": [
+          "Art (Cartographie)",
+          "Charme",
+          "Esquive",
+          "Intuition"
+        ],
+        "talents": [
+          "Exaltant",
+          "Voyageur aguerri",
+          "Seigneur de guerre",
+          "Affable"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Amiral",
+        "statut": "Or 5",
+        "caracs": [
+          "fm"
+        ],
+        "skills": [
+          "Langue (au choix)",
+          "Savoir (au choix)"
+        ],
+        "talents": [
+          "Présence imposante",
+          "Volonté de fer",
+          "Orateur",
+          "Cœur vaillant"
+        ]
+      }
+    ],
+    "carac": [
+      "cc",
+      "int",
+      "soc",
+      "ct",
+      "e",
+      "fm"
     ]
   },
   {
@@ -10567,6 +11288,109 @@
     ]
   },
   {
+    "id": "pretre-de-stromfels",
+    "nom": "Prêtre de Stromfels",
+    "source": "Sea of Claws",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Initié",
+        "statut": "Argent 2",
+        "caracs": [
+          "cc",
+          "f",
+          "i"
+        ],
+        "skills": [
+          "Escalade",
+          "Résistance à l'alcool",
+          "Résistance",
+          "Intimidation",
+          "Intuition",
+          "Corps à corps (Base)",
+          "Prière",
+          "Ramer",
+          "Voile",
+          "Natation"
+        ],
+        "talents": [
+          "Béni (Stromfels)",
+          "Criminel",
+          "Visions sacrées",
+          "Nageur endurant"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Prêtre de Stromfels",
+        "statut": "Argent 3",
+        "caracs": [
+          "soc"
+        ],
+        "skills": [
+          "Calme",
+          "Divertissement (Chant)",
+          "Savoir (Stromfels)",
+          "Orientation",
+          "Perception",
+          "Pistage"
+        ],
+        "talents": [
+          "Sans peur (au choix)",
+          "Fuite !",
+          "Invocation (Stromfels)",
+          "Menaçant"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Prêtre pirate",
+        "statut": "Argent 4",
+        "caracs": [
+          "ag"
+        ],
+        "skills": [
+          "Ragot",
+          "Commandement",
+          "Savoir (Océans)",
+          "Piégeage"
+        ],
+        "talents": [
+          "Haine (Manannites ou Fidèles du Chaos)",
+          "Ferveur ardente (au choix)",
+          "Grand orateur",
+          "Nomade"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Prêtre-Capitaine",
+        "statut": "Argent 5",
+        "caracs": [
+          "ct"
+        ],
+        "skills": [
+          "Corps à corps (au choix)",
+          "Projectiles (Poudre noire)"
+        ],
+        "talents": [
+          "Assaut féroce",
+          "Combattant au contact",
+          "Pilote",
+          "Guerrier né"
+        ]
+      }
+    ],
+    "carac": [
+      "cc",
+      "f",
+      "i",
+      "soc",
+      "ag",
+      "ct"
+    ]
+  },
+  {
     "id": "pretre-du-destin-n",
     "nom": "Prêtre du Destin (N)",
     "source": "Dwarf Player Guide",
@@ -11154,6 +11978,109 @@
       "int",
       "i",
       "cc"
+    ]
+  },
+  {
+    "id": "pretre-marin-de-manann",
+    "nom": "Prêtre-Marin de Manann",
+    "source": "Sea of Claws",
+    "rangs": [
+      {
+        "rang": 1,
+        "titre": "Initié",
+        "statut": "Bronze 2",
+        "caracs": [
+          "e",
+          "ag",
+          "fm"
+        ],
+        "skills": [
+          "Athlétisme",
+          "Résistance à l'alcool",
+          "Calme",
+          "Résistance",
+          "Langue (Classique)",
+          "Savoir (Manann)",
+          "Prière",
+          "Ramer",
+          "Voile",
+          "Natation"
+        ],
+        "talents": [
+          "Béni (Manann)",
+          "Visions sacrées",
+          "Pied marin",
+          "Très fort"
+        ]
+      },
+      {
+        "rang": 2,
+        "titre": "Prêtre-Marin",
+        "statut": "Argent 1",
+        "caracs": [
+          "soc"
+        ],
+        "skills": [
+          "Intuition",
+          "Divertissement (Chant)",
+          "Pari",
+          "Intimidation",
+          "Corps à corps (Arme d'hast)",
+          "Orientation"
+        ],
+        "talents": [
+          "Invocation (Manann)",
+          "Orateur",
+          "Lire/Écrire",
+          "Infatigable"
+        ]
+      },
+      {
+        "rang": 3,
+        "titre": "Prêtre-Capitaine",
+        "statut": "Or 1",
+        "caracs": [
+          "i"
+        ],
+        "skills": [
+          "Charme",
+          "Commandement",
+          "Savoir (Océans)",
+          "Projectiles (Poudre noire)"
+        ],
+        "talents": [
+          "Haine (Fidèles de Stromfels)",
+          "Loup de mer",
+          "Pilote",
+          "Nageur endurant"
+        ]
+      },
+      {
+        "rang": 4,
+        "titre": "Seigneur des Flots",
+        "statut": "Or 2",
+        "caracs": [
+          "int"
+        ],
+        "skills": [
+          "Langue (au choix)",
+          "Savoir (Politique)"
+        ],
+        "talents": [
+          "Chant marin",
+          "Exaltant",
+          "Âme pure",
+          "Voyageur aguerri"
+        ]
+      }
+    ],
+    "carac": [
+      "e",
+      "ag",
+      "fm",
+      "soc",
+      "i",
+      "int"
     ]
   },
   {

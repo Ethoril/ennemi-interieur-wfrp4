@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "sha256:490514a73a718a4993f807aabc4f1a2119c0f78f22027af5aff77177a2d3a60f",
+  "catalogVersion": "sha256:30319d3fd6ba9611e5f933b2240c427456f1684465350373b9dc94632e7a7462",
   "publishedAt": "2026-10-30",
   "sources": {
     "skills": "js/data/skills.json",
@@ -3630,7 +3630,7 @@
     ]
   },
   "talents": {
-    "version": "sha256:ee06e2d1aa6feb951583339a2f7f1270ae5074c23fcd7862717e28ea01b1c02c",
+    "version": "sha256:75719bc6969f605573641a1dee382b1bed1793a3147ecf7e4474ec2412c7f869",
     "entries": [
       {
         "nom": "Acharné",
@@ -6959,6 +6959,22 @@
         ]
       },
       {
+        "id": "talent-42_e9_6e_69_20_28_4d_61_6e_61_6e_6e_29",
+        "key": "béni (manann)",
+        "nom": "Béni (Manann)",
+        "sources": [
+          "career"
+        ]
+      },
+      {
+        "id": "talent-42_e9_6e_69_20_28_53_74_72_6f_6d_66_65_6c_73_29",
+        "key": "béni (stromfels)",
+        "nom": "Béni (Stromfels)",
+        "sources": [
+          "career"
+        ]
+      },
+      {
         "id": "talent-42_e9_6e_69_20_70_61_72_20_49_73_68_61",
         "key": "béni par isha",
         "nom": "Béni par Isha",
@@ -6980,6 +6996,7 @@
         "key": "chant marin",
         "nom": "Chant marin",
         "sources": [
+          "career",
           "sheet"
         ]
       },
@@ -7084,6 +7101,22 @@
         ]
       },
       {
+        "id": "talent-48_61_69_6e_65_20_28_46_69_64_e8_6c_65_73_20_64_65_20_53_74_72_6f_6d_66_65_6c_73_29",
+        "key": "haine (fidèles de stromfels)",
+        "nom": "Haine (Fidèles de Stromfels)",
+        "sources": [
+          "career"
+        ]
+      },
+      {
+        "id": "talent-48_61_69_6e_65_20_28_4d_61_6e_61_6e_6e_69_74_65_73_20_6f_75_20_46_69_64_e8_6c_65_73_20_64_75_20_43_68_61_6f_73_29",
+        "key": "haine (manannites ou fidèles du chaos)",
+        "nom": "Haine (Manannites ou Fidèles du Chaos)",
+        "sources": [
+          "career"
+        ]
+      },
+      {
         "id": "talent-49_6d_70_72_e9_67_6e_e9",
         "key": "imprégné",
         "nom": "Imprégné",
@@ -7120,6 +7153,22 @@
         "id": "talent-49_6e_76_6f_63_61_74_69_6f_6e_20_28_4c_65_20_52_f4_64_65_75_72_20_6e_6f_63_74_75_72_6e_65_29",
         "key": "invocation (le rôdeur nocturne)",
         "nom": "Invocation (Le Rôdeur nocturne)",
+        "sources": [
+          "career"
+        ]
+      },
+      {
+        "id": "talent-49_6e_76_6f_63_61_74_69_6f_6e_20_28_4d_61_6e_61_6e_6e_29",
+        "key": "invocation (manann)",
+        "nom": "Invocation (Manann)",
+        "sources": [
+          "career"
+        ]
+      },
+      {
+        "id": "talent-49_6e_76_6f_63_61_74_69_6f_6e_20_28_53_74_72_6f_6d_66_65_6c_73_29",
+        "key": "invocation (stromfels)",
+        "nom": "Invocation (Stromfels)",
         "sources": [
           "career"
         ]
@@ -7306,6 +7355,7 @@
         "key": "maître à bord",
         "nom": "Maître à bord",
         "sources": [
+          "career",
           "sheet"
         ]
       },
@@ -7433,6 +7483,14 @@
         ]
       },
       {
+        "id": "talent-53_61_76_61_6e_74_20_28_43_f4_74_65_73_20_65_74_20_6d_61_72_e9_65_73_29",
+        "key": "savant (côtes et marées)",
+        "nom": "Savant (Côtes et marées)",
+        "sources": [
+          "career"
+        ]
+      },
+      {
         "id": "talent-53_61_76_61_6e_74_20_28_54_65_72_72_61_69_6e_20_64_75_20_4d_6f_6f_74_29",
         "key": "savant (terrain du moot)",
         "nom": "Savant (Terrain du Moot)",
@@ -7452,6 +7510,14 @@
         "id": "talent-53_61_76_6f_69_72_2d_76_69_76_72_65_20_28_67_75_69_6c_64_65_73_29",
         "key": "savoir-vivre (guildes)",
         "nom": "Savoir-vivre (guildes)",
+        "sources": [
+          "career"
+        ]
+      },
+      {
+        "id": "talent-53_61_76_6f_69_72_2d_76_69_76_72_65_20_28_4d_61_72_69_6e_73_29",
+        "key": "savoir-vivre (marins)",
+        "nom": "Savoir-vivre (Marins)",
         "sources": [
           "career"
         ]
