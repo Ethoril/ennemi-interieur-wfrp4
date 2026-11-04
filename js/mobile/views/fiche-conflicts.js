@@ -1,8 +1,9 @@
 import { submitDraft } from '../fiche-autosave.js';
 import { skillPinId, skillRows } from '../fiche-model.js';
+import { familiersResume, motsClesResume } from '../../fiche/v5.js';
 
 const LABELS = {
-    destin: 'Destin', resilience: 'Résilience', chance: 'Chance', determination: 'Détermination',
+    destin: 'Destin', fortune: 'Fortune', peche: 'Péché', familiers: 'Familiers', motsCles: 'Mots-clés',
     nom: 'Nom', race: 'Race', blessuresAct: 'Blessures actuelles', corruption: 'Corruption',
 };
 const FAVORITE_PATH = /^favoriteSkills\.([1-5])$/u;
@@ -28,6 +29,8 @@ export function createConflictNotice({ documentRef, getContext, announce = () =>
 
     // Une compétence épinglée est stockée sous forme d'identifiant : on montre son nom.
     const valueLabel = (path, value) => {
+        if (path === 'familiers') return familiersResume({ familiers: value }) || 'aucun familier';
+        if (path === 'motsCles') return motsClesResume({ motsCles: value }) || 'aucun mot-clé';
         if (!FAVORITE_PATH.test(path)) return String(value ?? '');
         const { state, engine } = getContext();
         return skillRows(state?.data, engine).find(row => value && skillPinId(row) === value)?.nom || (value ? 'une compétence inconnue' : 'aucune');

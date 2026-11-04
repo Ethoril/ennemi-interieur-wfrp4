@@ -1,16 +1,15 @@
 // Export et import JSON d'une fiche : logique pure (pas de DOM), partagée par la fiche mobile.
-// Le bureau (js/fiche.js, exportToFile/importFromFile) garde sa propre copie ; tools/fiche-mobile-journal.test.mjs vérifie l'accord.
 export const FICHE_EXPORT_FORMAT = 'wfrp4-fiche';
 
 // Même liste que EXPORT_KEYS de commands.js (que le serveur applique à `import`).
 export const FICHE_EXPORT_KEYS = Object.freeze([
     'nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance',
-    'destin', 'corruption', 'possessions', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers',
+    'destin', 'fortune', 'peche', 'corruption', 'possessions', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers',
     'talentsAcq', 'talentsAvail', 'sorts', 'prieres', 'xpLog', 'customSpecs', 'basicSpecs',
-    'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment',
+    'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment', 'familiers', 'motsCles',
 ]);
 
-/** Ne garde que les clés exportables, dans l'ordre de la fiche (celui d'exportData du bureau). */
+/** Ne garde que les clés exportables, dans l'ordre de FICHE_EXPORT_KEYS. */
 export function pickFicheKeys(source) {
     return Object.fromEntries(FICHE_EXPORT_KEYS.filter(key => Object.hasOwn(source || {}, key)).map(key => [key, source[key]]));
 }

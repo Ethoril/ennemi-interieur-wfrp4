@@ -41,7 +41,7 @@ export function resourceTokens(data, maxKey, currentKey) {
 /** Valeur proposée par un point : le point plein d'indice i ramène la ressource à i, le point vide final ajoute 1. */
 export const dotTarget = (value, index) => (index < value ? index : value + 1);
 
-/** Patch d'une ressource passée à `value` ; Chance (resp. Détermination) est ramenée au nouveau maximum, `lowered` = son ancienne valeur. */
+/** Patch d'une ressource passée à `value` ; la Fortune est ramenée au nouveau Destin, `lowered` = son ancienne valeur. */
 export function resourceChange(data, maxKey, currentKey, value) {
     const current = count(data?.[currentKey]);
     const changes = { [maxKey]: String(value) };

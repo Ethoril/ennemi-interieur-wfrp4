@@ -13,7 +13,7 @@ const points = n => `${n} point${n > 1 ? 's' : ''}`;
 const isConflict = error => String(error?.code || '').split('/').at(-1) === 'aborted';
 
 /**
- * Confirmation d'un changement de Destin ou de Résilience. `getContext()` → { state (contrôleur), online, controller }.
+ * Confirmation d'un changement de Destin. `getContext()` → { state (contrôleur), online, controller }.
  * open({ maxKey, currentKey, maxLabel, label, value }, bouton) : `value` est la valeur proposée. Rien n'est écrit avant « Confirmer » ;
  * le patch est recalculé à ce moment-là sur la fiche courante, et s'il diffère de ce qui était affiché le texte est mis à jour
  * et un second toucher est demandé. Ensuite le brouillon est protégé (stagePatch, y compris hors ligne) puis envoyé si possible

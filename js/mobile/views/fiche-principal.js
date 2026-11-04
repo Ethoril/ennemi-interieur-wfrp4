@@ -1,4 +1,5 @@
 import { blessuresMax, mouvement } from '../../fiche/derived.js';
+import { familiersResume, motsClesResume } from '../../fiche/v5.js';
 import { CARACS, dotTarget, FAVORITE_SLOTS, favoriteSlots, ficheCaracs, resourceTokens } from '../fiche-model.js';
 
 function make(documentRef, tag, text = '', className = '') {
@@ -9,7 +10,7 @@ function make(documentRef, tag, text = '', className = '') {
 }
 
 /**
- * Onglet Principal ; toucher une caractéristique appelle onOpenCarac(clé, bouton). Toucher un point de Destin ou de Résilience
+ * Onglet Principal ; toucher une caractéristique appelle onOpenCarac(clé, bouton). Toucher un point de Destin
  * appelle onChangeResource({ maxKey, currentKey, maxLabel, label, value }, bouton) avec la valeur proposée. Les cinq emplacements de
  * compétences épinglées appellent onOpenSlot(numéro 1-5, bouton), qu'ils soient vides ou remplis. La structure est construite
  * une fois ; update() ne réécrit que les textes et les points (réutilisés par rang), donc le bouton focalisé garde le focus.
@@ -18,7 +19,7 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
     const root = make(documentRef, 'div', '', 'm-principal');
 
     const resources = make(documentRef, 'div', '', 'm-principal-resources');
-    const cards = [['Destin', 'Chance', 'destin', 'chance'], ['Résilience', 'Détermination', 'resilience', 'determination']]
+    const cards = [['Destin', 'Fortune', 'destin', 'fortune']]
         .map(([maxLabel, label, maxKey, currentKey]) => {
             const card = make(documentRef, 'div', '', 'm-principal-card');
             const max = make(documentRef, 'p', maxLabel, 'm-principal-max');
@@ -51,7 +52,8 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
     });
     const legend = make(documentRef, 'p', 'Cadre doré : caractéristique de la carrière.', 'm-principal-note');
     const derived = make(documentRef, 'p', '', 'm-principal-note');
-    caracsSection.append(caracsTitle, grid, legend, derived);
+    const v5 = make(documentRef, 'p', '', 'm-principal-note');
+    caracsSection.append(caracsTitle, grid, legend, derived, v5);
 
     const skillsSection = make(documentRef, 'section', '', 'm-principal-section');
     skillsSection.setAttribute('aria-labelledby', 'm-principal-skills');
@@ -112,7 +114,9 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
             cell.button.setAttribute('aria-label',
                 `${carac.nom} ${carac.total}, bonus ${carac.bonus}${carac.career ? ', de carrière' : ''}`);
         });
-        derived.textContent = `Mouvement ${mouvement(data) ?? 'Espèce inconnue'} · Blessures max ${blessuresMax(data)} · Corruption ${Math.max(0, Math.floor(+data?.corruption) || 0)}`;
+        derived.textContent = `Mouvement ${mouvement(data) ?? 'Espèce inconnue'} · Blessures max ${blessuresMax(data) ?? 'Espèce inconnue'} · Corruption ${Math.max(0, Math.floor(+data?.corruption) || 0)} · Péché ${Math.max(0, Math.floor(+data?.peche) || 0)}`;
+        v5.textContent = [familiersResume(data), motsClesResume(data)].filter(Boolean).join(' · ');
+        v5.hidden = !v5.textContent;
         favoriteSlots(data, engine, careers).forEach(({ slot, row }, index) => {
             const { button } = slots[index];
             button.disabled = readonly;

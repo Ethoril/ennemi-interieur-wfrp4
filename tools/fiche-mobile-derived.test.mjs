@@ -5,7 +5,7 @@ import { blessuresMax, caracBonus, caracTotal, mouvement, xpBalance } from '../j
 const caracs = values => Object.fromEntries(
     ['cc', 'ct', 'f', 'e', 'i', 'ag', 'dex', 'int', 'fm', 'soc'].map((key, index) => [key, values[index] ?? { base: 30, adv: 0 }]));
 
-// Valeurs attendues recalculées à la main d'après updateBlessuresMax() et recalc() de js/fiche.js :
+// Valeurs attendues recalculées à la main :
 // B.Force + 2 × B.Endurance + B.Force Mentale + (prises de « Dur à cuire » × B.Endurance).
 const humain = {
     race: 'humain',
@@ -31,6 +31,8 @@ test('blessures maximales par espèce : halfelin inclut BF (12), gnome/skink san
     assert.equal(blessuresMax({ ...humain, race: 'gnome' }), 9);
     assert.equal(blessuresMax({ ...humain, race: 'skink' }), 9);
     assert.equal(blessuresMax({ ...humain, race: 'ogre' }), 24);
+    assert.equal(blessuresMax({ ...humain, race: 'nain' }), 12);
+    assert.equal(blessuresMax({ ...humain, race: 'homme-lezard' }), null, 'espèce hors table : signalée, pas devinée');
 });
 
 test('« Dur à cuire » ajoute le bonus d\'Endurance à chaque prise, sans tenir compte des accents ni de la casse', () => {
@@ -57,6 +59,7 @@ test('mouvement : table des espèces, rétrocompatibilité, défaut à 4 sans es
     assert.equal(mouvement({ race: 'ogre' }), 6);
     assert.equal(mouvement({ race: 'skink' }), 6);
     assert.equal(mouvement({ race: 'inconnue' }), null);
+    assert.equal(mouvement({ race: 'constructor' }), null, 'clé héritée d’Object ignorée');
     assert.equal(mouvement({}), 4);
 });
 

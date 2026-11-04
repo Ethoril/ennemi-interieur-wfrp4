@@ -3,7 +3,8 @@ import { CARACS, ficheIdentity, ficheCaracs, resourceTokens, dotTarget, resource
 import { talentRows, talentTaken, spellRows, learnRows } from '../mobile/fiche-aptitudes-model.js';
 import { careerProgress, careerChangeOptions } from '../mobile/fiche-career-model.js';
 import { purchasePayload, purchaseErrorMessage, cancelErrorMessage } from '../mobile/fiche-purchase.js';
-import { blessuresMax, mouvement, xpBalance } from '../fiche/derived.js';
+import { blessuresMax, especeConnue, mouvement, xpBalance } from '../fiche/derived.js';
+import { FAMILIER_ESPECES, FAMILIER_SYSTEMES, FAMILIER_TYPES, FAMILIER_VENTS, MOT_CLE_CIBLES, MOT_CLE_TYPES, v5FieldError } from '../fiche/v5.js';
 import { publishedSkillRows } from '../catalogue/skill-forms.js';
 import { isTalentInCareer, findCareerByName } from '../fiche/career-model.js';
 import { createCareerViewer } from '../fiche/career-viewer.js';
@@ -44,6 +45,8 @@ const specButton = (label, spec, className = '', attrs = '') => {
 };
 const action = (name, label, disabled = false) => `<button type="button" data-action="${esc(name)}" ${disabled ? 'disabled' : ''}>${esc(label)}</button>`;
 const card = (title, content) => `<section class="bureau-card"><h2>${esc(title)}</h2>${content}</section>`;
+const options = (table, selected) => Object.entries(table).map(([key, label]) => `<option value="${esc(key)}" ${key === selected ? 'selected' : ''}>${esc(label)}</option>`).join('');
+const sortedCibles = Object.fromEntries(Object.entries(MOT_CLE_CIBLES).sort(([, a], [, b]) => a.localeCompare(b, 'fr')));
 const readPath = (data, parts) => {
     let value = data;
     for (const part of parts) value = Array.isArray(value) ? value.find(row => row.id === part) : value?.[part];
@@ -69,11 +72,11 @@ function renderHeader() {
     const identity = ficheIdentity(data, catalogues.careers);
     const xp = xpBalance(data);
     const controls = roleControls(state);
-    const resources = [['destin', 'chance', 'Destin', 'Chance'], ['resilience', 'determination', 'Résilience', 'Détermination']].map(([maxKey, currentKey, title, label]) => {
+    const resources = [['destin', 'fortune', 'Destin', 'Fortune']].map(([maxKey, currentKey, title, label]) => {
         const tokens = resourceTokens(data, maxKey, currentKey);
         return `<div><button class="bureau-resource-title" data-action="resource-max" data-max="${maxKey}" data-current="${currentKey}" ${controls.editable ? '' : 'disabled'}>${title} ${esc(tokens.max)}</button><div>${label} ${Array.from({ length: Math.min(100, tokens.max) }, (_, i) => `<button type="button" class="bureau-pip" data-action="pip" data-key="${currentKey}" data-value="${dotTarget(tokens.current, i)}" aria-label="${esc(`${label} : ${i < tokens.current ? 'dépenser' : 'récupérer'}, passer à ${dotTarget(tokens.current, i)} sur ${tokens.max}`)}" aria-pressed="${i < tokens.current}" ${controls.editable ? '' : 'disabled'}></button>`).join('')}</div></div>`;
     }).join('');
-    $('bureau-header').innerHTML = `${portraits[charId] ? `<img class="bureau-portrait" src="img/${portraits[charId]}.webp" alt="Portrait de ${esc(identity.nom)}">` : `<div class="bureau-portrait" aria-hidden="true">${esc(identity.nom.slice(0, 2).toUpperCase() || '⚜')}</div>`}<div class="bureau-identity"><h1>${esc(identity.nom || 'Personnage')}</h1><p>${esc(`${races[data.race] || data.race || ''} · ${identity.carriere} — ${identity.titreRang} · Rang ${identity.rang} · ${identity.statut}`)}</p>${controls.mj ? action('identity', 'Corriger l’identité', !controls.actions) : ''}</div><div class="bureau-resources">${resources}</div><div class="bureau-xp"><a href="#journal"><strong>${esc(xp.libre)}</strong>XP libres</a><small>Gagnés ${esc(xp.gagne)}<br>Dépensés ${esc(xp.depense)}</small></div><details class="bureau-menu"><summary aria-label="Plus d’actions">⋯</summary><div class="bureau-menu-panel">${action('export', 'Exporter en JSON')}${controls.mj ? action('import', 'Importer un JSON', !navigator.onLine || !['ready', 'missing', 'tombstone'].includes(state.phase)) : ''}<a href="fiche-ancienne.html?${esc(params.toString())}">Ancienne fiche</a></div></details>`;
+    $('bureau-header').innerHTML = `${portraits[charId] ? `<img class="bureau-portrait" src="img/${portraits[charId]}.webp" alt="Portrait de ${esc(identity.nom)}">` : `<div class="bureau-portrait" aria-hidden="true">${esc(identity.nom.slice(0, 2).toUpperCase() || '⚜')}</div>`}<div class="bureau-identity"><h1>${esc(identity.nom || 'Personnage')}</h1><p>${esc(`${races[data.race] || data.race || ''} · ${identity.carriere} — ${identity.titreRang} · Rang ${identity.rang} · ${identity.statut}`)}</p>${controls.mj ? action('identity', 'Corriger l’identité', !controls.actions) : ''}</div><div class="bureau-resources">${resources}</div><div class="bureau-xp"><a href="#journal"><strong>${esc(xp.libre)}</strong>XP libres</a><small>Gagnés ${esc(xp.gagne)}<br>Dépensés ${esc(xp.depense)}</small></div><details class="bureau-menu"><summary aria-label="Plus d’actions">⋯</summary><div class="bureau-menu-panel">${action('export', 'Exporter en JSON')}${controls.mj ? action('import', 'Importer un JSON', !navigator.onLine || !['ready', 'missing', 'tombstone'].includes(state.phase)) : ''}</div></details>`;
     document.title = `${identity.nom || 'Personnage'} — Fiche de personnage`;
 }
 
@@ -82,8 +85,52 @@ function renderLeft() {
     const editable = roleControls(state).editable;
     const maximum = blessuresMax(data);
     $('bureau-left').innerHTML = card('Caractéristiques', `<div class="bureau-caracs">${ficheCaracs(data, catalogues.careers).map(c => specButton(`<span>${esc(c.abbr)}</span><strong><em>${esc(Math.floor(c.total / 10))}</em>${esc(c.total % 10)}</strong>`, { kind: 'carac', key: c.key }, `bureau-carac ${c.career ? 'is-career' : ''}`, `aria-label="${esc(`${c.nom} ${c.total}, bonus ${c.bonus}${c.career ? ', de carrière' : ''}. Détail`)}"`)).join('')}</div><p class="bureau-muted">Cadre doré : caractéristique de carrière. Un clic ouvre le détail.</p>`)
-        + card('État', `<div class="bureau-state-row"><label for="blessures-act">Blessures actuelles</label><div class="bureau-stepper"><button data-action="wounds" data-delta="-1" aria-label="Diminuer les blessures actuelles" ${editable ? '' : 'disabled'}>−</button><input id="blessures-act" data-patch="blessuresAct" aria-label="Blessures actuelles" type="number" min="0" value="${esc(data.blessuresAct || 0)}" ${editable ? '' : 'disabled'}><button data-action="wounds" data-delta="1" aria-label="Augmenter les blessures actuelles" ${editable ? '' : 'disabled'}>+</button></div></div><progress max="${Math.max(1, maximum)}" value="${Math.max(0, +data.blessuresAct || 0)}" aria-label="Blessures disponibles"></progress><div class="bureau-state-row"><span>Mouvement</span><strong>${esc(mouvement(data) ?? 'Espèce inconnue')}</strong></div><div class="bureau-state-row"><span>Blessures max</span><strong>${maximum}</strong></div><div class="bureau-state-row"><label for="corruption">Corruption</label><input id="corruption" data-patch="corruption" type="number" min="0" value="${esc(data.corruption || 0)}" ${editable ? '' : 'disabled'}></div>`)
+        + card('État', `<div class="bureau-state-row"><label for="blessures-act">Blessures actuelles</label><div class="bureau-stepper"><button data-action="wounds" data-delta="-1" aria-label="Diminuer les blessures actuelles" ${editable ? '' : 'disabled'}>−</button><input id="blessures-act" data-patch="blessuresAct" aria-label="Blessures actuelles" type="number" min="0" value="${esc(data.blessuresAct || 0)}" ${editable ? '' : 'disabled'}><button data-action="wounds" data-delta="1" aria-label="Augmenter les blessures actuelles" ${editable ? '' : 'disabled'}>+</button></div></div><progress max="${Math.max(1, maximum ?? 0)}" value="${Math.max(0, +data.blessuresAct || 0)}" aria-label="Blessures disponibles"></progress>${especeConnue(data) ? '' : `<p class="bureau-error" role="note">Espèce « ${esc(data.race)} » inconnue : Mouvement et Blessures max à fixer avec le MJ.</p>`}<div class="bureau-state-row"><span>Mouvement</span><strong>${esc(mouvement(data) ?? '—')}</strong></div><div class="bureau-state-row"><span>Blessures max</span><strong>${esc(maximum ?? '—')}</strong></div><div class="bureau-state-row"><label for="corruption">Corruption</label><input id="corruption" data-patch="corruption" type="number" min="0" step="1" value="${esc(data.corruption || 0)}" ${editable ? '' : 'disabled'}></div><div class="bureau-state-row"><label for="peche">Péché</label><input id="peche" data-patch="peche" type="number" min="0" step="1" value="${esc(data.peche || 0)}" ${editable ? '' : 'disabled'}></div>`)
+        + card('Familiers', renderFamiliers(data, editable))
+        + card('Mots-clés', renderMotsCles(data, editable))
         + card('Possessions et notes', `<label class="bureau-sr" for="possessions">Possessions et notes</label><textarea id="possessions" data-patch="possessions" ${editable ? '' : 'disabled'}>${esc(data.possessions || '')}</textarea><small class="bureau-muted">Enregistrement automatique</small>`);
+}
+
+function renderFamiliers(data, editable) {
+    const disabled = editable ? '' : 'disabled';
+    const rows = (data.familiers || []).map(row => {
+        const id = esc(row.id);
+        const field = (name, label, control) => `<label for="fam-${id}-${name}">${label}</label>${control(`id="fam-${id}-${name}" data-fam="${id}" data-field="${name}" ${disabled}`)}`;
+        const homunculus = row.systeme === 'homunculus';
+        return `<fieldset class="bureau-familier"><legend>${esc(row.nom || 'Familier sans nom')}</legend>`
+            + field('nom', 'Nom', attrs => `<input ${attrs} value="${esc(row.nom)}" maxlength="200">`)
+            + field('systeme', 'Système', attrs => `<select ${attrs}>${options(FAMILIER_SYSTEMES, row.systeme)}</select>`)
+            + field('type', 'Type', attrs => `<select ${attrs} ${homunculus ? '' : 'disabled'}>${options(FAMILIER_TYPES, row.type)}</select>`)
+            + (homunculus ? field('vent', 'Vent', attrs => `<select ${attrs}>${options(FAMILIER_VENTS, row.vent)}</select>`)
+                : field('espece', 'Espèce', attrs => `<select ${attrs}>${options(FAMILIER_ESPECES, row.espece)}</select>`))
+            + field('destinSacrifie', 'Destin sacrifié (1 + points cédés)', attrs => `<input ${attrs} type="number" min="1" max="100" step="1" value="${esc(row.destinSacrifie)}">`)
+            + `<button type="button" data-action="familier-remove" data-id="${id}" aria-label="${esc(`Retirer ${row.nom || 'ce familier'}`)}" ${disabled}>Retirer</button></fieldset>`;
+    }).join('');
+    return `${rows || '<p class="bureau-muted">Aucun familier.</p>'}${editable ? action('familier-add', '+ Familier') : ''}`;
+}
+
+function renderMotsCles(data, editable) {
+    const label = row => `${MOT_CLE_TYPES[row.id] || row.id} (${MOT_CLE_CIBLES[row.cible] || row.cible})`;
+    const rows = (data.motsCles || []).map((row, index) => `<li>${esc(label(row))}${editable ? `<button type="button" data-action="mot-cle-remove" data-index="${index}" aria-label="${esc(`Retirer ${label(row)}`)}">×</button>` : ''}</li>`).join('');
+    const form = editable ? `<div class="bureau-mot-cle-form"><label for="mot-cle-type">Mot-clé</label><select id="mot-cle-type">${options(MOT_CLE_TYPES)}</select><label for="mot-cle-cible">Cible</label><select id="mot-cle-cible">${options(sortedCibles)}</select>${action('mot-cle-add', 'Ajouter')}</div>` : '';
+    return `${rows ? `<ul class="bureau-mots-cles">${rows}</ul>` : '<p class="bureau-muted">Aucun mot-clé.</p>'}${form}`;
+}
+
+// Un familier qui change de système garde nom et Destin ; les champs propres au système sont remis.
+function familierAvecChamp(row, field, value) {
+    if (field === 'systeme') {
+        return value === 'animal'
+            ? { ...row, systeme: 'animal', type: 'power', vent: null, espece: row.espece || 'generic' }
+            : { ...row, systeme: 'homunculus', type: row.type || 'combat', vent: row.vent || 'aqshy', espece: null };
+    }
+    if (field === 'destinSacrifie') return { ...row, destinSacrifie: Number(value) };
+    return { ...row, [field]: value };
+}
+
+function patchFamilier(input) {
+    // Destin vide pendant la saisie : on attend une valeur complète.
+    if (input.dataset.field === 'destinSacrifie' && !/^\d{1,3}$/u.test(input.value)) return;
+    patch({ familiers: (state.data.familiers || []).map(row => row.id === input.dataset.fam ? familierAvecChamp(row, input.dataset.field, input.value) : row) });
 }
 
 function renderAptitudes() {
@@ -257,6 +304,10 @@ function stageCorrections(changes) {
 // Le contrôleur persiste immédiatement le brouillon ; seul l’envoi cloud est temporisé.
 function patch(changes) {
     if (!roleControls(state).editable) return;
+    // Le serveur refuserait tout le lot : une saisie invalide n'entre pas dans le brouillon.
+    const invalid = Object.entries(changes).map(([path, value]) => v5FieldError(path, value)).find(Boolean);
+    if (invalid) { message = `Valeur refusée : ${invalid}.`; $('bureau-status').textContent = message; return; }
+    if (message.startsWith('Valeur refusée')) message = '';
     const staged = controller.stagePatch(changes);
     if (!staged.ok) { message = 'Modification non autorisée.'; render(); return; }
     clearTimeout(patchTimer);
@@ -293,12 +344,32 @@ $('bureau-content').addEventListener('click', async event => {
     if (name === 'wounds') { patch({ blessuresAct: String(Math.max(0, (+state.data.blessuresAct || 0) + +button.dataset.delta)) }); return; }
     if (name === 'resource-max') {
         const key = button.dataset.max;
-        const value = window.prompt(`Nouvelle valeur de ${key === 'destin' ? 'Destin' : 'Résilience'} :`, state.data[key] || '0');
+        const value = window.prompt('Nouvelle valeur de Destin :', state.data[key] || '0');
         if (value === null || !/^\d+$/u.test(value) || +value > 100) return;
         const proposed = resourceChange(state.data, key, button.dataset.current, +value);
         if (window.confirm(`Passer à ${value}${proposed.lowered === null ? '' : ' et plafonner les points disponibles'} ?`)) patch(proposed.changes);
         return;
     }
+    if (name === 'familier-add') {
+        const id = `fam_${globalThis.crypto.randomUUID().replaceAll('-', '').slice(0, 16)}`;
+        patch({ familiers: [...(state.data.familiers || []), { id, systeme: 'homunculus', type: 'combat', vent: 'aqshy', espece: null, nom: '', destinSacrifie: 1 }] });
+        $(`fam-${id}-nom`)?.focus();
+        return;
+    }
+    if (name === 'familier-remove') {
+        const row = (state.data.familiers || []).find(item => item.id === button.dataset.id);
+        if (row && window.confirm(`Retirer ${row.nom || 'ce familier'} de la fiche ?`)) patch({ familiers: state.data.familiers.filter(item => item !== row) });
+        return;
+    }
+    if (name === 'mot-cle-add') {
+        const row = { id: $('mot-cle-type').value, cible: $('mot-cle-cible').value };
+        const rows = state.data.motsCles || [];
+        if (rows.some(item => item.id === row.id && item.cible === row.cible)) { message = 'Ce mot-clé est déjà sur la fiche.'; $('bureau-status').textContent = message; return; }
+        patch({ motsCles: [...rows, row] });
+        $('mot-cle-add')?.focus();
+        return;
+    }
+    if (name === 'mot-cle-remove') { patch({ motsCles: (state.data.motsCles || []).filter((_, index) => index !== +button.dataset.index) }); $('mot-cle-type')?.focus(); return; }
     if (name === 'export') {
         const blob = new Blob([JSON.stringify(state.data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob); const link = document.createElement('a');
@@ -340,12 +411,14 @@ $('bureau-content').addEventListener('click', async event => {
 $('bureau-content').addEventListener('input', event => {
     const input = event.target;
     if (input.dataset.patch) patch({ [input.dataset.patch]: input.value });
+    if (input.dataset.fam && input.matches('input')) patchFamilier(input);
     if (input.id === 'skill-query') renderSkills();
     if (input.id === 'bureau-search') { searchQuery = input.value; const cursor = input.selectionStart; renderInspector(); $('bureau-search').focus(); $('bureau-search').setSelectionRange(cursor, cursor); }
     if (input.id === 'bureau-correction-reason') { correctionReason = input.value; persistCorrections(); $('bureau-corrections').querySelector('[data-action="submit-corrections"]').disabled = !roleControls(state).actions || !navigator.onLine || !correctionItems.length || correctionItems.length > 50 || !!correctionConflicts().length || !correctionReason.trim(); }
 });
 $('bureau-content').addEventListener('change', event => {
     const input = event.target;
+    if (input.dataset.fam && input.matches('select')) patchFamilier(input);
     if (input.id === 'skill-filter') renderSkills();
     if (input.id === 'bureau-target-rank') { selection.targetRank = +input.value; renderInspector(); }
     if (input.id === 'bureau-talent-pick') { selection.pick = input.value.trim(); renderInspector(); }

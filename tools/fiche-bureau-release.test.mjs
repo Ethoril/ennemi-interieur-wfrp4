@@ -6,18 +6,14 @@ import { fileURLToPath } from 'node:url';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = name => readFileSync(resolve(root, name), 'utf8');
 
-test('bureau : CSP conservée et ancienne page raccordée aux modules historiques', () => {
+test('bureau : CSP conservée, ancienne fiche retirée', () => {
     const page = read('fiche.html');
-    const previous = read('fiche-ancienne.html');
-    const csp = html => html.match(/<meta http-equiv="Content-Security-Policy"[^>]+>/u)?.[0];
-    assert.ok(csp(page));
-    assert.equal(csp(page), csp(previous));
-    assert.match(previous, /src="js\/fiche\.js"/u);
-    assert.match(previous, /src="js\/fiche-cloud\.js"/u);
-    assert.match(previous, /href="css\/fiche\.css"/u);
+    assert.ok(page.match(/<meta http-equiv="Content-Security-Policy"[^>]+>/u));
     assert.doesNotMatch(page, /src="js\/fiche(?:-cloud)?\.js"/u);
     assert.match(page, /href="app\/index\.html#\/fiches"/u);
-    assert.match(read('js/fiche-bureau/app.js'), /fiche-ancienne\.html\?/u);
+    for (const file of ['fiche-ancienne.html', 'js/fiche.js', 'js/fiche-cloud.js', 'js/fiche-client-bridge.js']) assert.ok(!existsSync(resolve(root, file)), file);
+    assert.doesNotMatch(read('js/fiche-bureau/app.js'), /fiche-ancienne/u);
+    assert.doesNotMatch(read('sw.js'), /fiche-ancienne|js\/fiche\.js|fiche-cloud|fiche-client-bridge/u);
 });
 
 test('bureau : page et graphe local précachés, livraison v2.38.3 cohérente', () => {
@@ -26,7 +22,7 @@ test('bureau : page et graphe local précachés, livraison v2.38.3 cohérente', 
     assert.match(read('js/layout.js'), /APP_VERSION = 'v2.38.3'/u);
     assert.match(read('CHANGELOG.md'), /^## \[2.38.3\]/u);
     const assets = new Set([...sw.matchAll(/['"]\.\/([^'"]+)['"]/gu)].map(match => match[1]));
-    for (const file of ['fiche.html', 'fiche-ancienne.html', 'css/fiche-bureau.css', 'css/equipment.css', 'js/data/equipment-catalog.json', 'docs/memo-armures.pdf']) assert.ok(assets.has(file), file);
+    for (const file of ['fiche.html', 'css/fiche-bureau.css', 'css/equipment.css', 'js/data/equipment-catalog.json', 'docs/memo-armures.pdf']) assert.ok(assets.has(file), file);
     const pending = ['js/fiche-bureau/app.js'];
     const visited = new Set();
     while (pending.length) {

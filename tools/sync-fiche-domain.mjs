@@ -13,6 +13,9 @@ const generated = [
     ['js/fiche/basic-skills.js', 'functions/src/domain/fiche/basic-skills.js'],
     ['js/fiche/skill-names.js', 'functions/src/domain/fiche/skill-names.js'],
     ['js/fiche/xp.js', 'functions/src/domain/fiche/xp.js'],
+    ['js/fiche/v5.js', 'functions/src/domain/fiche/v5.js', source => source
+        .replaceAll("'../data/creature-keywords.js'", "'../../data/creature-keywords.js'")],
+    ['js/data/creature-keywords.js', 'functions/src/data/creature-keywords.js'],
     ['js/fiche/published-catalogue-engine.js', 'functions/src/domain/fiche/published-catalogue-engine.mjs', source => source
         .replaceAll("'../catalogue/talent-resolver.js'", "'../../catalogue/talent-resolver.mjs'")
         .replaceAll("'../catalogue/skill-resolver.js'", "'../../catalogue/skill-resolver.mjs'")],

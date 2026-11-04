@@ -49,6 +49,14 @@
 .bureau-state-row, .bureau-actions, .bureau-stepper { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .bureau-state-row { justify-content: space-between; margin: 8px 0; }
 .bureau-state-row input { width: 75px; }
+.bureau-familier { border: 1px solid var(--border-subtle); border-radius: 10px; padding: 10px 12px 12px; margin: 0 0 10px; display: grid; grid-template-columns: max-content 1fr; gap: 6px 10px; align-items: center; }
+.bureau-familier legend { padding: 0 6px; color: var(--bureau-gold); font-family: var(--font-heading); }
+.bureau-familier button { grid-column: 2; justify-self: start; }
+.bureau-mots-cles { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.bureau-mots-cles li { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border-gold); border-radius: 999px; padding: 2px 4px 2px 10px; }
+.bureau .bureau-mots-cles button { padding: 0 8px; border: 0; background: transparent; }
+.bureau-mot-cle-form { display: grid; grid-template-columns: max-content 1fr; gap: 6px 10px; align-items: center; }
+.bureau-mot-cle-form button { grid-column: 2; justify-self: start; }
 .bureau textarea { resize: vertical; min-height: 170px; }
 .bureau progress { width: 100%; accent-color: var(--gold); height: 10px; }
 .bureau-filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }

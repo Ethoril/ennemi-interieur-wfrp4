@@ -13,6 +13,7 @@ import {
 import { BASIC_SKILLS, basicRowFor, basicSkillNom, getCaracForGroup } from './basic-skills.js';
 import { canonicalSkillNom, sameSkill } from './skill-names.js';
 import { applyEquipmentCommand, validateEquipmentItem } from './equipment.js';
+import { V5_LIST_FIELDS, v5FieldError } from './v5.js';
 import {
     CARAC_XP_BANDS,
     SKILL_XP_BANDS,
@@ -28,9 +29,9 @@ const XP_BANDS_LIMIT = 100;
 const TEXT_LIMIT = 200;
 const EXPORT_KEYS = new Set([
     'nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance',
-    'destin', 'corruption', 'possessions', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers',
+    'destin', 'fortune', 'peche', 'corruption', 'possessions', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers',
     'talentsAcq', 'talentsAvail', 'sorts', 'prieres', 'xpLog', 'customSpecs', 'basicSpecs',
-    'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment',
+    'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment', 'familiers', 'motsCles',
 ]);
 
 export class FicheCommandError extends Error {
@@ -717,7 +718,7 @@ function correct(data, command, context, options) {
 }
 
 const BATCH_ROWS = new Set(['skillsAdvanced', 'talentsAcq', 'talentsAvail', 'careers', 'sorts', 'prieres']);
-const BASIC_FIELDS = new Set(['nom', 'race', 'blessuresAct', 'resilience', 'determination', 'chance', 'destin', 'corruption', 'possessions']);
+const BASIC_FIELDS = new Set(['nom', 'race', 'blessuresAct', 'fortune', 'destin', 'peche', 'corruption', 'possessions']);
 
 function validateBatchRow(root, row, id, ruleCatalog) {
     if (!isRecord(row)) fail('ligne MJ invalide');
@@ -1047,8 +1048,13 @@ function validateImportData(imported, equipmentCatalogue) {
             || new Set(imported.equipment.map(item => item?.id)).size !== imported.equipment.length) fail('équipement importé invalide');
         for (const item of imported.equipment) validateEquipmentItem(item, equipmentCatalogue);
     }
-    for (const key of ['nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance', 'destin', 'corruption', 'possessions']) {
+    // `resilience`, `determination` et `chance` restent acceptés pour relire les exports d'avant la V5.
+    for (const key of ['nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance', 'destin', 'fortune', 'peche', 'corruption', 'possessions']) {
         if (Object.hasOwn(imported, key) && typeof imported[key] !== 'string') fail(`champ d’import invalide: ${key}`);
+    }
+    for (const key of ['fortune', 'peche', ...V5_LIST_FIELDS]) {
+        const error = Object.hasOwn(imported, key) ? v5FieldError(key, imported[key]) : null;
+        if (error) fail(`champ d’import invalide: ${key} (${error})`);
     }
     if (Object.hasOwn(imported, 'carac')) {
         if (!isRecord(imported.carac) || Object.keys(imported.carac).some(key => !CARACS.includes(key))) fail('caractéristiques d’import invalides');

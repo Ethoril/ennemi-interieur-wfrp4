@@ -1,9 +1,10 @@
 import { FICHE_SCHEMA_VERSION, migrateFicheDocument } from './fiche-schema.js';
 import { DRAFT_SCHEMA_VERSION } from './fiche-draft-store.js';
+import { migrerFicheV5 } from './fiche/v5.js';
 
 const SIMPLE_PATHS = new Set([
-    'nom', 'race', 'blessuresAct', 'resilience', 'determination', 'chance', 'destin',
-    'corruption', 'possessions', 'optVisible.section-sorts', 'optVisible.section-prieres',
+    'nom', 'race', 'blessuresAct', 'fortune', 'destin', 'peche', 'corruption', 'possessions',
+    'familiers', 'motsCles', 'optVisible.section-sorts', 'optVisible.section-prieres',
 ]);
 const PRIVATE_COMMANDS = new Set(['gain', 'correct', 'import', 'reset', 'equipment']);
 
@@ -211,7 +212,8 @@ export function createFicheController({
             emit({ phase: 'legacy-readonly', envelope, data: clone(snapshot.data), revision: snapshot.revision, conflicts: [] });
             return;
         }
-        snapshot = { envelope, data: clone(envelope.data), revision: envelope.revision };
+        // Même migration que le serveur, pour que les valeurs de base d'un patch concordent.
+        snapshot = { envelope, data: migrerFicheV5(clone(envelope.data)), revision: envelope.revision };
         if (envelope.tombstone === true) {
             emit({ phase: 'tombstone', envelope, revision: envelope.revision, data: {}, conflicts: [] });
             resolveWaiters(envelope.revision);

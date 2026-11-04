@@ -85,32 +85,23 @@ test('journal : entrées historiques sans kind, corrections MJ, achat sans libel
     assert.deepEqual(xpLogRows({}, engine, 'u1'), []);
 });
 
-// Copie de la logique du bureau (js/fiche.js exportData + exportToFile), lue dans la source : fiche.js dépend du DOM.
-test('export : même objet que le bureau, mêmes clés que le serveur, nom de fichier daté', () => {
-    const desktop = source('js/fiche.js');
-    const exportData = desktop.match(/export function exportData\(\) \{\s*return \{([\s\S]*?)\n    \};/u)[1];
-    const desktopKeys = [...exportData.matchAll(/^\s+(\w+):/gmu)].map(match => match[1]);
-    assert.deepEqual(desktopKeys, FICHE_EXPORT_KEYS);
+test('export : mêmes clés que le serveur, nom de fichier daté', () => {
     const serverKeys = source('js/fiche/commands.js').match(/const EXPORT_KEYS = new Set\(\[([\s\S]*?)\]\);/u)[1];
     assert.deepEqual([...serverKeys.matchAll(/'(\w+)'/gu)].map(match => match[1]), FICHE_EXPORT_KEYS);
-    const desktopImport = desktop.match(/const exportKeys = new Set\(\[([\s\S]*?)\]\);/u)[1];
-    assert.deepEqual([...desktopImport.matchAll(/'(\w+)'/gu)].map(match => match[1]), FICHE_EXPORT_KEYS);
 
     const data = { ...sheet(), customSpecs: {}, customTalents: {}, optVisible: { 'section-sorts': false }, nom: 'Ilsa', race: 'humain',
         blessuresAct: '3', resilience: '1', determination: '1', chance: '1', destin: '2', corruption: '0',
         catalogueMigrationBarriers: [{ purchaseIds: ['x'] }], revision: 9, equipment: [] };
     const exportedAt = '2026-10-06T12:34:56.000Z';
-    // Ce que le bureau écrit : { _format, _version, _app, _charId, _exportedAt, ...exportData() } (exportData : les 26 clés).
     const expected = {
         _format: 'wfrp4-fiche', _version: 1, _app: 'v2.31.1', _charId: 'test', _exportedAt: exportedAt,
-        ...Object.fromEntries(desktopKeys.map(key => [key, data[key]])),
+        ...Object.fromEntries(FICHE_EXPORT_KEYS.filter(key => key in data).map(key => [key, data[key]])),
     };
     const built = buildFicheExport(data, { charId: 'test', appVersion: 'v2.31.1', exportedAt });
     assert.deepEqual(built, expected);
     assert.equal(JSON.stringify(built, null, 2), JSON.stringify(expected, null, 2), 'même ordre des clés, donc même fichier');
     assert.ok(!('catalogueMigrationBarriers' in built) && !('revision' in built));
     assert.equal(ficheExportFilename('test', exportedAt), 'fiche-test-2026-10-06.json');
-    assert.match(desktop, /a\.download = `fiche-\$\{payload\._charId\}-\$\{jour\}\.json`/u);
 });
 
 test('import : format invalide ou illisible refusé, clés filtrées, aller-retour avec l’export', () => {

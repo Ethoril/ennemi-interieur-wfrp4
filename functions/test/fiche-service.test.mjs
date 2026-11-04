@@ -489,3 +489,48 @@ test('le handler callable transmet le motif des refus de plafond de talent', asy
         ));
     }
 });
+
+test('V5 : le joueur modifie Fortune, Péché, Corruption, familiers et mots-clés ; valeurs invalides refusées sans écriture', async () => {
+    const store = createStore(seed());
+    const services = deps(store);
+    const familiers = [{ id: 'fam_1', systeme: 'animal', type: 'power', vent: null, espece: 'cat', nom: 'Minou', destinSacrifie: 2 }];
+    const motsCles = [{ id: 'haine', cible: 'peaux-vertes' }];
+    await executeFicheCommand(command('patch', {
+        changes: { fortune: '2', peche: '1', corruption: '3', familiers, motsCles },
+        baseValues: { fortune: null, peche: null, corruption: null, familiers: null, motsCles: null },
+    }), PLAYER, services);
+    const data = store.documents.get('fiches/bhelgi').data;
+    assert.deepEqual([data.fortune, data.peche, data.corruption, data.familiers, data.motsCles], ['2', '1', '3', familiers, motsCles]);
+    const refused = [
+        { peche: '-1' }, { fortune: 2 }, { corruption: 'beaucoup' },
+        { familiers: [{ ...familiers[0], type: 'combat' }] }, { familiers: 'Minou' },
+        { motsCles: [{ id: 'haine', cible: 'gobelins' }] },
+    ];
+    for (const [index, changes] of refused.entries()) {
+        const [path] = Object.keys(changes);
+        await rejectCode(executeFicheCommand(command('patch', { changes, baseValues: { [path]: data[path] } },
+            { operationId: `v5-refus-${index}`, baseRevision: 1 }), PLAYER, services), 'invalid-argument');
+    }
+    assert.equal(store.documents.get('fiches/bhelgi').revision, 1);
+    for (const path of ['chance', 'resilience', 'determination']) {
+        await rejectCode(executeFicheCommand(command('patch', { changes: { [path]: '1' }, baseValues: { [path]: null } },
+            { operationId: `v5-retire-${path}`, baseRevision: 1 }), PLAYER, services), 'permission-denied', 'field-forbidden');
+    }
+});
+
+test('V5 : toute écriture migre Chance vers Fortune, garde Chance et la source sauvegardée intacte', async () => {
+    const legacy = { ...INITIAL, data: { ...INITIAL.data, destin: '3', chance: '2', resilience: '1', determination: '1' } };
+    const store = createStore({ ...seed(), 'fiches/bhelgi': legacy });
+    const services = deps(store);
+    // Le client lit la fiche migrée : sa valeur de base pour `fortune` est l'ancienne Chance.
+    await executeFicheCommand(command('patch', { changes: { fortune: '1' }, baseValues: { fortune: '2' } }), PLAYER, services);
+    assert.deepEqual(store.documents.get('fiches/bhelgi').data, { ...legacy.data, fortune: '1' });
+    const other = createStore({ ...seed(), 'fiches/bhelgi': legacy });
+    await executeFicheCommand(command('patch', { changes: { possessions: 'épée' }, baseValues: { possessions: 'hache' } }), PLAYER, deps(other));
+    assert.equal(other.documents.get('fiches/bhelgi').data.fortune, '2', 'un patch sur un autre champ migre aussi');
+    const imported = createStore({ ...seed(), 'fiches/bhelgi': legacy });
+    await executeFicheCommand(command('import', { reason: 'Ancien export', data: { nom: 'Bhelgi', chance: '1' } }), MJ,
+        deps(imported, async (_data, cmd) => ({ data: cmd.payload.data, summary: { kind: 'import' } })));
+    assert.deepEqual(imported.documents.get('fiches/bhelgi').data, { nom: 'Bhelgi', chance: '1', fortune: '1' });
+    assert.deepEqual(imported.documents.get('fiches/bhelgi/command_backups/operation-1').sourceEnvelope, legacy);
+});

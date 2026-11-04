@@ -184,7 +184,7 @@ export function createFicheDetailView({
     const cancel = createCancelSheet({
         documentRef, getContext: ficheContext, announce: message => { announce(message); journal.refocus(); },
     });
-    // Brûler ou ajouter un point de Destin / Résilience : confirmation, puis brouillon protégé et envoi.
+    // Brûler ou ajouter un point de Destin : confirmation, puis brouillon protégé et envoi.
     const resource = createResourceSheet({
         documentRef, getContext: ficheContext, announce, onDone: key => shell?.principal.focusResource(key),
     });

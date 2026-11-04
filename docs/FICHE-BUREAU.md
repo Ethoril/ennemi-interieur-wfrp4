@@ -56,8 +56,8 @@ git diff --stat master -- app js/mobile css/mobile-app.css css/mobile-fiche.css 
   - `js/fiche/xp.js` (barèmes, `xpBandCost`, `talentXpCost`, `careerRankXpCost`, sorts/miracles),
     `career-model.js`, `skill-names.js`, `basic-skills.js`, `derived.js`,
     `published-catalogue-engine.js`, `commands.js` (`evaluateCareerCompletion`) ;
-  - session, synchronisation, brouillons : `fiche-controller.js`, `fiche-client-bridge.js`,
-    `fiche-draft-store.js`, `fiche-cloud.js`.
+  - session, synchronisation, brouillons : `fiche-controller.js`, `fiche-draft-store.js`.
+  - données V5 (Fortune, Péché, familiers, mots-clés) : `js/fiche/v5.js`.
 - **Modèles mobiles purs : import autorisé, modification interdite.** `js/mobile/fiche-model.js`,
   `fiche-aptitudes-model.js`, `fiche-career-model.js`, `fiche-purchase.js` sont sans DOM et
   couvrent exactement les besoins du bureau : `skillRows`, `filterSkills`, `sortSkills`,
@@ -68,7 +68,8 @@ git diff --stat master -- app js/mobile css/mobile-app.css css/mobile-fiche.css 
 - **Achats** : uniquement via les commandes serveur existantes, avec le même payload que
   le mobile (`purchasePayload`) ou que l'actuel `validateXpPurchase` (`js/fiche.js`) : calcul,
   débit, reprise sans double débit restent côté serveur. Côté client : aperçu seulement.
-- **Ancienne fiche conservée** pendant quelques versions (§ 9). L'ancienne page doit continuer
+- **Ancienne fiche retirée** le 04/11/2026 avec le passage V5 (`fiche-ancienne.html`, `js/fiche.js`,
+  `fiche-cloud.js`, `fiche-client-bridge.js` supprimés). Historique : conservée pendant quelques versions (§ 9). L'ancienne page doit continuer
   de fonctionner sans changement de comportement.
 - **Étape 0 obligatoire** : avant d'écrire du code, proposer un court plan d'architecture
   (fichiers créés, fichiers modifiés, façon de garder l'ancienne page fonctionnelle) et le

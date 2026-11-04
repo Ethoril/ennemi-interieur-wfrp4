@@ -76,9 +76,9 @@ test('caractéristiques : ordre, bonus et marqueur de carrière (variantes et su
 });
 
 test('jetons : valeurs absentes ou non numériques valent 0, la valeur courante est bornée', () => {
-    assert.deepEqual(resourceTokens({ destin: '2', chance: '1' }, 'destin', 'chance'), { max: 2, current: 1 });
-    assert.deepEqual(resourceTokens({ destin: 'x', chance: undefined }, 'destin', 'chance'), { max: 0, current: 0 });
-    assert.deepEqual(resourceTokens({ destin: '1', chance: '3' }, 'destin', 'chance'), { max: 1, current: 1 });
+    assert.deepEqual(resourceTokens({ destin: '2', fortune: '1' }, 'destin', 'fortune'), { max: 2, current: 1 });
+    assert.deepEqual(resourceTokens({ destin: 'x', fortune: undefined }, 'destin', 'fortune'), { max: 0, current: 0 });
+    assert.deepEqual(resourceTokens({ destin: '1', fortune: '3' }, 'destin', 'fortune'), { max: 1, current: 1 });
 });
 
 class FakeElement {
@@ -108,39 +108,38 @@ const fakeDocument = () => {
 };
 const dotsOf = panel => panel.element.all().filter(node => node.className.startsWith('m-principal-dot'));
 
-test('points : un point vide final, la valeur proposée et le patch avec Chance ramenée au maximum', () => {
+test('points : un point vide final, la valeur proposée et le patch avec Fortune ramenée au maximum', () => {
     assert.deepEqual([0, 1, 2].map(index => dotTarget(2, index)), [0, 1, 3]);
     assert.equal(dotTarget(0, 0), 1);
-    assert.deepEqual(resourceChange({ destin: '3', chance: '1' }, 'destin', 'chance', 2), { changes: { destin: '2' }, lowered: null });
-    assert.deepEqual(resourceChange({ destin: '3', chance: '3' }, 'destin', 'chance', 1), { changes: { destin: '1', chance: '1' }, lowered: 3 });
-    assert.deepEqual(resourceChange({ resilience: '1', determination: '0' }, 'resilience', 'determination', 0), { changes: { resilience: '0' }, lowered: null });
+    assert.deepEqual(resourceChange({ destin: '3', fortune: '1' }, 'destin', 'fortune', 2), { changes: { destin: '2' }, lowered: null });
+    assert.deepEqual(resourceChange({ destin: '3', fortune: '3' }, 'destin', 'fortune', 1), { changes: { destin: '1', fortune: '1' }, lowered: 3 });
 });
 
-test('panneau : Destin et Résilience en points boutons, Chance et Détermination en nombres, focus conservé', () => {
+test('panneau : Destin en points boutons, Fortune en nombre, plus de Résilience, focus conservé', () => {
     const documentRef = fakeDocument();
     const asked = [];
     const opened = [];
     const panel = createPrincipalPanel({ documentRef, aptitudesHref: '#/x', onOpenCarac: key => opened.push(key),
         onChangeResource: spec => asked.push([spec.maxKey, spec.value]) });
-    const d = data({ carriere: 'Agitateur', rang: '1', destin: '2', chance: '1', resilience: '0', determination: '0', corruption: '3' });
+    const d = data({ carriere: 'Agitateur', rang: '1', destin: '2', fortune: '1', resilience: '1', determination: '0', corruption: '3' });
     panel.update({ data: d, careers: read('js/data/careers.json'), engine });
     const nodes = panel.element.all();
-    assert.deepEqual(nodes.filter(n => n.className === 'm-principal-max').map(n => n.textContent), ['Destin', 'Résilience']);
-    assert.deepEqual(nodes.filter(n => n.className === 'm-principal-label').map(n => n.textContent), ['Chance 1', 'Détermination 0']);
+    assert.deepEqual(nodes.filter(n => n.className === 'm-principal-max').map(n => n.textContent), ['Destin']);
+    assert.deepEqual(nodes.filter(n => n.className === 'm-principal-label').map(n => n.textContent), ['Fortune 1']);
     const groups = nodes.filter(n => n.getAttribute('role') === 'group');
-    assert.deepEqual(groups.map(n => n.getAttribute('aria-label')), ['Destin', 'Résilience']);
+    assert.deepEqual(groups.map(n => n.getAttribute('aria-label')), ['Destin']);
     const dots = dotsOf(panel);
     assert.deepEqual(dots.map(n => [n.tagName, n.className.includes('is-full'), n.getAttribute('aria-label')]), [
         ['button', true, "Destin : 2. Brûler jusqu'à 0"], ['button', true, "Destin : 2. Brûler jusqu'à 1"],
-        ['button', false, 'Ajouter un point de Destin'], ['button', false, 'Ajouter un point de Résilience']]);
+        ['button', false, 'Ajouter un point de Destin']]);
     dots.forEach(dot => dot.click());
-    assert.deepEqual(asked, [['destin', 0], ['destin', 1], ['destin', 3], ['resilience', 1]]);
+    assert.deepEqual(asked, [['destin', 0], ['destin', 1], ['destin', 3]]);
     dots[1].focus();
     panel.update({ data: d, careers: [], engine });
     assert.equal(dotsOf(panel)[1], dots[1]);
     assert.equal(documentRef.activeElement, dots[1]);
     panel.update({ data: { ...d, destin: '3' }, careers: [], engine });
-    assert.equal(dotsOf(panel).length, 5, 'quatre points de Destin (3 pleins + 1 vide) et un de Résilience');
+    assert.equal(dotsOf(panel).length, 4, 'quatre points de Destin (3 pleins + 1 vide)');
     panel.update({ data: d, careers: [], engine, readonly: true });
     assert.ok(dotsOf(panel).every(dot => dot.disabled));
     panel.update({ data: d, careers: read('js/data/careers.json'), engine });
@@ -157,10 +156,17 @@ test('panneau : Destin et Résilience en points boutons, Chance et Déterminatio
     panel.update({ data: d, careers: read('js/data/careers.json'), engine });
     buttons[3].click();
     assert.deepEqual(opened, ['e']);
-    assert.match(nodes.find(n => /^Mouvement/u.test(n.textContent)).textContent, /Corruption 3$/u);
+    assert.match(nodes.find(n => /^Mouvement/u.test(n.textContent)).textContent, /Corruption 3 · Péché 0$/u);
+    const v5 = () => panel.element.all().find(n => /^Familier|^Haine/u.test(n.textContent));
+    assert.equal(v5(), undefined, 'ligne masquée sans familier ni mot-clé');
+    panel.update({ data: { ...d, peche: '2', race: 'homme-lezard', familiers: [{ id: 'f1', systeme: 'animal', type: 'power', vent: null, espece: 'cat', nom: 'Minou', destinSacrifie: 2 }],
+        motsCles: [{ id: 'haine', cible: 'peaux-vertes' }] }, careers: [], engine });
+    assert.equal(v5().textContent, 'Familier : Minou (Familier animal, Familier de puissance, Chat) · Haine (Peaux-vertes)');
+    assert.equal(panel.element.all().find(n => /^Mouvement/u.test(n.textContent)).textContent,
+        'Mouvement Espèce inconnue · Blessures max Espèce inconnue · Corruption 3 · Péché 2');
 });
 
-function sheetSetup({ online = true, data = { destin: '3', chance: '3' } } = {}) {
+function sheetSetup({ online = true, data = { destin: '3', fortune: '3' } } = {}) {
     const documentRef = fakeDocument();
     const calls = [];
     const announces = [];
@@ -174,7 +180,7 @@ function sheetSetup({ online = true, data = { destin: '3', chance: '3' } } = {})
     } };
     const sheet = createResourceSheet({ documentRef, getContext: () => context, announce: m => announces.push(m), onDone: key => done.push(key) });
     const trigger = documentRef.createElement('button');
-    const open = value => sheet.open({ maxKey: 'destin', currentKey: 'chance', maxLabel: 'Destin', label: 'Chance', value }, trigger);
+    const open = value => sheet.open({ maxKey: 'destin', currentKey: 'fortune', maxLabel: 'Destin', label: 'Fortune', value }, trigger);
     const title = () => sheet.element.all().find(n => n.tagName === 'h2').textContent;
     return { documentRef, calls, announces, done, trigger, open, title, el: sheet.element, context, setDraft: value => { draft = value; } };
 }
@@ -186,7 +192,7 @@ test('confirmation : rien n’est écrit à l’ouverture ni à l’annulation, 
     assert.equal(setup.documentRef.activeElement, setup.el.byText('Annuler'));
     assert.equal(setup.title(), 'Brûler 2 points de Destin ?');
     assert.ok(setup.el.byText("Ce n'est pas anodin : les points sont perdus définitivement."));
-    assert.equal(setup.el.all().find(n => n.className === 'm-purchase-formula').textContent, 'La Chance sera aussi ramenée de 3 à 1.');
+    assert.equal(setup.el.all().find(n => n.className === 'm-purchase-formula').textContent, 'La Fortune sera aussi ramenée de 3 à 1.');
     setup.el.byText('Annuler').click();
     assert.deepEqual(setup.calls, []);
     assert.ok(!setup.el.open);
@@ -200,7 +206,7 @@ test('confirmation : stagePatch avec Chance ramenée puis envoi, focus rendu ava
     setup.el.byText('Confirmer').click();
     assert.deepEqual(setup.done, ['destin'], 'le focus est rendu avant l’attente réseau');
     await sleep(0);
-    assert.deepEqual(setup.calls, [['stage', { destin: '2', chance: '2' }], ['submit']]);
+    assert.deepEqual(setup.calls, [['stage', { destin: '2', fortune: '2' }], ['submit']]);
     assert.deepEqual(setup.announces, ['Destin : 2']);
     setup.open(4);
     assert.equal(setup.title(), 'Ajouter 1 point de Destin ?');
@@ -211,7 +217,7 @@ test('confirmation : stagePatch avec Chance ramenée puis envoi, focus rendu ava
 });
 
 test('confirmation : hors ligne le brouillon est protégé sans envoi, et l’état est annoncé', async () => {
-    const setup = sheetSetup({ online: false, data: { destin: '1', chance: '0' } });
+    const setup = sheetSetup({ online: false, data: { destin: '1', fortune: '0' } });
     setup.open(0);
     setup.el.byText('Confirmer').click();
     await sleep(0);
@@ -236,7 +242,7 @@ test('confirmation : conflit signalé par le résultat ou par une erreur du serv
 test('confirmation : la fiche a changé depuis l’ouverture, le texte est mis à jour et un second toucher est demandé', async () => {
     const setup = sheetSetup();
     setup.open(2);
-    setup.context.state = { phase: 'ready', data: { destin: '4', chance: '1' } };
+    setup.context.state = { phase: 'ready', data: { destin: '4', fortune: '1' } };
     setup.el.byText('Confirmer').click();
     await sleep(0);
     assert.deepEqual(setup.calls, [], 'rien d’envoyé');
@@ -281,7 +287,8 @@ test('conflits : liste lisible, Garder la mienne renvoie, Prendre celle du serve
     const calls = [];
     const announces = [];
     const context = { state: { conflicts: [
-        { path: 'destin', server: '1', local: '2' }, { path: 'possessions', server: 'a', local: 'b' }, { path: 'chance', server: '0', local: '1' },
+        { path: 'destin', server: '1', local: '2' }, { path: 'possessions', server: 'a', local: 'b' }, { path: 'fortune', server: '0', local: '1' },
+        { path: 'motsCles', server: [], local: [{ id: 'haine', cible: 'nain' }] },
     ] }, controller: {
         getState: () => ({ hasDraft: calls.every(call => call[0] !== 'submit') }),
         resolveConflict: (path, choice) => { calls.push(['resolve', path, choice]); return true; },
@@ -292,15 +299,16 @@ test('conflits : liste lisible, Garder la mienne renvoie, Prendre celle du serve
     notice.update();
     assert.ok(!notice.element.hidden);
     const texts = notice.element.all().filter(n => n.tagName === 'p').map(n => n.textContent);
-    assert.deepEqual(texts, ['Conflit sur Destin : le serveur a 1, vous avez 2.', 'Conflit sur Chance : le serveur a 0, vous avez 1.']);
+    assert.deepEqual(texts, ['Conflit sur Destin : le serveur a 1, vous avez 2.', 'Conflit sur Fortune : le serveur a 0, vous avez 1.',
+        'Conflit sur Mots-clés : le serveur a aucun mot-clé, vous avez Haine (Nain).']);
     const buttons = notice.element.all().filter(n => n.tagName === 'button');
-    assert.equal(buttons.length, 4);
+    assert.equal(buttons.length, 6);
     notice.update();
     assert.equal(notice.element.all().filter(n => n.tagName === 'button')[0], buttons[0], 'pas de reconstruction sans changement');
     buttons[0].click();
     buttons[3].click();
     await sleep(0);
-    assert.deepEqual(calls, [['resolve', 'destin', 'local'], ['resolve', 'chance', 'server'], ['submit']]);
+    assert.deepEqual(calls, [['resolve', 'destin', 'local'], ['resolve', 'fortune', 'server'], ['submit']]);
     context.state = { conflicts: [] };
     notice.update();
     assert.ok(notice.element.hidden);

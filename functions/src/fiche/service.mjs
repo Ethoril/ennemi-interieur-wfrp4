@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { V5_COUNTER_FIELDS, V5_LIST_FIELDS, migrerFicheV5, v5FieldError } from '../domain/fiche/v5.js';
 
 export const FICHE_CHAR_IDS = Object.freeze(['bhelgi', 'caelel', 'elysia', 'hellaya', 'wren', 'test']);
 export const FICHE_SCHEMA_VERSION = 2;
@@ -10,8 +11,8 @@ const PATCH_TYPES = new Set(['patch']);
 const SERVER_ONLY_TYPES = new Set(['gain', 'correct', 'import', 'reset', 'equipment']);
 const ADMIN_EMAIL = 'ethoril@gmail.com';
 const PATCH_FIELDS = new Set([
-    'nom', 'race', 'blessuresAct', 'resilience', 'determination', 'chance', 'destin',
-    'corruption', 'possessions', 'optVisible.section-sorts', 'optVisible.section-prieres',
+    'nom', 'race', 'blessuresAct', 'fortune', 'destin', 'peche', 'corruption', 'possessions',
+    'familiers', 'motsCles', 'optVisible.section-sorts', 'optVisible.section-prieres',
 ]);
 const MAX_COMMAND_BYTES = 256 * 1024;
 const MAX_FICHE_DATA_BYTES = 900 * 1024;
@@ -126,7 +127,11 @@ function validatePatchPayload(payload) {
         const value = payload.changes[path];
         const base = payload.baseValues[path];
         if (value === null) fail('une modification ne peut pas supprimer un champ');
-        if (simple && path.startsWith('optVisible.')) {
+        if (V5_LIST_FIELDS.includes(path) || V5_COUNTER_FIELDS.includes(path)) {
+            const error = v5FieldError(path, value);
+            if (error) fail(error, 'invalid-argument', { kind: 'field-invalid', path });
+            if (base !== null && (V5_LIST_FIELDS.includes(path) ? !Array.isArray(base) : typeof base !== 'string')) fail('valeur de base invalide');
+        } else if (simple && path.startsWith('optVisible.')) {
             if (typeof value !== 'boolean' || (base !== null && typeof base !== 'boolean')) fail('valeur de visibilité invalide');
         } else if (rowNote) {
             if (typeof value !== 'string' || value.length > 2_000 || (base !== null && typeof base !== 'string')) fail('note invalide');
@@ -335,6 +340,9 @@ export async function executeFicheCommand(rawCommand, request, deps) {
         if (envelope.tombstone === true && !['import', 'reset'].includes(command.type)) {
             fail('la fiche a été réinitialisée', 'failed-precondition', { kind: 'tombstone' });
         }
+        // Migration V5 à la volée : chaque écriture pose `fortune` (le client lit la fiche migrée de la même façon).
+        const sourceEnvelope = envelope;
+        envelope = { ...envelope, data: migrerFicheV5(envelope.data) };
         if (command.type !== 'patch' && command.type !== 'purchase' && command.type !== 'cancel') {
             requireExactRevision(command, envelope.revision);
         }
@@ -380,6 +388,7 @@ export async function executeFicheCommand(rawCommand, request, deps) {
             nextData = domainResult.data;
         }
 
+        nextData = migrerFicheV5(nextData);
         assertSafeTree(nextData);
         if (Buffer.byteLength(stableStringify(nextData), 'utf8') > MAX_FICHE_DATA_BYTES) {
             fail('la fiche dépasse la taille maximale conservatrice', 'resource-exhausted', { kind: 'fiche-too-large' });
@@ -398,7 +407,7 @@ export async function executeFicheCommand(rawCommand, request, deps) {
                 uid: user.uid,
                 charId: command.charId,
                 sourceRevision: envelope.revision,
-                sourceEnvelope: envelope,
+                sourceEnvelope,
                 createdAt: now,
             };
             let backupBytes;
