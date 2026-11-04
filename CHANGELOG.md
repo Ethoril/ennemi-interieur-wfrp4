@@ -1,3 +1,10 @@
+## [2.39.0] - 2026-11-04
+
+- Fiches V5 : la Chance devient la Fortune (les points déjà enregistrés sont repris), la Résilience et la Détermination disparaissent.
+- Fiches : saisie du Péché, des familiers (homoncule ou animal, type, Vent ou espèce, Destin sacrifié) et des mots-clés (Haine, Animosité, Préjugé, Sans peur) avec les cibles de l’outil MJ.
+- Fiches : une espèce inconnue est signalée au lieu de calculer un Mouvement et des Blessures au hasard.
+- Ancienne fiche retirée : seule la nouvelle fiche reste. Cache de l’application actualisé.
+
 ## [2.38.3] - 2026-10-27
 
 - Application mobile : « Rechercher une mise à jour » attend la fin du téléchargement au lieu de répondre « Aucune mise à jour » trop tôt.
