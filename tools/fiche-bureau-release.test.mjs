@@ -16,11 +16,11 @@ test('bureau : CSP conservée, ancienne fiche retirée', () => {
     assert.doesNotMatch(read('sw.js'), /fiche-ancienne|js\/fiche\.js|fiche-cloud|fiche-client-bridge/u);
 });
 
-test('bureau : page et graphe local précachés, livraison v2.39.0 cohérente', () => {
+test('bureau : page et graphe local précachés, livraison v2.39.1 cohérente', () => {
     const sw = read('sw.js');
-    assert.match(sw, /APP_VERSION = 'v2.39.0'/u);
-    assert.match(read('js/layout.js'), /APP_VERSION = 'v2.39.0'/u);
-    assert.match(read('CHANGELOG.md'), /^## \[2.39.0\]/u);
+    assert.match(sw, /APP_VERSION = 'v2.39.1'/u);
+    assert.match(read('js/layout.js'), /APP_VERSION = 'v2.39.1'/u);
+    assert.match(read('CHANGELOG.md'), /^## \[2.39.1\]/u);
     const assets = new Set([...sw.matchAll(/['"]\.\/([^'"]+)['"]/gu)].map(match => match[1]));
     for (const file of ['fiche.html', 'css/fiche-bureau.css', 'css/equipment.css', 'js/data/equipment-catalog.json', 'docs/memo-armures.pdf']) assert.ok(assets.has(file), file);
     const pending = ['js/fiche-bureau/app.js'];

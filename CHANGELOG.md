@@ -1,3 +1,8 @@
+## [2.39.1] - 2026-11-05
+
+- Fiches : actualisation des sorts, miracles, armes et mots-clés depuis les Aides de jeu. Les fiches enregistrées sont conservées.
+- Cache de l’application actualisé.
+
 ## [2.39.0] - 2026-11-04
 
 - Fiches V5 : la Chance devient la Fortune (les points déjà enregistrés sont repris), la Résilience et la Détermination disparaissent.

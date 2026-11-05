@@ -1,6 +1,6 @@
 {
-  "catalogVersion": "sha256:2f9881e86ed4e5869910a71937ee394da9d49df294566e05d5f53d60da552692",
-  "fetchedAt": "2026-10-18",
+  "catalogVersion": "sha256:279927b15d13da03555ede75d39d0a879f3d36c2f69d55bd00fe3043e729a681",
+  "fetchedAt": "2026-11-05",
   "sources": {
     "spells": "https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&sheet=Magie",
     "miracles": "https://docs.google.com/spreadsheets/d/1SCnAJCthdto7ROjovuyDYmz4y9GJBBLfThuYNmYR_Cs/gviz/tq?tqx=out:csv&sheet=Miracles"
@@ -85,7 +85,7 @@
       "portee": "Vous",
       "cible": "Vous",
       "duree": "(Bonus de Force Mentale) Rounds",
-      "desc": "- Vous canalisez Aqshy pour invoquer une couronne de flammes inspirante autour de votre tête.\n- Vous gagnez le Trait Peur (1).\n- Vous obtenez aussi le Talent Meneur de Guerre.\n- Avec +2 DR, vous pouvez soit augmenter votre Peur de +1, soit reprendre Meneur de Guerre.\n- Tant que le sort est actif, vous bénéficiez d’un +1 DR aux Tests de Focalisation et d’Incantation avec Aqshy."
+      "desc": "- Vous canalisez Aqshy pour invoquer une couronne de flammes inspirante autour de votre tête.\n- Vous gagnez le Trait Peur (2).\n- Vous obtenez aussi le Talent Meneur de Guerre.\n- Avec +2 DR, vous pouvez augmenter votre Peur de +1.\n- Tant que le sort est actif, vous bénéficiez d’un +1 DR aux Tests de Focalisation et d’Incantation avec Aqshy."
     },
     {
       "nom": "Mur de Feu",
@@ -119,9 +119,9 @@
       "type": "Aqshy - Rouge - Domaine du Feu",
       "cn": 8,
       "portee": "(Force Mentale) mètres",
-      "cible": "1 épée (arme de base)",
+      "cible": "1 épée",
       "duree": "(Bonus de Force Mentale) Rounds",
-      "desc": "Vous enveloppez une épée de type arme de base dans les flammes. Elle inflige BF + 6 Dégâts et gagne Dévastatrice et Magique. Chaque touche inflige 1 Enflammé. Un porteur sans Magie des Arcanes (Feu) gagne lui-même 1 Enflammé s’il commet une Maladresse avec l’épée."
+      "desc": "Vous enveloppez une épée dans les flammes. Elle inflige BF + 6 Dégâts et gagne Dévastatrice et Magique. Chaque touche inflige 1 Enflammé. Un porteur sans Magie des Arcanes (Feu) gagne lui-même 1 Enflammé s’il commet une Maladresse avec l’épée."
     },
     {
       "nom": "Forge de Tarnus",
@@ -190,9 +190,9 @@
       "nom": "Epées Sanguines",
       "type": "Aqshy - Rouge - Domaine du Feu",
       "cn": 6,
-      "portee": "Volonté en mètres",
+      "portee": "Force Mentale en mètres",
       "cible": "Vous",
-      "duree": "Bonus de Volonté minutes",
+      "duree": "Bonus de Force Mentale minutes",
       "desc": "Invoque une épée rouge magique flottante. Chaque +2 DR permet d'invoquer une épée supplémentaire (max 6). Chaque épée a Vol (20), Compétence d'arme de 60 et inflige 8 Dégâts. Une cible ne peut être attaquée que par une épée à la fois. Peut être dissipé, mais indestructible autrement.",
       "aliases": [
         "Sanguine Swords"
@@ -202,7 +202,7 @@
       "nom": "Goût de Feu",
       "type": "Aqshy - Rouge - Domaine du Feu",
       "cn": 2,
-      "portee": "Bonus de Volonté mètres",
+      "portee": "Bonus de Force Mentale mètres",
       "cible": "1 pot, cruche ou flacon",
       "duree": "Instantané",
       "desc": "Vous transformez un plat en nourriture très épicée, un quart de gallon de liquide en alcool fort, ou une pinte de liquide en huile inflammable. Le plat demande un Test de Résistance (+4 DR) pour éviter les séquelles digestives."
@@ -213,7 +213,7 @@
       "cn": 6,
       "portee": "ZdE Force Mentale mètres",
       "cible": "Vous",
-      "duree": "Bonus de Volonté rounds",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Les ennemis dans la zone gagnent 1 Exténué chaque Round où ils courent, chargent ou fuient. Retirer vêtements ou armure supprime un Exténué gagné ainsi. Tout contact avec le feu leur inflige 1 Enflammé ; les Dégâts de feu augmentent du DR final du lancement, Test et réserve de Focalisation compris."
     },
     {
@@ -222,7 +222,7 @@
       "cn": 12,
       "portee": "Force Mentale mètres",
       "cible": "ZdE Force Mentale mètres",
-      "duree": "Bonus de Volonté rounds",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Vous invoquez un puissant tourbillon de braises et de flammes. \n - Chaque cible dans la zone subit 8 + DR Dégâts chaque round. \n - Test d’Athlétisme Intermédiaire (+0 DR) requis pour éviter la Condition À Terre. \n - Objets et terrains inflammables ont 25% de chance de s’enflammer chaque round. \n - Seul un couvert solide protège de ses effets."
     },
     {
@@ -310,7 +310,7 @@
       "nom": "Arche de Saphir",
       "type": "Azyr - Bleu - Domaine des Cieux",
       "cn": 6,
-      "portee": "(Moitié de Force Mentale) mètres",
+      "portee": "(Moitié de la Force Mentale) mètres",
       "cible": "Spécial",
       "duree": "1 Round",
       "desc": "Vous invoquez une arche majestueuse de pur saphir, mesurant 4 mètres de large et 3 mètres de haut. \n • Toute créature ou objet qui traverse l’arche disparaît dans une dimension de limbes. \n • L’arche disparaît à la fin de votre prochain Round. \n • Lors de votre prochain lancement de ce sort, toute créature ou objet ayant traversé l’arche réapparaît sans avoir perçu le passage du temps. \n • Si vous êtes tué avant de relancer le sort, les occupants sont expulsés à leur position d’origine dans une pluie d’éclats de cristal, subissant les États Sonné et À Terre."
@@ -436,7 +436,7 @@
       "nom": "Tempête de Shemtek",
       "type": "Azyr - Bleu - Domaine des Cieux",
       "cn": 11,
-      "portee": "(Moitié de Force Mentale) mètres",
+      "portee": "(Moitié de la Force Mentale) mètres",
       "cible": "2 × Bonus d’Initiative ou Bonus d’Initiative",
       "duree": "Instantané",
       "desc": "Votre corps devient un paratonnerre d’énergie arcanique. \n • Une lumière surnaturelle jaillit de vos yeux et de votre bouche tandis que votre corps se raidit dans une pose cruciforme. \n • Des éclairs, en nombre égal à 2 × votre Bonus d’Initiative, surgissent des fissures de votre chair. \n • Chaque éclair est un Projectile magique avec Dégâts +6, que vous pouvez diriger vers des cibles distinctes en face de vous. \n • Vous gagnez immédiatement l’État Sonné. \n • Quiconque ne possède pas le Talent Magie des Arcanes (Cieux) et assiste au sort doit réussir un Test contre un effet de Peur (1). \n • Ce sort ne nécessite pas un ciel dégagé, car il provient directement de l’Aethyr. \n Une variante plus sûre (mais moins destructrice) de ce sort : \n • Fait tomber un nombre d’éclairs égal à votre Bonus d’Initiative dans une zone ciblée de 2 × votre Bonus de Force Mentale mètres. \n • Vous ne gagnez pas l’État Sonné et le sort ne provoque pas de Peur."
@@ -670,7 +670,7 @@
       "nom": "Apothéose",
       "type": "Domaine de Haute Magie",
       "cn": 4,
-      "portee": "½ FM mètres",
+      "portee": "Moitié de la Force Mentale mètres",
       "cible": "1",
       "duree": "1 round",
       "desc": "Vous infusez la cible d'une magie pure, lui permettant de récupérer un nombre de Blessures égal à votre Bonus de Force Mentale et lui octroyant temporairement le Trait de Créature Peur 1.\nSurpuissance :\n• Tous les +3 DR : La cible récupère à nouveau votre Bonus de Force Mentale en Blessures.\n• +6 DR : Vous soignez une Blessure Critique si vous réussissez un Test de Sociabilité Intermédiaire (+0 DR).\n• +10 DR : Vous ramenez la cible à la vie à son maximum de Blessures. Sa tête est entourée d’un halo magique. Elle meurt définitivement après un nombre de minutes égal à votre Bonus de Force Mentale ou si Apothéose est dissipé. Vous gagnez du Yenlui (Sombre)."
@@ -679,9 +679,9 @@
       "nom": "Destruction des Arcanes",
       "type": "Domaine de Haute Magie",
       "cn": 9,
-      "portee": "FM mètres",
+      "portee": "Force Mentale mètres",
       "cible": "1",
-      "duree": "Instantanée",
+      "duree": "Instantané",
       "desc": "Vous invoquez les pouvoirs d'annihilation pour blesser un ennemi en armure et détruire ses objets magiques. La cible subit 1 Blessure au corps par tranche complète de 2 points d’armure portés (par exemple, 18 PA infligent 9 Blessures). Le Bonus d'Endurance s'applique, mais les Points d'Armure sont ignorés. De plus, un de ses objets magiques (déterminé aléatoirement) est détruit si vous réussissez un Test de Focalisation Intermédiaire (+0 DR).\nSurpuissance :\n• Chaque +1 DR : Détruit 1 point d'armure porté (aléatoire) après les dégâts.\n• +3 DR : Si vous réussissez un Test de Dextérité Accessible (+2 DR), vous choisissez l'objet magique détruit.\n• +8 DR : Augmente les dégâts du sort à 1 Blessure par point d'armure porté."
     },
     {
@@ -690,16 +690,16 @@
       "cn": 11,
       "portee": "Vous",
       "cible": "Vous",
-      "duree": "Bonus de FM rounds",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Vous gagnez Vol (Agilité) et un plancher de 5 PA à chaque localisation, sans addition à l’armure portée. En surpuissance, le foyer arcanique donne 1d10 / 2, arrondi supérieur, soit 1 à 5 DR aux Tests de lancement dans Bonus de Force Mentale mètres, relancés au début de chaque Round. +5 DR ouvrent une faille instable dans Bonus de Force Mentale mètres et font perdre 3 Yenlui ; +8 DR ouvrent un portail plus stable dans un terrain solide, pour une couleur choisie et la Haute Magie. Les lieux et le foyer sont déclarés par le MJ."
     },
     {
       "nom": "Malédiction d'Attraction des Flèches",
       "type": "Domaine de Haute Magie",
       "cn": 5,
-      "portee": "FM mètres",
-      "cible": "Zone d’effet (Bonus de CT mètres)",
-      "duree": "Bonus de FM rounds",
+      "portee": "Force Mentale mètres",
+      "cible": "ZdE (Bonus de CT mètres)",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Les tireurs peuvent relancer les attaques à distance ratées contre les cibles maudites, y compris munitions magiques et machines de guerre, mais pas les projectiles de sorts. +4 DR retirent les PA et Défensive des boucliers lorsqu’ils opposent un tir ; ils peuvent toujours bloquer l’attaque. Avec +6 DR et un Test de CT (+0 DR), vous choisissez les localisations touchées."
     },
     {
@@ -708,7 +708,7 @@
       "cn": 5,
       "portee": "Moitié de l’Endurance mètres",
       "cible": "1 lanceur, sort ou objet",
-      "duree": "Bonus de FM minutes",
+      "duree": "Bonus de Force Mentale minutes",
       "desc": "Vous invoquez une résonance bourdonnante d’anti-magie pour neutraliser la sorcellerie ennemie. Un sort persistant ou objet magique de votre choix est temporairement annulé. Les armes et armures magiques continuent de fonctionner comme des objets normaux. Vous pouvez à la place cibler un lanceur de sorts et rendre temporairement inutilisable l'un de ses sorts, à condition d’avoir vu ce sort utilisé auparavant (ou d’avoir lu le grimoire de la cible).\nSurpuissance :\n• +6 DR : Le bonus aux Tests de Focalisation et d’Incantation généré par une Pierre Gardienne, un Cercle Oghamique, une Pierre de Harde ou une Jonction Tellurique est annulé (voir Vents de Magie p.194-197). Les Pivots Arcaniques ne peuvent être annulés. Vous gagnez du Yenlui (Lumière).\n• +9 DR : La propriété d'un Pivot Arcanique permettant de contrôler les Flux Magiques est annulée (voir Tempêtes de Magie, Vents de Magie p.192). Vous gagnez du Yenlui (Lumière)."
     },
     {
@@ -716,7 +716,7 @@
       "type": "Domaine de Haute Magie",
       "cn": 6,
       "portee": "Moitié de la Force Mentale mètres",
-      "cible": "Zone d’effet (Bonus de FM mètres)",
+      "cible": "ZdE (Bonus de Force Mentale mètres)",
       "duree": "Instantané",
       "desc": "Vous expulsez la magie du monde en invoquant un vortex éthérique. Les sorts persistants dans la zone d'effet sont immédiatement dissipés sans Test Étendu, et la magie accumulée par les lanceurs en Focalisation est perdue. Les objets magiques et Traits de Créature Protection ne sont pas affectés.\nSurpuissance :\n• +5 DR : Vous augmentez la Zone d’Effet à Force Mentale mètres. Un Test d'Intelligence Difficile (−1 DR) permet d'exempter des cibles alliées (y compris vous-même) des effets du sort.\n• +7 DR : Les Bénédictions et Miracles persistants sont également dissipés. Vous gagnez du Yenlui (Lumière).\n• +10 DR : Les objets magiques perdent temporairement leurs pouvoirs et les Traits de Créature Protection sont annulés. Les lanceurs de sorts doivent réussir un Test de Focalisation Intermédiaire (+0 DR) ou perdre toute capacité à lancer des sorts pendant 24 heures."
     },
@@ -724,9 +724,9 @@
       "nom": "Convocation Ardente",
       "type": "Domaine de Haute Magie",
       "cn": 10,
-      "portee": "FM mètres",
-      "cible": "Zone d’effet (Bonus de FM mètres)",
-      "duree": "Bonus de FM rounds",
+      "portee": "Force Mentale mètres",
+      "cible": "ZdE (Bonus de Force Mentale mètres)",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Vous invoquez un barrage incessant de flammes. Toutes les créatures présentes dans la Zone d’Effet subissent immédiatement un projectile magique infligeant +5 Dégâts et gagnent 1 État Enflammé. Chaque round suivant, elles subissent à nouveau ces dégâts et gagnent un État Enflammé supplémentaire, même si elles quittent la zone initiale. L’effet peut être annulé par immersion totale dans l'eau ou le sable.\nSurpuissance :\n• +5 DR : Les dégâts passent à +6 au deuxième round et augmentent de +1 à chaque round suivant. Vous gagnez du Yenlui (Sombre).\n• +8 DR : Un Test de Capacité de Combat Intermédiaire (+0 DR) permet d’exempter les cibles alliées des effets du sort."
     },
     {
@@ -742,7 +742,7 @@
       "nom": "Glamour de Teclis",
       "type": "Domaine de Haute Magie",
       "cn": 7,
-      "portee": "FM mètres",
+      "portee": "Force Mentale mètres",
       "cible": "ZdE Bonus d’Intelligence mètres",
       "duree": "Bonus d’Intelligence Rounds",
       "desc": "Vous invoquez un labyrinthe illusoire de brume et d'ombres. Chaque round, les cibles doivent réussir un Test de Navigation Très Difficile (−3 DR) ou n’effectuer aucune action sauf errer dans une direction aléatoire à leur rythme de marche normal. Le sort est invisible aux autres, faisant apparaître les cibles comme hébétées. Si une cible échoue à 3 tests, vous pouvez contrôler sa direction pendant le reste de la durée du sort en réussissant un Test de Commandement Accessible (+2 DR). Chaque changement de direction nécessite un nouveau Test de Commandement.\nSurpuissance :\n• +3 DR : Les effets du sort durent Bonus d’Intelligence heures pour les cibles qui échouent à trois Tests de Navigation. Vous gagnez du Yenlui (Sombre).\n• +6 DR : Un Test d'Agilité Intermédiaire (+0 DR) permet d'exempter les cibles alliées des effets du sort."
@@ -752,7 +752,7 @@
       "type": "Domaine de Haute Magie",
       "cn": 14,
       "portee": "Vous",
-      "cible": "Zone d'effet (½ FM mètres)",
+      "cible": "ZdE (Moitié de la Force Mentale mètres)",
       "duree": "1 round",
       "desc": "Vous irradiez des flots du plus pur Qhaysh pour bannir le mal et les ténèbres. Chaque round, les créatures Démoniaques et Mort-vivantes dans la Zone d’Effet subissent un projectile magique infligeant +8 Dégâts (ou +15 Dégâts si elles sont de Taille Grande ou supérieure). Les créatures Instables subissent le double des Dégâts. Les Démons détruits par ce sort ne peuvent être réinvoqués pendant 1001 jours. Les Morts-vivants détruits ne peuvent jamais être réanimés. De plus, vous pouvez gratuitement tenter de dissiper chaque sort de Sorcellerie, Démonologie, Nécromancie, Magie Noire ou Chaos dans la Zone d’Effet.\nSurpuissance :\n• Pour chaque +1 DR, vous bénéficiez d’un bonus de +1 DR aux Tests de Dissipation.\n• +4 DR : Les objets magiques possédant des enchantements maléfiques ou chaotiques cessent de fonctionner pendant la durée du sort si vous réussissez un Test de Sociabilité Accessible (+2 DR).\n• +7 DR : Les Dégâts augmentent à +15 (ou +30 si la cible est de Taille Grande ou supérieure). Vous gagnez du Yenlui (Lumineux)."
     },
@@ -761,7 +761,7 @@
       "type": "Domaine de Haute Magie",
       "cn": 4,
       "portee": "Vous",
-      "cible": "Zone (Bonus de Sociabilité mètres)",
+      "cible": "ZdE (Bonus de Sociabilité mètres)",
       "duree": "1 round",
       "desc": "Vous invoquez les noms de héros elfiques légendaires pour guider et renforcer vos alliés. Les personnages alliés gagnent temporairement 3d10 à l'une des caractéristiques suivantes : CC, CT, Force, Endurance, Initiative ou Agilité. Lancez une fois et appliquez le même bonus à tous. Alternativement, le Mouvement des cibles affectées peut être augmenté de 2. Les Blessures restent identiques, même si l'Endurance est augmentée.\nSurpuissance :\n• +3 DR : Les personnages alliés dans un rayon de Bonus de Sociabilité mètres retirent toutes leurs Conditions Brisé.\n• +6 DR : À la place des effets normaux, augmentez toutes les quatre caractéristiques de 3d10 (un seul jet, même bonus pour toutes les caractéristiques) et le Mouvement de 2.\n• +8 DR : Les alliés dans un rayon de Bonus de Sociabilité mètres retirent toutes leurs Conditions Brisé et Fatigué, récupèrent 1d10 Blessures et gagnent Immunité à la Psychologie (WFRP, p.340) pour la durée du sort. Vous gagnez du Yenlui (Lumineux)."
     },
@@ -770,7 +770,7 @@
       "type": "Domaine de Haute Magie",
       "cn": 4,
       "portee": "Bonus d'Intelligence mètres",
-      "cible": "Spéciale",
+      "cible": "Spécial",
       "duree": "Bonus d'Intelligence heures",
       "desc": "Vous créez un globe oculaire invisible flottant se déplaçant à votre commandement. L'œil possède une Perception égale à votre Langage (Magie), le Talent Sens Aiguisé (Vue) et le Trait Créature Vol (120). Vous voyez à travers l'œil en utilisant ses capacités à la place des vôtres, mais votre corps est en état de transe pendant la durée du sort. L'œil ne peut traverser les objets solides. S'il est détecté, il peut être détruit après avoir subi 3 Blessures. Si quelqu'un interagit avec vous durant ce sort, vous pouvez revenir à votre corps physique. L'œil est alors détruit et vous recevez la Condition Surpris.\nSurpuissance :\n• +4 DR : L'œil gagne Sens de la Magie, Seconde Vue et Vision Nocturne.\n• +8 DR : La portée du sort augmente à Intelligence miles."
     },
@@ -779,25 +779,25 @@
       "type": "Domaine de Haute Magie",
       "cn": 4,
       "portee": "Vous",
-      "cible": "Zone (Bonus de Volonté mètres)",
+      "cible": "ZdE (Bonus de Force Mentale mètres)",
       "duree": "1 round",
-      "desc": "Vous invoquez un champ protecteur étincelant autour de vos alliés. Les cibles amies dans la zone d'effet gagnent le Trait de Créature Protection 9+. Chaque fois que vous lancez un autre sort de Haute Magie, améliorez ce Trait de Protection de 1.\nSurpuissance :\n• Pour chaque +3 DR, améliorez encore le Trait de Protection de 1.\n• +4 DR : Modifiez la portée du sort à la moitié de votre Volonté en mètres."
+      "desc": "Vous invoquez un champ protecteur étincelant autour de vos alliés. Les cibles amies dans la zone d'effet gagnent le Trait de Créature Protection 9+. Chaque fois que vous lancez un autre sort de Haute Magie, améliorez ce Trait de Protection de 1.\nSurpuissance :\n• Pour chaque +3 DR, améliorez encore le Trait de Protection de 1.\n• +4 DR : Modifiez la portée du sort à la moitié de votre Force Mentale en mètres."
     },
     {
       "nom": "Extinction de l'Âme",
       "type": "Domaine de Haute Magie",
       "cn": 7,
       "portee": "Moitié de la Force Mentale mètres",
-      "cible": "Zone (Bonus de Volonté mètres)",
-      "duree": "Instant",
+      "cible": "ZdE (Bonus de Force Mentale mètres)",
+      "duree": "Instantané",
       "desc": "Vous infligez un projectile magique +9. Les victimes tuées ne peuvent devenir Fantômes ni avoir leur âme liée dans un réceptacle. +3 DR réduisent leurs corps en poussière. +7 DR doublent portée et zone et portent les Dégâts à +11 ; vous gagnez Yenlui (Sombre)."
     },
     {
       "nom": "Tempête",
       "type": "Domaine de Haute Magie",
       "cn": 8,
-      "portee": "Volonté mètres",
-      "cible": "Zone (2 × Bonus de Volonté mètres)",
+      "portee": "Force Mentale mètres",
+      "cible": "ZdE (2 × Bonus de Force Mentale mètres)",
       "duree": "1 round",
       "desc": "Vous invoquez depuis les cieux une tempête polychromatique d'énergie crépitante. Cette tempête se déplace comme un sort de vortex aléatoire, sauf qu'elle saute les étapes #1–2 et avance directement de 2d10 mètres selon l’étape #3 (voir Vents de Magie, page 21). Chaque round, les créatures dans la zone subissent un missile magique infligeant +4 Dégâts et doivent réussir un Test d'Athlétisme Accessible (+2 DR), sous peine de subir un malus de –20 en Capacité de Combat et Capacité de Tir pour la durée de la tempête. Les cibles volantes subissent à la place +5 Dégâts et leur Test d'Athlétisme souffre de –1 DR.\nSurpuissance :\n• +4 DR : De plus, les créatures doivent réussir un Test de Calme Intermédiaire (+0 DR) pour se déplacer. Les cibles volantes échouant à ce test chutent immédiatement de 50 mètres par round, et tous les Tests de Capacité de Tir subissent un malus de −3 DR.\n• +5 DR : Chaque round, la tempête inflige un missile magique infligeant +15 Dégâts aux bâtiments et machines de guerre dans la zone.\n• +8 DR : Un Test d'Initiative Intermédiaire (+0 DR) vous permet d’exempter les cibles amies des effets du sort.",
       "aliases": [
@@ -808,10 +808,10 @@
       "nom": "Chemin entre les Mondes",
       "type": "Domaine de Haute Magie",
       "cn": 7,
-      "portee": "Volonté mètres",
-      "cible": "Zone (Bonus de Volonté mètres)",
+      "portee": "Force Mentale mètres",
+      "cible": "ZdE (Bonus de Force Mentale mètres)",
       "duree": "1 round",
-      "desc": "Vous ouvrez les chemins entre les mondes à vos alliés. Les cibles amies gagnent le Trait de Créature Éthérée, et leur Mouvement est doublé.\nSurpuissance :\n• +5 DR : La durée du sort passe à un nombre de minutes égal à votre Bonus d’Intelligence si vous réussissez un Test de Volonté Difficile (−2 DR).\n• +8 DR : Les cibles présentes sur un nexus géomantique approprié peuvent emprunter les Chemins des Anciens pour rejoindre instantanément un autre nexus. Vous décidez du nexus de destination, sans limitation de distance."
+      "desc": "Vous ouvrez les chemins entre les mondes à vos alliés. Les cibles amies gagnent le Trait de Créature Éthérée, et leur Mouvement est doublé.\nSurpuissance :\n• +5 DR : La durée du sort passe à un nombre de minutes égal à votre Bonus d’Intelligence si vous réussissez un Test de Force Mentale Difficile (−2 DR).\n• +8 DR : Les cibles présentes sur un nexus géomantique approprié peuvent emprunter les Chemins des Anciens pour rejoindre instantanément un autre nexus. Vous décidez du nexus de destination, sans limitation de distance."
     },
     {
       "nom": "Forme bestiale",
@@ -846,7 +846,7 @@
       "cn": 3,
       "portee": "Vous",
       "cible": "Vous",
-      "duree": "Bonus de Volonté rounds",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Vos attaques à mains nues perdent Inoffensive, gagnent Magique et infligent BF + 4 Dégâts. Lorsqu’elles causent des Blessures, elles infligent 1 Hémorragique. Vous gagnez aussi Escalade des surfaces abruptes."
     },
     {
@@ -855,7 +855,7 @@
       "cn": 4,
       "portee": "Initiative mètres",
       "cible": "1 cible",
-      "duree": "Bonus de Volonté minutes",
+      "duree": "Bonus de Force Mentale minutes",
       "desc": "Vous transformez votre cible en statue d’ambre translucide. \n - Test de Calme Difficile (−2 DR) pour résister. \n - La cible est intouchable (ne peut être blessée, empoisonnée ou malade). \n - La cible peut guérir naturellement ou magiquement. \n - La transe se termine si la statue est attaquée (le premier coup ne cause pas de dégâts). \n - Si la cible est consentante, elle peut rester en hibernation jusqu’au prochain équinoxe ou solstice."
     },
     {
@@ -871,9 +871,9 @@
       "nom": "Maître des Bêtes",
       "type": "Ghur - Ambre - Domaine de la Bête",
       "cn": 10,
-      "portee": "Bonus de Volonté mètres",
+      "portee": "Bonus de Force Mentale mètres",
       "cible": "1 créature Bestiale (taille P, M ou G)",
-      "duree": "Bonus de Volonté jours",
+      "duree": "Bonus de Force Mentale jours",
       "desc": "Votre regard et votre voix imposent votre domination sur une créature Bestiale. \n - La cible vous considère comme son chef de meute et vous protège jusqu’à la mort. \n - Elle suit vos ordres simples instinctivement. \n - À la fin du sort, elle n’attaquera pas spontanément le lanceur, mais pourrait attaquer ses alliés."
     },
     {
@@ -889,25 +889,25 @@
       "nom": "Bête Indomptée",
       "type": "Ghur - Ambre - Domaine de la Bête",
       "cn": 4,
-      "portee": "Toucher",
+      "portee": "Contact",
       "cible": "1",
       "duree": "Instantané",
-      "desc": "Vous provoquez chez un animal domestique un retour à l’état sauvage et agressif. \n - Le MJ décide s’il fuit vers la nature ou attaque son ancien maître. \n - Le Test de Charmer Animal ne peut pas l’apprivoiser, mais seulement l’apaiser. \n - Un cavalier doit réussir un Test de Monter Difficile (−2 DR) ou être désarçonné. \n Avec +4 DR, vous pouvez affecter un humain, qui peut résister avec un Test de Volonté Difficile (−1 DR). S’il échoue, il se transforme partiellement en bête : \n - Il pousse des cris sauvages et perd la parole. \n - Chaque round, il agit selon un jet de 1d10 : \n • 1-3 : Distrait (grattage, défécation, etc.) \n • 4-6 : Paniqué (court dans une direction aléatoire, percute des obstacles, attaque au hasard) \n • 7-9 : Amical (rit, danse, rampe vers le plus proche) \n • 10 : Enragé (provoque Peur (1) à ceux qui l’entendent, sauf aux Mages des Bêtes). \n - L’effet dure jusqu’à être dissipé par magie"
+      "desc": "Vous provoquez chez un animal domestique un retour à l’état sauvage et agressif. \n - Le MJ décide s’il fuit vers la nature ou attaque son ancien maître. \n - Le Test de Charmer Animal ne peut pas l’apprivoiser, mais seulement l’apaiser. \n - Un cavalier doit réussir un Test de Monter Difficile (−2 DR) ou être désarçonné. \n Avec +4 DR, vous pouvez affecter un humain, qui peut résister avec un Test de Force Mentale Difficile (−1 DR). S’il échoue, il se transforme partiellement en bête : \n - Il pousse des cris sauvages et perd la parole. \n - Chaque round, il agit selon un jet de 1d10 : \n • 1-3 : Distrait (grattage, défécation, etc.) \n • 4-6 : Paniqué (court dans une direction aléatoire, percute des obstacles, attaque au hasard) \n • 7-9 : Amical (rit, danse, rampe vers le plus proche) \n • 10 : Enragé (provoque Peur (1) à ceux qui l’entendent, sauf aux Mages des Bêtes). \n - L’effet dure jusqu’à être dissipé par magie"
     },
     {
       "nom": "Malédiction d’Anraheir",
       "type": "Ghur - Ambre - Domaine de la Bête",
       "cn": 5,
-      "portee": "Volonté en mètres",
-      "cible": "ZdE (Bonus de Volonté mètres)",
-      "duree": "Bonus de Volonté rounds",
+      "portee": "Force Mentale en mètres",
+      "cible": "ZdE (Bonus de Force Mentale mètres)",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Vous invoquez des petits esprits de la terre pour harceler et distraire vos ennemis. \n - Les cibles ennemies dans la zone subissent : \n • -2 en Mouvement \n • -20 en CC, CT et Agilité \n - Les cibles qui quittent la zone sont suivies par les esprits mais subissent seulement -1/-10 à ces Caractéristiques. \n - Les montures doivent réussir un Test de Calme (+0) ou fuir jusqu’à être calmées avec un Test de Monter (+0). \n - Les esprits sont invisibles pour tous sauf leurs cibles et ne peuvent pas être blessés."
     },
     {
       "nom": "Yeux de la Meute",
       "type": "Ghur - Ambre - Domaine de la Bête",
       "cn": 3,
-      "portee": "Toucher",
+      "portee": "Contact",
       "cible": "1 cible",
       "duree": "Force Mentale minutes",
       "desc": "Vous liez la vision de la cible à la vôtre. \n - La cible peut alterner entre sa propre vue et la vôtre à volonté, sans limite de portée. \n - Votre ligne de vue peut aider certains sorts (ex. téléportation). \n - La cible ne peut pas lancer de sorts à travers votre corps."
@@ -916,9 +916,9 @@
       "nom": "Nuée Funeste",
       "type": "Ghur - Ambre - Domaine de la Bête",
       "cn": 8,
-      "portee": "Volonté en mètres",
-      "cible": "ZdE (Bonus de Volonté mètres)",
-      "duree": "Bonus de Volonté rounds",
+      "portee": "Force Mentale en mètres",
+      "cible": "ZdE (Bonus de Force Mentale mètres)",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Vous invoquez une nuée d’oiseaux pendant Bonus de Force Mentale Rounds. À chaque fin de Round, les occupants sans Magie des Arcanes (Bêtes) subissent une touche à la tête de 7 Dégâts et restent Aveuglés dans la zone. Une Action et un Test de Charme animal (+2 DR) permettent de déplacer la nuée à portée."
     },
     {
@@ -936,7 +936,7 @@
       "cn": 6,
       "portee": "Vous",
       "cible": "Vous",
-      "duree": "Bonus de Volonté rounds",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Vous gagnez +20 Endurance, Sens aiguisé (Odorat), Vision dans le noir et Peur (1) pendant Bonus de Force Mentale Rounds."
     },
     {
@@ -945,15 +945,15 @@
       "cn": 8,
       "portee": "Vous",
       "cible": "ZdE Force Mentale mètres",
-      "duree": "Bonus de Volonté rounds",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Vous hurlez à la lune rouge sang, insufflant une vigueur bestiale à vos alliés. \n - Tous les alliés dans la zone gagnent : \n • +1 Mouvement \n • +10 en Force et Endurance."
     },
     {
       "nom": "Régiment Monstrueux de Merciw",
       "type": "Ghur - Ambre - Domaine de la Bête",
       "cn": 13,
-      "portee": "Volonté en mètres",
-      "cible": "ZdE (Bonus de Volonté mètres)",
+      "portee": "Force Mentale en mètres",
+      "cible": "ZdE (Bonus de Force Mentale mètres)",
       "duree": "Bonus de Force rounds",
       "desc": "Vous conférez la force des bêtes à vos alliés. \n - Tous les alliés dans la zone gagnent : \n • +30 en Force et Endurance (max 100). \n - Ne vous affecte pas vous-même."
     },
@@ -961,7 +961,7 @@
       "nom": "Pulvérisation Musquée",
       "type": "Ghur - Ambre - Domaine de la Bête",
       "cn": 2,
-      "portee": "Bonus de Volonté mètres",
+      "portee": "Bonus de Force Mentale mètres",
       "cible": "1",
       "duree": "Instantané",
       "desc": "Vous projetez un musc à l’odeur répugnante. Choisissez une option : \n - Marquer une cible : Les Tests pour retrouver la cible bénéficient de +2 DR. \n - Marquer un territoire : Les animaux sauvages n’entrent pas sauf s'ils sont affamés ou menacés (Test de Calme Accessible (+2 DR)). \n - Le musc persiste 1 jour +1 jour/ +2 DR et ne peut pas être lavé."
@@ -972,7 +972,7 @@
       "cn": 4,
       "portee": "Vous",
       "cible": "Vous",
-      "duree": "Bonus de Volonté minutes",
+      "duree": "Bonus de Force Mentale minutes",
       "desc": "Vous gagnez +1 Mouvement, Escalade des surfaces abruptes et Foulée (un terrain). Si vous possédez déjà ces Talents, ajoutez un niveau temporaire, puis un autre par +2 DR. Vos Tests pour éviter Enchevêtré reçoivent +1 DR."
     },
     {
@@ -981,7 +981,7 @@
       "cn": 6,
       "portee": "Vous",
       "cible": "Vous",
-      "duree": "Bonus de Volonté heures",
+      "duree": "Bonus de Force Mentale heures",
       "desc": "Vous invoquez un animal sauvage pour vous servir de monture. \n - L’animal est choisi par le MJ (cerf, sanglier, ours, etc.). \n - Vous gagnez temporairement la compétence Monter, avec un niveau équivalent à votre Langage (Magie). \n - La monture combat pour vous mais préserve sa propre survie."
     },
     {
@@ -999,17 +999,17 @@
       "cn": 5,
       "portee": "Vous",
       "cible": "ZdE Force Mentale mètres",
-      "duree": "Bonus de Volonté Rounds",
+      "duree": "Bonus de Force Mentale Rounds",
       "desc": "Vous rendez courage à vos alliés : \n - Retirez DR+1 Conditions Brisé à tous les alliés de la zone. \n - Empêche les alliés affectés de faire d’autres Tests de Peur ou Terreur tant que le sort dure."
     },
     {
       "nom": "Transformation de Kadon",
       "type": "Ghur - Ambre - Domaine de la Bête",
       "cn": 14,
-      "portee": "Vous ou Toucher",
+      "portee": "Vous ou Contact",
       "cible": "Vous ou 1 (max)",
-      "duree": "Bonus de Volonté Rounds",
-      "desc": "Vous vous métamorphosez en bête monstrueuse : \n - La créature est Grande ou Énorme (choisie par le MJ) : \n → Mage d'Ambre ou Elfe : Demi-gryph, Dragon, Hippogryph, Aigle Géant, Griffon. \n → Chamane Homme-Bête, Sorcier du Chaos, Sorcière : Manticore, Hydre, Jabberslythe, Vouivre. \n - Vous conservez votre Intelligence et Volonté, mais remplacez toutes vos autres Caractéristiques, Compétences et Talents par ceux du monstre. \n - Vous ne pouvez pas lancer de sorts sous cette forme. \n - Pour chaque +4 DR : \n → Ajoutez un Trait de Créature optionnel, ou \n → Transformez quelqu'un d'autre (contact, Test Opposé de Volonté pour les cibles réticentes)."
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous vous métamorphosez en bête monstrueuse : \n - La créature est Grande ou Énorme (choisie par le MJ) : \n → Mage d'Ambre ou Elfe : Demi-gryph, Dragon, Hippogryph, Aigle Géant, Griffon. \n → Chamane Homme-Bête, Sorcier du Chaos, Sorcière : Manticore, Hydre, Jabberslythe, Vouivre. \n - Vous conservez votre Intelligence et Force Mentale, mais remplacez toutes vos autres Caractéristiques, Compétences et Talents par ceux du monstre. \n - Vous ne pouvez pas lancer de sorts sous cette forme. \n - Pour chaque +4 DR : \n → Ajoutez un Trait de Créature optionnel, ou \n → Transformez quelqu'un d'autre (contact, Test Opposé de Force Mentale pour les cibles réticentes)."
     },
     {
       "nom": "Capuche Vengeresse",
@@ -1017,8 +1017,8 @@
       "cn": 7,
       "portee": "Vous",
       "cible": "Vous",
-      "duree": "2 × Bonus de Volonté rounds",
-      "desc": "Une auréole d’ambre affaiblit et dévie les attaques non magiques : \n - Test de Calme (+0) à chaque attaque subie. \n - Réduit les Dégâts de votre Bonus de Volonté + DR. \n - Si les Dégâts sont réduits à 0 : \n → Attaques à distance : touchent une cible aléatoire à 2 mètres de vous. \n → Attaques au corps à corps : sont renvoyées sur l’attaquant (il ne peut pas s’opposer)."
+      "duree": "2 × Bonus de Force Mentale rounds",
+      "desc": "Une auréole d’ambre affaiblit et dévie les attaques non magiques : \n - Test de Calme (+0) à chaque attaque subie. \n - Réduit les Dégâts de votre Bonus de Force Mentale + DR. \n - Si les Dégâts sont réduits à 0 : \n → Attaques à distance : touchent une cible aléatoire à 2 mètres de vous. \n → Attaques au corps à corps : sont renvoyées sur l’attaquant (il ne peut pas s’opposer)."
     },
     {
       "nom": "Manteau d’Hiver",
@@ -1026,7 +1026,7 @@
       "cn": 2,
       "portee": "Vous",
       "cible": "Vous",
-      "duree": "Bonus de Volonté heures",
+      "duree": "Bonus de Force Mentale heures",
       "desc": "Vous faites pousser un pelage épais qui vous protège : \n - Immunité à l’Exposition au Froid. \n - Modifiez tous les jets sur la table des Coups Critiques contre vous de -10. \n - Pénalité : Agilité et Sociabilité -10."
     },
     {
@@ -1035,7 +1035,7 @@
       "cn": 4,
       "portee": "Force Mentale mètres",
       "cible": "1",
-      "duree": "Bonus de Volonté rounds",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Un ver massif enserre la cible, qui gagne 1 Enchevêtré de Force 50. Lors d’un Test opposé de Force gagné, le ver peut ajouter 1 Enchevêtré ou dissoudre 1 PA de cuir réellement porté, y compris les accessoires en cuir concernés. Le ver ne peut être blessé, ne cause aucune Blessure de lutte et disparaît lorsque la cible se libère."
     },
     {
@@ -1044,7 +1044,7 @@
       "cn": 8,
       "portee": "Vous",
       "cible": "Vous",
-      "duree": "Bonus de Volonté rounds",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Vous gagnez +1 Mouvement, +30 Force et Endurance, Belliqueux, Morsure (BF + 1), Peur (1), Frénésie, Magique et Foulée (Bois). Vous ne pouvez utiliser les compétences de Langue ou de Savoir pendant le sort."
     },
     {
@@ -1387,7 +1387,7 @@
       "portee": "Contact",
       "cible": "1",
       "duree": "(Bonus de Force Mentale) heures",
-      "desc": "Vous insufflez à la cible clarté et détermination, lui accordant +2 DR aux Tests pour résister à la Séduction et à l’Intimidation. \n Si vous lancez ce Sort sur vous-même, vous pouvez choisir à la place de recevoir +2 DR aux Tests de Charisme, à condition de ne dire que la vérité. \n Le Collège Lumineux désapprouve cette seconde utilisation, la considérant comme une forme de glamour."
+      "desc": "Vous insufflez à la cible clarté et détermination, lui accordant +2 DR aux Tests pour résister à la Séduction et à l’Intimidation. \n Si vous lancez ce Sort sur vous-même, vous pouvez choisir à la place de recevoir +2 DR aux Tests de Sociabilité, à condition de ne dire que la vérité. \n Le Collège Lumineux désapprouve cette seconde utilisation, la considérant comme une forme de glamour."
     },
     {
       "nom": "Lumière guérisseuse",
@@ -1510,7 +1510,7 @@
       "nom": "Enchantement Végétal (Ghyran & Chamon)",
       "type": "Magie Elfique Arcanique",
       "cn": 4,
-      "portee": "Toucher",
+      "portee": "Contact",
       "cible": "1 plante",
       "duree": "Instantané",
       "desc": "Vous insufflez une propriété magique permanente à une plante non-magique. Chaque plante ne peut recevoir qu’un seul enchantement, qui peut être dissipé. Choisissez une des améliorations suivantes : \n - Robuste : La plante devient résistante aux conditions environnementales difficiles (manque de lumière, sécheresse, températures extrêmes). \n - Nourricière : Les fruits, noix, racines ou feuilles de la plante sont plus nourrissants et pèsent deux fois moins pour satisfaire les besoins alimentaires. \n - Réceptacle : La plante peut abriter un démon mineur, un élémentaire mineur ou une âme, comme s’il s’agissait d’une Pierre de Pouvoir."
@@ -1522,7 +1522,7 @@
       "portee": "Force Mentale mètres",
       "cible": "1",
       "duree": "Instantané",
-      "desc": "Vous tentez d’expulser un fantôme, spectre, démon mineur ou bête démoniaque. Si vous remportez un Test Opposé de Volonté/Froideur, la cible est renvoyée dans son royaume d’origine."
+      "desc": "Vous tentez d’expulser un fantôme, spectre, démon mineur ou bête démoniaque. Si vous remportez un Test Opposé de Force Mentale/Froideur, la cible est renvoyée dans son royaume d’origine."
     },
     {
       "nom": "Alarme Magique (Azyr & Ulgu)",
@@ -1546,7 +1546,7 @@
       "nom": "Purification du Corps (Ghyran & Hysh)",
       "type": "Magie Elfique Arcanique",
       "cn": 6,
-      "portee": "Toucher",
+      "portee": "Contact",
       "cible": "1",
       "duree": "Instantané",
       "desc": "Vous effectuez Résistance (+0 DR) pour soigner une maladie nommée ou retirer un poison de la cible. En cas de Maladresse, vous contractez vous-même cette maladie ou ce poison."
@@ -1584,7 +1584,7 @@
       "cn": 0,
       "portee": "Contact",
       "cible": "1 flèche",
-      "duree": "Bonus de Volonté rounds",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Vous imprégnez une flèche non magique de puissance mystique : \n - Devient une arme magique. \n - Inflige +1 Dégâts."
     },
     {
@@ -1601,7 +1601,7 @@
       "type": "Petite Magie Elfique",
       "cn": 0,
       "portee": "Contact",
-      "cible": "ZdE (Bonus de Volonté mètres)",
+      "cible": "ZdE (Bonus de Force Mentale mètres)",
       "duree": "Instantané",
       "desc": "Vous insufflez de la vie aux plantes dans la zone : \n - Les plantes vivantes poussent à leur taille et rendement maximum, même dans de mauvaises conditions. \n - Les plantes mortes reviennent à la vie en 1 jour sous leur état d’origine."
     },
@@ -1619,17 +1619,17 @@
       "type": "Petite Magie Elfique",
       "cn": 0,
       "portee": "Contact",
-      "cible": "1 ou ZdE (Bonus de Volonté mètres)",
+      "cible": "1 ou ZdE (Bonus de Force Mentale mètres)",
       "duree": "Instantané",
-      "desc": "Vous retirez toute saleté d’un objet, d’une personne ou d’un animal, le laissant parfaitement propre. \n Si lancé sur une surface, il nettoie une zone de Bonus de Volonté mètres de diamètre."
+      "desc": "Vous retirez toute saleté d’un objet, d’une personne ou d’un animal, le laissant parfaitement propre. \n Si lancé sur une surface, il nettoie une zone de Bonus de Force Mentale mètres de diamètre."
     },
     {
       "nom": "Révéler la Magie",
       "type": "Petite Magie Elfique",
       "cn": 0,
       "portee": "Vous",
-      "cible": "ZdE (Bonus de Volonté mètres)",
-      "duree": "Bonus de Volonté rounds",
+      "cible": "ZdE (Bonus de Force Mentale mètres)",
+      "duree": "Bonus de Force Mentale rounds",
       "desc": "Vous rendez la magie visible dans la zone. \n - Les objets et créatures magiques brillent, même s’ils sont cachés. \n - Les magiciens ne sont pas détectés, sauf s’ils sont sous l’effet d’un sort."
     },
     {
@@ -1639,7 +1639,7 @@
       "portee": "Vous",
       "cible": "Vous",
       "duree": "(Bonus de Force Mentale) Rounds",
-      "desc": "Vous invoquez une hallebarde Magique infligeant BF + Bonus de Force Mentale + 4 Dégâts. Selon l’arbitrage V5 du MJ, les Morts-vivants engagés avec vous ne bénéficient pas d’Avantage aux Tests contre vous ; leur Élan reste disponible."
+      "desc": "Vous invoquez une hallebarde Magique infligeant BF + Bonus de Force Mentale + 4 Dégâts. Les Morts-vivants engagés avec vous ne gagnent pas d’Élan."
     },
     {
       "nom": "Acceptation du Destin",
@@ -1789,7 +1789,7 @@
       "nom": "Vitesse de Lykos",
       "type": "Shyish - Pourpre - Domaine de la Mort",
       "cn": 3,
-      "portee": "(Initiative ÷ 2) mètres",
+      "portee": "(Moitié de l’Initiative) mètres",
       "cible": "1",
       "duree": "1 Round",
       "desc": "Vous conférez à vous-même ou à une autre cible une vitesse surnaturelle. \n • La cible peut parcourir 100 mètres à son prochain Round tout en réalisant une action. \n • Les obstacles et le terrain influencent toujours le mouvement normalement. \n • Si la cible meurt alors que le Sort est actif, elle peut immédiatement effectuer une action bonus avant de succomber."
@@ -1816,7 +1816,7 @@
       "nom": "Goût de la Mort",
       "type": "Shyish - Pourpre - Domaine de la Mort",
       "cn": 7,
-      "portee": "(Force Mentale ÷ 2) mètres",
+      "portee": "(Moitié de la Force Mentale) mètres",
       "cible": "1 + ZdE (Spécial)",
       "duree": "Instantané",
       "desc": "Vous plongez vos ennemis dans une prise de conscience aiguë de leur propre mortalité. \n • La cible principale doit effectuer un Test d’Exposition mineure à la Corruption, puis réussir un Test de Calme Intermédiaire (+0) ou gagner l’État Inconscient. \n • Les ennemis situés dans une Zone d’Effet égale à votre Bonus d’Initiative mètres autour de la cible doivent réussir un Test de Calme Accessible (+2 DR) ou gagner un État Sonné. \n • Tous ceux qui échouent au Test de Calme doivent réussir un Test de Calme Facile (+4 DR) ou recevoir un État Exténué ainsi que la Psychologie (Désespoir). \n • Pendant une semaine, les victimes du Désespoir gagnent un État Exténué chaque matin à leur réveil."
@@ -1914,11 +1914,11 @@
     {
       "nom": "Effrayant",
       "type": "Sort d'Arcane",
-      "cn": 3,
+      "cn": 2,
       "portee": "Vous",
       "cible": "Vous",
       "duree": "(Bonus de Force Mentale) Rounds",
-      "desc": "En vous recouvrant de magie, vous devenez effrayant et intimidant. Gagnez Peur 1. Pour chaque +3 DR, vous pouvez augmenter votre valeur de Peur de 1."
+      "desc": "En vous recouvrant de magie, vous devenez effrayant et intimidant. Gagnez Peur (1). Pour chaque +3 DR, vous pouvez augmenter votre valeur de Peur de 1."
     },
     {
       "nom": "Envol",
@@ -1963,7 +1963,7 @@
       "portee": "Spécial",
       "cible": "Spécial",
       "duree": "Instantané",
-      "desc": "Choisissez une cible à 20 + Bonus de Force Mentale mètres et effectuez CT (+0 DR), opposé à l’Esquive de la cible et des voisins dans Bonus d’Initiative mètres. Ceux qui ne battent pas votre résultat sont touchés. Base Bonus de Force Mentale Dégâts : Métal +4 et dommages aux objets ; Bêtes/Lumière +2 et Exténué, frappe en dernier et adversaires +1 DR en défense jusqu’au retrait de cet Exténué ; Cieux +2, ignore les PA métalliques et Sonné ; Feu +5 et Enflammé ; Mort/Vie +2 et Empoisonné ; Ombres, pas de Dégâts mais fumée et suffocation pendant Bonus de Force Mentale Rounds."
+      "desc": "Choisissez une cible à 20 + Bonus de Force Mentale mètres et effectuez CT (+0 DR), opposé à l’Esquive de la cible et des voisins dans Bonus de Force Mentale mètres. Ceux qui ne battent pas votre résultat sont touchés. Base Bonus de Force Mentale Dégâts : Métal +4 et dommages aux objets ; Bêtes/Lumière +2 et Exténué, frappe en dernier et adversaires +1 DR en défense jusqu’au retrait de cet Exténué ; Cieux +2, ignore les PA métalliques et Sonné ; Feu +5 et Enflammé ; Mort/Vie +2 et Empoisonné ; Ombres, pas de Dégâts mais fumée et suffocation pendant Bonus de Force Mentale Rounds. Le lanceur est immunisé à son propre Souffle."
     },
     {
       "nom": "Téléportation",
@@ -2107,7 +2107,7 @@
       "portee": "(Force Mentale) mètres",
       "cible": "Spécial",
       "duree": "Instantané",
-      "desc": "Vous créez une brève rafale de vent, mais suffisamment forte pour éteindre une bougie, faire claquer une porte ouverte ou balayer quelques pages sur le sol."
+      "desc": "Vous créez une brève rafale de vent, mais suffisamment forte pour éteindre une bougie, faire claquer une porte ouverte ou donner à une silhouette en cape une allure impressionnante."
     },
     {
       "nom": "Créer un petit animal",
@@ -2374,7 +2374,7 @@
       "nom": "Cor du Andar",
       "type": "Uglu - Gris - Domaine de l'Ombre",
       "cn": 5,
-      "portee": "ZdE (Charisme) mètres",
+      "portee": "ZdE (Sociabilité) mètres",
       "cible": "Vous",
       "duree": "(Force Mentale) minutes",
       "desc": "Vous invoquez un puissant son de cor qui affecte tous ceux à portée. \n • Les alliés reçoivent un bonus de +2 DR à leurs Tests de Calme et Commandement en raison du regain de moral. \n • Les ennemis subissent un malus de -2 DR à leurs Tests de Calme et Commandement à cause de leur désespoir. \n • Les ennemis doivent immédiatement réussir un Test de Peur (1). \n • Les cibles neutres ne sont pas affectées."
@@ -2413,7 +2413,7 @@
       "portee": "Contact",
       "cible": "1",
       "duree": "(Bonus de Force Mentale) heures",
-      "desc": "Vous altérez l’apparence d’une cible. \n Les cibles non consentantes peuvent résister avec un Test opposé de Force Mentale. \n • Choisissez un des effets suivants : \n 1. Augmente ou réduit l’Attractivité, modifiant le Charisme de +/-10. \n 2. La cible semble morte, même en cas d’inspection minutieuse. Elle peut encore entendre et voir, mais ne peut ni parler ni bouger. \n 3. La cible devient méconnaissable aux yeux de ceux qui la connaissent. Un Test de Force Mentale peut être tenté pour se faire reconnaître volontairement."
+      "desc": "Vous altérez l’apparence d’une cible. \n Les cibles non consentantes peuvent résister avec un Test opposé de Force Mentale. \n • Choisissez un des effets suivants : \n 1. Augmente ou réduit l’Attractivité, modifiant la Sociabilité de +/-10. \n 2. La cible semble morte, même en cas d’inspection minutieuse. Elle peut encore entendre et voir, mais ne peut ni parler ni bouger. \n 3. La cible devient méconnaissable aux yeux de ceux qui la connaissent. Un Test de Force Mentale peut être tenté pour se faire reconnaître volontairement."
     },
     {
       "nom": "Miasme mystifiant",
@@ -2494,7 +2494,7 @@
       "portee": "(Force Mentale) mètres",
       "cible": "1",
       "duree": "(Force Mentale) minutes",
-      "desc": "Vous contraignez un ennemi à changer d’allégeance. \n • Si la cible échoue à un Test opposé de Force Mentale, elle vous considère comme un allié et traite ses anciens alliés comme des ennemis. \n • À chaque fois qu’elle est incitée à attaquer un ancien allié, elle peut tenter un Test de Calme Intermédiaire (+0) pour briser l’enchantement. \n • La cible ne suivra pas d’instructions suicidaires. \n • Si ce Sort est lancé sur une cible neutre, vous gagnez +2 DR à tous les Tests basés sur le Charisme effectués avec cette cible. \n • Ce Sort n’a aucun effet sur les cibles amicales."
+      "desc": "Vous contraignez un ennemi à changer d’allégeance. \n • Si la cible échoue à un Test opposé de Force Mentale, elle vous considère comme un allié et traite ses anciens alliés comme des ennemis. \n • À chaque fois qu’elle est incitée à attaquer un ancien allié, elle peut tenter un Test de Calme Intermédiaire (+0) pour briser l’enchantement. \n • La cible ne suivra pas d’instructions suicidaires. \n • Si ce Sort est lancé sur une cible neutre, vous gagnez +2 DR à tous les Tests basés sur la Sociabilité effectués avec cette cible. \n • Ce Sort n’a aucun effet sur les cibles amicales."
     },
     {
       "nom": "Ombre Vagabonde",
@@ -2504,6 +2504,1113 @@
       "cible": "Vous",
       "duree": "(Bonus de Force Mentale) minutes",
       "desc": "Votre ombre se détache de votre corps et se déplace indépendamment sous votre direction, à votre vitesse de Mouvement. \n • Vous devez utiliser une Action pour la diriger, sinon elle reste immobile. \n • Vous pouvez voir, entendre et sentir depuis la position de votre ombre, mais ne pouvez pas lancer de Sorts à partir d’elle. \n • L’ombre est détruite si elle entre en contact direct avec la lumière du soleil ou si elle s’éloigne de plus de 48 mètres d’une source lumineuse. \n • Elle cause Peur (1) mais ne peut pas attaquer."
+    },
+    {
+      "nom": "Apothéose (Slann)",
+      "type": "Domaine de Haute Magie",
+      "cn": 4,
+      "portee": "Moitié de la Force Mentale mètres",
+      "cible": "1",
+      "duree": "1 Round",
+      "desc": "Variante réservée aux Slann du sort Apothéose : vous insufflez à la cible une magie pure qui exalte sa présence terrifiante et referme ses blessures.\nSurpuissance :\n• Chaque +2 DR : Ajoute 1 au rang du Trait Peur de la cible.\n• +3 DR : La cible récupère un nombre de Blessures égal à votre Bonus de Force Mentale.\n• +6 DR : Vous soignez une Blessure Critique."
+    },
+    {
+      "nom": "Chemin entre les Mondes (Slann)",
+      "type": "Domaine de Haute Magie",
+      "cn": 7,
+      "portee": "Force Mentale mètres",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "1 Round",
+      "desc": "Variante réservée aux Slann du sort Chemin entre les Mondes : vous ouvrez les Voies des Anciens à travers le réseau géomantique.\nSurpuissance :\n• +4 DR : Si les cibles se trouvent sur un nexus géomantique, elles peuvent emprunter les Voies des Anciens vers un autre nexus que vous choisissez, sans limite de distance."
+    },
+    {
+      "nom": "Destruction des Arcanes (Slann)",
+      "type": "Domaine de Haute Magie",
+      "cn": 9,
+      "portee": "Force Mentale mètres",
+      "cible": "1",
+      "duree": "Instantané",
+      "desc": "Variante réservée aux Slann du sort Destruction des Arcanes : vous libérez des forces d’annihilation pour disloquer les artefacts adverses.\nSurpuissance :\n• Chaque +5 DR : Vous tentez une destruction supplémentaire contre un objet magique tiré au hasard."
+    },
+    {
+      "nom": "Drain de Magie (Slann)",
+      "type": "Domaine de Haute Magie",
+      "cn": 6,
+      "portee": "Moitié de la Force Mentale mètres",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Instantané",
+      "desc": "Variante réservée aux Slann du sort Drain de Magie : vous purgez l’éther ambiant dans la zone d’effet.\nSurpuissance :\n• Chaque +4 DR : Vous drainez la magie environnementale dans la zone, ce qui désature un nexus de ligne de force ou réduit la saturation environnementale d’un niveau par palier."
+    },
+    {
+      "nom": "Destruction de Démon Mineur",
+      "type": "Domaine de la Démonologie",
+      "cn": 6,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1 Démon de taille Moyenne ou inférieure",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous défaites le Dhar maintenant la cohésion d’un Démon de taille Petite ou Moyenne. Vous effectuez un Test d’incantation opposé à un Test d’Endurance Accessible (+4 DR) de la cible (l’égalité favorise le lanceur).\nEn cas de victoire, le démon est détruit et vous gagnez +10 à une caractéristique de votre choix pendant votre Bonus de Force Mentale Rounds."
+    },
+    {
+      "nom": "Détection de démon",
+      "type": "Domaine de la Démonologie",
+      "cn": 4,
+      "portee": "Force Mentale mètres",
+      "cible": "Spécial",
+      "duree": "Instantané",
+      "desc": "Vous sondez l’éther pour déceler la présence démoniaque. Vous apprenez automatiquement si un démon est manifesté à portée (qu’il soit invoqué, lié à un artefact, possédant un autre être ou équivalent), sans en connaître la localisation précise."
+    },
+    {
+      "nom": "Manifestation de Démon Mineur",
+      "type": "Domaine de la Démonologie",
+      "cn": 8,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "Spécial",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous déchirez le voile de la réalité pour faire surgir un Démon mineur (Sanguinaire de Khorne ou Démonette de Slaanesh). Vous opposez votre Test de Focalisation (Dhar) au Test de Calme du démon :\n• Victoire : Le démon exécute un seul ordre, pris au pied de la lettre, puis disparaît une fois cet ordre accompli. Si l’ordre n’est pas accompli à la fin de la durée du sort, le démon reste et devient hostile.\n• Échec : Le démon vous attaque immédiatement."
+    },
+    {
+      "nom": "Octogramme",
+      "type": "Domaine de la Démonologie",
+      "cn": 10,
+      "portee": "Contact",
+      "cible": "ZdE Bonus d’Intelligence mètres",
+      "duree": "Force Mentale minutes",
+      "desc": "Vous tracez au sol un octogramme marqué de symboles impies d’un diamètre maximal égal à votre Bonus d’Intelligence mètres. Une barrière infranchissable se dresse contre toute influence démoniaque : aucune créature Démoniaque ne peut y entrer ni en sortir. Les démons déjà présents dans la zone y restent prisonniers pendant toute la durée du sort."
+    },
+    {
+      "nom": "Bouillie de sang",
+      "type": "Domaine de la Grande Gueule",
+      "cn": 5,
+      "portee": "Vous",
+      "cible": "Vous",
+      "duree": "Instantané",
+      "desc": "Vous sucez le sang et la moelle d’un membre détaché pour revigorer votre organisme. Vous effectuez un Test d’Endurance Accessible (+4 DR) :\n• Réussite : Vous soignez 1 Blessure, plus 1 Blessure supplémentaire par DR obtenu.\n• Échec : Vous contractez le Flux sanglant."
+    },
+    {
+      "nom": "Brasse-bile",
+      "type": "Domaine de la Grande Gueule",
+      "cn": 6,
+      "portee": "Vous",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous avalez un mélange âcre de rate et de bile. Vous ainsi que tous les Ogres alliés situés dans la zone d’effet développez la Psychologie Haine envers une cible ou un groupe de cibles de votre choix pendant toute la durée du sort."
+    },
+    {
+      "nom": "Brise-dents",
+      "type": "Domaine de la Grande Gueule",
+      "cn": 8,
+      "portee": "Vous",
+      "cible": "ZdE Force Mentale mètres",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous broyez un morceau de roc entre vos mâchoires et effectuez un Test d’Endurance Intermédiaire (+0 DR), perdant une dent par DR négatif. Si le sort réussit, vous ainsi que tous les Ogres alliés de la zone bénéficiez de :\n• +2 DR à tous les Tests d’Endurance et de Calme.\n• +1 Point d’Armure (PA) sur toutes les localisations."
+    },
+    {
+      "nom": "Brise-os",
+      "type": "Domaine de la Grande Gueule",
+      "cn": 5,
+      "portee": "Force Mentale mètres",
+      "cible": "1",
+      "duree": "Instantané",
+      "desc": "Vous broyez bruyamment des os en maudissant un adversaire. Il s’agit d’un Projectile magique à Dégâts +4 qui ignore les Points d’Armure (le Bonus d’Endurance s’applique normalement). Sur une Blessure Critique, ajoutez +20 au jet sur la table de Blessures Critiques correspondante."
+    },
+    {
+      "nom": "Dévore-cervelle",
+      "type": "Domaine de la Grande Gueule",
+      "cn": 5,
+      "portee": "Vous",
+      "cible": "Vous",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous dévorez une tête entière pour exhaler une vague d’horreur cauchemardesque. Vous gagnez le Trait Peur (2). Si le défunt était proche d’une créature affectée par votre Peur, celle-ci subit un malus de −2 DR à ses Tests de Calme pour y résister."
+    },
+    {
+      "nom": "Du cœur au ventre",
+      "type": "Domaine de la Grande Gueule",
+      "cn": 6,
+      "portee": "Vous",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous consommez le gros intestin d’un Mournfang mâle pour insuffler une bravoure farouche. Vous et tous les Ogres alliés situés dans la zone d’effet ignorez totalement les États Brisé pendant toute la durée du sort."
+    },
+    {
+      "nom": "Festin des tombés",
+      "type": "Domaine de la Grande Gueule",
+      "cn": 9,
+      "portee": "Vous",
+      "cible": "Spécial",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous baignez votre lame dans le sang d’un ennemi tombé pour éveiller une soif sanguinaire. Les créatures de votre choix dans la zone gagnent le Trait Vampirisme pendant la durée du sort en blessant un adversaire au corps à corps. Une cible peut tenter de résister volontairement par un Test d’Endurance Difficile (−2 DR).\nÀ la fin du sort, tout non-Ogre ayant blessé un adversaire au corps à corps doit réussir un Test de Calme Intermédiaire (+0 DR) sous peine de recevoir l’État Sonné. Si l’adversaire blessé était Infecté ou Malade, ce test subit un malus de −3 DR."
+    },
+    {
+      "nom": "Gloutonneur",
+      "type": "Domaine de la Grande Gueule",
+      "cn": 5,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous dévorez le cœur d’une bête puissante pour insuffler sa vigueur à une créature proche. La cible gagne +20 en Force (soit +2 à son Bonus de Force pour ses dégâts et ses tests de Force). Pour refuser ce don, elle doit réussir un Test de Calme Difficile (−2 DR).\nÀ la fin du sort, la cible doit consommer un repas copieux sous peine de recevoir 1 État Exténué."
+    },
+    {
+      "nom": "La Gueule",
+      "type": "Domaine de la Grande Gueule",
+      "cn": 11,
+      "portee": "Force Mentale mètres",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous faites surgir du sol une manifestation béante de la Grande Gueule aux mille crocs. Chaque occupant de la zone effectue un Test d’Esquive Intermédiaire (+0 DR) contre une attaque touchant une localisation aléatoire :\n• Réussite : La cible subit Dégâts +8, réduits de 1 par DR obtenu.\n• Échec : La cible subit Dégâts +10 et reçoit 3 États Enchevêtré. Pour se dégager, elle doit opposer sa Force à celle de la Gueule (Force 60). Tant qu’une victime y reste prise, elle subit à la fin de chacun de ses tours une nouvelle frappe à Dégâts +10.\nÀ la fin du sort, la Gueule disparaît : toute victime encore prisonnière subit une Blessure Critique à une localisation tirée au hasard."
+    },
+    {
+      "nom": "Saveur de la mort",
+      "type": "Domaine de la Grande Gueule",
+      "cn": 2,
+      "portee": "Vous",
+      "cible": "Vous",
+      "duree": "Instantané",
+      "desc": "En consommant une part de cadavre, vous apprenez de façon générale quand et comment la créature est morte (arme, poison, magie ou mort naturelle), sans révéler l’identité de l’auteur ni les caractéristiques détaillées de l’arme. Si la mort est saine (exempte de poison et de maladie), il est possible de consommer le reste du corps sans danger."
+    },
+    {
+      "nom": "Tripes de troll",
+      "type": "Domaine de la Grande Gueule",
+      "cn": 6,
+      "portee": "Bonus d’Endurance mètres",
+      "cible": "1",
+      "duree": "Bonus d’Endurance Rounds",
+      "desc": "Vous avalez de la bile de troll et conférez le Trait Régénération à la cible pour toute la durée du sort (les Blessures et Blessures Critiques causées par le feu ne peuvent être régénérées). Les Ogres n’en subissent aucun effet secondaire.\nTout non-Ogre qui récupère des Blessures par ce sort doit réussir un Test d’Endurance Accessible (+2 DR) sous peine de voir sa chair prendre une teinte verdâtre ou bleutée que les témoins assimilent à une mutation."
+    },
+    {
+      "nom": "Allons-y !",
+      "type": "Domaine de la Grande Waaagh",
+      "cn": 7,
+      "portee": "Vous",
+      "cible": "ZdE Bonus de Force Mentale mètres (Orques)",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous poussez des clameurs agressives pour enflammer vos compagnons. Tous les Orques alliés de la zone (ou les Hobgobelins alliés si vous êtes vous-même un Hobgobelin) gagnent l’Élan pour leurs Tests de corps à corps pendant toute la durée du sort."
+    },
+    {
+      "nom": "Coup de boule",
+      "type": "Domaine de la Grande Waaagh",
+      "cn": 6,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1",
+      "duree": "Instantané",
+      "desc": "Vous projetez votre tête en avant, libérant une force verte maligne qui frappe toujours la tête de la cible. Il s’agit d’un Projectile magique à Dégâts +1, portés à Dégâts +6 si la cible possède le Talent Attirance aethyrique ou Seconde vue."
+    },
+    {
+      "nom": "Dur comme le roc",
+      "type": "Domaine de la Grande Waaagh",
+      "cn": 3,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous imprégnez la cible de Waaagh : elle devient belliqueuse et résistante, acquiert la Psychologie Haine envers tous ses ennemis, ignore les effets négatifs de ses États et maladies, et bénéficie de +2 DR à tous les Tests fondés sur l’Endurance."
+    },
+    {
+      "nom": "Éclate-cervelle",
+      "type": "Domaine de la Grande Waaagh",
+      "cn": 5,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1",
+      "duree": "Instantané",
+      "desc": "Vous fusillez la cible du regard pour lui asséner une décharge mentale violente. Elle tombe À Terre et reçoit l’État Sonné, plus 1 État Sonné supplémentaire par DR obtenu sur votre Test d’incantation.\nSi la cible accumule plus d’États Sonné que son Bonus d’Endurance, elle doit réussir un Test de Calme Accessible (+2 DR) sous peine de subir une Blessure Critique à la tête."
+    },
+    {
+      "nom": "Frappez-les, les gars !",
+      "type": "Domaine de la Grande Waaagh",
+      "cn": 6,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "Spécial",
+      "duree": "Instantané",
+      "desc": "Vos cris d’encouragement emplissent vos alliés de ferveur. Pour chaque DR obtenu sur votre Test d’incantation, vous pouvez accorder l’Élan à un Orque, Gobelin ou Hobgobelin allié situé à portée (les cibles bénéficiant déjà de l’Élan restent inchangées)."
+    },
+    {
+      "nom": "La Main de Gork",
+      "type": "Domaine de la Grande Waaagh",
+      "cn": 9,
+      "portee": "Force Mentale mètres",
+      "cible": "Spécial",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous conjurez une énorme main verte éthérée qui saisit 1d10 cibles de votre choix pour les déposer à portée, distantes d’au moins votre Bonus de Force Mentale mètres les unes des autres. À l’atterrissage, elles gagnent immédiatement l’Élan si elles engagent aussitôt le combat au corps à corps."
+    },
+    {
+      "nom": "Le Soleil mauvais",
+      "type": "Domaine de la Grande Waaagh",
+      "cn": 12,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "ZdE Force Mentale mètres",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Chargé d’une immense puissance, vous faites naître dans les cieux un noyau ardent orné de défenses et d’un rictus grimaçant. Toutes les cibles présentes dans la zone d’effet subissent 8 + DR Dégâts à la fin de chaque Round et doivent réussir un Test d’Endurance Intermédiaire (+0 DR) sous peine de recevoir 1 État Enflammé supplémentaire."
+    },
+    {
+      "nom": "Mork nous protège !",
+      "type": "Domaine de la Grande Waaagh",
+      "cn": 8,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "Spécial",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous implorez Mork de protéger vos alliés. Pour chaque DR obtenu sur votre Test d’incantation, un Orque, Gobelin ou Hobgobelin allié situé à portée reçoit le Trait Protection (10+). Si une cible possède déjà une Protection, celle-ci s’améliore de 1 (sans jamais dépasser 7+)."
+    },
+    {
+      "nom": "Pied de Gork",
+      "type": "Domaine de la Grande Waaagh",
+      "cn": 10,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Instantané",
+      "desc": "Vous hurlez au ciel en agitant les mains : le pied titanesque de Gork s’abat et écrase la zone. Toutes les cibles présentes tombent À Terre et subissent 8 Dégâts ignorant les Points d’Armure (à une localisation aléatoire). Un Test d’Esquive Difficile (−1 DR) réussi permet de réduire les dégâts à 4."
+    },
+    {
+      "nom": "Poings de Gork",
+      "type": "Domaine de la Grande Waaagh",
+      "cn": 2,
+      "portee": "Vous",
+      "cible": "Vous",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vos poings noueux grossissent démesurément et durcissent comme du fer. Vous devez lâcher tout ce que vous tenez et ne pouvez attaquer qu’à mains nues avec Corps à corps (Bagarre) fixé à 55 et Arme (Poings) +9 infligeant BF + 9 Dégâts magiques."
+    },
+    {
+      "nom": "Regard de Mork",
+      "type": "Domaine de la Grande Waaagh",
+      "cn": 5,
+      "portee": "Force Mentale mètres",
+      "cible": "Spécial",
+      "duree": "Instantané",
+      "desc": "Un rayon destructeur d’énergie fulgurante jaillit de vos yeux et frappe en ligne droite sur toute la portée. Toute créature vivante située sur sa trajectoire subit un Projectile magique à Dégâts +4. Les structures d’Endurance égale ou inférieure à 65 situées sur la ligne subissent également ces dégâts."
+    },
+    {
+      "nom": "WAAAGH !",
+      "type": "Domaine de la Grande Waaagh",
+      "cn": 12,
+      "portee": "Vous",
+      "cible": "ZdE Force Mentale mètres (tous les Orques, Gobelins et assimilés, alliés ou non)",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Une vague irrépressible d’énergie magique émane de vous et galvanise tous les Peaux-Vertes des alentours. Tous les Orques, Gobelins et Hobgobelins présents dans la zone d’effet (alliés ou non) gagnent l’Élan, perdent tous leurs États Brisé et bénéficient d’un bonus de +2 DR à leurs Tests de Calme et d’Endurance."
+    },
+    {
+      "nom": "Bonne Volonté",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 0,
+      "portee": "Vous",
+      "cible": "ZdE Bonus de Sociabilité mètres",
+      "duree": "Bonus de Force Mentale minutes",
+      "desc": "Vous installez une atmosphère de bienveillance et de concorde. Tous les Tests de Sociabilité effectués dans la zone d’effet gagnent +1 DR. De plus, les effets d’Animosité et de Haine sont totalement neutralisés dans la zone pendant toute la durée du sort."
+    },
+    {
+      "nom": "Borne sinistre",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 9,
+      "portee": "Spécial",
+      "cible": "Spécial",
+      "duree": "1 mois",
+      "desc": "Vous gravez et plantez en terre un pieu de bois qui repousse pendant un mois un type de créature choisi lors de l’apprentissage de ce sort (le sort peut être appris plusieurs fois, pour un type distinct à chaque fois).\nToute créature du type choisi qui s’approche à moins de 100 mètres de la borne doit réussir un Test de Calme Intermédiaire (+0 DR) sous peine de recevoir l’État Brisé. Lorsqu’elle se libère de cet État Brisé, la créature effectue un Test d’Intuition Intermédiaire (+0 DR) : en cas de réussite, elle comprend que cette panique était d’origine magique."
+    },
+    {
+      "nom": "Charme protecteur",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 0,
+      "portee": "Contact",
+      "cible": "Spécial",
+      "duree": "Bonus de Force Mentale jours",
+      "desc": "Vous enchantez un bijou ou une babiole d’un voile protecteur. Tant que la cible porte ce charme sur elle, elle bénéficie de +2 DR à tous ses Tests pour résister aux effets magiques et à la Corruption."
+    },
+    {
+      "nom": "Chevaucher l’Obscurité",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 0,
+      "portee": "Vous",
+      "cible": "Vous",
+      "duree": "Bonus de Force Mentale minutes",
+      "desc": "Votre esprit quitte votre corps charnel et s’aventure dans la Haie. Pendant ce temps, votre corps physique reste immobile et insensible. Votre esprit devient invisible, silencieux, n’a aucune prise sur le monde matériel et acquiert le Trait Éthéré. Vous voyez et touchez les esprits, les démons et les créatures Éthérées (même invisibles), et eux-mêmes peuvent vous voir et interagir avec vous.\nTout dégât magique subi met immédiatement fin au sort. À l’échéance, votre esprit réintègre votre corps ; si votre corps est tué pendant ce voyage, votre esprit est condamné à errer pour l’éternité."
+    },
+    {
+      "nom": "Dague de l’Art",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 4,
+      "portee": "Vous",
+      "cible": "Vous",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous métamorphosez une brindille de moins de 20 centimètres en une dague Magique infligeant BF + 2 Dégâts. Contre une cible possédant le Trait Éthéré ou le Trait Corruption (quel qu’en soit le degré), elle inflige BF + 8 Dégâts.\nVous pouvez maintenir le sort au-delà de sa durée initiale en réussissant un Test de Focalisation Intermédiaire (+0 DR) à chaque Round supplémentaire."
+    },
+    {
+      "nom": "Joie de Halãtha",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 0,
+      "portee": "Contact",
+      "cible": "1",
+      "duree": "Bonus de Sociabilité heures",
+      "desc": "Vous accordez la bénédiction d’une divinité de la fertilité. Pendant toute la durée du sort, la cible conçoit un enfant dès lors qu’une union fertile est biologiquement possible. Le sort prend fin dès la première conception."
+    },
+    {
+      "nom": "L’Expulsion",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 8,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1",
+      "duree": "1d10 ans",
+      "desc": "Vous ordonnez le bannissement d’une créature Éthérée ou Démoniaque. La cible doit réussir un Test de Force Mentale Intermédiaire (+0 DR) sous peine de perdre un nombre de Blessures égal à votre Bonus de Force Mentale (ignorant l’Armure et le Bonus d’Endurance). Si cette perte réduit la cible à 0 Blessure ou moins, elle est bannie du monde matériel pendant 1d10 ans."
+    },
+    {
+      "nom": "Marée d’argent",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 4,
+      "portee": "Vous",
+      "cible": "Vous",
+      "duree": "1d10 heures",
+      "desc": "Vous tissez un charme de prospérité qui attire les sous égarés. Au fil des 1d10 heures que dure le sort, vos pas vous mènent à découvrir de petites pièces perdues, vous rapportant au total 1d10 sous de cuivre à l’échéance."
+    },
+    {
+      "nom": "Nepenthés",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 0,
+      "portee": "Contact",
+      "cible": "Spécial",
+      "duree": "Bonus de Force Mentale heures",
+      "desc": "Vous préparez un philtre argenté versé dans une coupe. Quiconque le boit pendant la durée du sort peut choisir d’oublier définitivement de sa mémoire un individu de son choix."
+    },
+    {
+      "nom": "Œil du berger",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 0,
+      "portee": "Spécial",
+      "cible": "Spécial",
+      "duree": "Instantané",
+      "desc": "En plongeant un fragment de matière organique d’une créature dans un récipient d’eau, vous scrutez les reflets pendant une durée de 10 moins votre Bonus d’Initiative minutes. Vous apprenez alors le lieu exact où elle se trouve, à moins qu’elle ne soit protégée contre la détection ou hors du monde."
+    },
+    {
+      "nom": "Panacée",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 0,
+      "portee": "Contact",
+      "cible": "Spécial",
+      "duree": "Bonus de Dextérité heures",
+      "desc": "Vous préparez un breuvage curatif. Quiconque boit cette potion pendant la durée du sort récupère un nombre de Blessures égal à votre Bonus de Dextérité et guérit d’une maladie de votre choix.\nSurpuissance :\n• Chaque +2 DR : Guérit 1 maladie supplémentaire."
+    },
+    {
+      "nom": "Pas imperceptible",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 7,
+      "portee": "Vous",
+      "cible": "Vous",
+      "duree": "Bonus de Force Mentale minutes",
+      "desc": "Vous voilez totalement votre nature magique aux yeux de ceux qui ressentent les Vents. Vous devenez invisible aux Talents Seconde vue et Sens de la magie, et gagnez +2 DR à vos Tests de Discrétion face aux démons, esprits et créatures Éthérées.\nTant que le sort est actif, vous ne pouvez ni lancer, ni canaliser (Focalisation), ni dissiper la magie. Vous pouvez dissiper vous-même ce sort à votre Tour."
+    },
+    {
+      "nom": "Philtre d’amour",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 10,
+      "portee": "Contact",
+      "cible": "Spécial",
+      "duree": "Jusqu’à minuit",
+      "desc": "Vous enchantez du miel dans une coupe pour distiller un amour irrépressible. Quiconque boit ce philtre s’éprend passionnément, jusqu’à minuit, de la première personne rencontrée qu’il est susceptible de trouver attirante."
+    },
+    {
+      "nom": "Protection contre le wyrd",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 4,
+      "portee": "Contact",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale heures",
+      "desc": "Vous opposez votre Test de Force Mentale à celui de la cible. Si vous remportez l’opposition, la cible subit un malus de −2 DR à tous ses Tests de Langue (Magick) et de Focalisation destinés à lancer ou canaliser des sorts des Domaines de la Sorcellerie, de la Nécromancie, de la Démonologie ou du Chaos."
+    },
+    {
+      "nom": "Revigorer",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 2,
+      "portee": "Contact",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous touchez la cible pour dissiper son épuisement. Le sort retire définitivement 1 État Exténué de la cible."
+    },
+    {
+      "nom": "Sachet de protection",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 5,
+      "portee": "Contact",
+      "cible": "Spécial",
+      "duree": "1 semaine + 1 semaine par DR",
+      "desc": "Vous confectionnez un sachet d’herbes protectrices à porter autour du cou. Tant qu’il est porté, son possesseur bénéficie d’un bonus de +1 DR à ses Tests de Calme contre les effets surnaturels (y compris la Peur et la Terreur causées par les Morts-vivants et les démons) ainsi que de +1 DR à ses Tests de Résistance contre les maladies et les poisons. Ce charme dure 1 semaine, plus 1 semaine supplémentaire par DR obtenu sur votre Test d’incantation."
+    },
+    {
+      "nom": "Séparer les branches",
+      "type": "Domaine de la Magie naturelle",
+      "cn": 0,
+      "portee": "Vous",
+      "cible": "Vous",
+      "duree": "Initiative minutes",
+      "desc": "Vos pupilles se dilatent de façon surnaturelle, ouvrant votre regard sur le royaume des esprits. Pendant toute la durée du sort, vous percevez distinctement toutes les créatures invisibles ainsi que les entités éthérées."
+    },
+    {
+      "nom": "Crâne hurlant",
+      "type": "Domaine de la Nécromancie",
+      "cn": 8,
+      "portee": "Force Mentale mètres",
+      "cible": "Spécial",
+      "duree": "Instantané",
+      "desc": "Vous projetez un crâne noir cerclé de flammes verdâtres qui file en ligne droite sur toute la portée, à travers les obstacles et en suivant le relief. Il s’agit d’un Projectile magique à Dégâts +5 qui épargne totalement les Morts-vivants. Toute créature vivante qui perd au moins 1 Blessure suite à ce tir doit réussir un Test de Calme Intermédiaire (+0 DR) sous peine de recevoir l’État Brisé."
+    },
+    {
+      "nom": "L’appel de Vanhel",
+      "type": "Domaine de la Nécromancie",
+      "cn": 6,
+      "portee": "Force Mentale mètres",
+      "cible": "Spécial",
+      "duree": "Instantané",
+      "desc": "Vous inondez vos serviteurs Morts-vivants de torrents de Dhar. Chaque créature Morte-vivante ciblée à portée gagne immédiatement un Mouvement ou une Action gratuite."
+    },
+    {
+      "nom": "Réanimation",
+      "type": "Domaine de la Nécromancie",
+      "cn": 8,
+      "portee": "Force Mentale mètres",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Jusqu’au lever du soleil",
+      "desc": "Vous infusez du Dhar visqueux dans les cadavres de la zone. Un nombre de corps égal à votre Bonus de Force Mentale plus vos DR d’incantation se relèvent immédiatement sous forme de Zombies ou de Squelettes, À Terre, sous votre contrôle absolu jusqu’au lever du soleil.\nSurpuissance :\n• Chaque +2 DR : Relève 1 cadavre supplémentaire."
+    },
+    {
+      "nom": "Relever les morts",
+      "type": "Domaine de la Nécromancie",
+      "cn": 7,
+      "portee": "Force Mentale mètres",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Jusqu’au lever du soleil",
+      "desc": "Vous déversez un flot de Dhar sur le sol pour éveiller les défunts. À la fin du Round, 1 + DR Squelettes surgissent de terre, À Terre. Ils obéissent à vos ordres simples jusqu’au lever du soleil.\nSurpuissance :\n• Chaque +2 DR : Anime 1 Squelette supplémentaire."
+    },
+    {
+      "nom": "Chapardeur",
+      "type": "Domaine de la Petite Waaagh",
+      "cn": 3,
+      "portee": "Force Mentale mètres",
+      "cible": "1",
+      "duree": "Instantané",
+      "desc": "Vous faites surgir deux mains vertes spectrales qui tentent de faire les poches d’une cible à portée avec une Compétence d’Escamotage fixée à 55. La cible peut remarquer les mains et son butin si elle réussit un Test de Perception Intermédiaire (+0 DR)."
+    },
+    {
+      "nom": "Coups en traître",
+      "type": "Domaine de la Petite Waaagh",
+      "cn": 8,
+      "portee": "Vous",
+      "cible": "ZdE Bonus de Force Mentale mètres (Orques et Gobelins)",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous enchantez les attaques de vos compagnons d’une malice perfide pour exploiter les failles de l’adversaire. Tous les Orques et Gobelins alliés situés dans la zone d’effet voient leurs coups gagner les Qualités Empaleuse et Perforante pendant toute la durée du sort."
+    },
+    {
+      "nom": "Démangeaison",
+      "type": "Domaine de la Petite Waaagh",
+      "cn": 4,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "En vous grattant frénétiquement et en vociférant des jurons d’hygiène douteuse, vous accablez votre adversaire de vermine fongique. La cible subit un malus de −1 DR à tous ses Tests, porté à −2 DR si elle porte une armure de métal."
+    },
+    {
+      "nom": "Don du Dieu-Araignée",
+      "type": "Domaine de la Petite Waaagh",
+      "cn": 3,
+      "portee": "Vous",
+      "cible": "ZdE Bonus de Force Mentale mètres (Gobelins des forêts)",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous sifflez une mélopée stridente en hommage au Festin d’au-delà. Tous les Gobelins des forêts alliés situés dans la zone d’effet gagnent le Trait Venin (Intermédiaire). Si une cible possède déjà le Trait Venin, sa virulence passe à la difficulté Difficile (−1 DR)."
+    },
+    {
+      "nom": "Du calme !",
+      "type": "Domaine de la Petite Waaagh",
+      "cn": 2,
+      "portee": "Force Mentale mètres",
+      "cible": "1 (maximum)",
+      "duree": "Bonus de Force Mentale minutes",
+      "desc": "Vous adressez un grognement autoritaire à une bête à portée. Une créature ciblée parmi les Squigs, Loups géants, Araignées (de toute taille) ou Snotlings se soumet aussitôt et suit fidèlement vos ordres avec la docilité d’un animal dressé pendant toute la durée du sort."
+    },
+    {
+      "nom": "Gork va arranger ça",
+      "type": "Domaine de la Petite Waaagh",
+      "cn": 5,
+      "portee": "Force Mentale mètres",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous pointez un doigt menaçant vers un ennemi en appelant le courroux de Gork. La cible reçoit 1 État Exténué qui persiste pendant toute la durée du sort."
+    },
+    {
+      "nom": "La Grande Rancune verte",
+      "type": "Domaine de la Petite Waaagh",
+      "cn": 20,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous canalisez la haine et les rancœurs accumulées des Gobelins en une malédiction fielleuse. Pendant toute la durée du sort, toute attaque réussie portée par un Gobelin allié contre un ennemi situé dans la zone d’effet compte automatiquement comme un Coup Critique."
+    },
+    {
+      "nom": "Malédiction de la Mauvaise Lune",
+      "type": "Domaine de la Petite Waaagh",
+      "cn": 9,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous hurlez au ciel et invoquez une lune blafarde au rictus gobelinoïde grimaçant. Tous les ennemis présents dans la zone d’effet reçoivent 1 État Exténué et sont frappés d’une lourde infortune, ne pouvant plus dépenser de Points de Chance pendant toute la durée du sort."
+    },
+    {
+      "nom": "Mork te veut !",
+      "type": "Domaine de la Petite Waaagh",
+      "cn": 9,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1",
+      "duree": "Instantané",
+      "desc": "Vous pincez les doigts d’un geste narquois : une gigantesque main verte descend du ciel pour empoigner la cible. Celle-ci doit réussir un Test opposé de Force face à la poigne de la main (dotée d’une Force de 80).\nEn cas d’échec, elle subit 10 Dégâts à la localisation Corps, puis est hissée et lâchée dans le vide, chutant de 2d10 mètres. Si elle remporte l’opposition, elle se dégage sans subir le moindre effet."
+    },
+    {
+      "nom": "Mots malins",
+      "type": "Domaine de la Petite Waaagh",
+      "cn": 0,
+      "portee": "Force Mentale mètres",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale minutes",
+      "desc": "Vous invoquez la ruse de Mork pour travestir vos borborygmes. Votre auditeur entend un discours parfaitement civilisé et fluide, comme si vous parliez couramment sa propre langue maternelle. Ce sort facilite uniquement la compréhension mutuelle, sans octroyer de bonus social ni d’ascendant psychologique."
+    },
+    {
+      "nom": "Regard vengeur",
+      "type": "Domaine de la Petite Waaagh",
+      "cn": 7,
+      "portee": "Force Mentale mètres",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Instantané",
+      "desc": "Vous projetez de vos yeux des éclairs verts crépitants de rancune pure qui foudroient la zone ciblée. Il s’agit d’un Projectile magique à Dégâts +4 affectant tous les occupants de la zone. Quiconque perd au moins 1 Blessure suite à cette frappe doit réussir un Test de Calme Intermédiaire (+0 DR) sous peine de recevoir l’État Sonné."
+    },
+    {
+      "nom": "Voile de la nuit",
+      "type": "Domaine de la Petite Waaagh",
+      "cn": 5,
+      "portee": "Bonus de Force mètres",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous lancez un champignon noir vénéneux qui éclate en un épais nuage de ténèbres impénétrables. Quiconque s’y trouve plongé reçoit l’État Aveuglé (à moins de posséder Vision nocturne ou Vision dans le noir). Toute créature qui tente de s’y déplacer doit réussir un Test de Perception Intermédiaire (+0 DR) sous peine de trébucher et de tomber immédiatement À Terre."
+    },
+    {
+      "nom": "Bonne santé",
+      "type": "Domaine de la Sorcellerie",
+      "cn": 4,
+      "portee": "Contact",
+      "cible": "1",
+      "duree": "Instantané",
+      "desc": "Vos mains s’illuminent d’une clarté jaune apaisante. La cible récupère un nombre de Blessures égal à votre Bonus de Force Mentale et perd 1 État Exténué ainsi que 1 État Sonné.\nSurpuissance :\n• +3 DR : La portée devient Bonus de Force Mentale mètres."
+    },
+    {
+      "nom": "Dégradation",
+      "type": "Domaine de la Sorcellerie",
+      "cn": 14,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "Spécial",
+      "duree": "Instantané",
+      "desc": "Vous frappez de flétrissure et de désolation une taverne, un puits, un champ ou un animal domestique. Les vivres rancissent et pourrissent, l’eau devient saumâtre et imbuvable, les cultures se gâtent sur pied, ou l’animal devient totalement stérile et improductif. Si vous ciblez un animal, il dépérit et meurt dans un délai de 24 moins vos DR d’incantation en jours."
+    },
+    {
+      "nom": "Glamour",
+      "type": "Domaine de la Sorcellerie",
+      "cn": 4,
+      "portee": "Contact",
+      "cible": "1 adulte",
+      "duree": "Bonus de Force Mentale heures",
+      "desc": "Vous altérez magiquement les traits de la cible afin qu’elle paraisse avoir l’âge que vous désirez, dans les limites naturelles de l’âge adulte pour son espèce. Sa condition physique et ses caractéristiques restent inchangées."
+    },
+    {
+      "nom": "Horreur hantante",
+      "type": "Domaine de la Sorcellerie",
+      "cn": 8,
+      "portee": "Contact",
+      "cible": "Spécial",
+      "duree": "Force Mentale jours",
+      "desc": "Vous maudissez un lieu clos ou une clairière en le saturant de visions cauchemardesques éveillées. Toute créature qui y pénètre (à l’exception des sorcières et de leurs familiers) reçoit immédiatement 1 État Exténué, puis doit tenter un Test de Calme Intermédiaire (+0 DR) : en cas d’échec, elle reçoit 1 État Exténué supplémentaire ainsi que l’État Brisé. Ces États persistent tant que la victime ne quitte pas les lieux."
+    },
+    {
+      "nom": "Malédiction de douleur paralysante",
+      "type": "Domaine de la Sorcellerie",
+      "cn": 10,
+      "portee": "Force Mentale mètres",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous projetez des affres de souffrance magique sur une localisation précise de votre cible :\n• Corps : La cible reçoit +1 État Exténué et doit réussir un Test d’Endurance Difficile (−2 DR) sous peine de tomber À Terre.\n• Tête : La cible reçoit +1 État Sonné et doit réussir un Test d’Endurance Accessible (+2 DR) sous peine de recevoir 1 État Sonné supplémentaire par DR négatif.\n• Membre : Le membre ciblé devient complètement inerte et inutilisable, comme s’il avait été amputé.\nLes États Exténué et Sonné infligés par ce sort durent pour toute sa durée. Vous pouvez consacrer une Action et réussir un Test de Focalisation Accessible (+2 DR) pour frapper une nouvelle localisation encore indemne."
+    },
+    {
+      "nom": "Malédiction de malchance",
+      "type": "Domaine de la Sorcellerie",
+      "cn": 8,
+      "portee": "Force Mentale mètres",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale minutes",
+      "desc": "Vous saturez la cible de présages néfastes : elle subit −1 DR à tous ses Tests et ne peut dépenser aucun Point de Chance. Si elle est dépourvue de Points de Chance (ou dans l’incapacité d’en utiliser), elle doit relancer systématiquement tous ses résultats de dés 01-05.\nSi vous détenez un objet personnel ou une mèche de cheveux de la cible, la portée passe à Bonus de Force Mentale miles sans nécessiter de ligne de vue, et la durée est portée à Bonus de Force Mentale jours."
+    },
+    {
+      "nom": "Mauvais œil",
+      "type": "Domaine de la Sorcellerie",
+      "cn": 6,
+      "portee": "10 mètres maximum",
+      "cible": "1 maximum",
+      "duree": "Instantané",
+      "desc": "Vous ancrez votre regard glacial dans celui de la cible et engagez un Test opposé d’Intimidation ou de Calme, auquel vous ajoutez les DR obtenus lors de votre Test d’incantation.\nSi vous l’emportez, la cible subit votre Trait Peur (1) pour toute la rencontre et reçoit 1 État Exténué, plus 1 État Exténué supplémentaire par tranche de +3 DR d’écart. Si votre écart atteint +6 DR ou plus, elle reçoit également l’État Brisé."
+    },
+    {
+      "nom": "Menace rampante",
+      "type": "Domaine de la Sorcellerie",
+      "cn": 6,
+      "portee": "Force Mentale mètres",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous faites sourdre de terre un essaim de bêtes grouillantes (rats géants, araignées géantes ou vermines similaires) doté du Trait Nuée, qui vient immédiatement Engager la cible au corps à corps. Vous pouvez consacrer une Action et réussir un Test de Charme animal Intermédiaire (+0 DR) pour réorienter un ou plusieurs essaims vers une nouvelle cible. À la fin du sort, les créatures restantes s’évanouissent dans l’ombre."
+    },
+    {
+      "nom": "Flot de Corruption",
+      "type": "Domaine de Nurgle",
+      "cn": 9,
+      "portee": "Spécial",
+      "cible": "Spécial",
+      "duree": "Instantané",
+      "desc": "Votre mâchoire se distend abominablement pour régurgiter un torrent écœurant de fange pestilentielle sous la forme d’une attaque de Souffle (Acide et Poison). Il s’agit d’un Projectile magique non opposé infligeant des Dégâts égaux à votre Bonus d’Endurance plus vos DR d’incantation, ignorant les Points d’Armure (le Bonus d’Endurance de la cible s’applique).\nToute cible qui perd plus de Blessures que son propre Bonus d’Endurance doit réussir un Test d’Endurance Intermédiaire (+0 DR) sous peine de contracter immédiatement la maladie de la Pourriture du sang."
+    },
+    {
+      "nom": "Inflammation suppurée",
+      "type": "Domaine de Nurgle",
+      "cn": 5,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1",
+      "duree": "Instantané",
+      "desc": "Vous provoquez une effervescence putride au sein des chairs meurtries de l’adversaire. L’une de ses Blessures non soignées s’infecte instantanément et devient une Blessure Suppurée."
+    },
+    {
+      "nom": "Miasme de pestilence",
+      "type": "Domaine de Nurgle",
+      "cn": 6,
+      "portee": "Vous",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Une brume méphitique et vaporeuse se condense autour de vous. Toute créature vivante présente dans la zone d’effet doit réussir un Test d’Endurance Difficile (−2 DR) sous peine de subir le Symptôme de Nausée pendant toute la durée du sort. Les dévoués de Nurgle, les moines de la peste skavens et les créatures non vivantes (Morts-vivants, démons, créatures Artificielles et Éthérées) en sont totalement préservés."
+    },
+    {
+      "nom": "Consentement",
+      "type": "Domaine de Slaanesh",
+      "cn": 5,
+      "portee": "Contact",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Votre fluide magique sature les sens de la cible de sensations extatiques et indolentes. Au début de chacun de ses Rounds, elle doit réussir un Test d’Endurance Intermédiaire (+0 DR) sous peine de perdre tout Mouvement et toute Action pour le Round en cours."
+    },
+    {
+      "nom": "De la douleur le plaisir",
+      "type": "Domaine de Slaanesh",
+      "cn": 6,
+      "portee": "Contact",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous transmutez les signaux de douleur de la cible en vagues de jouissance indicible : elle gagne le Trait Indolore pendant toute la durée du sort.\nCependant, si elle subit une Blessure Critique, elle doit réussir un Test d’Endurance Accessible (+2 DR) sous peine de lâcher immédiatement ses armes et de demeurer totalement sans défense, submergée par l’extase."
+    },
+    {
+      "nom": "Fantasmagorie",
+      "type": "Domaine de Slaanesh",
+      "cn": 8,
+      "portee": "Vous",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Des apparitions surnaturelles et envoûtantes emplissent la zone d’une aura troublante. Vous ainsi que tous vos alliés situés dans la zone d’effet gagnez le Trait Distrayant pour toute la durée du sort (les bénéficiaires de cet effet ne se distraient pas entre eux)."
+    },
+    {
+      "nom": "Don de Tzeentch",
+      "type": "Domaine de Tzeentch",
+      "cn": 9,
+      "portee": "Vous",
+      "cible": "Vous",
+      "duree": "Bonus d’Intelligence jours",
+      "desc": "L’Architecte du Destin tord votre esprit pour y déposer une révélation occulte. Vous choisissez un sort issu de n’importe quel Domaine de magie : vous pouvez le lancer pendant toute la durée du sort comme si vous l’aviez mémorisé, sans toutefois pouvoir le transcrire dans un grimoire. Une Incantation Imparfaite met immédiatement fin au Don."
+    },
+    {
+      "nom": "Trahison de Tzeentch",
+      "type": "Domaine de Tzeentch",
+      "cn": 6,
+      "portee": "Force Mentale mètres",
+      "cible": "ZdE Bonus d’Initiative mètres",
+      "duree": "Bonus d’Intelligence Rounds",
+      "desc": "Vous insinuez des filaments de paranoïa et de fiel dans l’esprit des cibles de la zone. Elles acquièrent la Psychologie Animosité envers leurs propres alliés et ne peuvent plus leur transmettre d’Élan (sauf si elles sont immunisées à l’Animosité).\nDe plus, lorsqu’une cible obtient un Coup Critique lors d’une attaque, elle doit réussir un Test de Calme Difficile (−2 DR) sous peine de diriger sa frappe contre son allié le plus proche."
+    },
+    {
+      "nom": "Transformation de Tzeentch",
+      "type": "Domaine de Tzeentch",
+      "cn": 12,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Des filaments de feu éthérique surgissent du sol et enserrent la cible dans un cocon d’énergie mutagène. La cible est jetée À Terre et demeure sans défense pendant toute la durée du sort.\nÀ la fin de chacun de ses Rounds, elle doit effectuer un Test d’Endurance Intermédiaire (+0 DR) sous peine de recevoir +1 Point de Corruption."
+    },
+    {
+      "nom": "Déflagration mentale",
+      "type": "Haute Magie",
+      "cn": 7,
+      "portee": "Ligne de vue",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Instantané",
+      "desc": "Réservé aux Slann. Vous projetez une violente onde d’énergie psychique contre vos adversaires. Tous les ennemis situés dans la zone d’effet subissent des Dégâts égaux à votre Bonus d’Intelligence + 6 (portés à +6 Dégâts supplémentaires contre les créatures Démoniaques et les Morts-vivants). Cette attaque ignore les Points d’Armure mais soustrait normalement le Bonus d’Endurance de la cible.\nDe plus, chaque ennemi touché doit réussir un Test d’Intelligence Accessible (+2 DR) sous peine de recevoir l’État Sonné."
+    },
+    {
+      "nom": "Déracinement des montagnes",
+      "type": "Haute Magie",
+      "cn": 8,
+      "portee": "Ligne de vue",
+      "cible": "1",
+      "duree": "1 Round",
+      "desc": "Vous faites trembler la structure d’une colline ou d’une montagne ciblée. Quiconque s’y trouve doit réussir un Test d’Athlétisme Très difficile (−3 DR) au début de son Round sous peine de tomber À Terre et de ne pouvoir ni agir ni se déplacer durant ce Round.\nSurpuissance :\n• Chaque Round de durée supplémentaire : La colline peut être déplacée de Bonus de Force Mentale mètres. Toute créature située sur sa trajectoire doit réussir un Test d’Athlétisme Accessible (+2 DR) sous peine de subir 10 Dégâts à une localisation corporelle tirée au hasard."
+    },
+    {
+      "nom": "Ligne de terre",
+      "type": "Haute Magie",
+      "cn": 10,
+      "portee": "Ligne de vue",
+      "cible": "Spécial",
+      "duree": "Instantané",
+      "desc": "Réservé aux Slann. Vous faites déferler les énergies telluriques le long d’une ligne de force géomantique dans la direction choisie jusqu’au nexus suivant. Quiconque se trouve sur la ligne doit réussir un Test d’Endurance Difficile (−2 DR) sous peine de subir 15 Dégâts au corps (le Bonus d’Endurance s’applique, mais les Points d’Armure sont ignorés)."
+    },
+    {
+      "nom": "Ruine des cités",
+      "type": "Haute Magie",
+      "cn": 12,
+      "portee": "Ligne de vue",
+      "cible": "1 bâtiment",
+      "duree": "Instantané",
+      "desc": "Réservé aux Slann. Vous provoquez l’effondrement brutal d’un bâtiment, d’un mur ou d’un pont non fortifié, le réduisant en un champ de gravats considéré comme du terrain Difficile. Quiconque s’y trouve doit réussir un Test d’Esquive Difficile (−2 DR) sous peine de subir 20 Dégâts au corps et de se retrouver enseveli (subissant les règles de Suffocation).\nSurpuissance :\n• Cibles supplémentaires : Affecte les structures les plus proches de la première. Le sol situé entre elles s’ouvre en une crevasse de 2 mètres de large sur 4 mètres de profondeur ; les créatures doivent réussir un Test d’Esquive Intermédiaire (+0 DR) pour éviter de tomber (subissant des dégâts de chute), un échec marginal permettant de s’accrocher au bord."
+    },
+    {
+      "nom": "Aperçu arcanique",
+      "type": "Magie de Hoeth",
+      "cn": 8,
+      "portee": "Contact",
+      "cible": "1 objet",
+      "duree": "Instantané",
+      "desc": "Vous sondez les propriétés magiques d’un objet ou d’un artefact : vous révélez ses pouvoirs, ses malédictions latentes ainsi que la présence d’entités liées (élémentaires, démons ou esprits).\nEn réussissant un Test d’Intelligence Intermédiaire (+0 DR), vous percevez comment il a été façonné (les DR obtenus révélant des informations sur son créateur). Réparer ou dupliquer un artefact puissant peut exiger un Test prolongé d’Intelligence réparti sur plusieurs incantations."
+    },
+    {
+      "nom": "Calame divin",
+      "type": "Magie de Hoeth",
+      "cn": 0,
+      "portee": "Vous",
+      "cible": "Vous",
+      "duree": "Bonus de Force Mentale minutes",
+      "desc": "Du bout du doigt, vous tracez des glyphes de pure lumière dans toute langue connue (sans pouvoir former d’illustrations). Ces inscriptions peuvent être tracées sur une surface solide ou suspendues dans les airs, éclairant les environs comme une chandelle et brillant pendant un nombre d’heures égal à votre Bonus de Force Mentale."
+    },
+    {
+      "nom": "Creuset de lumière",
+      "type": "Magie de Hoeth",
+      "cn": 6,
+      "portee": "Contact",
+      "cible": "1 épée",
+      "duree": "Bonus d’Intelligence minutes",
+      "desc": "Vous imprégnez une épée de l’essence glorieuse de Hoeth : elle compte comme magique et acquiert la Qualité Rapide pendant toute la durée du sort.\nCe sort requiert un Sacrifice d’étude préalable : accomplir un Test prolongé de Recherche Difficile (−1 DR) jusqu’à accumuler 10 DR au cours de la semaine précédente (ou Très difficile à −3 DR si le test est tenté sur place)."
+    },
+    {
+      "nom": "Envoi psychique",
+      "type": "Magie de Hoeth",
+      "cn": 7,
+      "portee": "Force Mentale miles",
+      "cible": "1",
+      "duree": "Instantané",
+      "desc": "Vous transmettez par la pensée un message télépathique audible d’une durée maximale d’une minute, entendu avec votre propre voix dans l’esprit du destinataire. La cible doit être une personne que vous avez déjà rencontrée en personne ou avec qui vous avez entretenu une correspondance.\nCe sort requiert un Sacrifice préalable : accomplir un Test prolongé de Recherche Difficile (−1 DR) jusqu’à totaliser 10 DR."
+    },
+    {
+      "nom": "Façonnage d’âme",
+      "type": "Magie de Hoeth",
+      "cn": 10,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1 Fantôme",
+      "duree": "Instantané",
+      "desc": "Vous ancrez un Fantôme (ou l’esprit d’un mortel décédé depuis moins d’une heure) à une pierre-vent ou à une ligne de force géomantique située à portée. Un fantôme réticent effectue un Test de Calme opposé à votre Test d’incantation : chaque DR obtenu par le fantôme augmente de 1 le Niveau d’Incantation (NI) du sort."
+    },
+    {
+      "nom": "Grand lien spirituel",
+      "type": "Magie de Hoeth",
+      "cn": 4,
+      "portee": "Vous",
+      "cible": "Spécial",
+      "duree": "Bonus de Force Mentale minutes",
+      "desc": "Vous étendez la communion psychique avec votre Familier animal. La portée habituelle de 4 mètres de ses Traits Télépathie animale et Compagnon passe à Force Mentale miles pendant toute la durée du sort (ce lien à distance ne permet toutefois pas au familier d’assister vos incantations)."
+    },
+    {
+      "nom": "Illumination",
+      "type": "Magie de Hoeth",
+      "cn": 0,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1 animal",
+      "duree": "Bonus d’Intelligence minutes",
+      "desc": "Vous emplissez un animal de la sagesse éthérée de Hoeth. Il gagne un bonus de +20 en Intelligence et en Force Mentale et perd temporairement les Traits Bestial et Craintif. Il devient capable de comprendre et d’échanger des concepts élaborés, bien qu’il ne conserve pas nécessairement la mémoire de tous ces échanges après l’expiration du sort."
+    },
+    {
+      "nom": "Les Mots premiers",
+      "type": "Magie de Hoeth",
+      "cn": 15,
+      "portee": "Vous",
+      "cible": "Vous",
+      "duree": "Bonus d’Intelligence heures",
+      "desc": "Vous invoquez un langage mystique originel antérieur à l’arrivée des Anciens. Vous pouvez communiquer à un niveau élémentaire avec toute créature mortelle ou animale (les concepts complexes pouvant exiger un Test d’Intelligence de l’un ou des deux interlocuteurs). Pour les témoins, l’échange ressemble à un galimatias, à moins de réussir un Test de Langue (Magick) Accessible (+2 DR) pour en comprendre l’essentiel.\nCe sort requiert un Sacrifice d’étude préalable : accomplir un Test prolongé de Recherche Très difficile (−2 DR) jusqu’à totaliser 20 DR."
+    },
+    {
+      "nom": "Maîtrise mnémonique",
+      "type": "Magie de Hoeth",
+      "cn": 6,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1",
+      "duree": "Instantané",
+      "desc": "Vous puisez dans l’inconscient pour faire resurgir des souvenirs enfouis. Le prochain Test de Savoir ou de Langue (non magique) entrepris par la cible réussit automatiquement avec un nombre de DR égal à ceux obtenus lors de votre Test d’incantation (à condition qu’elle ait été exposée à ce savoir par le passé).\nCe sort requiert un Sacrifice préalable : mener à bien un Test prolongé de Recherche Difficile (−1 DR) totalisant 10 DR."
+    },
+    {
+      "nom": "Sceaux sacrés",
+      "type": "Magie de Hoeth",
+      "cn": 11,
+      "portee": "Contact",
+      "cible": "ZdE Bonus d’Intelligence mètres",
+      "duree": "Bonus d’Intelligence heures",
+      "desc": "Vous apposez des enchantements protecteurs sur une zone d’effet, assortis de l’un des effets suivants (la désignation d’un mot de passe secret permet d’exempter les cibles de votre choix) :\n• Oubli : Quiconque pénètre dans la zone perd tout souvenir des dernières 24 heures.\n• Pureté : Les créatures possédant le Trait Démoniaque ne peuvent y pénétrer. Toute créature mutée y entrant subit des Dégâts égaux à 6 fois son nombre de mutations.\n• Surveillance : Vous êtes alerté de toute intrusion.\n• Vérité : Aucun mensonge ne peut être proféré dans la zone.\nCe sort ne peut être lancé qu’une seule fois sur une zone donnée, mais reste renouvelable avant son expiration par un Test d’incantation de NI 0 (avec une zone, une durée et des effets identiques).\nCe sort requiert un Sacrifice préalable : accomplir un Test prolongé de Recherche Difficile (−1 DR) totalisant 20 DR."
+    },
+    {
+      "nom": "Appel des mers",
+      "type": "Magie de la mer",
+      "cn": 14,
+      "portee": "Force Mentale mètres",
+      "cible": "Spécial",
+      "duree": "Bonus de Force Mentale Rounds",
+      "desc": "Vous invoquez des profondeurs un colosse Merwyrm qui met un Round entier à émerger. La bête ne peut être commandée ni influencée par la parole (elle compte comme un poisson non prédateur neutre pour le sort Lien aux poissons) et replonge dans l’océan à la fin du sort.\nLancer ce sort exige un tribut corporel : vous subissez immédiatement 2 États Exténué et perdez 2 Blessures en sacrifice."
+    },
+    {
+      "nom": "Armure de Mathlann",
+      "type": "Magie de la mer",
+      "cn": 10,
+      "portee": "Force Mentale mètres",
+      "cible": "1 bateau ou navire",
+      "duree": "Force Mentale minutes",
+      "desc": "Vous enveloppez la coque d’un navire à un mât d’un voile de magie protectrice : le bâtiment gagne le Trait Armure (2) sans pénalité de poids (le gréement et l’équipage ne bénéficient pas de cette protection).\nLancer ce sort exige un sacrifice personnel : vous subissez immédiatement 2 États Exténué."
+    },
+    {
+      "nom": "Brumes grouillantes",
+      "type": "Magie de la mer",
+      "cn": 6,
+      "portee": "Force Mentale mètres",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Bonus de Force Mentale minutes",
+      "desc": "Vous appelez des flots une brume salée stationnaire qui dissimule vos alliés. Les attaques de tir dirigées contre les alliés abrités dans la zone subissent un malus de −2 DR pour toucher, et leurs propres Tests de Discrétion gagnent un bonus de +2 DR (quiconque sort de la brume perd ces bienfaits). La brume se dissipe immédiatement si vous cessez de vous concentrer.\nCe sort exige un sacrifice lors de l’incantation : vous subissez 1 État Exténué."
+    },
+    {
+      "nom": "Esprits des vagues",
+      "type": "Magie de la mer",
+      "cn": 5,
+      "portee": "2 × Sociabilité mètres",
+      "cible": "ZdE 2 × Bonus de Sociabilité mètres",
+      "duree": "Bonus de Sociabilité minutes",
+      "desc": "Vous invoquez un puissant cyclone tourbillonnant formé d’esprits des vagues. En maintenant votre concentration, vous pouvez déplacer ce cyclone de 2d10 mètres par Round (faute de quoi il dérive comme un vortex aléatoire). Tout navire heurté par l’élémentaire subit un Coup Critique au gréement. Dans un rayon de 50 mètres autour de lui, la visibilité est améliorée d’un niveau et la force du vent est diminuée d’un niveau.\nSurpuissance :\n• Chaque +3 DR : Vous invoquez 1 élémentaire supplémentaire."
+    },
+    {
+      "nom": "Furie de l’océan",
+      "type": "Magie de la mer",
+      "cn": 8,
+      "portee": "Vous",
+      "cible": "ZdE Bonus de Force Mentale miles",
+      "duree": "3 × Bonus de Force Mentale minutes",
+      "desc": "Vous faites lever une violente tempête maritime dans toute la région. Le vent souffle en Coup de vent pendant vos premiers Bonus de Force Mentale minutes, puis passe en Fort coup de vent pour la même durée, avant de se déchaîner en Tempête violente pour tout le reste du sort. Cette tempête étant d’essence naturelle, elle ne peut être dissipée."
+    },
+    {
+      "nom": "Lien aux poissons",
+      "type": "Magie de la mer",
+      "cn": 0,
+      "portee": "Force Mentale mètres",
+      "cible": "1",
+      "duree": "Force Mentale minutes",
+      "desc": "Vous vous liez d’amitié avec un poisson non magique et non prédateur (qui n’attaquerait pas naturellement un Elfe), quelle que soit sa Taille. Les créatures hostiles deviennent neutres, les créatures neutres deviennent amicales et s’efforcent de vous protéger, et une créature amicale de taille adéquate peut accepter de vous servir de monture. Ce sort ne confère pas la faculté de communiquer."
+    },
+    {
+      "nom": "Maîtresse des profondeurs",
+      "type": "Magie de la mer",
+      "cn": 9,
+      "portee": "Sociabilité mètres",
+      "cible": "Spécial",
+      "duree": "Bonus de Sociabilité Rounds",
+      "desc": "Vous invoquez une Océanide chantante de Mathlann pour envoûter vos adversaires. Au début de chaque Round, quiconque se trouve à moins de 20 mètres de l’Océanide doit réussir un Test de Calme Difficile (−1 DR) sous peine d’être envoûté, ne pouvant faire autre chose que s’avancer vers elle en restant totalement sans défense. L’Océanide ne se déplace pas, ne porte aucune attaque et regagne les abysses à l’expiration du sort.\nL’incantation vous impose un sacrifice de 1 État Exténué et 1 Blessure."
+    },
+    {
+      "nom": "Manteau de Mathlann",
+      "type": "Magie de la mer",
+      "cn": 11,
+      "portee": "Force Mentale mètres",
+      "cible": "1 bateau ou navire",
+      "duree": "Force Mentale minutes",
+      "desc": "Vous drapez un navire à un mât ainsi que tout son équipage sous un épais manteau de brume marine. Tous les Tests entrepris pour le repérer ou le viser à distance subissent un malus de −3 DR (le sillage et les remous d’étrave restent perceptibles sur un Test de Perception Intermédiaire à +0 DR). Les Arches noires et les monstres marins ne peuvent être dissimulés par ce sort.\nCe sort exige un sacrifice lors de l’incantation : vous subissez 2 États Exténué et perdez 1 Blessure."
+    },
+    {
+      "nom": "Poumons d’eau",
+      "type": "Magie de la mer",
+      "cn": 7,
+      "portee": "Force Mentale mètres",
+      "cible": "1",
+      "duree": "Bonus de Force Mentale heures",
+      "desc": "Vous accordez à la cible la faculté de respirer sous l’eau avec la même aisance qu’à l’air libre, l’immunisant contre la noyade et la suffocation aquatique pendant toute la durée du sort.\nL’incantation exige un sacrifice de 1 État Exténué."
+    },
+    {
+      "nom": "Sens de la tempête",
+      "type": "Magie de la mer",
+      "cn": 0,
+      "portee": "Initiative miles",
+      "cible": "Spécial",
+      "duree": "Instantané",
+      "desc": "Vous sondez l’atmosphère marine à grande distance. Vous prenez instantanément connaissance de toutes les tempêtes à portée, apprenant leur direction, leur vitesse de déplacement, leur intensité, leur formation ou leur dissipation, leur durée estimée ainsi que leur éventuelle nature magique."
+    },
+    {
+      "nom": "Divination des flammes",
+      "type": "Magie de Vaul",
+      "cn": 4,
+      "portee": "Bonus d’Initiative mètres (maximum)",
+      "cible": "1 forge ou feu de camp (maximum)",
+      "duree": "Bonus d’Intelligence heures",
+      "desc": "Vous liez votre perception aux braises d’une forge ou d’un feu de camp. Quelle que soit votre distance par rapport au foyer et sans exiger de ligne de vue, vous détectez et percevez la présence de toute créature s’approchant à moins de votre Bonus d’Intelligence mètres du feu, même si elle se dissimule.\nL’accès aux options de surpuissance exige le sacrifice préalable de 1 objet fabriqué (inflammable et d’une valeur d’au moins 2 CO, détruit avant la Focalisation)."
+    },
+    {
+      "nom": "Divination des pierres",
+      "type": "Magie de Vaul",
+      "cn": 6,
+      "portee": "Bonus d’Intelligence miles",
+      "cible": "Spécial",
+      "duree": "Bonus d’Intelligence heures",
+      "desc": "Vous sondez les tréfonds de la terre pour y déceler la présence de minéraux rares destinés au façonnage d’objets magiques. Si un filon est présent à portée, vous apprenez l’endroit exact où creuser pour extraire de quoi fabriquer 1d10 points d’Encombrement d’objets magiques. L’emploi de ce minerai rare abaisse la difficulté du Test de Savoir (Magie) requis pour la fabrication de Très difficile (−3 DR) à Difficile (−1 DR).\nCe sort requiert le sacrifice préalable de 1 objet façonné."
+    },
+    {
+      "nom": "Feux de la perfection",
+      "type": "Magie de Vaul",
+      "cn": 9,
+      "portee": "Contact",
+      "cible": "1 objet",
+      "duree": "Instantané",
+      "desc": "Vous invoquez l’intransigeance créatrice de Vaul pour bénir un ouvrage magique en cours de forgeage : si l’objet reçoit des Défauts, des Bizarreries ou des Malédictions lors des tirages de création, vous pouvez purement et simplement les ignorer.\nCe sort s’accompagne du sacrifice sacré de Vaul : être frappé d’une cécité permanente (un artisan déjà aveugle accède directement aux options)."
+    },
+    {
+      "nom": "Forteresse de Hotek",
+      "type": "Magie de Vaul",
+      "cn": 14,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1 salle de forge ou bâtiment (maximum)",
+      "duree": "Bonus de Force Mentale heures",
+      "desc": "Vous ceignez votre atelier de forge ou un bâtiment entier de défenses magiques impénétrables. L’édifice reçoit l’une des protections au choix :\n• Barrière de flammes : Un mur ardent défend les abords.\n• Armure magique : Une cuirasse d’énergie protège la structure.\n• Protection contre le métal : Les armes et projectiles de métal perdent leur efficacité contre les murs.\n• Portes renforcées : Les battants et portails sont blindés magiquement et ne peuvent être endommagés que par des engins de siège.\nCe sort exige le sacrifice permanent de la vue (cécité)."
+    },
+    {
+      "nom": "Grâce de Vaul",
+      "type": "Magie de Vaul",
+      "cn": 7,
+      "portee": "Contact",
+      "cible": "1 objet",
+      "duree": "Instantané",
+      "desc": "Vous conférez aux créations des armes et armures l’élégance aérienne et la légèreté des chefs-d’œuvre d’Ulthuan. Une arme ou pièce d’armure non magique en cours de fabrication acquiert la Qualité Légère. Un Test de Métier (Forge) demeure nécessaire pour déterminer les autres Qualités ou Défauts éventuels. Un objet ne peut recevoir qu’un seul sort d’amélioration de Vaul."
+    },
+    {
+      "nom": "Patience de Vaul",
+      "type": "Magie de Vaul",
+      "cn": 0,
+      "portee": "Contact",
+      "cible": "1 objet",
+      "duree": "Instantané",
+      "desc": "Vous condensez des journées entières de méticulosité artisanale en quelques fractions de seconde. Les DR exigés lors des Tests prolongés de fabrication d’un objet sont réduits au quart de leur valeur, sans altérer en rien la perfection du produit fini. Un même objet ne peut bénéficier que d’un seul sort d’amélioration de Vaul."
+    },
+    {
+      "nom": "Rage de Vaul",
+      "type": "Magie de Vaul",
+      "cn": 5,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1 forge ou feu de camp (maximum)",
+      "duree": "Instantané",
+      "desc": "Vous provoquez l’explosion destructrice d’une forge ou d’un foyer sans subir vous-même le moindre dommage ni abîmer vos outils :\n• Dans un rayon égal à votre Bonus de Force Mentale mètres : Toute créature subit un Projectile magique à Dégâts +6 ignorant l’Armure, reçoit 2 États Enflammé, et tombe À Terre et Sonnée (un Test d’Esquive réussi permet d’éviter la chute et l’étourdissement).\n• Dans un rayon étendu jusqu’à 2 × Bonus de Force Mentale mètres : Quiconque s’y trouve subit un coup à Dégâts +3 à une localisation au hasard et reçoit 1 État Enflammé. Tout terrain inflammable s’embrase aussitôt."
+    },
+    {
+      "nom": "Sagesse de l’acier du ciel",
+      "type": "Magie de Vaul",
+      "cn": 11,
+      "portee": "Contact",
+      "cible": "1 objet",
+      "duree": "1 Entreprise",
+      "desc": "Vous maîtrisez les secrets divins de forgeage des équipements non magiques en ithilmar. Lors d’une Entreprise d’artisanat disposant du minerai approprié, vous pouvez fabriquer des équipements en ithilmar dont l’Encombrement est réduit de 2 (jusqu’à un minimum de 0).\nCe sort exige le sacrifice permanent de la vue (cécité)."
+    },
+    {
+      "nom": "Toucher de l’artiste",
+      "type": "Magie de Vaul",
+      "cn": 0,
+      "portee": "Contact",
+      "cible": "1 objet",
+      "duree": "Instantané",
+      "desc": "Vos mains impriment une pureté esthétique et un équilibre parfait à votre création. Un objet non magique en cours de confection acquiert la Qualité Fine (d’autres Qualités ou Défauts pouvant encore s’y adjoindre). Un même objet ne peut bénéficier que d’un seul sort d’amélioration de Vaul."
+    },
+    {
+      "nom": "Belligérance du Marais de sang",
+      "type": "Sort d'Arcane",
+      "cn": 2,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1 Bête des fens (n’importe laquelle)",
+      "duree": "Instantané",
+      "desc": "Vous insufflez une ardeur belliqueuse et une fureur implacable dans la carcasse d’une Bête des fens. Si elle ne le possède pas déjà, la créature acquiert immédiatement le Trait Frénésie."
+    },
+    {
+      "nom": "Déchiffrer la malédiction",
+      "type": "Sort d'Arcane",
+      "cn": 4,
+      "portee": "Force Mentale mètres",
+      "cible": "Tout objet",
+      "duree": "Instantané",
+      "desc": "Vous sondez magiquement la structure occulte d’un objet pour déterminer s’il est maudit. Déchiffrer la malédiction en dévoile tous les arcanes : sa nature maléfique, ses bienfaits et méfaits ainsi que ses déclencheurs (l’analyse ne lève pas la malédiction).\nÀ l’issue du déchiffrage, vous devez réussir un Test d’Intelligence Intermédiaire (+0 DR) sous peine de subir une Exposition modérée à la Corruption."
+    },
+    {
+      "nom": "Effondrement d’un construit",
+      "type": "Sort d'Arcane",
+      "cn": 6,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1 Construit (n’importe lequel)",
+      "duree": "Instantané",
+      "desc": "Vous dénouez les flux magiques assurant la cohésion d’un assemblage artificiel. Vous effectuez un Test opposé de Force Mentale face à l’Endurance du construit ciblé (l’égalité favorise le lanceur). Si vous l’emportez, la créature artificielle devient instantanément inerte et sans vie."
+    },
+    {
+      "nom": "Limon de vie",
+      "type": "Sort d'Arcane",
+      "cn": 4,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1 Bête des fens (n’importe laquelle)",
+      "duree": "Bonus de Force Mentale minutes",
+      "desc": "Vous imprégnez la boue et les matières végétales d’une Bête des fens d’une puissance vitale accrue. Pendant toute la durée du sort, la créature régénère le double de ses Blessures habituelles lorsqu’elle applique son Trait Régénération."
+    },
+    {
+      "nom": "Perturber la magie",
+      "type": "Sort d'Arcane",
+      "cn": 8,
+      "portee": "Force Mentale mètres",
+      "cible": "1",
+      "duree": "Instantané",
+      "desc": "Vous déclenchez une violente contre-mesure d’anti-magie ciblant un sorcier en train de canaliser (Focalisation), avant qu’il n’ait achevé son sort. Vous engagez un Test opposé de Force Mentale contre lui (l’égalité est en votre faveur) : si vous remportez l’opposition, son sort échoue lamentablement et il subit immédiatement un Fiasco mineur."
+    },
+    {
+      "nom": "Pourriture grouillante de mouches",
+      "type": "Sort d'Arcane",
+      "cn": 4,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "1 Bête des fens (n’importe laquelle)",
+      "duree": "Bonus de Force Mentale minutes",
+      "desc": "Vous faites émerger des nuées d’insectes et de mouches lovées au cœur de la fange d’une Bête des fens pour tourbillonner autour d’elle. La créature gagne le Trait Distrayant pendant toute la durée du sort."
+    },
+    {
+      "nom": "Secours au serviteur magique",
+      "type": "Sort d'Arcane",
+      "cn": 2,
+      "portee": "Bonus de Force Mentale mètres",
+      "cible": "Un de vos Constructs ou Familiers",
+      "duree": "Instantané",
+      "desc": "Vous projetez un afflux d’énergie arcanique pour revigorer votre Familier ou l’un de vos Constructs. La créature magique ciblée récupère immédiatement un nombre de Blessures égal à son propre Bonus d’Endurance.\nSurpuissance :\n• +3 DR : La créature récupère le double de son Bonus d’Endurance en Blessures."
+    },
+    {
+      "nom": "Silence (Arcane)",
+      "type": "Sort d'Arcane",
+      "cn": 4,
+      "portee": "Vous",
+      "cible": "ZdE Bonus de Force Mentale mètres",
+      "duree": "Bonus de Force Mentale minutes",
+      "desc": "Vous créez autour de vous une sphère de mutisme absolu d’où aucun bruit ne peut s’échapper ni pénétrer depuis l’extérieur. À l’intérieur de cette zone, aucun son n’est audible et tout Test d’incantation (Langue (Magick)) y subit un malus de −3 DR pour tous les occupants."
+    },
+    {
+      "nom": "Voile de brouillard",
+      "type": "Sort d'Arcane (Ombres)",
+      "cn": 8,
+      "portee": "Vous",
+      "cible": "ZdE Bonus de Force Mentale miles",
+      "duree": "Force Mentale minutes",
+      "desc": "Vous invoquez un épais manteau de brume sombre qui se répand sur toute la région. La visibilité y est réduite à 10 mètres. Ce brouillard étant de nature non magique, il ne peut être dissipé."
     },
     {
       "nom": "Couronne de Flammes",
@@ -2599,7 +3706,7 @@
     },
     {
       "nom": "Connaître son Ennemi",
-      "portee": "Bonus de Volonté en mètres",
+      "portee": "Bonus de Force Mentale en mètres",
       "cible": "1",
       "duree": "Instantané",
       "effet": "Vous appelez Myrmidia à vous informer des forces et faiblesses d'un ennemi proche. Le MJ doit vous permettre d’examiner le profil, les traits, compétences et talents de la cible."
@@ -2607,7 +3714,7 @@
     {
       "nom": "Sur un Terrain Mortel",
       "portee": "Soi-même",
-      "cible": "Alliés dans la zone d'effet (Bonus de Volonté en mètres)",
+      "cible": "Alliés dans la zone d'effet (Bonus de Force Mentale en mètres)",
       "duree": "Bonus de Force Mentale en Rounds",
       "effet": "Sachant que la victoire ne peut être obtenue que si vos forces tiennent bon, vous appelez Myrmidia pour bannir toute idée de retraite dans l'esprit de vos alliés. Tant que le miracle est actif, vos alliés ne reçoivent pas la Condition Brisé."
     },
