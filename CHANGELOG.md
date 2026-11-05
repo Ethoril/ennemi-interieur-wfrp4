@@ -1,3 +1,8 @@
+## [2.39.2] - 2026-11-05
+
+- Fiches : ajout du mot-clé Barrakul depuis les Aides de jeu.
+- Cache de l’application actualisé.
+
 ## [2.39.1] - 2026-11-05
 
 - Fiches : actualisation des sorts, miracles, armes et mots-clés depuis les Aides de jeu. Les fiches enregistrées sont conservées.

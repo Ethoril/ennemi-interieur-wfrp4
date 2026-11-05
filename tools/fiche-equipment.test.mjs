@@ -29,7 +29,11 @@ test('anciens boucliers : actualisation explicite vers le profil V5, y compris l
 
 test('catalogue : profils complets validés, identités uniques et portée absente explicite', () => {
     assert.equal(catalogue.items.length, 211);
-    assert.equal(catalogue.keywords.length, 57);
+    assert.equal(catalogue.keywords.length, 58);
+    assert.equal(catalogue.keywords.find(entry => entry.id === 'barrakul')?.effect, 'Ignore les PA et boucliers non magique');
+    const barrakulWeapon = get('Dague');
+    barrakulWeapon.keywords.push({ id: 'barrakul', parameter: '' });
+    assert.equal(validateEquipmentItem(barrakulWeapon, catalogue, { keptKeywords: new Set() }), barrakulWeapon);
     assert.equal(new Set(catalogue.items.map(item => item.id)).size, catalogue.items.length);
     for (const item of catalogue.items) assert.equal(validateEquipmentItem(item, catalogue), item);
     assert.equal(get('Javelot').range, 'BF × 3');
