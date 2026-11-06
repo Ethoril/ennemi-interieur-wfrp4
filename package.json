@@ -35,6 +35,7 @@
     "test:pnj-groups": "node --test tools/pnj-groups-data.test.mjs tools/pnj-groups-picker.test.mjs tools/pnj-groups-mobile.test.mjs",
     "test:enquetes": "node tools/sync-enquetes-domain.mjs --check && node --test functions/test/enquetes-service.test.mjs tools/enquetes-workspace.test.mjs tools/enquetes-ui-*.test.mjs",
     "test:enquetes:emulator": "node tools/enquetes-emulator.mjs",
+    "test:outil-mj-emulator": "node tools/fiche-outil-mj-emulator.mjs",
     "build:enquetes:vendor": "node tools/build-enquetes-vendor.mjs"
   },
   "devDependencies": {
