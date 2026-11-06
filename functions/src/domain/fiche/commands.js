@@ -14,6 +14,7 @@ import { BASIC_SKILLS, basicRowFor, basicSkillNom, getCaracForGroup } from './ba
 import { canonicalSkillNom, sameSkill } from './skill-names.js';
 import { applyEquipmentCommand, validateEquipmentItem } from './equipment.js';
 import { V5_LIST_FIELDS, v5FieldError } from './v5.js';
+import { applyOutilMjCommand, suiviListError } from './outil-mj.js';
 import {
     CARAC_XP_BANDS,
     SKILL_XP_BANDS,
@@ -31,7 +32,7 @@ const EXPORT_KEYS = new Set([
     'nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance',
     'destin', 'fortune', 'peche', 'corruption', 'possessions', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers',
     'talentsAcq', 'talentsAvail', 'sorts', 'prieres', 'xpLog', 'customSpecs', 'basicSpecs',
-    'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment', 'familiers', 'motsCles',
+    'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment', 'familiers', 'motsCles', 'suiviMj',
 ]);
 
 export class FicheCommandError extends Error {
@@ -1056,6 +1057,10 @@ function validateImportData(imported, equipmentCatalogue) {
         const error = Object.hasOwn(imported, key) ? v5FieldError(key, imported[key]) : null;
         if (error) fail(`champ d’import invalide: ${key} (${error})`);
     }
+    if (Object.hasOwn(imported, 'suiviMj')) {
+        const error = suiviListError(imported.suiviMj);
+        if (error) fail(`champ d’import invalide: suiviMj (${error})`);
+    }
     if (Object.hasOwn(imported, 'carac')) {
         if (!isRecord(imported.carac) || Object.keys(imported.carac).some(key => !CARACS.includes(key))) fail('caractéristiques d’import invalides');
         for (const value of Object.values(imported.carac)) {
@@ -1136,6 +1141,7 @@ export function createFicheCommandEngine({ careers, skills, spells, catalogVersi
         if (command.type === 'correct') return correct(nextData, command, commandContext, options);
         if (command.type === 'equipment') return applyEquipmentCommand(nextData, command, commandContext, equipmentCatalogue);
         if (command.type === 'import') return importData(nextData, command, commandContext, equipmentCatalogue);
+        if (command.type === 'outil-mj') return applyOutilMjCommand(nextData, command, { ...commandContext, revision: context.revision });
         fail('commande non prise en charge par le moteur XP');
     }
     return Object.freeze({ applyCommand, evaluateCareerCompletion: (data, career, rank) => evaluateCareerCompletion(

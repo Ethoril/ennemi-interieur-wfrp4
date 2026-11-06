@@ -13,6 +13,7 @@ const generated = [
     ['js/fiche/basic-skills.js', 'functions/src/domain/fiche/basic-skills.js'],
     ['js/fiche/skill-names.js', 'functions/src/domain/fiche/skill-names.js'],
     ['js/fiche/xp.js', 'functions/src/domain/fiche/xp.js'],
+    ['js/fiche/outil-mj.js', 'functions/src/domain/fiche/outil-mj.js'],
     ['js/fiche/v5.js', 'functions/src/domain/fiche/v5.js', source => source
         .replaceAll("'../data/creature-keywords.js'", "'../../data/creature-keywords.js'")],
     ['js/data/creature-keywords.js', 'functions/src/data/creature-keywords.js'],

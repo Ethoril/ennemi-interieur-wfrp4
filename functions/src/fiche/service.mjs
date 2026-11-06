@@ -1,14 +1,15 @@
 import { createHash } from 'node:crypto';
 import { V5_COUNTER_FIELDS, V5_LIST_FIELDS, migrerFicheV5, v5FieldError } from '../domain/fiche/v5.js';
+import { outilMjChangeDelta, validateOutilMjCommand } from '../domain/fiche/outil-mj.js';
 
 export const FICHE_CHAR_IDS = Object.freeze(['bhelgi', 'caelel', 'elysia', 'hellaya', 'wren', 'test']);
 export const FICHE_SCHEMA_VERSION = 2;
-export const FICHE_COMMAND_TYPES = Object.freeze(['patch', 'purchase', 'cancel', 'gain', 'correct', 'import', 'reset', 'equipment']);
+export const FICHE_COMMAND_TYPES = Object.freeze(['patch', 'purchase', 'cancel', 'gain', 'correct', 'import', 'reset', 'equipment', 'outil-mj']);
 
 const PLAYER_CHAR_IDS = new Set(FICHE_CHAR_IDS.filter(charId => charId !== 'test'));
 const ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/u;
 const PATCH_TYPES = new Set(['patch']);
-const SERVER_ONLY_TYPES = new Set(['gain', 'correct', 'import', 'reset', 'equipment']);
+const SERVER_ONLY_TYPES = new Set(['gain', 'correct', 'import', 'reset', 'equipment', 'outil-mj']);
 const ADMIN_EMAIL = 'ethoril@gmail.com';
 const PATCH_FIELDS = new Set([
     'nom', 'race', 'blessuresAct', 'fortune', 'destin', 'peche', 'corruption', 'possessions',
@@ -89,6 +90,8 @@ function validateCommand(command) {
     assertSafeTree(payload);
     if (Buffer.byteLength(stableStringify(command), 'utf8') > MAX_COMMAND_BYTES) fail('commande trop volumineuse');
     if (type === 'patch') validatePatchPayload(payload);
+    // Clés fermées (chantier H, CA23) : rien de réservé au MJ ne peut atteindre la fiche.
+    if (type === 'outil-mj') validateOutilMjCommand(command);
     return command;
 }
 
@@ -301,14 +304,18 @@ export async function executeFicheCommand(rawCommand, request, deps) {
     const catalogueRef = deps.db.doc('referentiels/public');
     const operationRef = ficheRef.collection('operations').doc(command.operationId);
     const historyRef = ficheRef.collection('history').doc(command.operationId);
+    const undoneRef = command.type === 'outil-mj' && typeof command.payload.undoOf === 'string'
+        ? ficheRef.collection('history').doc(command.payload.undoOf)
+        : null;
     const commandBackupRef = ['import', 'reset'].includes(command.type)
         ? ficheRef.collection('command_backups').doc(command.operationId)
         : null;
 
     return deps.db.runTransaction(async transaction => {
         // Firestore impose que toutes les lectures précèdent les premières écritures.
-        const [accessSnapshot, ficheSnapshot, operationSnapshot, catalogueSnapshot] = await Promise.all([
+        const [accessSnapshot, ficheSnapshot, operationSnapshot, catalogueSnapshot, undoneSnapshot] = await Promise.all([
             transaction.get(accessRef), transaction.get(ficheRef), transaction.get(operationRef), transaction.get(catalogueRef),
+            undoneRef ? transaction.get(undoneRef) : null,
         ]);
         const role = ensureAuthorized(user, command, snapshotData(accessSnapshot));
         validatePrivilegedPayload(command);
@@ -322,6 +329,13 @@ export async function executeFicheCommand(rawCommand, request, deps) {
         if (priorReceipt) {
             if (priorReceipt.commandHash !== commandHash) fail('identifiant d’opération déjà utilisé', 'already-exists');
             return priorReceipt.response;
+        }
+        if (undoneRef) {
+            // CA15 : on n'annule qu'un envoi `outil-mj` de cette même fiche, jamais une annulation.
+            const undone = snapshotData(undoneSnapshot);
+            if (undone?.type !== 'outil-mj' || undone.summary?.undoOf !== undefined) {
+                fail('opération à annuler invalide', 'failed-precondition', { kind: 'undo-invalid' });
+            }
         }
 
         let envelope = snapshotData(ficheSnapshot);
@@ -343,7 +357,8 @@ export async function executeFicheCommand(rawCommand, request, deps) {
         // Migration V5 à la volée : chaque écriture pose `fortune` (le client lit la fiche migrée de la même façon).
         const sourceEnvelope = envelope;
         envelope = { ...envelope, data: migrerFicheV5(envelope.data) };
-        if (command.type !== 'patch' && command.type !== 'purchase' && command.type !== 'cancel') {
+        // `outil-mj` résout change par change (comme `patch`) : pas d'égalité de révision exigée.
+        if (!['patch', 'purchase', 'cancel', 'outil-mj'].includes(command.type)) {
             requireExactRevision(command, envelope.revision);
         }
 
@@ -386,6 +401,7 @@ export async function executeFicheCommand(rawCommand, request, deps) {
             const result = await applyCommand(inputData, command, context);
             domainResult = normalizeDomainResult(result, inputData, before);
             nextData = domainResult.data;
+            if (command.type === 'outil-mj') changeDelta = outilMjChangeDelta(envelope.data, nextData, command.payload);
         }
 
         nextData = migrerFicheV5(nextData);
