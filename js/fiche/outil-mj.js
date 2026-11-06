@@ -3,6 +3,7 @@
 // tools/sync-fiche-domain.mjs. Tout ce qui n'est pas dans la liste fermée ci-dessous est refusé :
 // aucune donnée réservée au MJ ne peut atteindre la fiche, que le joueur lit en entier.
 import { counterError } from './v5.js';
+import { validateEquipmentItem } from './equipment.js';
 
 export const OUTIL_MJ_CARACS = Object.freeze(['cc', 'ct', 'f', 'e', 'i', 'ag', 'dex', 'int', 'fm', 'soc']);
 export const OUTIL_MJ_COUNTERS = Object.freeze(['fortune', 'destin', 'peche', 'corruption']);
@@ -17,8 +18,12 @@ const CHANGE_KEYS = Object.freeze({
     carac: ['op', 'carac', 'base', 'value', 'label'],
     'skill-adv': ['op', 'id', 'base', 'value', 'label'],
     suivi: ['op', 'id', 'base', 'value', 'label'],
+    row: ['op', 'collection', 'id', 'base', 'value', 'label'],
 });
 const SUIVI_KEYS = ['id', 'categorie', 'libelle', 'detail', 'depuis'];
+export const OUTIL_MJ_ROW_COLLECTIONS = Object.freeze(['talentsAcq', 'equipment']);
+const MAX_EQUIPMENT_ROWS = 500;
+const MAX_TALENT_ROW_KEYS = 20;
 
 export class OutilMjError extends Error {
     constructor(message, code = 'invalid-argument', details = undefined) {
@@ -87,11 +92,49 @@ export function suiviListError(value) {
     return null;
 }
 
-/** Clé du change dans le conflit et l'historique : counter:destin, carac:ag, skill-adv:<id>, suivi:<id>. */
+/**
+ * Clé du change dans le conflit et l'historique : counter:destin, carac:ag, skill-adv:<id>,
+ * row:talentsAcq:<id>, row:equipment:<id>, suivi:<id>.
+ */
 export function outilMjChangeKey(change) {
     if (change.op === 'counter') return `counter:${change.field}`;
     if (change.op === 'carac') return `carac:${change.carac}`;
+    if (change.op === 'row') return `row:${change.collection}:${change.id}`;
     return `${change.op}:${change.id}`;
+}
+
+// Ligne de talent acquis : forme plate ({ id, nom, note… }), valeurs simples seulement.
+function talentRowError(row) {
+    if (!isRecord(row) || Object.keys(row).length > MAX_TALENT_ROW_KEYS) return 'ligne de talent invalide';
+    if (!isText(row.nom, 200, 1) || !row.nom.trim()) return 'nom de talent invalide';
+    for (const [key, value] of Object.entries(row)) {
+        if (key.length > 60 || !['string', 'number', 'boolean'].includes(typeof value)) return 'ligne de talent invalide';
+        if (typeof value === 'string' && value.length > 2_000) return 'ligne de talent invalide';
+    }
+    return null;
+}
+
+// Objet d'équipement : même contrôle que les commandes `equipment` ; `catalogue` nul = forme seule.
+// Sans `keptKeywords`, un mot clé retiré du référentiel reste accepté : la restitution est à l'identique.
+function checkEquipmentRow(row, catalogue) {
+    try {
+        validateEquipmentItem(row, catalogue);
+    } catch (error) {
+        fail(error?.message || 'objet d’équipement invalide');
+    }
+}
+
+function validateRowEntries(change, catalogue) {
+    for (const entry of [change.base, change.value]) {
+        if (entry === null) continue;
+        if (!isRecord(entry) || entry.id !== change.id) fail('identifiant de ligne incohérent');
+        if (change.collection === 'talentsAcq') {
+            const error = talentRowError(entry);
+            if (error) fail(error);
+        } else {
+            checkEquipmentRow(entry, catalogue);
+        }
+    }
 }
 
 function validateChange(change) {
@@ -107,6 +150,12 @@ function validateChange(change) {
     } else if (change.op === 'skill-adv') {
         if (!isRowId(change.id)) fail('identifiant de compétence invalide');
         if (!isCount(change.base) || !isCount(change.value) || change.value > 999) fail('Avances de compétence invalides');
+    } else if (change.op === 'row') {
+        // Retrait : value null ; restitution : base null ; la ligne entière est comparée.
+        if (!OUTIL_MJ_ROW_COLLECTIONS.includes(change.collection)) fail('collection non autorisée', 'invalid-argument', { kind: 'field-forbidden' });
+        if (!isRowId(change.id)) fail('identifiant de ligne invalide');
+        if (change.base === null && change.value === null) fail('change de ligne vide');
+        validateRowEntries(change, null);
     } else {
         if (!isRowId(change.id)) fail('identifiant de suivi invalide');
         if (change.base === null && change.value === null) fail('change de suivi vide');
@@ -149,10 +198,26 @@ export function outilMjCurrentValue(data, change) {
         const carac = isRecord(data.carac) && isRecord(data.carac[change.carac]) ? data.carac[change.carac] : null;
         return carac && Object.hasOwn(carac, 'base') ? carac.base : null;
     }
-    const rows = change.op === 'skill-adv' ? data.skillsAdvanced : data.suiviMj;
-    const matches = Array.isArray(rows) ? rows.filter(row => row?.id === change.id) : [];
+    const matches = matchingRows(data, change);
     if (matches.length !== 1) return null;
     return change.op === 'skill-adv' ? (Object.hasOwn(matches[0], 'adv') ? matches[0].adv : null) : matches[0];
+}
+
+function rowsOf(data, change) {
+    const name = change.op === 'skill-adv' ? 'skillsAdvanced' : change.op === 'row' ? change.collection : 'suiviMj';
+    return Array.isArray(data[name]) ? data[name] : [];
+}
+
+function matchingRows(data, change) {
+    if (change.op === 'counter' || change.op === 'carac') return [];
+    return rowsOf(data, change).filter(row => row?.id === change.id);
+}
+
+// Retire, remplace ou ajoute la ligne `id` d'une collection (value null = retrait).
+function upsertRow(rows, id, value) {
+    if (value === null) return rows.filter(row => row?.id !== id);
+    if (rows.some(row => row?.id === id)) return rows.map(row => row?.id === id ? value : row);
+    return [...rows, value];
 }
 
 function applyChange(data, change) {
@@ -163,11 +228,15 @@ function applyChange(data, change) {
         data.carac = { ...data.carac, [change.carac]: { ...data.carac[change.carac], base: change.value } };
     } else if (change.op === 'skill-adv') {
         data.skillsAdvanced = data.skillsAdvanced.map(row => row?.id === change.id ? { ...row, adv: change.value } : row);
+    } else if (change.op === 'row') {
+        // Aucune écriture au journal d'XP : ni remboursement, ni dépense. Un `cancel` ultérieur de l'achat
+        // d'un talent retiré est refusé par matchesCurrentEffect (la ligne achetée n'existe plus).
+        data[change.collection] = upsertRow(rowsOf(data, change), change.id, change.value);
+        if (change.collection === 'equipment' && data.equipment.length > MAX_EQUIPMENT_ROWS) {
+            fail('la fiche contient déjà 500 objets', 'resource-exhausted');
+        }
     } else {
-        const rows = Array.isArray(data.suiviMj) ? data.suiviMj : [];
-        if (change.value === null) data.suiviMj = rows.filter(row => row?.id !== change.id);
-        else if (rows.some(row => row?.id === change.id)) data.suiviMj = rows.map(row => row?.id === change.id ? change.value : row);
-        else data.suiviMj = [...rows, change.value];
+        data.suiviMj = upsertRow(rowsOf(data, change), change.id, change.value);
         if (data.suiviMj.length > MAX_SUIVI_ENTRIES) fail('suivi du MJ trop long', 'resource-exhausted');
     }
 }
@@ -177,12 +246,21 @@ function applyChange(data, change) {
  * fiche = valeur voulue → rien (CA12) ; sinon conflit. Un seul conflit refuse toute la commande (CA10).
  * Retourne { data, summary } ; le service dresse l'historique par outilMjChangeDelta.
  */
-export function applyOutilMjCommand(data, command, context = {}) {
+export function applyOutilMjCommand(data, command, context = {}, { equipmentCatalogue = null } = {}) {
     if (context.role !== 'mj') fail('commande réservée au MJ', 'permission-denied');
     const payload = validateOutilMjCommand(command);
+    // Objet restitué : contrôlé contre le référentiel d'équipement publié.
+    for (const change of payload.changes) {
+        if (change.op === 'row' && change.collection === 'equipment' && change.value !== null) checkEquipmentRow(change.value, equipmentCatalogue);
+    }
     const conflicts = [];
     const toApply = [];
     for (const change of payload.changes) {
+        // Identifiant en double sur la fiche : rapprochement impossible, traité comme un conflit.
+        if (matchingRows(data, change).length > 1) {
+            conflicts.push(outilMjChangeKey(change));
+            continue;
+        }
         const current = outilMjCurrentValue(data, change);
         if (same(current, change.value)) continue;
         if (same(current, change.base)) toApply.push(change);

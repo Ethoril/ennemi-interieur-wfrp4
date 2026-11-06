@@ -7,6 +7,7 @@ import { executeFicheCommand, FICHE_COMMAND_TYPES } from '../src/fiche/service.m
 import { createFicheCommandHandler } from '../src/fiche/handler.mjs';
 import { createFicheCommandEngine } from '../src/domain/fiche/commands.js';
 import { FICHE_EXPORT_KEYS } from '../../js/fiche/export-import.js';
+import equipmentCatalogue from '../../js/data/equipment-catalog.json' with { type: 'json' };
 
 const PLAYER = { auth: { uid: 'player-1', token: { email: 'player@example.test', email_verified: true } } };
 const MJ = { auth: { uid: 'mj-1', token: { email: 'ethoril@gmail.com', email_verified: true } } };
@@ -55,7 +56,7 @@ function createStore(seed) {
 
 function setup() {
     const store = createStore({ 'campagne/acces': { bhelgi: ['player@example.test'] }, 'fiches/bhelgi': initialFiche() });
-    const engine = createFicheCommandEngine({ careers: [], skills: [], spells: {} });
+    const engine = createFicheCommandEngine({ careers: [], skills: [], spells: {}, equipmentCatalogue });
     let timestamp = 0;
     const services = { db: store.db, applyCommand: engine.applyCommand, timestamp: () => ({ serverTime: ++timestamp }) };
     return { store, services, fiche: () => store.documents.get('fiches/bhelgi') };
@@ -211,7 +212,6 @@ test('CA23 : toute clé hors de la liste fermée est refusée', async () => {
         outilMj([{ op: 'suivi', id: 'outil:mut-1', base: null, value: { id: 'outil:mut-1', categorie: 'mutation', libelle: 'Œil', detail: '', delaiSecret: 3 }, label: 'Mutation' }]),
         outilMj([{ op: 'suivi', id: 'outil:x', base: null, value: { id: 'outil:x', categorie: 'mutation-en-attente', libelle: 'X', detail: '' }, label: 'X' }]),
         outilMj([{ op: 'suivi', id: 'outil:a', base: null, value: { ...PENITENCE, id: 'outil:b' }, label: 'Identifiant différent' }]),
-        outilMj([{ op: 'row', collection: 'talentsAcq', id: 't1', base: { id: 't1' }, value: null, label: 'Talent' }]),
         outilMj([{ op: 'counter', field: 'fortune', base: '1', value: '12345', label: 'Trop grand' }]),
         outilMj([{ op: 'carac', carac: 'ag', base: 30, value: -1, label: 'Négatif' }]),
         outilMj([{ op: 'skill-adv', id: 'priere', base: 10, value: 1.5, label: 'Décimal' }]),
@@ -279,4 +279,106 @@ test('suiviMj fait partie des clés d’export et d’import JSON', async () => 
     await assert.rejects(executeFicheCommand(importCommand('import-bad', [{ ...PENITENCE, secret: 1 }]), MJ, services));
     await executeFicheCommand(importCommand('import-ok', [PENITENCE]), MJ, services);
     assert.deepEqual(fiche().data.suiviMj, [PENITENCE]);
+});
+
+// ---- T2 : lignes de talents et d'équipement (changes `row`) ----
+
+const BENI = { id: 't-beni', nom: 'Béni (Sigmar)', note: '' };
+const INVOCATION = { id: 't-inv', nom: 'Invocation (Sigmar)', note: 'hors carrière' };
+const MARTEAU = { ...equipmentCatalogue.items.find(item => item.kind === 'weapon'), id: 'eq-1' };
+const PURCHASE = {
+    id: 'xp-p1', operationId: 'achat-beni', origin: 'command', actorUid: 'player-1', kind: 'purchase', purchaseId: 'p-1',
+    targetType: 'talent', achat: 'Béni (Sigmar)', cout: 100,
+    effects: [{ path: 'talentsAcq.t-beni', pathParts: ['talentsAcq', 't-beni'], before: null, after: BENI }],
+};
+const GAIN = { id: 'xp-g1', kind: 'gain', montant: 300, raison: 'Séance 1' };
+
+function setupRows() {
+    const context = setup();
+    const data = context.fiche().data;
+    data.talentsAcq = [BENI, INVOCATION];
+    data.equipment = [MARTEAU];
+    data.xpLog = [GAIN, PURCHASE];
+    return context;
+}
+
+test('CA18 : excommunication, Béni et Invocation retirés, Prière à zéro, journal d’XP intact', async () => {
+    const { store, services, fiche } = setupRows();
+    const changes = [
+        { op: 'row', collection: 'talentsAcq', id: 't-beni', base: BENI, value: null, label: 'Excommunication' },
+        { op: 'row', collection: 'talentsAcq', id: 't-inv', base: INVOCATION, value: null, label: 'Excommunication' },
+        { op: 'skill-adv', id: 'priere', base: 10, value: 0, label: 'Excommunication' },
+    ];
+    await executeFicheCommand(outilMj(changes), MJ, services);
+    assert.deepEqual(fiche().data.talentsAcq, []);
+    assert.equal(fiche().data.skillsAdvanced[0].adv, 0);
+    assert.deepEqual(fiche().data.xpLog, [GAIN, PURCHASE], 'ni remboursement ni écriture au journal');
+    const history = store.documents.get('fiches/bhelgi/history/outilmj-send-1-bhelgi');
+    assert.deepEqual(history.changes['row:talentsAcq:t-beni'], { before: BENI, after: null, label: 'Excommunication' });
+    // L'achat du talent retiré ne peut plus être annulé, donc pas remboursé.
+    await rejects(executeFicheCommand({ charId: 'bhelgi', operationId: 'cancel-beni', baseRevision: 4, type: 'cancel',
+        payload: { purchaseId: 'p-1' } }, MJ, services), 'failed-precondition', 'purchase-not-reversible');
+    assert.equal(fiche().revision, 4);
+});
+
+test('CA19 : un objet retenu est retiré puis rendu à l’identique', async () => {
+    const { services, fiche } = setupRows();
+    await executeFicheCommand(outilMj([{ op: 'row', collection: 'equipment', id: 'eq-1', base: MARTEAU, value: null, label: 'Courroux : objet retenu' }]), MJ, services);
+    assert.deepEqual(fiche().data.equipment, []);
+    await executeFicheCommand(outilMj([{ op: 'row', collection: 'equipment', id: 'eq-1', base: null, value: MARTEAU, label: 'Pénitence accomplie : objet rendu' }],
+        { sendId: 'send-2', baseRevision: 4 }), MJ, services);
+    assert.deepEqual(fiche().data.equipment, [MARTEAU]);
+    // Rendu une seconde fois : déjà présent à l'identique, pas un conflit, rien n'est dupliqué (CA12).
+    await executeFicheCommand(outilMj([{ op: 'row', collection: 'equipment', id: 'eq-1', base: null, value: MARTEAU, label: 'Objet rendu' }],
+        { sendId: 'send-3', baseRevision: 5 }), MJ, services);
+    assert.deepEqual(fiche().data.equipment, [MARTEAU]);
+    assert.deepEqual(fiche().data.xpLog, [GAIN, PURCHASE]);
+});
+
+test('CA10 sur les lignes : ligne entière comparée ; une ligne déjà retirée n’est pas un conflit', async () => {
+    const { services, fiche } = setupRows();
+    fiche().data.talentsAcq = [{ ...BENI, note: 'note du joueur' }, INVOCATION];
+    const changes = [
+        { op: 'row', collection: 'talentsAcq', id: 't-beni', base: BENI, value: null, label: 'Excommunication' },
+        { op: 'row', collection: 'talentsAcq', id: 't-absent', base: { id: 't-absent', nom: 'Absent', note: '' }, value: null, label: 'Déjà retiré' },
+        { op: 'row', collection: 'equipment', id: 'eq-1', base: null, value: { ...MARTEAU, name: 'Autre nom' }, label: 'Restitution' },
+        { op: 'row', collection: 'talentsAcq', id: 't-inv', base: INVOCATION, value: null, label: 'Excommunication' },
+    ];
+    const error = await rejects(executeFicheCommand(outilMj(changes), MJ, services), 'aborted', 'conflict');
+    assert.deepEqual(error.details.fields, ['row:talentsAcq:t-beni', 'row:equipment:eq-1']);
+    assert.equal(fiche().data.talentsAcq.length, 2);
+    assert.equal(fiche().revision, 3);
+});
+
+test('lignes : annulation d’un envoi par commande inverse', async () => {
+    const { services, fiche } = setupRows();
+    const changes = [
+        { op: 'row', collection: 'talentsAcq', id: 't-inv', base: INVOCATION, value: null, label: 'Excommunication' },
+        { op: 'row', collection: 'equipment', id: 'eq-1', base: MARTEAU, value: null, label: 'Courroux' },
+    ];
+    await executeFicheCommand(outilMj(changes), MJ, services);
+    await executeFicheCommand(outilMj(invert(changes), { sendId: 'undo-1', baseRevision: 4, undoOf: 'outilmj-send-1-bhelgi' }), MJ, services);
+    assert.deepEqual(fiche().data.talentsAcq, [BENI, INVOCATION]);
+    assert.deepEqual(fiche().data.equipment, [MARTEAU]);
+});
+
+test('lignes : formes refusées (collection, clés, identifiant, objet hors catalogue)', async () => {
+    const { services, fiche } = setupRows();
+    const row = change => outilMj([{ op: 'row', label: 'Ligne', ...change }]);
+    const refused = [
+        row({ collection: 'sorts', id: 's-1', base: { id: 's-1', nom: 'Sort' }, value: null }),
+        row({ collection: 'talentsAcq', id: 't-beni', base: BENI, value: null, extra: 1 }),
+        row({ collection: 'talentsAcq', id: 't-beni', base: null, value: null }),
+        row({ collection: 'talentsAcq', id: 't-beni', base: null, value: { ...BENI, id: 't-autre' } }),
+        row({ collection: 'talentsAcq', id: 't-x', base: null, value: { id: 't-x', nom: '' } }),
+        row({ collection: 'talentsAcq', id: 't-x', base: null, value: { id: 't-x', nom: 'X', detail: { secret: true } } }),
+        row({ collection: 'equipment', id: 'eq-2', base: null, value: { ...MARTEAU, id: 'eq-2', secretMj: 'x' } }),
+        row({ collection: 'equipment', id: 'eq-2', base: null, value: { ...MARTEAU, id: 'eq-2', kind: 'relique' } }),
+        row({ collection: 'equipment', id: 'eq-1', base: { ...MARTEAU, id: 'eq-2' }, value: null }),
+    ];
+    for (const [index, request] of refused.entries()) {
+        await assert.rejects(executeFicheCommand(request, MJ, services), error => ['invalid-argument', 'permission-denied'].includes(error.code),
+            `requête ${index} acceptée à tort`);
+    }
+    assert.equal(fiche().revision, 3);
 });

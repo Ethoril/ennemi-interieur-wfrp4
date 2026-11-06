@@ -1141,7 +1141,7 @@ export function createFicheCommandEngine({ careers, skills, spells, catalogVersi
         if (command.type === 'correct') return correct(nextData, command, commandContext, options);
         if (command.type === 'equipment') return applyEquipmentCommand(nextData, command, commandContext, equipmentCatalogue);
         if (command.type === 'import') return importData(nextData, command, commandContext, equipmentCatalogue);
-        if (command.type === 'outil-mj') return applyOutilMjCommand(nextData, command, { ...commandContext, revision: context.revision });
+        if (command.type === 'outil-mj') return applyOutilMjCommand(nextData, command, { ...commandContext, revision: context.revision }, { equipmentCatalogue });
         fail('commande non prise en charge par le moteur XP');
     }
     return Object.freeze({ applyCommand, evaluateCareerCompletion: (data, career, rank) => evaluateCareerCompletion(
