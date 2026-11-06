@@ -222,6 +222,11 @@
 .m-principal-carac-total { color: var(--text-heading); font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; }
 .m-principal-carac-tens { color: var(--m-tens); }
 .m-principal-note { margin: var(--space-xs) 0 0; color: var(--text-secondary); font-size: 0.875rem; }
+.m-suivi-mj-group { margin: var(--space-sm, 8px) 0 var(--space-xs, 4px); font-size: 1rem; }
+.m-suivi-mj-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-xs, 4px); }
+.m-suivi-mj-entry { border-left: 2px solid var(--border-gold); padding: 2px 0 2px var(--space-sm, 8px); }
+.m-suivi-mj-since { margin-left: var(--space-xs, 4px); color: var(--text-secondary); }
+.m-suivi-mj-detail { margin: 2px 0 0; overflow-wrap: anywhere; }
 
 .m-principal-head { display: flex; align-items: baseline; justify-content: space-between; }
 .m-principal-head .m-principal-title { margin: 0; }

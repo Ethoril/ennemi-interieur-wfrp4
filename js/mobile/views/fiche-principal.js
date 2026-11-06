@@ -1,5 +1,6 @@
 import { blessuresMax, mouvement } from '../../fiche/derived.js';
 import { familiersResume, motsClesResume } from '../../fiche/v5.js';
+import { SUIVI_MJ_NOTE, SUIVI_MJ_TITLE, suiviMjGroups, suiviMjSince } from '../../fiche/suivi-mj.js';
 import { CARACS, dotTarget, FAVORITE_SLOTS, favoriteSlots, ficheCaracs, resourceTokens } from '../fiche-model.js';
 
 function make(documentRef, tag, text = '', className = '') {
@@ -78,7 +79,33 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
     });
     skillsSection.append(skillsHead, skillList);
 
-    root.append(resources, caracsSection, skillsSection);
+    // « Suivi du MJ » : lecture seule, masqué quand il n'y a rien (aucun bouton, aucun champ).
+    const suiviSection = make(documentRef, 'section', '', 'm-principal-section m-suivi-mj');
+    suiviSection.setAttribute('aria-labelledby', 'm-principal-suivi-mj');
+    const suiviTitle = make(documentRef, 'h3', SUIVI_MJ_TITLE, 'm-principal-title');
+    suiviTitle.id = 'm-principal-suivi-mj';
+    const suiviNote = make(documentRef, 'p', SUIVI_MJ_NOTE, 'm-principal-note');
+    const suiviBody = make(documentRef, 'div', '', 'm-suivi-mj-body');
+    suiviSection.append(suiviTitle, suiviNote, suiviBody);
+    suiviSection.hidden = true;
+
+    root.append(resources, caracsSection, skillsSection, suiviSection);
+
+    function updateSuivi(data) {
+        const groups = suiviMjGroups(data);
+        suiviSection.hidden = !groups.length;
+        suiviBody.replaceChildren(...groups.flatMap(group => {
+            const list = make(documentRef, 'ul', '', 'm-suivi-mj-list');
+            list.append(...group.entries.map(entry => {
+                const item = make(documentRef, 'li', '', 'm-suivi-mj-entry');
+                item.append(make(documentRef, 'strong', entry.libelle));
+                if (entry.depuis) item.append(make(documentRef, 'small', suiviMjSince(entry), 'm-suivi-mj-since'));
+                if (entry.detail) item.append(make(documentRef, 'p', entry.detail, 'm-suivi-mj-detail'));
+                return item;
+            }));
+            return [make(documentRef, 'h4', group.titre, 'm-suivi-mj-group'), list];
+        }));
+    }
 
     function update({ data, careers, engine, readonly = false }) {
         for (const card of cards) {
@@ -117,6 +144,7 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
         derived.textContent = `Mouvement ${mouvement(data) ?? 'Espèce inconnue'} · Blessures max ${blessuresMax(data) ?? 'Espèce inconnue'} · Corruption ${Math.max(0, Math.floor(+data?.corruption) || 0)} · Péché ${Math.max(0, Math.floor(+data?.peche) || 0)}`;
         v5.textContent = [familiersResume(data), motsClesResume(data)].filter(Boolean).join(' · ');
         v5.hidden = !v5.textContent;
+        updateSuivi(data);
         favoriteSlots(data, engine, careers).forEach(({ slot, row }, index) => {
             const { button } = slots[index];
             button.disabled = readonly;

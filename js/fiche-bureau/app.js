@@ -11,6 +11,7 @@ import { createCareerViewer } from '../fiche/career-viewer.js';
 import { bureauSkills, roleControls, inspectorModel, missingChips, correctionChanges, correctionOverlay, correctionMatches } from './model.js';
 import { connectBureau, loadBureauCatalogues, getEquipmentRepository } from './session.js';
 import { createEquipmentView } from '../equipment/view.js';
+import { renderSuiviMjHtml } from '../fiche/suivi-mj.js';
 
 const $ = id => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -88,6 +89,7 @@ function renderLeft() {
         + card('État', `<div class="bureau-state-row"><label for="blessures-act">Blessures actuelles</label><div class="bureau-stepper"><button data-action="wounds" data-delta="-1" aria-label="Diminuer les blessures actuelles" ${editable ? '' : 'disabled'}>−</button><input id="blessures-act" data-patch="blessuresAct" aria-label="Blessures actuelles" type="number" min="0" value="${esc(data.blessuresAct || 0)}" ${editable ? '' : 'disabled'}><button data-action="wounds" data-delta="1" aria-label="Augmenter les blessures actuelles" ${editable ? '' : 'disabled'}>+</button></div></div><progress max="${Math.max(1, maximum ?? 0)}" value="${Math.max(0, +data.blessuresAct || 0)}" aria-label="Blessures disponibles"></progress>${especeConnue(data) ? '' : `<p class="bureau-error" role="note">Espèce « ${esc(data.race)} » inconnue : Mouvement et Blessures max à fixer avec le MJ.</p>`}<div class="bureau-state-row"><span>Mouvement</span><strong>${esc(mouvement(data) ?? '—')}</strong></div><div class="bureau-state-row"><span>Blessures max</span><strong>${esc(maximum ?? '—')}</strong></div><div class="bureau-state-row"><label for="corruption">Corruption</label><input id="corruption" data-patch="corruption" type="number" min="0" step="1" value="${esc(data.corruption || 0)}" ${editable ? '' : 'disabled'}></div><div class="bureau-state-row"><label for="peche">Péché</label><input id="peche" data-patch="peche" type="number" min="0" step="1" value="${esc(data.peche || 0)}" ${editable ? '' : 'disabled'}></div>`)
         + card('Familiers', renderFamiliers(data, editable))
         + card('Mots-clés', renderMotsCles(data, editable))
+        + renderSuiviMjHtml(data)
         + card('Possessions et notes', `<label class="bureau-sr" for="possessions">Possessions et notes</label><textarea id="possessions" data-patch="possessions" ${editable ? '' : 'disabled'}>${esc(data.possessions || '')}</textarea><small class="bureau-muted">Enregistrement automatique</small>`);
 }
 

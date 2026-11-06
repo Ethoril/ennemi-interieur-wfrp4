@@ -92,6 +92,8 @@ const ASSETS_LOCAUX = [
   './js/fiche/skill-names.js',
   './js/fiche/xp.js',
   './js/fiche/v5.js',
+  './js/fiche/outil-mj.js',
+  './js/fiche/suivi-mj.js',
   './js/data/creature-keywords.js',
   './js/fiche/derived.js',
   './js/fiche/export-import.js',
