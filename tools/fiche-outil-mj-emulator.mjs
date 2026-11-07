@@ -40,7 +40,7 @@ try {
     };
     const result = spawnSync(process.execPath, [join(root, 'node_modules/firebase-tools/lib/bin/firebase.js'), 'emulators:exec',
         '--only', 'firestore,functions', '--project', project, '--config', config,
-        `"${process.execPath}" --test "${join(root, 'tools/fiche-outil-mj-emulator.test.mjs')}"`], { cwd: root, env, stdio: 'inherit' });
+        `"${process.execPath}" --test "${join(root, 'tools/outil-mj-emulator.test.mjs')}"`], { cwd: root, env, stdio: 'inherit' });
     if (result.error) throw result.error;
     process.exitCode = result.status ?? 1;
 } finally {

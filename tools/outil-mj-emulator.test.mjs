@@ -1,4 +1,4 @@
-// Chantier H, T3 : lancé par tools/fiche-outil-mj-emulator.mjs (npm run test:outil-mj-emulator).
+// Chantier H, T3 : lancé par tools/fiche-outil-mj-emulator.mjs (npm run test:outil-mj-emulator) ; nommé hors du motif tools/fiche-*.test.mjs de npm run check, qui tourne sans émulateur.
 // Appelle la vraie fonction callable `executeFicheCommand` sous l'émulateur Functions, en HTTP, comme le SDK client.
 // L'émulateur ne vérifie pas la signature des jetons (skipTokenVerification) mais exige leur présence :
 // App Check reste imposé (un appel sans jeton App Check est refusé, voir le premier scénario).
@@ -6,8 +6,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import equipmentCatalogue from '../js/data/equipment-catalog.json' with { type: 'json' };
+import { fileURLToPath, URL } from 'node:url';
+import { Buffer } from 'node:buffer';
+import { readFileSync } from 'node:fs';
+
+const equipmentCatalogue = JSON.parse(readFileSync(new URL('../js/data/equipment-catalog.json', import.meta.url), 'utf8'));
 
 const projectId = process.env.GCLOUD_PROJECT || '';
 const functionUrl = process.env.OUTIL_MJ_FUNCTIONS_URL || '';

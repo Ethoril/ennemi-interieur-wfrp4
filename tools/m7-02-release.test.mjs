@@ -65,10 +65,10 @@ test('M7-02 aligne release, précache, documentation et rollback', () => {
     const changelog = read('CHANGELOG.md');
     const report = read('docs/mobile/M7-02-activation-livraison-finale.md');
     const packageJson = read('package.json');
-    assert.match(layout, /APP_VERSION = 'v2.39.2'/u);
-    assert.match(sw, /APP_VERSION = 'v2.39.2'/u);
-    assert.match(app, /app-version" content="v2.39.2"/u);
-    assert.match(changelog, /^## \[2.39.2\] - 2026-11-05\r?\n/u);
+    assert.match(layout, /APP_VERSION = 'v2.40.0'/u);
+    assert.match(sw, /APP_VERSION = 'v2.40.0'/u);
+    assert.match(app, /app-version" content="v2.40.0"/u);
+    assert.match(changelog, /^## \[2.40.0\] - 2026-11-07\r?\n/u);
     assert.match(sw, /['"]\.\/js\/pwa-entry\.js['"]/u);
     assert.match(sw, /['"]\.\/app\/index\.html['"]/u);
     assert.match(packageJson, /"test:m7-02"/u);

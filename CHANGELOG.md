@@ -1,3 +1,10 @@
+## [2.40.0] - 2026-11-07
+
+- Fiches : l’outil MJ peut réécrire en fin de séance les valeurs durables de la fiche (Destin, Fortune, Péché, Corruption, Base des caractéristiques, Prière, talents et objets retirés ou rendus), par une commande réservée au MJ, avec détection des conflits et annulation.
+- Fiches : nouvelle section « Suivi du MJ » en lecture seule (pénitences, séquelles, cicatrices, maladies, mutations).
+- Catalogue des objets regénéré (Barrakul).
+- Cache de l’application actualisé.
+
 ## [2.39.2] - 2026-11-05
 
 - Fiches : ajout du mot-clé Barrakul depuis les Aides de jeu.
