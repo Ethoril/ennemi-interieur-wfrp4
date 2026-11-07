@@ -86,6 +86,8 @@ function validateCommand(command) {
     if (typeof operationId !== 'string' || !ID_PATTERN.test(operationId)) fail('identifiant d’opération invalide');
     if (!Number.isSafeInteger(baseRevision) || baseRevision < 0) fail('révision de base invalide');
     if (!FICHE_COMMAND_TYPES.includes(type)) fail('type de commande invalide');
+    // Préfixe réservé (chantier H) : nul ne peut occuper à l'avance l'identifiant d'un envoi de l'outil MJ.
+    if (type !== 'outil-mj' && operationId.startsWith('outilmj-')) fail('identifiant d’opération réservé à l’outil MJ');
     if (!isRecord(payload)) fail('contenu de commande invalide');
     assertSafeTree(payload);
     if (Buffer.byteLength(stableStringify(command), 'utf8') > MAX_COMMAND_BYTES) fail('commande trop volumineuse');

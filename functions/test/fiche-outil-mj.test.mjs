@@ -382,3 +382,16 @@ test('lignes : formes refusées (collection, clés, identifiant, objet hors cata
     }
     assert.equal(fiche().revision, 3);
 });
+
+test('le préfixe outilmj- est réservé au type outil-mj : un joueur ne peut pas occuper l’identifiant d’un envoi du MJ', async () => {
+    const { services, fiche } = setup();
+    const squat = {
+        charId: 'bhelgi', operationId: 'outilmj-send-1-bhelgi', baseRevision: 3, type: 'patch',
+        payload: { changes: { fortune: '2' }, baseValues: { fortune: '1' } },
+    };
+    await rejects(executeFicheCommand(squat, PLAYER, services), 'invalid-argument');
+    assert.equal(fiche().data.fortune, '1');
+    const result = await executeFicheCommand(outilMj([{ op: 'counter', field: 'fortune', base: '1', value: '0', label: 'Fortune' }]), MJ, services);
+    assert.equal(result.revision, 4);
+    assert.equal(fiche().data.fortune, '0');
+});
