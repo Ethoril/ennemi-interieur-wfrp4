@@ -1,3 +1,4 @@
+import { careerDisplayName } from './career-display.js';
 import { primarySkillLabel } from '../catalogue/skill-forms.js';
 import {
     getEffectiveCaracs,
@@ -79,7 +80,7 @@ function renderRank(parent, career, rank, variant, overrides, onTalent, context 
     const panel = element('div', 'career-viewer-rank');
     const variants = variantsAt(career, rank);
     const title = variant?.titre || variants[0]?.titre || `Rang ${rank}`;
-    panel.append(element('h3', '', `Rang ${rank} · ${title}`));
+    panel.append(element('h3', '', `Rang ${rank} · ${careerDisplayName(title, context.genreAffichage)}`));
     if (variant?.statut) panel.append(element('p', 'career-viewer-status', `Statut : ${variant.statut}`));
     const caracs = getEffectiveCaracs(career, rank, variant, overrides).map(code => CARAC_LABELS[code] || code);
     const skills = getEffectiveSkills(career, rank, variant, overrides);
@@ -118,8 +119,9 @@ function checkboxControl(labelText, checked) {
     return { label, input };
 }
 
-function careerOptionLabel(career) {
-    return career.source ? `${career.nom} · ${career.source}` : career.nom;
+function careerOptionLabel(career, genre) {
+    const name = careerDisplayName(career.nom, genre);
+    return career.source ? `${name} · ${career.source}` : name;
 }
 
 // modalOnly : le conteneur ne reçoit que la modale (ouverte par openModal()), sans la section d'aperçu ;
@@ -169,7 +171,7 @@ export function createCareerViewer({ container, getContext, onTalent = null, mod
         const root = element('section', 'career-viewer');
         root.setAttribute('aria-label', 'Visionneuse de carrière');
         const header = element('header', 'career-viewer-header');
-        const heading = element('h2', '', career.nom);
+        const heading = element('h2', '', careerDisplayName(career.nom, context.genreAffichage));
         const openModal = element('button', 'career-viewer-open', 'Voir la carrière complète');
         openModal.dataset.testid = 'open-modal';
         openModal.type = 'button';
@@ -192,7 +194,7 @@ export function createCareerViewer({ container, getContext, onTalent = null, mod
         root.append(element('p', 'career-viewer-mode', state.adapted ? 'Version adaptée à la fiche' : 'Référence du catalogue'));
 
         if (variants.length > 1) {
-            const variantControl = selectControl('Variante du rang', variants.map(item => ({ value: item.titre, label: item.titre })), chosenTitle);
+            const variantControl = selectControl('Variante du rang', variants.map(item => ({ value: item.titre, label: careerDisplayName(item.titre, context.genreAffichage) })), chosenTitle);
             variantControl.select.addEventListener('change', () => {
                 state.variantTitles ||= {};
                 state.variantTitles[career.id] ||= {};
@@ -270,7 +272,7 @@ function renderCareerModal(careers, selectedCareer, context, state, update, onTa
     adapted.input.dataset.testid = 'mode-adapte-modal';
     adapted.input.addEventListener('change', () => { state.adapted = adapted.input.checked; update(); });
     dialog.append(adapted.label);
-    const careerControl = selectControl('Carrière', careers.map(career => ({ value: career.id, label: careerOptionLabel(career) })), selectedCareer.id);
+    const careerControl = selectControl('Carrière', careers.map(career => ({ value: career.id, label: careerOptionLabel(career, context.genreAffichage) })), selectedCareer.id);
     careerControl.select.dataset.testid = 'carriere-modal';
     careerControl.select.addEventListener('change', () => {
         state.modalCareerId = careerControl.select.value;
@@ -282,7 +284,7 @@ function renderCareerModal(careers, selectedCareer, context, state, update, onTa
         dialog.append(element('p', 'career-viewer-prereq', `Prérequis : ${selectedCareer.prereq.career}${prereqRank ? `, rang ${prereqRank} minimum` : ''}`));
     }
     const overview = element('div', 'career-viewer-overview');
-    overview.append(element('h3', '', selectedCareer.nom));
+    overview.append(element('h3', '', careerDisplayName(selectedCareer.nom, context.genreAffichage)));
     if (selectedCareer.source) overview.append(element('p', '', `Source : ${selectedCareer.source}`));
     dialog.append(overview);
     const ranks = ranksOf(selectedCareer);
@@ -292,7 +294,7 @@ function renderCareerModal(careers, selectedCareer, context, state, update, onTa
         const savedTitle = context.chosenVariants?.[selectedCareer.id]?.[rank];
         const previewTitle = state.variantTitles?.[selectedCareer.id]?.[rank] ?? savedTitle;
         if (variants.length > 1) {
-            const control = selectControl(`Variante du rang ${rank}`, variants.map(item => ({ value: item.titre, label: item.titre })), previewTitle || variants[0].titre);
+            const control = selectControl(`Variante du rang ${rank}`, variants.map(item => ({ value: item.titre, label: careerDisplayName(item.titre, context.genreAffichage) })), previewTitle || variants[0].titre);
             control.select.addEventListener('change', () => {
                 state.variantTitles ||= {};
                 state.variantTitles[selectedCareer.id] ||= {};

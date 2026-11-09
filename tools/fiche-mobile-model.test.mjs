@@ -23,3 +23,13 @@ test('identité : carrière inconnue ou fiche vide sans exception', () => {
     assert.deepEqual(ficheIdentity(null, careers), { nom: '', carriere: '', titreRang: '', rang: 1, statut: '' });
     assert.equal(ficheIdentity({ carriere: 'Agitateur' }).titreRang, '');
 });
+
+test('préférence de genre : affichage sans changer la carrière ni la variante', () => {
+    const data = { carriere: 'Agitateur', rang: '2', genreAffichage: 'feminin', chosenVariants: {} };
+    const original = globalThis.structuredClone(data);
+    const identity = ficheIdentity(data, careers);
+    assert.equal(identity.carriere, 'Agitatrice');
+    assert.equal(identity.titreRang, 'Agitatrice');
+    assert.deepEqual(data, original);
+    assert.equal(ficheIdentity({ ...data, genreAffichage: 'masculin' }, careers).carriere, 'Agitateur');
+});

@@ -534,3 +534,16 @@ test('V5 : toute écriture migre Chance vers Fortune, garde Chance et la source 
     assert.deepEqual(imported.documents.get('fiches/bhelgi').data, { nom: 'Bhelgi', chance: '1', fortune: '1' });
     assert.deepEqual(imported.documents.get('fiches/bhelgi/command_backups/operation-1').sourceEnvelope, legacy);
 });
+
+test('préférence de genre : un joueur peut la modifier sans changer la carrière, les valeurs invalides sont refusées', async () => {
+    const initial = structuredClone(seed());
+    initial['fiches/bhelgi'].data.carriere = 'Agitateur';
+    initial['fiches/bhelgi'].data.rang = '2';
+    const store = createStore(initial);
+    await executeFicheCommand(command('patch', { changes: { genreAffichage: 'feminin' }, baseValues: { genreAffichage: null } }), PLAYER, deps(store));
+    const data = store.documents.get('fiches/bhelgi').data;
+    assert.equal(data.genreAffichage, 'feminin');
+    assert.equal(data.carriere, 'Agitateur');
+    assert.equal(data.rang, '2');
+    await rejectCode(executeFicheCommand(command('patch', { changes: { genreAffichage: 'autre' }, baseValues: { genreAffichage: 'feminin' } }, { operationId: 'operation-2', baseRevision: 1 }), PLAYER, deps(store)), 'invalid-argument');
+});

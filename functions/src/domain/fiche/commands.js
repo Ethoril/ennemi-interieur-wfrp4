@@ -29,7 +29,7 @@ const CARACS = Object.freeze(['cc', 'ct', 'f', 'e', 'i', 'ag', 'dex', 'int', 'fm
 const XP_BANDS_LIMIT = 100;
 const TEXT_LIMIT = 200;
 const EXPORT_KEYS = new Set([
-    'nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance',
+    'nom', 'race', 'genreAffichage', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance',
     'destin', 'fortune', 'peche', 'corruption', 'possessions', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers',
     'talentsAcq', 'talentsAvail', 'sorts', 'prieres', 'xpLog', 'customSpecs', 'basicSpecs',
     'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment', 'familiers', 'motsCles', 'suiviMj',
@@ -1044,6 +1044,7 @@ function ensureNoLaterDependencies(rows, index, original) {
 
 function validateImportData(imported, equipmentCatalogue) {
     if (!isRecord(imported) || Object.keys(imported).some(key => !EXPORT_KEYS.has(key))) fail('format d’import non pris en charge');
+    if (Object.hasOwn(imported, 'genreAffichage') && !['masculin', 'feminin'].includes(imported.genreAffichage)) fail('genre d’affichage importé invalide');
     if (Object.hasOwn(imported, 'equipment')) {
         if (!Array.isArray(imported.equipment) || imported.equipment.length > 500
             || new Set(imported.equipment.map(item => item?.id)).size !== imported.equipment.length) fail('équipement importé invalide');

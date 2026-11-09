@@ -3,7 +3,7 @@ import { DRAFT_SCHEMA_VERSION } from './fiche-draft-store.js';
 import { migrerFicheV5 } from './fiche/v5.js';
 
 const SIMPLE_PATHS = new Set([
-    'nom', 'race', 'blessuresAct', 'fortune', 'destin', 'peche', 'corruption', 'possessions',
+    'nom', 'race', 'genreAffichage', 'blessuresAct', 'fortune', 'destin', 'peche', 'corruption', 'possessions',
     'familiers', 'motsCles', 'optVisible.section-sorts', 'optVisible.section-prieres',
 ]);
 const PRIVATE_COMMANDS = new Set(['gain', 'correct', 'import', 'reset', 'equipment']);

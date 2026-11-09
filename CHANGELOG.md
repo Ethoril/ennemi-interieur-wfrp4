@@ -1,3 +1,8 @@
+## [2.40.1] - 2026-11-09
+
+- Fiches : choix de libellés de carrière féminins, sans modification des données de carrière utilisées par les règles. Les formes non renseignées conservent le libellé du catalogue.
+- Cache de l’application actualisé.
+
 ## [2.40.0] - 2026-11-07
 
 - Fiches : l’outil MJ peut réécrire en fin de séance les valeurs durables de la fiche (Destin, Fortune, Péché, Corruption, Base des caractéristiques, Prière, talents et objets retirés ou rendus), par une commande réservée au MJ, avec détection des conflits et annulation.

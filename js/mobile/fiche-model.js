@@ -1,3 +1,4 @@
+import { careerDisplayName } from '../fiche/career-display.js';
 import { primarySkillLabel } from '../catalogue/skill-forms.js';
 import { basicSkillNom, BASIC_SKILLS } from '../fiche/basic-skills.js';
 import {
@@ -14,8 +15,8 @@ export function ficheIdentity(data, careers = []) {
         : null;
     return {
         nom: String(data?.nom ?? '').trim(),
-        carriere: career?.nom || String(data?.carriere ?? '').trim(),
-        titreRang: variant?.titre || '',
+        carriere: careerDisplayName(career?.nom || String(data?.carriere ?? '').trim(), data?.genreAffichage),
+        titreRang: careerDisplayName(variant?.titre || '', data?.genreAffichage),
         rang,
         statut: variant?.statut || '',
     };

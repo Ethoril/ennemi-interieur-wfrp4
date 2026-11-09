@@ -1,3 +1,4 @@
+import { careerDisplayName } from '../fiche/career-display.js';
 import { primarySkillLabel } from '../catalogue/skill-forms.js';
 import {
     activeCareerRank, findCareerByName, getCareerCaracs, getCareerSkillSets, getEffectiveCaracs, getEffectiveSkills,
@@ -123,18 +124,18 @@ export function careerProgress(data, engine, careers = []) {
     };
 
     const next = getRangVariants(career, rank + 1).map(variant => ({
-        title: variant.titre, statut: variant.statut || '',
+        title: careerDisplayName(variant.titre, data.genreAffichage), statut: variant.statut || '',
         caracs: getEffectiveCaracs(career, rank + 1, variant, overrides).map(abbr),
         skills: getEffectiveSkills(career, rank + 1, variant, overrides).map(item => primarySkillLabel(resolver, item, true)),
         talents: getEffectiveTalents(career, rank + 1, variant, overrides, engine.talentResolver).map(nom => talentLabel(engine, nom)),
     }));
     const archived = (Array.isArray(data.careers) ? data.careers : []).filter(row => typeof row?.nom === 'string')
-        .map(row => ({ nom: row.nom, rang: Math.max(1, +row.rang || 1), current: false }));
+        .map(row => ({ nom: careerDisplayName(row.nom, data.genreAffichage), rang: Math.max(1, +row.rang || 1), current: false }));
 
     return {
-        career: career.nom, title: titreRang, statut, rank, complete: completion.complete,
+        career: careerDisplayName(career.nom, data.genreAffichage), title: titreRang, statut, rank, complete: completion.complete,
         gauges: [caracGauge, skillGauge, talentGauge],
         hasNext: next.length > 0, nextRank: rank + 1, nextCost: careerRankXpCost(completion.complete), next,
-        history: [...archived, { nom: career.nom, rang: rank, current: true }],
+        history: [...archived, { nom: careerDisplayName(career.nom, data.genreAffichage), rang: rank, current: true }],
     };
 }

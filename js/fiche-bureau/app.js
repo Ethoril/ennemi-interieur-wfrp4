@@ -77,7 +77,7 @@ function renderHeader() {
         const tokens = resourceTokens(data, maxKey, currentKey);
         return `<div><button class="bureau-resource-title" data-action="resource-max" data-max="${maxKey}" data-current="${currentKey}" ${controls.editable ? '' : 'disabled'}>${title} ${esc(tokens.max)}</button><div>${label} ${Array.from({ length: Math.min(100, tokens.max) }, (_, i) => `<button type="button" class="bureau-pip" data-action="pip" data-key="${currentKey}" data-value="${dotTarget(tokens.current, i)}" aria-label="${esc(`${label} : ${i < tokens.current ? 'dépenser' : 'récupérer'}, passer à ${dotTarget(tokens.current, i)} sur ${tokens.max}`)}" aria-pressed="${i < tokens.current}" ${controls.editable ? '' : 'disabled'}></button>`).join('')}</div></div>`;
     }).join('');
-    $('bureau-header').innerHTML = `${portraits[charId] ? `<img class="bureau-portrait" src="img/${portraits[charId]}.webp" alt="Portrait de ${esc(identity.nom)}">` : `<div class="bureau-portrait" aria-hidden="true">${esc(identity.nom.slice(0, 2).toUpperCase() || '⚜')}</div>`}<div class="bureau-identity"><h1>${esc(identity.nom || 'Personnage')}</h1><p>${esc(`${races[data.race] || data.race || ''} · ${identity.carriere} — ${identity.titreRang} · Rang ${identity.rang} · ${identity.statut}`)}</p>${controls.mj ? action('identity', 'Corriger l’identité', !controls.actions) : ''}</div><div class="bureau-resources">${resources}</div><div class="bureau-xp"><a href="#journal"><strong>${esc(xp.libre)}</strong>XP libres</a><small>Gagnés ${esc(xp.gagne)}<br>Dépensés ${esc(xp.depense)}</small></div><details class="bureau-menu"><summary aria-label="Plus d’actions">⋯</summary><div class="bureau-menu-panel">${action('export', 'Exporter en JSON')}${controls.mj ? action('import', 'Importer un JSON', !navigator.onLine || !['ready', 'missing', 'tombstone'].includes(state.phase)) : ''}</div></details>`;
+    $('bureau-header').innerHTML = `${portraits[charId] ? `<img class="bureau-portrait" src="img/${portraits[charId]}.webp" alt="Portrait de ${esc(identity.nom)}">` : `<div class="bureau-portrait" aria-hidden="true">${esc(identity.nom.slice(0, 2).toUpperCase() || '⚜')}</div>`}<div class="bureau-identity"><h1>${esc(identity.nom || 'Personnage')}</h1><p>${esc(`${races[data.race] || data.race || ''} · ${identity.carriere} — ${identity.titreRang} · Rang ${identity.rang} · ${identity.statut}`)}</p>${controls.mj ? action('identity', 'Corriger l’identité', !controls.actions) : ''}</div><div class="bureau-resources">${resources}</div><div class="bureau-xp"><a href="#journal"><strong>${esc(xp.libre)}</strong>XP libres</a><small>Gagnés ${esc(xp.gagne)}<br>Dépensés ${esc(xp.depense)}</small></div><details class="bureau-menu"><summary aria-label="Plus d’actions">⋯</summary><div class="bureau-menu-panel"><label for="bureau-genre">Libellés de carrière</label><select id="bureau-genre" ${controls.editable ? '' : 'disabled'}>${options({ masculin: 'Masculin', feminin: 'Féminin' }, data.genreAffichage || 'masculin')}</select>${action('export', 'Exporter en JSON')}${controls.mj ? action('import', 'Importer un JSON', !navigator.onLine || !['ready', 'missing', 'tombstone'].includes(state.phase)) : ''}</div></details>`;
     document.title = `${identity.nom || 'Personnage'} — Fiche de personnage`;
 }
 
@@ -404,7 +404,7 @@ $('bureau-content').addEventListener('click', async event => {
     }
     if (name === 'viewer') {
         viewer ||= createCareerViewer({ container: $('career-viewer-host'), modalOnly: true,
-            getContext: () => ({ careers: catalogues.careers, careerName: state.data.carriere, rank: +state.data.rang || 1, chosenVariants: state.data.chosenVariants, careerOverrides: state.data.careerOverrides, skillResolver: catalogues.engine.skillResolver, uid: state.uid }),
+            getContext: () => ({ careers: catalogues.careers, careerName: state.data.carriere, genreAffichage: state.data.genreAffichage, rank: +state.data.rang || 1, chosenVariants: state.data.chosenVariants, careerOverrides: state.data.careerOverrides, skillResolver: catalogues.engine.skillResolver, uid: state.uid }),
             onTalent: nom => select({ kind: 'talent', nom }, button) });
         viewer.openModal();
     }
@@ -421,6 +421,7 @@ $('bureau-content').addEventListener('input', event => {
 $('bureau-content').addEventListener('change', event => {
     const input = event.target;
     if (input.dataset.fam && input.matches('select')) patchFamilier(input);
+    if (input.id === 'bureau-genre') patch({ genreAffichage: input.value });
     if (input.id === 'skill-filter') renderSkills();
     if (input.id === 'bureau-target-rank') { selection.targetRank = +input.value; renderInspector(); }
     if (input.id === 'bureau-talent-pick') { selection.pick = input.value.trim(); renderInspector(); }

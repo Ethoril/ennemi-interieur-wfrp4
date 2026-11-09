@@ -1,5 +1,6 @@
 import { createFicheController } from '../../fiche-controller.js';
 import { createFicheDraftStore } from '../../fiche-draft-store.js';
+import { submitDraft } from '../fiche-autosave.js';
 import { xpBalance } from '../../fiche/derived.js';
 import { createCareerViewer } from '../../fiche/career-viewer.js';
 import { buildFicheExport, ficheExportFilename, parseFicheImport } from '../../fiche/export-import.js';
@@ -98,6 +99,16 @@ export function createFicheDetailView({
     menuDialog.setAttribute('aria-labelledby', 'm-fiche-menu-title');
     const menu = createDialogController({ dialog: menuDialog, documentRef });
     const importButton = make(documentRef, 'button', 'Importer une fiche', 'm-button');
+    const genreSelect = make(documentRef, 'select');
+    genreSelect.id = 'm-fiche-genre';
+    for (const [value, label] of [['masculin', 'Masculin'], ['feminin', 'Féminin']]) {
+        const option = make(documentRef, 'option', label); option.value = value; genreSelect.append(option);
+    }
+    genreSelect.addEventListener('change', async () => {
+        if (!controller?.stagePatch({ genreAffichage: genreSelect.value }).ok) { announce('Modification impossible sur cette fiche.'); return; }
+        if (online) { try { await submitDraft(controller); } catch { announce('Enregistrement en attente.'); } }
+        else announce('Modification en attente de connexion.');
+    });
     const buildMenu = () => {
         const card = make(documentRef, 'div', '', 'm-dialog-card');
         const heading = make(documentRef, 'div', '', 'm-dialog-heading');
@@ -143,7 +154,9 @@ export function createFicheDetailView({
         });
         const legacy = make(documentRef, 'a', 'Ancienne fiche', 'm-button');
         legacy.href = `../fiche.html?char=${encodeURIComponent(charId)}&return=mobile`;
-        card.append(heading, exportButton, importButton, fileInput, note, legacy);
+        const genreLabel = make(documentRef, 'label', 'Libellés de carrière');
+        genreLabel.htmlFor = genreSelect.id;
+        card.append(heading, genreLabel, genreSelect, exportButton, importButton, fileInput, note, legacy);
         menuDialog.append(card);
         menuDialog.addEventListener('cancel', event => { event.preventDefault(); menu.close(); });
         // Un clic sur le fond (le <dialog> lui-même) ferme, comme les autres feuilles de l'application.
@@ -213,7 +226,7 @@ export function createFicheDetailView({
                 const engine = catalogue?.getEngine();
                 const data = controllerState?.data;
                 return {
-                    careers: catalogue?.careers, careerName: data?.carriere, rank: data?.rang, chosenVariants: data?.chosenVariants,
+                    careers: catalogue?.careers, careerName: data?.carriere, genreAffichage: data?.genreAffichage, rank: data?.rang, chosenVariants: data?.chosenVariants,
                     careerOverrides: data?.careerOverrides, skillResolver: engine?.skillResolver,
                     resolveSkill: engine?.resolveSkill, resolveTalent: engine?.resolveTalent,
                 };
@@ -262,6 +275,8 @@ export function createFicheDetailView({
 
     const updateShell = () => {
         if (!shell) return;
+        genreSelect.value = controllerState?.data?.genreAffichage || 'masculin';
+        genreSelect.disabled = !['ready', 'saving', 'awaiting-snapshot'].includes(controllerState?.phase) || !['mj', 'joueur'].includes(controllerState?.role);
         const { carriere, titreRang, rang, nom } = identity();
         const line = [carriere, titreRang, `Rang ${rang}`].filter(Boolean).join(' · ');
         shell.identity.textContent = line;

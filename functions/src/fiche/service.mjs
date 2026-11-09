@@ -12,7 +12,7 @@ const PATCH_TYPES = new Set(['patch']);
 const SERVER_ONLY_TYPES = new Set(['gain', 'correct', 'import', 'reset', 'equipment', 'outil-mj']);
 const ADMIN_EMAIL = 'ethoril@gmail.com';
 const PATCH_FIELDS = new Set([
-    'nom', 'race', 'blessuresAct', 'fortune', 'destin', 'peche', 'corruption', 'possessions',
+    'nom', 'race', 'genreAffichage', 'blessuresAct', 'fortune', 'destin', 'peche', 'corruption', 'possessions',
     'familiers', 'motsCles', 'optVisible.section-sorts', 'optVisible.section-prieres',
 ]);
 const MAX_COMMAND_BYTES = 256 * 1024;
@@ -136,6 +136,8 @@ function validatePatchPayload(payload) {
             const error = v5FieldError(path, value);
             if (error) fail(error, 'invalid-argument', { kind: 'field-invalid', path });
             if (base !== null && (V5_LIST_FIELDS.includes(path) ? !Array.isArray(base) : typeof base !== 'string')) fail('valeur de base invalide');
+        } else if (path === 'genreAffichage') {
+            if (!['masculin', 'feminin'].includes(value) || (base !== null && !['masculin', 'feminin'].includes(base))) fail('genre d’affichage invalide');
         } else if (simple && path.startsWith('optVisible.')) {
             if (typeof value !== 'boolean' || (base !== null && typeof base !== 'boolean')) fail('valeur de visibilité invalide');
         } else if (rowNote) {

@@ -3,7 +3,7 @@ export const FICHE_EXPORT_FORMAT = 'wfrp4-fiche';
 
 // Même liste que EXPORT_KEYS de commands.js (que le serveur applique à `import`).
 export const FICHE_EXPORT_KEYS = Object.freeze([
-    'nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance',
+    'nom', 'race', 'genreAffichage', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance',
     'destin', 'fortune', 'peche', 'corruption', 'possessions', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers',
     'talentsAcq', 'talentsAvail', 'sorts', 'prieres', 'xpLog', 'customSpecs', 'basicSpecs',
     'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment', 'familiers', 'motsCles', 'suiviMj',
