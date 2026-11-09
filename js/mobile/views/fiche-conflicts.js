@@ -3,7 +3,7 @@ import { skillPinId, skillRows } from '../fiche-model.js';
 import { familiersResume, motsClesResume } from '../../fiche/v5.js';
 
 const LABELS = {
-    destin: 'Destin', fortune: 'Fortune', peche: 'Péché', familiers: 'Familiers', motsCles: 'Mots-clés',
+    destin: 'Destin', fortune: 'Chance', peche: 'Péché', familiers: 'Familiers', motsCles: 'Mots-clés',
     nom: 'Nom', race: 'Race', blessuresAct: 'Blessures actuelles', corruption: 'Corruption',
 };
 const FAVORITE_PATH = /^favoriteSkills\.([1-5])$/u;

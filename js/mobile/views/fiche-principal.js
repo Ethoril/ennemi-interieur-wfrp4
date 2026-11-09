@@ -20,7 +20,7 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
     const root = make(documentRef, 'div', '', 'm-principal');
 
     const resources = make(documentRef, 'div', '', 'm-principal-resources');
-    const cards = [['Destin', 'Fortune', 'destin', 'fortune']]
+    const cards = [['Destin', 'Chance', 'destin', 'fortune']]
         .map(([maxLabel, label, maxKey, currentKey]) => {
             const card = make(documentRef, 'div', '', 'm-principal-card');
             const max = make(documentRef, 'p', maxLabel, 'm-principal-max');

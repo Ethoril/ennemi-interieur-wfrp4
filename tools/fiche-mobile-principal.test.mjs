@@ -125,7 +125,7 @@ test('panneau : Destin en points boutons, Fortune en nombre, plus de Résilience
     panel.update({ data: d, careers: read('js/data/careers.json'), engine });
     const nodes = panel.element.all();
     assert.deepEqual(nodes.filter(n => n.className === 'm-principal-max').map(n => n.textContent), ['Destin']);
-    assert.deepEqual(nodes.filter(n => n.className === 'm-principal-label').map(n => n.textContent), ['Fortune 1']);
+    assert.deepEqual(nodes.filter(n => n.className === 'm-principal-label').map(n => n.textContent), ['Chance 1']);
     const groups = nodes.filter(n => n.getAttribute('role') === 'group');
     assert.deepEqual(groups.map(n => n.getAttribute('aria-label')), ['Destin']);
     const dots = dotsOf(panel);
@@ -180,7 +180,7 @@ function sheetSetup({ online = true, data = { destin: '3', fortune: '3' } } = {}
     } };
     const sheet = createResourceSheet({ documentRef, getContext: () => context, announce: m => announces.push(m), onDone: key => done.push(key) });
     const trigger = documentRef.createElement('button');
-    const open = value => sheet.open({ maxKey: 'destin', currentKey: 'fortune', maxLabel: 'Destin', label: 'Fortune', value }, trigger);
+    const open = value => sheet.open({ maxKey: 'destin', currentKey: 'fortune', maxLabel: 'Destin', label: 'Chance', value }, trigger);
     const title = () => sheet.element.all().find(n => n.tagName === 'h2').textContent;
     return { documentRef, calls, announces, done, trigger, open, title, el: sheet.element, context, setDraft: value => { draft = value; } };
 }
@@ -192,7 +192,7 @@ test('confirmation : rien n’est écrit à l’ouverture ni à l’annulation, 
     assert.equal(setup.documentRef.activeElement, setup.el.byText('Annuler'));
     assert.equal(setup.title(), 'Brûler 2 points de Destin ?');
     assert.ok(setup.el.byText("Ce n'est pas anodin : les points sont perdus définitivement."));
-    assert.equal(setup.el.all().find(n => n.className === 'm-purchase-formula').textContent, 'La Fortune sera aussi ramenée de 3 à 1.');
+    assert.equal(setup.el.all().find(n => n.className === 'm-purchase-formula').textContent, 'La Chance sera aussi ramenée de 3 à 1.');
     setup.el.byText('Annuler').click();
     assert.deepEqual(setup.calls, []);
     assert.ok(!setup.el.open);
@@ -299,7 +299,7 @@ test('conflits : liste lisible, Garder la mienne renvoie, Prendre celle du serve
     notice.update();
     assert.ok(!notice.element.hidden);
     const texts = notice.element.all().filter(n => n.tagName === 'p').map(n => n.textContent);
-    assert.deepEqual(texts, ['Conflit sur Destin : le serveur a 1, vous avez 2.', 'Conflit sur Fortune : le serveur a 0, vous avez 1.',
+    assert.deepEqual(texts, ['Conflit sur Destin : le serveur a 1, vous avez 2.', 'Conflit sur Chance : le serveur a 0, vous avez 1.',
         'Conflit sur Mots-clés : le serveur a aucun mot-clé, vous avez Haine (Nain).']);
     const buttons = notice.element.all().filter(n => n.tagName === 'button');
     assert.equal(buttons.length, 6);

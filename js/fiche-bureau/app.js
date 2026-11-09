@@ -73,7 +73,7 @@ function renderHeader() {
     const identity = ficheIdentity(data, catalogues.careers);
     const xp = xpBalance(data);
     const controls = roleControls(state);
-    const resources = [['destin', 'fortune', 'Destin', 'Fortune']].map(([maxKey, currentKey, title, label]) => {
+    const resources = [['destin', 'fortune', 'Destin', 'Chance']].map(([maxKey, currentKey, title, label]) => {
         const tokens = resourceTokens(data, maxKey, currentKey);
         return `<div><button class="bureau-resource-title" data-action="resource-max" data-max="${maxKey}" data-current="${currentKey}" ${controls.editable ? '' : 'disabled'}>${title} ${esc(tokens.max)}</button><div>${label} ${Array.from({ length: Math.min(100, tokens.max) }, (_, i) => `<button type="button" class="bureau-pip" data-action="pip" data-key="${currentKey}" data-value="${dotTarget(tokens.current, i)}" aria-label="${esc(`${label} : ${i < tokens.current ? 'dépenser' : 'récupérer'}, passer à ${dotTarget(tokens.current, i)} sur ${tokens.max}`)}" aria-pressed="${i < tokens.current}" ${controls.editable ? '' : 'disabled'}></button>`).join('')}</div></div>`;
     }).join('');
