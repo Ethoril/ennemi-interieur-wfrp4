@@ -95,6 +95,7 @@ const ASSETS_LOCAUX = [
   './js/fiche/outil-mj.js',
   './js/fiche/suivi-mj.js',
   './js/data/creature-keywords.js',
+  './js/data/donnees-communes.js',
   './js/fiche/derived.js',
   './js/fiche/export-import.js',
   './js/fiche/career-display.js',

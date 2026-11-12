@@ -1,17 +1,12 @@
 import { stripAccents } from '../utils.js';
+import { especeDe } from '../data/donnees-communes.js';
 
-// Valeurs dérivées de la fiche (bureau et mobile), alignées sur js/core/fiche-sync.js de l'outil MJ.
-// Client seulement : volontairement absent de tools/sync-fiche-domain.mjs.
+// Valeurs dérivées de la fiche (bureau et mobile). Mouvement et Blessures par espèce : js/data/donnees-communes.js,
+// copie générée depuis l'outil MJ (source unique, ne pas modifier ici). Client seulement : volontairement absent de tools/sync-fiche-domain.mjs.
 
-export const MOUVEMENT = Object.freeze({
-    humain: 4, nain: 3, 'elfe-sylvain': 5, 'haut-elfe': 5, 'elfe-noir': 5, 'elfe-des-mers': 5,
-    halfelin: 3, gnome: 3, ogre: 6, skink: 6,
-    elfe: 5, halfling: 3, // rétrocompat anciennes sauvegardes
-});
-
-/** Espèce absente ou présente dans la table V5 ; une autre valeur doit être signalée (Mouvement et Blessures inconnus). */
+/** Espèce absente ou présente dans le registre commun ; une autre valeur doit être signalée (Mouvement et Blessures inconnus). */
 export function especeConnue(data) {
-    return !data?.race || Object.hasOwn(MOUVEMENT, data.race);
+    return !data?.race || especeDe(data.race) !== null;
 }
 
 export function caracTotal(data, key) {
@@ -29,19 +24,19 @@ function countTalent(data, nom) {
 }
 
 // Espèces de taille Petite (Gnome, Skink) : pas de Bonus de Force. Ogre (Grande) : total doublé.
-// Halfelin (L06 p. 341) : inclut BF en V4/V5. Espèce inconnue : null, à signaler.
+// Halfelin (L06 p. 341) : inclut BF en V4/V5. Espèce inconnue : null, à signaler. Valeurs : registre commun.
 export function blessuresMax(data) {
     if (!especeConnue(data)) return null;
-    const race = data?.race || 'humain';
-    const bf = ['gnome', 'skink'].includes(race) ? 0 : caracBonus(data, 'f');
+    const espece = especeDe(data?.race || 'humain');
+    const bf = espece.sansBonusForce ? 0 : caracBonus(data, 'f');
     const be = caracBonus(data, 'e');
     const base = bf + 2 * be + caracBonus(data, 'fm') + countTalent(data, 'Dur à cuire') * be;
-    return race === 'ogre' ? base * 2 : base;
+    return base * espece.multiplicateurBlessures;
 }
 
 export function mouvement(data) {
-    if (!data?.race) return MOUVEMENT.humain;
-    return especeConnue(data) ? MOUVEMENT[data.race] : null;
+    if (!data?.race) return especeDe('humain').mouvement;
+    return especeDe(data.race)?.mouvement ?? null;
 }
 
 // Gagné = somme des gains, dépensé = somme des autres lignes (même règle que recalc()).

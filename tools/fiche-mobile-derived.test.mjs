@@ -30,6 +30,7 @@ test('blessures maximales par espèce : halfelin inclut BF (12), gnome/skink san
     assert.equal(blessuresMax({ ...humain, race: 'halfling' }), 12);
     assert.equal(blessuresMax({ ...humain, race: 'gnome' }), 9);
     assert.equal(blessuresMax({ ...humain, race: 'skink' }), 9);
+    assert.equal(blessuresMax({ ...humain, race: 'skink-cameleon' }), 9, 'registre commun js/data/donnees-communes.js');
     assert.equal(blessuresMax({ ...humain, race: 'ogre' }), 24);
     assert.equal(blessuresMax({ ...humain, race: 'nain' }), 12);
     assert.equal(blessuresMax({ ...humain, race: 'homme-lezard' }), null, 'espèce hors table : signalée, pas devinée');
@@ -58,6 +59,7 @@ test('mouvement : table des espèces, rétrocompatibilité, défaut à 4 sans es
     assert.equal(mouvement({ race: 'elfe' }), 5);
     assert.equal(mouvement({ race: 'ogre' }), 6);
     assert.equal(mouvement({ race: 'skink' }), 6);
+    assert.equal(mouvement({ race: 'skink-cameleon' }), 6);
     assert.equal(mouvement({ race: 'inconnue' }), null);
     assert.equal(mouvement({ race: 'constructor' }), null, 'clé héritée d’Object ignorée');
     assert.equal(mouvement({}), 4);
