@@ -1,7 +1,7 @@
 # M0-01 — Baseline, sauvegardes et jeu de test
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md) et
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md).
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md).
 
 | | |
 |---|---|

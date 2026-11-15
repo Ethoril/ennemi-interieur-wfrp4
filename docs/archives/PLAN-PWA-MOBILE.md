@@ -1,11 +1,11 @@
 # Plan d'action — Application mobile PWA PNJs & Enquêtes
 
-> **Statut :** proposition validée, mise en œuvre non commencée  
+> **Statut :** archivé le 15/11/2026. Plan réalisé, lots M0 à M7, application mobile activée en v2.22.0 (août 2026) ; comptes rendus dans `docs/mobile/`. Reste connu : iOS jamais validé, faute d'appareil (`docs/mobile/M7-02-activation-livraison-finale.md`).  
 > **Date :** 19 août 2026  
 > **Périmètre :** expérience mobile installable pour les pages PNJs et Enquêtes  
 > **Architecture imposée :** même projet Firebase, mêmes données Firestore, aucune sauvegarde mobile séparée
 
-> Lire d'abord [`briefs/00-CONVENTIONS.md`](briefs/00-CONVENTIONS.md). Les contraintes du projet
+> Lire d'abord [`briefs/00-CONVENTIONS.md`](../briefs/00-CONVENTIONS.md). Les contraintes du projet
 > restent applicables : site statique, modules ES natifs, aucun framework, aucun bundler et aucune
 > dépendance npm à l'exécution.
 
@@ -109,7 +109,7 @@ Les images vivent dans :
 
 ### 4.2 Chargement actuel
 
-[`js/pnjs.js`](../js/pnjs.js) et [`js/enquetes.js`](../js/enquetes.js) utilisent principalement
+[`js/pnjs.js`](../../js/pnjs.js) et [`js/enquetes.js`](../../js/enquetes.js) utilisent principalement
 `getDocs()`. Les données sont donc cohérentes au prochain chargement, mais les changements d'un
 autre appareil n'apparaissent pas immédiatement.
 
@@ -117,10 +117,10 @@ autre appareil n'apparaissent pas immédiatement.
 
 Le dépôt possède déjà :
 
-- [`manifest.json`](../manifest.json) ;
-- [`sw.js`](../sw.js) ;
+- [`manifest.json`](../../manifest.json) ;
+- [`sw.js`](../../sw.js) ;
 - une stratégie de cache des ressources locales ;
-- une page de repli [`offline.html`](../offline.html).
+- une page de repli [`offline.html`](../../offline.html).
 
 Cette base installe le site général et lance `index.html`. Elle ne définit pas encore une
 expérience mobile propre aux PNJs et Enquêtes. Le cache du service worker couvre la coque web,
@@ -133,7 +133,7 @@ du navigateur.
 
 ### S1 — Illustrations secrètes publiquement lisibles
 
-[`storage.rules`](../storage.rules) autorise aujourd'hui `read: if true` sur `indices/{file}`.
+[`storage.rules`](../../storage.rules) autorise aujourd'hui `read: if true` sur `indices/{file}`.
 Une illustration d'indice non découvert n'est donc pas réellement secrète.
 
 Le commentaire indiquant que Storage ne peut pas interroger Firestore est obsolète : les règles
@@ -384,7 +384,7 @@ Le compte MJ étant unique, cette protection vise surtout l'usage simultané ord
 
 ### 8.1 Règles Firestore
 
-Étendre [`firestore.rules`](../firestore.rules) pour couvrir :
+Étendre [`firestore.rules`](../../firestore.rules) pour couvrir :
 
 - `pnjs` : lecture MJ ou `visibleJoueurs == true`, écriture MJ ;
 - `pnjs_prives` : lecture et écriture MJ uniquement ;
@@ -902,7 +902,7 @@ et que tous les clients sachent l'interroger.
 
 À chaque lot livré :
 
-- mettre à jour [`CHANGELOG.md`](../CHANGELOG.md) ;
+- mettre à jour [`CHANGELOG.md`](../../CHANGELOG.md) ;
 - synchroniser la version dans `js/layout.js` et `sw.js` ;
 - documenter tout nouveau champ Firestore dans ce fichier ou dans un document de schéma dédié ;
 - documenter les index et règles nécessaires ;
@@ -913,7 +913,7 @@ et que tous les clients sachent l'interroger.
   dépôt public.
 
 Le plan est décliné en **28 briefs autonomes** dans
-[`briefs/mobile/README.md`](briefs/mobile/README.md), avec ordre, dépendances, fichiers concernés,
+[`briefs/mobile/README.md`](../briefs/mobile/README.md), avec ordre, dépendances, fichiers concernés,
 étapes exactes, recettes et message de commit.
 
 ---

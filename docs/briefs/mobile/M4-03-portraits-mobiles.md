@@ -1,7 +1,7 @@
 # M4-03 — Appareil photo, recadrage et cycle de vie portrait
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md), M1-03 et M4-02.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md), M1-03 et M4-02.
 
 | | |
 |---|---|

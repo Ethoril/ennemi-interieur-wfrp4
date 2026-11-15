@@ -1,7 +1,7 @@
 # M1-01 — Schéma de visibilité, notes privées et migration
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md) et M0-01.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md) et M0-01.
 
 | | |
 |---|---|

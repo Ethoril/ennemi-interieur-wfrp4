@@ -1,7 +1,7 @@
 # M7-02 — Activation publique, documentation et retour arrière
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md) et M7-01.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md) et M7-01.
 
 | | |
 |---|---|

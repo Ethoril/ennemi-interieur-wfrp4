@@ -1,7 +1,7 @@
 # M6-02 — Service worker, mise à jour et aides d'installation
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md), M5-03 et M6-01.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md), M5-03 et M6-01.
 
 | | |
 |---|---|

@@ -1,7 +1,7 @@
 # M3-02 — État public, cache persistant et synchronisation
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md), M2-01 et M3-01.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md), M2-01 et M3-01.
 
 | | |
 |---|---|

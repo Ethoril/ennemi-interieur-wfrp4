@@ -1,7 +1,7 @@
 # M2-02 — Dépôt partagé PNJs et relations
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md) et M2-01.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md) et M2-01.
 
 | | |
 |---|---|

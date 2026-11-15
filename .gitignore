@@ -18,3 +18,7 @@ ui-debug.log
 
 tools/.runtime/
 enquetes-import-report.json
+
+# Fichiers locaux hors dépôt
+.claude/launch.json
+img/pnj-default.png

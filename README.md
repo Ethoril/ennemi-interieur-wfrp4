@@ -52,6 +52,6 @@ Ce site est hébergé via [GitHub Pages](https://pages.github.com/).
 ## Documentation
 
 - [Carnaval de Middenheim — utilisation, initialisation privée et tests](docs/CARNAVAL.md)
-- [Plan d'action — Application mobile PWA PNJs & Enquêtes](docs/PLAN-PWA-MOBILE.md)
+- [Plan d'action — Application mobile PWA PNJs & Enquêtes](docs/archives/PLAN-PWA-MOBILE.md)
 - [Briefs d'implémentation — découpage, ordre et dépendances](docs/briefs/mobile/README.md)
 

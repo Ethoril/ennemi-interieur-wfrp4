@@ -1,7 +1,7 @@
 # M4-02 — Création, modification et suppression de PNJ
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md) et M4-01.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md) et M4-01.
 
 | | |
 |---|---|

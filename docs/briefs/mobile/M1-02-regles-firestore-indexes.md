@@ -1,7 +1,7 @@
 # M1-02 — Règles Firestore, requêtes et index versionnés
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md) et M1-01.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md) et M1-01.
 
 | | |
 |---|---|

@@ -22,7 +22,7 @@ publique. Le mobile propose une consultation joueur et une administration MJ com
 sauvegarde Firestore, avec une interface dédiée et installable.
 
 - [Index, ordre et dépendances des briefs mobiles](mobile/README.md)
-- [Plan d'action et décisions d'architecture](../PLAN-PWA-MOBILE.md)
+- [Plan d'action et décisions d'architecture](../archives/PLAN-PWA-MOBILE.md)
 
 Les briefs M0 à M2 sécurisent et mutualisent d'abord les données. M3 à M5 livrent les interfaces
 mobiles. M6 rend la PWA installable ; M7 organise la production et le retour arrière.

@@ -1,7 +1,7 @@
 # M2-03 — Dépôt partagé indices et images
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md), M1-03 et M2-01.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md), M1-03 et M2-01.
 
 | | |
 |---|---|

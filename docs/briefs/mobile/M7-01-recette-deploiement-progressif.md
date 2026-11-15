@@ -1,7 +1,7 @@
 # M7-01 — Recette globale et déploiement non annoncé
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md) et tous les briefs de clôture M1 à M6.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md) et tous les briefs de clôture M1 à M6.
 
 | | |
 |---|---|

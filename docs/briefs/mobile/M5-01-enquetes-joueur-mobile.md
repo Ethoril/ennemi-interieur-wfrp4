@@ -1,7 +1,7 @@
 # M5-01 — Liste et fiche Enquêtes pour les joueurs
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md), M3-04 et M2-03.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md), M3-04 et M2-03.
 
 | | |
 |---|---|

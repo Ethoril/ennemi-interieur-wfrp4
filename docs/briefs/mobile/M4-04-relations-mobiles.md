@@ -1,7 +1,7 @@
 # M4-04 — Éditeur mobile de relations
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md), M2-02 et M4-02.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md), M2-02 et M4-02.
 
 | | |
 |---|---|

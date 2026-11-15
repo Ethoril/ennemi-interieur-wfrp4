@@ -1,7 +1,7 @@
 # M3-01 — Coque `/app/`, routeur et design mobile
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md) et M2-05.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md) et M2-05.
 
 | | |
 |---|---|

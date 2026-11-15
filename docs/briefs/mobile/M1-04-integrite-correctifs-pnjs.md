@@ -1,7 +1,7 @@
 # M1-04 — Atomicité, cascades, courses et filtres PNJs
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md) et M1-03.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md) et M1-03.
 
 | | |
 |---|---|

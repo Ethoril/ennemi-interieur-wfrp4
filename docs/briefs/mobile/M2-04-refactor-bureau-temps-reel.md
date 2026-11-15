@@ -1,7 +1,7 @@
 # M2-04 — Refactor des pages bureau et temps réel
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md), M2-02 et M2-03.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md), M2-02 et M2-03.
 
 | | |
 |---|---|

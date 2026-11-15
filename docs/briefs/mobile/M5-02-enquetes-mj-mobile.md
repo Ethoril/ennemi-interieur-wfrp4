@@ -1,7 +1,7 @@
 # M5-02 — Administration mobile des indices et illustrations
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md), M4-05 et M5-01.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md), M4-05 et M5-01.
 
 | | |
 |---|---|

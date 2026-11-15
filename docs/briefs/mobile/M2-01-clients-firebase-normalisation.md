@@ -1,7 +1,7 @@
 # M2-01 — Clients Firebase injectables, normalisation et erreurs
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md) et M1-05.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md) et M1-05.
 
 | | |
 |---|---|

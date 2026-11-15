@@ -1,6 +1,6 @@
 # Briefs — Application mobile PWA PNJs & Enquêtes
 
-Ces briefs déclinent le [`PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md) en unités de travail
+Ces briefs déclinent le [`PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md) en unités de travail
 ordonnées. Chacun doit produire un commit autonome.
 
 > **Lire avant toute intervention :** [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md).

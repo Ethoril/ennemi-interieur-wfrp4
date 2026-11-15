@@ -1,7 +1,7 @@
 # M3-03 — Liste, recherche et filtres PNJs
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md) et M3-02.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md) et M3-02.
 
 | | |
 |---|---|

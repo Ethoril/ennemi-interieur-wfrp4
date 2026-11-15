@@ -1,7 +1,7 @@
 # M4-01 — Authentification et session MJ mobile
 
 > Lire d'abord [`../00-CONVENTIONS.md`](../00-CONVENTIONS.md),
-> [`../../PLAN-PWA-MOBILE.md`](../../PLAN-PWA-MOBILE.md), M2-01 et M3-04.
+> [`../../PLAN-PWA-MOBILE.md`](../../archives/PLAN-PWA-MOBILE.md), M2-01 et M3-04.
 
 | | |
 |---|---|
