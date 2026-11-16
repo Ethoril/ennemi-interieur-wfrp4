@@ -358,7 +358,7 @@ const holderChangeText = holder => holder.changedAt ? `Camp changé : ${dayLabel
 const campOptions = selected => CAMPS.map(camp => `<option value="${esc(camp.id)}"${camp.id === selected ? ' selected' : ''}>${esc(camp.label)}</option>`).join('');
 function renderHolders() {
   const holders = state.campaign?.holders || [], list = $('#holders-list');
-  list.innerHTML = holders.length ? holders.map(holder => { const names = (holder.characterIds || []).map(id => characterById(id)?.name || 'Personnage inconnu'); const change = holderChangeText(holder); return `<article class="carnaval-holder" data-holder-id="${esc(holder.id)}"><div class="carnaval-holder-info"><strong>${esc(holder.label)}</strong> · poids ${esc(holder.weight)}<br><span class="carnaval-muted">${names.length ? esc(names.join(', ')) : 'Aucun personnage rattaché'}</span>${change ? `<br><span class="carnaval-muted">${esc(change)}</span>` : ''}</div><div class="carnaval-holder-actions"><select data-holder-camp="${esc(holder.id)}" aria-label="Camp de ${esc(holder.label)}">${campOptions(holder.camp)}</select><button type="button" class="btn-ghost-sm" data-edit-holder="${esc(holder.id)}" aria-label="Modifier le détenteur ${esc(holder.label)}">Modifier</button><button type="button" class="btn-ghost-sm" data-delete-holder="${esc(holder.id)}" aria-label="Supprimer le détenteur ${esc(holder.label)}">Supprimer</button></div></article>`; }).join('') : '<p class="carnaval-no-results">Aucun détenteur de voix</p>';
+  list.innerHTML = holders.length ? holders.map(holder => { const names = (holder.characterIds || []).map(id => characterById(id)?.name || 'Personnage inconnu'); const change = holderChangeText(holder); return `<article class="carnaval-holder" data-holder-id="${esc(holder.id)}"><div class="carnaval-holder-info"><strong>${esc(holder.label)}</strong> · poids ${esc(holder.weight)}<br><span class="carnaval-muted">${names.length ? esc(names.join(', ')) : 'Aucun personnage rattaché'}</span>${change ? `<br><span class="carnaval-muted">${esc(change)}</span>` : ''}</div><div class="carnaval-holder-actions"><select data-holder-camp="${esc(holder.id)}" aria-label="Camp de ${esc(holder.label)}">${campOptions(holder.camp)}</select><button type="button" class="btn-ghost-sm" data-apply-camp="${esc(holder.id)}" aria-label="Appliquer le camp de ${esc(holder.label)}" disabled>Appliquer</button><button type="button" class="btn-ghost-sm" data-edit-holder="${esc(holder.id)}" aria-label="Modifier le détenteur ${esc(holder.label)}">Modifier</button><button type="button" class="btn-ghost-sm" data-delete-holder="${esc(holder.id)}" aria-label="Supprimer le détenteur ${esc(holder.label)}">Supprimer</button></div></article>`; }).join('') : '<p class="carnaval-no-results">Aucun détenteur de voix</p>';
 }
 // Un personnage ne figure que dans un seul détenteur : les cases déjà prises ailleurs sont désactivées et nomment leur détenteur.
 function openHolderForm(id = '') {
@@ -379,15 +379,24 @@ $('#holders-dialog').addEventListener('close', () => { $('#holder-form').hidden 
 $('#add-holder').addEventListener('click', () => { if (state.onlineReady) openHolderForm(); });
 $('#holder-cancel').addEventListener('click', closeHolderForm);
 $('#holders-list').addEventListener('click', event => {
-  const edit = event.target.closest('[data-edit-holder]'), remove = event.target.closest('[data-delete-holder]');
-  if (edit) openHolderForm(edit.dataset.editHolder);
+  const edit = event.target.closest('[data-edit-holder]'), remove = event.target.closest('[data-delete-holder]'), apply = event.target.closest('[data-apply-camp]');
+  if (apply) void applyCamp(apply.dataset.applyCamp);
+  else if (edit) openHolderForm(edit.dataset.editHolder);
   else if (remove) { const holder = (state.campaign.holders || []).find(item => item.id === remove.dataset.deleteHolder); if (holder && window.confirm(`Supprimer le détenteur « ${holder.label} » ?`)) { const before = state.campaign; void commitHolders(withHolders(state.campaign.holders.filter(item => item.id !== holder.id)),'Suppression en cours…').then(() => { if (state.campaign !== before && !state.campaign.holders?.some(item => item.id === holder.id)) setStatus('Détenteur supprimé.','success'); }); } }
 });
-$('#holders-list').addEventListener('change', async event => {
-  const select = event.target.closest('[data-holder-camp]'); if (!select || !state.onlineReady) return; const id = select.dataset.holderCamp;
-  const holders = (state.campaign.holders || []).map(holder => holder.id === id ? { ...holder, camp:select.value, changedAt:clockMoment() } : holder);
-  const before = state.campaign; await commitHolders({ ...state.campaign, holders },'Changement de camp en cours…'); if (state.campaign !== before && state.campaign.holders?.find(item => item.id === id)?.camp === select.value) setStatus('Camp modifié.','success'); renderHolders(); [...$('#holders-list').querySelectorAll('[data-holder-camp]')].find(item => item.dataset.holderCamp === id)?.focus();
+// Choisir un camp ne fait que préparer le changement : au clavier, chaque flèche sur le menu fermé déclenche « change ».
+// L'enregistrement attend le bouton « Appliquer », actif seulement quand le choix diffère du camp enregistré.
+const campControls = id => ({ select:[...$('#holders-list').querySelectorAll('[data-holder-camp]')].find(item => item.dataset.holderCamp === id), apply:[...$('#holders-list').querySelectorAll('[data-apply-camp]')].find(item => item.dataset.applyCamp === id) });
+$('#holders-list').addEventListener('change', event => {
+  const select = event.target.closest('[data-holder-camp]'); if (!select) return; const id = select.dataset.holderCamp, { apply } = campControls(id);
+  if (apply) apply.disabled = select.value === (state.campaign.holders || []).find(holder => holder.id === id)?.camp;
 });
+async function applyCamp(id) {
+  const { select } = campControls(id); if (!select || !state.onlineReady) return; const camp = select.value;
+  if (camp === (state.campaign.holders || []).find(holder => holder.id === id)?.camp) return;
+  const holders = (state.campaign.holders || []).map(holder => holder.id === id ? { ...holder, camp, changedAt:clockMoment() } : holder);
+  const before = state.campaign; await commitHolders({ ...state.campaign, holders },'Changement de camp en cours…'); if (state.campaign !== before && state.campaign.holders?.find(item => item.id === id)?.camp === camp) setStatus('Camp modifié.','success'); renderHolders(); campControls(id).select?.focus();
+}
 $('#holder-form').addEventListener('submit', async event => {
   event.preventDefault(); const form = event.currentTarget; if (!state.admin || !state.onlineReady) return;
   const id = form.elements.holderId.value, previous = (state.campaign.holders || []).find(item => item.id === id), camp = form.elements.camp.value, weight = Number(form.elements.weight.value), label = form.elements.label.value.trim();

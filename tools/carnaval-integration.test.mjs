@@ -141,3 +141,11 @@ test('petits points d’accessibilité du Carnaval', async () => {
     assert.match(ui, /aria-label="Modifier le détenteur \$\{esc\(holder\.label\)\}"/u);
     assert.match(ui, /aria-label="Supprimer le détenteur \$\{esc\(holder\.label\)\}"/u);
 });
+
+test('le changement de camp attend le bouton « Appliquer » au lieu d’enregistrer à chaque choix', async () => {
+    const ui = await read('js/carnaval.js');
+    assert.match(ui, /data-apply-camp="\$\{esc\(holder\.id\)\}" aria-label="Appliquer le camp de \$\{esc\(holder\.label\)\}" disabled>Appliquer<\/button>/u);
+    const onChange = ui.slice(ui.indexOf("$('#holders-list').addEventListener('change'"), ui.indexOf('async function applyCamp'));
+    assert.ok(onChange.length > 0 && !onChange.includes('commit'), 'le choix du camp ne doit rien enregistrer');
+    assert.match(ui, /async function applyCamp\(id\)[\s\S]*?commitHolders\(/u);
+});
