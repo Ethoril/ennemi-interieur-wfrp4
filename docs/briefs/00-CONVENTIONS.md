@@ -205,6 +205,11 @@ adresses de joueurs se place **hors du dépôt** (par exemple à côté de lui, 
 s'ajoute pas à `.gitignore` pour « pouvoir le garder au même endroit » — hors du dépôt veut dire
 hors du dossier.
 
+**Aucune révélation de scénario dans le dépôt.** Les joueurs peuvent lire le dépôt : ni nom de
+PNJ, ni chiffre, ni secret d'intrigue dans le code, les tests, la documentation ou les messages de
+commit. Les données de test restent fictives et génériques ; les données du scénario vivent dans
+Firestore (réservées au MJ) ou dans des fichiers de préparation hors du dossier du dépôt.
+
 ## 9. Comptes et données de test
 
 - L'administrateur (MJ) est `ethoril@gmail.com`, constante `ADMIN_EMAIL` dans

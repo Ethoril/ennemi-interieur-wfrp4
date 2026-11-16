@@ -14,6 +14,18 @@ Les événements secrets sont des prévisions du scénario. Les heures approxima
 
 Le Carnaval exige une connexion. Une sauvegarde n'est confirmée qu'après validation serveur. En cas de modification concurrente, les données actuelles sont rechargées avec un message de conflit. Il faut alors réappliquer son changement. La déconnexion vide la vue privée, ses formulaires et ses abonnements, et libère les portraits temporaires.
 
+### Rendez-vous et lieux libres
+
+Une scène ajoutée peut être de type **Rendez-vous** : elle exige une heure de début, porte un badge distinct et peut être masquée par le filtre « Rendez-vous ». Son lieu se choisit parmi ceux du programme ou par **Autre lieu…**, qui crée un lieu libre réutilisable ; un lieu libre que plus aucune scène n'utilise disparaît. Les scènes du programme ne peuvent pas devenir des rendez-vous.
+
+### Suivi de cour
+
+- **Détenteurs de voix** : le bouton **Détenteurs** du bandeau ouvre la liste. Un détenteur a un libellé, un poids (0 à 99), un camp (Adverse, Libre, Acquis) et des personnages rattachés ; un personnage n'appartient qu'à un détenteur. Le camp se change depuis la liste : choisir, puis **Appliquer**. Le jour et l'heure de l'horloge de campagne sont alors conservés. Le bandeau totalise les poids par camp ; un détenteur collectif ne compte qu'une fois.
+- **Suivi d'un personnage** : dans son panneau, la section **Suivi** rappelle son détenteur et note la rencontre (jour et heure proposés d'après l'horloge, modifiables ; décocher efface la date), l'attitude envers les PJ (hostile, neutre, favorable) et une note courte. La vue **PNJ** filtre les personnages rencontrés ou non, et par camp ; elle rappelle le détenteur du personnage choisi.
+- **Présentations** : la section du même nom liste les personnages que celui-ci peut présenter, avec une condition facultative, et ceux qui peuvent le présenter. Un nom ouvre le panneau du personnage.
+
+Ces informations appartiennent au suivi du Carnaval : rien n'est écrit dans les fiches PNJ ni dans leurs relations, et elles subsistent si une fiche est dissociée ou supprimée. Le suivi existant reste valide sans elles.
+
 ## Activation sur le site
 
 Le développement est additif. Avant d'ouvrir le module sur le site hébergé :
@@ -33,7 +45,7 @@ L'initialisation crée la source et le suivi dans une seule transaction. Elle re
 - `js/carnaval.js`, `carnaval.html`, `css/carnaval.css` : interface, formulaires, synchronisation et cycle de vie privé.
 - `js/middenheim-map.js` : image publique et repères partagés avec `js/maps.js`.
 - `carnaval_sources/current` : programme source versionné, création initiale uniquement.
-- `carnaval_campaigns/current` : horloge, associations, adaptations, scènes ajoutées et notes, avec révision incrémentée à chaque écriture.
+- `carnaval_campaigns/current` : horloge, associations, adaptations, scènes ajoutées et notes, avec révision incrémentée à chaque écriture. Champs facultatifs depuis la v2.42.0 : `customPlaces` (lieux libres), `holders` (détenteurs), `tracking` (rencontre, attitude, note par personnage), `introductions` (présentations). Un champ vide est retiré du document.
 
 Les événements publics portent des bornes en minutes entre 0 et 1800. Pour les prévisions secrètes, `start: null, end: null` signifie heure inconnue ; un début numérique avec `end: null` est un jalon à durée inconnue. Une présence `start: null, end: null` reprend les bornes connues de sa scène et est signalée comme déduite.
 

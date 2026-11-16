@@ -1,3 +1,12 @@
+## [2.42.0] - 2026-11-16
+
+- Carnaval : suivi de cour réservé au MJ. Détenteurs de voix (libellé, poids, camp, personnages rattachés) avec bandeau des totaux par camp et changement de camp daté d'après l'horloge ; pour chaque personnage, rencontre datée, attitude envers les PJ, note de suivi et présentations possibles ; filtres « rencontré » et « camp » dans la vue PNJ. Rien n'est écrit dans les fiches PNJ.
+- Carnaval : scènes ajoutées de type « rendez-vous », avec badge et filtre, et lieux libres réutilisables.
+- Carnaval : messages d'enregistrement visibles dans les dialogues, saisie du panneau conservée lors d'une mise à jour venue d'une autre session, accessibilité au clavier et au toucher améliorée.
+- Fiches PNJ : bouton d'insertion d'un gabarit de rubriques dans les notes privées MJ.
+- Règles d'accès : champs facultatifs du suivi, toujours réservés au MJ.
+- Cache de l’application actualisé.
+
 ## [2.41.0] - 2026-11-16
 
 - Fiches : nouveau champ « Monture » (carte au bureau à côté des familiers, avec un nom facultatif et un retrait). Le joueur la choisit parmi la liste des montures du bestiaire de l’outil MJ, que le MJ peut corriger par le même écran ; le mobile n’en affiche qu’une ligne de résumé. Une espèce disparue de la liste reste visible (« monture inconnue ») et ne s’efface que par un choix explicite.
