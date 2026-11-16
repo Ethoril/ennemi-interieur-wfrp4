@@ -119,6 +119,7 @@ const ASSETS_LOCAUX = [
   './js/data/pnj-positions-repository.js',
   './js/pnj-groups.js',
   './js/pnj-group-picker.js',
+  './js/pnj-notes-template.js',
   './js/protected-images.js',
   './js/protected-image-scope.js',
   './js/storage-reference.js',

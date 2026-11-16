@@ -20,6 +20,7 @@ import { rememberGraphNodes, restoreGraphNodes, applySharedGraphPositions } from
 
 import { createLiveImages, graphStructureKey } from './pnj-live-images.js';
 import { anchorToTrigger } from './modal-origin.js';
+import { insertNotesTemplate } from './pnj-notes-template.js';
 
 // ── Constants ──────────────────────────────────────────────────
 const STATUT_COLOR   = { 'allié': 'var(--statut-allie, #4caf7d)', 'ennemi': 'var(--statut-ennemi, #c94c4c)', 'neutre': 'var(--statut-neutre, #8a8a9a)' };
@@ -1192,6 +1193,16 @@ document.getElementById('pnj-modal').addEventListener('cancel', e => { e.prevent
 // Un clic sur le voile (::backdrop) est reçu par le <dialog> lui-même.
 document.getElementById('pnj-modal').addEventListener('click', e => { if (e.target === document.getElementById('pnj-modal')) closePnjModal(); });
 document.getElementById('pnj-delete-btn').addEventListener('click', () => { if (state.editingId) deletePnj(state.editingId); });
+// Insère le gabarit dans le champ seulement : rien n'est enregistré ici. Le
+// bouton suit le champ : tous deux sont dans le formulaire, rendu inerte
+// pendant le chargement.
+document.getElementById('pnj-notes-template-btn').addEventListener('click', () => {
+    const field = document.getElementById('f-notes-privees');
+    const { text, alreadyPresent } = insertNotesTemplate(field.value);
+    if (alreadyPresent && !window.confirm('Le gabarit figure déjà dans ces notes. L’insérer une seconde fois ?')) return;
+    field.value = text;
+    field.focus();
+});
 document.getElementById('add-pnj-btn').addEventListener('click', () => openPnjModal());
 
 // ── Colors ─────────────────────────────────────────────────────
