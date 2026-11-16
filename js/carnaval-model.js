@@ -6,6 +6,13 @@ const boundedText = (value, maximum) => text(value) && value.length <= maximum;
 const absTime = (day, value) => (day - 1) * 1440 + value;
 const onlyKeys = (value, keys) => Object.keys(value).every(key => keys.includes(key));
 
+const HOLDER_KEYS = ['id', 'label', 'weight', 'camp', 'characterIds', 'changedAt'];
+const validMoment = value => hasObject(value) && onlyKeys(value, ['day', 'minute']) && Object.hasOwn(value, 'day') && Object.hasOwn(value, 'minute')
+    && Number.isInteger(value.day) && value.day >= 1 && value.day <= 8 && minute(value.minute);
+
+export const CAMPS = Object.freeze([{ id: 'adverse', label: 'Adverse' }, { id: 'libre', label: 'Libre' }, { id: 'acquis', label: 'Acquis' }]);
+export const ATTITUDES = Object.freeze([{ id: 'hostile', label: 'Hostile' }, { id: 'neutre', label: 'Neutre' }, { id: 'favorable', label: 'Favorable' }]);
+
 function result(errors, warnings = []) { return { valid: errors.length === 0, errors, warnings }; }
 
 export function validateSource(source) {
@@ -71,7 +78,7 @@ function validatePresenceList(presences, path, issue) {
     });
 }
 
-function validateEditableEvent(event, path, issue, { partial = false, allowNullSource = false } = {}) {
+function validateEditableEvent(event, path, issue, { partial = false, allowNullSource = false, allowRendezvous = false } = {}) {
     const fields = ['id', 'day', 'start', 'end', 'title', 'placeId', 'kind', 'source', 'presences'];
     if (!hasObject(event) || !onlyKeys(event, [...fields, ...(partial ? ['cancelled'] : [])])) { issue(path, 'Événement invalide ou champ inattendu.'); return; }
     if (!partial && !safeId(event.id)) issue(`${path}.id`, 'Identifiant invalide.');
@@ -82,13 +89,14 @@ function validateEditableEvent(event, path, issue, { partial = false, allowNullS
         if ((field === 'start' || field === 'end') && event[field] !== null && !minute(event[field])) issue(`${path}.${field}`, 'Minute invalide.');
         if (field === 'title' && !boundedText(event.title, 500)) issue(`${path}.title`, 'Titre invalide.');
         if (field === 'placeId' && !safeId(event.placeId)) issue(`${path}.placeId`, 'Lieu invalide.');
-        if (field === 'kind' && !['public', 'secret'].includes(event.kind)) issue(`${path}.kind`, 'Type invalide.');
+        if (field === 'kind' && !['public', 'secret', ...(allowRendezvous ? ['rendezvous'] : [])].includes(event.kind)) issue(`${path}.kind`, 'Type invalide.');
         if (field === 'source' && !(allowNullSource && event.source === null) && (!hasObject(event.source) || !onlyKeys(event.source, ['bookPage', 'pdfPage'])
             || !['bookPage', 'pdfPage'].every(key => event.source[key] === null || (Number.isInteger(event.source[key]) && event.source[key] > 0)))) issue(`${path}.source`, 'Référence invalide.');
         if (field === 'presences') validatePresenceList(event.presences, `${path}.presences`, issue);
     }
     if (!partial && event.kind === 'public' && (!minute(event.start) || !minute(event.end))) issue(path, 'Un événement public exige un début et une fin.');
     if (Number.isInteger(event.start) && Number.isInteger(event.end) && event.end <= event.start) issue(path, 'Créneau horaire invalide.');
+    if (event.kind === 'rendezvous' && !minute(event.start)) issue(`${path}.start`, 'Un rendez-vous exige un début.');
 }
 
 export function validateCampaign(campaign, source = null) {
@@ -96,7 +104,7 @@ export function validateCampaign(campaign, source = null) {
     const warnings = [];
     const issue = (path, message) => errors.push({ path, message });
     if (!hasObject(campaign)) return result([{ path: '', message: 'Objet attendu.' }]);
-    if (!onlyKeys(campaign, ['version', 'revision', 'clock', 'links', 'overrides', 'customEvents', 'notes', 'updatedAt'])) issue('', 'Champ inattendu.');
+    if (!onlyKeys(campaign, ['version', 'revision', 'clock', 'links', 'overrides', 'customEvents', 'customPlaces', 'holders', 'tracking', 'introductions', 'notes', 'updatedAt'])) issue('', 'Champ inattendu.');
     if (campaign.version !== 1) issue('version', 'Version attendue : 1.');
     if (!Number.isInteger(campaign.revision) || campaign.revision < 0) issue('revision', 'Révision entière non négative requise.');
     if (!hasObject(campaign.clock) || !onlyKeys(campaign.clock, ['day', 'minute']) || !Number.isInteger(campaign.clock.day) || campaign.clock.day < 1 || campaign.clock.day > 8 || !minute(campaign.clock.minute)) issue('clock', 'Jour ou heure invalide.');
@@ -114,26 +122,103 @@ export function validateCampaign(campaign, source = null) {
     else {
         const ids = new Set();
         campaign.customEvents.forEach((event, index) => {
-            validateEditableEvent(event, `customEvents[${index}]`, issue, { allowNullSource: true });
+            validateEditableEvent(event, `customEvents[${index}]`, issue, { allowNullSource: true, allowRendezvous: true });
             if (safeId(event?.id)) { if (ids.has(event.id)) issue(`customEvents[${index}].id`, 'Identifiant dupliqué.'); ids.add(event.id); }
         });
+    }
+    if (campaign.customPlaces !== undefined) {
+        if (!Array.isArray(campaign.customPlaces) || campaign.customPlaces.length > 50) issue('customPlaces', 'Liste de lieux invalide.');
+        else {
+            const ids = new Set();
+            campaign.customPlaces.forEach((place, index) => {
+                const path = `customPlaces[${index}]`;
+                if (!hasObject(place) || !onlyKeys(place, ['id', 'name']) || !safeId(place.id) || !boundedText(place.name, 200)) { issue(path, 'Lieu invalide ou champ inattendu.'); return; }
+                if (ids.has(place.id)) issue(`${path}.id`, 'Identifiant dupliqué.'); ids.add(place.id);
+            });
+        }
+    }
+    if (campaign.holders !== undefined) {
+        if (!Array.isArray(campaign.holders) || campaign.holders.length > 50) issue('holders', 'Liste de détenteurs invalide.');
+        else {
+            const ids = new Set();
+            campaign.holders.forEach((holder, index) => {
+                const path = `holders[${index}]`;
+                if (!hasObject(holder) || !onlyKeys(holder, HOLDER_KEYS) || !HOLDER_KEYS.every(key => Object.hasOwn(holder, key))) { issue(path, 'Détenteur invalide ou champ inattendu.'); return; }
+                if (!safeId(holder.id)) issue(`${path}.id`, 'Identifiant invalide.');
+                else { if (ids.has(holder.id)) issue(`${path}.id`, 'Identifiant dupliqué.'); ids.add(holder.id); }
+                if (!boundedText(holder.label, 100)) issue(`${path}.label`, 'Libellé invalide.');
+                if (!Number.isInteger(holder.weight) || holder.weight < 0 || holder.weight > 99) issue(`${path}.weight`, 'Poids hors limites.');
+                if (!CAMPS.some(camp => camp.id === holder.camp)) issue(`${path}.camp`, 'Camp inconnu.');
+                if (!Array.isArray(holder.characterIds) || holder.characterIds.length > 20 || holder.characterIds.some(id => !safeId(id)) || new Set(holder.characterIds).size !== holder.characterIds.length) issue(`${path}.characterIds`, 'Liste de personnages invalide.');
+                if (holder.changedAt !== null && !validMoment(holder.changedAt)) issue(`${path}.changedAt`, 'Moment invalide.');
+            });
+        }
+    }
+    if (campaign.tracking !== undefined) {
+        if (!hasObject(campaign.tracking) || Object.keys(campaign.tracking).length > 500) issue('tracking', 'Suivi invalide.');
+        else for (const [id, entry] of Object.entries(campaign.tracking)) {
+            const path = `tracking.${id}`;
+            if (!safeId(id)) issue(path, 'Identifiant de personnage invalide.');
+            if (!hasObject(entry) || !onlyKeys(entry, ['met', 'attitude', 'note']) || !['met', 'attitude', 'note'].every(key => Object.hasOwn(entry, key))) { issue(path, 'Suivi invalide ou champ inattendu.'); continue; }
+            if (entry.met !== null && !validMoment(entry.met)) issue(`${path}.met`, 'Moment invalide.');
+            if (entry.attitude !== null && !ATTITUDES.some(attitude => attitude.id === entry.attitude)) issue(`${path}.attitude`, 'Attitude inconnue.');
+            if (typeof entry.note !== 'string' || entry.note.length > 500) issue(`${path}.note`, 'Note invalide.');
+        }
+    }
+    if (campaign.introductions !== undefined) {
+        if (!hasObject(campaign.introductions) || Object.keys(campaign.introductions).length > 500) issue('introductions', 'Présentations invalides.');
+        else for (const [id, list] of Object.entries(campaign.introductions)) {
+            const path = `introductions.${id}`;
+            if (!safeId(id)) issue(path, 'Identifiant de personnage invalide.');
+            if (!Array.isArray(list) || list.length > 30) { issue(path, 'Liste de présentations invalide.'); continue; }
+            const targets = new Set();
+            list.forEach((item, index) => {
+                const itemPath = `${path}[${index}]`;
+                if (!hasObject(item) || !onlyKeys(item, ['to', 'condition']) || !Object.hasOwn(item, 'to') || !Object.hasOwn(item, 'condition') || !safeId(item.to)) { issue(itemPath, 'Présentation invalide ou champ inattendu.'); return; }
+                if (item.to === id) issue(`${itemPath}.to`, 'Un personnage ne se présente pas à lui-même.');
+                if (targets.has(item.to)) issue(`${itemPath}.to`, 'Cible dupliquée.'); targets.add(item.to);
+                if (typeof item.condition !== 'string' || item.condition.length > 200) issue(`${itemPath}.condition`, 'Condition invalide.');
+            });
+        }
     }
     if (hasObject(campaign.notes) && Object.keys(campaign.notes).length > 350) issue('notes', 'Trop de notes.');
     for (const [id, note] of Object.entries(campaign.notes ?? {})) if (!safeId(id) || typeof note !== 'string' || note.length > 20000) issue(`notes.${id}`, 'Note textuelle invalide.');
     if (source && hasObject(source)) {
         const checkedSource = validateSource(source);
         if (!checkedSource.valid) errors.push(...checkedSource.errors.map(item => ({ path: `source.${item.path}`, message: item.message })));
+        if (checkedSource.valid) {
+            const known = new Set(source.characters.map(character => character.id));
+            const unknown = (id, path) => { if (typeof id === 'string' && !known.has(id)) issue(path, 'Personnage du calendrier inconnu.'); };
+            const holdersList = Array.isArray(campaign.holders) ? campaign.holders : [];
+            const placed = new Set();
+            holdersList.forEach((holder, index) => {
+                if (!hasObject(holder) || !Array.isArray(holder.characterIds)) return;
+                holder.characterIds.forEach((id, i) => {
+                    unknown(id, `holders[${index}].characterIds[${i}]`);
+                    if (placed.has(id)) issue(`holders[${index}].characterIds[${i}]`, 'Personnage déjà attribué à un autre détenteur.');
+                    placed.add(id);
+                });
+            });
+            if (hasObject(campaign.tracking)) for (const id of Object.keys(campaign.tracking)) unknown(id, `tracking.${id}`);
+            if (hasObject(campaign.introductions)) for (const [id, list] of Object.entries(campaign.introductions)) {
+                unknown(id, `introductions.${id}`);
+                if (Array.isArray(list)) list.forEach((item, index) => unknown(item?.to, `introductions.${id}[${index}].to`));
+            }
+        }
         if (checkedSource.valid && hasObject(campaign.overrides) && Array.isArray(campaign.customEvents)) {
             const eventIds = new Set(source.events.map(event => event.id));
             const placeIds = new Set(source.places.map(place => place.id));
             const characterIds = new Set(source.characters.map(character => character.id));
+            const customPlaces = Array.isArray(campaign.customPlaces) ? campaign.customPlaces : [];
+            customPlaces.forEach((place, index) => { if (hasObject(place) && placeIds.has(place.id)) issue(`customPlaces[${index}].id`, 'Identifiant de lieu déjà utilisé par le calendrier.'); });
+            const knownPlaceIds = new Set([...placeIds, ...customPlaces.map(place => place?.id)]);
             for (const id of Object.keys(campaign.overrides ?? {})) if (!eventIds.has(id)) issue(`overrides.${id}`, 'Événement source inconnu.');
             for (const id of Object.keys(campaign.links ?? {})) if (!characterIds.has(id)) issue(`links.${id}`, 'Personnage du calendrier inconnu.');
             for (const event of campaign.customEvents ?? []) if (event && (eventIds.has(event.id) || campaign.customEvents.filter(other => other?.id === event.id).length > 1)) issue(`customEvents.${event.id}`, 'Identifiant d’événement déjà utilisé.');
             const effective = effectiveEvents(source, campaign);
             const effectiveIds = new Set([...eventIds, ...(campaign.customEvents ?? []).map(event => event?.id)]);
             for (const event of effective) {
-                if (!placeIds.has(event.placeId)) issue(`events.${event.id}.placeId`, 'Lieu inconnu.');
+                if (!knownPlaceIds.has(event.placeId)) issue(`events.${event.id}.placeId`, 'Lieu inconnu.');
                 if (event.kind === 'public' && (!minute(event.start) || !minute(event.end))) issue(`events.${event.id}`, 'Un événement public exige un début et une fin.');
                 if (Number.isInteger(event.start) && Number.isInteger(event.end) && event.end <= event.start) issue(`events.${event.id}`, 'Créneau effectif invalide.');
                 const presences = Array.isArray(event.presences) ? event.presences : [];
@@ -160,6 +245,32 @@ export function validateCampaign(campaign, source = null) {
 
 export function initialCampaign() {
     return { version: 1, revision: 0, clock: { day: 1, minute: 480 }, links: {}, overrides: {}, customEvents: [], notes: {} };
+}
+
+export function campaignPlaces(source, campaign) {
+    const rows = (list, custom) => (Array.isArray(list) ? list : []).filter(place => hasObject(place) && typeof place.id === 'string' && typeof place.name === 'string').map(place => ({ id: place.id, name: place.name, custom }));
+    return [...rows(source?.places, false), ...rows(campaign?.customPlaces, true)];
+}
+
+export function holderTally(campaign) {
+    const tally = { adverse: 0, libre: 0, acquis: 0, total: 0 };
+    for (const holder of Array.isArray(campaign?.holders) ? campaign.holders : []) {
+        if (!hasObject(holder) || !Number.isInteger(holder.weight) || !Object.hasOwn(tally, holder.camp) || holder.camp === 'total') continue;
+        tally[holder.camp] += holder.weight; tally.total += holder.weight;
+    }
+    return tally;
+}
+
+export function holderOfCharacter(campaign, characterId) {
+    return (Array.isArray(campaign?.holders) ? campaign.holders : []).find(holder => Array.isArray(holder?.characterIds) && holder.characterIds.includes(characterId)) ?? null;
+}
+
+export function introductionsFor(campaign, characterId) {
+    const all = hasObject(campaign?.introductions) ? campaign.introductions : {};
+    const outgoing = Array.isArray(all[characterId]) ? all[characterId].map(({ to, condition }) => ({ to, condition })) : [];
+    const incoming = [];
+    for (const [from, list] of Object.entries(all)) for (const item of Array.isArray(list) ? list : []) if (item?.to === characterId) incoming.push({ from, condition: item.condition });
+    return { outgoing, incoming };
 }
 
 export function resetEventOverride(campaign, eventId) {
