@@ -1201,6 +1201,7 @@ document.getElementById('pnj-notes-template-btn').addEventListener('click', () =
     const { text, alreadyPresent } = insertNotesTemplate(field.value);
     if (alreadyPresent && !window.confirm('Le gabarit figure déjà dans ces notes. L’insérer une seconde fois ?')) return;
     field.value = text;
+    document.getElementById('pnj-private-status').textContent = 'Gabarit inséré dans les notes (non enregistré).';
     field.focus();
 });
 document.getElementById('add-pnj-btn').addEventListener('click', () => openPnjModal());

@@ -90,3 +90,54 @@ test('l’interface du Carnaval tient les présentations sans stockage local ni 
     assert.doesNotMatch(ui, /localStorage|indexedDB/u);
     assert.doesNotMatch(ui, /relations\??\.(?:add|set|save|update|delete|remove|create|put|write)\w*\(/u);
 });
+
+const sliceOf = (source, start, end) => { const from = source.indexOf(start), to = source.indexOf(end, from); assert.ok(from >= 0 && to > from, `${start} introuvable`); return source.slice(from, to); };
+
+test('openCharacter ne lie qu’une fois le suivi, les présentations et l’association d’un personnage sans fiche', async () => {
+    const ui = await read('js/carnaval.js');
+    const body = sliceOf(ui, 'async function openCharacter(', 'function renderRelations(');
+    assert.equal(body.split('bindTracking(id)').length - 1, 2);
+    assert.equal(body.split('bindIntroductions(id)').length - 1, 2);
+    assert.equal(body.split("'#associate-pnj'").length - 1, 1);
+});
+
+test('le moment du suivi et du changement de camp vient de l’horloge de campagne', async () => {
+    const ui = await read('js/carnaval.js');
+    assert.match(ui, /state\.campaign\?\.clock\?\.day/u);
+    assert.match(ui, /state\.campaign\?\.clock\?\.minute/u);
+    for (const [start, end] of [['function trackingHtml(', 'function bindTracking('], ['function bindTracking(', 'function introductionsHtml('], ['$(\'#holders-list\').addEventListener(\'change\'', '$(\'#holder-form\').addEventListener(\'submit\''], ['$(\'#holder-form\').addEventListener(\'submit\'', 'function collectClock(']])
+        assert.doesNotMatch(sliceOf(ui, start, end), /changedAt:\{ day:state\.selectedDay|state\.selectedDay\)|\?\? state\.selectedDay/u, start);
+});
+
+test('le détenteur du personnage s’affiche dans l’encart de la vue PNJ', async () => {
+    const ui = await read('js/carnaval.js');
+    const body = sliceOf(ui, 'function renderNext(', 'function renderOverlaps(');
+    assert.match(body, /holderLine\(/u);
+    assert.match(body, /state\.view === 'character'/u);
+});
+
+test('les messages d’état atteignent la zone du dialogue modal ouvert', async () => {
+    const [html, ui, css] = await Promise.all([read('carnaval.html'), read('js/carnaval.js'), read('css/carnaval.css')]);
+    for (const id of ['holders-dialog', 'event-dialog']) assert.match(sliceOf(html, `<dialog id="${id}"`, '</dialog>'), /<p class="carnaval-dialog-status" role="status" aria-live="polite" data-dialog-status><\/p>/u, id);
+    assert.match(sliceOf(ui, 'function setStatus(', 'function clearDialogStatus('), /dialog\[open\] \[data-dialog-status\]/u);
+    assert.match(css, /\.carnaval-dialog-status/u);
+});
+
+test('rafraîchir le panneau conserve la saisie et le focus, et « Présentations » replace le focus', async () => {
+    const ui = await read('js/carnaval.js');
+    assert.match(ui, /async function renderDrawerIfOpen\(/u);
+    assert.match(sliceOf(ui, 'async function renderDrawerIfOpen(', 'function closeDrawer('), /await openCharacter\(/u);
+    assert.match(ui, /focusHeading/u);
+    assert.match(ui, /openCharacter\(button\.dataset\.openCharacter, ?\{ focusHeading: ?true \}\)/u);
+});
+
+test('petits points d’accessibilité du Carnaval', async () => {
+    const [html, ui] = await Promise.all([read('carnaval.html'), read('js/carnaval.js')]);
+    assert.match(html, /<section class="carnaval-clock" aria-label=/u);
+    assert.match(html, /<div id="court-tally" class="carnaval-tally"><span id="court-tally-text" role="status">/u);
+    assert.match(html, /id="holder-form"[^>]*aria-labelledby="holder-form-title"/u);
+    assert.match(ui, /<h3 id="introductions-heading" tabindex="-1">|<h3 tabindex="-1">Présentations/u);
+    assert.ok(ui.includes('Présenter à'));
+    assert.match(ui, /aria-label="Modifier le détenteur \$\{esc\(holder\.label\)\}"/u);
+    assert.match(ui, /aria-label="Supprimer le détenteur \$\{esc\(holder\.label\)\}"/u);
+});

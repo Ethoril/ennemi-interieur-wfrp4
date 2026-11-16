@@ -10,7 +10,9 @@ const absoluteTime = value => { const day = Math.floor(value / 1440) + 1; return
 const state = { admin: false, onlineReady: false, streamsReady: {}, clockSeeded: false, drawerReturnTarget: null, bureau: null, source: null, campaign: null, pnjs: [], relations: [], pnjPrivate: new Map(), view: 'day', selectedCharacter: '', selectedPlace: '', selectedDay: 1, placeDay: 'all', selectedMinute: 480, showSecrets: true, showRendezvous: true, metFilter: 'all', campFilter: 'all', eventId: null, linkCharacterId: null, generation: 0, unsubs: [], privateUnsub: null, map: null, markerById: new Map(), imageReleases: new Map(), focusedCharacter: '' };
 let authUnsubscribe = null;
 
-function setStatus(message = '', kind = '') { const target = $('#carnaval-status'); target.textContent = message; if (kind) target.dataset.kind = kind; else delete target.dataset.kind; }
+// Pendant un dialogue modal, la zone principale est inerte : le message est aussi écrit dans la zone du dialogue ouvert.
+function setStatus(message = '', kind = '') { for (const target of [$('#carnaval-status'), document.querySelector('dialog[open] [data-dialog-status]')]) { if (!target) continue; target.textContent = message; if (kind) target.dataset.kind = kind; else delete target.dataset.kind; } }
+function clearDialogStatus(dialog) { dialog.querySelectorAll('[data-dialog-status]').forEach(target => { target.textContent = ''; delete target.dataset.kind; }); }
 function setGate(text, allowLogin = true) { const gate = $('#carnaval-gate'); gate.hidden = false; gate.innerHTML = `<h2>Accès MJ</h2><p>${esc(text)}</p>${allowLogin ? '<button class="btn-primary" id="gate-login">Connexion MJ</button>' : ''}`; $('#gate-login')?.addEventListener('click', () => void doLogin()); }
 function showOfflineLock(message) { $('#carnaval-offline-message').textContent = message; $('#carnaval-offline').hidden = false; $('#carnaval-app').hidden = true; }
 async function doLogin() { try { await loginWithGoogle(); } catch (error) { if (error?.code !== 'auth/popup-closed-by-user') setStatus('Connexion impossible. Réessayez lorsque le réseau est disponible.', 'error'); } }
@@ -147,10 +149,11 @@ function renderEvents() {
 function renderNext() {
   const target = $('#next-encounter'), id = state.selectedCharacter || '';
   if (!id) { target.textContent = 'Choisissez un PNJ pour afficher sa prochaine rencontre.'; return; }
+  const holder = state.view === 'character' ? holderOfCharacter(state.campaign,id) : null, holderNote = holder ? `<br><span class="carnaval-muted">${esc(holderLine(holder))}</span>` : '';
   const result = findNextPresence(events().filter(event => event.kind === 'public' || (event.kind === 'secret' && state.showSecrets) || (event.kind === 'rendezvous' && state.showRendezvous)), id, { day: state.selectedDay, minute: state.selectedMinute });
-  const character = characterById(id); if (!result) { target.textContent = `${character?.name || 'Ce personnage'} : aucune autre présence annoncée pour la suite du Carnaval.`; return; }
+  const character = characterById(id); if (!result) { target.innerHTML = `${esc(character?.name || 'Ce personnage')} : aucune autre présence annoncée pour la suite du Carnaval.${holderNote}`; return; }
   const { event, presence } = result; const absoluteNow = currentAbsolute(); const start = Number.isInteger(presence.start) ? eventAbsolute(event,presence.start) : null; const end = Number.isInteger(presence.end) ? eventAbsolute(event,presence.end) : null; const active = start !== null && (presence.milestone ? absoluteNow === start : end !== null && absoluteNow >= start && absoluteNow < end);
-  target.innerHTML = `<strong>${active ? 'Présence en cours' : 'Prochaine occasion de rencontre'} — ${esc(character?.name || '')}</strong><br>${esc(event.title)} · ${esc(placeById(event.placeId)?.name || 'Lieu non renseigné')} · ${esc(dayLabel(event.day))}, ${esc(presenceTimeLabel(presence))}`;
+  target.innerHTML = `<strong>${active ? 'Présence en cours' : 'Prochaine occasion de rencontre'} — ${esc(character?.name || '')}</strong><br>${esc(event.title)} · ${esc(placeById(event.placeId)?.name || 'Lieu non renseigné')} · ${esc(dayLabel(event.day))}, ${esc(presenceTimeLabel(presence))}${holderNote}`;
 }
 function renderOverlaps() {
   const overlaps = findOverlaps(events()); const target = $('#overlap-list');
@@ -198,7 +201,7 @@ function openEvent(id = '') {
   form.elements.kind.value = event?.kind || 'public'; form.elements.start.innerHTML = timeOptions(event ? event.start : state.selectedMinute,true,event?.kind === 'secret' || isCustom); form.elements.end.innerHTML = timeOptions(event ? event.end : state.selectedMinute + 60,true,event?.kind === 'secret' || isCustom); form.elements.bookPage.value = event?.source?.bookPage || ''; form.elements.pdfPage.value = event?.source?.pdfPage || ''; form.elements.bookPage.readOnly = Boolean(event?.sourceEventId); form.elements.pdfPage.readOnly = Boolean(event?.sourceEventId); form.elements.notes.value = state.campaign.notes?.[id] || '';
   form.elements.day.value = String(event?.day ?? state.selectedDay); if (event?.placeId) form.elements.placeId.value = event.placeId;
   const reset = $('#reset-event'); reset.hidden = !event?.sourceEventId; reset.onclick = () => void resetEvent(event);
-  renderPresenceEditor(event?.presences || []); $('#event-dialog').showModal();
+  renderPresenceEditor(event?.presences || []); clearDialogStatus($('#event-dialog')); $('#event-dialog').showModal();
 }
 function renderPresenceEditor(presences) {
   const container = $('#presence-editor'); container.innerHTML = presences.map((presence,index) => presenceRow(presence,index)).join('');
@@ -250,6 +253,8 @@ async function deleteEvent(id) { if (!confirm('Supprimer cette scène ajoutée e
 async function resetEvent(event) { if (!event?.sourceEventId) return; const overrides = { ...state.campaign.overrides }; delete overrides[event.id]; const next = { ...state.campaign, overrides }; $('#event-dialog').close(); await commit(next,'Réinitialisation en cours…'); }
 $('#add-presence').addEventListener('click', () => { const container = $('#presence-editor'); container.insertAdjacentHTML('beforeend',presenceRow()); container.lastElementChild.querySelector('[data-remove-presence]').addEventListener('click', event => event.currentTarget.closest('.carnaval-presence-row').remove()); });
 
+// Moment proposé d’après l’horloge de campagne (jour et heure consultés seulement si l’horloge manque).
+const clockMoment = () => ({ day:state.campaign?.clock?.day ?? state.selectedDay, minute:state.campaign?.clock?.minute ?? state.selectedMinute });
 function holderLine(holder) { return holder ? `${holder.label} — ${holder.weight} voix — ${CAMPS.find(camp => camp.id === holder.camp)?.label || holder.camp}` : ''; }
 // Met à jour la seule ligne du détenteur dans le panneau ouvert, sans toucher une saisie de suivi en cours.
 function refreshTrackingHolder() {
@@ -258,13 +263,13 @@ function refreshTrackingHolder() {
 }
 function trackingHtml(id) {
   const entry = state.campaign?.tracking?.[id] || { met:null, attitude:null, note:'' }, holder = holderOfCharacter(state.campaign,id);
-  const day = entry.met?.day ?? state.selectedDay, minute = entry.met?.minute ?? state.selectedMinute;
+  const now = clockMoment(), day = entry.met?.day ?? now.day, minute = entry.met?.minute ?? now.minute;
   const dayOptions = (state.source?.days || []).map(item => `<option value="${esc(item.id)}"${Number(item.id) === Number(day) ? ' selected' : ''}>${esc(item.id)} — ${esc(item.name)}</option>`).join('');
   const attitudes = [{ id:'', label:'Non renseignée' }, ...ATTITUDES].map(item => `<label class="carnaval-tracking-choice"><input type="radio" name="tracking-attitude" value="${esc(item.id)}"${(entry.attitude || '') === item.id ? ' checked' : ''}> ${esc(item.label)}</label>`).join('');
   return `<div class="carnaval-drawer-section" id="character-tracking"><h3>Suivi</h3><p class="carnaval-muted" id="tracking-holder"${holder ? '' : ' hidden'}>${esc(holderLine(holder))}</p><label class="carnaval-tracking-choice"><input type="checkbox" id="tracking-met"${entry.met ? ' checked' : ''}> Rencontré</label><div class="carnaval-form-row" id="tracking-moment"${entry.met ? '' : ' hidden'}><label>Jour de la rencontre<select id="tracking-day">${dayOptions}</select></label><label>Heure de la rencontre<select id="tracking-time">${timeOptions(minute)}</select></label></div><fieldset class="carnaval-tracking-fieldset"><legend>Attitude envers les PJ</legend>${attitudes}</fieldset><label class="carnaval-tracking-note">Note de suivi<textarea id="tracking-note" maxlength="500" rows="3">${esc(entry.note)}</textarea></label><button type="button" class="btn-primary" id="tracking-save">Enregistrer le suivi</button></div>`;
 }
 function bindTracking(id) {
-  $('#tracking-met').addEventListener('change', event => { $('#tracking-moment').hidden = !event.target.checked; if (event.target.checked) { $('#tracking-day').value = String(state.selectedDay); $('#tracking-time').value = String(state.selectedMinute); } });
+  $('#tracking-met').addEventListener('change', event => { $('#tracking-moment').hidden = !event.target.checked; if (event.target.checked) { const now = clockMoment(); $('#tracking-day').value = String(now.day); $('#tracking-time').value = String(now.minute); } });
   $('#tracking-save').addEventListener('click', async () => {
     if (!state.onlineReady || !state.campaign || state.focusedCharacter !== id) return;
     const met = $('#tracking-met').checked ? { day:Number($('#tracking-day').value), minute:Number($('#tracking-time').value) } : null, attitude = document.querySelector('input[name="tracking-attitude"]:checked')?.value || null, note = $('#tracking-note').value;
@@ -284,11 +289,11 @@ function introductionsHtml(id) {
   const candidates = state.source.characters.filter(character => character.id !== id && !listed.has(character.id)).sort((a,b) => String(a.name).localeCompare(String(b.name),'fr')).map(character => `<option value="${esc(character.id)}">${esc(character.name)}</option>`).join('');
   const outgoingList = outgoing.length ? `<ul>${outgoing.map(item => `<li>${person(item.to)}${condition(item.condition)} <button type="button" class="btn-ghost-sm" data-remove-introduction="${esc(item.to)}" aria-label="Retirer la présentation à ${esc(name(item.to))}">Retirer</button></li>`).join('')}</ul>` : '<p class="carnaval-muted">Aucune présentation.</p>';
   const incomingList = incoming.length ? `<ul>${incoming.map(item => `<li>${person(item.from)}${condition(item.condition)}</li>`).join('')}</ul>` : '<p class="carnaval-muted">Aucune présentation.</p>';
-  return `<div class="carnaval-drawer-section" id="character-introductions"><h3>Présentations</h3><h4>Peut présenter à</h4>${outgoingList}<div class="carnaval-form-row"><label>Personnage<select id="introduction-target"${full ? ' disabled' : ''}>${candidates}</select></label><label>Condition<input type="text" id="introduction-condition" maxlength="200"${full ? ' disabled' : ''}></label><button type="button" class="btn-primary" id="introduction-add"${full || !candidates ? ' disabled' : ''}>Ajouter</button></div><h4>Présenté par</h4>${incomingList}</div>`;
+  return `<div class="carnaval-drawer-section" id="character-introductions"><h3 tabindex="-1">Présentations</h3><h4>Peut présenter à</h4>${outgoingList}<div class="carnaval-form-row"><label>Présenter à<select id="introduction-target"${full ? ' disabled' : ''}>${candidates}</select></label><label>Condition<input type="text" id="introduction-condition" maxlength="200"${full ? ' disabled' : ''}></label><button type="button" class="btn-primary" id="introduction-add"${full || !candidates ? ' disabled' : ''}>Ajouter</button></div><h4>Présenté par</h4>${incomingList}</div>`;
 }
 function bindIntroductions(id) {
   const section = $('#character-introductions'); if (!section) return;
-  section.querySelectorAll('[data-open-character]').forEach(button => button.addEventListener('click', () => { void openCharacter(button.dataset.openCharacter); }));
+  section.querySelectorAll('[data-open-character]').forEach(button => button.addEventListener('click', () => { void openCharacter(button.dataset.openCharacter, { focusHeading:true }); }));
   const save = async (list, message) => {
     if (!state.onlineReady || !state.campaign || state.focusedCharacter !== id) return;
     const introductions = { ...state.campaign.introductions }; if (list.length) introductions[id] = list; else delete introductions[id];
@@ -300,21 +305,32 @@ function bindIntroductions(id) {
   section.querySelectorAll('[data-remove-introduction]').forEach(button => button.addEventListener('click', () => { void save(introductionsFor(state.campaign,id).outgoing.filter(item => item.to !== button.dataset.removeIntroduction),'Présentation retirée.'); }));
   $('#introduction-add').addEventListener('click', () => { const to = $('#introduction-target').value; if (!to) return; void save([...introductionsFor(state.campaign,id).outgoing,{ to, condition:$('#introduction-condition').value }],'Présentation ajoutée.'); });
 }
-async function openCharacter(id) {
-  if (!state.onlineReady) return; state.privateUnsub?.(); state.privateUnsub = null; const previousCharacter = state.focusedCharacter; if (previousCharacter) { state.imageReleases.get(previousCharacter)?.(); state.imageReleases.delete(previousCharacter); } state.focusedCharacter = id; const character = characterById(id); if (!character) return; const pnj = linkedPnj(id); const drawer = $('#character-drawer'); const opening = !drawer.classList.contains('open'); if (opening) { state.drawerReturnTarget = document.activeElement; drawer.inert = false; drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); drawer.setAttribute('aria-modal','false'); } $('#character-drawer-content').innerHTML = `<h2 tabindex="-1">${esc(character.name)}</h2>${pnj ? '<p class="carnaval-muted">Chargement de la fiche…</p>' : `<p class="carnaval-muted">Aucune fiche PNJ associée.</p><button type="button" class="btn-primary" id="associate-pnj">Associer une fiche</button>${trackingHtml(id)}${introductionsHtml(id)}`}`; if (!pnj) { bindTracking(id); bindIntroductions(id); } if (opening) $('#character-drawer-content h2')?.focus();
-  $('#associate-pnj')?.addEventListener('click', () => openLinkDialog(id));
-  if (!pnj) { if (state.campaign.links?.[id]) $('#character-drawer-content').innerHTML = `<h2 tabindex="-1">${esc(character.name)}</h2><p class="carnaval-muted">La fiche associée est indisponible ou a été supprimée.</p><button type="button" class="btn-primary" id="associate-pnj">Réassocier une fiche</button>${trackingHtml(id)}${introductionsHtml(id)}`; bindTracking(id); bindIntroductions(id); $('#associate-pnj')?.addEventListener('click', () => openLinkDialog(id)); if (opening) $('#character-drawer-content h2')?.focus(); return; }
+async function openCharacter(id, { focusHeading = false } = {}) {
+  if (!state.onlineReady) return; state.privateUnsub?.(); state.privateUnsub = null; const previousCharacter = state.focusedCharacter; if (previousCharacter) { state.imageReleases.get(previousCharacter)?.(); state.imageReleases.delete(previousCharacter); } state.focusedCharacter = id; const character = characterById(id); if (!character) return; const pnj = linkedPnj(id); const drawer = $('#character-drawer'); const opening = !drawer.classList.contains('open'); if (opening) { state.drawerReturnTarget = document.activeElement; drawer.inert = false; drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); drawer.setAttribute('aria-modal','false'); } const linked = Boolean(state.campaign.links?.[id]), focusH2 = opening || focusHeading; $('#character-drawer-content').innerHTML = `<h2 tabindex="-1">${esc(character.name)}</h2>${pnj ? '<p class="carnaval-muted">Chargement de la fiche…</p>' : `<p class="carnaval-muted">${linked ? 'La fiche associée est indisponible ou a été supprimée.' : 'Aucune fiche PNJ associée.'}</p><button type="button" class="btn-primary" id="associate-pnj">${linked ? 'Réassocier une fiche' : 'Associer une fiche'}</button>${trackingHtml(id)}${introductionsHtml(id)}`}`; if (focusH2) $('#character-drawer-content h2')?.focus();
+  if (!pnj) { bindTracking(id); bindIntroductions(id); $('#associate-pnj').addEventListener('click', () => openLinkDialog(id)); return; }
   const generation = state.generation;
   let image = pnj.imageUrl || ''; if (pnj.imagePath && state.bureau?.images?.loadObjectUrl) { try { const loaded = await state.bureau.images.loadObjectUrl(pnj.imagePath); if (!state.admin || generation !== state.generation || state.focusedCharacter !== id) { loaded.release?.(); return; } image = loaded.url; state.imageReleases.set(id,loaded.release); } catch { image = ''; } }
   if (!state.admin || generation !== state.generation || state.focusedCharacter !== id) return;
   const privateNote = state.pnjPrivate.get(pnj.id) || '';
   $('#character-drawer-content').innerHTML = `<h2>${esc(pnj.nom || character.name)}</h2><img src="${esc(image || 'img/pnj-default.webp')}" alt="${image ? `Portrait de ${esc(pnj.nom || character.name)}` : 'Portrait non renseigné'}"><div class="carnaval-drawer-section"><h3>Description</h3>${esc(pnj.description || 'Aucune description renseignée.')}</div><div class="carnaval-drawer-section"><h3>Relations</h3>${renderRelations(pnj.id)}</div>${trackingHtml(id)}${introductionsHtml(id)}<div class="carnaval-drawer-section" id="character-private-notes"><h3>Notes MJ</h3>${esc(privateNote || 'Aucune note privée.')}</div><button type="button" class="btn-ghost-sm" id="reassociate-pnj">Réassocier</button>`; bindTracking(id); bindIntroductions(id);
-  $('#character-drawer-content h2')?.setAttribute('tabindex','-1'); if (opening) $('#character-drawer-content h2')?.focus();
+  $('#character-drawer-content h2')?.setAttribute('tabindex','-1'); if (focusH2) $('#character-drawer-content h2')?.focus();
   $('#reassociate-pnj').addEventListener('click', () => openLinkDialog(id));
   state.privateUnsub?.(); state.privateUnsub = state.bureau.pnjs.subscribePrivate(pnj.id,snapshot => { if (!state.admin || generation !== state.generation || state.focusedCharacter !== id) return; state.pnjPrivate.set(pnj.id,snapshot?.notes || ''); const target = $('#character-private-notes'); if (target) target.innerHTML = `<h3>Notes MJ</h3>${esc(snapshot?.notes || 'Aucune note privée.')}`; });
 }
 function renderRelations(id) { const byId = new Map(state.pnjs.map(pnj => [pnj.id,pnj])); const links = state.relations.filter(relation => relation.source === id || relation.cible === id); return links.length ? `<ul>${links.map(relation => { const otherId = relation.source === id ? relation.cible : relation.source; return `<li>${esc(byId.get(otherId)?.nom || 'Fiche indisponible')} — ${esc(relation.label || relation.type || 'Relation')}</li>`; }).join('')}</ul>` : '<span class="carnaval-muted">Aucune relation renseignée.</span>'; }
-function renderDrawerIfOpen() { if ($('#character-drawer').classList.contains('open') && state.focusedCharacter) void openCharacter(state.focusedCharacter); }
+// Le rafraîchissement remplace tout le panneau : on relève la saisie de suivi et de présentation et le focus, puis on les restaure.
+async function renderDrawerIfOpen() {
+  if (!$('#character-drawer').classList.contains('open') || !state.focusedCharacter) return;
+  const id = state.focusedCharacter, content = $('#character-drawer-content'), active = document.activeElement, saved = $('#tracking-met') ? { met:$('#tracking-met').checked, day:$('#tracking-day')?.value, time:$('#tracking-time')?.value, attitude:document.querySelector('input[name="tracking-attitude"]:checked')?.value, note:$('#tracking-note')?.value, target:$('#introduction-target')?.value, condition:$('#introduction-condition')?.value } : null;
+  const focusId = content.contains(active) ? active.id : '';
+  await openCharacter(id); if (state.focusedCharacter !== id || !saved) return;
+  if ($('#tracking-met')) { $('#tracking-met').checked = saved.met; $('#tracking-moment').hidden = !saved.met; if (saved.day !== undefined && $('#tracking-day')) $('#tracking-day').value = saved.day; if (saved.time !== undefined && $('#tracking-time')) $('#tracking-time').value = saved.time; }
+  if (saved.attitude) { const radio = [...document.querySelectorAll('input[name="tracking-attitude"]')].find(input => input.value === saved.attitude); if (radio) radio.checked = true; }
+  if (saved.note !== undefined && $('#tracking-note')) $('#tracking-note').value = saved.note;
+  if (saved.target && $('#introduction-target')) $('#introduction-target').value = saved.target;
+  if (saved.condition !== undefined && $('#introduction-condition')) $('#introduction-condition').value = saved.condition;
+  if (focusId) document.getElementById(focusId)?.focus();
+}
 function closeDrawer() { state.privateUnsub?.(); state.privateUnsub = null; state.imageReleases.forEach(release => release?.()); state.imageReleases.clear(); state.focusedCharacter = ''; const drawer = $('#character-drawer'); const focusWasInDrawer = drawer.contains(document.activeElement); drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); drawer.setAttribute('aria-modal','false'); drawer.inert = true; $('#character-drawer-content').replaceChildren(); if (focusWasInDrawer && !$('#carnaval-app').hidden && state.drawerReturnTarget?.isConnected) state.drawerReturnTarget.focus(); state.drawerReturnTarget = null; }
 function openLinkDialog(id) {
   const character = characterById(id); if (!character) return; state.linkCharacterId = id; $('#link-character-name').textContent = `Calendrier : ${character.name}`;
@@ -329,13 +345,14 @@ $('#link-dialog').querySelectorAll('#link-cancel, #link-dialog-close').forEach(b
 // Le bandeau porte le libellé de chaque camp en toutes lettres : le total se lit sans la couleur.
 function renderTally() {
   const holders = state.campaign?.holders || [], tally = holderTally(state.campaign);
-  $('#court-tally-text').textContent = holders.length ? `${CAMPS.map(camp => `${camp.label} ${tally[camp.id]}`).join(' · ')} · Total ${tally.total}` : 'Aucun détenteur de voix';
+  const text = holders.length ? `${CAMPS.map(camp => `${camp.label} ${tally[camp.id]}`).join(' · ')} · Total ${tally.total}` : 'Aucun détenteur de voix';
+  if ($('#court-tally-text').textContent !== text) $('#court-tally-text').textContent = text;
 }
 const holderChangeText = holder => holder.changedAt ? `Camp changé : ${dayLabel(holder.changedAt.day)}, ${minuteText(holder.changedAt.minute)}` : '';
 const campOptions = selected => CAMPS.map(camp => `<option value="${esc(camp.id)}"${camp.id === selected ? ' selected' : ''}>${esc(camp.label)}</option>`).join('');
 function renderHolders() {
   const holders = state.campaign?.holders || [], list = $('#holders-list');
-  list.innerHTML = holders.length ? holders.map(holder => { const names = (holder.characterIds || []).map(id => characterById(id)?.name || 'Personnage inconnu'); const change = holderChangeText(holder); return `<article class="carnaval-holder" data-holder-id="${esc(holder.id)}"><div class="carnaval-holder-info"><strong>${esc(holder.label)}</strong> · poids ${esc(holder.weight)}<br><span class="carnaval-muted">${names.length ? esc(names.join(', ')) : 'Aucun personnage rattaché'}</span>${change ? `<br><span class="carnaval-muted">${esc(change)}</span>` : ''}</div><div class="carnaval-holder-actions"><select data-holder-camp="${esc(holder.id)}" aria-label="Camp de ${esc(holder.label)}">${campOptions(holder.camp)}</select><button type="button" class="btn-ghost-sm" data-edit-holder="${esc(holder.id)}">Modifier</button><button type="button" class="btn-ghost-sm" data-delete-holder="${esc(holder.id)}">Supprimer</button></div></article>`; }).join('') : '<p class="carnaval-no-results">Aucun détenteur de voix</p>';
+  list.innerHTML = holders.length ? holders.map(holder => { const names = (holder.characterIds || []).map(id => characterById(id)?.name || 'Personnage inconnu'); const change = holderChangeText(holder); return `<article class="carnaval-holder" data-holder-id="${esc(holder.id)}"><div class="carnaval-holder-info"><strong>${esc(holder.label)}</strong> · poids ${esc(holder.weight)}<br><span class="carnaval-muted">${names.length ? esc(names.join(', ')) : 'Aucun personnage rattaché'}</span>${change ? `<br><span class="carnaval-muted">${esc(change)}</span>` : ''}</div><div class="carnaval-holder-actions"><select data-holder-camp="${esc(holder.id)}" aria-label="Camp de ${esc(holder.label)}">${campOptions(holder.camp)}</select><button type="button" class="btn-ghost-sm" data-edit-holder="${esc(holder.id)}" aria-label="Modifier le détenteur ${esc(holder.label)}">Modifier</button><button type="button" class="btn-ghost-sm" data-delete-holder="${esc(holder.id)}" aria-label="Supprimer le détenteur ${esc(holder.label)}">Supprimer</button></div></article>`; }).join('') : '<p class="carnaval-no-results">Aucun détenteur de voix</p>';
 }
 // Un personnage ne figure que dans un seul détenteur : les cases déjà prises ailleurs sont désactivées et nomment leur détenteur.
 function openHolderForm(id = '') {
@@ -350,7 +367,7 @@ function closeHolderForm() { $('#holder-form').hidden = true; $('#holder-form').
 // La clé holders disparaît avec le dernier détenteur pour garder la forme d’origine de la campagne.
 function withHolders(holders) { const next = { ...state.campaign, holders }; if (!holders.length) delete next.holders; return next; }
 async function commitHolders(next, message) { await commit(next,message); refreshTrackingHolder(); }
-$('#open-holders').addEventListener('click', () => { if (!state.onlineReady || !state.campaign) return; $('#holder-form').hidden = true; renderHolders(); $('#holders-dialog').showModal(); });
+$('#open-holders').addEventListener('click', () => { if (!state.onlineReady || !state.campaign) return; $('#holder-form').hidden = true; renderHolders(); clearDialogStatus($('#holders-dialog')); $('#holders-dialog').showModal(); });
 $('#holders-dialog').querySelectorAll('#holders-close, #holders-close-bottom').forEach(button => button.addEventListener('click', () => $('#holders-dialog').close()));
 $('#holders-dialog').addEventListener('close', () => { $('#holder-form').hidden = true; if (!$('#carnaval-app').hidden) $('#open-holders').focus(); });
 $('#add-holder').addEventListener('click', () => { if (state.onlineReady) openHolderForm(); });
@@ -362,8 +379,8 @@ $('#holders-list').addEventListener('click', event => {
 });
 $('#holders-list').addEventListener('change', async event => {
   const select = event.target.closest('[data-holder-camp]'); if (!select || !state.onlineReady) return; const id = select.dataset.holderCamp;
-  const holders = (state.campaign.holders || []).map(holder => holder.id === id ? { ...holder, camp:select.value, changedAt:{ day:state.selectedDay, minute:state.selectedMinute } } : holder);
-  const before = state.campaign; await commitHolders({ ...state.campaign, holders },'Changement de camp en cours…'); if (state.campaign !== before && state.campaign.holders?.find(item => item.id === id)?.camp === select.value) setStatus('Camp modifié.','success'); [...$('#holders-list').querySelectorAll('[data-holder-camp]')].find(item => item.dataset.holderCamp === id)?.focus();
+  const holders = (state.campaign.holders || []).map(holder => holder.id === id ? { ...holder, camp:select.value, changedAt:clockMoment() } : holder);
+  const before = state.campaign; await commitHolders({ ...state.campaign, holders },'Changement de camp en cours…'); if (state.campaign !== before && state.campaign.holders?.find(item => item.id === id)?.camp === select.value) setStatus('Camp modifié.','success'); renderHolders(); [...$('#holders-list').querySelectorAll('[data-holder-camp]')].find(item => item.dataset.holderCamp === id)?.focus();
 });
 $('#holder-form').addEventListener('submit', async event => {
   event.preventDefault(); const form = event.currentTarget; if (!state.admin || !state.onlineReady) return;
@@ -371,7 +388,7 @@ $('#holder-form').addEventListener('submit', async event => {
   if (!label) { setStatus('Le libellé est obligatoire.', 'error'); return; }
   if (!Number.isInteger(weight) || weight < 0 || weight > 99) { setStatus('Le poids doit être un entier de 0 à 99.', 'error'); return; }
   const characterIds = [...form.querySelectorAll('input[name="characterIds"]:checked')].map(input => input.value);
-  const value = { id:previous?.id || 'holder-' + globalThis.crypto.randomUUID(), label, weight, camp, characterIds, changedAt:previous ? (previous.camp !== camp ? { day:state.selectedDay, minute:state.selectedMinute } : previous.changedAt) : null };
+  const value = { id:previous?.id || 'holder-' + globalThis.crypto.randomUUID(), label, weight, camp, characterIds, changedAt:previous ? (previous.camp !== camp ? clockMoment() : previous.changedAt) : null };
   const holders = previous ? state.campaign.holders.map(item => item.id === id ? value : item) : [...(state.campaign.holders || []),value];
   const before = state.campaign; await commitHolders(withHolders(holders),'Enregistrement en cours…');
   if (state.campaign !== before && state.campaign.holders?.some(item => item.id === value.id)) { setStatus('Détenteur enregistré.','success'); closeHolderForm(); }
