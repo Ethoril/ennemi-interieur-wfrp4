@@ -28,3 +28,22 @@ test('le shell précaché contient les modules mais aucune source ou campagne pr
     assert.doesNotMatch(`${html}${ui}${sw}`, /carnaval-source\.json|data-privees|carnaval_sources\/current/u);
     assert.doesNotMatch(ui, /localStorage|sessionStorage|indexedDB/u);
 });
+
+test('le bureau propose les rendez-vous et les lieux libres dans le formulaire et la barre d’outils', async () => {
+    const html = await read('carnaval.html');
+    assert.match(html, /id="show-rendezvous"/u);
+    assert.match(html, /<option value="rendezvous"/u);
+    assert.match(html, /name="placeName"/u);
+    assert.match(html, /id="place-name-wrap"/u);
+});
+
+test('l’interface du Carnaval gère rendez-vous et lieux libres sans stockage local', async () => {
+    const ui = await read('js/carnaval.js');
+    assert.match(ui, /import \{[^}]*\bcampaignPlaces\b[^}]*\} from '\.\/carnaval-model\.js'/u);
+    assert.match(ui, /campaignPlaces\(state\.source, ?state\.campaign\)/u);
+    assert.match(ui, /showRendezvous/u);
+    assert.match(ui, /is-rendezvous/u);
+    assert.match(ui, /__other__/u);
+    assert.match(ui, /Un rendez-vous exige une heure de début\./u);
+    assert.doesNotMatch(ui, /localStorage|indexedDB/u);
+});

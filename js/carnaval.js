@@ -1,13 +1,13 @@
 import { watchAuth, loginWithGoogle, logout } from './auth.js';
 import { createBureauData } from './bureau-data.js';
 import { esc } from './utils.js';
-import { initialCampaign, effectiveEvents, eventPresences, isAt, findNextPresence, findOverlaps, suggestPnjMatches, validateSource, validateCampaign } from './carnaval-model.js';
+import { campaignPlaces, initialCampaign, effectiveEvents, eventPresences, isAt, findNextPresence, findOverlaps, suggestPnjMatches, validateSource, validateCampaign } from './carnaval-model.js';
 import { MIDDENHEIM_MAP } from './middenheim-map.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const minuteText = value => { if (value === null || value === undefined || value === '' || !Number.isFinite(Number(value))) return 'Horaire non précisé'; const minute = Number(value); return `${String(Math.floor(minute / 60) % 24).padStart(2, '0')} h${String(minute % 60).padStart(2, '0')}${minute >= 1440 ? ' (nuit suivante)' : ''}`; };
 const absoluteTime = value => { const day = Math.floor(value / 1440) + 1; return day > 8 ? `Nuit suivant ${dayLabel(8)}, ${minuteText(value % 1440)}` : `${dayLabel(day)}, ${minuteText(value % 1440)}`; };
-const state = { admin: false, onlineReady: false, streamsReady: {}, clockSeeded: false, drawerReturnTarget: null, bureau: null, source: null, campaign: null, pnjs: [], relations: [], pnjPrivate: new Map(), view: 'day', selectedCharacter: '', selectedPlace: '', selectedDay: 1, placeDay: 'all', selectedMinute: 480, showSecrets: true, eventId: null, linkCharacterId: null, generation: 0, unsubs: [], privateUnsub: null, map: null, markerById: new Map(), imageReleases: new Map(), focusedCharacter: '' };
+const state = { admin: false, onlineReady: false, streamsReady: {}, clockSeeded: false, drawerReturnTarget: null, bureau: null, source: null, campaign: null, pnjs: [], relations: [], pnjPrivate: new Map(), view: 'day', selectedCharacter: '', selectedPlace: '', selectedDay: 1, placeDay: 'all', selectedMinute: 480, showSecrets: true, showRendezvous: true, eventId: null, linkCharacterId: null, generation: 0, unsubs: [], privateUnsub: null, map: null, markerById: new Map(), imageReleases: new Map(), focusedCharacter: '' };
 let authUnsubscribe = null;
 
 function setStatus(message = '', kind = '') { const target = $('#carnaval-status'); target.textContent = message; if (kind) target.dataset.kind = kind; else delete target.dataset.kind; }
@@ -18,7 +18,7 @@ function clearPrivateState() {
   state.generation += 1; state.unsubs.forEach(unsub => unsub?.()); state.unsubs = []; state.privateUnsub?.(); state.privateUnsub = null;
   state.imageReleases.forEach(release => release?.()); state.imageReleases.clear();
   const previous = state.bureau; state.bureau = null; void previous?.close?.();
-  state.source = null; state.campaign = null; state.pnjs = []; state.relations = []; state.pnjPrivate.clear(); state.onlineReady = false; state.clockSeeded = false; state.streamsReady = {}; state.selectedCharacter = ''; state.selectedPlace = ''; state.selectedDay = 1; state.placeDay = 'all'; state.selectedMinute = 480; state.view = 'day'; state.showSecrets = true; state.eventId = null; state.linkCharacterId = null;
+  state.source = null; state.campaign = null; state.pnjs = []; state.relations = []; state.pnjPrivate.clear(); state.onlineReady = false; state.clockSeeded = false; state.streamsReady = {}; state.selectedCharacter = ''; state.selectedPlace = ''; state.selectedDay = 1; state.placeDay = 'all'; state.selectedMinute = 480; state.view = 'day'; state.showSecrets = true; state.showRendezvous = true; $('#show-rendezvous').checked = true; state.eventId = null; state.linkCharacterId = null;
   $('#carnaval-app').hidden = true; $('#carnaval-import').hidden = true; closeDrawer(); if ($('#event-dialog').open) $('#event-dialog').close(); if ($('#link-dialog').open) $('#link-dialog').close();
   $('#carnaval-offline').hidden = true;
   $('#event-list').replaceChildren(); $('#overlap-list').replaceChildren(); $('#next-encounter').replaceChildren();
@@ -63,13 +63,15 @@ function refreshControls() {
   $('#day-select').innerHTML = dayOptions; $('#day-select').value = String(state.selectedDay);
   $('#clock-day').innerHTML = dayOptions; $('#clock-day').value = String(state.campaign?.clock?.day || 1);
   $('#time-select').innerHTML = timeOptions(state.selectedMinute); $('#clock-time').innerHTML = timeOptions(state.campaign?.clock?.minute ?? 480);
-  $('#place-filter').innerHTML = '<option value="">Tous les lieux</option>' + state.source.places.map(place => `<option value="${esc(place.id)}">${esc(place.name)}</option>`).join(''); $('#place-filter').value = state.selectedPlace;
+  $('#place-filter').innerHTML = '<option value="">Tous les lieux</option>' + places().map(place => `<option value="${esc(place.id)}">${esc(place.name)}</option>`).join(''); if (state.selectedPlace && !places().some(place => place.id === state.selectedPlace)) state.selectedPlace = ''; $('#place-filter').value = state.selectedPlace;
   $('#place-day-filter').innerHTML = '<option value="all">Tous les jours</option>' + days.map(day => `<option value="${esc(day.id)}">${esc(day.id)} — ${esc(day.name)}</option>`).join(''); $('#place-day-filter').value = state.placeDay;
   $('#character-filter').innerHTML = '<option value="">Tous les PNJ</option>' + state.source.characters.map(character => `<option value="${esc(character.id)}">${esc(character.name)}</option>`).join(''); $('#character-filter').value = state.selectedCharacter;
 }
 const events = () => !state.source || !state.campaign ? [] : effectiveEvents(state.source, state.campaign);
 const characterById = id => state.source?.characters.find(character => character.id === id);
-const placeById = id => state.source?.places.find(place => place.id === id);
+// Lieux du programme source et lieux libres du suivi : un seul point de résolution pour tous les noms affichés.
+const places = () => campaignPlaces(state.source, state.campaign);
+const placeById = id => places().find(place => place.id === id);
 const pnjById = id => state.pnjs.find(pnj => pnj.id === id);
 function linkedPnj(characterId) { const id = state.campaign?.links?.[characterId]; return id ? pnjById(id) : null; }
 function render() { if (!state.admin || !state.onlineReady || !state.source || !state.campaign) return; renderEvents(); renderNext(); renderOverlaps(); renderWarnings(); updatePins(); }
@@ -77,6 +79,7 @@ function currentAbsolute() { return (Number(state.selectedDay) - 1) * 1440 + Num
 function eventAbsolute(event, minute) { return (Number(event.day) - 1) * 1440 + minute; }
 function eventVisible(event) {
   if (event.kind === 'secret' && !state.showSecrets) return false;
+  if (event.kind === 'rendezvous' && !state.showRendezvous) return false;
   const presenceIds = eventPresences(event).map(item => item.characterId);
   if (state.selectedPlace && event.placeId !== state.selectedPlace) return false;
   if (state.selectedCharacter && !presenceIds.includes(state.selectedCharacter)) return false;
@@ -121,7 +124,7 @@ function renderEvents() {
   list.innerHTML = shown.map(event => {
     const allPresences = eventPresences(event); const presences = $('#filter-current-time').checked ? allPresences.filter(presence => atSelectedMinute(event,presence.start,presence.end)) : allPresences; const current = Number.isInteger(event.start) && isAt(event, { day: state.selectedDay, minute: state.selectedMinute }); const override = event.adapted;
     const source = sourceById.get(event.sourceEventId || event.id);
-    return `<article class="carnaval-event${current ? ' is-current' : ''}${event.kind === 'secret' ? ' is-secret' : ''}" data-event-id="${esc(event.id)}"><header><span class="carnaval-event-time">${esc(scheduleLabel(event))}</span><h3>${esc(event.title)}</h3></header><p class="carnaval-event-meta"><button type="button" data-place="${esc(event.placeId)}">${esc(placeById(event.placeId)?.name || 'Lieu non renseigné')}</button> · ${esc(dayLabel(event.day))}</p><div class="carnaval-event-badges">${event.kind === 'secret' ? '<span class="carnaval-badge secret">Chronologie secrète</span>' : ''}${override ? '<span class="carnaval-badge">Adapté MJ</span>' : '<span class="carnaval-badge">Programme source</span>'}${source?.source?.bookPage ? `<span class="carnaval-badge">Livre p. ${esc(source.source.bookPage)}</span>` : ''}${source?.source?.pdfPage ? `<span class="carnaval-badge">PDF p. ${esc(source.source.pdfPage)}</span>` : ''}</div><ul class="carnaval-presences">${presences.length ? presences.map(presence => { const character = characterById(presence.characterId); const pnj = linkedPnj(presence.characterId); return `<li><button type="button" data-character="${esc(presence.characterId)}">${esc(character?.name || 'Personnage inconnu')}</button>${presence.role === 'participant' ? ' · participant' : ''}<span class="carnaval-inferred">${presence.inferred ? ` — horaires du spectacle (${esc(presenceTimeLabel(presence))})` : ` — ${esc(presenceTimeLabel(presence))}`}</span>${pnj ? '<span aria-label="Fiche associée"> •</span>' : ''}${presence.characterId && !pnj ? '<span class="carnaval-muted"> (sans fiche)</span>' : ''}</li>`; }).join('') : `<li class="carnaval-muted">${$('#filter-current-time').checked ? 'Aucun PNJ annoncé à cette heure' : 'Aucun PNJ principal listé'}</li>`}</ul><div class="carnaval-event-actions"><button type="button" class="btn-ghost-sm" data-edit-event="${esc(event.id)}">Modifier</button>${!event.custom ? `<button type="button" class="btn-ghost-sm" data-cancel-event="${esc(event.id)}">Annuler</button>` : ''}${event.custom ? `<button type="button" class="btn-ghost-sm" data-delete-event="${esc(event.id)}">Supprimer</button>` : ''}</div></article>`;
+    return `<article class="carnaval-event${current ? ' is-current' : ''}${event.kind === 'secret' ? ' is-secret' : ''}${event.kind === 'rendezvous' ? ' is-rendezvous' : ''}" data-event-id="${esc(event.id)}"><header><span class="carnaval-event-time">${esc(scheduleLabel(event))}</span><h3>${esc(event.title)}</h3></header><p class="carnaval-event-meta"><button type="button" data-place="${esc(event.placeId)}">${esc(placeById(event.placeId)?.name || 'Lieu non renseigné')}</button> · ${esc(dayLabel(event.day))}</p><div class="carnaval-event-badges">${event.kind === 'secret' ? '<span class="carnaval-badge secret">Chronologie secrète</span>' : ''}${event.kind === 'rendezvous' ? '<span class="carnaval-badge rendezvous">Rendez-vous</span>' : ''}${override ? '<span class="carnaval-badge">Adapté MJ</span>' : '<span class="carnaval-badge">Programme source</span>'}${source?.source?.bookPage ? `<span class="carnaval-badge">Livre p. ${esc(source.source.bookPage)}</span>` : ''}${source?.source?.pdfPage ? `<span class="carnaval-badge">PDF p. ${esc(source.source.pdfPage)}</span>` : ''}</div><ul class="carnaval-presences">${presences.length ? presences.map(presence => { const character = characterById(presence.characterId); const pnj = linkedPnj(presence.characterId); return `<li><button type="button" data-character="${esc(presence.characterId)}">${esc(character?.name || 'Personnage inconnu')}</button>${presence.role === 'participant' ? ' · participant' : ''}<span class="carnaval-inferred">${presence.inferred ? ` — horaires du spectacle (${esc(presenceTimeLabel(presence))})` : ` — ${esc(presenceTimeLabel(presence))}`}</span>${pnj ? '<span aria-label="Fiche associée"> •</span>' : ''}${presence.characterId && !pnj ? '<span class="carnaval-muted"> (sans fiche)</span>' : ''}</li>`; }).join('') : `<li class="carnaval-muted">${$('#filter-current-time').checked ? 'Aucun PNJ annoncé à cette heure' : 'Aucun PNJ principal listé'}</li>`}</ul><div class="carnaval-event-actions"><button type="button" class="btn-ghost-sm" data-edit-event="${esc(event.id)}">Modifier</button>${!event.custom ? `<button type="button" class="btn-ghost-sm" data-cancel-event="${esc(event.id)}">Annuler</button>` : ''}${event.custom ? `<button type="button" class="btn-ghost-sm" data-delete-event="${esc(event.id)}">Supprimer</button>` : ''}</div></article>`;
   }).join('') + cancelled.map(event => `<article class="carnaval-event" data-event-id="${esc(event.id)}"><header><span class="carnaval-event-time">${esc(scheduleLabel(event))}</span><h3>${esc(event.title)} <span class="carnaval-badge">Annulée</span></h3></header><p class="carnaval-event-meta">${esc(placeById(event.placeId)?.name || 'Lieu non renseigné')} · ${esc(dayLabel(event.day))}</p><div class="carnaval-event-actions"><button type="button" class="btn-ghost-sm" data-restore-event="${esc(event.id)}">Réactiver</button><button type="button" class="btn-ghost-sm" data-reset-cancelled="${esc(event.id)}">Réinitialiser vers la source</button></div></article>`).join('');
   list.querySelectorAll('[data-place]').forEach(button => button.addEventListener('click', () => { state.selectedPlace = button.dataset.place; $('#place-filter').value = state.selectedPlace; focusPlace(state.selectedPlace); render(); }));
   list.querySelectorAll('[data-character]').forEach(button => button.addEventListener('click', () => openCharacter(button.dataset.character)));
@@ -134,7 +137,7 @@ function renderEvents() {
 function renderNext() {
   const target = $('#next-encounter'), id = state.selectedCharacter || '';
   if (!id) { target.textContent = 'Choisissez un PNJ pour afficher sa prochaine rencontre.'; return; }
-  const result = findNextPresence(events().filter(event => event.kind === 'public' || state.showSecrets), id, { day: state.selectedDay, minute: state.selectedMinute });
+  const result = findNextPresence(events().filter(event => event.kind === 'public' || (event.kind === 'secret' && state.showSecrets) || (event.kind === 'rendezvous' && state.showRendezvous)), id, { day: state.selectedDay, minute: state.selectedMinute });
   const character = characterById(id); if (!result) { target.textContent = `${character?.name || 'Ce personnage'} : aucune autre présence annoncée pour la suite du Carnaval.`; return; }
   const { event, presence } = result; const absoluteNow = currentAbsolute(); const start = Number.isInteger(presence.start) ? eventAbsolute(event,presence.start) : null; const end = Number.isInteger(presence.end) ? eventAbsolute(event,presence.end) : null; const active = start !== null && (presence.milestone ? absoluteNow === start : end !== null && absoluteNow >= start && absoluteNow < end);
   target.innerHTML = `<strong>${active ? 'Présence en cours' : 'Prochaine occasion de rencontre'} — ${esc(character?.name || '')}</strong><br>${esc(event.title)} · ${esc(placeById(event.placeId)?.name || 'Lieu non renseigné')} · ${esc(dayLabel(event.day))}, ${esc(presenceTimeLabel(presence))}`;
@@ -179,8 +182,10 @@ function focusPlace(id) { const place = MIDDENHEIM_MAP?.places.find(item => item
 function openEvent(id = '') {
   state.eventId = id; const form = $('#event-form'); form.reset(); const event = id ? events().find(item => item.id === id) : null;
   $('#event-dialog-title').textContent = event ? 'Adapter la scène' : 'Ajouter une scène';
-  form.elements.eventId.value = id; form.elements.title.value = event?.title || ''; form.elements.day.innerHTML = state.source.days.map(day => `<option value="${esc(day.id)}">${esc(day.id)} — ${esc(day.name)}</option>`).join(''); form.elements.placeId.innerHTML = state.source.places.map(place => `<option value="${esc(place.id)}">${esc(place.name)}</option>`).join('');
-  form.elements.kind.value = event?.kind || 'public'; form.elements.start.innerHTML = timeOptions(event ? event.start : state.selectedMinute,true,event?.kind === 'secret'); form.elements.end.innerHTML = timeOptions(event ? event.end : state.selectedMinute + 60,true,event?.kind === 'secret'); form.elements.bookPage.value = event?.source?.bookPage || ''; form.elements.pdfPage.value = event?.source?.pdfPage || ''; form.elements.bookPage.readOnly = Boolean(event?.sourceEventId); form.elements.pdfPage.readOnly = Boolean(event?.sourceEventId); form.elements.notes.value = state.campaign.notes?.[id] || '';
+  form.elements.eventId.value = id; form.elements.title.value = event?.title || ''; form.elements.day.innerHTML = state.source.days.map(day => `<option value="${esc(day.id)}">${esc(day.id)} — ${esc(day.name)}</option>`).join(''); form.elements.placeId.innerHTML = places().map(place => `<option value="${esc(place.id)}">${esc(place.name)}</option>`).join('') + '<option value="__other__">Autre lieu…</option>'; form.elements.placeName.value = ''; $('#place-name-wrap').hidden = true;
+  // Le rendez-vous n’existe que pour une scène ajoutée : le programme source ne le connaît pas.
+  const isCustom = !event || String(id).startsWith('custom-'); form.elements.kind.querySelector('option[value="rendezvous"]').disabled = !isCustom;
+  form.elements.kind.value = event?.kind || 'public'; form.elements.start.innerHTML = timeOptions(event ? event.start : state.selectedMinute,true,event?.kind === 'secret' || isCustom); form.elements.end.innerHTML = timeOptions(event ? event.end : state.selectedMinute + 60,true,event?.kind === 'secret' || isCustom); form.elements.bookPage.value = event?.source?.bookPage || ''; form.elements.pdfPage.value = event?.source?.pdfPage || ''; form.elements.bookPage.readOnly = Boolean(event?.sourceEventId); form.elements.pdfPage.readOnly = Boolean(event?.sourceEventId); form.elements.notes.value = state.campaign.notes?.[id] || '';
   form.elements.day.value = String(event?.day ?? state.selectedDay); if (event?.placeId) form.elements.placeId.value = event.placeId;
   const reset = $('#reset-event'); reset.hidden = !event?.sourceEventId; reset.onclick = () => void resetEvent(event);
   renderPresenceEditor(event?.presences || []); $('#event-dialog').showModal();
@@ -205,17 +210,33 @@ async function commit(next, message = 'Enregistrement en cours…') {
 }
 $('#event-form').addEventListener('submit', event => {
   event.preventDefault(); const form = event.currentTarget; if (!state.admin || !state.onlineReady) return; const id = form.elements.eventId.value || `custom-${globalThis.crypto.randomUUID()}`; const previous = events().find(item => item.id === id); const start = form.elements.start.value === '' ? null : Number(form.elements.start.value); const end = form.elements.end.value === '' ? null : Number(form.elements.end.value); const kind = form.elements.kind.value;
+  if (kind === 'rendezvous' && !Number.isInteger(start)) { setStatus('Un rendez-vous exige une heure de début.', 'error'); return; }
   if (kind === 'public' && (!Number.isInteger(start) || !Number.isInteger(end))) { setStatus('Une attraction publique doit avoir un début et une fin.', 'error'); return; }
   if (Number.isInteger(start) && Number.isInteger(end) && end <= start) { setStatus('La fin doit être après le début dans le temps de jeu.', 'error'); return; }
   const bookPage = form.elements.bookPage.value === '' ? null : Number(form.elements.bookPage.value); const pdfPage = form.elements.pdfPage.value === '' ? null : Number(form.elements.pdfPage.value);
   const sourceReference = previous?.source || (bookPage === null && pdfPage === null ? null : { bookPage,pdfPage });
-  const value = { id, day:Number(form.elements.day.value), start, end, title:form.elements.title.value.trim(), placeId:form.elements.placeId.value, kind, source:sourceReference, presences:readPresenceEditor() };
+  let placeId = form.elements.placeId.value, newPlace = null;
+  if (placeId === '__other__') {
+    const name = form.elements.placeName.value.trim(); if (!name) { setStatus('Le nom du lieu est obligatoire.', 'error'); return; }
+    const known = places().find(place => place.name.toLowerCase() === name.toLowerCase());
+    if (known) placeId = known.id; else { newPlace = { id:'place-' + globalThis.crypto.randomUUID(), name }; placeId = newPlace.id; }
+  }
+  const value = { id, day:Number(form.elements.day.value), start, end, title:form.elements.title.value.trim(), placeId, kind, source:sourceReference, presences:readPresenceEditor() };
   let next = { ...state.campaign, notes:{ ...state.campaign.notes, [id]:form.elements.notes.value } };
   if (previous?.sourceEventId) next = patchEvent(next,id,value); else next = { ...next, customEvents:[...(next.customEvents||[]).filter(item => item.id !== id),value] };
-  $('#event-dialog').close(); void commit(next);
+  if (newPlace) next = { ...next, customPlaces:[...(next.customPlaces||[]),newPlace] };
+  $('#event-dialog').close(); void commit(pruneCustomPlaces(next));
 });
+// Un lieu libre n’existe que tant qu’une scène ajoutée ou une adaptation s’y réfère ; sans lieu, la clé disparaît pour garder la forme d’origine.
+function pruneCustomPlaces(campaign) {
+  if (!campaign.customPlaces) return campaign;
+  const used = new Set([...(campaign.customEvents||[]).map(item => item.placeId),...Object.values(campaign.overrides||{}).map(item => item?.placeId)]);
+  const kept = campaign.customPlaces.filter(place => used.has(place.id)); const rest = { ...campaign };
+  if (kept.length) rest.customPlaces = kept; else delete rest.customPlaces;
+  return rest;
+}
 async function cancelEvent(id) { const event = events().find(item => item.id === id) || state.source?.events?.find(item => item.id === id); if (!event) return; const isCancelled = state.campaign.overrides?.[id]?.cancelled === true; const next = patchEvent(state.campaign,id,{ cancelled:!isCancelled }); await commit(next,isCancelled ? 'Rétablissement en cours…' : 'Annulation en cours…'); }
-async function deleteEvent(id) { if (!confirm('Supprimer cette scène ajoutée et ses notes MJ ?')) return; const notes = { ...state.campaign.notes }; delete notes[id]; await commit({ ...state.campaign, customEvents:state.campaign.customEvents.filter(item => item.id !== id), notes },'Suppression en cours…'); }
+async function deleteEvent(id) { if (!confirm('Supprimer cette scène ajoutée et ses notes MJ ?')) return; const notes = { ...state.campaign.notes }; delete notes[id]; await commit(pruneCustomPlaces({ ...state.campaign, customEvents:state.campaign.customEvents.filter(item => item.id !== id), notes }),'Suppression en cours…'); }
 async function resetEvent(event) { if (!event?.sourceEventId) return; const overrides = { ...state.campaign.overrides }; delete overrides[event.id]; const next = { ...state.campaign, overrides }; $('#event-dialog').close(); await commit(next,'Réinitialisation en cours…'); }
 $('#add-presence').addEventListener('click', () => { const container = $('#presence-editor'); container.insertAdjacentHTML('beforeend',presenceRow()); container.lastElementChild.querySelector('[data-remove-presence]').addEventListener('click', event => event.currentTarget.closest('.carnaval-presence-row').remove()); });
 
@@ -258,6 +279,8 @@ $('#place-filter').addEventListener('change', event => { state.selectedPlace = e
 $('#place-day-filter').addEventListener('change', event => { state.placeDay = event.target.value; render(); });
 $('#character-filter').addEventListener('change', event => { state.selectedCharacter = event.target.value; render(); });
 $('#show-secrets').addEventListener('change', event => { state.showSecrets = event.target.checked; render(); });
+$('#show-rendezvous').addEventListener('change', event => { state.showRendezvous = event.target.checked; render(); });
+$('#event-form').elements.placeId.addEventListener('change', event => { $('#place-name-wrap').hidden = event.target.value !== '__other__'; });
 document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => { state.view = button.dataset.view; document.querySelectorAll('[data-view]').forEach(tab => tab.setAttribute('aria-selected',String(tab === button))); render(); }));
 $('#map-reset').addEventListener('click', () => { if (state.map) state.map.fitBounds([[0,0],[MIDDENHEIM_MAP.height,MIDDENHEIM_MAP.width]]); });
 document.addEventListener('themechange', () => { const colors = mapColors(); state.mapCircles?.forEach(circle => circle.setStyle({ color:colors.goldBright, fillColor:colors.gold })); });
