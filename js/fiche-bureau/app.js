@@ -4,8 +4,8 @@ import { talentRows, talentTaken, spellRows, learnRows } from '../mobile/fiche-a
 import { careerProgress, careerChangeOptions } from '../mobile/fiche-career-model.js';
 import { purchasePayload, purchaseErrorMessage, cancelErrorMessage } from '../mobile/fiche-purchase.js';
 import { blessuresMax, especeConnue, mouvement, xpBalance } from '../fiche/derived.js';
-import { FAMILIER_ESPECES, FAMILIER_SYSTEMES, FAMILIER_TYPES, FAMILIER_VENTS, MOT_CLE_CIBLES, MOT_CLE_TYPES, v5FieldError } from '../fiche/v5.js';
-import { MONTURES_FICHES } from '../data/montures-fiches.js';
+import { FAMILIER_ESPECES, FAMILIER_SYSTEMES, FAMILIER_TYPES, FAMILIER_VENTS, MOT_CLE_CIBLES, MOT_CLE_TYPES, MONTURE_INCONNUE, montureAEnvoyer, v5FieldError } from '../fiche/v5.js';
+import { MONTURES_FICHES, montureFicheDe } from '../data/montures-fiches.js';
 import { publishedSkillRows } from '../catalogue/skill-forms.js';
 import { isTalentInCareer, findCareerByName } from '../fiche/career-model.js';
 import { createCareerViewer } from '../fiche/career-viewer.js';
@@ -118,8 +118,11 @@ function renderFamiliers(data, editable) {
 function renderMonture(data, editable) {
     const monture = data.monture || null;
     const disabled = editable ? '' : 'disabled';
-    return `<div class="bureau-monture"><label for="monture-espece">Monture</label><select id="monture-espece" data-monture="espece" ${disabled}>${options(MONTURE_OPTIONS, monture?.espece ?? '')}</select>`
-        + `<label for="monture-nom">Nom (facultatif)</label><input id="monture-nom" data-monture="nom" maxlength="200" value="${esc(monture?.nom ?? '')}" ${monture && editable ? '' : 'disabled'}>`
+    // Espèce absente de la liste (liste régénérée, fiche d'une version plus récente) : option dédiée, nom figé jusqu'à un choix explicite.
+    const inconnue = !!monture && !montureFicheDe(monture.espece);
+    const table = inconnue ? { [MONTURE_INCONNUE]: `Monture inconnue de cette version (${monture.espece})`, ...MONTURE_OPTIONS } : MONTURE_OPTIONS;
+    return `<div class="bureau-monture"><label for="monture-espece">Monture</label><select id="monture-espece" data-monture="espece" ${disabled}>${options(table, inconnue ? MONTURE_INCONNUE : monture?.espece ?? '')}</select>`
+        + `<label for="monture-nom">Nom (facultatif)</label><input id="monture-nom" data-monture="nom" maxlength="200" value="${esc(monture?.nom ?? '')}" ${monture && !inconnue && editable ? '' : 'disabled'}>`
         + `<button type="button" data-action="monture-remove" ${monture && editable ? '' : 'disabled'}>Retirer la monture</button></div>`;
 }
 
@@ -149,9 +152,8 @@ function patchFamilier(input) {
 
 // Choisir « Aucune monture » écrit null (retrait explicite) ; un nom vide n'est pas écrit.
 function patchMonture() {
-    const espece = $('monture-espece').value;
-    const nom = $('monture-nom').value;
-    patch({ monture: espece ? { espece, ...(nom ? { nom } : {}) } : null });
+    const monture = montureAEnvoyer($('monture-espece').value, $('monture-nom').value);
+    if (monture !== undefined) patch({ monture });
 }
 
 function renderAptitudes() {

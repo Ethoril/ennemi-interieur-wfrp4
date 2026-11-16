@@ -1,6 +1,6 @@
 ## [2.41.0] - 2026-11-16
 
-- Fiches : nouveau champ « Monture » (carte au bureau à côté des familiers, avec un nom facultatif et un retrait). Le joueur la choisit parmi la liste des montures du bestiaire de l’outil MJ, que le MJ peut corriger par le même écran ; le mobile n’en affiche qu’une ligne de résumé.
+- Fiches : nouveau champ « Monture » (carte au bureau à côté des familiers, avec un nom facultatif et un retrait). Le joueur la choisit parmi la liste des montures du bestiaire de l’outil MJ, que le MJ peut corriger par le même écran ; le mobile n’en affiche qu’une ligne de résumé. Une espèce disparue de la liste reste visible (« monture inconnue ») et ne s’efface que par un choix explicite.
 
 ## [2.40.1] - 2026-11-09
 

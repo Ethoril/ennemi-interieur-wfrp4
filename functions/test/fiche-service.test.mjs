@@ -539,6 +539,28 @@ test('monture : le joueur la pose, la modifie et la retire (null) ; les valeurs 
     assert.equal(store.documents.get('fiches/bhelgi').revision, revision);
 });
 
+test('monture : une espèce sortie de la liste peut être remplacée ou retirée, la nouvelle valeur reste validée', async () => {
+    const orpheline = { espece: 'espece-disparue', nom: 'Pie' };
+    const espece = MONTURES_FICHES[0].cle;
+    const base = seed();
+    const depart = { ...base['fiches/bhelgi'], data: { ...base['fiches/bhelgi'].data, monture: orpheline } };
+    const run = async (changes, operationId) => {
+        const store = createStore({ ...base, 'fiches/bhelgi': depart });
+        const services = deps(store);
+        const revision = depart.revision;
+        return { store, revision, execute: () => executeFicheCommand(command('patch', { changes, baseValues: { monture: orpheline } }, { operationId, baseRevision: revision }), PLAYER, services) };
+    };
+    const remplace = await run({ monture: { espece, nom: 'Pie' } }, 'orph-1');
+    await remplace.execute();
+    assert.deepEqual(remplace.store.documents.get('fiches/bhelgi').data.monture, { espece, nom: 'Pie' });
+    const retire = await run({ monture: null }, 'orph-2');
+    await retire.execute();
+    assert.equal(retire.store.documents.get('fiches/bhelgi').data.monture, null);
+    const refuse = await run({ monture: { espece: 'autre-inconnue' } }, 'orph-3');
+    await rejectCode(refuse.execute(), 'invalid-argument');
+    assert.equal(refuse.store.documents.get('fiches/bhelgi').revision, refuse.revision);
+});
+
 test('V5 : toute écriture migre Chance vers Fortune, garde Chance et la source sauvegardée intacte', async () => {
     const legacy = { ...INITIAL, data: { ...INITIAL.data, destin: '3', chance: '2', resilience: '1', determination: '1' } };
     const store = createStore({ ...seed(), 'fiches/bhelgi': legacy });

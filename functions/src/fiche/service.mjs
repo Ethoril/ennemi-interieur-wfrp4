@@ -140,7 +140,8 @@ function validatePatchPayload(payload) {
         } else if (path === 'monture') {
             const error = v5FieldError(path, value);
             if (error) fail(error, 'invalid-argument', { kind: 'field-invalid', path });
-            if (base !== null && v5FieldError(path, base)) fail('valeur de base invalide');
+            // La valeur enregistrée peut porter une espèce que la liste ne connaît plus : seule sa forme est vérifiée.
+            if (base !== null && !(isRecord(base) && typeof base.espece === 'string')) fail('valeur de base invalide');
         } else if (path === 'genreAffichage') {
             if (!['masculin', 'feminin'].includes(value) || (base !== null && !['masculin', 'feminin'].includes(base))) fail('genre d’affichage invalide');
         } else if (simple && path.startsWith('optVisible.')) {

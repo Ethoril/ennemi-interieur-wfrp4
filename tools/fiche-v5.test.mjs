@@ -6,7 +6,7 @@ import { BASE_KEYWORDS } from '../js/data/creature-keywords.js';
 import { FICHE_EXPORT_KEYS } from '../js/fiche/export-import.js';
 import { MONTURES_FICHES } from '../js/data/montures-fiches.js';
 import {
-    counterError, familiersError, familiersResume, migrerFicheV5, montureError, montureResume, motsClesError, motsClesResume, MOT_CLE_CIBLES, v5FieldError,
+    counterError, familiersError, familiersResume, migrerFicheV5, MONTURE_INCONNUE, montureAEnvoyer, montureError, montureResume, motsClesError, motsClesResume, MOT_CLE_CIBLES, v5FieldError,
 } from '../js/fiche/v5.js';
 
 const homoncule = { id: 'fam_1', systeme: 'homunculus', type: 'spell', vent: 'ulgu', espece: null, nom: 'Brindille', destinSacrifie: 1 };
@@ -56,6 +56,8 @@ test('monture : null (retrait) ou { espece de la liste fermée, nom facultatif d
     assert.ok(v5FieldError('monture', { espece: 'inconnue' }));
     assert.equal(montureResume({ monture: { espece: cle, nom: 'Pie' } }), `Monture : Pie (${libelle})`);
     assert.equal(montureResume({ monture: { espece: cle } }), `Monture : ${libelle}`);
+    assert.equal(montureResume({ monture: { espece: 'disparue', nom: 'Pie' } }), 'Monture : Pie (monture inconnue)');
+    assert.equal(montureResume({ monture: { espece: 'disparue' } }), 'Monture : monture inconnue');
     assert.equal(montureResume({ monture: null }), '');
     assert.equal(montureResume({}), '');
 });
@@ -109,6 +111,34 @@ test('import : nouveaux champs acceptés et validés, anciens exports avec Chanc
     assert.throws(() => run({ ...data, familiers: [{ ...animal, type: 'spell' }] }), /familiers/u);
     assert.throws(() => run({ ...data, motsCles: [{ id: 'haine', cible: 'inconnu' }] }), /motsCles/u);
     assert.throws(() => run({ ...data, peche: '-1' }), /peche/u);
+});
+
+test('bureau : espèce inconnue + frappe dans le nom = rien d’envoyé ; choix explicite = objet ou null', () => {
+    const { cle } = MONTURES_FICHES[0];
+    assert.equal(montureAEnvoyer(MONTURE_INCONNUE, 'Pie'), undefined);
+    assert.deepEqual(montureAEnvoyer(cle, 'Pie'), { espece: cle, nom: 'Pie' });
+    assert.deepEqual(montureAEnvoyer(cle, ''), { espece: cle });
+    assert.equal(montureAEnvoyer('', 'Pie'), null);
+});
+
+test('contrôleur : monture accepte null, aucun autre champ ne l’accepte', async () => {
+    const { createFicheController } = await import('../js/fiche-controller.js');
+    const { createFicheDraftStore } = await import('../js/fiche-draft-store.js');
+    const values = new Map();
+    const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key),
+        key: index => [...values.keys()][index] ?? null, get length() { return values.size; } };
+    const listeners = [];
+    const sent = [];
+    const repository = { subscribe(_id, next) { listeners.push(next); return () => {}; }, async execute(command) { sent.push(command); return { revision: 2 }; } };
+    const controller = createFicheController({ repository, draftStore: createFicheDraftStore({ storage }), isOnline: () => true, receiptTimeoutMs: 1 });
+    controller.setSession({ uid: 'u', charId: 'test', role: 'joueur' });
+    const monture = { espece: MONTURES_FICHES[0].cle };
+    for (const next of listeners) next({ exists: true, envelope: { schemaVersion: 2, revision: 1, tombstone: false, data: { destin: '3', monture } } });
+    assert.equal(controller.stagePatch({ monture: null }).ok, true);
+    assert.deepEqual(controller.stagePatch({ fortune: null }), { ok: false, reason: 'field-forbidden' });
+    await controller.submitPatch();
+    assert.deepEqual(sent[0].payload, { changes: { monture: null }, baseValues: { monture } });
+    controller.close();
 });
 
 test('contrôleur : la fiche lue est migrée, un patch Fortune part avec l’ancienne Chance pour base', async () => {

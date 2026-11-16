@@ -99,11 +99,21 @@ export function familiersResume(data) {
     return `${rows.length > 1 ? 'Familiers' : 'Familier'} : ${rows.map(row => `${row?.nom || 'sans nom'} (${label(row)})`).join(' ; ')}`;
 }
 
+/** Valeur de l'option « monture inconnue de cette version » de la liste du bureau : jamais un choix du joueur. */
+export const MONTURE_INCONNUE = '__monture-inconnue__';
+
+/** Valeur à envoyer selon la liste du bureau : undefined (rien : espèce inconnue conservée), null (« Aucune monture ») ou { espece, nom? }. */
+export function montureAEnvoyer(espece, nom) {
+    if (espece === MONTURE_INCONNUE) return undefined;
+    return espece ? { espece, ...(nom ? { nom } : {}) } : null;
+}
+
 /** « Monture : Pie (Cheval de selle) », le libellé seul sans nom ; chaîne vide sans monture. */
 export function montureResume(data) {
     const monture = data?.monture;
     if (!isRecord(monture) || typeof monture.espece !== 'string') return '';
-    const libelle = montureFicheDe(monture.espece)?.libelle || monture.espece;
+    const libelle = montureFicheDe(monture.espece)?.libelle;
+    if (!libelle) return `Monture : ${monture.nom ? `${monture.nom} (monture inconnue)` : 'monture inconnue'}`;
     return `Monture : ${monture.nom ? `${monture.nom} (${libelle})` : libelle}`;
 }
 
