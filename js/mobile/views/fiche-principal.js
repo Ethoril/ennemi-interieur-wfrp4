@@ -1,5 +1,5 @@
 import { blessuresMax, mouvement } from '../../fiche/derived.js';
-import { familiersResume, motsClesResume } from '../../fiche/v5.js';
+import { familiersResume, montureResume, motsClesResume } from '../../fiche/v5.js';
 import { SUIVI_MJ_NOTE, SUIVI_MJ_TITLE, suiviMjGroups, suiviMjSince } from '../../fiche/suivi-mj.js';
 import { CARACS, dotTarget, FAVORITE_SLOTS, favoriteSlots, ficheCaracs, resourceTokens } from '../fiche-model.js';
 
@@ -142,7 +142,7 @@ export function createPrincipalPanel({ documentRef, aptitudesHref, onOpenCarac =
                 `${carac.nom} ${carac.total}, bonus ${carac.bonus}${carac.career ? ', de carrière' : ''}`);
         });
         derived.textContent = `Mouvement ${mouvement(data) ?? 'Espèce inconnue'} · Blessures max ${blessuresMax(data) ?? 'Espèce inconnue'} · Corruption ${Math.max(0, Math.floor(+data?.corruption) || 0)} · Péché ${Math.max(0, Math.floor(+data?.peche) || 0)}`;
-        v5.textContent = [familiersResume(data), motsClesResume(data)].filter(Boolean).join(' · ');
+        v5.textContent = [familiersResume(data), montureResume(data), motsClesResume(data)].filter(Boolean).join(' · ');
         v5.hidden = !v5.textContent;
         updateSuivi(data);
         favoriteSlots(data, engine, careers).forEach(({ slot, row }, index) => {

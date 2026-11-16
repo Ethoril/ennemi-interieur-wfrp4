@@ -1,7 +1,8 @@
-// Données V5 de la fiche : Fortune (ex-Chance), Péché, Corruption, familiers et mots-clés.
+// Données V5 de la fiche : Fortune (ex-Chance), Péché, Corruption, familiers, monture et mots-clés.
 // Module pur, partagé avec la fonction (tools/sync-fiche-domain.mjs). Les identifiants de familier
 // reprennent ceux de l'outil MJ (js/core/familiars.js), les cibles de mots-clés son référentiel de base.
 import { BASE_KEYWORDS } from '../data/creature-keywords.js';
+import { montureFicheDe } from '../data/montures-fiches.js';
 
 export const FAMILIER_SYSTEMES = Object.freeze({ homunculus: 'Homoncule', animal: 'Familier animal' });
 export const FAMILIER_TYPES = Object.freeze({ combat: 'Familier de combat', power: 'Familier de puissance', spell: 'Familier de sort' });
@@ -56,6 +57,15 @@ export function familiersError(value) {
     return null;
 }
 
+/** Message d'erreur, ou null si la monture est valide : `null` (retrait) ou { espece, nom? }, espèce dans MONTURES_FICHES. */
+export function montureError(value) {
+    if (value === null) return null;
+    if (!isRecord(value) || Object.keys(value).some(key => !['espece', 'nom'].includes(key))) return 'monture invalide';
+    if (typeof value.espece !== 'string' || !montureFicheDe(value.espece)) return 'espèce de monture invalide';
+    if (Object.hasOwn(value, 'nom') && (typeof value.nom !== 'string' || value.nom.length > 200)) return 'nom de monture invalide';
+    return null;
+}
+
 /** Message d'erreur, ou null si la liste de mots-clés est valide. */
 export function motsClesError(value) {
     if (!Array.isArray(value) || value.length > MAX_MOTS_CLES) return 'liste de mots-clés invalide';
@@ -76,6 +86,7 @@ export function v5FieldError(path, value) {
     if (V5_COUNTER_FIELDS.includes(path)) return counterError(value);
     if (path === 'familiers') return familiersError(value);
     if (path === 'motsCles') return motsClesError(value);
+    if (path === 'monture') return montureError(value);
     return null;
 }
 
@@ -86,6 +97,14 @@ export function familiersResume(data) {
     const label = row => [FAMILIER_SYSTEMES[row?.systeme], FAMILIER_TYPES[row?.type],
         FAMILIER_VENTS[row?.vent] || FAMILIER_ESPECES[row?.espece]].filter(Boolean).join(', ');
     return `${rows.length > 1 ? 'Familiers' : 'Familier'} : ${rows.map(row => `${row?.nom || 'sans nom'} (${label(row)})`).join(' ; ')}`;
+}
+
+/** « Monture : Pie (Cheval de selle) », le libellé seul sans nom ; chaîne vide sans monture. */
+export function montureResume(data) {
+    const monture = data?.monture;
+    if (!isRecord(monture) || typeof monture.espece !== 'string') return '';
+    const libelle = montureFicheDe(monture.espece)?.libelle || monture.espece;
+    return `Monture : ${monture.nom ? `${monture.nom} (${libelle})` : libelle}`;
 }
 
 /** « Haine (Peaux-vertes), Sans peur (Chien) » ; chaîne vide sans mot-clé. */

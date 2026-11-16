@@ -5,6 +5,7 @@ import { careerProgress, careerChangeOptions } from '../mobile/fiche-career-mode
 import { purchasePayload, purchaseErrorMessage, cancelErrorMessage } from '../mobile/fiche-purchase.js';
 import { blessuresMax, especeConnue, mouvement, xpBalance } from '../fiche/derived.js';
 import { FAMILIER_ESPECES, FAMILIER_SYSTEMES, FAMILIER_TYPES, FAMILIER_VENTS, MOT_CLE_CIBLES, MOT_CLE_TYPES, v5FieldError } from '../fiche/v5.js';
+import { MONTURES_FICHES } from '../data/montures-fiches.js';
 import { publishedSkillRows } from '../catalogue/skill-forms.js';
 import { isTalentInCareer, findCareerByName } from '../fiche/career-model.js';
 import { createCareerViewer } from '../fiche/career-viewer.js';
@@ -46,6 +47,8 @@ const specButton = (label, spec, className = '', attrs = '') => {
 };
 const action = (name, label, disabled = false) => `<button type="button" data-action="${esc(name)}" ${disabled ? 'disabled' : ''}>${esc(label)}</button>`;
 const card = (title, content) => `<section class="bureau-card"><h2>${esc(title)}</h2>${content}</section>`;
+// Deux livres peuvent porter le même libellé de monture : le titre du livre les distingue.
+const MONTURE_OPTIONS = { '': 'Aucune monture', ...Object.fromEntries(MONTURES_FICHES.map(m => [m.cle, `${m.libelle} (${m.titreLivre})`])) };
 const options = (table, selected) => Object.entries(table).map(([key, label]) => `<option value="${esc(key)}" ${key === selected ? 'selected' : ''}>${esc(label)}</option>`).join('');
 const sortedCibles = Object.fromEntries(Object.entries(MOT_CLE_CIBLES).sort(([, a], [, b]) => a.localeCompare(b, 'fr')));
 const readPath = (data, parts) => {
@@ -88,6 +91,7 @@ function renderLeft() {
     $('bureau-left').innerHTML = card('Caractéristiques', `<div class="bureau-caracs">${ficheCaracs(data, catalogues.careers).map(c => specButton(`<span>${esc(c.abbr)}</span><strong><em>${esc(Math.floor(c.total / 10))}</em>${esc(c.total % 10)}</strong>`, { kind: 'carac', key: c.key }, `bureau-carac ${c.career ? 'is-career' : ''}`, `aria-label="${esc(`${c.nom} ${c.total}, bonus ${c.bonus}${c.career ? ', de carrière' : ''}. Détail`)}"`)).join('')}</div><p class="bureau-muted">Cadre doré : caractéristique de carrière. Un clic ouvre le détail.</p>`)
         + card('État', `<div class="bureau-state-row"><label for="blessures-act">Blessures actuelles</label><div class="bureau-stepper"><button data-action="wounds" data-delta="-1" aria-label="Diminuer les blessures actuelles" ${editable ? '' : 'disabled'}>−</button><input id="blessures-act" data-patch="blessuresAct" aria-label="Blessures actuelles" type="number" min="0" value="${esc(data.blessuresAct || 0)}" ${editable ? '' : 'disabled'}><button data-action="wounds" data-delta="1" aria-label="Augmenter les blessures actuelles" ${editable ? '' : 'disabled'}>+</button></div></div><progress max="${Math.max(1, maximum ?? 0)}" value="${Math.max(0, +data.blessuresAct || 0)}" aria-label="Blessures disponibles"></progress>${especeConnue(data) ? '' : `<p class="bureau-error" role="note">Espèce « ${esc(data.race)} » inconnue : Mouvement et Blessures max à fixer avec le MJ.</p>`}<div class="bureau-state-row"><span>Mouvement</span><strong>${esc(mouvement(data) ?? '—')}</strong></div><div class="bureau-state-row"><span>Blessures max</span><strong>${esc(maximum ?? '—')}</strong></div><div class="bureau-state-row"><label for="corruption">Corruption</label><input id="corruption" data-patch="corruption" type="number" min="0" step="1" value="${esc(data.corruption || 0)}" ${editable ? '' : 'disabled'}></div><div class="bureau-state-row"><label for="peche">Péché</label><input id="peche" data-patch="peche" type="number" min="0" step="1" value="${esc(data.peche || 0)}" ${editable ? '' : 'disabled'}></div>`)
         + card('Familiers', renderFamiliers(data, editable))
+        + card('Monture', renderMonture(data, editable))
         + card('Mots-clés', renderMotsCles(data, editable))
         + renderSuiviMjHtml(data)
         + card('Possessions et notes', `<label class="bureau-sr" for="possessions">Possessions et notes</label><textarea id="possessions" data-patch="possessions" ${editable ? '' : 'disabled'}>${esc(data.possessions || '')}</textarea><small class="bureau-muted">Enregistrement automatique</small>`);
@@ -109,6 +113,14 @@ function renderFamiliers(data, editable) {
             + `<button type="button" data-action="familier-remove" data-id="${id}" aria-label="${esc(`Retirer ${row.nom || 'ce familier'}`)}" ${disabled}>Retirer</button></fieldset>`;
     }).join('');
     return `${rows || '<p class="bureau-muted">Aucun familier.</p>'}${editable ? action('familier-add', '+ Familier') : ''}`;
+}
+
+function renderMonture(data, editable) {
+    const monture = data.monture || null;
+    const disabled = editable ? '' : 'disabled';
+    return `<div class="bureau-monture"><label for="monture-espece">Monture</label><select id="monture-espece" data-monture="espece" ${disabled}>${options(MONTURE_OPTIONS, monture?.espece ?? '')}</select>`
+        + `<label for="monture-nom">Nom (facultatif)</label><input id="monture-nom" data-monture="nom" maxlength="200" value="${esc(monture?.nom ?? '')}" ${monture && editable ? '' : 'disabled'}>`
+        + `<button type="button" data-action="monture-remove" ${monture && editable ? '' : 'disabled'}>Retirer la monture</button></div>`;
 }
 
 function renderMotsCles(data, editable) {
@@ -133,6 +145,13 @@ function patchFamilier(input) {
     // Destin vide pendant la saisie : on attend une valeur complète.
     if (input.dataset.field === 'destinSacrifie' && !/^\d{1,3}$/u.test(input.value)) return;
     patch({ familiers: (state.data.familiers || []).map(row => row.id === input.dataset.fam ? familierAvecChamp(row, input.dataset.field, input.value) : row) });
+}
+
+// Choisir « Aucune monture » écrit null (retrait explicite) ; un nom vide n'est pas écrit.
+function patchMonture() {
+    const espece = $('monture-espece').value;
+    const nom = $('monture-nom').value;
+    patch({ monture: espece ? { espece, ...(nom ? { nom } : {}) } : null });
 }
 
 function renderAptitudes() {
@@ -363,6 +382,7 @@ $('bureau-content').addEventListener('click', async event => {
         if (row && window.confirm(`Retirer ${row.nom || 'ce familier'} de la fiche ?`)) patch({ familiers: state.data.familiers.filter(item => item !== row) });
         return;
     }
+    if (name === 'monture-remove') { patch({ monture: null }); $('monture-espece')?.focus(); return; }
     if (name === 'mot-cle-add') {
         const row = { id: $('mot-cle-type').value, cible: $('mot-cle-cible').value };
         const rows = state.data.motsCles || [];
@@ -414,6 +434,7 @@ $('bureau-content').addEventListener('input', event => {
     const input = event.target;
     if (input.dataset.patch) patch({ [input.dataset.patch]: input.value });
     if (input.dataset.fam && input.matches('input')) patchFamilier(input);
+    if (input.dataset.monture === 'nom') patchMonture();
     if (input.id === 'skill-query') renderSkills();
     if (input.id === 'bureau-search') { searchQuery = input.value; const cursor = input.selectionStart; renderInspector(); $('bureau-search').focus(); $('bureau-search').setSelectionRange(cursor, cursor); }
     if (input.id === 'bureau-correction-reason') { correctionReason = input.value; persistCorrections(); $('bureau-corrections').querySelector('[data-action="submit-corrections"]').disabled = !roleControls(state).actions || !navigator.onLine || !correctionItems.length || correctionItems.length > 50 || !!correctionConflicts().length || !correctionReason.trim(); }
@@ -421,6 +442,7 @@ $('bureau-content').addEventListener('input', event => {
 $('bureau-content').addEventListener('change', event => {
     const input = event.target;
     if (input.dataset.fam && input.matches('select')) patchFamilier(input);
+    if (input.dataset.monture === 'espece') patchMonture();
     if (input.id === 'bureau-genre') patch({ genreAffichage: input.value });
     if (input.id === 'skill-filter') renderSkills();
     if (input.id === 'bureau-target-rank') { selection.targetRank = +input.value; renderInspector(); }

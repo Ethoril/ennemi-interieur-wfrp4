@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { executeFicheCommand, FicheCommandError } from '../src/fiche/service.mjs';
 import { createFicheCommandHandler } from '../src/fiche/handler.mjs';
 import { applyEquipmentCommand } from '../../js/fiche/equipment.js';
+import { MONTURES_FICHES } from '../src/data/montures-fiches.js';
 import equipmentCatalogue from '../../js/data/equipment-catalog.json' with { type: 'json' };
 
 const PLAYER = { auth: { uid: 'player-1', token: { email: 'PLAYER@example.test', email_verified: true } } };
@@ -516,6 +517,26 @@ test('V5 : le joueur modifie Fortune, Péché, Corruption, familiers et mots-cl�
         await rejectCode(executeFicheCommand(command('patch', { changes: { [path]: '1' }, baseValues: { [path]: null } },
             { operationId: `v5-retire-${path}`, baseRevision: 1 }), PLAYER, services), 'permission-denied', 'field-forbidden');
     }
+});
+
+test('monture : le joueur la pose, la modifie et la retire (null) ; les valeurs invalides sont refusées sans écriture', async () => {
+    const store = createStore(seed());
+    const services = deps(store);
+    const espece = MONTURES_FICHES[0].cle;
+    const patch = (changes, baseValues, operationId, baseRevision) => executeFicheCommand(command('patch', { changes, baseValues }, { operationId, baseRevision }), PLAYER, services);
+    await patch({ monture: { espece } }, { monture: null }, 'monture-1', 0);
+    assert.deepEqual(store.documents.get('fiches/bhelgi').data.monture, { espece });
+    await patch({ monture: { espece, nom: 'Pie' } }, { monture: { espece } }, 'monture-2', 1);
+    assert.deepEqual(store.documents.get('fiches/bhelgi').data.monture, { espece, nom: 'Pie' });
+    await patch({ monture: null }, { monture: { espece, nom: 'Pie' } }, 'monture-3', 2);
+    assert.equal(store.documents.get('fiches/bhelgi').data.monture, null, 'retrait explicite écrit null');
+    const revision = store.documents.get('fiches/bhelgi').revision;
+    const refused = [{ espece: 'inconnue' }, { espece, nom: 'x'.repeat(201) }, { espece, nom: 4 }, { espece, pv: 10 }, { nom: 'Pie' }, 'cheval', [espece]];
+    for (const [index, value] of refused.entries()) {
+        await rejectCode(patch({ monture: value }, { monture: null }, `monture-refus-${index}`, revision), 'invalid-argument');
+    }
+    await rejectCode(patch({ monture: { espece } }, { monture: 'cheval' }, 'monture-base', revision), 'invalid-argument');
+    assert.equal(store.documents.get('fiches/bhelgi').revision, revision);
 });
 
 test('V5 : toute écriture migre Chance vers Fortune, garde Chance et la source sauvegardée intacte', async () => {

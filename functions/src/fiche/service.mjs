@@ -13,7 +13,7 @@ const SERVER_ONLY_TYPES = new Set(['gain', 'correct', 'import', 'reset', 'equipm
 const ADMIN_EMAIL = 'ethoril@gmail.com';
 const PATCH_FIELDS = new Set([
     'nom', 'race', 'genreAffichage', 'blessuresAct', 'fortune', 'destin', 'peche', 'corruption', 'possessions',
-    'familiers', 'motsCles', 'optVisible.section-sorts', 'optVisible.section-prieres',
+    'familiers', 'monture', 'motsCles', 'optVisible.section-sorts', 'optVisible.section-prieres',
 ]);
 const MAX_COMMAND_BYTES = 256 * 1024;
 const MAX_FICHE_DATA_BYTES = 900 * 1024;
@@ -131,11 +131,16 @@ function validatePatchPayload(payload) {
         }
         const value = payload.changes[path];
         const base = payload.baseValues[path];
-        if (value === null) fail('une modification ne peut pas supprimer un champ');
+        // Seul `monture` admet null : retrait explicite par le joueur, distinct d'une fiche jamais renseignée.
+        if (value === null && path !== 'monture') fail('une modification ne peut pas supprimer un champ');
         if (V5_LIST_FIELDS.includes(path) || V5_COUNTER_FIELDS.includes(path)) {
             const error = v5FieldError(path, value);
             if (error) fail(error, 'invalid-argument', { kind: 'field-invalid', path });
             if (base !== null && (V5_LIST_FIELDS.includes(path) ? !Array.isArray(base) : typeof base !== 'string')) fail('valeur de base invalide');
+        } else if (path === 'monture') {
+            const error = v5FieldError(path, value);
+            if (error) fail(error, 'invalid-argument', { kind: 'field-invalid', path });
+            if (base !== null && v5FieldError(path, base)) fail('valeur de base invalide');
         } else if (path === 'genreAffichage') {
             if (!['masculin', 'feminin'].includes(value) || (base !== null && !['masculin', 'feminin'].includes(base))) fail('genre d’affichage invalide');
         } else if (simple && path.startsWith('optVisible.')) {

@@ -128,6 +128,10 @@ Une grille unique, largeur max 1376 px :
 - Mêmes champs et mêmes clés qu'aujourd'hui (`blessures-act`, `corruption`…), patch joueur
   autorisé comme aujourd'hui.
 
+### 5.3 bis Monture (colonne gauche, à côté des familiers)
+
+- Carte « Monture » : liste déroulante des montures (libellé et titre du livre, première option « Aucune monture »), nom facultatif, bouton « Retirer la monture » ; choisir « Aucune monture » ou retirer écrit `null`. Champ `monture`, validé par le serveur (`js/fiche/v5.js`), sur mobile une ligne de résumé en lecture seule.
+
 ### 5.4 Possessions et notes (colonne gauche)
 
 Texte libre, enregistrement automatique comme aujourd'hui.

@@ -4,7 +4,7 @@ import { migrerFicheV5 } from './fiche/v5.js';
 
 const SIMPLE_PATHS = new Set([
     'nom', 'race', 'genreAffichage', 'blessuresAct', 'fortune', 'destin', 'peche', 'corruption', 'possessions',
-    'familiers', 'motsCles', 'optVisible.section-sorts', 'optVisible.section-prieres',
+    'familiers', 'monture', 'motsCles', 'optVisible.section-sorts', 'optVisible.section-prieres',
 ]);
 const PRIVATE_COMMANDS = new Set(['gain', 'correct', 'import', 'reset', 'equipment']);
 
@@ -277,7 +277,7 @@ export function createFicheController({
             return { ok: false, reason: 'not-editable' };
         }
         const paths = Object.keys(changes);
-        if (!paths.length || paths.some(path => !canEditPath(path) || changes[path] === undefined || changes[path] === null)) {
+        if (!paths.length || paths.some(path => !canEditPath(path) || changes[path] === undefined || (changes[path] === null && path !== 'monture'))) {
             return { ok: false, reason: 'field-forbidden' };
         }
         const baseData = draft?.baseData || clone(snapshot.data);

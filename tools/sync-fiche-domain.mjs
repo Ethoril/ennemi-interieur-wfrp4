@@ -15,8 +15,10 @@ const generated = [
     ['js/fiche/xp.js', 'functions/src/domain/fiche/xp.js'],
     ['js/fiche/outil-mj.js', 'functions/src/domain/fiche/outil-mj.js'],
     ['js/fiche/v5.js', 'functions/src/domain/fiche/v5.js', source => source
-        .replaceAll("'../data/creature-keywords.js'", "'../../data/creature-keywords.js'")],
+        .replaceAll("'../data/creature-keywords.js'", "'../../data/creature-keywords.js'")
+        .replaceAll("'../data/montures-fiches.js'", "'../../data/montures-fiches.js'")],
     ['js/data/creature-keywords.js', 'functions/src/data/creature-keywords.js'],
+    ['js/data/montures-fiches.js', 'functions/src/data/montures-fiches.js'],
     ['js/fiche/published-catalogue-engine.js', 'functions/src/domain/fiche/published-catalogue-engine.mjs', source => source
         .replaceAll("'../catalogue/talent-resolver.js'", "'../../catalogue/talent-resolver.mjs'")
         .replaceAll("'../catalogue/skill-resolver.js'", "'../../catalogue/skill-resolver.mjs'")],

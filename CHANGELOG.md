@@ -1,3 +1,7 @@
+## [2.41.0] - 2026-11-16
+
+- Fiches : nouveau champ « Monture » (carte au bureau à côté des familiers, avec un nom facultatif et un retrait). Le joueur la choisit parmi la liste des montures du bestiaire de l’outil MJ, que le MJ peut corriger par le même écran ; le mobile n’en affiche qu’une ligne de résumé.
+
 ## [2.40.1] - 2026-11-09
 
 - Fiches : choix de libellés de carrière féminins, sans modification des données de carrière utilisées par les règles. Les formes non renseignées conservent le libellé du catalogue.

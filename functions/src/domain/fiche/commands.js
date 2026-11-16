@@ -32,7 +32,7 @@ const EXPORT_KEYS = new Set([
     'nom', 'race', 'genreAffichage', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance',
     'destin', 'fortune', 'peche', 'corruption', 'possessions', 'carac', 'skillsBasic', 'skillsAdvanced', 'careers',
     'talentsAcq', 'talentsAvail', 'sorts', 'prieres', 'xpLog', 'customSpecs', 'basicSpecs',
-    'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment', 'familiers', 'motsCles', 'suiviMj',
+    'customTalents', 'chosenVariants', 'careerOverrides', 'optVisible', 'equipment', 'familiers', 'monture', 'motsCles', 'suiviMj',
 ]);
 
 export class FicheCommandError extends Error {
@@ -1054,7 +1054,7 @@ function validateImportData(imported, equipmentCatalogue) {
     for (const key of ['nom', 'race', 'carriere', 'rang', 'blessuresAct', 'resilience', 'determination', 'chance', 'destin', 'fortune', 'peche', 'corruption', 'possessions']) {
         if (Object.hasOwn(imported, key) && typeof imported[key] !== 'string') fail(`champ d’import invalide: ${key}`);
     }
-    for (const key of ['fortune', 'peche', ...V5_LIST_FIELDS]) {
+    for (const key of ['fortune', 'peche', 'monture', ...V5_LIST_FIELDS]) {
         const error = Object.hasOwn(imported, key) ? v5FieldError(key, imported[key]) : null;
         if (error) fail(`champ d’import invalide: ${key} (${error})`);
     }

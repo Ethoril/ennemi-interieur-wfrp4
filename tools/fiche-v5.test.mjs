@@ -4,8 +4,9 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createFicheCommandEngine } from '../js/fiche/commands.js';
 import { BASE_KEYWORDS } from '../js/data/creature-keywords.js';
 import { FICHE_EXPORT_KEYS } from '../js/fiche/export-import.js';
+import { MONTURES_FICHES } from '../js/data/montures-fiches.js';
 import {
-    counterError, familiersError, familiersResume, migrerFicheV5, motsClesError, motsClesResume, MOT_CLE_CIBLES, v5FieldError,
+    counterError, familiersError, familiersResume, migrerFicheV5, montureError, montureResume, motsClesError, motsClesResume, MOT_CLE_CIBLES, v5FieldError,
 } from '../js/fiche/v5.js';
 
 const homoncule = { id: 'fam_1', systeme: 'homunculus', type: 'spell', vent: 'ulgu', espece: null, nom: 'Brindille', destinSacrifie: 1 };
@@ -38,6 +39,25 @@ test('familiers : homoncule avec Vent, animal toujours de puissance avec espèce
     for (const [row, message] of refused) assert.match(familiersError([row]), message, JSON.stringify(row));
     assert.match(familiersError([homoncule, { ...animal, id: homoncule.id }]), /identifiant/u, 'identifiants uniques');
     assert.ok(familiersError({}), 'une liste est attendue');
+});
+
+test('monture : null (retrait) ou { espece de la liste fermée, nom facultatif de 200 caractères au plus }, rien d’autre', () => {
+    const { cle, libelle } = MONTURES_FICHES[0];
+    assert.equal(montureError({ espece: cle }), null, 'sans nom');
+    assert.equal(montureError({ espece: cle, nom: 'Pie' }), null, 'avec nom');
+    assert.equal(montureError({ espece: cle, nom: 'x'.repeat(200) }), null, '200 caractères');
+    assert.equal(montureError(null), null, 'retrait explicite');
+    assert.ok(MONTURES_FICHES.every(monture => montureError({ espece: monture.cle }) === null), 'toute la liste est acceptée');
+    for (const value of [{ espece: 'inconnue' }, { espece: libelle }, { espece: 3 }, {}, { nom: 'Pie' }, { espece: cle, nom: 'x'.repeat(201) },
+        { espece: cle, nom: 4 }, { espece: cle, nom: null }, { espece: cle, pv: 10 }, 'cheval', [], 0, undefined]) {
+        assert.ok(montureError(value), JSON.stringify(value));
+    }
+    assert.equal(v5FieldError('monture', null), null);
+    assert.ok(v5FieldError('monture', { espece: 'inconnue' }));
+    assert.equal(montureResume({ monture: { espece: cle, nom: 'Pie' } }), `Monture : Pie (${libelle})`);
+    assert.equal(montureResume({ monture: { espece: cle } }), `Monture : ${libelle}`);
+    assert.equal(montureResume({ monture: null }), '');
+    assert.equal(montureResume({}), '');
 });
 
 test('mots-clés : type connu, cible du référentiel de l’outil, sans doublon', () => {
@@ -74,7 +94,7 @@ test('migration : Fortune reprend Chance sans rien effacer, idempotente', () => 
 });
 
 test('import : nouveaux champs acceptés et validés, anciens exports avec Chance relus', () => {
-    assert.ok(['fortune', 'peche', 'familiers', 'motsCles', 'chance'].every(key => FICHE_EXPORT_KEYS.includes(key)));
+    assert.ok(['fortune', 'peche', 'familiers', 'monture', 'motsCles', 'chance'].every(key => FICHE_EXPORT_KEYS.includes(key)));
     const engine = createFicheCommandEngine({ careers: [], catalogVersion: 'v5-test' });
     const run = data => engine.applyCommand({}, {
         type: 'import', operationId: 'import-v5', charId: 'test', baseRevision: 0, payload: { reason: 'Import V5', data },
@@ -82,6 +102,10 @@ test('import : nouveaux champs acceptés et validés, anciens exports avec Chanc
     const data = { nom: 'Ilsa', fortune: '2', peche: '1', familiers: [homoncule], motsCles: [{ id: 'haine', cible: 'mutant' }] };
     assert.deepEqual(run(data).data.familiers, [homoncule]);
     assert.equal(run({ nom: 'Ilsa', chance: '2', resilience: '1' }).data.chance, '2');
+    const monture = { espece: MONTURES_FICHES[0].cle, nom: 'Pie' };
+    assert.deepEqual(run({ ...data, monture }).data.monture, monture, 'la monture survit à un import');
+    assert.equal(run({ ...data, monture: null }).data.monture, null, 'le retrait aussi');
+    assert.throws(() => run({ ...data, monture: { espece: 'inconnue' } }), /monture/u);
     assert.throws(() => run({ ...data, familiers: [{ ...animal, type: 'spell' }] }), /familiers/u);
     assert.throws(() => run({ ...data, motsCles: [{ id: 'haine', cible: 'inconnu' }] }), /motsCles/u);
     assert.throws(() => run({ ...data, peche: '-1' }), /peche/u);
