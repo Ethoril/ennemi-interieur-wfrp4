@@ -149,3 +149,8 @@ test('le changement de camp attend le bouton « Appliquer » au lieu d’enregis
     assert.ok(onChange.length > 0 && !onChange.includes('commit'), 'le choix du camp ne doit rien enregistrer');
     assert.match(ui, /async function applyCamp\(id\)[\s\S]*?commitHolders\(/u);
 });
+
+test('une présence dans un rendez-vous parle des horaires du rendez-vous, pas du spectacle', async () => {
+    const ui = await read('js/carnaval.js');
+    assert.match(ui, /horaires \$\{event\.kind === 'rendezvous' \? 'du rendez-vous' : 'du spectacle'\}/u);
+});
