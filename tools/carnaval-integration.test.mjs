@@ -62,3 +62,31 @@ test('l’interface du Carnaval totalise et modifie les détenteurs sans stockag
     for (const message of ['Détenteur enregistré.', 'Détenteur supprimé.', 'Camp modifié.']) assert.ok(ui.includes(message), message);
     assert.doesNotMatch(ui, /localStorage|indexedDB/u);
 });
+
+test('le bureau propose les filtres de suivi de la vue PNJ', async () => {
+    const html = await read('carnaval.html');
+    for (const id of ['character-tracking-filters', 'met-filter', 'camp-filter']) assert.match(html, new RegExp(`id="${id}"`, 'u'));
+});
+
+test('l’interface du Carnaval note le suivi des personnages sans stockage local', async () => {
+    const ui = await read('js/carnaval.js');
+    assert.match(ui, /import \{[^}]*\bATTITUDES\b[^}]*\} from '\.\/carnaval-model\.js'/u);
+    assert.match(ui, /import \{[^}]*\bholderOfCharacter\b[^}]*\} from '\.\/carnaval-model\.js'/u);
+    assert.match(ui, /[.]{3}ATTITUDES/u);
+    assert.match(ui, /holderOfCharacter\(/u);
+    assert.match(ui, /character-tracking/u);
+    assert.match(ui, /tracking/u);
+    for (const text of ['Suivi enregistré.', 'Rencontré', 'Attitude envers les PJ', 'Note de suivi']) assert.ok(ui.includes(text), text);
+    assert.doesNotMatch(ui, /last-of-type/u);
+    assert.doesNotMatch(ui, /localStorage|indexedDB/u);
+});
+
+test('l’interface du Carnaval tient les présentations sans stockage local ni écriture des relations', async () => {
+    const ui = await read('js/carnaval.js');
+    assert.match(ui, /import \{[^}]*\bintroductionsFor\b[^}]*\} from '\.\/carnaval-model\.js'/u);
+    assert.match(ui, /introductionsFor\(/u);
+    assert.match(ui, /character-introductions/u);
+    for (const text of ['Peut présenter à', 'Présenté par', 'Présentation ajoutée.', 'Présentation retirée.']) assert.ok(ui.includes(text), text);
+    assert.doesNotMatch(ui, /localStorage|indexedDB/u);
+    assert.doesNotMatch(ui, /relations\??\.(?:add|set|save|update|delete|remove|create|put|write)\w*\(/u);
+});

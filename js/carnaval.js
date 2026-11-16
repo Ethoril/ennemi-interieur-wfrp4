@@ -1,13 +1,13 @@
 import { watchAuth, loginWithGoogle, logout } from './auth.js';
 import { createBureauData } from './bureau-data.js';
 import { esc } from './utils.js';
-import { campaignPlaces, initialCampaign, effectiveEvents, eventPresences, isAt, findNextPresence, findOverlaps, suggestPnjMatches, validateSource, validateCampaign, CAMPS, holderTally, holderOfCharacter } from './carnaval-model.js';
+import { campaignPlaces, initialCampaign, effectiveEvents, eventPresences, isAt, findNextPresence, findOverlaps, suggestPnjMatches, validateSource, validateCampaign, CAMPS, ATTITUDES, holderTally, holderOfCharacter, introductionsFor } from './carnaval-model.js';
 import { MIDDENHEIM_MAP } from './middenheim-map.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const minuteText = value => { if (value === null || value === undefined || value === '' || !Number.isFinite(Number(value))) return 'Horaire non précisé'; const minute = Number(value); return `${String(Math.floor(minute / 60) % 24).padStart(2, '0')} h${String(minute % 60).padStart(2, '0')}${minute >= 1440 ? ' (nuit suivante)' : ''}`; };
 const absoluteTime = value => { const day = Math.floor(value / 1440) + 1; return day > 8 ? `Nuit suivant ${dayLabel(8)}, ${minuteText(value % 1440)}` : `${dayLabel(day)}, ${minuteText(value % 1440)}`; };
-const state = { admin: false, onlineReady: false, streamsReady: {}, clockSeeded: false, drawerReturnTarget: null, bureau: null, source: null, campaign: null, pnjs: [], relations: [], pnjPrivate: new Map(), view: 'day', selectedCharacter: '', selectedPlace: '', selectedDay: 1, placeDay: 'all', selectedMinute: 480, showSecrets: true, showRendezvous: true, eventId: null, linkCharacterId: null, generation: 0, unsubs: [], privateUnsub: null, map: null, markerById: new Map(), imageReleases: new Map(), focusedCharacter: '' };
+const state = { admin: false, onlineReady: false, streamsReady: {}, clockSeeded: false, drawerReturnTarget: null, bureau: null, source: null, campaign: null, pnjs: [], relations: [], pnjPrivate: new Map(), view: 'day', selectedCharacter: '', selectedPlace: '', selectedDay: 1, placeDay: 'all', selectedMinute: 480, showSecrets: true, showRendezvous: true, metFilter: 'all', campFilter: 'all', eventId: null, linkCharacterId: null, generation: 0, unsubs: [], privateUnsub: null, map: null, markerById: new Map(), imageReleases: new Map(), focusedCharacter: '' };
 let authUnsubscribe = null;
 
 function setStatus(message = '', kind = '') { const target = $('#carnaval-status'); target.textContent = message; if (kind) target.dataset.kind = kind; else delete target.dataset.kind; }
@@ -18,7 +18,7 @@ function clearPrivateState() {
   state.generation += 1; state.unsubs.forEach(unsub => unsub?.()); state.unsubs = []; state.privateUnsub?.(); state.privateUnsub = null;
   state.imageReleases.forEach(release => release?.()); state.imageReleases.clear();
   const previous = state.bureau; state.bureau = null; void previous?.close?.();
-  state.source = null; state.campaign = null; state.pnjs = []; state.relations = []; state.pnjPrivate.clear(); state.onlineReady = false; state.clockSeeded = false; state.streamsReady = {}; state.selectedCharacter = ''; state.selectedPlace = ''; state.selectedDay = 1; state.placeDay = 'all'; state.selectedMinute = 480; state.view = 'day'; state.showSecrets = true; state.showRendezvous = true; $('#show-rendezvous').checked = true; state.eventId = null; state.linkCharacterId = null;
+  state.source = null; state.campaign = null; state.pnjs = []; state.relations = []; state.pnjPrivate.clear(); state.onlineReady = false; state.clockSeeded = false; state.streamsReady = {}; state.selectedCharacter = ''; state.selectedPlace = ''; state.selectedDay = 1; state.placeDay = 'all'; state.selectedMinute = 480; state.view = 'day'; state.showSecrets = true; state.showRendezvous = true; $('#show-rendezvous').checked = true; state.metFilter = 'all'; state.campFilter = 'all'; $('#met-filter').value = 'all'; $('#camp-filter').value = 'all'; state.eventId = null; state.linkCharacterId = null;
   $('#carnaval-app').hidden = true; $('#carnaval-import').hidden = true; closeDrawer(); if ($('#event-dialog').open) $('#event-dialog').close(); if ($('#link-dialog').open) $('#link-dialog').close(); if ($('#holders-dialog').open) $('#holders-dialog').close();
   $('#carnaval-offline').hidden = true; $('#court-tally-text').textContent = ''; $('#holders-list').replaceChildren(); $('#holder-form').hidden = true; $('#holder-form').reset();
   $('#event-list').replaceChildren(); $('#overlap-list').replaceChildren(); $('#next-encounter').replaceChildren();
@@ -65,7 +65,17 @@ function refreshControls() {
   $('#time-select').innerHTML = timeOptions(state.selectedMinute); $('#clock-time').innerHTML = timeOptions(state.campaign?.clock?.minute ?? 480);
   $('#place-filter').innerHTML = '<option value="">Tous les lieux</option>' + places().map(place => `<option value="${esc(place.id)}">${esc(place.name)}</option>`).join(''); if (state.selectedPlace && !places().some(place => place.id === state.selectedPlace)) state.selectedPlace = ''; $('#place-filter').value = state.selectedPlace;
   $('#place-day-filter').innerHTML = '<option value="all">Tous les jours</option>' + days.map(day => `<option value="${esc(day.id)}">${esc(day.id)} — ${esc(day.name)}</option>`).join(''); $('#place-day-filter').value = state.placeDay;
-  $('#character-filter').innerHTML = '<option value="">Tous les PNJ</option>' + state.source.characters.map(character => `<option value="${esc(character.id)}">${esc(character.name)}</option>`).join(''); $('#character-filter').value = state.selectedCharacter;
+  $('#camp-filter').innerHTML = '<option value="all">Tous les camps</option>' + CAMPS.map(camp => `<option value="${esc(camp.id)}">${esc(camp.label)}</option>`).join('') + '<option value="none">Sans détenteur</option>'; $('#camp-filter').value = state.campFilter;
+  const shown = state.source.characters.filter(characterShown); if (state.selectedCharacter && !shown.some(character => character.id === state.selectedCharacter)) state.selectedCharacter = '';
+  $('#character-filter').innerHTML = '<option value="">Tous les PNJ</option>' + shown.map(character => `<option value="${esc(character.id)}">${esc(character.name)}${state.campaign?.tracking?.[character.id]?.met ? ' (rencontré)' : ''}</option>`).join(''); $('#character-filter').value = state.selectedCharacter;
+}
+// Les filtres de suivi ne jouent que dans la vue PNJ : hors de cette vue ils sont masqués et ne doivent pas réduire la liste en silence.
+function characterShown(character) {
+  if (state.view !== 'character') return true;
+  const met = Boolean(state.campaign?.tracking?.[character.id]?.met);
+  if (state.metFilter === 'met' && !met) return false; if (state.metFilter === 'unmet' && met) return false;
+  const holder = holderOfCharacter(state.campaign,character.id);
+  if (state.campFilter === 'none') return !holder; return state.campFilter === 'all' || holder?.camp === state.campFilter;
 }
 const events = () => !state.source || !state.campaign ? [] : effectiveEvents(state.source, state.campaign);
 const characterById = id => state.source?.characters.find(character => character.id === id);
@@ -115,7 +125,7 @@ function renderEvents() {
   const list = $('#event-list'); let shown = events().filter(eventVisible);
   shown.sort((a,b) => (Number(a.day)-Number(b.day)) || ((Number.isInteger(a.start) ? a.start : Infinity)-(Number.isInteger(b.start) ? b.start : Infinity)) || String(a.title).localeCompare(String(b.title),'fr'));
   $('#program-heading').textContent = state.view === 'day' ? `Programme — ${dayLabel(state.selectedDay)}` : state.view === 'place' ? 'Programme par lieu' : 'Programme par PNJ';
-  $('#place-day-filter-wrap').hidden = state.view !== 'place';
+  $('#place-day-filter-wrap').hidden = state.view !== 'place'; $('#character-tracking-filters').hidden = state.view !== 'character';
   const cancelled = (state.source.events || []).filter(event => state.campaign.overrides?.[event.id]?.cancelled && (state.view !== 'day' || Number(event.day) === Number(state.selectedDay)) && (state.view !== 'place' || state.placeDay === 'all' || Number(event.day) === Number(state.placeDay)) && (!state.selectedPlace || event.placeId === state.selectedPlace));
   const unknownTime = $('#filter-current-time').checked && events().some(event => (event.start === null || event.end === null || eventPresences(event).some(presence => presence.start === null || presence.end === null)) && !eventVisible(event));
   $('#time-unknown-hint').hidden = !unknownTime;
@@ -240,18 +250,68 @@ async function deleteEvent(id) { if (!confirm('Supprimer cette scène ajoutée e
 async function resetEvent(event) { if (!event?.sourceEventId) return; const overrides = { ...state.campaign.overrides }; delete overrides[event.id]; const next = { ...state.campaign, overrides }; $('#event-dialog').close(); await commit(next,'Réinitialisation en cours…'); }
 $('#add-presence').addEventListener('click', () => { const container = $('#presence-editor'); container.insertAdjacentHTML('beforeend',presenceRow()); container.lastElementChild.querySelector('[data-remove-presence]').addEventListener('click', event => event.currentTarget.closest('.carnaval-presence-row').remove()); });
 
+function holderLine(holder) { return holder ? `${holder.label} — ${holder.weight} voix — ${CAMPS.find(camp => camp.id === holder.camp)?.label || holder.camp}` : ''; }
+// Met à jour la seule ligne du détenteur dans le panneau ouvert, sans toucher une saisie de suivi en cours.
+function refreshTrackingHolder() {
+  const line = $('#tracking-holder'); if (!line || !state.focusedCharacter) return;
+  const holder = holderOfCharacter(state.campaign,state.focusedCharacter); line.textContent = holderLine(holder); line.hidden = !holder;
+}
+function trackingHtml(id) {
+  const entry = state.campaign?.tracking?.[id] || { met:null, attitude:null, note:'' }, holder = holderOfCharacter(state.campaign,id);
+  const day = entry.met?.day ?? state.selectedDay, minute = entry.met?.minute ?? state.selectedMinute;
+  const dayOptions = (state.source?.days || []).map(item => `<option value="${esc(item.id)}"${Number(item.id) === Number(day) ? ' selected' : ''}>${esc(item.id)} — ${esc(item.name)}</option>`).join('');
+  const attitudes = [{ id:'', label:'Non renseignée' }, ...ATTITUDES].map(item => `<label class="carnaval-tracking-choice"><input type="radio" name="tracking-attitude" value="${esc(item.id)}"${(entry.attitude || '') === item.id ? ' checked' : ''}> ${esc(item.label)}</label>`).join('');
+  return `<div class="carnaval-drawer-section" id="character-tracking"><h3>Suivi</h3><p class="carnaval-muted" id="tracking-holder"${holder ? '' : ' hidden'}>${esc(holderLine(holder))}</p><label class="carnaval-tracking-choice"><input type="checkbox" id="tracking-met"${entry.met ? ' checked' : ''}> Rencontré</label><div class="carnaval-form-row" id="tracking-moment"${entry.met ? '' : ' hidden'}><label>Jour de la rencontre<select id="tracking-day">${dayOptions}</select></label><label>Heure de la rencontre<select id="tracking-time">${timeOptions(minute)}</select></label></div><fieldset class="carnaval-tracking-fieldset"><legend>Attitude envers les PJ</legend>${attitudes}</fieldset><label class="carnaval-tracking-note">Note de suivi<textarea id="tracking-note" maxlength="500" rows="3">${esc(entry.note)}</textarea></label><button type="button" class="btn-primary" id="tracking-save">Enregistrer le suivi</button></div>`;
+}
+function bindTracking(id) {
+  $('#tracking-met').addEventListener('change', event => { $('#tracking-moment').hidden = !event.target.checked; if (event.target.checked) { $('#tracking-day').value = String(state.selectedDay); $('#tracking-time').value = String(state.selectedMinute); } });
+  $('#tracking-save').addEventListener('click', async () => {
+    if (!state.onlineReady || !state.campaign || state.focusedCharacter !== id) return;
+    const met = $('#tracking-met').checked ? { day:Number($('#tracking-day').value), minute:Number($('#tracking-time').value) } : null, attitude = document.querySelector('input[name="tracking-attitude"]:checked')?.value || null, note = $('#tracking-note').value;
+    const entry = { met, attitude, note }, empty = !met && !attitude && !note, tracking = { ...state.campaign.tracking };
+    if (empty) delete tracking[id]; else tracking[id] = entry;
+    const next = { ...state.campaign, tracking }; if (!Object.keys(tracking).length) delete next.tracking;
+    const before = state.campaign; await commit(next,'Enregistrement en cours…');
+    // commit ne signale pas son échec : on ne confirme que si la campagne a changé et porte bien ce suivi.
+    if (state.campaign !== before && JSON.stringify(state.campaign.tracking?.[id] ?? null) === JSON.stringify(empty ? null : entry)) { setStatus('Suivi enregistré.','success'); if (state.focusedCharacter === id && $('#character-tracking')) { $('#character-tracking').outerHTML = trackingHtml(id); bindTracking(id); $('#tracking-save').focus(); } }
+  });
+}
+// Les présentations vivent dans la campagne, jamais dans les relations des fiches PNJ : elles décrivent la cour, pas la fiche.
+function introductionsHtml(id) {
+  const { outgoing, incoming } = introductionsFor(state.campaign,id), name = other => characterById(other)?.name || 'Personnage inconnu';
+  const person = other => `<button type="button" class="btn-ghost-sm" data-open-character="${esc(other)}">${esc(name(other))}</button>`, condition = text => text ? ` <span class="carnaval-muted">— ${esc(text)}</span>` : '';
+  const listed = new Set(outgoing.map(item => item.to)), full = outgoing.length >= 30;
+  const candidates = state.source.characters.filter(character => character.id !== id && !listed.has(character.id)).sort((a,b) => String(a.name).localeCompare(String(b.name),'fr')).map(character => `<option value="${esc(character.id)}">${esc(character.name)}</option>`).join('');
+  const outgoingList = outgoing.length ? `<ul>${outgoing.map(item => `<li>${person(item.to)}${condition(item.condition)} <button type="button" class="btn-ghost-sm" data-remove-introduction="${esc(item.to)}" aria-label="Retirer la présentation à ${esc(name(item.to))}">Retirer</button></li>`).join('')}</ul>` : '<p class="carnaval-muted">Aucune présentation.</p>';
+  const incomingList = incoming.length ? `<ul>${incoming.map(item => `<li>${person(item.from)}${condition(item.condition)}</li>`).join('')}</ul>` : '<p class="carnaval-muted">Aucune présentation.</p>';
+  return `<div class="carnaval-drawer-section" id="character-introductions"><h3>Présentations</h3><h4>Peut présenter à</h4>${outgoingList}<div class="carnaval-form-row"><label>Personnage<select id="introduction-target"${full ? ' disabled' : ''}>${candidates}</select></label><label>Condition<input type="text" id="introduction-condition" maxlength="200"${full ? ' disabled' : ''}></label><button type="button" class="btn-primary" id="introduction-add"${full || !candidates ? ' disabled' : ''}>Ajouter</button></div><h4>Présenté par</h4>${incomingList}</div>`;
+}
+function bindIntroductions(id) {
+  const section = $('#character-introductions'); if (!section) return;
+  section.querySelectorAll('[data-open-character]').forEach(button => button.addEventListener('click', () => { void openCharacter(button.dataset.openCharacter); }));
+  const save = async (list, message) => {
+    if (!state.onlineReady || !state.campaign || state.focusedCharacter !== id) return;
+    const introductions = { ...state.campaign.introductions }; if (list.length) introductions[id] = list; else delete introductions[id];
+    const next = { ...state.campaign, introductions }; if (!Object.keys(introductions).length) delete next.introductions;
+    const before = state.campaign; await commit(next,'Enregistrement en cours…');
+    // Même garde que le suivi : on ne confirme que si la campagne a changé et porte bien cette liste.
+    if (state.campaign !== before && JSON.stringify(introductionsFor(state.campaign,id).outgoing) === JSON.stringify(list)) { setStatus(message,'success'); if (state.focusedCharacter === id && $('#character-introductions')) { $('#character-introductions').outerHTML = introductionsHtml(id); bindIntroductions(id); ($('#introduction-add')?.disabled ? $('#character-introductions h3') : $('#introduction-target'))?.focus(); } }
+  };
+  section.querySelectorAll('[data-remove-introduction]').forEach(button => button.addEventListener('click', () => { void save(introductionsFor(state.campaign,id).outgoing.filter(item => item.to !== button.dataset.removeIntroduction),'Présentation retirée.'); }));
+  $('#introduction-add').addEventListener('click', () => { const to = $('#introduction-target').value; if (!to) return; void save([...introductionsFor(state.campaign,id).outgoing,{ to, condition:$('#introduction-condition').value }],'Présentation ajoutée.'); });
+}
 async function openCharacter(id) {
-  if (!state.onlineReady) return; state.privateUnsub?.(); state.privateUnsub = null; const previousCharacter = state.focusedCharacter; if (previousCharacter) { state.imageReleases.get(previousCharacter)?.(); state.imageReleases.delete(previousCharacter); } state.focusedCharacter = id; const character = characterById(id); if (!character) return; const pnj = linkedPnj(id); const drawer = $('#character-drawer'); const opening = !drawer.classList.contains('open'); if (opening) { state.drawerReturnTarget = document.activeElement; drawer.inert = false; drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); drawer.setAttribute('aria-modal','false'); } $('#character-drawer-content').innerHTML = `<h2 tabindex="-1">${esc(character.name)}</h2>${pnj ? '<p class="carnaval-muted">Chargement de la fiche…</p>' : `<p class="carnaval-muted">Aucune fiche PNJ associée.</p><button type="button" class="btn-primary" id="associate-pnj">Associer une fiche</button>`}`; if (opening) $('#character-drawer-content h2')?.focus();
+  if (!state.onlineReady) return; state.privateUnsub?.(); state.privateUnsub = null; const previousCharacter = state.focusedCharacter; if (previousCharacter) { state.imageReleases.get(previousCharacter)?.(); state.imageReleases.delete(previousCharacter); } state.focusedCharacter = id; const character = characterById(id); if (!character) return; const pnj = linkedPnj(id); const drawer = $('#character-drawer'); const opening = !drawer.classList.contains('open'); if (opening) { state.drawerReturnTarget = document.activeElement; drawer.inert = false; drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); drawer.setAttribute('aria-modal','false'); } $('#character-drawer-content').innerHTML = `<h2 tabindex="-1">${esc(character.name)}</h2>${pnj ? '<p class="carnaval-muted">Chargement de la fiche…</p>' : `<p class="carnaval-muted">Aucune fiche PNJ associée.</p><button type="button" class="btn-primary" id="associate-pnj">Associer une fiche</button>${trackingHtml(id)}${introductionsHtml(id)}`}`; if (!pnj) { bindTracking(id); bindIntroductions(id); } if (opening) $('#character-drawer-content h2')?.focus();
   $('#associate-pnj')?.addEventListener('click', () => openLinkDialog(id));
-  if (!pnj) { if (state.campaign.links?.[id]) $('#character-drawer-content').innerHTML = `<h2 tabindex="-1">${esc(character.name)}</h2><p class="carnaval-muted">La fiche associée est indisponible ou a été supprimée.</p><button type="button" class="btn-primary" id="associate-pnj">Réassocier une fiche</button>`; $('#associate-pnj')?.addEventListener('click', () => openLinkDialog(id)); if (opening) $('#character-drawer-content h2')?.focus(); return; }
+  if (!pnj) { if (state.campaign.links?.[id]) $('#character-drawer-content').innerHTML = `<h2 tabindex="-1">${esc(character.name)}</h2><p class="carnaval-muted">La fiche associée est indisponible ou a été supprimée.</p><button type="button" class="btn-primary" id="associate-pnj">Réassocier une fiche</button>${trackingHtml(id)}${introductionsHtml(id)}`; bindTracking(id); bindIntroductions(id); $('#associate-pnj')?.addEventListener('click', () => openLinkDialog(id)); if (opening) $('#character-drawer-content h2')?.focus(); return; }
   const generation = state.generation;
   let image = pnj.imageUrl || ''; if (pnj.imagePath && state.bureau?.images?.loadObjectUrl) { try { const loaded = await state.bureau.images.loadObjectUrl(pnj.imagePath); if (!state.admin || generation !== state.generation || state.focusedCharacter !== id) { loaded.release?.(); return; } image = loaded.url; state.imageReleases.set(id,loaded.release); } catch { image = ''; } }
   if (!state.admin || generation !== state.generation || state.focusedCharacter !== id) return;
   const privateNote = state.pnjPrivate.get(pnj.id) || '';
-  $('#character-drawer-content').innerHTML = `<h2>${esc(pnj.nom || character.name)}</h2><img src="${esc(image || 'img/pnj-default.webp')}" alt="${image ? `Portrait de ${esc(pnj.nom || character.name)}` : 'Portrait non renseigné'}"><div class="carnaval-drawer-section"><h3>Description</h3>${esc(pnj.description || 'Aucune description renseignée.')}</div><div class="carnaval-drawer-section"><h3>Relations</h3>${renderRelations(pnj.id)}</div><div class="carnaval-drawer-section"><h3>Notes MJ</h3>${esc(privateNote || 'Aucune note privée.')}</div><button type="button" class="btn-ghost-sm" id="reassociate-pnj">Réassocier</button>`;
+  $('#character-drawer-content').innerHTML = `<h2>${esc(pnj.nom || character.name)}</h2><img src="${esc(image || 'img/pnj-default.webp')}" alt="${image ? `Portrait de ${esc(pnj.nom || character.name)}` : 'Portrait non renseigné'}"><div class="carnaval-drawer-section"><h3>Description</h3>${esc(pnj.description || 'Aucune description renseignée.')}</div><div class="carnaval-drawer-section"><h3>Relations</h3>${renderRelations(pnj.id)}</div>${trackingHtml(id)}${introductionsHtml(id)}<div class="carnaval-drawer-section" id="character-private-notes"><h3>Notes MJ</h3>${esc(privateNote || 'Aucune note privée.')}</div><button type="button" class="btn-ghost-sm" id="reassociate-pnj">Réassocier</button>`; bindTracking(id); bindIntroductions(id);
   $('#character-drawer-content h2')?.setAttribute('tabindex','-1'); if (opening) $('#character-drawer-content h2')?.focus();
   $('#reassociate-pnj').addEventListener('click', () => openLinkDialog(id));
-  state.privateUnsub?.(); state.privateUnsub = state.bureau.pnjs.subscribePrivate(pnj.id,snapshot => { if (!state.admin || generation !== state.generation || state.focusedCharacter !== id) return; state.pnjPrivate.set(pnj.id,snapshot?.notes || ''); const target = $('#character-drawer-content .carnaval-drawer-section:last-of-type'); if (target) target.innerHTML = `<h3>Notes MJ</h3>${esc(snapshot?.notes || 'Aucune note privée.')}`; });
+  state.privateUnsub?.(); state.privateUnsub = state.bureau.pnjs.subscribePrivate(pnj.id,snapshot => { if (!state.admin || generation !== state.generation || state.focusedCharacter !== id) return; state.pnjPrivate.set(pnj.id,snapshot?.notes || ''); const target = $('#character-private-notes'); if (target) target.innerHTML = `<h3>Notes MJ</h3>${esc(snapshot?.notes || 'Aucune note privée.')}`; });
 }
 function renderRelations(id) { const byId = new Map(state.pnjs.map(pnj => [pnj.id,pnj])); const links = state.relations.filter(relation => relation.source === id || relation.cible === id); return links.length ? `<ul>${links.map(relation => { const otherId = relation.source === id ? relation.cible : relation.source; return `<li>${esc(byId.get(otherId)?.nom || 'Fiche indisponible')} — ${esc(relation.label || relation.type || 'Relation')}</li>`; }).join('')}</ul>` : '<span class="carnaval-muted">Aucune relation renseignée.</span>'; }
 function renderDrawerIfOpen() { if ($('#character-drawer').classList.contains('open') && state.focusedCharacter) void openCharacter(state.focusedCharacter); }
@@ -289,6 +349,7 @@ function openHolderForm(id = '') {
 function closeHolderForm() { $('#holder-form').hidden = true; $('#holder-form').reset(); $('#add-holder').focus(); }
 // La clé holders disparaît avec le dernier détenteur pour garder la forme d’origine de la campagne.
 function withHolders(holders) { const next = { ...state.campaign, holders }; if (!holders.length) delete next.holders; return next; }
+async function commitHolders(next, message) { await commit(next,message); refreshTrackingHolder(); }
 $('#open-holders').addEventListener('click', () => { if (!state.onlineReady || !state.campaign) return; $('#holder-form').hidden = true; renderHolders(); $('#holders-dialog').showModal(); });
 $('#holders-dialog').querySelectorAll('#holders-close, #holders-close-bottom').forEach(button => button.addEventListener('click', () => $('#holders-dialog').close()));
 $('#holders-dialog').addEventListener('close', () => { $('#holder-form').hidden = true; if (!$('#carnaval-app').hidden) $('#open-holders').focus(); });
@@ -297,12 +358,12 @@ $('#holder-cancel').addEventListener('click', closeHolderForm);
 $('#holders-list').addEventListener('click', event => {
   const edit = event.target.closest('[data-edit-holder]'), remove = event.target.closest('[data-delete-holder]');
   if (edit) openHolderForm(edit.dataset.editHolder);
-  else if (remove) { const holder = (state.campaign.holders || []).find(item => item.id === remove.dataset.deleteHolder); if (holder && window.confirm(`Supprimer le détenteur « ${holder.label} » ?`)) void commit(withHolders(state.campaign.holders.filter(item => item.id !== holder.id)),'Suppression en cours…').then(() => setStatus('Détenteur supprimé.','success')); }
+  else if (remove) { const holder = (state.campaign.holders || []).find(item => item.id === remove.dataset.deleteHolder); if (holder && window.confirm(`Supprimer le détenteur « ${holder.label} » ?`)) { const before = state.campaign; void commitHolders(withHolders(state.campaign.holders.filter(item => item.id !== holder.id)),'Suppression en cours…').then(() => { if (state.campaign !== before && !state.campaign.holders?.some(item => item.id === holder.id)) setStatus('Détenteur supprimé.','success'); }); } }
 });
 $('#holders-list').addEventListener('change', async event => {
   const select = event.target.closest('[data-holder-camp]'); if (!select || !state.onlineReady) return; const id = select.dataset.holderCamp;
   const holders = (state.campaign.holders || []).map(holder => holder.id === id ? { ...holder, camp:select.value, changedAt:{ day:state.selectedDay, minute:state.selectedMinute } } : holder);
-  await commit({ ...state.campaign, holders },'Changement de camp en cours…'); setStatus('Camp modifié.','success'); [...$('#holders-list').querySelectorAll('[data-holder-camp]')].find(item => item.dataset.holderCamp === id)?.focus();
+  const before = state.campaign; await commitHolders({ ...state.campaign, holders },'Changement de camp en cours…'); if (state.campaign !== before && state.campaign.holders?.find(item => item.id === id)?.camp === select.value) setStatus('Camp modifié.','success'); [...$('#holders-list').querySelectorAll('[data-holder-camp]')].find(item => item.dataset.holderCamp === id)?.focus();
 });
 $('#holder-form').addEventListener('submit', async event => {
   event.preventDefault(); const form = event.currentTarget; if (!state.admin || !state.onlineReady) return;
@@ -312,7 +373,7 @@ $('#holder-form').addEventListener('submit', async event => {
   const characterIds = [...form.querySelectorAll('input[name="characterIds"]:checked')].map(input => input.value);
   const value = { id:previous?.id || 'holder-' + globalThis.crypto.randomUUID(), label, weight, camp, characterIds, changedAt:previous ? (previous.camp !== camp ? { day:state.selectedDay, minute:state.selectedMinute } : previous.changedAt) : null };
   const holders = previous ? state.campaign.holders.map(item => item.id === id ? value : item) : [...(state.campaign.holders || []),value];
-  const before = state.campaign; await commit(withHolders(holders),'Enregistrement en cours…');
+  const before = state.campaign; await commitHolders(withHolders(holders),'Enregistrement en cours…');
   if (state.campaign !== before && state.campaign.holders?.some(item => item.id === value.id)) { setStatus('Détenteur enregistré.','success'); closeHolderForm(); }
 });
 
@@ -328,10 +389,12 @@ $('#next-day').addEventListener('click', () => { state.selectedDay = Math.min(st
 $('#place-filter').addEventListener('change', event => { state.selectedPlace = event.target.value; if (state.selectedPlace) focusPlace(state.selectedPlace); render(); });
 $('#place-day-filter').addEventListener('change', event => { state.placeDay = event.target.value; render(); });
 $('#character-filter').addEventListener('change', event => { state.selectedCharacter = event.target.value; render(); });
+$('#met-filter').addEventListener('change', event => { state.metFilter = event.target.value; refreshControls(); render(); });
+$('#camp-filter').addEventListener('change', event => { state.campFilter = event.target.value; refreshControls(); render(); });
 $('#show-secrets').addEventListener('change', event => { state.showSecrets = event.target.checked; render(); });
 $('#show-rendezvous').addEventListener('change', event => { state.showRendezvous = event.target.checked; render(); });
 $('#event-form').elements.placeId.addEventListener('change', event => { $('#place-name-wrap').hidden = event.target.value !== '__other__'; });
-document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => { state.view = button.dataset.view; document.querySelectorAll('[data-view]').forEach(tab => tab.setAttribute('aria-selected',String(tab === button))); render(); }));
+document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => { state.view = button.dataset.view; document.querySelectorAll('[data-view]').forEach(tab => tab.setAttribute('aria-selected',String(tab === button))); refreshControls(); render(); }));
 $('#map-reset').addEventListener('click', () => { if (state.map) state.map.fitBounds([[0,0],[MIDDENHEIM_MAP.height,MIDDENHEIM_MAP.width]]); });
 document.addEventListener('themechange', () => { const colors = mapColors(); state.mapCircles?.forEach(circle => circle.setStyle({ color:colors.goldBright, fillColor:colors.gold })); });
 $('#refresh-data').addEventListener('click', () => { state.unsubs.forEach(unsub => unsub?.()); state.unsubs = []; connectBureau(); });
