@@ -47,3 +47,18 @@ test('l’interface du Carnaval gère rendez-vous et lieux libres sans stockage 
     assert.match(ui, /Un rendez-vous exige une heure de début\./u);
     assert.doesNotMatch(ui, /localStorage|indexedDB/u);
 });
+
+test('le bureau propose le bandeau des camps et la gestion des détenteurs de voix', async () => {
+    const html = await read('carnaval.html');
+    for (const id of ['court-tally', 'open-holders', 'holders-dialog', 'holders-list', 'holder-form']) assert.match(html, new RegExp(`id="${id}"`, 'u'));
+});
+
+test('l’interface du Carnaval totalise et modifie les détenteurs sans stockage local', async () => {
+    const ui = await read('js/carnaval.js');
+    assert.match(ui, /import \{[^}]*\bholderTally\b[^}]*\} from '\.\/carnaval-model\.js'/u);
+    assert.match(ui, /import \{[^}]*\bCAMPS\b[^}]*\} from '\.\/carnaval-model\.js'/u);
+    assert.match(ui, /holderTally\(/u);
+    assert.match(ui, /changedAt/u);
+    for (const message of ['Détenteur enregistré.', 'Détenteur supprimé.', 'Camp modifié.']) assert.ok(ui.includes(message), message);
+    assert.doesNotMatch(ui, /localStorage|indexedDB/u);
+});

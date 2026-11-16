@@ -1,7 +1,7 @@
 import { watchAuth, loginWithGoogle, logout } from './auth.js';
 import { createBureauData } from './bureau-data.js';
 import { esc } from './utils.js';
-import { campaignPlaces, initialCampaign, effectiveEvents, eventPresences, isAt, findNextPresence, findOverlaps, suggestPnjMatches, validateSource, validateCampaign } from './carnaval-model.js';
+import { campaignPlaces, initialCampaign, effectiveEvents, eventPresences, isAt, findNextPresence, findOverlaps, suggestPnjMatches, validateSource, validateCampaign, CAMPS, holderTally, holderOfCharacter } from './carnaval-model.js';
 import { MIDDENHEIM_MAP } from './middenheim-map.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -19,8 +19,8 @@ function clearPrivateState() {
   state.imageReleases.forEach(release => release?.()); state.imageReleases.clear();
   const previous = state.bureau; state.bureau = null; void previous?.close?.();
   state.source = null; state.campaign = null; state.pnjs = []; state.relations = []; state.pnjPrivate.clear(); state.onlineReady = false; state.clockSeeded = false; state.streamsReady = {}; state.selectedCharacter = ''; state.selectedPlace = ''; state.selectedDay = 1; state.placeDay = 'all'; state.selectedMinute = 480; state.view = 'day'; state.showSecrets = true; state.showRendezvous = true; $('#show-rendezvous').checked = true; state.eventId = null; state.linkCharacterId = null;
-  $('#carnaval-app').hidden = true; $('#carnaval-import').hidden = true; closeDrawer(); if ($('#event-dialog').open) $('#event-dialog').close(); if ($('#link-dialog').open) $('#link-dialog').close();
-  $('#carnaval-offline').hidden = true;
+  $('#carnaval-app').hidden = true; $('#carnaval-import').hidden = true; closeDrawer(); if ($('#event-dialog').open) $('#event-dialog').close(); if ($('#link-dialog').open) $('#link-dialog').close(); if ($('#holders-dialog').open) $('#holders-dialog').close();
+  $('#carnaval-offline').hidden = true; $('#court-tally-text').textContent = ''; $('#holders-list').replaceChildren(); $('#holder-form').hidden = true; $('#holder-form').reset();
   $('#event-list').replaceChildren(); $('#overlap-list').replaceChildren(); $('#next-encounter').replaceChildren();
   $('#source-file').value = ''; $('#source-import').disabled = true; $('#event-form').reset(); $('#link-form').reset(); $('#presence-editor').replaceChildren();
   $('#event-form').elements.day.replaceChildren(); $('#event-form').elements.placeId.replaceChildren(); $('#link-pnj-select').replaceChildren(); $('#link-character-name').textContent = ''; $('#link-suggestions').replaceChildren();
@@ -46,7 +46,7 @@ async function connectBureau() {
   const repo = state.bureau.carnaval;
   if (!repo) { setStatus('Le dépôt Carnaval n’est pas disponible sur cette version du site.', 'error'); showOfflineLock('Le dépôt Carnaval est indisponible sur cette version.'); return; }
   const ready = (name, metadata) => { if (metadata?.fromCache === true || metadata?.hasPendingWrites === true) { readError(name,{ code:'cache-only' }); return false; } state.streamsReady[name] = true; if (['source','campaign','pnjs','relations'].every(key => state.streamsReady[key])) { state.onlineReady = true; $('#carnaval-offline').hidden = true; $('#carnaval-app').hidden = false; render(); ensureMap(); } return true; };
-  const readError = (stream,error) => { if (generation !== state.generation || !state.admin) return; if (error?.code === 'permission-denied') state.streamsReady = {}; else delete state.streamsReady[stream]; state.onlineReady = false; $('#carnaval-app').hidden = true; closeDrawer(); if ($('#event-dialog').open) $('#event-dialog').close(); if ($('#link-dialog').open) $('#link-dialog').close(); showOfflineLock(error?.code === 'permission-denied' ? 'Le serveur a refusé la lecture des données MJ.' : 'Connexion aux données privées indisponible. Le contenu n’est pas consultable hors ligne.'); setStatus('Lecture indisponible. Vérifiez la connexion ; les changements non confirmés ne sont pas sauvegardés.', 'error'); };
+  const readError = (stream,error) => { if (generation !== state.generation || !state.admin) return; if (error?.code === 'permission-denied') state.streamsReady = {}; else delete state.streamsReady[stream]; state.onlineReady = false; $('#carnaval-app').hidden = true; closeDrawer(); if ($('#event-dialog').open) $('#event-dialog').close(); if ($('#link-dialog').open) $('#link-dialog').close(); if ($('#holders-dialog').open) $('#holders-dialog').close(); showOfflineLock(error?.code === 'permission-denied' ? 'Le serveur a refusé la lecture des données MJ.' : 'Connexion aux données privées indisponible. Le contenu n’est pas consultable hors ligne.'); setStatus('Lecture indisponible. Vérifiez la connexion ; les changements non confirmés ne sont pas sauvegardés.', 'error'); };
   const streamError = stream => error => readError(stream,error);
   state.unsubs.push(repo.subscribeSource((source, metadata) => { if (!state.admin || generation !== state.generation || !ready('source',metadata)) return; if (source) { const validation = validateSource(source); if (!validation.valid) { setStatus(`Source invalide : ${validation.errors.map(item => item.message).join(' · ')}`, 'error'); return; } } state.source = source; if (!source) { $('#carnaval-import').hidden = false; setStatus('Source du calendrier absente. Initialisez-la à partir du fichier local fourni au MJ.'); } else { const campaignValidation = state.campaign && validateCampaign(state.campaign,source); if (campaignValidation && !campaignValidation.valid) setStatus(`Suivi invalide : ${campaignValidation.errors.map(item => item.message).join(' · ')}`, 'error'); $('#carnaval-import').hidden = true; } refreshControls(); render(); }, streamError('source')));
   state.unsubs.push(repo.subscribeCampaign((campaign, metadata) => { if (!state.admin || generation !== state.generation || !ready('campaign',metadata)) return; state.campaign = campaign || initialCampaign(); if (!state.clockSeeded) { state.selectedDay = state.campaign.clock.day; state.selectedMinute = state.campaign.clock.minute; state.clockSeeded = true; } const validation = validateCampaign(state.campaign,state.source); if (!validation.valid) setStatus(`Suivi invalide : ${validation.errors.map(item => item.message).join(' · ')}`, 'error'); else setStatus('Données synchronisées.', 'success'); refreshControls(); render(); }, streamError('campaign')));
@@ -74,7 +74,7 @@ const places = () => campaignPlaces(state.source, state.campaign);
 const placeById = id => places().find(place => place.id === id);
 const pnjById = id => state.pnjs.find(pnj => pnj.id === id);
 function linkedPnj(characterId) { const id = state.campaign?.links?.[characterId]; return id ? pnjById(id) : null; }
-function render() { if (!state.admin || !state.onlineReady || !state.source || !state.campaign) return; renderEvents(); renderNext(); renderOverlaps(); renderWarnings(); updatePins(); }
+function render() { if (!state.admin || !state.onlineReady || !state.source || !state.campaign) return; renderEvents(); renderNext(); renderOverlaps(); renderWarnings(); updatePins(); renderTally(); if ($('#holders-dialog').open) renderHolders(); }
 function currentAbsolute() { return (Number(state.selectedDay) - 1) * 1440 + Number(state.selectedMinute); }
 function eventAbsolute(event, minute) { return (Number(event.day) - 1) * 1440 + minute; }
 function eventVisible(event) {
@@ -266,6 +266,56 @@ function openLinkDialog(id) {
 $('#link-form').addEventListener('submit', event => { event.preventDefault(); const id = state.linkCharacterId, pnjId = $('#link-pnj-select').value; if (!id || !pnjById(pnjId)) return; const links = { ...state.campaign.links, [id]:pnjId }; $('#link-dialog').close(); void commit({ ...state.campaign, links },'Association en cours…'); });
 $('#link-dialog').querySelectorAll('#link-cancel, #link-dialog-close').forEach(button => button.addEventListener('click', () => $('#link-dialog').close()));
 
+// Le bandeau porte le libellé de chaque camp en toutes lettres : le total se lit sans la couleur.
+function renderTally() {
+  const holders = state.campaign?.holders || [], tally = holderTally(state.campaign);
+  $('#court-tally-text').textContent = holders.length ? `${CAMPS.map(camp => `${camp.label} ${tally[camp.id]}`).join(' · ')} · Total ${tally.total}` : 'Aucun détenteur de voix';
+}
+const holderChangeText = holder => holder.changedAt ? `Camp changé : ${dayLabel(holder.changedAt.day)}, ${minuteText(holder.changedAt.minute)}` : '';
+const campOptions = selected => CAMPS.map(camp => `<option value="${esc(camp.id)}"${camp.id === selected ? ' selected' : ''}>${esc(camp.label)}</option>`).join('');
+function renderHolders() {
+  const holders = state.campaign?.holders || [], list = $('#holders-list');
+  list.innerHTML = holders.length ? holders.map(holder => { const names = (holder.characterIds || []).map(id => characterById(id)?.name || 'Personnage inconnu'); const change = holderChangeText(holder); return `<article class="carnaval-holder" data-holder-id="${esc(holder.id)}"><div class="carnaval-holder-info"><strong>${esc(holder.label)}</strong> · poids ${esc(holder.weight)}<br><span class="carnaval-muted">${names.length ? esc(names.join(', ')) : 'Aucun personnage rattaché'}</span>${change ? `<br><span class="carnaval-muted">${esc(change)}</span>` : ''}</div><div class="carnaval-holder-actions"><select data-holder-camp="${esc(holder.id)}" aria-label="Camp de ${esc(holder.label)}">${campOptions(holder.camp)}</select><button type="button" class="btn-ghost-sm" data-edit-holder="${esc(holder.id)}">Modifier</button><button type="button" class="btn-ghost-sm" data-delete-holder="${esc(holder.id)}">Supprimer</button></div></article>`; }).join('') : '<p class="carnaval-no-results">Aucun détenteur de voix</p>';
+}
+// Un personnage ne figure que dans un seul détenteur : les cases déjà prises ailleurs sont désactivées et nomment leur détenteur.
+function openHolderForm(id = '') {
+  const form = $('#holder-form'), holder = id ? (state.campaign.holders || []).find(item => item.id === id) : null; form.reset();
+  $('#holder-form-title').textContent = holder ? 'Modifier le détenteur' : 'Nouveau détenteur';
+  form.elements.holderId.value = holder?.id || ''; form.elements.label.value = holder?.label || ''; form.elements.weight.value = holder ? String(holder.weight) : ''; form.elements.camp.innerHTML = campOptions(holder?.camp || CAMPS[0].id);
+  const characters = [...state.source.characters].sort((a,b) => String(a.name).localeCompare(String(b.name),'fr'));
+  $('#holder-characters').innerHTML = characters.map((character,index) => { const owner = holderOfCharacter(state.campaign,character.id); const other = owner && owner.id !== holder?.id ? owner : null; const checked = Boolean(owner) && !other; return `<label class="carnaval-holder-character"><input type="checkbox" name="characterIds" value="${esc(character.id)}" id="holder-character-${index}"${checked ? ' checked' : ''}${other ? ' disabled' : ''}> ${esc(character.name)}${other ? `<span class="carnaval-muted"> — déjà rattaché à ${esc(other.label)}</span>` : ''}</label>`; }).join('');
+  form.hidden = false; form.elements.label.focus();
+}
+function closeHolderForm() { $('#holder-form').hidden = true; $('#holder-form').reset(); $('#add-holder').focus(); }
+// La clé holders disparaît avec le dernier détenteur pour garder la forme d’origine de la campagne.
+function withHolders(holders) { const next = { ...state.campaign, holders }; if (!holders.length) delete next.holders; return next; }
+$('#open-holders').addEventListener('click', () => { if (!state.onlineReady || !state.campaign) return; $('#holder-form').hidden = true; renderHolders(); $('#holders-dialog').showModal(); });
+$('#holders-dialog').querySelectorAll('#holders-close, #holders-close-bottom').forEach(button => button.addEventListener('click', () => $('#holders-dialog').close()));
+$('#holders-dialog').addEventListener('close', () => { $('#holder-form').hidden = true; if (!$('#carnaval-app').hidden) $('#open-holders').focus(); });
+$('#add-holder').addEventListener('click', () => { if (state.onlineReady) openHolderForm(); });
+$('#holder-cancel').addEventListener('click', closeHolderForm);
+$('#holders-list').addEventListener('click', event => {
+  const edit = event.target.closest('[data-edit-holder]'), remove = event.target.closest('[data-delete-holder]');
+  if (edit) openHolderForm(edit.dataset.editHolder);
+  else if (remove) { const holder = (state.campaign.holders || []).find(item => item.id === remove.dataset.deleteHolder); if (holder && window.confirm(`Supprimer le détenteur « ${holder.label} » ?`)) void commit(withHolders(state.campaign.holders.filter(item => item.id !== holder.id)),'Suppression en cours…').then(() => setStatus('Détenteur supprimé.','success')); }
+});
+$('#holders-list').addEventListener('change', async event => {
+  const select = event.target.closest('[data-holder-camp]'); if (!select || !state.onlineReady) return; const id = select.dataset.holderCamp;
+  const holders = (state.campaign.holders || []).map(holder => holder.id === id ? { ...holder, camp:select.value, changedAt:{ day:state.selectedDay, minute:state.selectedMinute } } : holder);
+  await commit({ ...state.campaign, holders },'Changement de camp en cours…'); setStatus('Camp modifié.','success'); [...$('#holders-list').querySelectorAll('[data-holder-camp]')].find(item => item.dataset.holderCamp === id)?.focus();
+});
+$('#holder-form').addEventListener('submit', async event => {
+  event.preventDefault(); const form = event.currentTarget; if (!state.admin || !state.onlineReady) return;
+  const id = form.elements.holderId.value, previous = (state.campaign.holders || []).find(item => item.id === id), camp = form.elements.camp.value, weight = Number(form.elements.weight.value), label = form.elements.label.value.trim();
+  if (!label) { setStatus('Le libellé est obligatoire.', 'error'); return; }
+  if (!Number.isInteger(weight) || weight < 0 || weight > 99) { setStatus('Le poids doit être un entier de 0 à 99.', 'error'); return; }
+  const characterIds = [...form.querySelectorAll('input[name="characterIds"]:checked')].map(input => input.value);
+  const value = { id:previous?.id || 'holder-' + globalThis.crypto.randomUUID(), label, weight, camp, characterIds, changedAt:previous ? (previous.camp !== camp ? { day:state.selectedDay, minute:state.selectedMinute } : previous.changedAt) : null };
+  const holders = previous ? state.campaign.holders.map(item => item.id === id ? value : item) : [...(state.campaign.holders || []),value];
+  const before = state.campaign; await commit(withHolders(holders),'Enregistrement en cours…');
+  if (state.campaign !== before && state.campaign.holders?.some(item => item.id === value.id)) { setStatus('Détenteur enregistré.','success'); closeHolderForm(); }
+});
+
 function collectClock() { return { day:Number($('#clock-day').value), minute:Number($('#clock-time').value) }; }
 $('#save-clock').addEventListener('click', () => void commit({ ...state.campaign, clock:collectClock() },'Heure de campagne en cours…'));
 $('#clock-day').addEventListener('change', () => { state.selectedDay = Number($('#clock-day').value); $('#day-select').value = String(state.selectedDay); render(); });
@@ -291,7 +341,7 @@ $('#carnaval-auth').addEventListener('click', () => state.admin ? void logout() 
 $('#retry-private-data').addEventListener('click', () => { if (state.admin) void connectBureau(); else void doLogin(); });
 window.addEventListener('keydown', event => {
   const drawer = $('#character-drawer'); if (!drawer.classList.contains('open')) return;
-  if (event.key === 'Escape' && !$('#event-dialog').open && !$('#link-dialog').open) { event.preventDefault(); closeDrawer(); return; }
+  if (event.key === 'Escape' && !$('#event-dialog').open && !$('#link-dialog').open && !$('#holders-dialog').open) { event.preventDefault(); closeDrawer(); return; }
 });
 $('#source-file').addEventListener('change', event => { $('#source-import').disabled = !event.target.files?.[0]; });
 $('#source-import').addEventListener('click', async () => { const file = $('#source-file').files?.[0]; if (!file || !state.admin || !state.bureau?.carnaval) return; try { const source = JSON.parse(await file.text()); const validation = validateSource(source); if (!validation.valid) { setStatus(validation.errors.map(item => item.message).join(' · '),'error'); return; } await state.bureau.carnaval.importSource(source); $('#source-file').value = ''; $('#source-import').disabled = true; $('#carnaval-import').hidden = true; setStatus('Programme source importé.','success'); } catch (error) { setStatus(error?.code === 'source-exists' ? 'Une source existe déjà ; actualisez le programme.' : 'Import impossible. Vérifiez que le fichier est un JSON valide et connecté au dépôt privé.','error'); } });
