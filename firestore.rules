@@ -205,7 +205,7 @@ service cloud.firestore {
     }
 
     function validCarnavalCampaign(data) {
-      return data.keys().hasOnly(['version', 'revision', 'clock', 'links', 'overrides', 'customEvents', 'notes', 'updatedAt'])
+      return data.keys().hasOnly(['version', 'revision', 'clock', 'links', 'overrides', 'customEvents', 'notes', 'customPlaces', 'holders', 'tracking', 'introductions', 'updatedAt'])
         && data.version == 1
         && data.revision is int && data.revision >= 0
         && data.clock is map
@@ -216,6 +216,11 @@ service cloud.firestore {
         && data.overrides is map && data.overrides.size() <= 250
         && data.customEvents is list && data.customEvents.size() <= 100
         && data.notes is map && data.notes.size() <= 350
+        // Champs facultatifs du suivi : forme et tailles seulement, le modèle client valide le détail.
+        && (!('customPlaces' in data) || (data.customPlaces is list && data.customPlaces.size() <= 50))
+        && (!('holders' in data) || (data.holders is list && data.holders.size() <= 50))
+        && (!('tracking' in data) || (data.tracking is map && data.tracking.size() <= 500))
+        && (!('introductions' in data) || (data.introductions is map && data.introductions.size() <= 500))
         && data.updatedAt is timestamp && serverUpdated(data);
     }
 

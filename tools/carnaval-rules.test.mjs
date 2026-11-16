@@ -72,4 +72,40 @@ try {
             assert.ok([600, 630].includes(saved.clock.minute));
         } finally { repository.close(); }
     });
+    // Champs facultatifs du suivi : lieux perso, porteurs, suivi, présentations (données fictives).
+    const liste = n => Array.from({ length: n }, (_, i) => ({ id: `x${i}` }));
+    const extras = () => ({ customPlaces: liste(2), holders: liste(2), tracking: { a: { etat: 'x' } }, introductions: { b: true } });
+    const seedCampaign = async data => {
+        await env.clearFirestore();
+        await env.withSecurityRulesDisabled(async ctx => { await setDoc(ref(ctx.firestore(), 'carnaval_campaigns'), data); });
+    };
+    const maj = fields => updateDoc(ref(gm, 'carnaval_campaigns'), { revision: 1, updatedAt: serverTimestamp(), ...fields });
+    await test('le MJ ajoute les quatre champs facultatifs au suivi', async () => {
+        await seedCampaign(campaign());
+        await assertSucceeds(maj(extras()));
+    });
+    await test('le MJ met toujours à jour un suivi à l\'ancienne forme', async () => {
+        await seedCampaign(campaign());
+        await assertSucceeds(maj({ clock: { day: 2, minute: 600 } }));
+    });
+    await test('les champs facultatifs invalides sont refusés au MJ', async () => {
+        await seedCampaign(campaign());
+        await assertFails(maj({ holders: liste(51) }));
+        await assertFails(maj({ customPlaces: liste(51) }));
+        await assertFails(maj({ holders: { a: 1 } }));
+        await assertFails(maj({ customPlaces: 'x' }));
+        await assertFails(maj({ tracking: [] }));
+        await assertFails(maj({ introductions: [] }));
+        await assertFails(maj({ tracking: Object.fromEntries(Array.from({ length: 501 }, (_, i) => [`k${i}`, 1])) }));
+        await assertFails(maj({ introductions: Object.fromEntries(Array.from({ length: 501 }, (_, i) => [`k${i}`, 1])) }));
+        await assertFails(maj({ ...extras(), inconnu: 1 }));
+    });
+    await test('un suivi portant ces champs reste fermé aux non-MJ', async () => {
+        await seedCampaign({ ...campaign(), ...extras() });
+        for (const db of [guest, player, unverified]) {
+            await assertFails(getDoc(ref(db, 'carnaval_campaigns')));
+            await assertFails(setDoc(ref(db, 'carnaval_campaigns'), { ...campaign(), ...extras() }));
+            await assertFails(updateDoc(ref(db, 'carnaval_campaigns'), { revision: 1, ...extras(), updatedAt: serverTimestamp() }));
+        }
+    });
 } finally { await env.cleanup(); }
