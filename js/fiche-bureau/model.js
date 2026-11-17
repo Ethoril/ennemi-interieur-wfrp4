@@ -1,7 +1,7 @@
 import { primarySkillLabel, publishedSkillRows } from '../catalogue/skill-forms.js';
 import { activeCareerRank, findCareerByName, getEffectiveSkills, getVariantsToConsider } from '../fiche/career-model.js';
 import { caracTotal, xpBalance } from '../fiche/derived.js';
-import { expandChoiceSkill } from '../fiche/skill-names.js';
+import { expandChoiceSkill, isOpenCareerSlot } from '../fiche/skill-names.js';
 import { skillRows, CARACS } from '../mobile/fiche-model.js';
 import { filterSkills, sortSkills, talentAcquisitions } from '../mobile/fiche-aptitudes-model.js';
 import { careerProgress } from '../mobile/fiche-career-model.js';
@@ -26,6 +26,8 @@ export function bureauSkills(data, engine, careers, filters = {}) {
                         }
                         if (rows.some(row => row.nom === label || row.serverName === name)) continue;
                         const group = name.split('(')[0].trim();
+                        // « Discrétion (au choix) » : les spécialités sont des compétences de base, la ligne de base porte déjà le choix.
+                        if (isOpenCareerSlot(name) && publishedSkillRows(engine.skillResolver).some(row => row.group === group && row.basic)) continue;
                         const key = entry?.carac || publishedSkillRows(engine.skillResolver).find(row => row.group === group)?.carac || 'int';
                         rows.push({ key: `new:${name}`, nom: label, newName: name, caracKey: key,
                             caracAbbr: CARACS.find(c => c.key === key)?.abbr || '', adv: 0,

@@ -155,3 +155,28 @@ test('correction talent : remplacement du brouillon par un autre alias, spécial
     assert.deepEqual(correctionChanges(d, fire, { taken: '0' }, engine), [{ pathParts: ['talentsAcq', 'fire'], value: null }]);
     assert.equal(correctionMatches({ pathParts: ['talentsAcq', 'light'], value: null }, d, fire, engine), false);
 });
+
+test('compétence de carrière « (au choix) » : jamais achetée sous son libellé littéral', () => {
+    // Discrétion, Art, Divertissement : groupes de base, dont les spécialités ne sont pas des lignes avancées.
+    for (const [carriere, group] of [['Espion', 'Discrétion'], ['Artiste', 'Art'], ['Saltimbanque', 'Divertissement']]) {
+        const d = data({ carriere, skillsBasic: {} });
+        const rows = bureauSkills(d, engine, careers);
+        // Groupe de base : aucune ligne d'achat « au choix » ; groupe avancé : ligne qui exige un choix avant tout achat.
+        for (const row of rows.filter(row => /\bchoix\b/iu.test(row.newName || ''))) {
+            const open = inspectorModel(d, engine, careers, { ...row, kind: 'skill' }, ready, true);
+            assert.equal(open.target.specialty?.kind, 'group', `${carriere} : ${row.nom} sans choix proposé`);
+            assert.equal(open.enabled, false, `${carriere} : ${row.nom} achetable sans choix`);
+        }
+        assert.equal(rows.filter(row => /\bchoix\b/iu.test(row.newName || '') && row.newName.startsWith(`${group} (`)).length, 0, `${carriere} : ligne littérale ${group}`);
+        const basic = rows.find(row => row.basic && row.group === group);
+        assert.ok(basic?.inCareer, `${carriere} : la ligne de base ${group} reste de carrière`);
+        const model = inspectorModel(d, engine, careers, { ...basic, kind: 'skill' }, ready, true);
+        assert.equal(model.target.specialty?.kind, 'basic', `${carriere} : choix de spécialité proposé`);
+        assert.ok(model.target.specialty.options.length > 1);
+    }
+    // Défense : aucune cible d'achat ne doit porter un libellé « au choix ».
+    const d = data({ carriere: 'Espion', skillsBasic: {} });
+    for (const newName of ['Discrétion (au choix)', 'Langue (au choix)', 'Savoir (Au choix)', 'Art (au choix)']) {
+        assert.equal(inspectorModel(d, engine, careers, { kind: 'skill', newName }, ready, true)?.enabled ?? false, false, newName);
+    }
+});

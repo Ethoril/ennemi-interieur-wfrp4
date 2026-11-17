@@ -11,7 +11,7 @@ import {
     isTalentInCareer,
 } from './career-model.js';
 import { BASIC_SKILLS, basicRowFor, basicSkillNom, getCaracForGroup } from './basic-skills.js';
-import { canonicalSkillNom, sameSkill } from './skill-names.js';
+import { canonicalSkillNom, isOpenCareerSlot, sameSkill } from './skill-names.js';
 import { applyEquipmentCommand, validateEquipmentItem } from './equipment.js';
 import { V5_LIST_FIELDS, v5FieldError } from './v5.js';
 import { applyOutilMjCommand, suiviListError } from './outil-mj.js';
@@ -242,6 +242,7 @@ function resolvedSkillTarget(data, payload, skills, skillResolver = null) {
     const name = cleanText(payload.name, 'nom de compétence');
     const resolved = skillResolver?.resolve(name);
     const entry = resolved?.status === 'resolved' ? resolved.entry : null;
+    if (!entry && payload.targetId === undefined && isOpenCareerSlot(name)) fail('spécialité de la compétence à choisir', 'invalid-argument');
     const basicEntry = entry?.basic === true ? entry : null;
     const rowForEntry = basicEntry ? BASIC_SKILLS.find(skill => skill.nom === basicEntry.nom
         || skill.nom === basicEntry.group || skill.nom === `${basicEntry.group} (Base)`

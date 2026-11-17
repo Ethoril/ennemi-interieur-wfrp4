@@ -4,7 +4,7 @@ import {
     activeCareerRank, findCareerByName, getActiveVariantForRang, getRangVariants, isCaracInCareer, isSkillInCareer, isTalentInCareer,
 } from '../fiche/career-model.js';
 import { caracTotal } from '../fiche/derived.js';
-import { canonicalSkillNom, sameSkill } from '../fiche/skill-names.js';
+import { canonicalSkillNom, isOpenCareerSlot, sameSkill } from '../fiche/skill-names.js';
 import { CARAC_XP_BANDS, careerRankXpCost, SKILL_XP_BANDS, talentXpCost, xpBandCost } from '../fiche/xp.js';
 import { learnable, talentChoices, talentTaken } from './fiche-aptitudes-model.js';
 import { careerChangeBlock } from './fiche-career-model.js';
@@ -58,6 +58,8 @@ export function purchaseTarget(data, engine, careers, spec) {
             };
             title = name;
             specialty = groupSpecialty(resolver, group);
+            // Un emplacement « (au choix) » sans spécialités à proposer ne doit jamais devenir une compétence littérale.
+            if (!entry && isOpenCareerSlot(name) && !specialty) return null;
         } else if (spec.row) {
             const basic = BASIC_SKILLS.find(({ nom }) => nom === spec.row);
             if (!basic) return null;
