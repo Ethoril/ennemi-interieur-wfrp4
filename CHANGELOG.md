@@ -1,3 +1,10 @@
+## [2.43.0] - 2026-11-17
+
+### Personnages
+- **Spécialités visibles** : sur mobile comme sur le bureau, une compétence à spécialité (Discrétion, Art, Divertissement, Chevaucher, Métier, Langue…) affiche ses spécialités connues en boutons ; un clic suffit. Un champ « Nouvelle spécialité » permet d'en saisir une autre, acceptée par le serveur ; « au choix » reste refusé.
+- **Mots-clés** : la liste des mots-clés et de leurs types (Haine, Animosité, Préjugé, Sans peur) est désormais générée par l'outil MJ, qui reste la seule source ; le test de cohérence ne dépend plus du dépôt de l'outil.
+- Cache de l’application actualisé.
+
 ## [2.42.1] - 2026-11-17
 
 ### Corrections
