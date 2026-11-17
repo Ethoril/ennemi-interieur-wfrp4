@@ -44,6 +44,16 @@ export function createPublishedCatalogueEngine({ catalogue, careers, skills, spe
         if (match?.status === 'resolved') payload.name = match.purchaseName || match.entry.nom;
         return engine.applyCommand(data, { ...command, payload }, context);
     }
+    const foldText = text => text.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/\s+/gu, ' ').trim().toLowerCase();
+    /** Spécialité de base : vide (effacement), nom publié (orthographe publiée) ou texte libre valable ; null si refusée. */
+    function basicSpecialization(value, labels) {
+        if (value === '') return '';
+        const text = value.replace(/\s+/gu, ' ').trim();
+        if (!text || text.length > 150 || /[()]/u.test(text) || /\bau choix\b/u.test(foldText(text))) return null;
+        const known = skillResolver.entries.find(entry => entry.basic === true && labels.includes(entry.group)
+            && entry.specialization && foldText(entry.specialization) === foldText(text));
+        return known ? known.specialization : text;
+    }
     function validatePatch(data, payload) {
         if (!data || typeof data !== 'object' || !payload?.changes || typeof payload.changes !== 'object'
             || Array.isArray(payload.changes)) fail('modification publiée invalide', 'invalid-argument', { kind: 'invalid-patch' });
@@ -57,13 +67,12 @@ export function createPublishedCatalogueEngine({ catalogue, careers, skills, spe
                 const group = physicalKey.endsWith(' (Base)') ? physicalKey.slice(0, -7) : physicalKey;
                 const knownGroup = skillResolver.entries.some(entry => entry.basic === true
                     && (entry.group === group || entry.nom === physicalKey || entry.group === physicalKey));
-                if (!knownGroup || typeof value !== 'string' || value.length > 200
-                    || (value !== '' && ![group, physicalKey].some(label => {
-                        const entry = skillResolver.resolve(`${label} (${value})`).entry;
-                        return entry?.basic === true && (entry.group === group || entry.group === physicalKey);
-                    }))) {
-                    fail('spécialité de base absente du référentiel publié', 'invalid-argument', { kind: 'basic-specialization-invalid' });
+                const canonical = typeof value === 'string' ? basicSpecialization(value, [group, physicalKey]) : null;
+                if (!knownGroup || canonical === null) {
+                    fail('spécialité de base invalide', 'invalid-argument', { kind: 'basic-specialization-invalid' });
                 }
+                // Une spécialité connue garde l'orthographe publiée ; le patch appliqué reprend cette forme.
+                if (canonical !== value) payload.changes[encodedPath] = canonical;
                 const advances = data.skillsBasic?.[physicalKey] ?? 0;
                 if (!Number.isSafeInteger(advances) || advances !== 0) {
                     fail('la spécialisation ne peut pas changer après des avances', 'failed-precondition', { kind: 'specialization-has-advances' });

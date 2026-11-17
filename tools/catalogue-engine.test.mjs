@@ -69,10 +69,45 @@ test('validatePatch valide les spécialités et variantes depuis le snapshot pub
     assert.throws(() => engine.validatePatch(data(), { changes: {
         'chosenVariants.career-a.1': 'Inconnue',
     } }), error => error.details?.kind === 'career-variant-invalid');
-    assert.throws(() => engine.validatePatch(data(), { changes: {
-        'basicSpecs.Corps%20%C3%A0%20corps%20%28Base%29': 'Spécialité inventée',
-    } }), error => error.details?.kind === 'basic-specialization-invalid');
     assert.throws(() => engine.validatePatch({ ...data(), skillsBasic: { 'Corps à corps (Base)': 1 } }, { changes: {
         'basicSpecs.Corps%20%C3%A0%20corps%20%28Base%29': 'Arme d\'hast',
     } }), error => error.details?.kind === 'specialization-has-advances');
+});
+
+const CC = 'basicSpecs.Corps%20%C3%A0%20corps%20%28Base%29';
+const patchOf = value => ({ changes: { [CC]: value } });
+const kindOf = error => error.details?.kind;
+
+test('validatePatch accepte une spécialité de base libre, bornée, sans « au choix » ni parenthèses', () => {
+    const engine = createPublishedCatalogueEngine({ catalogue, careers, skills, spells, talentSheetSnapshot: { entries: [] } });
+    assert.equal(engine.validatePatch(data(), patchOf('Spécialité inventée')), true);
+    assert.equal(engine.validatePatch(data(), patchOf('')), true);
+    for (const bad of ['   ', 'au choix', 'Au Choix', 'Arme (au choix)', 'Arme (x)', 'Arme )', 'x'.repeat(151), 42]) {
+        assert.throws(() => engine.validatePatch(data(), patchOf(bad)), error => kindOf(error) === 'basic-specialization-invalid', String(bad));
+    }
+    assert.throws(() => engine.validatePatch({ ...data(), skillsBasic: { 'Corps à corps (Base)': 1 } }, patchOf('Libre')),
+        error => kindOf(error) === 'specialization-has-advances');
+    assert.throws(() => engine.validatePatch(data(), { changes: { 'basicSpecs.Inconnue': 'Libre' } }),
+        error => kindOf(error) === 'basic-specialization-invalid');
+});
+
+test('une spécialité connue garde son orthographe publiée (sans casse ni accents)', () => {
+    const engine = createPublishedCatalogueEngine({ catalogue, careers, skills, spells, talentSheetSnapshot: { entries: [] } });
+    const payload = patchOf('ARME D\'HAST');
+    assert.equal(engine.validatePatch(data(), payload), true);
+    assert.equal(payload.changes[CC], 'Arme d\'hast');
+    const free = patchOf('  Arme   exotique ');
+    engine.validatePatch(data(), free);
+    assert.equal(free.changes[CC], 'Arme exotique');
+});
+
+test('achat d’une compétence avancée libre : caractéristique du groupe ; « au choix » refusé', () => {
+    const engine = createPublishedCatalogueEngine({ catalogue, careers, skills, spells, talentSheetSnapshot: { entries: [] } });
+    const buy = name => engine.applyCommand(data(), { type: 'purchase', operationId: 'libre', payload: {
+        kind: 'skill', name, count: 1, expectedCost: 20, catalogVersion: engine.catalogVersion,
+    } }, { uid: 'joueur', role: 'joueur' });
+    const bought = buy('Savoir (Vins du Reikland)').data.skillsAdvanced[0];
+    assert.equal(bought.nom, 'Savoir (Vins du Reikland)');
+    assert.equal(bought.carac, 'int');
+    assert.throws(() => buy('Savoir (au choix)'));
 });

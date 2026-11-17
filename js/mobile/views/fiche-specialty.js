@@ -7,7 +7,7 @@ function make(documentRef, tag, text = '', className = '') {
 
 const UNCERTAIN = ['unavailable', 'deadline-exceeded', 'internal', 'unknown'];
 const SPEC_ERRORS = {
-    'basic-specialization-invalid': 'Spécialité absente du référentiel publié.',
+    'basic-specialization-invalid': 'Spécialité refusée : sans parenthèses, sans « au choix », 150 caractères au plus.',
     'specialization-has-advances': 'La spécialité ne peut plus changer après des avances.',
 };
 
@@ -23,23 +23,21 @@ export function createSpecialtySection({ documentRef, getContext, onChoose, anno
     const root = make(documentRef, 'div', '', 'm-spec');
 
     const basic = make(documentRef, 'div', '', 'm-spec-block');
-    const label = make(documentRef, 'label', 'Spécialité', 'm-spec-label');
+    const known = make(documentRef, 'div', '', 'm-spec-choices');
+    const label = make(documentRef, 'label', 'Nouvelle spécialité', 'm-spec-label');
     label.setAttribute('for', `${idPrefix}-input`);
     const field = make(documentRef, 'div', '', 'm-spec-field');
     const input = make(documentRef, 'input', '', 'm-search-input');
     input.id = `${idPrefix}-input`;
     input.type = 'text';
     input.autocomplete = 'off';
-    input.setAttribute('list', `${idPrefix}-options`);
-    input.setAttribute('maxlength', '200');
-    const datalist = make(documentRef, 'datalist');
-    datalist.id = `${idPrefix}-options`;
+    input.setAttribute('maxlength', '150');
     const save = make(documentRef, 'button', 'Enregistrer', 'm-button');
     save.type = 'button';
     field.append(input, save);
     const basicNote = make(documentRef, 'p', '', 'm-spec-note');
     basicNote.setAttribute('role', 'status');
-    basic.append(label, field, datalist, basicNote);
+    basic.append(known, label, field, basicNote);
 
     const group = make(documentRef, 'div', '', 'm-spec-block');
     const toggle = make(documentRef, 'button', 'Ajouter une spécialité', 'm-button');
@@ -92,10 +90,10 @@ export function createSpecialtySection({ documentRef, getContext, onChoose, anno
     });
     free.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); freeGo.click?.(); } });
 
-    async function saveBasic() {
+    async function saveBasic(chosen) {
         const context = getContext();
         const { row, value: previous } = specialty;
-        const value = input.value.trim();
+        const value = (chosen ?? input.value).trim();
         if (value === previous) return;
         // Chemin encodé comme le pont du bureau (js/fiche-client-bridge.js) ; le moteur valide la valeur avant la mise en brouillon.
         const path = `basicSpecs.${encodeURIComponent(row).replaceAll('.', '%2E')}`;
@@ -142,11 +140,16 @@ export function createSpecialtySection({ documentRef, getContext, onChoose, anno
             if (stamp !== shown) { shown = stamp; input.value = specialty.value; message = ''; }
             if (listedFor !== specialty.row) {
                 listedFor = specialty.row;
-                datalist.replaceChildren(...specialty.options.map(value => {
-                    const option = make(documentRef, 'option');
-                    option.value = value;
-                    return option;
+                known.replaceChildren(...specialty.options.map(value => {
+                    const button = make(documentRef, 'button', value, 'm-chip');
+                    button.type = 'button';
+                    button.addEventListener('click', () => { input.value = value; void saveBasic(value); });
+                    return button;
                 }));
+            }
+            for (const button of known.children) {
+                button.setAttribute('aria-pressed', String(button.textContent === specialty.value));
+                button.disabled = specialty.locked || busy;
             }
             input.disabled = specialty.locked || busy;
             save.disabled = specialty.locked || busy;

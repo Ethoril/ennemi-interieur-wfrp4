@@ -10,6 +10,7 @@ import { publishedSkillRows } from '../catalogue/skill-forms.js';
 import { isTalentInCareer, findCareerByName } from '../fiche/career-model.js';
 import { createCareerViewer } from '../fiche/career-viewer.js';
 import { bureauSkills, roleControls, inspectorModel, missingChips, correctionChanges, correctionOverlay, correctionMatches } from './model.js';
+import { specialtyControlsHtml, freeSpecialtyName } from './specialty-html.js';
 import { connectBureau, loadBureauCatalogues, getEquipmentRepository } from './session.js';
 import { createEquipmentView } from '../equipment/view.js';
 import { renderSuiviMjHtml } from '../fiche/suivi-mj.js';
@@ -221,8 +222,7 @@ function renderInspector() {
             if (mode === 'correct' && canCorrect) content += renderCorrection();
             else {
                 if (target.choice) content += `<p>Choisir la spécialité</p><div class="bureau-chips">${target.choice.specs.map(pick => `<button class="bureau-chip" data-action="talent-pick" data-value="${esc(pick)}" aria-pressed="${pick === selection.pick}">${esc(pick)}</button>`).join('')}</div>${target.choice.free ? `<label>Autre spécialité<input id="bureau-talent-pick" value="${esc(selection.pick || '')}" maxlength="150"></label>` : ''}`;
-                if (target.specialty?.kind === 'group') content += `<label>Spécialité<select id="bureau-skill-pick"><option value="">Choisir une spécialité…</option>${target.specialty.options.map(row => `<option value="${esc(row.nom)}" ${row.nom === target.name ? 'selected' : ''}>${esc(row.spec)}</option>`).join('')}</select></label>`;
-                if (target.specialty?.kind === 'basic') content += `<label>Spécialité<select id="bureau-basic-pick" ${target.specialty.locked || !controls.editable ? 'disabled' : ''}><option value="">Sans spécialité</option>${target.specialty.options.map(value => `<option value="${esc(value)}" ${value === target.specialty.value ? 'selected' : ''}>${esc(value)}</option>`).join('')}</select></label>`;
+                content += specialtyControlsHtml(target.specialty, { name: target.name, editable: target.specialty?.kind === 'basic' ? controls.editable : true });
                 if (selection.careerSpecialty) content += `<p class="bureau-muted">La carrière demande ${esc(selection.careerSpecialty)}. Choisissez cette spécialité avant l’achat.</p>`;
                 if (target.total !== undefined) content += `<p>${esc(`${target.baseLabel} ${target.baseValue} + ${target.adv} avances = ${target.total}`)}</p>`;
                 content += (target.description || []).map(line => `<p>${esc(line)}</p>`).join('');
@@ -348,6 +348,19 @@ $('bureau-content').addEventListener('click', async event => {
     if (name === 'buy-mode' || name === 'correct-mode') { mode = name === 'buy-mode' ? 'buy' : 'correct'; correctionFeedback = ''; renderInspector(); return; }
     if (name === 'advance-minus' || name === 'advance-plus') { advances = Math.max(1, Math.min(10, advances + (name === 'advance-plus' ? 1 : -1))); renderInspector(); return; }
     if (name === 'talent-pick') { selection.pick = button.dataset.value; renderInspector(); return; }
+    if (name === 'skill-spec-pick') { selection = { kind: 'skill', newName: button.dataset.value }; renderInspector(); return; }
+    if (name === 'skill-spec-free') {
+        const typed = freeSpecialtyName($('bureau-skill-free').dataset.group, $('bureau-skill-free').value);
+        if (typed) { selection = { kind: 'skill', newName: typed }; renderInspector(); }
+        else $('bureau-status').textContent = 'Spécialité refusée : sans parenthèses ni « au choix ».';
+        return;
+    }
+    if (name === 'basic-spec-pick' || name === 'basic-spec-free') {
+        const value = name === 'basic-spec-pick' ? button.dataset.value : $('bureau-basic-free').value.trim();
+        if (value && freeSpecialtyName('x', value) === null) { $('bureau-status').textContent = 'Spécialité refusée : sans parenthèses ni « au choix ».'; return; }
+        patch({ [`basicSpecs.${encodeURIComponent(selection.row)}`]: value });
+        return;
+    }
     if (name === 'purchase') {
         const model = inspectorModel(state.data, catalogues.engine, catalogues.careers, selection, state, navigator.onLine, advances);
         if (model?.enabled) await command('purchase', purchasePayload(model.target, advances, catalogues.engine));
@@ -449,8 +462,6 @@ $('bureau-content').addEventListener('change', event => {
     if (input.id === 'skill-filter') renderSkills();
     if (input.id === 'bureau-target-rank') { selection.targetRank = +input.value; renderInspector(); }
     if (input.id === 'bureau-talent-pick') { selection.pick = input.value.trim(); renderInspector(); }
-    if (input.id === 'bureau-skill-pick' && input.value) { selection = { kind: 'skill', newName: input.value }; renderInspector(); }
-    if (input.id === 'bureau-basic-pick') patch({ [`basicSpecs.${encodeURIComponent(selection.row)}`]: input.value });
 });
 $('bureau-content').addEventListener('submit', event => {
     if (event.target.id !== 'bureau-correction-form') return;

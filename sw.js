@@ -21,6 +21,7 @@ const ASSETS_LOCAUX = [
   './js/fiche-bureau/app.js',
   './js/fiche-bureau/model.js',
   './js/fiche-bureau/session.js',
+  './js/fiche-bureau/specialty-html.js',
   './css/equipment.css',
   './js/equipment/view.js',
   './js/equipment/memo.js',

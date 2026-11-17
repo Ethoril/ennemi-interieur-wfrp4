@@ -320,11 +320,17 @@ test('spécialité de base : patch encodé validé par le moteur, valeur refusé
     assert.deepEqual(setup.staged, [{ 'basicSpecs.Art': 'Calligraphie' }]);
     assert.deepEqual(setup.announces, ['Spécialité enregistrée']);
 
-    setup.input().value = 'Zzzz';
+    setup.input().value = 'Zzzz (au choix)';
     setup.button('Enregistrer').click();
     await sleep(0);
     assert.equal(setup.staged.length, 1);
-    assert.match(setup.note(), /absente du référentiel publié/u);
+    assert.match(setup.note(), /Spécialité refusée/u);
+
+    // Saisie libre : une nouvelle spécialité valable est enregistrée.
+    setup.input().value = 'Zzzz';
+    setup.button('Enregistrer').click();
+    await sleep(0);
+    assert.deepEqual(setup.staged.at(-1), { 'basicSpecs.Art': 'Zzzz' });
 
     // Valeur inchangée : rien à enregistrer.
     const same = specialtySetup();
@@ -337,6 +343,26 @@ test('spécialité de base : patch encodé validé par le moteur, valeur refusé
     const locked = specialtySetup();
     locked.section.update({ specialty: { ...basic, locked: true } });
     assert.ok(locked.input().disabled && locked.button('Enregistrer').disabled);
+    assert.match(locked.note(), /aucune avance/u);
+});
+
+test('spécialité de base : les spécialités connues sont des boutons visibles, un clic enregistre', async () => {
+    const setup = specialtySetup();
+    setup.section.update({ specialty: { kind: 'basic', row: 'Art', value: 'Peinture', options: ['Peinture', 'Calligraphie'], locked: false } });
+    const all = setup.section.element.all();
+    assert.equal(all.some(node => node.tagName === 'datalist'), false);
+    const chips = all.filter(node => node.className === 'm-chip');
+    assert.deepEqual(chips.map(node => node.textContent), ['Peinture', 'Calligraphie']);
+    assert.equal(chips[0].getAttribute('aria-pressed'), 'true');
+    assert.equal(chips[1].getAttribute('aria-pressed'), 'false');
+    assert.ok(all.some(node => node.textContent === 'Nouvelle spécialité'));
+    chips[1].click();
+    await sleep(0);
+    assert.deepEqual(setup.staged, [{ 'basicSpecs.Art': 'Calligraphie' }]);
+
+    const locked = specialtySetup();
+    locked.section.update({ specialty: { kind: 'basic', row: 'Art', value: '', options: ['Peinture'], locked: true } });
+    assert.ok(locked.section.element.all().filter(node => node.className === 'm-chip').every(node => node.disabled));
     assert.match(locked.note(), /aucune avance/u);
 });
 
