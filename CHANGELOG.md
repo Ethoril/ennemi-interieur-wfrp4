@@ -1,3 +1,9 @@
+## [2.42.1] - 2026-11-17
+
+### Corrections
+- **Compétences « (au choix) »** : une compétence de carrière dont le libellé est « Discrétion (au choix) », « Art (au choix) », etc. n'est plus créée telle quelle dans la fiche. La ligne de base du bureau porte désormais le choix de spécialité, et la cible d'achat comme le serveur refusent un libellé « au choix » sans spécialité choisie.
+- Cache de l’application actualisé.
+
 ## [2.42.0] - 2026-11-16
 
 - Carnaval : suivi de cour réservé au MJ. Détenteurs de voix (libellé, poids, camp, personnages rattachés) avec bandeau des totaux par camp et changement de camp daté d'après l'horloge ; pour chaque personnage, rencontre datée, attitude envers les PJ, note de suivi et présentations possibles ; filtres « rencontré » et « camp » dans la vue PNJ. Rien n'est écrit dans les fiches PNJ.
