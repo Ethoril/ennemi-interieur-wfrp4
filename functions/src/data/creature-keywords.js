@@ -1,5 +1,5 @@
-// Copie de js/data/creature-keywords.js du dépôt Outil MJ Warhammer (commit c2f670f) : même référentiel des deux côtés.
-// À recopier telle quelle quand l'outil change sa liste de base.
+// Fichier généré par node tools/build-fiche-keywords.mjs depuis l'outil MJ (commit 5d803aa) : ne pas modifier à la main.
+// Source : js/data/creature-keywords.js · sha256 du corps : 3b1b6dad76d14d075d562317f2355fb09479ce1697405ac496e02fc945110f54
 /**
  * Référentiel de base des mots-clés de créature (espèce, peuple, nature, allégeance). Liste figée : les ajouts du MJ vivent dans la
  * sauvegarde (`extensions.v5.keywordReferential`), jamais ici. Un terme peut avoir plusieurs parents (Démon de Nurgle : Démon, Chaos,

@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { createFicheCommandEngine } from '../js/fiche/commands.js';
 import { BASE_KEYWORDS } from '../js/data/creature-keywords.js';
 import { FICHE_EXPORT_KEYS } from '../js/fiche/export-import.js';
 import { MONTURES_FICHES } from '../js/data/montures-fiches.js';
 import {
-    counterError, familiersError, familiersResume, migrerFicheV5, MONTURE_INCONNUE, montureAEnvoyer, montureError, montureResume, motsClesError, motsClesResume, MOT_CLE_CIBLES, v5FieldError,
+    counterError, familiersError, familiersResume, migrerFicheV5, MONTURE_INCONNUE, montureAEnvoyer, montureError, montureResume, motsClesError, motsClesResume, MOT_CLE_CIBLES, MOT_CLE_TYPES, v5FieldError,
 } from '../js/fiche/v5.js';
 
 const homoncule = { id: 'fam_1', systeme: 'homunculus', type: 'spell', vent: 'ulgu', espece: null, nom: 'Brindille', destinSacrifie: 1 };
@@ -75,11 +76,16 @@ test('mots-clés : type connu, cible du référentiel de l’outil, sans doublon
     assert.equal(familiersResume({}), '');
 });
 
-test('référentiel des mots-clés identique à celui de l’outil MJ quand son dépôt est présent', t => {
-    const tool = 'E:/Outil MJ Warhammer/js/data/creature-keywords.js';
-    if (!existsSync(tool)) { t.skip('dépôt de l’outil absent'); return; }
-    const local = readFileSync(new globalThis.URL('../js/data/creature-keywords.js', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
-    assert.equal(local.split('\n').slice(2).join('\n'), readFileSync(tool, 'utf8').replaceAll('\r\n', '\n'));
+test('mots-clés : copies générées par l’outil MJ, intactes (en-tête et empreinte), sans le dépôt de l’outil', () => {
+    for (const file of ['creature-keywords.js', 'mots-cles-types.js']) {
+        const text = readFileSync(new globalThis.URL(`../js/data/${file}`, import.meta.url), 'utf8').replaceAll('\r\n', '\n');
+        const [first, second, ...rest] = text.split('\n');
+        assert.match(first, /^\/\/ Fichier généré par node tools\/build-fiche-keywords\.mjs depuis l'outil MJ \(commit [0-9a-f]{7}\)/, file);
+        const sha = second.match(/sha256 du corps : ([0-9a-f]{64})$/)?.[1];
+        assert.ok(sha, `${file} : empreinte absente`);
+        assert.equal(createHash('sha256').update(rest.join('\n')).digest('hex'), sha, `${file} modifié à la main : régénérer depuis l’outil`);
+    }
+    assert.deepEqual(Object.keys(MOT_CLE_TYPES), ['haine', 'animosite', 'prejuge', 'sans-peur']);
 });
 
 test('migration : Fortune reprend Chance sans rien effacer, idempotente', () => {

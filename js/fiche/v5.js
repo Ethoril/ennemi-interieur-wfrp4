@@ -3,6 +3,7 @@
 // reprennent ceux de l'outil MJ (js/core/familiars.js), les cibles de mots-clés son référentiel de base.
 import { BASE_KEYWORDS } from '../data/creature-keywords.js';
 import { montureFicheDe } from '../data/montures-fiches.js';
+import { FICHE_KEYWORD_TYPES } from '../data/mots-cles-types.js';
 
 export const FAMILIER_SYSTEMES = Object.freeze({ homunculus: 'Homoncule', animal: 'Familier animal' });
 export const FAMILIER_TYPES = Object.freeze({ combat: 'Familier de combat', power: 'Familier de puissance', spell: 'Familier de sort' });
@@ -12,7 +13,8 @@ export const FAMILIER_VENTS = Object.freeze({
 export const FAMILIER_ESPECES = Object.freeze({
     fox: 'Renard', owl: 'Hibou', stoat: 'Hermine', badger: 'Blaireau', cat: 'Chat', raven: 'Corbeau', generic: 'Compagnon générique',
 });
-export const MOT_CLE_TYPES = Object.freeze({ haine: 'Haine', animosite: 'Animosité', prejuge: 'Préjugé', 'sans-peur': 'Sans peur' });
+/** Types de mots-clés : liste de l'outil MJ, recopiée par son générateur (js/data/mots-cles-types.js), jamais écrite ici. */
+export const MOT_CLE_TYPES = FICHE_KEYWORD_TYPES;
 export const MOT_CLE_CIBLES = Object.freeze(Object.fromEntries(BASE_KEYWORDS.map(term => [term.id, term.nameFr])));
 
 // Compteurs saisis en chaîne de chiffres, comme `destin` ; une chaîne vide vaut 0.
