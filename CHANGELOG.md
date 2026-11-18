@@ -1,3 +1,8 @@
+## [2.43.2] - 2026-11-18
+
+- **Carnaval de Middenheim**. Les cartes de l’agenda MJ affichent une description de chaque événement du programme, avec les présences et les références de pages.
+- Cache de l’application actualisé.
+
 ## [2.43.1] - 2026-11-18
 
 ### Corrections

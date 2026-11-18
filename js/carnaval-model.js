@@ -31,13 +31,14 @@ export function validateSource(source) {
         rows.forEach((row, index) => {
             const path = `${key}[${index}]`;
             if (!hasObject(row) || !(key === 'days' ? Number.isInteger(row.id) : safeId(row.id)) || !boundedText(row.name ?? row.title, 300)) { issue(path, 'Identifiant ou nom invalide.'); return; }
-            if (!onlyKeys(row, key === 'days' || key === 'places' ? ['id', 'name'] : key === 'characters' ? ['id', 'name', 'aliases'] : ['id', 'day', 'start', 'end', 'title', 'placeId', 'kind', 'source', 'presences'])) issue(path, 'Champ inattendu.');
+            if (!onlyKeys(row, key === 'days' || key === 'places' ? ['id', 'name'] : key === 'characters' ? ['id', 'name', 'aliases'] : ['id', 'day', 'start', 'end', 'title', 'description', 'placeId', 'kind', 'source', 'presences'])) issue(path, 'Champ inattendu.');
             if (ids.has(row.id)) issue(`${path}.id`, 'Identifiant dupliqué.'); ids.add(row.id);
             if (key === 'days' && (row.id !== index + 1 || !Number.isInteger(row.id) || row.id < 1 || row.id > 8)) issue(`${path}.id`, 'Les jours doivent être numérotés de 1 à 8.');
             if (key === 'characters' && (!Array.isArray(row.aliases) || row.aliases.length > 50 || row.aliases.some(a => !boundedText(a, 200)))) issue(`${path}.aliases`, 'Liste d’alias invalide.');
             if (key === 'events') {
                 if (!Number.isInteger(row.day) || row.day < 1 || row.day > 8) issue(`${path}.day`, 'Jour hors limites.');
                 if (!boundedText(row.title, 500) || !safeId(row.placeId)) issue(path, 'Titre et lieu requis.');
+                if (Object.hasOwn(row, 'description') && !boundedText(row.description, 1000)) issue(`${path}.description`, 'Description de 1 à 1000 caractères attendue.');
                 if (!['public', 'secret'].includes(row.kind)) issue(`${path}.kind`, 'Type public ou secret attendu.');
                 if (row.start !== null && !minute(row.start)) issue(`${path}.start`, 'Minute invalide.');
                 if (row.end !== null && !minute(row.end)) issue(`${path}.end`, 'Minute invalide.');

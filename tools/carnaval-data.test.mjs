@@ -27,6 +27,24 @@ test('validates source and campaign with useful paths', () => {
     assert.equal(validateCampaign(badCampaign).valid, false);
 });
 
+test('a source description follows a scene through adaptations and reset', () => {
+    const describedSource = clone(source);
+    const description = 'Les choristes ouvrent le bal.';
+    describedSource.events[0].description = description;
+    assert.equal(validateSource(describedSource).valid, true);
+
+    const campaign = initialCampaign();
+    campaign.overrides.late = { title: 'Veillée reportée', start: 1390 };
+    assert.equal(effectiveEvents(describedSource, campaign)[0].description, description);
+    assert.equal(effectiveEvents(describedSource, resetEventOverride(campaign, 'late'))[0].description, description);
+    assert.equal(effectiveEvents(describedSource, campaign)[1].description, undefined);
+
+    for (const invalid of [null, 42, ' ', 'a'.repeat(1001)]) {
+        describedSource.events[0].description = invalid;
+        assert.equal(validateSource(describedSource).errors[0].path, 'events[0].description');
+    }
+});
+
 test('validators fail closed on malformed collections and check campaign references', () => {
     assert.equal(validateSource({ version: 1, days: [], places: 'oops', characters: [], events: [] }).valid, false);
     const campaign = initialCampaign();
