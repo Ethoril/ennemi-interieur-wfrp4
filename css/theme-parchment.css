@@ -4,6 +4,7 @@
    ================================================ */
 
 [data-theme="parchment"] {
+  color-scheme: light;
   /* Fonds — palette parchemin/papier vieilli */
   --document-paper: #fbf5e6;
   --document-ink: #2a2116;

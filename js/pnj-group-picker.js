@@ -92,7 +92,8 @@ export function createGroupPicker({ documentRef = document, input, initialGroups
     }
     const onAddClick = () => addPending();
     const onKeydown = event => {
-        if (event.key === 'Enter') { event.preventDefault(); addPending(); }
+        // isComposing : Entrée qui valide une composition (IME, claviers Android) ne doit pas ajouter le groupe.
+        if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); addPending(); }
     };
     const onInput = () => {
         const raw = input.value.trim();

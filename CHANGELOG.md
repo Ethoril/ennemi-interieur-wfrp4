@@ -1,3 +1,13 @@
+## [2.43.1] - 2026-11-18
+
+### Corrections
+- **Thèmes** : les contrôles natifs (champs, listes, barres de défilement) suivent le thème, sombre par défaut et clair en parchemin ; les fiches papier des enquêtes restent claires.
+- **Barre de défilement dorée** des tableaux de fiche désormais visible aussi sous Firefox.
+- **Tables de critiques** : l’ouverture et la fermeture s’animent sur la hauteur réelle, sans le temps mort de la fermeture.
+- **Saisie** : Entrée ne valide plus un mot en cours de composition (claviers Android, IME) dans les spécialités et le choix de groupe de PNJ.
+- Erreur de nettoyage d’image : la cause d’origine est conservée.
+- Cache de l’application actualisé.
+
 ## [2.43.0] - 2026-11-17
 
 ### Personnages

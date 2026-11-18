@@ -88,7 +88,7 @@ export function createSpecialtySection({ documentRef, getContext, onChoose, anno
         const typed = free.value.trim();
         choose(typed && `${specialty.group} (${typed})`);
     });
-    free.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); freeGo.click?.(); } });
+    free.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); freeGo.click?.(); } });
 
     async function saveBasic(chosen) {
         const context = getContext();
@@ -123,7 +123,7 @@ export function createSpecialtySection({ documentRef, getContext, onChoose, anno
         }
     }
     save.addEventListener('click', () => { void saveBasic(); });
-    input.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); void saveBasic(); } });
+    input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.isComposing) { event.preventDefault(); void saveBasic(); } });
 
     function update(target, locked = false) {
         specialty = target?.specialty || null;

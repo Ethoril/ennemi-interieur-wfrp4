@@ -109,7 +109,7 @@ export async function cleanupUnreferencedImage({
         await deleteObject(storageRef);
     } catch (error) {
         if (error?.code === 'storage/object-not-found') missing = true;
-        else throw new Error(`Image à nettoyer : ${path} (${error?.code || error?.message || 'erreur Storage'}).`);
+        else throw new Error(`Image à nettoyer : ${path} (${error?.code || error?.message || 'erreur Storage'}).`, { cause: error });
     }
     await releaseImageLock(db, lockRef, path);
     forgetProtectedUpload(path);

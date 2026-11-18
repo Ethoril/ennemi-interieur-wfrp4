@@ -5,6 +5,8 @@
 
 /* ── CSS Variables ─────────────────────────────── */
 :root {
+  /* Contrôles natifs (champs, listes, barres de défilement) accordés au thème sombre. */
+  color-scheme: dark;
   /* Colors */
   --document-paper: #e6d7b5;
   --document-ink: #2a2116;
@@ -1342,6 +1344,23 @@ strong {
 
 .crit-table-section.open .crit-table-body {
   max-height: 5000px;
+}
+
+/* Navigateurs récents : animation vers la hauteur réelle (height: auto) au lieu
+   du plafond de 5000px, qui retardait le début de la fermeture. Le bloc
+   ci-dessus reste le repli. js/main.js mesure scrollHeight et écoute
+   transitionend sans dépendre de la propriété animée. */
+@supports (interpolate-size: allow-keywords) {
+  .crit-table-body {
+    interpolate-size: allow-keywords;
+    height: 0;
+    max-height: none;
+    transition: height 0.4s ease;
+  }
+  .crit-table-section.open .crit-table-body {
+    height: auto;
+    max-height: none;
+  }
 }
 
 .crit-table-body .rules-table {
