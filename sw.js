@@ -1,6 +1,6 @@
 // sw.js, en tête. Doit rester identique à APP_VERSION de js/layout.js :
 // la CI le vérifie (.github/workflows/validate.yml).
-const APP_VERSION = 'v2.43.2';
+const APP_VERSION = 'v2.43.3';
 const CACHE_NAME  = 'wfrp-cache-' + APP_VERSION;
 
 const ASSETS_LOCAUX = [
@@ -211,6 +211,7 @@ const ASSETS_LOCAUX = [
   './js/mobile/enquetes-drafts-store.js',
   './js/mobile/lifecycle.js',
   './js/mobile/mj-composition.js',
+  './js/mobile/mj-pnjs-view.js',
   './js/mobile/mj-runtime.js',
   './js/mobile/pnj-detail-model.js',
   './js/mobile/pnj-list-model.js',
