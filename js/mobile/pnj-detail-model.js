@@ -57,9 +57,9 @@ function compareText(left, right) {
     return left < right ? -1 : left > right ? 1 : 0;
 }
 
-function visiblePnjMap(items) {
+function visiblePnjMap(items, includeHidden = false) {
     return new Map((Array.isArray(items) ? items : [])
-        .filter(item => validId(item?.id) && item.visibleJoueurs === true && item.suppressionEnCours !== true)
+        .filter(item => validId(item?.id) && (includeHidden || item.visibleJoueurs === true) && item.suppressionEnCours !== true)
         .map(item => [item.id, item]));
 }
 
@@ -142,7 +142,9 @@ export function selectPnjDetailModel(state, id) {
     const relations = publicResource(state, 'relations');
     const indices = publicResource(state, 'indices');
     const connection = state?.connection ?? {};
-    const item = visiblePnjMap(pnjs.items).get(id) ?? null;
+    // Vue MJ (mj-pnjs-view.js) : les PNJs masqués aux joueurs restent consultables.
+    const includeHidden = state?.mjView === true;
+    const item = visiblePnjMap(pnjs.items, includeHidden).get(id) ?? null;
 
     if (connection.phase === 'offline-empty') {
         return freeze({ kind: 'offline-empty', retry: true, item: null,
@@ -167,7 +169,7 @@ export function selectPnjDetailModel(state, id) {
             message: 'Ce PNJ est indisponible.' });
     }
 
-    const visiblePnjs = visiblePnjMap(pnjs.items);
+    const visiblePnjs = visiblePnjMap(pnjs.items, includeHidden);
     const lieu = text(item.lieu, 200);
     const groupes = pnjGroups(item);
     const groupe = groupLabel(item);
@@ -175,6 +177,7 @@ export function selectPnjDetailModel(state, id) {
         kind: 'ready',
         item: publicItem(item),
         name: itemName(item),
+        masque: item.visibleJoueurs !== true,
         description: text(item.description),
         statut: statutKey(item.statut),
         statutLabel: statutLabel(item.statut),

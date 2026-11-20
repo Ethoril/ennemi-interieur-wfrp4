@@ -36,7 +36,7 @@ function sameFilters(left, right) {
 function listSignature(model) {
     const rows = model.results.map(item => [
         item.id, item.ordre, item.nom, item.statut, item.vivant, item.lieu, groupLabel(item),
-        item.image?.path, item.image?.legacy, item.image?.invalid,
+        item.image?.path, item.image?.legacy, item.image?.invalid, item.visibleJoueurs,
     ].map(value => String(value ?? '')).join('\u001f')).join('\u001e');
     return `${model.search}\u001d${model.quick}\u001d${FILTER_DIMENSIONS.map(name => model.filters[name].join('\u001f')).join('\u001e')}\u001d${rows}`;
 }
@@ -145,10 +145,14 @@ function renderPnjCard({ documentRef, pnj, imageService, portraits, links }) {
     statut.textContent = `Statut : ${statutLabel(pnj.statut)}`;
     copy.append(name, context, statut);
     const vivant = vivantKey(pnj.vivant);
-    if (vivant === 'decede' || vivant === 'inconnu') {
+    const vital = vivant === 'decede' || vivant === 'inconnu';
+    // Seule la vue MJ reçoit des PNJs masqués : la carte le signale.
+    const masque = pnj.visibleJoueurs === false;
+    if (vital || masque) {
         const badges = documentRef.createElement('span');
         badges.className = 'm-pnj-badges';
-        appendBadge(documentRef, badges, vivantLabel(pnj.vivant), 'État vital : ');
+        if (vital) appendBadge(documentRef, badges, vivantLabel(pnj.vivant), 'État vital : ');
+        if (masque) appendBadge(documentRef, badges, 'Masqué aux joueurs');
         copy.append(badges);
     }
     const chevron = documentRef.createElement('span');

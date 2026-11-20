@@ -6,6 +6,7 @@ import { createDefaultPublicSession } from './public-runtime.js';
 import { createDefaultMjSession } from './mj-runtime.js';
 import { announce, createDialogController, publicStatusKind, publicStatusMessage, renderState } from './ui.js';
 import { createPnjsListView, forgetOpenedPnjCard } from './views/pnjs-list.js';
+import { createMjPnjsView } from './mj-pnjs-view.js';
 import { createPnjDetailView } from './views/pnj-detail.js';
 import { createEnquetesListView } from './views/enquetes-list.js';
 import { createEnqueteDetailView } from './views/enquete-detail.js';
@@ -275,6 +276,9 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
         },
     });
     const store = session.store;
+    // Liste et fiche PNJ : tous les PNJs en session MJ, les seuls visibles sinon.
+    const pnjsStore = createMjPnjsView({ store, mjSession });
+    const pnjImages = () => (mjSession.getState().status === 'gm' && mjSession.getState().private?.repositories?.images) || session.getImages();
     const initialPreferences = session.getState().preferences;
     let pwa = null;
     applyTheme(documentRef, initialPreferences.theme, themeToggle);
@@ -287,8 +291,8 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     const views = {
         [ROUTE_NAMES.PNJS]: () => createPnjsListView({
             container,
-            store,
-            getImageService: () => session.getImages(),
+            store: pnjsStore,
+            getImageService: pnjImages,
             onRetry: retry,
             getSession: () => mjSession,
             getContributionClient,
@@ -299,8 +303,8 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
         [ROUTE_NAMES.PNJ]: route => createPnjDetailView({
             container,
             id: route.id,
-            store,
-            getImageService: () => session.getImages(),
+            store: pnjsStore,
+            getImageService: pnjImages,
             onBack: () => router.back(),
             onRetry: retry,
             getSession: () => mjSession.getState(),
@@ -507,6 +511,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
     });
     session.start();
     mjSession.start();
+    pnjsStore.start();
     const adminRouteController = createAdminRouteController({
         routeNames: ROUTE_NAMES,
         onRefresh: () => router.refresh(),
@@ -538,6 +543,7 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             themeToggle?.removeEventListener('click', onThemeToggle);
             stopNavigationLayout();
             await session.stop();
+            pnjsStore.stop();
             await mjSession.stop();
             await logoutContributionAccount().catch(() => {});
         })();

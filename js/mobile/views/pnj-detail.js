@@ -44,7 +44,9 @@ function renderHeroInfo(documentRef, refs, model) {
         appendText(documentRef, badge, 'span', 'visually-hidden', 'État vital : ');
         appendText(documentRef, badge, 'span', '', model.vivantLabel);
     }
-    refs.marks.hidden = !seal && !vital;
+    // Vue MJ seulement : un PNJ hors du mode joueur le dit, pour ne pas le croire connu des joueurs.
+    if (model.masque) appendText(documentRef, refs.marks, 'span', 'm-detail-vital', 'Masqué aux joueurs');
+    refs.marks.hidden = !seal && !vital && !model.masque;
     refs.context.textContent = model.context;
     refs.context.hidden = !model.context;
 }
@@ -170,7 +172,7 @@ function renderReady({ documentRef, target, model, portrait, portraitSignature, 
     }
     refs.title.textContent = model.name;
     refs.portraitTarget.setAttribute('aria-label', `Portrait de ${model.name}`);
-    const heroSignature = JSON.stringify([model.statut, model.vivant, model.vivantLabel, model.surnom, model.role, model.context]);
+    const heroSignature = JSON.stringify([model.statut, model.vivant, model.vivantLabel, model.surnom, model.role, model.context, model.masque]);
     if (refs.signatures.hero !== heroSignature) {
         renderHeroInfo(documentRef, refs, model);
         refs.signatures.hero = heroSignature;
