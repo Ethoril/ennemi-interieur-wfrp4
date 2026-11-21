@@ -1,6 +1,6 @@
 import { FirebaseClientError, ERROR_KINDS, normalizeFirebaseError } from './firebase-errors.js';
 import { documentRef, requireRepository, serverTimestamp, snapshotData, snapshotMetadata, subscribeSnapshot } from './repository-utils.js';
-import { initialCampaign, validateCampaign, validateSource } from '../carnaval-model.js';
+import { initialCampaign, validateCampaign, validateDossiers, validateSource } from '../carnaval-model.js';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const exists = snapshot => typeof snapshot?.exists === 'function' ? snapshot.exists() : snapshot?.exists === true;
@@ -26,6 +26,7 @@ export function createCarnavalRepository({ sdk, client } = {}) {
         throw error(ERROR_KINDS.VALIDATION, 'missing-firestore-api', 'carnaval-repository');
     }
     const sourceRef = documentRef(sdk, db, 'carnaval_sources', 'current');
+    const dossiersRef = documentRef(sdk, db, 'carnaval_sources', 'dossiers');
     const campaignRef = documentRef(sdk, db, 'carnaval_campaigns', 'current');
     const subscriptions = new Set();
     let closed = false;
@@ -48,6 +49,7 @@ export function createCarnavalRepository({ sdk, client } = {}) {
 
     return Object.freeze({
         subscribeSource(onData, onError) { return subscribe(sourceRef, validateSource, onData, onError, 'subscribe-carnaval-source'); },
+        subscribeDossiers(onData, onError) { return subscribe(dossiersRef, validateDossiers, onData, onError, 'subscribe-carnaval-dossiers'); },
         subscribeCampaign(onData, onError) { return subscribe(campaignRef, validateCampaign, onData, onError, 'subscribe-carnaval-campaign'); },
         async saveCampaign(campaign, { expectedRevision } = {}) {
             if (closed) throw error(ERROR_KINDS.VALIDATION, 'repository-closed', 'save-carnaval-campaign');

@@ -585,6 +585,11 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /carnaval_sources/dossiers {
+      allow get: if isGM();
+      allow list, write: if false;
+    }
+
     match /carnaval_campaigns/current {
       allow read: if isGM();
       allow create: if isGM() && validCarnavalCampaign(request.resource.data)

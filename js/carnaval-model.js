@@ -15,6 +15,23 @@ export const ATTITUDES = Object.freeze([{ id: 'hostile', label: 'Hostile' }, { i
 
 function result(errors, warnings = []) { return { valid: errors.length === 0, errors, warnings }; }
 
+export function validateDossiers(data) {
+    if (!hasObject(data) || !onlyKeys(data, ['version', 'characters']) || data.version !== 1 || !hasObject(data.characters)) {
+        return result([{ path: '', message: 'Format de dossiers PNJ invalide.' }]);
+    }
+    const entries = Object.entries(data.characters);
+    if (entries.length > 500) return result([{ path: 'characters', message: 'Trop de dossiers PNJ.' }]);
+    const errors = [];
+    for (const [id, dossier] of entries) {
+        if (!safeId(id) || !hasObject(dossier) || !onlyKeys(dossier, ['summary', 'story', 'details'])
+            || !boundedText(dossier.summary, 5000) || !boundedText(dossier.story, 30000)
+            || (Object.hasOwn(dossier, 'details') && !boundedText(dossier.details, 30000))) {
+            errors.push({ path: `characters.${id}`, message: 'Dossier PNJ invalide.' });
+        }
+    }
+    return result(errors);
+}
+
 export function validateSource(source) {
     const errors = [];
     const issue = (path, message) => errors.push({ path, message });

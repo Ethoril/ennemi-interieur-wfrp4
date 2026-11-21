@@ -9,6 +9,8 @@ const minuteText = value => { if (value === null || value === undefined || value
 const absoluteTime = value => { const day = Math.floor(value / 1440) + 1; return day > 8 ? `Nuit suivant ${dayLabel(8)}, ${minuteText(value % 1440)}` : `${dayLabel(day)}, ${minuteText(value % 1440)}`; };
 const state = { admin: false, onlineReady: false, streamsReady: {}, clockSeeded: false, drawerReturnTarget: null, bureau: null, source: null, campaign: null, pnjs: [], relations: [], pnjPrivate: new Map(), view: 'day', selectedCharacter: '', selectedPlace: '', selectedDay: 1, placeDay: 'all', selectedMinute: 480, showSecrets: true, showRendezvous: true, metFilter: 'all', campFilter: 'all', eventId: null, linkCharacterId: null, generation: 0, unsubs: [], privateUnsub: null, map: null, markerById: new Map(), imageReleases: new Map(), focusedCharacter: '' };
 let authUnsubscribe = null;
+let dossiers = null;
+let dossiersUnavailable = false;
 
 // Pendant un dialogue modal, la zone principale est inerte : le message est aussi écrit dans la zone du dialogue ouvert, sauf les messages de fond (synchronisation), qui ne doivent pas y masquer une erreur.
 function setStatus(message = '', kind = '', { background = false } = {}) { for (const target of [$('#carnaval-status'), background ? null : document.querySelector('dialog[open] [data-dialog-status]')]) { if (!target) continue; target.textContent = message; if (kind) target.dataset.kind = kind; else delete target.dataset.kind; } }
@@ -18,6 +20,7 @@ function showOfflineLock(message) { $('#carnaval-offline-message').textContent =
 async function doLogin() { try { await loginWithGoogle(); } catch (error) { if (error?.code !== 'auth/popup-closed-by-user') setStatus('Connexion impossible. Réessayez lorsque le réseau est disponible.', 'error'); } }
 function clearPrivateState() {
   state.generation += 1; state.unsubs.forEach(unsub => unsub?.()); state.unsubs = []; state.privateUnsub?.(); state.privateUnsub = null;
+  dossiers = null; dossiersUnavailable = false;
   state.imageReleases.forEach(release => release?.()); state.imageReleases.clear();
   const previous = state.bureau; state.bureau = null; void previous?.close?.();
   state.source = null; state.campaign = null; state.pnjs = []; state.relations = []; state.pnjPrivate.clear(); state.onlineReady = false; state.clockSeeded = false; state.streamsReady = {}; state.selectedCharacter = ''; state.selectedPlace = ''; state.selectedDay = 1; state.placeDay = 'all'; state.selectedMinute = 480; state.view = 'day'; state.showSecrets = true; state.showRendezvous = true; $('#show-rendezvous').checked = true; state.metFilter = 'all'; state.campFilter = 'all'; $('#met-filter').value = 'all'; $('#camp-filter').value = 'all'; state.eventId = null; state.linkCharacterId = null;
@@ -54,6 +57,15 @@ async function connectBureau() {
   state.unsubs.push(repo.subscribeCampaign((campaign, metadata) => { if (!state.admin || generation !== state.generation || !ready('campaign',metadata)) return; state.campaign = campaign || initialCampaign(); if (!state.clockSeeded) { state.selectedDay = state.campaign.clock.day; state.selectedMinute = state.campaign.clock.minute; state.clockSeeded = true; } const validation = validateCampaign(state.campaign,state.source); if (!validation.valid) setStatus(`Suivi invalide : ${validation.errors.map(item => item.message).join(' · ')}`, 'error'); else setStatus('Données synchronisées.', 'success', { background:true }); refreshControls(); render(); }, streamError('campaign')));
   state.unsubs.push(state.bureau.pnjs.subscribeAll((pnjs,metadata) => { if (!state.admin || generation !== state.generation || !ready('pnjs',metadata)) return; state.pnjs = pnjs || []; refreshControls(); render(); refreshDrawer(); }, streamError('pnjs')));
   state.unsubs.push(state.bureau.relations.subscribeAll((relations,metadata) => { if (!state.admin || generation !== state.generation || !ready('relations',metadata)) return; state.relations = relations || []; refreshDrawer(); }, streamError('relations')));
+  const setDossiers = (data, unavailable) => {
+    if (!state.admin || generation !== state.generation) return;
+    dossiers = data?.characters ?? null;
+    dossiersUnavailable = unavailable;
+    renderCharacterDossier(state.focusedCharacter);
+  };
+  if (repo.subscribeDossiers) {
+    state.unsubs.push(repo.subscribeDossiers(data => setDossiers(data, false), () => setDossiers(null, true)));
+  }
 }
 
 function timeOptions(selected = 480, withNight = true, allowUnknown = false, unknownLabel = 'Horaire non précisé') { const max = withNight ? 1800 : 1439; const values = allowUnknown ? [`<option value=""${selected === null || selected === '' ? ' selected' : ''}>${unknownLabel}</option>`] : []; for (let minute = 0; minute <= max; minute += 1) values.push(`<option value="${minute}"${selected !== '' && selected !== null && minute === Number(selected) ? ' selected' : ''}>${minuteText(minute)}</option>`); return values.join(''); }
@@ -320,17 +332,111 @@ function bindIntroductions(id) {
   section.querySelectorAll('[data-remove-introduction]').forEach(button => button.addEventListener('click', () => { void save(introductionsFor(state.campaign,id).outgoing.filter(item => item.to !== button.dataset.removeIntroduction),'Présentation retirée.'); }));
   $('#introduction-add').addEventListener('click', () => { const to = $('#introduction-target').value; if (!to) return; void save([...introductionsFor(state.campaign,id).outgoing,{ to, condition:$('#introduction-condition').value }],'Présentation ajoutée.'); });
 }
-async function openCharacter(id, { focusHeading = false } = {}) {
-  if (!state.onlineReady) return; state.privateUnsub?.(); state.privateUnsub = null; const previousCharacter = state.focusedCharacter; if (previousCharacter) { state.imageReleases.get(previousCharacter)?.(); state.imageReleases.delete(previousCharacter); } state.focusedCharacter = id; const character = characterById(id); if (!character) return; const pnj = linkedPnj(id); const drawer = $('#character-drawer'); const opening = !drawer.classList.contains('open'); if (opening) { state.drawerReturnTarget = document.activeElement; drawer.inert = false; drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); drawer.setAttribute('aria-modal','false'); } const linked = Boolean(state.campaign.links?.[id]), focusH2 = opening || focusHeading; $('#character-drawer-content').innerHTML = `<h2 tabindex="-1">${esc(character.name)}</h2>${pnj ? '<p class="carnaval-muted">Chargement de la fiche…</p>' : `<p class="carnaval-muted">${linked ? 'La fiche associée est indisponible ou a été supprimée.' : 'Aucune fiche PNJ associée.'}</p><button type="button" class="btn-primary" id="associate-pnj">${linked ? 'Réassocier une fiche' : 'Associer une fiche'}</button>${trackingHtml(id)}${introductionsHtml(id)}`}`; if (focusH2) $('#character-drawer-content h2')?.focus();
-  if (!pnj) { bindTracking(id); bindIntroductions(id); $('#associate-pnj').addEventListener('click', () => openLinkDialog(id)); return; }
-  const generation = state.generation;
-  let image = pnj.imageUrl || ''; if (pnj.imagePath && state.bureau?.images?.loadObjectUrl) { try { const loaded = await state.bureau.images.loadObjectUrl(pnj.imagePath); if (!state.admin || generation !== state.generation || state.focusedCharacter !== id) { loaded.release?.(); return; } image = loaded.url; state.imageReleases.set(id,loaded.release); } catch { image = ''; } }
-  if (!state.admin || generation !== state.generation || state.focusedCharacter !== id) return;
+const DOSSIER_TAGS = new Set(['p', 'h4', 'strong', 'em', 'ul', 'li', 'br', 'blockquote']);
+const dossierSection = '<section id="character-dossier" class="carnaval-drawer-section carnaval-dossier" hidden></section>';
+
+function dossierContent(html) {
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  const safe = document.createDocumentFragment();
+  function appendChildren(source, target) {
+    for (const child of source.childNodes) {
+      if (child.nodeName === '#text') target.append(child.data);
+      else if (DOSSIER_TAGS.has(child.localName)) {
+        const element = document.createElement(child.localName);
+        appendChildren(child, element);
+        target.append(element);
+      }
+    }
+  }
+  // Le fragment rendu est reconstruit sans recopier d’attributs ni de balises arbitraires.
+  appendChildren(template.content, safe);
+  return safe;
+}
+
+function renderCharacterDossier(id, openSections) {
+  const section = $('#character-dossier');
+  if (!section) return;
+  const dossier = dossiers && Object.hasOwn(dossiers, id) ? dossiers[id] : null;
+  const expanded = openSections ?? [...section.querySelectorAll('details[open]')].map(item => item.id);
+  const focusId = section.contains(document.activeElement) ? document.activeElement.id : '';
+  section.replaceChildren();
+  section.hidden = !dossier && !dossiersUnavailable;
+  if (section.hidden) return;
+  const title = document.createElement('h3');
+  title.textContent = 'Fiche du tome';
+  section.append(title);
+  if (!dossier) {
+    const message = document.createElement('p');
+    message.className = 'carnaval-muted';
+    message.textContent = 'La fiche du tome est indisponible. Actualisez la page pour réessayer.';
+    section.append(message);
+    return;
+  }
+  const heading = document.createElement('h4');
+  heading.textContent = 'Résumé';
+  section.append(heading, dossierContent(dossier.summary));
+  for (const [key, label] of [['story', 'Impact sur l’histoire'], ['details', 'Détails']]) {
+    if (!dossier[key]) continue;
+    const details = document.createElement('details');
+    details.id = `dossier-${key}`;
+    details.open = expanded.includes(details.id);
+    const summary = document.createElement('summary');
+    summary.id = `dossier-${key}-summary`;
+    summary.textContent = label;
+    details.append(summary, dossierContent(dossier[key]));
+    section.append(details);
+  }
+  if (focusId) document.getElementById(focusId)?.focus({ preventScroll: true });
+}
+
+async function openCharacter(id, { focusHeading = false, openSections = [] } = {}) {
+  const character = characterById(id);
+  if (!state.onlineReady || !character) return;
+  const previousCharacter = state.focusedCharacter;
+  state.privateUnsub?.(); state.privateUnsub = null;
+  if (previousCharacter) { state.imageReleases.get(previousCharacter)?.(); state.imageReleases.delete(previousCharacter); }
+  state.focusedCharacter = id;
+  const pnj = linkedPnj(id);
+  const drawer = $('#character-drawer'), content = $('#character-drawer-content');
+  const opening = !drawer.classList.contains('open');
+  if (opening) {
+    state.drawerReturnTarget = document.activeElement;
+    drawer.inert = false;
+    drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden','false');
+    drawer.setAttribute('aria-modal','false');
+  }
+  if (previousCharacter !== id) drawer.scrollTop = 0;
+  const linked = Boolean(state.campaign.links?.[id]), focusH2 = opening || focusHeading;
+  const request = {};
+  state.drawerRequest = request;
+  const current = () => state.admin && state.drawerRequest === request && state.focusedCharacter === id;
+  content.innerHTML = `<h2 tabindex="-1">${esc(character.name)}</h2>${pnj ? '<p class="carnaval-muted">Chargement de la fiche…</p>' : `${dossierSection}<p class="carnaval-muted">${linked ? 'La fiche associée est indisponible ou a été supprimée.' : 'Aucune fiche PNJ associée.'}</p><button type="button" class="btn-primary" id="associate-pnj">${linked ? 'Réassocier une fiche' : 'Associer une fiche'}</button>${trackingHtml(id)}${introductionsHtml(id)}`}`;
+  if (focusH2) $('h2', content)?.focus();
+  if (!pnj) {
+    renderCharacterDossier(id, openSections);
+    bindTracking(id); bindIntroductions(id);
+    $('#associate-pnj').addEventListener('click', () => openLinkDialog(id));
+    return;
+  }
+  let image = pnj.imageUrl || '';
+  if (pnj.imagePath && state.bureau?.images?.loadObjectUrl) {
+    try {
+      const loaded = await state.bureau.images.loadObjectUrl(pnj.imagePath);
+      if (!current()) { loaded.release?.(); return; }
+      image = loaded.url;
+      state.imageReleases.set(id,loaded.release);
+    } catch { image = ''; }
+  }
+  if (!current()) return;
   const privateNote = state.pnjPrivate.get(pnj.id) || '';
-  $('#character-drawer-content').innerHTML = `<h2>${esc(pnj.nom || character.name)}</h2><img src="${esc(image || 'img/pnj-default.webp')}" alt="${image ? `Portrait de ${esc(pnj.nom || character.name)}` : 'Portrait non renseigné'}"><div class="carnaval-drawer-section"><h3>Description</h3>${esc(pnj.description || 'Aucune description renseignée.')}</div><div class="carnaval-drawer-section"><h3>Relations</h3>${renderRelations(pnj.id)}</div>${trackingHtml(id)}${introductionsHtml(id)}<div class="carnaval-drawer-section" id="character-private-notes"><h3>Notes MJ</h3>${esc(privateNote || 'Aucune note privée.')}</div><button type="button" class="btn-ghost-sm" id="reassociate-pnj">Réassocier</button>`; bindTracking(id); bindIntroductions(id);
+  content.innerHTML = `<h2>${esc(pnj.nom || character.name)}</h2><img src="${esc(image || 'img/pnj-default.webp')}" alt="${image ? `Portrait de ${esc(pnj.nom || character.name)}` : 'Portrait non renseigné'}">${dossierSection}<div class="carnaval-drawer-section"><h3>Description</h3>${esc(pnj.description || 'Aucune description renseignée.')}</div><div class="carnaval-drawer-section"><h3>Relations</h3>${renderRelations(pnj.id)}</div>${trackingHtml(id)}${introductionsHtml(id)}<div class="carnaval-drawer-section" id="character-private-notes"><h3>Notes MJ</h3>${esc(privateNote || 'Aucune note privée.')}</div><button type="button" class="btn-ghost-sm" id="reassociate-pnj">Réassocier</button>`;
+  renderCharacterDossier(id, openSections);
+  bindTracking(id); bindIntroductions(id);
   $('#character-drawer-content h2')?.setAttribute('tabindex','-1'); if (focusH2) $('#character-drawer-content h2')?.focus();
   $('#reassociate-pnj').addEventListener('click', () => openLinkDialog(id));
-  state.privateUnsub?.(); state.privateUnsub = state.bureau.pnjs.subscribePrivate(pnj.id,snapshot => { if (!state.admin || generation !== state.generation || state.focusedCharacter !== id) return; state.pnjPrivate.set(pnj.id,snapshot?.notes || ''); const target = $('#character-private-notes'); if (target) target.innerHTML = `<h3>Notes MJ</h3>${esc(snapshot?.notes || 'Aucune note privée.')}`; });
+  state.privateUnsub = state.bureau.pnjs.subscribePrivate(pnj.id,snapshot => { if (!current()) return; state.pnjPrivate.set(pnj.id,snapshot?.notes || ''); const target = $('#character-private-notes'); if (target) target.innerHTML = `<h3>Notes MJ</h3>${esc(snapshot?.notes || 'Aucune note privée.')}`; });
 }
 function renderRelations(id) { const byId = new Map(state.pnjs.map(pnj => [pnj.id,pnj])); const links = state.relations.filter(relation => relation.source === id || relation.cible === id); return links.length ? `<ul>${links.map(relation => { const otherId = relation.source === id ? relation.cible : relation.source; return `<li>${esc(byId.get(otherId)?.nom || 'Fiche indisponible')} — ${esc(relation.label || relation.type || 'Relation')}</li>`; }).join('')}</ul>` : '<span class="carnaval-muted">Aucune relation renseignée.</span>'; }
 // Le rafraîchissement remplace tout le panneau : on relève la saisie de suivi et de présentation et le focus, puis on les restaure.
@@ -341,15 +447,21 @@ async function renderDrawerIfOpen() {
   // donc le brouillon déjà relevé et pas encore restauré a priorité, et seul le dernier rafraîchissement le restaure.
   const pending = state.drawerDraft?.id === id ? state.drawerDraft : null, saved = pending ? pending.saved : captured;
   const focusId = pending ? pending.focusId : (content.contains(active) && active.id) || '', token = {};
-  state.drawerDraft = { id, saved, focusId, token };
-  await openCharacter(id); if (state.drawerDraft?.token !== token) return; state.drawerDraft = null;
-  if (state.focusedCharacter !== id || !saved) return;
-  if ($('#tracking-met')) { $('#tracking-met').checked = saved.met; $('#tracking-moment').hidden = !saved.met; if (saved.day !== undefined && $('#tracking-day')) $('#tracking-day').value = saved.day; if (saved.time !== undefined && $('#tracking-time')) $('#tracking-time').value = saved.time; }
-  if (saved.attitude !== undefined) { const radio = [...document.querySelectorAll('input[name="tracking-attitude"]')].find(input => input.value === saved.attitude); if (radio) radio.checked = true; }
-  if (saved.note !== undefined && $('#tracking-note')) $('#tracking-note').value = saved.note;
-  if (saved.target && $('#introduction-target')) $('#introduction-target').value = saved.target;
-  if (saved.condition !== undefined && $('#introduction-condition')) $('#introduction-condition').value = saved.condition;
-  if (focusId) document.getElementById(focusId)?.focus();
+  const drawer = $('#character-drawer');
+  const openSections = pending?.openSections ?? [...content.querySelectorAll('#character-dossier details[open]')].map(item => item.id);
+  const scrollTop = pending?.scrollTop ?? drawer.scrollTop;
+  state.drawerDraft = { id, saved, focusId, token, openSections, scrollTop };
+  await openCharacter(id, { openSections }); if (state.drawerDraft?.token !== token) return; state.drawerDraft = null;
+  if (state.focusedCharacter !== id) return;
+  drawer.scrollTop = scrollTop;
+  if (saved) {
+    if ($('#tracking-met')) { $('#tracking-met').checked = saved.met; $('#tracking-moment').hidden = !saved.met; if (saved.day !== undefined && $('#tracking-day')) $('#tracking-day').value = saved.day; if (saved.time !== undefined && $('#tracking-time')) $('#tracking-time').value = saved.time; }
+    if (saved.attitude !== undefined) { const radio = [...document.querySelectorAll('input[name="tracking-attitude"]')].find(input => input.value === saved.attitude); if (radio) radio.checked = true; }
+    if (saved.note !== undefined && $('#tracking-note')) $('#tracking-note').value = saved.note;
+    if (saved.target && $('#introduction-target')) $('#introduction-target').value = saved.target;
+    if (saved.condition !== undefined && $('#introduction-condition')) $('#introduction-condition').value = saved.condition;
+  }
+  if (focusId) document.getElementById(focusId)?.focus({ preventScroll: true });
 }
 function refreshDrawer() { renderDrawerIfOpen().catch(() => { state.drawerDraft = null; setStatus('Le panneau du personnage n’a pas pu être actualisé.', 'error'); }); }
 function closeDrawer() { state.drawerDraft = null; state.privateUnsub?.(); state.privateUnsub = null; state.imageReleases.forEach(release => release?.()); state.imageReleases.clear(); state.focusedCharacter = ''; const drawer = $('#character-drawer'); const focusWasInDrawer = drawer.contains(document.activeElement); drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); drawer.setAttribute('aria-modal','false'); drawer.inert = true; $('#character-drawer-content').replaceChildren(); if (focusWasInDrawer && !$('#carnaval-app').hidden && state.drawerReturnTarget?.isConnected) state.drawerReturnTarget.focus(); state.drawerReturnTarget = null; }

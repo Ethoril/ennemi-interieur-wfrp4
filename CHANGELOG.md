@@ -1,3 +1,8 @@
+## [2.43.4] - 2026-11-21
+
+- **Carnaval de Middenheim**. Le panneau des PNJ affiche la fiche du tome, avec son résumé et les informations de scénario réservées au MJ.
+- Cache de l’application actualisé.
+
 ## [2.43.3] - 2026-11-20
 
 ### Corrections

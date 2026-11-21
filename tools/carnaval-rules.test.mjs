@@ -41,6 +41,17 @@ try {
         await assertFails(deleteDoc(ref(gm, 'carnaval_sources')));
         await assertFails(setDoc(doc(gm, 'carnaval_sources', 'other'), source()));
     });
+    await test('les dossiers PNJ importés ne sont lisibles que par le MJ vérifié', async () => {
+        const data = { version: 1, characters: { a: { summary: '<p>Résumé</p>', story: '<p>Secret</p>' } } };
+        const dossier = db => doc(db, 'carnaval_sources', 'dossiers');
+        await env.withSecurityRulesDisabled(ctx => setDoc(dossier(ctx.firestore()), data));
+        assert.deepEqual((await assertSucceeds(getDoc(dossier(gm)))).data(), data);
+        for (const db of [guest, player, unverified]) await assertFails(getDoc(dossier(db)));
+        for (const db of [gm, player]) {
+            await assertFails(setDoc(dossier(db), data));
+            await assertFails(deleteDoc(dossier(db)));
+        }
+    });
     await test('les révisions, horaires, clés et timestamps sont contrôlés côté serveur', async () => {
         const target = ref(gm, 'carnaval_campaigns');
         await assertFails(updateDoc(target, { revision: 0, updatedAt: serverTimestamp() }));
