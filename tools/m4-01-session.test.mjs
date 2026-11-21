@@ -47,6 +47,19 @@ test('getRedirectResult est consommé avant le premier état définitif et resta
     assert.equal(route.read(), null);
 });
 
+test('la connexion Google impose le choix du compte (téléphone à plusieurs comptes)', async () => {
+    const fake = fakeAuth();
+    const providers = [];
+    fake.sdk.GoogleAuthProvider = class { constructor() { this.params = null; providers.push(this); } setCustomParameters(params) { this.params = params; } };
+    fake.sdk.signInWithPopup = async () => ({ user: player });
+    const session = createMjSession({ auth: fake.auth, authSdk: fake.sdk, privateFactory });
+    await session.start();
+    await session.signIn();
+    assert.equal(providers.length, 1);
+    assert.deepEqual(providers[0].params, { prompt: 'select_account' });
+    assert.match(read('js/auth.js'), /setCustomParameters\(\{ prompt: 'select_account' \}\)/u);
+});
+
 function mapStorage(entries = []) {
     const values = new Map(entries);
     return { values, getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) };

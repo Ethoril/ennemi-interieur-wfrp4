@@ -30,6 +30,9 @@ export function watchAuth(callback) {
  */
 export async function loginWithGoogle() {
     const provider = new GoogleAuthProvider();
+    // Toujours proposer le choix du compte : sur un téléphone à plusieurs
+    // comptes, Google peut sinon reprendre d'office un compte sans accès.
+    provider.setCustomParameters({ prompt: 'select_account' });
     return signInWithPopup(auth, provider);
 }
 

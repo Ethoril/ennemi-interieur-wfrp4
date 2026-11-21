@@ -105,7 +105,9 @@ function createSettingsView({
         const state = mjSession.getState();
         const busy = ['checking', 'signing-in', 'signing-out'].includes(state.status);
         const signedIn = state.status === 'gm' || state.status === 'authenticated-non-gm';
-        const account = state.user?.displayName || 'compte Google';
+        // L'adresse permet de repérer d'un coup d'œil un mauvais compte Google
+        // quand le téléphone en possède plusieurs.
+        const account = state.user?.email || state.user?.displayName || 'compte Google';
         const capabilitiesMatchUser = Boolean(state.user?.uid && contributionState.user?.uid === state.user.uid);
         const hasPlayerAccess = capabilitiesMatchUser
             && (contributionState.capabilities.contribution || (contributionState.capabilities.characterIds?.length > 0));
@@ -147,7 +149,7 @@ function createSettingsView({
                 section.append(detail);
             } else {
                 const detail = documentRef.createElement('p');
-                detail.textContent = 'Ce compte n’a pas d’accès MJ ou joueur sur cette campagne.';
+                detail.textContent = 'Ce compte n’a pas d’accès MJ ou joueur sur cette campagne. Déconnectez-vous puis choisissez le compte Google relié à la campagne.';
                 section.append(detail);
             }
         }

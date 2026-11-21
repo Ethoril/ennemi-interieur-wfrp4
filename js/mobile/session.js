@@ -377,6 +377,9 @@ export function createMjSession({
         try {
             provider = typeof authSdk.GoogleAuthProvider === 'function'
                 ? new authSdk.GoogleAuthProvider() : (typeof authSdk.googleProvider === 'function' ? authSdk.googleProvider() : {});
+            // Toujours proposer le choix du compte : sur un téléphone à plusieurs
+            // comptes, Google peut sinon reprendre d'office un compte sans accès.
+            if (typeof provider?.setCustomParameters === 'function') provider.setCustomParameters({ prompt: 'select_account' });
             // Popup is the primary flow.  It stays within the page origin and
             // avoids the third-party-storage failure of Firebase redirects on
             // modern mobile browsers.  A redirect is retained only for SDKs
