@@ -687,6 +687,75 @@ test('MJ public→secret cache les relations et retire les liens exposés atomiq
     assert.equal(publish.cascaded, 2);
 });
 
+function setPnjVisibility(store, id, visible, operationId) {
+    const revision = store.documents.get(`content_metadata/pnj_${id}`)?.revision ?? 0;
+    return mutateMjContent({ kind: 'pnj', id, operationId, baseRevision: revision,
+        baseValues: { visibleJoueurs: !visible }, changes: { visibleJoueurs: visible } }, MJ, dependencies(store));
+}
+
+test('deux PNJ liés masqués puis révélés dans n’importe quel ordre rallument leur lien', async () => {
+    for (const order of [['a', 'b'], ['b', 'a']]) {
+        const store = createStore({
+            'campagne/acces': access(),
+            'pnjs/a': pnj('a'), 'pnjs/b': pnj('b'),
+            'relations/ab': { source: 'a', cible: 'b', type: 'ami', label: 'ami', visibleJoueurs: true },
+        });
+        await setPnjVisibility(store, 'a', false, 'hide-a');
+        await setPnjVisibility(store, 'b', false, 'hide-b');
+        assert.equal(store.documents.get('relations/ab').visibleJoueurs, false);
+        await setPnjVisibility(store, order[0], true, `show-${order[0]}`);
+        assert.equal(store.documents.get('relations/ab').visibleJoueurs, false, 'un seul PNJ visible : le lien reste caché');
+        await setPnjVisibility(store, order[1], true, `show-${order[1]}`);
+        assert.equal(store.documents.get('relations/ab').visibleJoueurs, true, `ordre ${order.join('→')}`);
+    }
+});
+
+test('révéler un PNJ rallume un lien caché hors passerelle (ancien chemin, sans snapshot)', async () => {
+    const store = createStore({
+        'campagne/acces': access(),
+        'pnjs/hidden': pnj('hidden', { visibleJoueurs: false }), 'pnjs/visible': pnj('visible'),
+        'relations/legacy': { source: 'visible', cible: 'hidden', type: 'ami', label: 'ami', visibleJoueurs: false },
+    });
+    const result = await setPnjVisibility(store, 'hidden', true, 'show-hidden');
+    assert.equal(store.documents.get('relations/legacy').visibleJoueurs, true);
+    assert.equal(result.cascaded, 1);
+});
+
+test('un lien caché à la main par le MJ reste secret quand ses PNJ sont masqués puis révélés', async () => {
+    const store = createStore({
+        'campagne/acces': access(),
+        'pnjs/a': pnj('a'), 'pnjs/b': pnj('b'),
+        'relations/ab': { source: 'a', cible: 'b', type: 'ami', label: 'ami', visibleJoueurs: true },
+    });
+    await mutateMjContent({ kind: 'relation', id: 'ab', operationId: 'secret-ab', baseRevision: 0,
+        baseValues: { visibleJoueurs: true }, changes: { visibleJoueurs: false } }, MJ, dependencies(store));
+    assert.equal(store.documents.get('content_metadata/relation_ab').masqueeParMj, true);
+    await setPnjVisibility(store, 'a', false, 'hide-a');
+    await setPnjVisibility(store, 'b', false, 'hide-b');
+    await setPnjVisibility(store, 'b', true, 'show-b');
+    await setPnjVisibility(store, 'a', true, 'show-a');
+    assert.equal(store.documents.get('relations/ab').visibleJoueurs, false);
+    await mutateMjContent({ kind: 'relation', id: 'ab', operationId: 'unsecret-ab',
+        baseRevision: store.documents.get('content_metadata/relation_ab').revision,
+        baseValues: { visibleJoueurs: false }, changes: { visibleJoueurs: true } }, MJ, dependencies(store));
+    assert.equal(store.documents.get('relations/ab').visibleJoueurs, true);
+    assert.equal(store.documents.get('content_metadata/relation_ab').masqueeParMj, false);
+});
+
+test('masquer un PNJ marque secret un lien déjà caché alors que l’autre PNJ est visible', async () => {
+    const store = createStore({
+        'campagne/acces': access(),
+        'pnjs/a': pnj('a'), 'pnjs/b': pnj('b'),
+        'relations/old-secret': { source: 'a', cible: 'b', type: 'secret', label: 'secret', visibleJoueurs: false },
+        'content_metadata/relation_old-secret': { kind: 'relation', contentId: 'old-secret', revision: 3, state: 'active' },
+    });
+    await setPnjVisibility(store, 'a', false, 'hide-a');
+    assert.equal(store.documents.get('content_metadata/relation_old-secret').masqueeParMj, true);
+    assert.equal(store.documents.get('content_metadata/relation_old-secret').revision, 3);
+    await setPnjVisibility(store, 'a', true, 'show-a');
+    assert.equal(store.documents.get('relations/old-secret').visibleJoueurs, false);
+});
+
 test('un retry Firestore reconstruit les dépendances depuis le snapshot transactionnel courant', async () => {
     const store = createStore({
         'campagne/acces': access(),

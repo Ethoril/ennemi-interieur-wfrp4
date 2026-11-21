@@ -604,6 +604,7 @@ export async function mutateMjContent(rawCommand, request, deps) {
     try {
         return await deps.db.runTransaction(async transaction => {
             const dependencies = [];
+            const secretMarks = [];
             const [accessSnap, receiptSnap, lockSnap, contentSnap, metadataSnap] = await Promise.all([
                 transaction.get(campaignRef(deps.db)), transaction.get(opRef), transaction.get(deletionLockRef(deps.db)),
                 transaction.get(docRef), transaction.get(docMetaRef),
@@ -685,10 +686,32 @@ export async function mutateMjContent(rawCommand, request, deps) {
                     fail('cascade trop volumineuse ou tronquée', 'failed-precondition', { kind: 'cascade-too-large' });
                 }
                 const related = new Map();
+                const hiddenRelations = new Map();
                 for (const snapshot of [...outgoing.docs, ...incoming.docs]) {
                     const value = dataOf(snapshot);
-                    if (visibilityTurningOff && value?.visibleJoueurs === true) {
+                    if (!value) continue;
+                    if (visibilityTurningOff && value.visibleJoueurs === true) {
                         related.set(`relation_${snapshot.id}`, { kind: 'relation', id: snapshot.id, raw: value });
+                    } else if (value.visibleJoueurs !== true) hiddenRelations.set(snapshot.id, value);
+                }
+                // Un lien caché dont l'autre PNJ est public n'est caché que par
+                // un choix explicite du MJ (masqueeParMj) ou par la cascade du
+                // PNJ courant. Au masquage, on fige ce choix ; à la révélation,
+                // on rallume tout lien non secret dont l'autre PNJ est public.
+                for (const [relationId, relationRaw] of hiddenRelations) {
+                    const otherId = relationRaw.source === command.id ? relationRaw.cible : relationRaw.source;
+                    const otherPnj = dataOf(await transaction.get(contentRef(deps.db, 'pnj', safeId(otherId))));
+                    if (otherPnj?.visibleJoueurs !== true || otherPnj.suppressionEnCours === true) continue;
+                    const relationMetaRef = metadataRef(deps.db, 'relation', relationId);
+                    const relationMetaRaw = dataOf(await transaction.get(relationMetaRef));
+                    if (relationMetaRaw?.state && relationMetaRaw.state !== 'active') continue;
+                    if (relationMetaRaw?.masqueeParMj === true) continue;
+                    const relationMetadata = metadataDefaults('relation', relationId, relationMetaRaw);
+                    if (visibilityTurningOff) secretMarks.push({ metaRef: relationMetaRef, metadata: relationMetadata });
+                    else {
+                        dependencies.push({ kind: 'relation', id: relationId, raw: relationRaw,
+                            data: readPublic('relation', relationId, relationRaw), ref: contentRef(deps.db, 'relation', relationId),
+                            metaRef: relationMetaRef, metadata: relationMetadata });
                     }
                 }
                 for (const snapshot of indices.docs) {
@@ -715,13 +738,14 @@ export async function mutateMjContent(rawCommand, request, deps) {
                     for (const entry of metadata.visibilitySnapshot.relations) {
                         if (!isRecord(entry) || typeof entry.id !== 'string' || !Number.isSafeInteger(entry.revision)) continue;
                         const relationId = safeId(entry.id);
+                        if (dependencies.some(item => item.kind === 'relation' && item.id === relationId)) continue;
                         const relationRef = contentRef(deps.db, 'relation', relationId);
                         const relationMetaRef = metadataRef(deps.db, 'relation', relationId);
                         const [relationSnap, relationMetaSnap] = await Promise.all([transaction.get(relationRef), transaction.get(relationMetaRef)]);
                         const relationRaw = dataOf(relationSnap);
                         const relationMetadata = metadataDefaults('relation', relationId, dataOf(relationMetaSnap));
                         if (!relationRaw || relationRaw.visibleJoueurs !== false || relationMetadata.state !== 'active'
-                            || relationMetadata.revision !== entry.revision) continue;
+                            || relationMetadata.revision !== entry.revision || relationMetadata.masqueeParMj === true) continue;
                         const otherId = relationRaw.source === command.id ? relationRaw.cible : relationRaw.cible === command.id ? relationRaw.source : null;
                         if (!otherId) continue;
                         const otherPnj = dataOf(await transaction.get(contentRef(deps.db, 'pnj', safeId(otherId))));
@@ -750,7 +774,7 @@ export async function mutateMjContent(rawCommand, request, deps) {
                     }
                 }
             }
-            if (4 + (reciprocal ? 3 : 0) + dependencies.length * 3 > CONTRIBUTION_LIMITS.transactionWrites) fail('cascade trop volumineuse', 'failed-precondition', { kind: 'cascade-too-large' });
+            if (4 + (reciprocal ? 3 : 0) + dependencies.length * 3 + secretMarks.length > CONTRIBUTION_LIMITS.transactionWrites) fail('cascade trop volumineuse', 'failed-precondition', { kind: 'cascade-too-large' });
 
             const now = deps.timestamp();
             const changes = {};
@@ -770,14 +794,19 @@ export async function mutateMjContent(rawCommand, request, deps) {
                     revision: item.metadata.revision + 1,
                 })),
             } : visibilityTurningOn ? { relations: [], indices: [] } : metadata.visibilitySnapshot;
-            transaction.set(docMetaRef, { ...metadata, ...(visibilitySnapshot ? { visibilitySnapshot } : {}),
+            // Cacher ou montrer un lien à la main fixe son statut secret,
+            // que la cascade de visibilité des PNJ respecte ensuite.
+            const relationSecret = command.kind === 'relation' && Object.hasOwn(changes, 'visibleJoueurs')
+                ? { masqueeParMj: next.visibleJoueurs !== true } : {};
+            transaction.set(docMetaRef, { ...metadata, ...(visibilitySnapshot ? { visibilitySnapshot } : {}), ...relationSecret,
                 ...(reciprocal ? { reciprocalId: reciprocal.id } : {}), revision: metadata.revision + 1, state: 'active', updatedAt: now });
+            for (const mark of secretMarks) transaction.set(mark.metaRef, { ...mark.metadata, masqueeParMj: true });
             if (consumedReservation) transaction.set(consumedReservation.ref, { ...consumedReservation.value, updatedAt: now });
             if (reciprocal) {
                 const reciprocalChanges = Object.fromEntries([...RELATION_FIELDS].filter(field => !same(reciprocal.raw[field] ?? null, reciprocal.next[field] ?? null))
                     .map(field => [field, { before: reciprocal.raw[field] ?? null, after: reciprocal.next[field] ?? null }]));
                 transaction.update(reciprocal.ref, { ...reciprocal.next, updatedAt: now });
-                transaction.set(reciprocal.metaRef, { ...reciprocal.metadata, revision: reciprocal.metadata.revision + 1,
+                transaction.set(reciprocal.metaRef, { ...reciprocal.metadata, ...relationSecret, revision: reciprocal.metadata.revision + 1,
                     reciprocalId: command.id, state: 'active', updatedAt: now });
                 transaction.set(historyRef(deps.db, 'relation', reciprocal.id, `${command.operationId}_reciprocal`), {
                     kind: 'relation', operationId: command.operationId, actorUid: user.uid, role: 'mj', action: 'mj-update',
