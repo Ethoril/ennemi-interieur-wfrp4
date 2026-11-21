@@ -1,3 +1,11 @@
+## [2.44.2] - 2026-11-21
+
+### Corrections
+- **Connexion unique** : une seule connexion Google pour tout le site, mobile compris (MJ, fiches, enquêtes, contributions). Les Réglages mobiles ne proposent plus qu’un bouton et indiquent le rôle détecté (MJ, joueur ou sans accès).
+- **Session conservée** : fermer ou recharger l’application mobile ne déconnecte plus le compte. Les MJ déjà connectés sur mobile doivent se reconnecter une fois.
+- **Vérification des droits** : droits de campagne et session Enquêtes gardés en cache quelques minutes, avec un message de chargement, un message d’erreur et un bouton Réessayer.
+- Cache de l’application actualisé.
+
 ## [2.44.1] - 2026-11-21
 
 ### Corrections
