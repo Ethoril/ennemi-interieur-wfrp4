@@ -1,3 +1,10 @@
+## [2.44.3] - 2026-11-21
+
+### Corrections
+- **Choix du compte Google** : la connexion propose toujours la liste des comptes, au lieu de reprendre d’office un compte déjà ouvert (téléphones à plusieurs comptes).
+- **Appli mobile, Réglages** : l’adresse du compte connecté est affichée ; un compte sans accès est invité à se déconnecter puis à choisir le compte relié à la campagne.
+- Cache de l’application actualisé.
+
 ## [2.44.2] - 2026-11-21
 
 ### Corrections
