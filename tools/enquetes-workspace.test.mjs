@@ -78,3 +78,30 @@ test('switching accounts closes the private editor and preserves its draft only 
   assert.equal(f.drafts.get('n').body.texte,'Confidentiel A');f.view.unmount();
 });
 
+test('enquetes workspace shows loading before auth resolves and retry on transient session error instead of Google login',async()=>{
+  const d=createDocument(),container=new Element(d,'main');
+  let onChange,retries=0;
+  const runtime={
+    newEnqueteId:()=>'id1',saveEnqueteDraft:()=>true,readEnqueteDraft:()=>null,removeEnqueteDraft:()=>{},listEnqueteDrafts:()=>[],
+    createEnqueteClient(options){onChange=options.onChange;return{signIn(){},signOut(){},retry(){retries+=1;},close(){}};},
+  };
+  const view=createEnqueteWorkspaceView({container,layout:'mobile',loadRuntime:async()=>runtime});
+  await view.mount();
+  // Avant la première réponse Auth : état de vérification, aucun flash « Se connecter avec Google »
+  assert.ok(!container.querySelectorAll('button').some(b=>b.textContent==='Se connecter avec Google'));
+  assert.match(container.querySelectorAll('p').map(p=>p.textContent).join(' '),/Vérification de la session/u);
+
+  // Erreur réseau alors que l'utilisateur est connecté : bouton Réessayer, pas de fausse demande de connexion
+  onChange({authState:'error',session:null,error:{code:'unavailable',message:'network'},records:[],pnjs:[]});
+  assert.ok(!container.querySelectorAll('button').some(b=>b.textContent==='Se connecter avec Google'));
+  const retryButton=container.querySelectorAll('button').find(b=>b.textContent==='Réessayer');
+  assert.ok(retryButton);
+  retryButton.dispatch('click');
+  assert.equal(retries,1);
+
+  // Utilisateur réellement déconnecté : affiche le bouton de connexion Google
+  onChange({authState:'signed-out',session:null,error:null,records:[],pnjs:[]});
+  assert.ok(container.querySelectorAll('button').some(b=>b.textContent==='Se connecter avec Google'));
+  view.unmount();
+});
+

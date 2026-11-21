@@ -15,7 +15,7 @@ import { createEnqueteEditView } from './views/enquete-edit.js';
 import { createPnjEditView } from './views/pnj-edit.js';
 import { createFicheAccessView } from './views/fiche-access.js';
 import { createFicheDetailView } from './views/fiche-detail.js';
-import { getContributionClient, logoutContributionAccount, signInContribution } from './contribution-runtime.js';
+import { getContributionClient, signInContribution } from './contribution-runtime.js';
 import { createAdminRouteController } from './admin-route-controller.js';
 import { createPublicDraftStore } from './drafts-store.js';
 import { createEnquetesDraftStore } from './enquetes-drafts-store.js';
@@ -82,17 +82,17 @@ function createSettingsView({
     pwa = null,
     announce = () => {},
     getContributionClientFn = getContributionClient,
-    signInContributionFn = signInContribution,
-    logoutContributionAccountFn = logoutContributionAccount,
 }) {
     let unsubscribePublic = null;
     let unsubscribeMj = null;
     let unsubscribePwa = null;
     let unsubscribeContribution = null;
+    let contributionClientRef = null;
     let mounted = false;
-    let contributionBusy = false;
-    let contributionError = '';
-    let contributionState = { user: null, capabilities: { role: 'public', contribution: false } };
+    let contributionLoaded = false;
+    let contributionError = false;
+    let retryingCapabilities = false;
+    let contributionState = { user: null, capabilities: { role: 'public', contribution: false, characterIds: [] } };
     const allDraftStores = [...new Set([draftStore, ...draftStores].filter(store => store && typeof store.clear === 'function'))];
     const render = () => {
         if (!mounted) return;
@@ -102,105 +102,104 @@ function createSettingsView({
         const heading = documentRef.createElement('h2');
         heading.textContent = 'Réglages';
         section.append(heading);
-        const contributionIdentity = documentRef.createElement('p');
-        contributionIdentity.setAttribute('role', 'status');
-        contributionIdentity.textContent = contributionState.user
-            ? contributionState.capabilities.contribution
-                ? contributionState.capabilities.role === 'mj'
-                    ? 'Session de contribution active (MJ).'
-                    : 'Compte joueur connecté — fiches, enquêtes et contributions actives.'
-                : 'Compte connecté sans accès de contribution.'
-            : 'Aucune session joueur active.';
-        section.append(contributionIdentity);
-        if (contributionError) {
-            const error = documentRef.createElement('p');
-            error.className = 'm-settings-error';
-            error.textContent = contributionError;
-            section.append(error);
-        }
+        const state = mjSession.getState();
+        const busy = ['checking', 'signing-in', 'signing-out'].includes(state.status);
+        const signedIn = state.status === 'gm' || state.status === 'authenticated-non-gm';
+        const account = state.user?.displayName || 'compte Google';
+        const capabilitiesMatchUser = Boolean(state.user?.uid && contributionState.user?.uid === state.user.uid);
+        const hasPlayerAccess = capabilitiesMatchUser
+            && (contributionState.capabilities.contribution || (contributionState.capabilities.characterIds?.length > 0));
         const authStatus = documentRef.createElement('p');
         authStatus.setAttribute('role', 'status');
-        const state = mjSession.getState();
-        const account = state.user?.displayName || 'compte Google';
-        authStatus.textContent = state.status === 'gm' ? `Mode MJ actif — ${account}`
-            : state.status === 'authenticated-non-gm' ? 'Compte connecté, sans accès MJ.'
-                : state.status === 'checking' || state.status === 'signing-in' ? 'Vérification de la session…'
-                    : state.status === 'signing-out' ? 'Déconnexion en cours…' : 'Mode joueur — aucune session MJ.';
+        if (state.status === 'gm') {
+            authStatus.textContent = `Mode MJ actif — ${account}`;
+        } else if (state.status === 'authenticated-non-gm') {
+            authStatus.textContent = hasPlayerAccess
+                ? `Compte joueur connecté — ${account}`
+                : `Compte connecté — ${account}`;
+        } else if (state.status === 'signing-in') {
+            authStatus.textContent = 'Connexion en cours…';
+        } else if (state.status === 'checking') {
+            authStatus.textContent = 'Vérification de la session…';
+        } else if (state.status === 'signing-out') {
+            authStatus.textContent = 'Déconnexion en cours…';
+        } else {
+            authStatus.textContent = 'Non connecté — consultation publique.';
+        }
         section.append(authStatus);
+        if (state.status === 'gm') {
+            const detail = documentRef.createElement('p');
+            detail.textContent = 'Fiches, enquêtes, PNJs masqués et outils MJ actifs.';
+            section.append(detail);
+        } else if (state.status === 'authenticated-non-gm') {
+            if (hasPlayerAccess) {
+                const detail = documentRef.createElement('p');
+                detail.textContent = 'Fiches, enquêtes et contributions actives.';
+                section.append(detail);
+            } else if (contributionError) {
+                const error = documentRef.createElement('p');
+                error.className = 'm-settings-error';
+                error.textContent = 'Impossible de vérifier les droits de campagne pour le moment.';
+                section.append(error);
+            } else if (!contributionLoaded || !capabilitiesMatchUser) {
+                const detail = documentRef.createElement('p');
+                detail.textContent = 'Vérification des droits de campagne…';
+                section.append(detail);
+            } else {
+                const detail = documentRef.createElement('p');
+                detail.textContent = 'Ce compte n’a pas d’accès MJ ou joueur sur cette campagne.';
+                section.append(detail);
+            }
+        }
         if (state.error) {
             const error = documentRef.createElement('p');
             error.className = 'm-settings-error';
             error.textContent = state.error.kind === 'offline'
                 ? 'Connexion indisponible. Réessayez lorsque le réseau sera revenu.'
-                : 'La connexion MJ n’a pas abouti. Vous pouvez réessayer.';
+                : 'La connexion Google n’a pas abouti. Vous pouvez réessayer.';
             section.append(error);
         }
-        const busy = ['checking', 'signing-in', 'signing-out'].includes(state.status);
-        const hasMjAccount = state.status === 'gm' || state.status === 'authenticated-non-gm';
-        const hasContributionAccount = Boolean(contributionState.user);
-        const hasAnyAccount = hasMjAccount || hasContributionAccount;
         const authActions = documentRef.createElement('div');
         authActions.className = 'm-settings-actions';
-        if (!hasContributionAccount) {
-            const playerAction = documentRef.createElement('button');
-            playerAction.type = 'button';
-            playerAction.className = 'm-button m-button-primary';
-            const playerBusy = busy || contributionBusy;
-            playerAction.disabled = playerBusy;
-            playerAction.setAttribute('aria-disabled', String(playerBusy));
-            playerAction.textContent = contributionBusy
-                ? 'Connexion joueur en cours…'
-                : 'Connexion joueur (fiches, enquêtes, contributions)';
-            playerAction.addEventListener('click', async () => {
-                if (busy || contributionBusy) return;
-                contributionBusy = true;
-                contributionError = '';
-                render();
-                try {
-                    await signInContributionFn();
-                } catch (error) {
-                    if (error?.code !== 'auth/popup-closed-by-user') {
-                        contributionError = 'La connexion joueur n’a pas abouti. Vous pouvez réessayer.';
-                    }
-                } finally {
-                    contributionBusy = false;
-                    render();
-                }
-            });
-            authActions.append(playerAction);
-        }
-        if (!hasMjAccount) {
+        if (!signedIn) {
             const action = documentRef.createElement('button');
             action.type = 'button';
-            action.className = 'm-button';
+            action.className = 'm-button m-button-primary';
             action.disabled = busy;
             action.setAttribute('aria-disabled', String(busy));
-            action.textContent = 'Connexion MJ';
+            action.textContent = 'Se connecter avec Google';
             action.addEventListener('click', () => {
-                if (busy || contributionBusy) return;
+                if (busy) return;
                 return mjSession.signIn();
             });
             authActions.append(action);
-        }
-        if (hasAnyAccount) {
+        } else {
+            if (state.status === 'authenticated-non-gm' && contributionError && contributionClientRef?.refreshCapabilities) {
+                const retryAction = documentRef.createElement('button');
+                retryAction.type = 'button';
+                retryAction.className = 'm-button';
+                retryAction.disabled = busy || retryingCapabilities;
+                retryAction.textContent = retryingCapabilities ? 'Vérification…' : 'Réessayer';
+                retryAction.addEventListener('click', async () => {
+                    if (busy || retryingCapabilities) return;
+                    retryingCapabilities = true;
+                    contributionError = false;
+                    render();
+                    try { await contributionClientRef.refreshCapabilities(); }
+                    catch { contributionError = true; }
+                    finally { retryingCapabilities = false; render(); }
+                });
+                authActions.append(retryAction);
+            }
             const logoutAction = documentRef.createElement('button');
             logoutAction.type = 'button';
             logoutAction.className = 'm-button';
-            const logoutBusy = busy || contributionBusy;
-            logoutAction.disabled = logoutBusy;
-            logoutAction.setAttribute('aria-disabled', String(logoutBusy));
+            logoutAction.disabled = busy;
+            logoutAction.setAttribute('aria-disabled', String(busy));
             logoutAction.textContent = 'Déconnexion';
-            logoutAction.addEventListener('click', async () => {
-                if (busy || contributionBusy) return;
-                contributionBusy = true;
-                contributionError = '';
-                render();
-                try {
-                    await Promise.allSettled([mjSession.signOut(), logoutContributionAccountFn()]);
-                } finally {
-                    contributionBusy = false;
-                    render();
-                }
+            logoutAction.addEventListener('click', () => {
+                if (busy) return;
+                return mjSession.signOut();
             });
             authActions.append(logoutAction);
         }
@@ -281,7 +280,18 @@ function createSettingsView({
             unsubscribePublic = publicSession.subscribe(render);
             unsubscribeMj = mjSession.subscribe(render);
             void getContributionClientFn().then(client => {
-                if (mounted) unsubscribeContribution = client.watch(value => { contributionState = value; render(); }, () => render());
+                if (!mounted) return;
+                contributionClientRef = client;
+                unsubscribeContribution = client.watch(value => {
+                    contributionState = value;
+                    contributionLoaded = true;
+                    contributionError = false;
+                    render();
+                }, () => {
+                    contributionLoaded = true;
+                    contributionError = true;
+                    render();
+                });
             }).catch(() => {});
             unsubscribePwa = pwa?.subscribe(render) || null;
             render();
@@ -296,6 +306,7 @@ function createSettingsView({
             unsubscribeMj = null;
             unsubscribePwa = null;
             unsubscribeContribution = null;
+            contributionClientRef = null;
             container.replaceChildren();
         },
     });
@@ -622,8 +633,9 @@ function boot(documentRef = globalThis.document, windowRef = globalThis.window) 
             stopNavigationLayout();
             await session.stop();
             pnjsStore.stop();
+            // Fermer uniquement les abonnements et caches mémoire : ne jamais
+            // déconnecter le compte Google lors d'un pagehide ou rechargement.
             await mjSession.stop();
-            await logoutContributionAccount().catch(() => {});
         })();
         return stopPromise;
     };

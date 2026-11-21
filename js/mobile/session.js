@@ -299,6 +299,10 @@ export function createMjSession({
             if (typeof authSdk.getRedirectResult === 'function') result = await authSdk.getRedirectResult(auth);
         } catch (error) { redirectError = error; }
         if (!current(token)) return;
+        if (!result?.user && observerUser === undefined && typeof auth.authStateReady === 'function') {
+            try { await auth.authStateReady(); } catch { /* État initial relu via currentUser ou l'observer. */ }
+            if (!current(token)) return;
+        }
         redirectChecked = true;
         const resultUser = result?.user || null;
         if (redirectError) {
@@ -340,7 +344,8 @@ export function createMjSession({
                     observerUser = user;
                     if (state.status === 'signing-out') return;
                     if (redirectChecked && !redirectFailure) {
-                        if (state.status === 'gm' && state.user?.uid === user?.uid) return;
+                        if ((state.status === 'gm' || state.status === 'authenticated-non-gm') && state.user?.uid === user?.uid) return;
+                        if (state.status === 'visitor' && !user) return;
                         if (processingUid && processingUid === user?.uid) return;
                         const changeGeneration = ++generation;
                         setState({ status: 'checking', user: safeIdentity(user), private: null, error: null });
@@ -384,6 +389,8 @@ export function createMjSession({
                 if (state.status === 'gm') {
                     const target = routeStore.consume(capturedRoute);
                     if (target) onNavigate(target);
+                } else if (state.status === 'authenticated-non-gm') {
+                    routeStore.consume();
                 }
                 return state;
             }

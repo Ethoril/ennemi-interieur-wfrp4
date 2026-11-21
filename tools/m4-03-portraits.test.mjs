@@ -144,11 +144,11 @@ test('uploader protégé utilise la callable injectée et ne propose aucune prim
     assert.equal(result.imagePath, `portraits/p1/portrait-${operationId}.webp`); assert.equal(callableArgs.ownerId, 'p1'); assert.equal(callableArgs.base64.length > 0, true);
 });
 
-test('la composition raccorde Functions à la même app mobile-mj et le runtime ne réintroduit pas d upload Storage direct', () => {
+test('la composition raccorde Functions à la même app partagée et le runtime ne réintroduit pas d upload Storage direct', () => {
     const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
     const runtime = fs.readFileSync(path.join(root, 'js/mobile/mj-runtime.js'), 'utf8');
     const composition = fs.readFileSync(path.join(root, 'js/mobile/mj-composition.js'), 'utf8');
-    assert.match(runtime, /getFunctions, httpsCallable/u); assert.match(runtime, /name === 'mobile-mj'/u);
+    assert.match(runtime, /httpsCallable/u); assert.match(runtime, /functions[^}]*\}\s*from '\.\.\/firebase-init\.js'/u);
     assert.match(composition, /functions: client\.functions, httpsCallable: sdk\.httpsCallable/u);
     assert.doesNotMatch(runtime, /uploadBytes|deleteObject|getDownloadURL/u);
 });

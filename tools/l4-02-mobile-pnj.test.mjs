@@ -631,11 +631,10 @@ test('la liste PNJs mobile expose Créer un PNJ, Créer une relation et Ma corbe
     assert.equal(documentRef.body.children.filter(node => node.tagName === 'DIALOG').length, 0);
 });
 
-test('Réglages mobile propose Connexion joueur et Connexion MJ distinctes ainsi qu’une déconnexion unifiée', () => {
+test('Réglages mobile propose une connexion Google unifiée et stop() ne déconnecte pas sur pagehide', () => {
     const appSource = read('js/mobile/app.js');
-    assert.match(appSource, /Connexion joueur \(fiches, enquêtes, contributions\)/u);
-    assert.match(appSource, /await signInContributionFn\(\)/u);
-    assert.match(appSource, /Connexion MJ/u);
+    assert.match(appSource, /Se connecter avec Google/u);
     assert.match(appSource, /mjSession\.signIn\(\)/u);
-    assert.match(appSource, /Promise\.allSettled\(\[mjSession\.signOut\(\), logoutContributionAccountFn\(\)\]\)/u);
+    assert.match(appSource, /mjSession\.signOut\(\)/u);
+    assert.doesNotMatch(appSource, /logoutContributionAccount/u, 'pagehide/stop ne doit jamais déconnecter le compte joueur');
 });

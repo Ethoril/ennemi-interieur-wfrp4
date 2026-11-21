@@ -8,7 +8,7 @@ import { createProtectedImageUploader } from '../protected-upload.js';
 import { rememberProtectedUpload, forgetProtectedUpload } from '../protected-upload-journal.js';
 import { createContributionClient } from '../contributions/client-core.js';
 
-const DEFAULT_BUILDERS = Object.freeze({
+export const DEFAULT_BUILDERS = Object.freeze({
     client: createMjMobileClient,
     pnjs: createMjPnjRepository,
     relations: createMjRelationsRepository,

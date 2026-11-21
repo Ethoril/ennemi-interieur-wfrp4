@@ -7,7 +7,7 @@ const mobileTabs=new Map(),mobileContexts=new Map();
 export function createEnqueteWorkspaceView({container,id=null,initialAction=null,loadRuntime=()=>import('./enquetes-runtime.js'),onOpen=()=>{},onOpenPnj=()=>{},onMenuLabelChange=()=>{},layout='desktop'}={}) {
   const d=container.ownerDocument;
   let initialOpened=false,legacyResolved=false,detailSignature='',linksIndex=new Map();
-  let client=null,state={session:null,records:[],pnjs:[]},mounted=false,token=0,section='enquetes',selected=id,search='',scope='',filter='',category='',editor=null,timer=null,graph=null,handles=[],busy=false;
+  let client=null,state={authState:'loading',session:null,error:null,records:[],pnjs:[]},mounted=false,token=0,section='enquetes',selected=id,search='',scope='',filter='',category='',editor=null,timer=null,graph=null,handles=[],busy=false;
   const node=(tag,text='',className='')=>{const e=d.createElement(tag);e.textContent=text;e.className=className;return e;};
   function icon(kind){
     const svg=d.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('width','16');svg.setAttribute('height','16');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','2');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');
@@ -77,8 +77,20 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     syncMobileScreen();rememberMobile();fab.hidden=layout!=='mobile'||!state.session||!!editor;
     toolbar.replaceChildren();
     if(!state.session){
+      release();notebook.replaceChildren();
+      if(state.authState==='loading'){
+        const msg='Vérification de la session…';
+        list.replaceChildren(node('p',msg));detail.replaceChildren(node('p',msg));return;
+      }
+      if(state.authState==='error'){
+        const denied=state.error?.code?.includes('permission-denied');
+        const msg=denied?(state.error.message||'Ce compte n’a pas accès à cette campagne.'):'Impossible de vérifier la session Enquêtes. Réessayez dans un instant.';
+        if(!denied&&client?.retry)toolbar.append(button('Réessayer',()=>client.retry()));
+        if(client?.signOut)toolbar.append(button('Déconnexion',()=>client.signOut(),'quiet'));
+        list.replaceChildren(node('p',msg));detail.replaceChildren(node('p',msg));return;
+      }
       toolbar.append(button('Se connecter avec Google',()=>client?.signIn()));
-      list.replaceChildren(node('p','Connecte-toi pour retrouver les pièces du groupe et ton carnet personnel.'));release();detail.replaceChildren(node('p','Connecte-toi pour retrouver les pièces du groupe et ton carnet personnel.'));notebook.replaceChildren();return;
+      list.replaceChildren(node('p','Connecte-toi pour retrouver les pièces du groupe et ton carnet personnel.'));detail.replaceChildren(node('p','Connecte-toi pour retrouver les pièces du groupe et ton carnet personnel.'));return;
     }
     if(!state.session.active){status.textContent='Le nouvel espace sera disponible après sa mise en service.';release();list.replaceChildren();detail.replaceChildren(node('p',status.textContent));notebook.replaceChildren();return;}
     if(state.session.maintenance){status.textContent='Réorganisation des accès en cours. Ton carnet personnel reste accessible.';}
@@ -563,7 +575,7 @@ export function createEnqueteWorkspaceView({container,id=null,initialAction=null
     async mount({signal}={}){
       if(mounted||signal?.aborted)return;mounted=true;build();d.addEventListener('keydown',searchShortcut);
       const runtime=await loadRuntime();if(!mounted||signal?.aborted)return;
-      client=runtime.createEnqueteClient({onChange:next=>{if(!mounted)return;if(next.session?.uid!==state.session?.uid)fileCache.clear();if(editor&&(!next.session||next.session.uid!==editor.uid||!editor.zone.startsWith('user:')&&(!next.session.active||next.session.maintenance&&!busy||next.session.role==='ancien'))){editor=null;if(timer)globalThis.clearTimeout(timer);timer=null;detailSignature='';}if(!next.session||next.session.uid!==state.session?.uid||next.session.maintenance)for(const dialog of root.querySelectorAll('dialog'))if(dialog.open&&(!next.session||next.session.uid!==state.session?.uid||!dialog.className.includes('enq-quick-sheet'))){dialog.close();dialog.remove();}if(layout==='mobile'&&next.session?.uid!==state.session?.uid){if(mobileSpace.uid===next.session?.uid){({section,filter,category,search,scope}=mobileSpace);}else{mobileSpace={uid:next.session?.uid,section:'enquetes',filter:'',category:'',search:'',scope:''};mobileTabs.clear();mobileContexts.clear();contextDossier=null;}}state=next;onMenuLabelChange(current()?.type==='enquetes'?'Actions du dossier':'Actions de la pièce');linksIndex=buildLinksIndex(next.records);if(selected&&!legacyResolved&&next.session?.active&&client){legacyResolved=true;client.read('resolveLegacy',selected).then(result=>{if(mounted&&result.id){selected=result.id;render();}}).catch(()=>{});}if(selected&&!editor){const found=next.records.find(r=>r.id===selected);if(found&&['documents','enquetes','notes'].includes(found.type))section=found.type;}render();if(!initialOpened&&initialAction&&next.session?.active&&(initialAction==='new'||current())){initialOpened=true;openEditor(initialAction==='edit'?current():null,current()?.type||'enquetes');}},onError:showError});
+      client=runtime.createEnqueteClient({onChange:next=>{if(!mounted)return;if(next.session?.uid!==state.session?.uid)fileCache.clear();if(editor&&(!next.session||next.session.uid!==editor.uid||!editor.zone.startsWith('user:')&&(!next.session.active||next.session.maintenance&&!busy||next.session.role==='ancien'))){editor=null;if(timer)globalThis.clearTimeout(timer);timer=null;detailSignature='';}if(!next.session||next.session.uid!==state.session?.uid||next.session.maintenance)for(const dialog of root.querySelectorAll('dialog'))if(dialog.open&&(!next.session||next.session.uid!==state.session?.uid||!dialog.className.includes('enq-quick-sheet'))){dialog.close();dialog.remove();}if(layout==='mobile'&&next.session?.uid!==state.session?.uid){if(mobileSpace.uid===next.session?.uid){({section,filter,category,search,scope}=mobileSpace);}else{mobileSpace={uid:next.session?.uid,section:'enquetes',filter:'',category:'',search:'',scope:''};mobileTabs.clear();mobileContexts.clear();contextDossier=null;}}state={...next,authState:next.session?'ready':(next.authState||'signed-out')};onMenuLabelChange(current()?.type==='enquetes'?'Actions du dossier':'Actions de la pièce');linksIndex=buildLinksIndex(next.records);if(selected&&!legacyResolved&&next.session?.active&&client){legacyResolved=true;client.read('resolveLegacy',selected).then(result=>{if(mounted&&result.id){selected=result.id;render();}}).catch(()=>{});}if(selected&&!editor){const found=next.records.find(r=>r.id===selected);if(found&&['documents','enquetes','notes'].includes(found.type))section=found.type;}render();if(!initialOpened&&initialAction&&next.session?.active&&(initialAction==='new'||current())){initialOpened=true;openEditor(initialAction==='edit'?current():null,current()?.type||'enquetes');}},onError:showError});
       Object.assign(client,{newId:runtime.newEnqueteId,saveDraft:runtime.saveEnqueteDraft,readDraft:runtime.readEnqueteDraft,removeDraft:runtime.removeEnqueteDraft,listDrafts:runtime.listEnqueteDrafts});
       signal?.addEventListener('abort',()=>this.unmount(),{once:true});
     },

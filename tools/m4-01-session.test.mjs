@@ -413,19 +413,58 @@ test('un relogin recrée une Firestore mémoire après terminate sans supprimer 
     await second.close();
 });
 
-test('runtime public et runtime MJ restent séparés et les actions privées sont fail-closed', () => {
+test('stop nettoie les abonnements privés sans déconnecter Firebase Auth (persistance après pagehide)', async () => {
+    const fake = fakeAuth({ redirect: gm });
+    let closes = 0;
+    const session = createMjSession({
+        auth: fake.auth,
+        authSdk: fake.sdk,
+        privateFactory: async () => ({
+            client: { cache: { mode: 'memory', persistent: false }, close: () => { closes += 1; } },
+            repositories: {},
+        }),
+    });
+    await session.start();
+    assert.equal(session.getState().status, 'gm');
+    await session.stop();
+    assert.equal(closes, 1);
+    assert.equal(fake.calls.signOut, 0, 'stop() ne doit jamais appeler signOut() : seule la déconnexion explicite déconnecte');
+});
+
+test('authStateReady évite un faux état visitor pendant la réhydratation IndexedDB au démarrage', async () => {
+    let resolveReady;
+    const fake = fakeAuth();
+    fake.auth.authStateReady = () => new Promise(resolve => { resolveReady = resolve; });
+    const states = [];
+    const session = createMjSession({
+        auth: fake.auth,
+        authSdk: fake.sdk,
+        privateFactory,
+        onChange: state => states.push(state.status),
+    });
+    const starting = session.start();
+    await new Promise(resolve => globalThis.setTimeout(resolve, 0));
+    assert.equal(session.getState().status, 'checking');
+    fake.auth.currentUser = gm;
+    resolveReady();
+    await starting;
+    assert.equal(session.getState().status, 'gm');
+    assert.ok(!states.includes('visitor'), 'aucun flash visitor ne doit survenir avant la fin de authStateReady()');
+});
+
+test('runtime public et runtime MJ restent séparés, Auth est unifiée et les actions privées sont fail-closed', () => {
     assert.doesNotMatch(read('js/mobile/public-runtime.js'), /getAuth|signInWithRedirect|GoogleAuthProvider/iu);
-    assert.match(read('js/mobile/mj-runtime.js'), /firebase-auth/iu);
-    assert.match(read('js/mobile/mj-runtime.js'), /signInWithPopup/u);
-    assert.match(read('js/mobile/mj-runtime.js'), /if \(!existing\)/u);
-    for (const method of ['getDoc', 'getDocs', 'runTransaction', 'writeBatch', 'serverTimestamp', 'arrayRemove', 'deleteField']) {
-        assert.match(read('js/mobile/mj-runtime.js'), new RegExp(`\\b${method}\\b`, 'u'), method);
-    }
-    assert.match(read('js/mobile/mj-runtime.js'), /firebase-app\.js'[\s\S]*deleteApp/u);
     const runtimeSource = read('js/mobile/mj-runtime.js');
-    const firestoreEnd = runtimeSource.indexOf("from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js'");
-    const firestoreImport = runtimeSource.slice(runtimeSource.lastIndexOf('import {', firestoreEnd), firestoreEnd);
-    assert.doesNotMatch(firestoreImport, /\bdeleteApp\b/u);
+    assert.match(runtimeSource, /firebase-auth/iu);
+    assert.match(runtimeSource, /signInWithPopup/u);
+    assert.match(runtimeSource, /from '\.\.\/firebase-init\.js'/u);
+    assert.match(runtimeSource, /isDefaultFirestorePersisted/u);
+    assert.match(runtimeSource, /clearIndexedDbPersistence/u);
+    assert.doesNotMatch(runtimeSource, /dispose\s*:/u, 'stop() ne doit pas disposer ni déconnecter l’app Auth partagée');
+    assert.doesNotMatch(runtimeSource, /\bdeleteApp\b/u);
+    for (const method of ['getDoc', 'getDocs', 'runTransaction', 'writeBatch', 'serverTimestamp', 'arrayRemove', 'deleteField']) {
+        assert.match(runtimeSource, new RegExp(`\\b${method}\\b`, 'u'), method);
+    }
     assert.match(read('js/mobile/mj-composition.js'), /deleteApplicationOnClose:\s*false/u);
     assert.match(read('js/mobile/mj-composition.js'), /signOutOnClose:\s*false/u);
     assert.match(read('app/index.html'), /frame-src\s+(?:blob:\s+)?https:\/\/campagne-wrpg\.firebaseapp\.com/u);

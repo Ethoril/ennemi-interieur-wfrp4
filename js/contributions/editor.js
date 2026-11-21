@@ -330,7 +330,9 @@ export function mountContributionButton({
         }
         button.hidden = false;
         button.disabled = false;
-        button.textContent = 'Contribuer (connexion requise)';
+        button.textContent = clientRef?.currentUser?.()
+            ? 'Vérification impossible (réessayer)'
+            : 'Contribuer (connexion requise)';
     };
     const subscribe = value => {
         session = value;

@@ -1,4 +1,4 @@
-import { auth, db, storage, functions } from './firebase-init.js';
+import { auth, db, storage, functions, isDefaultFirestorePersisted, markDefaultFirestorePersisted } from './firebase-init.js';
 import { loginWithGoogle, logout } from './auth.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { collection, doc, query, where, onSnapshot, runTransaction, serverTimestamp, enableIndexedDbPersistence, terminate, clearIndexedDbPersistence } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
@@ -7,6 +7,8 @@ import { ref, uploadBytesResumable, getBlob, deleteObject } from 'https://www.gs
 import { ENQUETE_PROTOCOL, TYPES, normalizeRecord, zonePath } from './data/enquetes-domain.js';
 const invoke=name=>async data=>(await httpsCallable(functions,name)(data)).data;
 const callCommand=invoke('executeEnqueteCommand'),callRead=invoke('readEnqueteContent'),callFile=invoke('finalizeEnqueteFile'),callSession=invoke('getEnqueteSession');
+const SESSION_CACHE_TTL_MS=5*60*1000;
+let cachedSession=null,inFlightSession=null;
 export const newEnqueteId=()=>globalThis.crypto.randomUUID().replaceAll('-','_');
 function localStorageSafe(){try{return globalThis.localStorage;}catch{return null;}}
 const drafts=localStorageSafe();
@@ -14,10 +16,31 @@ export function draftKey(uid,id){return `wfrp-enq-draft:${uid}:${id}`;}
 export function saveEnqueteDraft(uid,id,value){try{drafts?.setItem(draftKey(uid,id),JSON.stringify({...value,uid,savedAt:Date.now()}));return !!drafts;}catch{return false;}}
 export function readEnqueteDraft(uid,id){try{const v=JSON.parse(drafts?.getItem(draftKey(uid,id))||'null');return v?.uid===uid?v:null;}catch{return null;}}
 export function removeEnqueteDraft(uid,id){try{drafts?.removeItem(draftKey(uid,id));}catch{/* unavailable */}}
+async function resolveEnqueteSession(user,{force=false}={}){
+  const uid=user.uid;
+  if(!force&&cachedSession&&cachedSession.uid===uid&&(Date.now()-cachedSession.fetchedAt)<SESSION_CACHE_TTL_MS)return cachedSession.session;
+  if(!force&&inFlightSession&&inFlightSession.uid===uid)return inFlightSession.promise;
+  const promise=(async()=>{
+    try{
+      const next=await callSession();
+      cachedSession={uid,session:next,fetchedAt:Date.now()};
+      try{drafts?.setItem(`wfrp-enq-session:${uid}`,JSON.stringify(next));}catch{/* no cache */}
+      return next;
+    }catch(error){
+      const cached=JSON.parse(drafts?.getItem(`wfrp-enq-session:${uid}`)||'null');
+      if(globalThis.navigator.onLine!==false||!cached)throw error;
+      return {...cached,offline:true};
+    }finally{
+      if(inFlightSession?.promise===promise)inFlightSession=null;
+    }
+  })();
+  inFlightSession={uid,promise};
+  return promise;
+}
 export function createEnqueteClient({onChange,onError=()=>{}}={}) {
-  let active=true,generation=0,session=null,records=new Map(),pnjs=[],stops=[],urls=new Set(),started=false,persisted=false,unsubscribeControl=()=>{},refreshing=false;
-  const refreshSession=async()=>{if(refreshing||!auth.currentUser||!active)return;refreshing=true;try{const next=await callSession();if(active&&next.uid===auth.currentUser?.uid){session=next;attach(generation);}}catch(error){onError(error);}finally{refreshing=false;}};
-  const emit=()=>{if(active)onChange({session,records:[...records.values()],pnjs});};
+  let active=true,generation=0,authState='loading',authError=null,session=null,records=new Map(),pnjs=[],stops=[],urls=new Set(),started=false,persisted=isDefaultFirestorePersisted(),unsubscribeControl=()=>{},refreshing=false;
+  const refreshSession=async()=>{if(refreshing||!auth.currentUser||!active)return;refreshing=true;try{const next=await resolveEnqueteSession(auth.currentUser,{force:true});if(active&&next.uid===auth.currentUser?.uid){session=next;authState='ready';authError=null;attach(generation);}}catch(error){onError(error);}finally{refreshing=false;}};
+  const emit=()=>{if(active)onChange({authState,session,error:authError,records:[...records.values()],pnjs});};
   const stopData=()=>{stops.splice(0).forEach(s=>s());records.clear();pnjs=[];urls.forEach(u=>URL.revokeObjectURL(u));urls.clear();};
   const subscribe=(zone,type,token)=>{
     const path=zone.startsWith('user:')?`enq_users/${zone.slice(5)}/${type}`:`enq_${zone}/data/${type}`;
@@ -42,42 +65,45 @@ export function createEnqueteClient({onChange,onError=()=>{}}={}) {
     }
     emit();
   };
-  const unsubscribeAuth=onAuthStateChanged(auth,async user=>{
-    const token=++generation;unsubscribeControl();unsubscribeControl=()=>{};stopData();session=null;emit();
-    if(!user)return;
-    try {
-      let next;
-      try {next=await callSession();}
-      catch(error){
-        const cached=JSON.parse(drafts?.getItem(`wfrp-enq-session:${user.uid}`)||'null');
-        if(globalThis.navigator.onLine!==false||!cached)throw error;
-        next={...cached,offline:true};
-      }
+  const activateUser=async(user,token,{force=false}={})=>{
+    unsubscribeControl();unsubscribeControl=()=>{};stopData();session=null;authError=null;
+    if(!user){cachedSession=null;authState='signed-out';emit();return;}
+    const hasFreshCache=!force&&cachedSession&&cachedSession.uid===user.uid&&(Date.now()-cachedSession.fetchedAt)<SESSION_CACHE_TTL_MS;
+    if(!hasFreshCache){authState='loading';emit();}
+    try{
+      const next=await resolveEnqueteSession(user,{force});
       if(!active||generation!==token)return;
-      session=next;
-      try{drafts?.setItem(`wfrp-enq-session:${user.uid}`,JSON.stringify(next));}catch{/* no cache */}
-      if(!started){started=true;if(next.role!=='mj'){try{await enableIndexedDbPersistence(db);persisted=true;}catch{/* memory fallback */}}}
+      session=next;authState='ready';authError=null;
+      persisted=persisted||isDefaultFirestorePersisted();
+      if(!started){started=true;if(next.role!=='mj'&&!persisted){try{await enableIndexedDbPersistence(db);persisted=true;markDefaultFirestorePersisted(true);}catch{/* memory fallback */}}}
       if(!active||generation!==token)return;
-      if(next.role==='mj'&&persisted){unsubscribeControl();await terminate(db);await clearIndexedDbPersistence(db);globalThis.location.reload();return;}
+      if(next.role==='mj'&&(persisted||isDefaultFirestorePersisted())){unsubscribeControl();markDefaultFirestorePersisted(false);await terminate(db);await clearIndexedDbPersistence(db);globalThis.location.reload();return;}
       attach(token);
       unsubscribeControl=onSnapshot(doc(db,'enq_control/public'),snapshot=>{
         if(!active||generation!==token||!session||!snapshot.exists())return;
-        const next=snapshot.data();
-        if(next.active===session.active&&next.maintenance===session.maintenance)return;
-        session={...session,...next};attach(token);
+        const control=snapshot.data();
+        if(control.active===session.active&&control.maintenance===session.maintenance)return;
+        session={...session,...control};
+        if(cachedSession?.uid===session.uid)cachedSession={...cachedSession,session};
+        attach(token);
       },error=>{if(error.code?.includes('permission-denied'))refreshSession();});
-    }catch(error){if(active&&generation===token)onError(error);}
+    }catch(error){if(active&&generation===token){authState='error';authError=error;emit();onError(error);}}
+  };
+  const unsubscribeAuth=onAuthStateChanged(auth,async user=>{
+    const token=++generation;
+    await activateUser(user,token);
   });
 
   const assertSession=()=>{if(!active||!session)throw new Error('Connexion requise');return session;};
   const api={
-    getState:()=>({session,records:[...records.values()],pnjs}),
+    getState:()=>({authState,session,error:authError,records:[...records.values()],pnjs}),
     signIn:loginWithGoogle,
+    retry(){const token=++generation;return activateUser(auth.currentUser||null,token,{force:true});},
     async signOut(){
       if(!globalThis.confirm('Déconnexion : les brouillons locaux de ce compte seront effacés. Continuer ?'))return;
-      const uid=session?.uid;stopData();
+      const uid=session?.uid;cachedSession=null;stopData();
       if(uid&&drafts)for(let i=drafts.length-1;i>=0;i--){const key=drafts.key(i);if(key?.startsWith(`wfrp-enq-draft:${uid}:`)||key===`wfrp-enq-session:${uid}`)drafts.removeItem(key);}
-      await logout();if(persisted){await terminate(db);await clearIndexedDbPersistence(db);}globalThis.location.reload();
+      await logout();if(persisted||isDefaultFirestorePersisted()){markDefaultFirestorePersisted(false);await terminate(db);await clearIndexedDbPersistence(db);}globalThis.location.reload();
     },
     async save({type,id=newEnqueteId(),zone,body,baseRevision=0,operationId=newEnqueteId()}){
       const captured=assertSession(),token=generation;

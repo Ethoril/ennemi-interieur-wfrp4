@@ -25,3 +25,10 @@ export const auth    = getAuth(app);
 export const db      = getFirestore(app);
 export const storage = getStorage(app);
 export const functions = getFunctions(app, FIREBASE_FUNCTIONS_REGION);
+
+// Suivi en mémoire de l'activation éventuelle de la persistance disque sur db
+// (réservée aux joueurs dans Enquêtes) afin de garantir qu'une session MJ ne
+// lise jamais Firestore avec persistance disque active.
+let defaultFirestorePersisted = false;
+export function isDefaultFirestorePersisted() { return defaultFirestorePersisted; }
+export function markDefaultFirestorePersisted(value = true) { defaultFirestorePersisted = value === true; }
