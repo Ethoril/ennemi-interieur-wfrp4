@@ -1,3 +1,11 @@
+## [2.44.1] - 2026-11-21
+
+### Corrections
+- **Contributions joueurs (mobile et bureau)** : création et modification des PNJs et de leurs liaisons entre PNJs pleinement opérationnelles sur l’application mobile (boutons dédiés sur la liste et la fiche PNJ, listes déroulantes Statut / État vital, champ Groupes multilignes, édition sans faux conflit et corbeille accessible depuis la liste).
+- **Appli mobile, Réglages** : connexion joueur (fiches, enquêtes, contributions) et connexion MJ proposées par deux boutons distincts, avec déconnexion unifiée.
+- **Modales de contribution mobile** : styles CSS effectivement appliqués en thèmes sombre et parchemin.
+- Cache de l’application actualisé.
+
 ## [2.44.0] - 2026-11-21
 
 - **Carnaval de Middenheim**. La vue PNJ affiche les lieux à l’heure choisie, les itinéraires sur huit jours et les pistes des trois premiers jours. Le MJ peut enregistrer un déplacement pour un créneau.
