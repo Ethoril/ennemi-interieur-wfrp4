@@ -4,7 +4,7 @@ import { mountPnjPortrait } from '../components/portrait.js';
 import { createPnjListModel, DEFAULT_QUICK, FILTER_DIMENSIONS, QUICK_FILTERS, vivantKey } from '../pnj-list-model.js';
 import { renderState } from '../ui.js';
 import { groupLabel } from '../../pnj-groups.js';
-import { mountContributionButton } from '../../contributions/editor.js';
+import { mountContentTrashPanel, mountContributionButton } from '../../contributions/editor.js';
 
 const FILTER_LABELS = Object.freeze({ groupe: 'Groupe', statut: 'Statut', lieu: 'Lieu' });
 const QUICK_LABELS = Object.freeze({ tous: 'Tous', allie: 'Alliés', neutre: 'Neutres', ennemi: 'Ennemis', decede: 'Décédés' });
@@ -198,6 +198,7 @@ export function createPnjsListView({
     getImageService = () => null,
     onRetry = () => store?.restart?.(),
     getSession = () => null,
+    contributionClient = null,
     getContributionClient = null,
     signInContribution = null,
     announce = () => {},
@@ -223,15 +224,69 @@ export function createPnjsListView({
     let sheet = null;
     let unsubscribeSession = () => {};
     let createButton = null;
+    let playerActions = null;
+    let trashHost = null;
+    let contributionStatusHost = null;
     let contributionAction = null;
+    let relationContributionAction = null;
+    let trashPanel = null;
+    let activeTrashSource = null;
     let focusPending = false;
 
+    const refreshIfStale = () => {
+        if (store?.getState?.()?.connection?.phase === 'error') store?.restart?.();
+    };
+
+    const syncTrashPanel = (state, allowed) => {
+        if (!trashHost || !mounted) return;
+        const documentRef = container.ownerDocument;
+        const mjClient = allowed ? (state?.private?.contributions || null) : null;
+        if (mjClient) {
+            if (activeTrashSource === mjClient) return;
+            trashPanel?.dispose?.();
+            activeTrashSource = mjClient;
+            trashPanel = mountContentTrashPanel({
+                container: trashHost,
+                client: mjClient,
+                documentRef,
+                announce,
+                buttonClass: 'm-button m-list-action',
+                onRestored: refreshIfStale,
+            });
+            return;
+        }
+        if (contributionClient || typeof getContributionClient === 'function') {
+            const targetSource = contributionClient || 'public';
+            if (activeTrashSource === targetSource) return;
+            trashPanel?.dispose?.();
+            activeTrashSource = targetSource;
+            trashPanel = mountContentTrashPanel({
+                container: trashHost,
+                client: contributionClient,
+                getClient: getContributionClient,
+                signIn: signInContribution,
+                documentRef,
+                announce,
+                buttonClass: 'm-button m-list-action',
+                onRestored: refreshIfStale,
+            });
+            return;
+        }
+        trashPanel?.dispose?.();
+        trashPanel = null;
+        activeTrashSource = null;
+    };
+
     const renderCreateAction = state => {
-        if (!createButton) return;
         const allowed = state?.status === 'gm' && state?.role === 'mj'
             && typeof state.user?.uid === 'string' && state.user.uid.length > 0;
-        createButton.hidden = !allowed;
-        createButton.disabled = !allowed;
+        if (createButton) {
+            createButton.hidden = !allowed;
+            createButton.disabled = !allowed;
+        }
+        if (playerActions) playerActions.hidden = allowed;
+        if (contributionStatusHost) contributionStatusHost.hidden = allowed;
+        syncTrashPanel(state, allowed);
     };
 
     const releasePortraits = () => {
@@ -403,6 +458,8 @@ export function createPnjsListView({
         resultCount.className = 'm-result-count';
         resultCount.setAttribute('aria-live', 'polite');
         meta.append(resultCount);
+        const actionsRow = documentRef.createElement('div');
+        actionsRow.className = 'm-list-actions';
         if (typeof onCreate === 'function') {
             createButton = documentRef.createElement('button');
             createButton.type = 'button';
@@ -415,13 +472,46 @@ export function createPnjsListView({
             createButton.append(plus, createLabel);
             createButton.hidden = true;
             createButton.addEventListener('click', onCreate);
-            meta.append(createButton);
+            actionsRow.append(createButton);
         }
-        if (typeof getContributionClient === 'function') {
-            contributionAction = mountContributionButton({ container: meta, getClient: getContributionClient,
-                signIn: signInContribution, kind: 'pnj', action: 'create', documentRef,
-                announce, onSaved: () => store?.restart?.() });
+        contributionStatusHost = documentRef.createElement('div');
+        contributionStatusHost.className = 'm-contribution-status-host';
+        if (contributionClient || typeof getContributionClient === 'function') {
+            playerActions = documentRef.createElement('div');
+            playerActions.className = 'm-list-player-actions';
+            contributionAction = mountContributionButton({
+                container: playerActions,
+                client: contributionClient,
+                getClient: getContributionClient,
+                signIn: signInContribution,
+                kind: 'pnj',
+                action: 'create',
+                documentRef,
+                announce,
+                onSaved: refreshIfStale,
+                buttonClass: 'm-button m-list-action',
+                statusContainer: contributionStatusHost,
+            });
+            relationContributionAction = mountContributionButton({
+                container: playerActions,
+                client: contributionClient,
+                getClient: getContributionClient,
+                signIn: signInContribution,
+                kind: 'relation',
+                action: 'create',
+                documentRef,
+                announce,
+                onSaved: refreshIfStale,
+                hideWithoutContribution: true,
+                buttonClass: 'm-button m-list-action',
+                statusContainer: contributionStatusHost,
+            });
+            actionsRow.append(playerActions);
         }
+        trashHost = documentRef.createElement('div');
+        trashHost.className = 'm-list-trash-action';
+        actionsRow.append(trashHost);
+        meta.append(actionsRow);
         quickRow = documentRef.createElement('div');
         quickRow.className = 'm-quick-filters';
         quickRow.setAttribute('role', 'group');
@@ -453,7 +543,7 @@ export function createPnjsListView({
         warning.append(warningText, retryButton);
         listTarget = documentRef.createElement('div');
         listTarget.className = 'm-list-state';
-        screen.append(searchRow, meta, quickRow, warning, listTarget);
+        screen.append(searchRow, meta, contributionStatusHost, quickRow, warning, listTarget);
         if (signal?.aborted) { mounted = false; return; }
         container.append(screen);
         sheet = createFilterSheet({
@@ -497,6 +587,11 @@ export function createPnjsListView({
         createButton?.removeEventListener('click', onCreate);
         contributionAction?.dispose?.();
         contributionAction = null;
+        relationContributionAction?.dispose?.();
+        relationContributionAction = null;
+        trashPanel?.dispose?.();
+        trashPanel = null;
+        activeTrashSource = null;
         sheet?.destroy();
         sheet = null;
         releasePortraits();
@@ -512,6 +607,9 @@ export function createPnjsListView({
         retryButton = null;
         listTarget = null;
         createButton = null;
+        playerActions = null;
+        trashHost = null;
+        contributionStatusHost = null;
         currentModel = null;
         lastSignature = null;
         focusPending = false;

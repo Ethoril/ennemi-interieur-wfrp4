@@ -72,12 +72,26 @@ function cacheMessage(state) {
     return 'Le mode de cache sera indiqué après le premier chargement.';
 }
 
-function createSettingsView({ container, publicSession, mjSession, documentRef, draftStore = null, draftStores = [], pwa = null, announce = () => {} }) {
+function createSettingsView({
+    container,
+    publicSession,
+    mjSession,
+    documentRef,
+    draftStore = null,
+    draftStores = [],
+    pwa = null,
+    announce = () => {},
+    getContributionClientFn = getContributionClient,
+    signInContributionFn = signInContribution,
+    logoutContributionAccountFn = logoutContributionAccount,
+}) {
     let unsubscribePublic = null;
     let unsubscribeMj = null;
     let unsubscribePwa = null;
     let unsubscribeContribution = null;
     let mounted = false;
+    let contributionBusy = false;
+    let contributionError = '';
     let contributionState = { user: null, capabilities: { role: 'public', contribution: false } };
     const allDraftStores = [...new Set([draftStore, ...draftStores].filter(store => store && typeof store.clear === 'function'))];
     const render = () => {
@@ -88,6 +102,22 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
         const heading = documentRef.createElement('h2');
         heading.textContent = 'Réglages';
         section.append(heading);
+        const contributionIdentity = documentRef.createElement('p');
+        contributionIdentity.setAttribute('role', 'status');
+        contributionIdentity.textContent = contributionState.user
+            ? contributionState.capabilities.contribution
+                ? contributionState.capabilities.role === 'mj'
+                    ? 'Session de contribution active (MJ).'
+                    : 'Compte joueur connecté — fiches, enquêtes et contributions actives.'
+                : 'Compte connecté sans accès de contribution.'
+            : 'Aucune session joueur active.';
+        section.append(contributionIdentity);
+        if (contributionError) {
+            const error = documentRef.createElement('p');
+            error.className = 'm-settings-error';
+            error.textContent = contributionError;
+            section.append(error);
+        }
         const authStatus = documentRef.createElement('p');
         authStatus.setAttribute('role', 'status');
         const state = mjSession.getState();
@@ -105,28 +135,76 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
                 : 'La connexion MJ n’a pas abouti. Vous pouvez réessayer.';
             section.append(error);
         }
-        const contributionIdentity = documentRef.createElement('p');
-        contributionIdentity.textContent = contributionState.user
-            ? contributionState.capabilities.contribution ? 'Session de contribution active.' : 'Compte connecté sans accès de contribution.'
-            : 'Aucune session de contribution active.';
-        section.append(contributionIdentity);
-        const action = documentRef.createElement('button');
-        action.type = 'button';
-        action.className = 'm-button m-button-primary';
         const busy = ['checking', 'signing-in', 'signing-out'].includes(state.status);
-        action.disabled = busy;
-        action.setAttribute('aria-disabled', String(busy));
-        const hasAnyAccount = state.status === 'gm' || state.status === 'authenticated-non-gm' || Boolean(contributionState.user);
-        action.textContent = hasAnyAccount
-            ? 'Déconnexion' : 'Connexion Google';
-        action.addEventListener('click', () => {
-            if (busy) return;
-            if (hasAnyAccount) {
-                return Promise.allSettled([mjSession.signOut(), logoutContributionAccount()]);
-            }
-            return mjSession.signIn();
-        });
-        section.append(action);
+        const hasMjAccount = state.status === 'gm' || state.status === 'authenticated-non-gm';
+        const hasContributionAccount = Boolean(contributionState.user);
+        const hasAnyAccount = hasMjAccount || hasContributionAccount;
+        const authActions = documentRef.createElement('div');
+        authActions.className = 'm-settings-actions';
+        if (!hasContributionAccount) {
+            const playerAction = documentRef.createElement('button');
+            playerAction.type = 'button';
+            playerAction.className = 'm-button m-button-primary';
+            const playerBusy = busy || contributionBusy;
+            playerAction.disabled = playerBusy;
+            playerAction.setAttribute('aria-disabled', String(playerBusy));
+            playerAction.textContent = contributionBusy
+                ? 'Connexion joueur en cours…'
+                : 'Connexion joueur (fiches, enquêtes, contributions)';
+            playerAction.addEventListener('click', async () => {
+                if (busy || contributionBusy) return;
+                contributionBusy = true;
+                contributionError = '';
+                render();
+                try {
+                    await signInContributionFn();
+                } catch (error) {
+                    if (error?.code !== 'auth/popup-closed-by-user') {
+                        contributionError = 'La connexion joueur n’a pas abouti. Vous pouvez réessayer.';
+                    }
+                } finally {
+                    contributionBusy = false;
+                    render();
+                }
+            });
+            authActions.append(playerAction);
+        }
+        if (!hasMjAccount) {
+            const action = documentRef.createElement('button');
+            action.type = 'button';
+            action.className = 'm-button';
+            action.disabled = busy;
+            action.setAttribute('aria-disabled', String(busy));
+            action.textContent = 'Connexion MJ';
+            action.addEventListener('click', () => {
+                if (busy || contributionBusy) return;
+                return mjSession.signIn();
+            });
+            authActions.append(action);
+        }
+        if (hasAnyAccount) {
+            const logoutAction = documentRef.createElement('button');
+            logoutAction.type = 'button';
+            logoutAction.className = 'm-button';
+            const logoutBusy = busy || contributionBusy;
+            logoutAction.disabled = logoutBusy;
+            logoutAction.setAttribute('aria-disabled', String(logoutBusy));
+            logoutAction.textContent = 'Déconnexion';
+            logoutAction.addEventListener('click', async () => {
+                if (busy || contributionBusy) return;
+                contributionBusy = true;
+                contributionError = '';
+                render();
+                try {
+                    await Promise.allSettled([mjSession.signOut(), logoutContributionAccountFn()]);
+                } finally {
+                    contributionBusy = false;
+                    render();
+                }
+            });
+            authActions.append(logoutAction);
+        }
+        section.append(authActions);
         const cache = documentRef.createElement('p');
         cache.textContent = cacheMessage(publicSession.getState());
         section.append(cache);
@@ -202,7 +280,7 @@ function createSettingsView({ container, publicSession, mjSession, documentRef, 
             mounted = true;
             unsubscribePublic = publicSession.subscribe(render);
             unsubscribeMj = mjSession.subscribe(render);
-            void getContributionClient().then(client => {
+            void getContributionClientFn().then(client => {
                 if (mounted) unsubscribeContribution = client.watch(value => { contributionState = value; render(); }, () => render());
             }).catch(() => {});
             unsubscribePwa = pwa?.subscribe(render) || null;

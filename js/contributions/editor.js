@@ -1,6 +1,24 @@
+const STATUT_OPTIONS = Object.freeze([
+    ['', 'Inconnu'],
+    ['allié', 'Allié'],
+    ['neutre', 'Neutre'],
+    ['ennemi', 'Ennemi'],
+]);
+const VIVANT_OPTIONS = Object.freeze([
+    ['oui', 'Vivant'],
+    ['non', 'Décédé'],
+    ['inconnu', 'Inconnu'],
+]);
+const STYLE_OPTIONS = Object.freeze([
+    ['solid', 'Plein'],
+    ['dashed', 'Pointillé'],
+]);
+const SELECT_TYPES = new Set(['pnj-select', 'pnj-multi', 'style-select', 'statut-select', 'vivant-select']);
+const DEFAULT_RELATION_COLOR = '#c9a84c';
+
 const FIELDS = Object.freeze({
     pnj: [
-        ['nom', 'Nom', 'text', 200], ['statut', 'Statut', 'text', 64], ['vivant', 'État vital', 'text', 32],
+        ['nom', 'Nom', 'text', 200], ['statut', 'Statut', 'statut-select', 64], ['vivant', 'État vital', 'vivant-select', 32],
         ['lieu', 'Lieu', 'text', 200], ['groupes', 'Groupes (un par ligne)', 'lines', 20], ['description', 'Description publique', 'textarea', 20000],
         ['visibleJoueurs', 'Visible par les joueurs', 'checkbox', 0],
         ['imagePath', 'Remplacer le portrait (JPEG, PNG, WebP, GIF ou AVIF · 2 Mio max)', 'file', 2 * 1024 * 1024],
@@ -18,6 +36,78 @@ const FIELDS = Object.freeze({
         ['pair', 'Créer aussi la relation réciproque', 'checkbox', 0],
     ],
 });
+
+let nextDialogInstanceId = 0;
+
+function foldValue(value) {
+    return typeof value === 'string'
+        ? value.trim().normalize('NFD').replace(/[\u0300-\u036f]/gu, '').toLowerCase()
+        : '';
+}
+function normalizeStatutChoice(value) {
+    const folded = foldValue(value);
+    if (folded === 'allie' || folded === 'alliee') return 'allié';
+    if (folded === 'neutre') return 'neutre';
+    if (folded === 'ennemi' || folded === 'ennemie') return 'ennemi';
+    return '';
+}
+function normalizeVivantChoice(value) {
+    const folded = foldValue(value);
+    if (folded === 'oui' || folded === 'vivant' || folded === 'vivante') return 'oui';
+    if (folded === 'non' || folded === 'mort' || folded === 'morte' || folded === 'decede' || folded === 'decedee') return 'non';
+    if (folded === 'inconnu' || folded === 'inconnue') return 'inconnu';
+    return 'oui';
+}
+function normalizeColorHex(value) {
+    if (typeof value !== 'string') return DEFAULT_RELATION_COLOR;
+    const trimmed = value.trim();
+    if (/^#[0-9a-f]{6}$/iu.test(trimmed)) return trimmed.toLowerCase();
+    if (/^#[0-9a-f]{3}$/iu.test(trimmed)) {
+        const [, r, g, b] = trimmed;
+        return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+    }
+    return DEFAULT_RELATION_COLOR;
+}
+function formatTrashSummary(summary, fallback = 'Contenu archivé') {
+    if (typeof summary === 'string' && summary.trim()) return summary.trim();
+    if (summary && typeof summary === 'object') {
+        const label = [summary.nom, summary.titre, summary.label, summary.type]
+            .find(value => typeof value === 'string' && value.trim());
+        if (label) return label.trim();
+    }
+    return fallback;
+}
+function serverBaseValue(field, data = {}) {
+    return Object.hasOwn(data, field) ? data[field] : null;
+}
+function formatMutationError(error) {
+    const code = String(error?.code || error?.details?.code || '');
+    if (code.includes('aborted')) return 'Le contenu a changé depuis son ouverture. Rechargez-le avant de recommencer.';
+    if (code.includes('permission')) return 'L’accès de contribution a été retiré.';
+    if (code.includes('already-exists')) return 'Ce contenu ou cette relation existe déjà.';
+    if (code.includes('invalid-argument') || code.includes('failed-precondition') || code.includes('not-found')) {
+        const detail = typeof error?.message === 'string' ? error.message.trim() : '';
+        if (detail && detail.length <= 200 && !/internal|firebase|https/iu.test(detail)) {
+            return `Enregistrement refusé : ${detail}.`;
+        }
+    }
+    return 'La modification n’a pas été enregistrée. Réessayez.';
+}
+async function loadAllPnjChoices(clientRef) {
+    const all = [];
+    const seenCursors = new Set();
+    let cursor = null;
+    for (let page = 0; page < 20; page += 1) {
+        const result = await clientRef.getContentPnjChoices(cursor ? { cursor } : undefined);
+        if (!Array.isArray(result?.pnjs)) throw new Error('choices unavailable');
+        all.push(...result.pnjs);
+        const next = typeof result.nextCursor === 'string' && result.nextCursor ? result.nextCursor : null;
+        if (!next || seenCursors.has(next)) break;
+        seenCursors.add(next);
+        cursor = next;
+    }
+    return all;
+}
 
 function operationId(documentRef) {
     const value = documentRef.defaultView?.crypto?.randomUUID?.() || `${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
@@ -38,15 +128,21 @@ function publicValues(kind, data = {}) {
         type === 'file' ? null
             : type === 'checkbox' ? (field === 'pair' ? false : data[field] === true)
             : type === 'pnj-multi' ? (Array.isArray(data[field]) ? data[field] : [])
+            : type === 'lines' ? (Array.isArray(data[field]) ? data[field].join('\n') : (typeof data[field] === 'string' ? data[field] : ''))
+            : type === 'statut-select' ? normalizeStatutChoice(data[field])
+            : type === 'vivant-select' ? normalizeVivantChoice(data[field])
             : type === 'style-select' ? (data[field] === 'dashed' ? 'dashed' : 'solid')
-            : type === 'color' ? (typeof data[field] === 'string' && /^#[0-9a-f]{6}$/iu.test(data[field]) ? data[field] : '#000000')
+            : type === 'color' ? normalizeColorHex(data[field])
                 : type === 'date' ? (data[field] instanceof Date ? data[field].toISOString().slice(0, 10)
                     : typeof data[field] === 'string' ? data[field].slice(0, 10) : '')
                     : (data[field] ?? ''),
     ]));
 }
 function parseField(type, value) {
-    if (type === 'lines') return value.split(/\r?\n/u).map(item => item.trim()).filter(Boolean);
+    if (type === 'lines') {
+        if (Array.isArray(value)) return value.map(item => String(item ?? '').trim()).filter(Boolean);
+        return String(value ?? '').split(/\r?\n/u).map(item => item.trim()).filter(Boolean);
+    }
     return value;
 }
 
@@ -98,11 +194,30 @@ function populatePnjChoices(control, choices, { multiple = false, selected = [] 
     }
 }
 
-export function mountContributionButton({ container, client = null, getClient = null, signIn = null, kind, id = null, action = 'update', documentRef = container?.ownerDocument,
-    announce = () => {}, onSaved = () => {} } = {}) {
+export function mountContributionButton({
+    container,
+    client = null,
+    getClient = null,
+    signIn = null,
+    kind,
+    id = null,
+    action = 'update',
+    documentRef = container?.ownerDocument,
+    announce = () => {},
+    onSaved = () => {},
+    defaultValues = null,
+    hideWithoutContribution = false,
+    buttonClass = 'm-button m-detail-edit',
+    buttonLabel = null,
+    buttonAriaLabel = null,
+    statusContainer = null,
+} = {}) {
     if (!container || (!client?.watch && typeof getClient !== 'function') || !FIELDS[kind] || !documentRef || !['create', 'update'].includes(action)
         || (action === 'update' && typeof id !== 'string')) throw new TypeError('conteneur, client et contenu requis');
-    const button = text(documentRef, 'button', contentActionLabel(kind, action), 'm-button m-detail-edit');
+    const actionText = typeof buttonLabel === 'string' && buttonLabel.trim()
+        ? buttonLabel.trim() : contentActionLabel(kind, action);
+    const titleId = `contribution-title-${kind}-${id || 'new'}-${++nextDialogInstanceId}`;
+    const button = text(documentRef, 'button', actionText, buttonClass);
     button.type = 'button';
     button.hidden = true;
     container.append(button);
@@ -110,39 +225,46 @@ export function mountContributionButton({ container, client = null, getClient = 
     launchStatus.setAttribute('role', 'alert');
     launchStatus.setAttribute('aria-live', 'polite');
     launchStatus.hidden = true;
-    container.append(launchStatus);
+    (statusContainer || container).append(launchStatus);
     const dialog = documentRef.createElement('dialog');
     dialog.className = 'contribution-dialog';
-    dialog.setAttribute('aria-labelledby', `contribution-title-${kind}-${id || 'new'}`);
+    dialog.setAttribute('aria-labelledby', titleId);
     const form = documentRef.createElement('form');
     form.method = 'dialog';
     const heading = text(documentRef, 'h2', contentActionLabel(kind, action));
-    heading.id = `contribution-title-${kind}-${id || 'new'}`;
+    heading.id = titleId;
     const status = text(documentRef, 'p', '', 'contribution-status');
     status.setAttribute('role', 'status');
     const fields = new Map();
     for (const [name, labelText, type, maximum] of FIELDS[kind]) {
         const label = documentRef.createElement('label');
         label.append(documentRef.createTextNode(`${labelText} `));
-        const control = documentRef.createElement(type === 'textarea' ? 'textarea'
-            : ['pnj-select', 'pnj-multi', 'style-select'].includes(type) ? 'select' : 'input');
-        if (!['textarea', 'pnj-select', 'pnj-multi', 'style-select'].includes(type)) control.type = type === 'date' ? 'date'
+        const isTextarea = type === 'textarea' || type === 'lines';
+        const isSelect = SELECT_TYPES.has(type);
+        const control = documentRef.createElement(isTextarea ? 'textarea' : isSelect ? 'select' : 'input');
+        if (!isTextarea && !isSelect) control.type = type === 'date' ? 'date'
             : type === 'file' ? 'file' : type === 'checkbox' ? 'checkbox' : type === 'color' ? 'color' : 'text';
         if (type === 'pnj-multi') control.multiple = true;
         if (type === 'pnj-multi') control.size = 6;
-        if (type === 'pnj-select') control.required = true;
-        if (type === 'style-select') {
-            for (const [value, labelText] of [['solid', 'Plein'], ['dashed', 'Pointillé']]) {
+        if (type === 'pnj-select' || name === 'nom' || name === 'titre' || (kind === 'relation' && name === 'type')) {
+            control.required = true;
+        }
+        const staticOptions = type === 'style-select' ? STYLE_OPTIONS
+            : type === 'statut-select' ? STATUT_OPTIONS
+                : type === 'vivant-select' ? VIVANT_OPTIONS : null;
+        if (staticOptions) {
+            for (const [value, optionLabel] of staticOptions) {
                 const option = documentRef.createElement('option');
                 option.value = value;
-                option.textContent = labelText;
+                option.textContent = optionLabel;
                 control.append(option);
             }
         }
-        control.maxLength = type === 'lines' ? 6000 : maximum;
+        if (type === 'lines') control.maxLength = 6000;
+        else if (!isSelect && type !== 'file' && type !== 'checkbox' && type !== 'color' && maximum > 0) control.maxLength = maximum;
         control.dataset.field = name;
         control.autocomplete = 'off';
-        if (type === 'textarea') control.rows = name === 'description' ? 8 : 3;
+        if (isTextarea) control.rows = name === 'description' ? 8 : 3;
         label.append(control);
         if (name === 'pair') label.hidden = action === 'update';
         form.append(label);
@@ -170,6 +292,7 @@ export function mountContributionButton({ container, client = null, getClient = 
     let loadingClient = null;
     let stopWatching = () => {};
     let context = null;
+    let initialUiValues = null;
     let inFlight = false;
     let activeOperationId = null;
     let activeOperationPayload = null;
@@ -198,6 +321,17 @@ export function mountContributionButton({ container, client = null, getClient = 
             launchStatus.hidden = !value;
         }
     };
+    const onWatchError = () => {
+        if (!active) return;
+        if (hideWithoutContribution) {
+            button.hidden = true;
+            button.disabled = true;
+            return;
+        }
+        button.hidden = false;
+        button.disabled = false;
+        button.textContent = 'Contribuer (connexion requise)';
+    };
     const subscribe = value => {
         session = value;
         for (const [field, entry] of fields) {
@@ -205,10 +339,19 @@ export function mountContributionButton({ container, client = null, getClient = 
                 entry.control.closest('label').hidden = value.capabilities.role !== 'mj' || action === 'create';
             }
         }
+        if (hideWithoutContribution && !value.capabilities.contribution) {
+            button.hidden = true;
+            button.disabled = true;
+            return;
+        }
         button.hidden = false;
         button.disabled = false;
         button.textContent = !value.user ? 'Se connecter pour contribuer'
-            : value.capabilities.contribution ? contentActionLabel(kind, action) : 'Contribution indisponible';
+            : value.capabilities.contribution ? actionText : 'Contribution indisponible';
+        if (buttonAriaLabel) {
+            if (value.capabilities.contribution) button.setAttribute('aria-label', buttonAriaLabel);
+            else button.removeAttribute?.('aria-label');
+        }
         button.title = value.capabilities.contribution ? '' : value.user ? 'Ce compte ne figure pas dans les accès de contribution.' : '';
     };
     const ensureClient = async () => {
@@ -216,18 +359,17 @@ export function mountContributionButton({ container, client = null, getClient = 
         loadingClient ||= Promise.resolve().then(() => getClient()).then(value => {
             if (!value?.watch || !active) throw new Error('callable unavailable');
             clientRef = value;
-            stopWatching = clientRef.watch(subscribe, () => {
-                if (active) { button.hidden = false; button.disabled = false; button.textContent = 'Contribuer (connexion requise)'; }
-            });
+            stopWatching = clientRef.watch(subscribe, onWatchError);
             return clientRef;
+        }).catch(error => {
+            loadingClient = null;
+            throw error;
         });
         return loadingClient;
     };
-    if (clientRef) stopWatching = clientRef.watch(subscribe, () => {
-        if (active) { button.hidden = false; button.disabled = false; button.textContent = 'Contribuer (connexion requise)'; }
-    });
+    if (clientRef) stopWatching = clientRef.watch(subscribe, onWatchError);
     else void ensureClient().catch(() => {
-        if (active) { button.hidden = false; button.textContent = 'Connexion pour contribuer'; }
+        if (active && !hideWithoutContribution) { button.hidden = false; button.textContent = 'Connexion pour contribuer'; }
     });
 
     const showHistory = async () => {
@@ -268,27 +410,30 @@ export function mountContributionButton({ container, client = null, getClient = 
         button.disabled = true;
         setStatus('Chargement du contenu public…');
         try {
-            context = action === 'create' ? { kind, id: null, data: {}, revision: 0, canEdit: true }
+            const initialData = defaultValues && typeof defaultValues === 'object' ? { ...defaultValues } : {};
+            context = action === 'create' ? { kind, id: null, data: initialData, revision: 0, canEdit: true }
                 : await clientRef.getContentEditContext({ kind, id });
             if (!context?.canEdit) throw new Error('access');
             let pnjChoices = null;
             if (FIELDS[kind].some(([, , type]) => type === 'pnj-select' || type === 'pnj-multi')) {
                 if (typeof clientRef.getContentPnjChoices !== 'function') throw new Error('choices unavailable');
-                const result = await clientRef.getContentPnjChoices();
-                if (!Array.isArray(result?.pnjs)) throw new Error('choices unavailable');
-                pnjChoices = result.pnjs;
+                pnjChoices = await loadAllPnjChoices(clientRef);
             }
             const values = publicValues(kind, context.data);
+            initialUiValues = values;
             for (const [field, entry] of fields) {
                 if (entry.type === 'pnj-select' || entry.type === 'pnj-multi') {
                     const selected = entry.type === 'pnj-multi' ? values[field] : [values[field]];
                     populatePnjChoices(entry.control, pnjChoices || [], { multiple: entry.type === 'pnj-multi', selected });
                     setSelectedValues(entry.control, selected);
                 } else if (entry.type === 'checkbox') entry.control.checked = values[field] === true;
-                else if (entry.type !== 'file') entry.control.value = values[field] ?? '';
+                else if (entry.type === 'file') {
+                    try { entry.control.value = ''; } catch { /* FakeElement ou valeur protégée */ }
+                } else entry.control.value = values[field] ?? '';
             }
             activeOperationId = null;
             activeOperationPayload = null;
+            activeImageOperationId = null;
             activeContentId = id;
             save.disabled = false;
             history.hidden = action === 'create';
@@ -328,28 +473,41 @@ export function mountContributionButton({ container, client = null, getClient = 
     form.addEventListener('submit', async event => {
         event.preventDefault();
         if (inFlight || !context || !session.capabilities.contribution) return;
+        if (kind === 'relation') {
+            const sourceValue = fields.get('source')?.control.value || '';
+            const targetValue = fields.get('cible')?.control.value || '';
+            if (sourceValue && targetValue && sourceValue === targetValue) {
+                setStatus('Choisissez deux PNJ distincts.');
+                return;
+            }
+        }
+        const uiBaseline = initialUiValues || publicValues(kind, context.data);
         const changes = {};
         const baseValues = {};
         for (const [field, entry] of fields) {
             if (entry.type === 'file' || field === 'pair') continue;
             if (entry.type === 'checkbox') {
                 const value = entry.control.checked;
-                const before = publicValues(kind, context.data)[field];
-                if (JSON.stringify(value) !== JSON.stringify(before)) {
+                const beforeUi = uiBaseline[field];
+                if (JSON.stringify(value) !== JSON.stringify(beforeUi)) {
                     changes[field] = value;
-                    if (action === 'update') baseValues[field] = before;
+                    if (action === 'update') baseValues[field] = serverBaseValue(field, context.data);
                 }
                 continue;
             }
             const value = (field === 'dateDecouverte' && entry.control.value === '')
                 ? null : entry.type === 'pnj-multi' ? selectedValues(entry.control) : parseField(entry.type, entry.control.value);
-            const before = publicValues(kind, context.data)[field];
-            const normalizedBefore = entry.type === 'lines' ? parseField(entry.type, before) : before;
-            if (action === 'create' || JSON.stringify(value) !== JSON.stringify(normalizedBefore)) {
+            const beforeUi = uiBaseline[field];
+            const normalizedBeforeUi = entry.type === 'lines' ? parseField(entry.type, beforeUi) : beforeUi;
+            if (action === 'create' || JSON.stringify(value) !== JSON.stringify(normalizedBeforeUi)) {
                 changes[field] = value;
-                if (action === 'update') baseValues[field] = field === 'dateDecouverte'
-                    ? (context.data[field] ?? null) : normalizedBefore;
+                if (action === 'update') baseValues[field] = serverBaseValue(field, context.data);
             }
+        }
+        if (kind === 'relation' && action === 'create'
+            && typeof changes.type === 'string' && changes.type.trim()
+            && (!changes.label || !changes.label.trim())) {
+            changes.label = changes.type.trim();
         }
         const imageEntry = fields.get('imagePath');
         const imageFile = imageEntry?.control.files?.[0] || null;
@@ -379,12 +537,17 @@ export function mountContributionButton({ container, client = null, getClient = 
                 return;
             }
         }
+        const isMjUpdate = session.capabilities.role === 'mj' && action === 'update';
         const command = {
-            kind, action, ...(activeContentId ? { id: activeContentId } : {}), baseRevision: context.revision,
+            kind,
+            ...(isMjUpdate ? {} : { action }),
+            ...(activeContentId ? { id: activeContentId } : {}),
+            baseRevision: context.revision,
             ...(kind === 'relation' && action === 'create' ? { pair: pairWanted } : {}),
             ...(kind === 'relation' && action === 'update' && context.data.reciprocalId
                 ? { reciprocalId: context.data.reciprocalId, reciprocalBaseRevision: context.data.reciprocalRevision } : {}),
-            ...(action === 'update' ? { baseValues } : {}), changes,
+            ...(action === 'update' ? { baseValues } : {}),
+            changes,
         };
         const commandSignature = JSON.stringify(command);
         if (commandSignature !== activeOperationPayload) {
@@ -392,8 +555,7 @@ export function mountContributionButton({ container, client = null, getClient = 
             activeOperationPayload = commandSignature;
         }
         try {
-            const mutate = session.capabilities.role === 'mj' && action === 'update'
-                ? clientRef.mutateMjContent : clientRef.mutatePublicContent;
+            const mutate = isMjUpdate ? clientRef.mutateMjContent : clientRef.mutatePublicContent;
             const result = await mutate({
                 ...command, operationId: activeOperationId,
             });
@@ -405,10 +567,7 @@ export function mountContributionButton({ container, client = null, getClient = 
             announce(action === 'create' ? 'Contenu public créé et publié.' : 'Modification publique enregistrée.');
             onSaved(result);
         } catch (error) {
-            const code = error?.code || error?.details?.code;
-            setStatus(code?.includes('aborted') ? 'Le contenu a changé depuis son ouverture. Rechargez-le avant de recommencer.'
-                : code?.includes('permission') ? 'L’accès de contribution a été retiré.'
-                    : 'La modification n’a pas été enregistrée. Réessayez.');
+            setStatus(formatMutationError(error));
         } finally { inFlight = false; setFormBusy(false); }
     });
 
@@ -424,10 +583,18 @@ export function mountContributionButton({ container, client = null, getClient = 
     } });
 }
 
-export function mountContentTrashPanel({ container, client = null, getClient = null, signIn = null, documentRef = container?.ownerDocument,
-    announce = () => {} } = {}) {
+export function mountContentTrashPanel({
+    container,
+    client = null,
+    getClient = null,
+    signIn = null,
+    documentRef = container?.ownerDocument,
+    announce = () => {},
+    buttonClass = 'm-button m-detail-edit',
+    onRestored = () => {},
+} = {}) {
     if (!container || (!client?.watch && typeof getClient !== 'function') || !documentRef) throw new TypeError('conteneur et client requis');
-    const button = text(documentRef, 'button', 'Corbeille', 'm-button m-detail-edit');
+    const button = text(documentRef, 'button', 'Corbeille', buttonClass);
     button.type = 'button';
     button.hidden = true;
     container.append(button);
@@ -468,10 +635,14 @@ export function mountContentTrashPanel({ container, client = null, getClient = n
             clientRef = value;
             stopWatching = clientRef.watch(notifySession, () => {});
             return clientRef;
+        }).catch(error => {
+            loadingClient = null;
+            throw error;
         });
         return loadingClient;
     };
     if (clientRef) stopWatching = clientRef.watch(notifySession, () => {});
+    else void ensureClient().catch(() => {});
 
     const renderEntries = entries => {
         list.replaceChildren();
@@ -482,7 +653,7 @@ export function mountContentTrashPanel({ container, client = null, getClient = n
         for (const entry of entries) {
             const item = documentRef.createElement('article');
             item.className = 'contribution-trash-entry';
-            const label = `${entry.kind === 'pnj' ? 'PNJ' : entry.kind === 'indice' ? 'Indice' : 'Relation'} · ${typeof entry.summary === 'string' ? entry.summary : 'Contenu archivé'}`;
+            const label = `${entry.kind === 'pnj' ? 'PNJ' : entry.kind === 'indice' ? 'Indice' : 'Relation'} · ${formatTrashSummary(entry.summary)}`;
             item.append(text(documentRef, 'h3', label));
             item.append(text(documentRef, 'p', `Révision ${entry.revision}${entry.canRestore ? ' · restauration autorisée' : ' · restauration MJ'}`, 'contribution-trash-meta'));
             const actions = documentRef.createElement('div');
@@ -497,6 +668,7 @@ export function mountContentTrashPanel({ container, client = null, getClient = n
                     try {
                         await clientRef.restorePublicContent({ kind: entry.kind, id: entry.id, operationId: operationId(documentRef), baseRevision: entry.revision });
                         announce('Contenu restauré.');
+                        onRestored(entry);
                         if (await loadPage(null, false)) status.textContent = 'Contenu restauré. La corbeille a été actualisée.';
                     } catch { status.textContent = 'Restauration impossible : le contenu ou ses dépendances ont changé.'; restore.disabled = false; }
                 });
@@ -562,7 +734,7 @@ export function mountContentTrashPanel({ container, client = null, getClient = n
             const item = documentRef.createElement('article');
             item.className = 'contribution-trash-entry';
             const kindLabel = entry.kind === 'pnj' ? 'PNJ' : entry.kind === 'indice' ? 'Indice' : 'Relation';
-            item.append(text(documentRef, 'h4', `${kindLabel} · ${typeof entry.summary === 'string' ? entry.summary : 'Contenu purgé'}`));
+            item.append(text(documentRef, 'h4', `${kindLabel} · ${formatTrashSummary(entry.summary, 'Contenu purgé')}`));
             const cleanup = entry.cleanup || {};
             const remaining = Number.isSafeInteger(cleanup.retryable) ? cleanup.retryable : cleanup.pending;
             item.append(text(documentRef, 'p', `Contenu déjà purgé. ${Number.isSafeInteger(remaining) ? remaining : 0} image(s) restent à vérifier.`, 'contribution-trash-meta'));

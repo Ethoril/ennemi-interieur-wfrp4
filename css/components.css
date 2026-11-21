@@ -245,8 +245,18 @@
 .contribution-dialog form { display: grid; gap: 0.9rem; }
 .contribution-dialog h2 { margin: 0; color: var(--text-heading); font-family: var(--font-heading); }
 .contribution-dialog label { display: grid; gap: 0.35rem; color: var(--text-secondary); }
-.contribution-dialog input:not([type="checkbox"]),
+.contribution-dialog label:has(> input[type="checkbox"]) {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  color: var(--text-primary);
+}
+.contribution-dialog input[type="checkbox"] { width: 1.15rem; height: 1.15rem; accent-color: var(--gold); }
+.contribution-dialog input:not([type="checkbox"]):not([type="color"]),
 .contribution-dialog input[type="file"],
+.contribution-dialog select,
 .contribution-dialog textarea {
   box-sizing: border-box;
   width: 100%;
@@ -258,8 +268,19 @@
   border-radius: var(--radius-sm);
   font: inherit;
 }
+.contribution-dialog input[type="color"] {
+  box-sizing: border-box;
+  width: 5rem;
+  height: 2.6rem;
+  padding: 0.2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
 .contribution-dialog textarea { resize: vertical; }
 .contribution-dialog input:focus-visible,
+.contribution-dialog select:focus-visible,
 .contribution-dialog textarea:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
 .contribution-dialog .contribution-status { margin: 0; color: var(--text-secondary); white-space: pre-line; }
 .contribution-launch-status { color: var(--text-danger, var(--blood)); margin: .4rem 0 0; max-width: 42rem; white-space: pre-line; }

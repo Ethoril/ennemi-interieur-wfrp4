@@ -47,6 +47,11 @@ class FakeElement {
             this.children.push(node);
         }
     }
+    prepend(node) {
+        node.parentNode?.removeChild(node);
+        node.parentNode = this;
+        this.children.unshift(node);
+    }
     replaceChildren(...nodes) {
         for (const child of this.children) child.parentNode = null;
         this.children = [];
@@ -63,10 +68,10 @@ class FakeElement {
         return false;
     }
     closest(selector) {
-        const [, tag, key] = /^(\w+)\[data-([\w-]+)\]$/u.exec(selector) || [];
+        const [, tag, key] = /^(\w+)(?:\[data-([\w-]+)\])?$/u.exec(selector) || [];
         const property = key?.replace(/-(\w)/gu, (_, letter) => letter.toUpperCase());
         for (let current = this; current; current = current.parentNode) {
-            if (current.tagName === tag?.toUpperCase() && current.dataset?.[property] !== undefined) return current;
+            if (current.tagName === tag?.toUpperCase() && (!property || current.dataset?.[property] !== undefined)) return current;
         }
         return null;
     }
@@ -103,7 +108,9 @@ function makeDocument({ svg = false } = {}) {
     const documentRef = {
         activeElement: null,
         createElement: tag => new FakeElement(documentRef, tag),
+        createTextNode: value => { const node = new FakeElement(documentRef, '#text'); node.textContent = value; return node; },
         createDocumentFragment: () => new FakeElement(documentRef, '#fragment', { fragment: true }),
+        querySelector: () => null,
         addEventListener() {},
         removeEventListener() {},
         defaultView: { setTimeout: () => 1, clearTimeout() {} },
@@ -564,4 +571,71 @@ test('le CSS mobile dégage les en-têtes collants, voile le nom en plein et gar
     const opaqueAt = Number(/var\(--bg-darkest\)\s*([\d.]+)rem\)/u.exec(overlay)?.[1]);
     assert.ok(opaqueAt <= paddingTop, `voile plein à ${opaqueAt}rem pour un nom qui commence à ${paddingTop}rem`);
     assert.doesNotMatch(css, /\.m-form-field [^{]*:focus-visible\s*\{[^}]*outline/u, 'le formulaire garde l’indicateur de focus du site');
+    // Modales de contribution attachées à document.body : le CSS ne doit plus exiger un ancêtre .m-app.
+    assert.doesNotMatch(css, /\.m-app\s+\.contribution-(?:dialog|trash)/u);
+    assert.match(css, /\n\.contribution-dialog\s*\{/u);
+    assert.match(css, /\.contribution-dialog::backdrop\s*\{/u);
+    assert.match(css, /\.contribution-dialog select/u);
+    assert.match(css, /\.contribution-trash-dialog\[open\]\s*\{[^}]*display:\s*grid/u);
+    const meta = /\.m-list-meta\s*\{([^}]*)\}/u.exec(css)?.[1] ?? '';
+    assert.match(meta, /flex-wrap:\s*wrap/u);
+    assert.match(read('css/components.css'), /\.contribution-dialog select/u);
+});
+
+test('la liste PNJs mobile expose Créer un PNJ, Créer une relation et Ma corbeille aux joueurs, et Corbeille MJ en mode MJ', async () => {
+    const documentRef = makeDocument();
+    const container = new FakeElement(documentRef, 'main');
+    const store = makeStore(listState([pnj('a', { nom: 'Ada' })]));
+    const playerWatchers = new Set();
+    let playerSession = { user: null, capabilities: { role: 'public', contribution: false } };
+    const contributionClient = {
+        watch(listener) { playerWatchers.add(listener); listener(playerSession); return () => playerWatchers.delete(listener); },
+        currentUser: () => playerSession.user,
+    };
+    const mjWatchers = new Set();
+    const mjContribClient = {
+        watch(listener) {
+            mjWatchers.add(listener);
+            listener({ user: { uid: 'gm-1' }, capabilities: { role: 'mj', contribution: true } });
+            return () => mjWatchers.delete(listener);
+        },
+        currentUser: () => ({ uid: 'gm-1' }),
+    };
+    const sessionListeners = new Set();
+    let mjState = { status: 'visitor', role: 'public', user: null, private: null };
+    const sessionSource = {
+        getState: () => mjState,
+        subscribe(listener) { sessionListeners.add(listener); return () => sessionListeners.delete(listener); },
+    };
+    const view = createPnjsListView({
+        container, store, onCreate: () => {}, getSession: () => sessionSource, contributionClient,
+    });
+    view.mount({ signal: { aborted: false } });
+    const visibleButtons = () => container.querySelectorAll('.m-list-actions')[0].querySelectorAll('button')
+        .filter(button => !button.hidden && !button.parentNode?.hidden)
+        .map(button => button.text);
+    // Visiteur : seul le CTA principal de connexion est visible
+    assert.deepEqual(visibleButtons(), ['Se connecter pour contribuer']);
+
+    // Joueur autorisé : PNJ + Relation + Ma corbeille
+    playerSession = { user: { uid: 'p1' }, capabilities: { role: 'joueur', contribution: true } };
+    for (const listener of playerWatchers) listener(playerSession);
+    assert.deepEqual(visibleButtons(), ['Créer un PNJ', 'Créer une relation', 'Ma corbeille']);
+
+    // Session MJ active : Nouveau PNJ + Corbeille MJ (via session.private.contributions), boutons joueur masqués
+    mjState = { status: 'gm', role: 'mj', user: { uid: 'gm-1' }, private: { contributions: mjContribClient } };
+    for (const listener of sessionListeners) listener(mjState);
+    assert.deepEqual(visibleButtons(), ['＋ Nouveau PNJ', 'Corbeille MJ']);
+
+    view.unmount();
+    assert.equal(documentRef.body.children.filter(node => node.tagName === 'DIALOG').length, 0);
+});
+
+test('Réglages mobile propose Connexion joueur et Connexion MJ distinctes ainsi qu’une déconnexion unifiée', () => {
+    const appSource = read('js/mobile/app.js');
+    assert.match(appSource, /Connexion joueur \(fiches, enquêtes, contributions\)/u);
+    assert.match(appSource, /await signInContributionFn\(\)/u);
+    assert.match(appSource, /Connexion MJ/u);
+    assert.match(appSource, /mjSession\.signIn\(\)/u);
+    assert.match(appSource, /Promise\.allSettled\(\[mjSession\.signOut\(\), logoutContributionAccountFn\(\)\]\)/u);
 });

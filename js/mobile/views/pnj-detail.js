@@ -2,7 +2,7 @@ import { createSeal } from '../../seal.js';
 import { mountPnjPortrait } from '../components/portrait.js';
 import { selectPnjDetailModel } from '../pnj-detail-model.js';
 import { renderState } from '../ui.js';
-import { mountContentTrashPanel, mountContributionButton } from '../../contributions/editor.js';
+import { mountContributionButton } from '../../contributions/editor.js';
 
 const RELATION_ARROWS = Object.freeze({ sortante: '→', entrante: '←', paire: '↔' });
 
@@ -60,7 +60,26 @@ function renderDescription(documentRef, body, model) {
     appendText(documentRef, body, 'p', 'm-detail-description', model.description);
 }
 
-function renderRelations(documentRef, body, model) {
+function disposeDetailContributions(detail) {
+    if (!detail) return;
+    detail.contribution?.dispose?.();
+    detail.addRelation?.dispose?.();
+    if (Array.isArray(detail.relationEdits)) {
+        for (const action of detail.relationEdits.splice(0)) action?.dispose?.();
+    }
+}
+
+function renderRelations(documentRef, body, model, {
+    canEdit = false,
+    contributionClient = null,
+    getContributionClient = null,
+    signInContribution = null,
+    announce = () => {},
+    onContributionSaved = () => {},
+    relationEdits = [],
+    statusContainer = null,
+} = {}) {
+    for (const action of relationEdits.splice(0)) action?.dispose?.();
     body.replaceChildren();
     if (!model.relations.length) {
         const message = model.relationsStatus === 'loading'
@@ -73,8 +92,10 @@ function renderRelations(documentRef, body, model) {
     }
     const list = documentRef.createElement('ul');
     list.className = 'm-detail-links';
+    const allowRelationContribution = !canEdit && Boolean(contributionClient || getContributionClient);
     for (const relation of model.relations) {
         const item = documentRef.createElement('li');
+        item.className = 'm-detail-relation-row';
         const link = documentRef.createElement('a');
         link.className = 'm-detail-relation';
         link.href = `#/pnjs/${encodeURIComponent(relation.otherId)}`;
@@ -92,6 +113,25 @@ function renderRelations(documentRef, body, model) {
         appendText(documentRef, label, 'span', '', relation.label);
         link.append(name, label);
         item.append(link);
+        if (allowRelationContribution) {
+            relationEdits.push(mountContributionButton({
+                container: item,
+                client: contributionClient,
+                getClient: getContributionClient,
+                signIn: signInContribution,
+                kind: 'relation',
+                id: relation.id,
+                action: 'update',
+                documentRef,
+                announce,
+                onSaved: onContributionSaved,
+                hideWithoutContribution: true,
+                buttonClass: 'm-button m-detail-relation-edit',
+                buttonLabel: 'Modifier',
+                buttonAriaLabel: `Modifier la relation avec ${relation.otherName}`,
+                statusContainer,
+            }));
+        }
         list.append(item);
     }
     body.append(list);
@@ -138,15 +178,28 @@ function renderReady({ documentRef, target, model, portrait, portraitSignature, 
         overlay.append(title, extra, marks, context);
         hero.append(portraitTarget, overlay);
         target.append(hero);
+        const contributionStatus = documentRef.createElement('div');
+        contributionStatus.className = 'm-contribution-status-host';
         const description = makeSection(documentRef, 'Description publique', 'description');
         const relations = makeSection(documentRef, 'Relations visibles', 'relations');
+        const relationsActions = documentRef.createElement('div');
+        relationsActions.className = 'm-detail-section-actions';
+        const relationsStatus = documentRef.createElement('div');
+        relationsStatus.className = 'm-contribution-status-host';
+        relationsActions.append(relationsStatus);
+        if (contributionClient || getContributionClient) relations.section.append(relationsActions);
         const indices = makeSection(documentRef, 'Documents et enquêtes', 'indices');
         const metadata = documentRef.createElement('div');
         metadata.className = 'm-detail-metadata';
         metadata.dataset.detailMetadata = 'true';
-        target.append(description.section, relations.section, indices.section, metadata);
-        refs = { hero, portraitTarget, title, extra, marks, context, edit: null, contribution: null, trash: null, description: description.body,
-            relations: relations.body, indices: indices.body, metadata, signatures: {} };
+        target.append(contributionStatus, description.section, relations.section, indices.section, metadata);
+        refs = {
+            hero, portraitTarget, title, extra, marks, context, edit: null,
+            contributionHost: null, contribution: null, contributionStatus,
+            addRelation: null, relationsActions, relationsStatus, relationEdits: [],
+            description: description.body, relations: relations.body, indices: indices.body,
+            metadata, signatures: {},
+        };
         target._detail = refs;
     }
     const sessionState = typeof getSession === 'function' ? getSession() : getSession;
@@ -162,14 +215,44 @@ function renderReady({ documentRef, target, model, portrait, portraitSignature, 
         refs.edit = null;
     }
     if ((contributionClient || getContributionClient) && !refs.contribution) {
-        refs.contribution = mountContributionButton({ container: refs.hero, client: contributionClient,
-            getClient: getContributionClient, signIn: signInContribution, kind: 'pnj', id: model.item.id,
-            documentRef, announce, onSaved: onContributionSaved });
+        refs.contributionHost = documentRef.createElement('div');
+        refs.contributionHost.className = 'm-pnj-banner-contribution';
+        refs.hero.append(refs.contributionHost);
+        refs.contribution = mountContributionButton({
+            container: refs.contributionHost,
+            client: contributionClient,
+            getClient: getContributionClient,
+            signIn: signInContribution,
+            kind: 'pnj',
+            id: model.item.id,
+            documentRef,
+            announce,
+            onSaved: onContributionSaved,
+            statusContainer: refs.contributionStatus,
+        });
     }
-    if ((contributionClient || getContributionClient) && !refs.trash) {
-        refs.trash = mountContentTrashPanel({ container: refs.hero, client: contributionClient,
-            getClient: getContributionClient, signIn: signInContribution, documentRef, announce });
+    if (refs.contributionHost) refs.contributionHost.hidden = canEdit;
+    if (refs.contributionStatus) refs.contributionStatus.hidden = canEdit;
+    if ((contributionClient || getContributionClient) && !refs.addRelation) {
+        refs.addRelation = mountContributionButton({
+            container: refs.relationsActions,
+            client: contributionClient,
+            getClient: getContributionClient,
+            signIn: signInContribution,
+            kind: 'relation',
+            action: 'create',
+            defaultValues: { source: model.item.id },
+            hideWithoutContribution: true,
+            buttonClass: 'm-button m-detail-relation-add',
+            buttonLabel: 'Ajouter une relation',
+            documentRef,
+            announce,
+            onSaved: onContributionSaved,
+            statusContainer: refs.relationsStatus,
+        });
+        refs.relationsActions.append(refs.relationsStatus);
     }
+    if (refs.relationsActions) refs.relationsActions.hidden = canEdit;
     refs.title.textContent = model.name;
     refs.portraitTarget.setAttribute('aria-label', `Portrait de ${model.name}`);
     const heroSignature = JSON.stringify([model.statut, model.vivant, model.vivantLabel, model.surnom, model.role, model.context, model.masque]);
@@ -181,9 +264,18 @@ function renderReady({ documentRef, target, model, portrait, portraitSignature, 
         renderDescription(documentRef, refs.description, model);
         refs.signatures.description = model.description;
     }
-    const relationsSignature = JSON.stringify([model.relations, model.relationsStatus]);
+    const relationsSignature = JSON.stringify([model.relations, model.relationsStatus, canEdit]);
     if (refs.signatures.relations !== relationsSignature) {
-        renderRelations(documentRef, refs.relations, model);
+        renderRelations(documentRef, refs.relations, model, {
+            canEdit,
+            contributionClient,
+            getContributionClient,
+            signInContribution,
+            announce,
+            onContributionSaved,
+            relationEdits: refs.relationEdits,
+            statusContainer: refs.relationsStatus,
+        });
         refs.signatures.relations = relationsSignature;
     }
     const indicesSignature = JSON.stringify([model.item.id]);
@@ -228,6 +320,13 @@ export function createPnjDetailView({ container, id, store, onBack = () => {},
     let mounting = false;
     let entryPending = true;
     let entryName = '';
+    const onContributionSaved = result => {
+        if (result?.kind === 'pnj' && result?.state === 'trashed') {
+            onBack();
+            return;
+        }
+        if (store?.getState?.()?.connection?.phase === 'error') store?.restart?.();
+    };
 
     const render = state => {
         if (!mounted || signalRef?.aborted) return;
@@ -240,8 +339,7 @@ export function createPnjDetailView({ container, id, store, onBack = () => {},
             portrait?.dispose?.();
             portrait = null;
             portraitSignature = null;
-            content?._detail?.contribution?.dispose?.();
-            content?._detail?.trash?.dispose?.();
+            disposeDetailContributions(content?._detail);
             content._detail = null;
             renderState(content, {
                 state: model.kind === 'offline-empty' ? 'offline' : model.kind,
@@ -254,7 +352,7 @@ export function createPnjDetailView({ container, id, store, onBack = () => {},
         }
         const next = renderReady({ documentRef: container.ownerDocument, target: content,
             model, portrait, portraitSignature, imageService: getImageService(), getSession, onEdit, contributionClient, getContributionClient, signInContribution, announce,
-            onContributionSaved: () => store?.restart?.() });
+            onContributionSaved });
         portrait = next.portrait;
         portraitSignature = next.portraitSignature;
         if (entryPending) {
@@ -303,8 +401,7 @@ export function createPnjDetailView({ container, id, store, onBack = () => {},
         portrait?.dispose?.();
         portrait = null;
         portraitSignature = null;
-        content?._detail?.contribution?.dispose?.();
-        content?._detail?.trash?.dispose?.();
+        disposeDetailContributions(content?._detail);
         backButton?.removeEventListener('click', onBack);
         signalRef?.removeEventListener?.('abort', abortHandler);
         container.replaceChildren();
