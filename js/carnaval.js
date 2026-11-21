@@ -1,7 +1,7 @@
 import { watchAuth, loginWithGoogle, logout } from './auth.js';
 import { createBureauData } from './bureau-data.js';
 import { esc } from './utils.js';
-import { campaignPlaces, initialCampaign, effectiveEvents, eventPresences, isAt, findNextPresence, findOverlaps, suggestPnjMatches, validateSource, validateCampaign, CAMPS, ATTITUDES, holderTally, holderOfCharacter, introductionsFor } from './carnaval-model.js';
+import { campaignPlaces, initialCampaign, effectiveEvents, eventPresences, isAt, findNextPresence, findOverlaps, suggestPnjMatches, validateSource, validateCampaign, buildLocationTimelines, locateCharacter, validateLocationData, CAMPS, ATTITUDES, holderTally, holderOfCharacter, introductionsFor } from './carnaval-model.js';
 import { MIDDENHEIM_MAP } from './middenheim-map.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -11,6 +11,11 @@ const state = { admin: false, onlineReady: false, streamsReady: {}, clockSeeded:
 let authUnsubscribe = null;
 let dossiers = null;
 let dossiersUnavailable = false;
+let locationHints = [];
+let hintsUnavailable = false;
+let movementData = null;
+let movementsUnavailable = false;
+let editingMovement = null;
 
 // Pendant un dialogue modal, la zone principale est inerte : le message est aussi écrit dans la zone du dialogue ouvert, sauf les messages de fond (synchronisation), qui ne doivent pas y masquer une erreur.
 function setStatus(message = '', kind = '', { background = false } = {}) { for (const target of [$('#carnaval-status'), background ? null : document.querySelector('dialog[open] [data-dialog-status]')]) { if (!target) continue; target.textContent = message; if (kind) target.dataset.kind = kind; else delete target.dataset.kind; } }
@@ -21,6 +26,10 @@ async function doLogin() { try { await loginWithGoogle(); } catch (error) { if (
 function clearPrivateState() {
   state.generation += 1; state.unsubs.forEach(unsub => unsub?.()); state.unsubs = []; state.privateUnsub?.(); state.privateUnsub = null;
   dossiers = null; dossiersUnavailable = false;
+  locationHints = []; hintsUnavailable = false; movementData = null; movementsUnavailable = false; editingMovement = null;
+  $('#locations-view').replaceChildren(); delete $('#locations-view').dataset.character;
+  if ($('#movement-dialog').open) $('#movement-dialog').close();
+  clearMovementForm();
   state.imageReleases.forEach(release => release?.()); state.imageReleases.clear();
   const previous = state.bureau; state.bureau = null; void previous?.close?.();
   state.source = null; state.campaign = null; state.pnjs = []; state.relations = []; state.pnjPrivate.clear(); state.onlineReady = false; state.clockSeeded = false; state.streamsReady = {}; state.selectedCharacter = ''; state.selectedPlace = ''; state.selectedDay = 1; state.placeDay = 'all'; state.selectedMinute = 480; state.view = 'day'; state.showSecrets = true; state.showRendezvous = true; $('#show-rendezvous').checked = true; state.metFilter = 'all'; state.campFilter = 'all'; $('#met-filter').value = 'all'; $('#camp-filter').value = 'all'; state.eventId = null; state.linkCharacterId = null;
@@ -51,10 +60,10 @@ async function connectBureau() {
   const repo = state.bureau.carnaval;
   if (!repo) { setStatus('Le dépôt Carnaval n’est pas disponible sur cette version du site.', 'error'); showOfflineLock('Le dépôt Carnaval est indisponible sur cette version.'); return; }
   const ready = (name, metadata) => { if (metadata?.fromCache === true || metadata?.hasPendingWrites === true) { readError(name,{ code:'cache-only' }); return false; } state.streamsReady[name] = true; if (['source','campaign','pnjs','relations'].every(key => state.streamsReady[key])) { state.onlineReady = true; $('#carnaval-offline').hidden = true; $('#carnaval-app').hidden = false; render(); ensureMap(); } return true; };
-  const readError = (stream,error) => { if (generation !== state.generation || !state.admin) return; if (error?.code === 'permission-denied') state.streamsReady = {}; else delete state.streamsReady[stream]; state.onlineReady = false; $('#carnaval-app').hidden = true; closeDrawer(); if ($('#event-dialog').open) $('#event-dialog').close(); if ($('#link-dialog').open) $('#link-dialog').close(); if ($('#holders-dialog').open) $('#holders-dialog').close(); showOfflineLock(error?.code === 'permission-denied' ? 'Le serveur a refusé la lecture des données MJ.' : 'Connexion aux données privées indisponible. Le contenu n’est pas consultable hors ligne.'); setStatus('Lecture indisponible. Vérifiez la connexion ; les changements non confirmés ne sont pas sauvegardés.', 'error'); };
+  const readError = (stream,error) => { if (generation !== state.generation || !state.admin) return; if (error?.code === 'permission-denied') state.streamsReady = {}; else delete state.streamsReady[stream]; state.onlineReady = false; $('#carnaval-app').hidden = true; closeDrawer(); if ($('#event-dialog').open) $('#event-dialog').close(); if ($('#link-dialog').open) $('#link-dialog').close(); if ($('#holders-dialog').open) $('#holders-dialog').close(); if ($('#movement-dialog').open) $('#movement-dialog').close(); showOfflineLock(error?.code === 'permission-denied' ? 'Le serveur a refusé la lecture des données MJ.' : 'Connexion aux données privées indisponible. Le contenu n’est pas consultable hors ligne.'); setStatus('Lecture indisponible. Vérifiez la connexion ; les changements non confirmés ne sont pas sauvegardés.', 'error'); };
   const streamError = stream => error => readError(stream,error);
   state.unsubs.push(repo.subscribeSource((source, metadata) => { if (!state.admin || generation !== state.generation || !ready('source',metadata)) return; if (source) { const validation = validateSource(source); if (!validation.valid) { setStatus(`Source invalide : ${validation.errors.map(item => item.message).join(' · ')}`, 'error'); return; } } state.source = source; if (!source) { $('#carnaval-import').hidden = false; setStatus('Source du calendrier absente. Initialisez-la à partir du fichier local fourni au MJ.'); } else { const campaignValidation = state.campaign && validateCampaign(state.campaign,source); if (campaignValidation && !campaignValidation.valid) setStatus(`Suivi invalide : ${campaignValidation.errors.map(item => item.message).join(' · ')}`, 'error'); $('#carnaval-import').hidden = true; } refreshControls(); render(); }, streamError('source')));
-  state.unsubs.push(repo.subscribeCampaign((campaign, metadata) => { if (!state.admin || generation !== state.generation || !ready('campaign',metadata)) return; state.campaign = campaign || initialCampaign(); if (!state.clockSeeded) { state.selectedDay = state.campaign.clock.day; state.selectedMinute = state.campaign.clock.minute; state.clockSeeded = true; } const validation = validateCampaign(state.campaign,state.source); if (!validation.valid) setStatus(`Suivi invalide : ${validation.errors.map(item => item.message).join(' · ')}`, 'error'); else setStatus('Données synchronisées.', 'success', { background:true }); refreshControls(); render(); }, streamError('campaign')));
+  state.unsubs.push(repo.subscribeCampaign((campaign, metadata) => { if (!state.admin || generation !== state.generation || !ready('campaign',metadata)) return; const followClock = !state.clockSeeded || atCampaignClock(); state.campaign = campaign || initialCampaign(); if (followClock) { state.selectedDay = state.campaign.clock.day; state.selectedMinute = state.campaign.clock.minute; state.clockSeeded = true; } const validation = validateCampaign(state.campaign,state.source); if (!validation.valid) setStatus(`Suivi invalide : ${validation.errors.map(item => item.message).join(' · ')}`, 'error'); else setStatus('Données synchronisées.', 'success', { background:true }); refreshControls(); render(); }, streamError('campaign')));
   state.unsubs.push(state.bureau.pnjs.subscribeAll((pnjs,metadata) => { if (!state.admin || generation !== state.generation || !ready('pnjs',metadata)) return; state.pnjs = pnjs || []; refreshControls(); render(); refreshDrawer(); }, streamError('pnjs')));
   state.unsubs.push(state.bureau.relations.subscribeAll((relations,metadata) => { if (!state.admin || generation !== state.generation || !ready('relations',metadata)) return; state.relations = relations || []; refreshDrawer(); }, streamError('relations')));
   const setDossiers = (data, unavailable) => {
@@ -66,6 +75,20 @@ async function connectBureau() {
   if (repo.subscribeDossiers) {
     state.unsubs.push(repo.subscribeDossiers(data => setDossiers(data, false), () => setDossiers(null, true)));
   }
+  const setHints = (data, unavailable) => {
+    if (!state.admin || generation !== state.generation) return;
+    locationHints = data?.hints ?? [];
+    hintsUnavailable = unavailable;
+    render();
+  };
+  const setMovements = (data, unavailable) => {
+    if (!state.admin || generation !== state.generation) return;
+    movementData = unavailable ? null : data ?? { revision: 0, movements: [] };
+    movementsUnavailable = unavailable;
+    render();
+  };
+  if (repo.subscribeLocationHints) state.unsubs.push(repo.subscribeLocationHints(data => setHints(data, false), () => setHints(null, true)));
+  if (repo.subscribeMovements) state.unsubs.push(repo.subscribeMovements(data => setMovements(data, false), () => setMovements(null, true)));
 }
 
 function timeOptions(selected = 480, withNight = true, allowUnknown = false, unknownLabel = 'Horaire non précisé') { const max = withNight ? 1800 : 1439; const values = allowUnknown ? [`<option value=""${selected === null || selected === '' ? ' selected' : ''}>${unknownLabel}</option>`] : []; for (let minute = 0; minute <= max; minute += 1) values.push(`<option value="${minute}"${selected !== '' && selected !== null && minute === Number(selected) ? ' selected' : ''}>${minuteText(minute)}</option>`); return values.join(''); }
@@ -98,7 +121,22 @@ const places = () => campaignPlaces(state.source, state.campaign);
 const placeById = id => places().find(place => place.id === id);
 const pnjById = id => state.pnjs.find(pnj => pnj.id === id);
 function linkedPnj(characterId) { const id = state.campaign?.links?.[characterId]; return id ? pnjById(id) : null; }
-function render() { if (!state.admin || !state.onlineReady || !state.source || !state.campaign) return; renderEvents(); renderNext(); renderOverlaps(); renderWarnings(); updatePins(); renderTally(); if ($('#holders-dialog').open) renderHolders(); }
+function render() {
+  if (!state.admin || !state.onlineReady || !state.source || !state.campaign) return;
+  const locationView = state.view === 'character';
+  for (const id of ['event-list', 'next-encounter', 'overlap-list', 'current-time-filter-wrap']) $('#' + id).hidden = locationView;
+  $('#locations-view').hidden = !locationView;
+  $('#character-tracking-filters').hidden = !locationView;
+  $('#place-day-filter-wrap').hidden = state.view !== 'place';
+  if (locationView) {
+    $('#program-heading').textContent = 'Où sont-ils ?';
+    $('#time-unknown-hint').hidden = true;
+    renderLocations();
+  } else {
+    renderEvents(); renderNext(); renderOverlaps();
+  }
+  renderWarnings(); updatePins(); renderTally(); if ($('#holders-dialog').open) renderHolders();
+}
 function currentAbsolute() { return (Number(state.selectedDay) - 1) * 1440 + Number(state.selectedMinute); }
 function eventAbsolute(event, minute) { return (Number(event.day) - 1) * 1440 + minute; }
 function eventVisible(event) {
@@ -141,8 +179,7 @@ function renderEventDescription(event) {
 function renderEvents() {
   const list = $('#event-list'); let shown = events().filter(eventVisible);
   shown.sort((a,b) => (Number(a.day)-Number(b.day)) || ((Number.isInteger(a.start) ? a.start : Infinity)-(Number.isInteger(b.start) ? b.start : Infinity)) || String(a.title).localeCompare(String(b.title),'fr'));
-  $('#program-heading').textContent = state.view === 'day' ? `Programme — ${dayLabel(state.selectedDay)}` : state.view === 'place' ? 'Programme par lieu' : 'Programme par PNJ';
-  $('#place-day-filter-wrap').hidden = state.view !== 'place'; $('#character-tracking-filters').hidden = state.view !== 'character';
+  $('#program-heading').textContent = state.view === 'day' ? `Programme — ${dayLabel(state.selectedDay)}` : 'Programme par lieu';
   const cancelled = (state.source.events || []).filter(event => state.campaign.overrides?.[event.id]?.cancelled && (state.view !== 'day' || Number(event.day) === Number(state.selectedDay)) && (state.view !== 'place' || state.placeDay === 'all' || Number(event.day) === Number(state.placeDay)) && (!state.selectedPlace || event.placeId === state.selectedPlace));
   const unknownTime = $('#filter-current-time').checked && events().some(event => (event.start === null || event.end === null || eventPresences(event).some(presence => presence.start === null || presence.end === null)) && !eventVisible(event));
   $('#time-unknown-hint').hidden = !unknownTime;
@@ -176,12 +213,204 @@ function renderEvents() {
 function renderNext() {
   const target = $('#next-encounter'), id = state.selectedCharacter || '';
   if (!id) { target.textContent = 'Choisissez un PNJ pour afficher sa prochaine rencontre.'; return; }
-  const holder = state.view === 'character' ? holderOfCharacter(state.campaign,id) : null, holderNote = holder ? `<br><span class="carnaval-muted">${esc(holderLine(holder))}</span>` : '';
   const result = findNextPresence(events().filter(event => event.kind === 'public' || (event.kind === 'secret' && state.showSecrets) || (event.kind === 'rendezvous' && state.showRendezvous)), id, { day: state.selectedDay, minute: state.selectedMinute });
-  const character = characterById(id); if (!result) { target.innerHTML = `${esc(character?.name || 'Ce personnage')} : aucune autre présence annoncée pour la suite du Carnaval.${holderNote}`; return; }
+  const character = characterById(id); if (!result) { target.innerHTML = `${esc(character?.name || 'Ce personnage')} : aucune autre présence annoncée pour la suite du Carnaval.`; return; }
   const { event, presence } = result; const absoluteNow = currentAbsolute(); const start = Number.isInteger(presence.start) ? eventAbsolute(event,presence.start) : null; const end = Number.isInteger(presence.end) ? eventAbsolute(event,presence.end) : null; const active = start !== null && (presence.milestone ? absoluteNow === start : end !== null && absoluteNow >= start && absoluteNow < end);
-  target.innerHTML = `<strong>${active ? 'Présence en cours' : 'Prochaine occasion de rencontre'} — ${esc(character?.name || '')}</strong><br>${esc(event.title)} · ${esc(placeById(event.placeId)?.name || 'Lieu non renseigné')} · ${esc(dayLabel(event.day))}, ${esc(presenceTimeLabel(presence))}${holderNote}`;
+  target.innerHTML = `<strong>${active ? 'Présence en cours' : 'Prochaine occasion de rencontre'} — ${esc(character?.name || '')}</strong><br>${esc(event.title)} · ${esc(placeById(event.placeId)?.name || 'Lieu non renseigné')} · ${esc(dayLabel(event.day))}, ${esc(presenceTimeLabel(presence))}`;
 }
+
+const selectedMoment = () => ({ day: state.selectedDay, minute: state.selectedMinute });
+function atCampaignClock() {
+  const clock = state.campaign?.clock;
+  return clock && clock.day === state.selectedDay && clock.minute === state.selectedMinute;
+}
+const locationPlace = entry => entry.place || 'Lieu non renseigné';
+const locationTime = entry => entry.start === null && entry.kind === 'hint' ? 'Horaire non précisé' : presenceTimeLabel(entry);
+const locationKind = { hint: 'Piste du tome', event: 'Programme', forecast: 'Prévision', move: 'Déplacement MJ' };
+
+function locationClues({ current, forecasts, hints }) {
+  if (current[0]?.kind === 'move') return [];
+  return [...forecasts, ...hints.filter(entry => !current.length || entry.start !== null)];
+}
+
+function locationSummary(position) {
+  const hints = locationClues(position);
+  const clues = hints.length ? `<ul class="carnaval-location-hints">${hints.map(entry => `<li><strong>${esc(locationPlace(entry))}</strong><small>${esc(locationKind[entry.kind])}${entry.note ? ` · ${esc(entry.note)}` : ''}${entry.kind === 'forecast' ? ` · ${esc(locationTime(entry))}` : ''}</small></li>`).join('')}</ul>` : '';
+  if (position.current.length) {
+    const conflict = new Set(position.current.map(locationPlace)).size > 1;
+    return (conflict ? '<small>Plusieurs lieux annoncés à cette heure</small>' : '') + position.current.map(entry =>
+      `<strong>${esc(locationPlace(entry))}</strong><small>${esc(locationKind[entry.kind])}${entry.title ? ` · ${esc(entry.title)}` : ''}${entry.inferred ? ' · horaires de la scène' : ''}</small>`).join('') + clues;
+  }
+  const reference = (label, entry) => `<small>${label} · ${esc(locationPlace(entry))} · ${esc(dayLabel(entry.day))}, ${esc(locationTime(entry))}</small>`;
+  return `<strong>Localisation inconnue</strong>${clues}${position.last ? reference('Dernière présence', position.last) : ''}${position.next ? reference('Prochaine présence', position.next) : ''}`;
+}
+
+function itineraryEntry(entry) {
+  const confirmableHint = entry.kind === 'hint';
+  return `<li class="carnaval-itinerary-entry">
+    <div><strong>${esc(locationTime(entry))}</strong><small>${esc(locationKind[entry.kind])}${entry.inferred && entry.kind === 'event' ? ' · horaires de la scène' : ''}</small></div>
+    <div><strong>${esc(locationPlace(entry))}</strong>
+      ${entry.title ? `<p>${esc(entry.title)}</p>` : ''}
+      ${entry.note ? `<p>${esc(entry.note)}</p>` : ''}
+      ${entry.source ? `<small>${esc(entry.source)}</small>` : ''}
+      ${entry.kind === 'move' ? `<button type="button" class="btn-ghost-sm" id="edit-${esc(entry.id)}" data-edit-movement="${esc(entry.id)}"${movementData ? '' : ' disabled'}>Modifier le déplacement</button>` : ''}
+      ${confirmableHint ? `<button type="button" class="btn-ghost-sm" id="confirm-${esc(entry.id)}" data-confirm-location="${esc(entry.id)}"${movementData ? '' : ' disabled'}>Fixer ce lieu</button>` : ''}
+    </div>
+  </li>`;
+}
+
+function renderLocations() {
+  const target = $('#locations-view');
+  const focusId = target.contains(document.activeElement) ? document.activeElement.id : '';
+  const clock = selectedMoment();
+  const visibleEvents = events().filter(event => event.kind === 'public' || (event.kind === 'secret' && state.showSecrets) || (event.kind === 'rendezvous' && state.showRendezvous));
+  const timelines = buildLocationTimelines(visibleEvents, places(), locationHints, movementData?.movements || []);
+  const character = characterById(state.selectedCharacter);
+  const clockBar = `<div class="carnaval-location-clock"><strong>${esc(dayLabel(clock.day))} · ${esc(minuteText(clock.minute))}</strong>${atCampaignClock() ? '<span>Heure de campagne</span>' : '<button id="locations-live-clock" type="button" class="btn-ghost-sm">Revenir à l’heure de campagne</button>'}</div>`;
+  const warnings = `${hintsUnavailable ? '<p class="carnaval-muted">Les pistes du tome sont indisponibles.</p>' : ''}${movementsUnavailable ? '<p class="carnaval-muted">Les déplacements MJ sont indisponibles.</p>' : ''}`;
+  let body;
+  if (character) {
+    const timeline = timelines.get(character.id) ?? [];
+    const previousDetails = target.dataset.character === character.id ? [...target.querySelectorAll('details[open]')].map(item => Number(item.dataset.day)) : [clock.day];
+    const holder = holderOfCharacter(state.campaign, character.id);
+    const days = state.source.days.map(day => {
+      const entries = timeline.filter(entry => entry.day === day.id);
+      return `<details data-day="${day.id}"${previousDetails.includes(day.id) ? ' open' : ''}><summary id="itinerary-day-${day.id}">${esc(day.name)}</summary>
+        ${entries.length ? `<ul>${entries.map(itineraryEntry).join('')}</ul>` : '<p class="carnaval-muted">Aucun créneau renseigné.</p>'}</details>`;
+    }).join('');
+    body = `<button type="button" class="btn-ghost-sm" id="locations-back">← Tous les PNJ</button>
+      <h3 id="locations-character-heading" tabindex="-1">${esc(character.name)}</h3>
+      ${holder ? `<p class="carnaval-muted">${esc(holderLine(holder))}</p>` : ''}
+      <div class="carnaval-location-summary">${locationSummary(locateCharacter(timeline, clock))}</div>
+      <div class="carnaval-location-actions"><button type="button" class="btn-ghost-sm" id="locations-profile">Fiche du PNJ</button>
+        <button type="button" class="btn-primary" id="locations-move"${movementData ? '' : ' disabled'}>Fixer un lieu</button></div>
+      <div class="carnaval-itinerary"><h4>Itinéraire sur huit jours</h4>${days}</div>`;
+  } else {
+    let rows = state.source.characters.filter(characterShown).map(item => ({ item, position: locateCharacter(timelines.get(item.id) ?? [], clock) }));
+    if (state.selectedPlace) {
+      const place = placeById(state.selectedPlace);
+      rows = place ? rows.filter(({ position }) => [...position.current, ...locationClues(position)]
+        .some(entry => entry.placeId === place.id || entry.place === place.name)) : [];
+    }
+    const entries = rows.sort((a, b) => a.item.name.localeCompare(b.item.name, 'fr')).map(({ item, position }) =>
+      `<tr><th scope="row"><button type="button" class="carnaval-location-character" id="locate-${esc(item.id)}" data-locate="${esc(item.id)}">${esc(item.name)}</button></th><td>${locationSummary(position)}</td></tr>`).join('');
+    body = entries ? `<table class="carnaval-location-table"><thead><tr><th scope="col">PNJ</th><th scope="col">Lieu à cette heure</th></tr></thead><tbody>${entries}</tbody></table>`
+      : '<p class="carnaval-no-results">Aucun PNJ à afficher pour ces filtres.</p>';
+  }
+  target.dataset.character = character?.id ?? '';
+  target.innerHTML = clockBar + warnings + body;
+  if (focusId) document.getElementById(focusId)?.focus({ preventScroll: true });
+}
+
+$('#locations-view').addEventListener('click', event => {
+  const button = event.target.closest('button');
+  if (!button || !state.onlineReady) return;
+  if (button.dataset.locate || button.id === 'locations-back') {
+    const previous = state.selectedCharacter;
+    state.selectedCharacter = button.dataset.locate || '';
+    $('#character-filter').value = state.selectedCharacter;
+    render();
+    const focus = state.selectedCharacter ? $('#locations-character-heading') : document.getElementById('locate-' + previous);
+    (focus || $('#character-filter')).focus();
+  } else if (button.id === 'locations-live-clock') {
+    const clock = state.campaign.clock;
+    state.selectedDay = clock.day; state.selectedMinute = clock.minute;
+    refreshControls(); render();
+    $('#time-select').focus();
+  } else if (button.id === 'locations-profile') {
+    void openCharacter(state.selectedCharacter);
+  } else if (button.id === 'locations-move' || button.dataset.editMovement || button.dataset.confirmLocation) {
+    const movement = movementData?.movements.find(item => item.id === button.dataset.editMovement);
+    const hint = locationHints.find(item => item.id === button.dataset.confirmLocation);
+    openMovement(state.selectedCharacter, movement, hint, button.id);
+  }
+});
+
+function openMovement(characterId, movement, hint, returnId) {
+  const character = characterById(characterId);
+  if (!character || !movementData) return;
+  const dialog = $('#movement-dialog'), form = $('#movement-form');
+  clearDialogStatus(dialog);
+  editingMovement = { revision: movementData.revision, returnId, busy: false };
+  for (const id of ['movement-save', 'movement-close', 'movement-delete']) $('#' + id).disabled = false;
+  const data = movement || hint;
+  const day = data?.day ?? state.selectedDay;
+  const start = data?.start ?? (day === state.selectedDay ? state.selectedMinute : null);
+  const end = data?.end ?? (start !== null && start < 1800 ? Math.min(start + 60, 1800) : null);
+  $('#movement-heading').textContent = `${movement ? 'Modifier le déplacement' : 'Fixer un lieu'} — ${character.name}`;
+  form.elements.characterId.value = characterId;
+  form.elements.movementId.value = movement?.id ?? '';
+  form.elements.place.value = data?.place ?? '';
+  form.elements.note.value = movement?.note ?? '';
+  form.elements.day.innerHTML = state.source.days.map(item => `<option value="${item.id}">${esc(item.name)}</option>`).join('');
+  form.elements.day.value = String(day);
+  form.elements.start.innerHTML = timeOptions(start, true, true, 'Choisir une heure');
+  form.elements.end.innerHTML = timeOptions(end, true, true, 'Choisir une heure');
+  $('#movement-places').innerHTML = places().map(place => `<option value="${esc(place.name)}"></option>`).join('');
+  $('#movement-delete').hidden = !movement;
+  dialog.showModal();
+  form.elements.place.focus();
+}
+
+async function saveMovement({ remove = false } = {}) {
+  if (!state.admin || !state.onlineReady || !movementData || !editingMovement || editingMovement.busy) return;
+  const edit = editingMovement, form = $('#movement-form');
+  if (edit.revision !== movementData.revision) {
+    setStatus('Une autre session a modifié les déplacements. Fermez puis rouvrez ce formulaire pour vérifier la dernière version.', 'error');
+    return;
+  }
+  const movementId = form.elements.movementId.value || `move-${globalThis.crypto.randomUUID()}`;
+  const next = movementData.movements.filter(item => item.id !== movementId);
+  if (!remove) next.push({
+    id: movementId, characterId: form.elements.characterId.value, day: Number(form.elements.day.value),
+    start: Number(form.elements.start.value), end: Number(form.elements.end.value),
+    place: form.elements.place.value.trim(), note: form.elements.note.value.trim(),
+  });
+  const validation = validateLocationData({ version: 1, revision: edit.revision, movements: next });
+  if (!validation.valid) { setStatus(validation.errors[0].message, 'error'); return; }
+  edit.busy = true;
+  for (const id of ['movement-save', 'movement-close', 'movement-delete']) $('#' + id).disabled = true;
+  try {
+    const saved = await state.bureau.carnaval.saveMovements(next, edit.revision);
+    if (editingMovement !== edit) return;
+    if (saved.revision >= (movementData?.revision ?? 0)) movementData = saved;
+    $('#movement-dialog').close();
+    render();
+    setStatus(remove ? 'Déplacement supprimé.' : 'Déplacement enregistré.', 'success');
+  } catch (error) {
+    if (editingMovement !== edit) return;
+    if (error?.code === 'revision-conflict') {
+      if (error.latest?.revision >= (movementData?.revision ?? 0)) movementData = error.latest;
+      render();
+      setStatus('Une autre session a modifié les déplacements. Fermez puis rouvrez ce formulaire pour vérifier la dernière version.', 'error');
+    } else setStatus('Le serveur n’a pas confirmé le déplacement. Vérifiez la connexion, puis réessayez.', 'error');
+  } finally {
+    if (!editingMovement || editingMovement === edit) {
+      for (const id of ['movement-save', 'movement-close', 'movement-delete']) $('#' + id).disabled = false;
+    }
+    edit.busy = false;
+  }
+}
+$('#movement-form').addEventListener('submit', event => { event.preventDefault(); void saveMovement(); });
+$('#movement-delete').addEventListener('click', () => { if (confirm('Supprimer ce déplacement ?')) void saveMovement({ remove: true }); });
+$('#movement-close').addEventListener('click', () => $('#movement-dialog').close());
+$('#movement-dialog').addEventListener('cancel', event => { if (editingMovement?.busy) event.preventDefault(); });
+function clearMovementForm() {
+  const form = $('#movement-form');
+  form.reset();
+  for (const field of ['day', 'start', 'end']) form.elements[field].replaceChildren();
+  $('#movement-places').replaceChildren();
+  $('#movement-heading').textContent = 'Fixer un lieu';
+  clearDialogStatus($('#movement-dialog'));
+}
+$('#movement-dialog').addEventListener('close', () => {
+  if ($('#movement-dialog').open) return;
+  const destination = document.getElementById(editingMovement?.returnId) || $('#locations-move');
+  editingMovement = null;
+  clearMovementForm();
+  if (state.onlineReady) destination?.focus({ preventScroll: true });
+});
+
 function renderOverlaps() {
   const overlaps = findOverlaps(events()); const target = $('#overlap-list');
   if (!overlaps.length) { target.replaceChildren(); return; }
@@ -563,7 +792,7 @@ $('#carnaval-auth').addEventListener('click', () => state.admin ? void logout() 
 $('#retry-private-data').addEventListener('click', () => { if (state.admin) void connectBureau(); else void doLogin(); });
 window.addEventListener('keydown', event => {
   const drawer = $('#character-drawer'); if (!drawer.classList.contains('open')) return;
-  if (event.key === 'Escape' && !$('#event-dialog').open && !$('#link-dialog').open && !$('#holders-dialog').open) { event.preventDefault(); closeDrawer(); return; }
+  if (event.key === 'Escape' && !$('#event-dialog').open && !$('#link-dialog').open && !$('#holders-dialog').open && !$('#movement-dialog').open) { event.preventDefault(); closeDrawer(); return; }
 });
 $('#source-file').addEventListener('change', event => { $('#source-import').disabled = !event.target.files?.[0]; });
 $('#source-import').addEventListener('click', async () => { const file = $('#source-file').files?.[0]; if (!file || !state.admin || !state.bureau?.carnaval) return; try { const source = JSON.parse(await file.text()); const validation = validateSource(source); if (!validation.valid) { setStatus(validation.errors.map(item => item.message).join(' · '),'error'); return; } await state.bureau.carnaval.importSource(source); $('#source-file').value = ''; $('#source-import').disabled = true; $('#carnaval-import').hidden = true; setStatus('Programme source importé.','success'); } catch (error) { setStatus(error?.code === 'source-exists' ? 'Une source existe déjà ; actualisez le programme.' : 'Import impossible. Vérifiez que le fichier est un JSON valide et connecté au dépôt privé.','error'); } });

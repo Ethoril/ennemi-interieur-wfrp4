@@ -1,6 +1,6 @@
 import { FirebaseClientError, ERROR_KINDS, normalizeFirebaseError } from './firebase-errors.js';
 import { documentRef, requireRepository, serverTimestamp, snapshotData, snapshotMetadata, subscribeSnapshot } from './repository-utils.js';
-import { initialCampaign, validateCampaign, validateDossiers, validateSource } from '../carnaval-model.js';
+import { initialCampaign, validateCampaign, validateDossiers, validateLocationData, validateSource } from '../carnaval-model.js';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const exists = snapshot => typeof snapshot?.exists === 'function' ? snapshot.exists() : snapshot?.exists === true;
@@ -19,6 +19,12 @@ function assertNetworkSnapshot(snapshot, operation) {
     if (snapshot?.metadata?.fromCache === true) throw error(ERROR_KINDS.OFFLINE, 'cache-only', operation);
 }
 
+function revisionConflict(latest, operation) {
+    const conflict = error(ERROR_KINDS.CONFLICT, 'revision-conflict', operation);
+    conflict.latest = clone(latest);
+    return conflict;
+}
+
 export function createCarnavalRepository({ sdk, client } = {}) {
     const db = requireRepository(sdk, client, 'carnaval-repository');
     if (client?.isGM !== true) throw error(ERROR_KINDS.PERMISSION, 'permission-denied', 'carnaval-repository');
@@ -27,9 +33,25 @@ export function createCarnavalRepository({ sdk, client } = {}) {
     }
     const sourceRef = documentRef(sdk, db, 'carnaval_sources', 'current');
     const dossiersRef = documentRef(sdk, db, 'carnaval_sources', 'dossiers');
+    const hintsRef = documentRef(sdk, db, 'carnaval_sources', 'locations');
     const campaignRef = documentRef(sdk, db, 'carnaval_campaigns', 'current');
+    const movementsRef = documentRef(sdk, db, 'carnaval_campaigns', 'locations');
     const subscriptions = new Set();
     let closed = false;
+
+    async function revisionError(cause, ref, expectedRevision, operation) {
+        if (cause instanceof FirebaseClientError) return cause;
+        const code = String(cause?.code ?? '').replace(/^(?:firestore|firebase)\//u, '');
+        if (code === 'permission-denied' || code === 'aborted') {
+            // Une écriture concurrente peut échouer sur la règle de révision avant que le SDK ne relance la transaction.
+            const latest = await sdk.runTransaction(db, async transaction => {
+                const snapshot = await transaction.get(ref);
+                return exists(snapshot) ? snapshotData(snapshot) : null;
+            }).catch(() => null);
+            if (latest && latest.revision !== expectedRevision) return revisionConflict(latest, operation);
+        }
+        return normalizeFirebaseError(cause, { operation });
+    }
 
     function subscribe(ref, validator, onData, onError, operation) {
         if (closed) throw error(ERROR_KINDS.VALIDATION, 'repository-closed', operation);
@@ -50,7 +72,31 @@ export function createCarnavalRepository({ sdk, client } = {}) {
     return Object.freeze({
         subscribeSource(onData, onError) { return subscribe(sourceRef, validateSource, onData, onError, 'subscribe-carnaval-source'); },
         subscribeDossiers(onData, onError) { return subscribe(dossiersRef, validateDossiers, onData, onError, 'subscribe-carnaval-dossiers'); },
+        subscribeLocationHints(onData, onError) { return subscribe(hintsRef, data => validateLocationData(data, { hints: true }), onData, onError, 'subscribe-carnaval-location-hints'); },
+        subscribeMovements(onData, onError) { return subscribe(movementsRef, validateLocationData, onData, onError, 'subscribe-carnaval-movements'); },
         subscribeCampaign(onData, onError) { return subscribe(campaignRef, validateCampaign, onData, onError, 'subscribe-carnaval-campaign'); },
+        async saveMovements(movements, expectedRevision) {
+            const operation = 'save-carnaval-movements';
+            if (closed) throw error(ERROR_KINDS.VALIDATION, 'repository-closed', operation);
+            const requested = { version: 1, revision: expectedRevision, movements };
+            assertValid(requested, validateLocationData, operation);
+            try {
+                return await sdk.runTransaction(db, async transaction => {
+                    const [previous, source] = await Promise.all([transaction.get(movementsRef), transaction.get(sourceRef)]);
+                    const current = exists(previous) ? snapshotData(previous) : { revision: 0, movements: [] };
+                    if (current.revision !== expectedRevision) throw revisionConflict(current, operation);
+                    const characterIds = new Set(snapshotData(source)?.characters?.map(character => character.id) ?? []);
+                    if (requested.movements.some(item => !characterIds.has(item.characterId))) {
+                        throw error(ERROR_KINDS.VALIDATION, 'unknown-character', operation);
+                    }
+                    const saved = { ...requested, revision: expectedRevision + 1 };
+                    transaction.set(movementsRef, { ...saved, updatedAt: serverTimestamp(sdk) });
+                    return saved;
+                });
+            } catch (cause) {
+                throw await revisionError(cause, movementsRef, expectedRevision, operation);
+            }
+        },
         async saveCampaign(campaign, { expectedRevision } = {}) {
             if (closed) throw error(ERROR_KINDS.VALIDATION, 'repository-closed', 'save-carnaval-campaign');
             if (!Number.isInteger(expectedRevision) || expectedRevision < 0) throw error(ERROR_KINDS.VALIDATION, 'revision-required', 'save-carnaval-campaign');
@@ -64,9 +110,7 @@ export function createCarnavalRepository({ sdk, client } = {}) {
                     assertValid(campaign, validateCampaign, 'save-carnaval-campaign', snapshotData(sourceSnapshot));
                     const latest = exists(currentSnapshot) ? snapshotData(currentSnapshot) : initialCampaign();
                     if (!exists(currentSnapshot) || latest.revision !== expectedRevision) {
-                        const conflict = error(ERROR_KINDS.CONFLICT, 'revision-conflict', 'save-carnaval-campaign');
-                        conflict.latest = clone(latest);
-                        throw conflict;
+                        throw revisionConflict(latest, 'save-carnaval-campaign');
                     }
                     const next = { ...clone(campaign), revision: expectedRevision + 1, updatedAt: serverTimestamp(sdk) };
                     const campaignData = { ...next };
@@ -76,24 +120,7 @@ export function createCarnavalRepository({ sdk, client } = {}) {
                     return { revision: next.revision, campaign: { ...next, updatedAt: null } };
                 });
             } catch (cause) {
-                if (cause?.code === 'revision-conflict') throw cause;
-                const firebaseCode = String(cause?.code ?? '').replace(/^(?:firestore|firebase)\//u, '');
-                if (firebaseCode === 'permission-denied' || firebaseCode === 'aborted') {
-                    try {
-                        const latest = await sdk.runTransaction(db, async transaction => {
-                            const snapshot = await transaction.get(campaignRef);
-                            return exists(snapshot) ? snapshotData(snapshot) : null;
-                        });
-                        if (latest && latest.revision !== expectedRevision) {
-                            const conflict = error(ERROR_KINDS.CONFLICT, 'revision-conflict', 'save-carnaval-campaign');
-                            conflict.latest = clone(latest);
-                            throw conflict;
-                        }
-                    } catch (readError) {
-                        if (readError?.code === 'revision-conflict') throw readError;
-                    }
-                }
-                throw normalizeFirebaseError(cause, { operation: 'save-carnaval-campaign' });
+                throw await revisionError(cause, campaignRef, expectedRevision, 'save-carnaval-campaign');
             }
         },
         async importSource(source) {

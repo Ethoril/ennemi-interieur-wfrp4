@@ -68,3 +68,74 @@
   outline: 3px solid var(--gold-bright);
   outline-offset: 2px;
 }
+
+.carnaval-location-clock, .carnaval-location-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem .8rem;
+  margin-block: .45rem .8rem;
+}
+.carnaval-location-clock {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding-block: .35rem;
+  background: var(--bg-card);
+}
+.carnaval-location-clock span { color: var(--text-secondary); }
+.carnaval-location-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.carnaval-location-table th, .carnaval-location-table td {
+  padding: .55rem .55rem .65rem;
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.carnaval-location-table th:first-child { width: 34%; }
+.carnaval-location-table thead { background: var(--bg-surface); }
+.carnaval-location-character {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+  font: inherit;
+  text-align: start;
+  text-decoration: underline;
+  text-underline-offset: .12em;
+  overflow-wrap: anywhere;
+}
+.carnaval-location-character:hover { color: var(--gold-bright); }
+.carnaval-location-table small, .carnaval-location-summary small, .carnaval-itinerary-entry small {
+  display: block;
+  color: var(--text-secondary);
+  line-height: 1.35;
+  margin-block-end: .25rem;
+}
+.carnaval-location-hints, .carnaval-itinerary ul { list-style: none; margin: 0; padding: 0; }
+.carnaval-location-hints li { margin-block: .35rem; }
+.carnaval-location-summary { background: var(--bg-surface); padding: .65rem .8rem; overflow-wrap: anywhere; }
+#locations-character-heading { margin-block: .55rem .45rem; color: var(--gold); }
+.carnaval-itinerary h4 { margin-block: 1rem .45rem; }
+.carnaval-itinerary details { border-top: 1px solid var(--border-subtle); }
+.carnaval-itinerary summary { padding: .6rem .25rem; font-weight: 600; cursor: pointer; color: var(--gold); }
+.carnaval-itinerary summary:focus-visible { outline: 3px solid var(--gold-bright); }
+.carnaval-itinerary-entry {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, .5fr) minmax(0, 1fr);
+  gap: .65rem;
+  padding: .6rem .25rem;
+  border-top: 1px solid var(--border-subtle);
+  overflow-wrap: anywhere;
+}
+.carnaval-itinerary-entry p { margin: .25rem 0; }
+@media (max-width: 520px) {
+  .carnaval-location-table th, .carnaval-location-table td { padding-inline: .35rem; }
+  .carnaval-location-table th:first-child { width: 43%; }
+  .carnaval-itinerary-entry { grid-template-columns: 1fr; gap: .15rem; }
+}

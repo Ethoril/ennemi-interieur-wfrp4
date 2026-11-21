@@ -109,11 +109,11 @@ test('le moment du suivi et du changement de camp vient de l’horloge de campag
         assert.doesNotMatch(sliceOf(ui, start, end), /changedAt:\{ day:state\.selectedDay|state\.selectedDay\)|\?\? state\.selectedDay/u, start);
 });
 
-test('le détenteur du personnage s’affiche dans l’encart de la vue PNJ', async () => {
+test('le détenteur du personnage s’affiche dans l’itinéraire de la vue PNJ', async () => {
     const ui = await read('js/carnaval.js');
-    const body = sliceOf(ui, 'function renderNext(', 'function renderOverlaps(');
+    const body = sliceOf(ui, 'function renderLocations(', "$('#locations-view').addEventListener");
     assert.match(body, /holderLine\(/u);
-    assert.match(body, /state\.view === 'character'/u);
+    assert.match(body, /holderOfCharacter\(state\.campaign, character\.id\)/u);
 });
 
 test('les messages d’état atteignent la zone du dialogue modal ouvert', async () => {

@@ -52,6 +52,40 @@ try {
             await assertFails(deleteDoc(dossier(db)));
         }
     });
+    await test('les pistes et déplacements sont privés, avec révision obligatoire pour le MJ', async () => {
+        const hints = db => doc(db, 'carnaval_sources', 'locations');
+        const movements = db => doc(db, 'carnaval_campaigns', 'locations');
+        await env.withSecurityRulesDisabled(ctx => setDoc(hints(ctx.firestore()), { version: 1, hints: [] }));
+        const data = { version: 1, revision: 1, movements: [], updatedAt: serverTimestamp() };
+        await assertSucceeds(getDoc(hints(gm)));
+        await assertFails(setDoc(hints(gm), { version: 1, hints: [] }));
+        for (const db of [guest, player, unverified]) {
+            await assertFails(getDoc(hints(db)));
+            await assertFails(getDoc(movements(db)));
+            await assertFails(setDoc(movements(db), data));
+        }
+        await assertFails(setDoc(movements(gm), { ...data, revision: 2 }));
+        await assertSucceeds(setDoc(movements(gm), data));
+        await assertSucceeds(getDoc(movements(gm)));
+        await assertFails(setDoc(movements(gm), data));
+        await assertFails(setDoc(movements(gm), { ...data, revision: 2, movements: Array(301).fill({}) }));
+        await assertSucceeds(setDoc(movements(gm), { ...data, revision: 2 }));
+        const calendar = { ...source(), characters: [{ id: 'char-a', name: 'Ada', aliases: [] }] };
+        await env.withSecurityRulesDisabled(ctx => setDoc(ref(ctx.firestore(), 'carnaval_sources'), calendar));
+        const sdk = { doc, serverTimestamp, runTransaction, onSnapshot };
+        const repository = createCarnavalRepository({ sdk, client: { db: gm, isGM: true } });
+        try {
+            const move = { id: 'm1', characterId: 'char-a', day: 1, start: 780, end: 810, place: 'Auberge', note: '' };
+            const writes = await Promise.allSettled([
+                repository.saveMovements([move], 2),
+                repository.saveMovements([{ ...move, place: 'Parc' }], 2),
+            ]);
+            assert.equal(writes.filter(write => write.status === 'fulfilled').length, 1);
+            const rejected = writes.find(write => write.status === 'rejected');
+            assert.equal(rejected.reason.code, 'revision-conflict');
+            assert.equal(rejected.reason.latest.revision, 3);
+        } finally { repository.close(); }
+    });
     await test('les révisions, horaires, clés et timestamps sont contrôlés côté serveur', async () => {
         const target = ref(gm, 'carnaval_campaigns');
         await assertFails(updateDoc(target, { revision: 0, updatedAt: serverTimestamp() }));

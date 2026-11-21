@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
     ATTITUDES, CAMPS, campaignPlaces, effectiveEvents, eventPresences, findNextPresence, findOverlaps, holderOfCharacter, holderTally,
     initialCampaign, introductionsFor, isAt, resetEventOverride, suggestPnjMatches, validateCampaign, validateSource,
+    buildLocationTimelines, locateCharacter, validateLocationData,
 } from '../js/carnaval-model.js';
 import { createCarnavalRepository } from '../js/data/carnaval-repository.js';
 
@@ -202,6 +203,46 @@ test('repository waits for a server-confirmed snapshot after cache or pending wr
     emit('carnaval_sources/current', { fromCache: false, hasPendingWrites: false });
     assert.equal(dataCalls, 1);
     unsubscribe(); repo.close();
+});
+
+const movement = { id: 'm1', characterId: 'char-a', day: 7, start: 1470, end: 1530, place: 'Une auberge', note: '' };
+const hint = { id: 'h1', characterId: 'char-a', day: 8, start: null, end: null, place: 'Salle de garde', note: 'Sur convocation', source: 'Tome' };
+
+test('la localisation distingue prévisions, mouvements et horaires inférés, y compris après minuit', () => {
+    const before = { ...source.events[0], id: 'before', day: 7, start: 1380, end: 1510 };
+    const [event, forecast] = source.events;
+    const timeline = buildLocationTimelines([before, event, forecast], source.places, [hint], [movement]).get('char-a');
+    const atNight = locateCharacter(timeline, { day: 8, minute: 45 });
+    assert.deepEqual(atNight.current.map(entry => entry.kind), ['move']);
+    assert.equal(atNight.current[0].place, movement.place);
+    const unknown = locateCharacter(timeline, { day: 8, minute: 600 });
+    assert.equal(unknown.current.length, 0);
+    assert.equal(unknown.hints[0].place, hint.place);
+    assert.equal(unknown.last.kind, 'move');
+    assert.equal(unknown.next.title, event.title);
+    const during = locateCharacter(timeline, { day: 8, minute: 1420 });
+    assert.deepEqual(during.current.map(entry => [entry.kind, entry.inferred]), [['event', true]]);
+    assert.deepEqual(during.forecasts.map(entry => entry.title), [forecast.title]);
+    assert.equal(locateCharacter(timeline, { day: 8, minute: 1500 }).current.length, 0);
+});
+
+test('les déplacements du même PNJ ne peuvent pas se chevaucher, y compris après minuit', () => {
+    const check = movements => validateLocationData({ version: 1, revision: 0, movements });
+    assert.equal(check([movement, { ...movement, id: 'm2', day: 8, start: 60, end: 120 }]).valid, false);
+    assert.equal(check([movement, { ...movement, id: 'm2', day: 8, start: 90, end: 120 }]).valid, true);
+    assert.equal(check([{ ...movement, end: null }]).valid, false);
+    assert.equal(validateLocationData({ version: 1, hints: [hint] }, { hints: true }).valid, true);
+});
+
+test('les déplacements révisionnés sont indépendants du calendrier et refusent les PNJ inconnus', async () => {
+    const current = initialCampaign();
+    const { repo, documents } = makeRepository({ 'carnaval_sources/current': source, 'carnaval_campaigns/current': current });
+    assert.equal((await repo.saveMovements([movement], 0)).revision, 1);
+    await assert.rejects(repo.saveMovements([], 0), error => error.code === 'revision-conflict' && error.latest.revision === 1);
+    await assert.rejects(repo.saveMovements([{ ...movement, characterId: 'missing' }], 1), error => error.code === 'unknown-character');
+    assert.equal((await repo.saveMovements([], 1)).revision, 2);
+    assert.deepEqual(documents.get('carnaval_campaigns/current'), current);
+    repo.close();
 });
 
 const withPlaces = customPlaces => ({ ...initialCampaign(), customPlaces });

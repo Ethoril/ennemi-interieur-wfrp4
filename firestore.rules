@@ -590,6 +590,26 @@ service cloud.firestore {
       allow list, write: if false;
     }
 
+    match /carnaval_sources/locations {
+      allow get: if isGM();
+      allow list, write: if false;
+    }
+
+    match /carnaval_campaigns/locations {
+      function validMovements(data) {
+        return data.keys().hasOnly(['version', 'revision', 'movements', 'updatedAt'])
+          && data.version == 1 && data.revision is int
+          && data.movements is list && data.movements.size() <= 300
+          && data.updatedAt == request.time;
+      }
+      allow get: if isGM();
+      allow create: if isGM() && validMovements(request.resource.data)
+          && request.resource.data.revision == 1;
+      allow update: if isGM() && validMovements(request.resource.data)
+          && request.resource.data.revision == resource.data.revision + 1;
+      allow list, delete: if false;
+    }
+
     match /carnaval_campaigns/current {
       allow read: if isGM();
       allow create: if isGM() && validCarnavalCampaign(request.resource.data)

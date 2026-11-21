@@ -38,7 +38,7 @@
       <div class="carnaval-toolbar">
         <div class="carnaval-day-control"><button type="button" id="previous-day" aria-label="Jour précédent">←</button><label for="day-select">Jour</label><select id="day-select"></select><button type="button" id="next-day" aria-label="Jour suivant">→</button></div>
         <label class="carnaval-time-control" for="time-select">Heure de jeu <select id="time-select"></select></label>
-        <label class="carnaval-filter-label"><input type="checkbox" id="filter-current-time"> Filtrer à l’heure choisie</label>
+        <label class="carnaval-filter-label" id="current-time-filter-wrap"><input type="checkbox" id="filter-current-time"> Filtrer à l’heure choisie</label>
         <div class="carnaval-view-tabs" role="tablist" aria-label="Vue du programme">
           <button role="tab" aria-selected="true" data-view="day">Jour</button><button role="tab" aria-selected="false" data-view="place">Lieu</button><button role="tab" aria-selected="false" data-view="character">PNJ</button>
         </div>
@@ -58,6 +58,7 @@
           <div id="next-encounter" class="carnaval-next" aria-live="polite"></div>
           <div id="overlap-list" class="carnaval-overlaps" aria-live="polite"></div>
           <div id="event-list" class="carnaval-event-list" aria-live="polite"></div>
+          <div id="locations-view" hidden></div>
         </section>
         <section class="carnaval-map-panel" aria-label="Carte des lieux du Carnaval"><div class="carnaval-map-toolbar"><h2>Plan de Middenheim</h2><button type="button" id="map-reset">Centrer la carte</button></div><div id="carnaval-map"></div><p class="carnaval-map-caption">Les repères montrent les cinq lieux du Carnaval. La carte reste publique ; les données affichées ici sont réservées au MJ.</p></section>
       </div>
@@ -65,6 +66,29 @@
     <dialog id="event-dialog" class="carnaval-dialog"><form id="event-form" method="dialog"><div class="carnaval-dialog-heading"><h2 id="event-dialog-title">Modifier une scène</h2><button type="button" id="event-dialog-close" aria-label="Fermer">×</button></div><input type="hidden" name="eventId"><label>Titre<input name="title" required maxlength="180"></label><div class="carnaval-form-row"><label>Jour<select name="day"></select></label><label>Lieu<select name="placeId"></select></label></div><div id="place-name-wrap" hidden><label>Nom du lieu<input name="placeName" maxlength="200" autocomplete="off"></label></div><div class="carnaval-form-row"><label>Début<select name="start"></select></label><label>Fin<select name="end"></select></label></div><label>Type<select name="kind"><option value="public">Attraction publique</option><option value="secret">Chronologie secrète MJ</option><option value="rendezvous">Rendez-vous</option></select></label><div class="carnaval-form-row"><label>Page imprimée<input name="bookPage" inputmode="numeric"></label><label>Page PDF<input name="pdfPage" inputmode="numeric"></label></div><label>Notes MJ<textarea name="notes" rows="4"></textarea></label><div class="carnaval-presences-edit"><h3>Présences</h3><div id="presence-editor"></div><button type="button" id="add-presence" class="btn-ghost-sm">＋ Ajouter une présence</button></div><p class="carnaval-dialog-status" role="status" aria-live="polite" data-dialog-status></p><div class="carnaval-dialog-actions"><button type="button" id="reset-event" class="btn-ghost-sm">Réinitialiser vers la source</button><button type="button" id="cancel-event" class="btn-ghost-sm">Annuler</button><button type="submit" class="btn-primary">Enregistrer</button></div></form></dialog>
     <dialog id="link-dialog" class="carnaval-dialog carnaval-link-dialog"><form method="dialog" id="link-form"><div class="carnaval-dialog-heading"><h2>Associer une fiche PNJ</h2><button type="button" id="link-dialog-close" aria-label="Fermer">×</button></div><p id="link-character-name"></p><label>Fiche existante<select id="link-pnj-select" required></select></label><div id="link-suggestions" class="carnaval-suggestions"></div><div class="carnaval-dialog-actions"><button type="button" id="link-cancel" class="btn-ghost-sm">Annuler</button><button type="submit" class="btn-primary">Confirmer l’association</button></div></form></dialog>
     <dialog id="holders-dialog" class="carnaval-dialog" aria-labelledby="holders-dialog-title"><div class="carnaval-dialog-heading"><h2 id="holders-dialog-title">Détenteurs de voix</h2><button type="button" id="holders-close" aria-label="Fermer">×</button></div><div id="holders-list" class="carnaval-holders-list"></div><div class="carnaval-dialog-actions"><button type="button" id="add-holder" class="btn-primary">＋ Détenteur</button><button type="button" id="holders-close-bottom" class="btn-ghost-sm">Fermer</button></div><form id="holder-form" aria-labelledby="holder-form-title" hidden><h3 id="holder-form-title">Détenteur</h3><input type="hidden" name="holderId"><label>Libellé<input name="label" required maxlength="100" autocomplete="off"></label><div class="carnaval-form-row"><label>Poids (0 à 99)<input name="weight" type="number" min="0" max="99" step="1" required inputmode="numeric"></label><label>Camp<select name="camp"></select></label></div><fieldset class="carnaval-holder-characters"><legend>Personnages rattachés</legend><div id="holder-characters"></div></fieldset><div class="carnaval-dialog-actions"><button type="button" id="holder-cancel" class="btn-ghost-sm">Annuler</button><button type="submit" class="btn-primary">Enregistrer</button></div></form><p class="carnaval-dialog-status" role="status" aria-live="polite" data-dialog-status></p></dialog>
+    <dialog id="movement-dialog" class="carnaval-dialog" aria-labelledby="movement-heading">
+      <form id="movement-form">
+        <div class="carnaval-dialog-heading">
+          <h2 id="movement-heading">Fixer un lieu</h2>
+          <button type="button" id="movement-close" aria-label="Fermer">×</button>
+        </div>
+        <input type="hidden" name="characterId">
+        <input type="hidden" name="movementId">
+        <label>Lieu<input name="place" list="movement-places" maxlength="200" autocomplete="off" required></label>
+        <datalist id="movement-places"></datalist>
+        <label>Jour<select name="day" required></select></label>
+        <div class="carnaval-form-row">
+          <label>De<select name="start" required></select></label>
+          <label>À<select name="end" required></select></label>
+        </div>
+        <label>Note MJ<textarea name="note" maxlength="500" rows="2"></textarea></label>
+        <p class="carnaval-dialog-status" role="status" data-dialog-status></p>
+        <div class="carnaval-dialog-actions">
+          <button class="btn-ghost-sm" type="button" id="movement-delete" hidden>Supprimer le déplacement</button>
+          <button class="btn-primary" type="submit" id="movement-save">Enregistrer</button>
+        </div>
+      </form>
+    </dialog>
     <footer class="footer" id="site-footer"></footer>
   </main>
   <aside id="character-drawer" class="carnaval-drawer" role="dialog" aria-label="Fiche du personnage" aria-hidden="true" aria-modal="false" inert><button type="button" id="drawer-close" class="carnaval-drawer-close" aria-label="Fermer la fiche">×</button><div id="character-drawer-content"></div></aside>

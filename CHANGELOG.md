@@ -1,3 +1,8 @@
+## [2.44.0] - 2026-11-21
+
+- **Carnaval de Middenheim**. La vue PNJ affiche les lieux à l’heure choisie, les itinéraires sur huit jours et les pistes des trois premiers jours. Le MJ peut enregistrer un déplacement pour un créneau.
+- Cache de l’application actualisé.
+
 ## [2.43.4] - 2026-11-21
 
 - **Carnaval de Middenheim**. Le panneau des PNJ affiche la fiche du tome, avec son résumé et les informations de scénario réservées au MJ.

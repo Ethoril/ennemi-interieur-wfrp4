@@ -32,6 +32,99 @@ export function validateDossiers(data) {
     return result(errors);
 }
 
+export function validateLocationData(data, { hints = false } = {}) {
+    const key = hints ? 'hints' : 'movements';
+    const errors = [];
+    const issue = (path, message) => errors.push({ path, message });
+    const keys = hints ? ['version', key] : ['version', 'revision', key, 'updatedAt'];
+    if (!hasObject(data) || data.version !== 1 || !onlyKeys(data, keys)
+        || (!hints && (!Number.isInteger(data.revision) || data.revision < 0))
+        || !Array.isArray(data[key]) || data[key].length > 300) {
+        return result([{ path: key, message: 'Format de localisations invalide.' }]);
+    }
+    const ids = new Set();
+    const schedules = new Map();
+    data[key].forEach((entry, index) => {
+        const path = `${key}[${index}]`;
+        const fields = ['id', 'characterId', 'day', 'start', 'end', 'place', 'note', ...(hints ? ['source'] : [])];
+        if (!hasObject(entry) || !onlyKeys(entry, fields) || !safeId(entry.id) || !safeId(entry.characterId)
+            || !Number.isInteger(entry.day) || entry.day < 1 || entry.day > 8 || !boundedText(entry.place, 200)
+            || typeof entry.note !== 'string' || entry.note.length > 500 || (hints && !boundedText(entry.source, 250))) {
+            issue(path, 'Personnage, jour ou lieu invalide.');
+            return;
+        }
+        if (ids.has(entry.id)) issue(path, 'Identifiant dupliqué.');
+        ids.add(entry.id);
+        if (hints && entry.start === null && entry.end === null) return;
+        if (!minute(entry.start) || !minute(entry.end) || entry.end <= entry.start) {
+            issue(path, 'La fin doit être après le début.');
+            return;
+        }
+        if (hints) return;
+        const spans = schedules.get(entry.characterId) ?? [];
+        const start = absTime(entry.day, entry.start), end = absTime(entry.day, entry.end);
+        if (spans.some(span => span.start < end && start < span.end)) issue(path, 'Deux déplacements du même PNJ se chevauchent.');
+        spans.push({ start, end });
+        schedules.set(entry.characterId, spans);
+    });
+    return result(errors);
+}
+
+export function buildLocationTimelines(events, places, hints = [], movements = []) {
+    const locations = new Map(places.map(place => [place.id, place.name]));
+    const timelines = new Map();
+    const add = (id, item) => {
+        const entries = timelines.get(id) ?? [];
+        entries.push(item);
+        timelines.set(id, entries);
+    };
+    for (const event of events) for (const presence of eventPresences(event)) {
+        add(presence.characterId, {
+            kind: event.kind === 'secret' ? 'forecast' : 'event', day: event.day, start: presence.start,
+            end: presence.end, title: event.title, place: locations.get(event.placeId), placeId: event.placeId,
+            inferred: presence.inferred, note: '',
+        });
+    }
+    for (const entry of hints) add(entry.characterId, { ...entry, kind: 'hint' });
+    for (const entry of movements) add(entry.characterId, { ...entry, kind: 'move' });
+    for (const entries of timelines.values()) {
+        entries.sort((a, b) => a.day - b.day || (a.start ?? Infinity) - (b.start ?? Infinity));
+    }
+    return timelines;
+}
+
+export function locateCharacter(timeline, clock) {
+    const now = absTime(clock.day, clock.minute);
+    const active = (start, end) => start <= now && now < end;
+    const moves = [], events = [], hints = [], forecasts = [];
+    const calendarDay = Math.floor(now / 1440) + 1;
+    let last = null, next = null, lastEnd = -Infinity, nextStart = Infinity;
+    for (const entry of timeline) {
+        const { kind, day, start, end } = entry;
+        if (kind === 'hint' && start === null) {
+            if (day === calendarDay) hints.push(entry);
+            continue;
+        }
+        if (!Number.isInteger(start)) continue;
+        const from = absTime(day, start);
+        const until = Number.isInteger(end) ? absTime(day, end) : null;
+        if (kind === 'forecast') {
+            if (until === null ? now === from : active(from, until)) forecasts.push(entry);
+            continue;
+        }
+        if (until === null) continue;
+        if (active(from, until)) {
+            if (kind === 'move') moves.push(entry);
+            else if (kind === 'hint') hints.push(entry);
+            else events.push(entry);
+        } else if (kind !== 'hint') {
+            if (until <= now && (until > lastEnd || (until === lastEnd && kind === 'move'))) { last = entry; lastEnd = until; }
+            if (from >= now && (from < nextStart || (from === nextStart && kind === 'move'))) { next = entry; nextStart = from; }
+        }
+    }
+    return { current: moves.length ? moves : events, hints, forecasts, last, next };
+}
+
 export function validateSource(source) {
     const errors = [];
     const issue = (path, message) => errors.push({ path, message });
